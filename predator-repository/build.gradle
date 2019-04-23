@@ -1,0 +1,4 @@
+dependencies {
+	annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+	compile project(":predator-model")
+}
