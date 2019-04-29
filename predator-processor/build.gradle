@@ -1,3 +1,10 @@
 dependencies {
-	compile project(":predator-annotation")
+	compile project(":predator-model")
+	compile "io.micronaut:micronaut-inject:$micronautVersion"
+
+	testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
+	if (!JavaVersion.current().isJava9Compatible()) {
+		testCompile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
+	}
 }

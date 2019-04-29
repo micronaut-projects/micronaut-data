@@ -1,7 +1,6 @@
 rootProject.name = 'predator'
 
-include 'predator-annotation'
-include 'predator-processor'
 include 'predator-model'
+include 'predator-processor'
 include 'predator-repository'
 

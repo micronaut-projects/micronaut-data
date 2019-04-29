@@ -1,3 +1,6 @@
 dependencies {
-	compile project(":predator-annotation")
+	compile "io.micronaut:micronaut-inject:$micronautVersion"
+	compile "io.micronaut:micronaut-aop:$micronautVersion"
+	compile 'javax.persistence:javax.persistence-api:2.2'
+	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
 }
