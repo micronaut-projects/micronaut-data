@@ -34,6 +34,7 @@ class FindBySpec extends Specification {
 
         then:
         p == null
+        !personRepository.findOptionalByName("Fred").isPresent()
 
         when:
         sessionFactory.currentSession.persist(new Person(name: "Fred"))
@@ -43,6 +44,7 @@ class FindBySpec extends Specification {
         then:
         p != null
         p.name == "Bob"
+        personRepository.findOptionalByName("Bob").isPresent()
 
         when:
         def results = personRepository.findAllByName("Bob")

@@ -1,10 +1,7 @@
 package io.micronaut.data.model.finders;
 
 import io.micronaut.data.annotation.Persisted;
-import io.micronaut.data.intercept.FindAllInterceptor;
-import io.micronaut.data.intercept.FindOneInterceptor;
-import io.micronaut.data.intercept.FindReactivePublisherInterceptor;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.*;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -66,9 +63,9 @@ public class FindByFinder extends AbstractFindByFinder {
             } else if (returnType.isAssignable(Iterable.class) && hasPersistedTypeArgument(returnType)) {
                 return FindAllInterceptor.class;
             } else if(returnType.isAssignable(Stream.class) && hasPersistedTypeArgument(returnType)) {
-                // TODO: handle stream
+                return FindStreamInterceptor.class;
             } else if(returnType.isAssignable(Optional.class) && hasPersistedTypeArgument(returnType)) {
-                // TODO: handle optional
+                return FindOptionalInterceptor.class;
             } else if(returnType.isAssignable(Publisher.class) && hasPersistedTypeArgument(returnType)) {
                 return FindReactivePublisherInterceptor.class;
             } else {
@@ -76,7 +73,7 @@ public class FindByFinder extends AbstractFindByFinder {
             }
         }
 
-        visitorContext.fail("Unsupported return type", methodElement);
+        visitorContext.fail("Unsupported Repository method return type", methodElement);
         return null;
     }
 }
