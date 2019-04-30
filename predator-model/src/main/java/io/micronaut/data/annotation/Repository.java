@@ -1,6 +1,8 @@
 package io.micronaut.data.annotation;
 
 import io.micronaut.aop.Introduction;
+import io.micronaut.context.annotation.Type;
+import io.micronaut.data.intercept.PredatorIntroductionAdvice;
 import io.micronaut.data.model.query.encoder.JpaQueryEncoder;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
 
@@ -17,9 +19,11 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
+@Type(PredatorIntroductionAdvice.class)
 public @interface Repository {
     /**
-     * The name of the underlying datasource connection.
+     * The name of the underlying datasource connection name. In a multiple data source scenario this will
+     * be the name of a configured datasource or connection.
      *
      * @return The connection name
      */

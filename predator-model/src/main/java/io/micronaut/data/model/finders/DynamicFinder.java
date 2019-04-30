@@ -3,15 +3,18 @@ package io.micronaut.data.model.finders;
 
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.DefaultQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.factory.Restrictions;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -143,7 +146,8 @@ abstract class DynamicFinder implements FinderMethod {
                         // populate the arguments into the Expression from the argument list
                         String[] currentArguments = new String[requiredArgs];
                         if ((argumentCursor + requiredArgs) > arguments.length) {
-                            throw new IllegalArgumentException("Insufficient arguments to method: " + methodName);
+                            visitorContext.fail("Insufficient arguments to method", methodElement);
+                            return null;
                         }
 
                         for (int k = 0; k < requiredArgs; k++, argumentCursor++) {
@@ -167,7 +171,8 @@ abstract class DynamicFinder implements FinderMethod {
 
             final int requiredArguments = solo.getArgumentsRequired();
             if (requiredArguments  > arguments.length) {
-                throw new IllegalArgumentException("Insufficient arguments to method: " + methodName);
+                visitorContext.fail("Insufficient arguments to method", methodElement);
+                return null;
             }
 
             totalRequiredArguments += requiredArguments;
@@ -182,15 +187,8 @@ abstract class DynamicFinder implements FinderMethod {
         // if the total of all the arguments necessary does not equal the number of arguments
         // throw exception
         if (totalRequiredArguments > arguments.length) {
-            throw new IllegalArgumentException("Insufficient arguments to method: " + methodName);
-        }
-
-        // calculate the remaining arguments
-        Object[] remainingArguments = new Object[arguments.length - totalRequiredArguments];
-        if (remainingArguments.length > 0) {
-            for (int i = 0, j = totalRequiredArguments; i < remainingArguments.length; i++,j++) {
-                remainingArguments[i] = arguments[j];
-            }
+            visitorContext.fail("Insufficient arguments to method", methodElement);
+            return null;
         }
 
         Query query = Query.from(entity);
@@ -220,10 +218,12 @@ abstract class DynamicFinder implements FinderMethod {
 
     /**
      * Checks whether the given method is a match
-     * @param methodName The method name
+     * @param methodElement The method element
      * @return True if it is
      */
-    public boolean isMethodMatch(String methodName) {
+    @Override
+    public boolean isMethodMatch(MethodElement methodElement) {
+        String methodName = methodElement.getName();
         return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 

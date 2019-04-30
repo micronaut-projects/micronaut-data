@@ -1,8 +1,12 @@
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.context.annotation.Property;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.finders.FindByFinder;
 import io.micronaut.data.model.finders.FinderMethod;
@@ -15,10 +19,7 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
 
@@ -35,9 +36,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         if (currentClass != null && element.isAbstract() && !element.isStatic()) {
-            final String methodName = element.getName();
             for (FinderMethod finder : finders) {
-                if (finder.isMethodMatch(methodName)) {
+                if (finder.isMethodMatch(element)) {
                     PersistentEntity entity = resolvePersistentEntity(element);
 
                     if (entity == null) {
@@ -46,33 +46,72 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     }
 
                     final Query queryObject = finder.buildQuery(entity, element, context);
-                    QueryEncoder queryEncoder = resolveQueryEncoder(element, context);
+                    Map<String, String> parameterBinding = null;
+                    if (queryObject != null) {
+                        QueryEncoder queryEncoder = resolveQueryEncoder(element, context);
 
-                    if (queryEncoder == null) {
-                        context.fail("QueryEncoder not present on annotation processor path", element);
-                        return;
+                        if (queryEncoder == null) {
+                            context.fail("QueryEncoder not present on annotation processor path", element);
+                            return;
+                        }
+
+                        EncodedQuery encodedQuery;
+                        try {
+                            encodedQuery = queryEncoder.encodeQuery(queryObject);
+                        } catch (Exception e) {
+                            context.fail("Invalid query method: " + e.getMessage(), element);
+                            return;
+                        }
+
+                        parameterBinding = encodedQuery.getParameters();
+                        element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
+                                annotationBuilder.value(encodedQuery.getQuery())
+                        );
                     }
 
-                    EncodedQuery encodedQuery;
-                    try {
-                        encodedQuery = queryEncoder.encodeQuery(queryObject);
-                    } catch (Exception e) {
-                        context.fail("Invalid query method: " + e.getMessage(), element);
-                        return;
-                    }
+                    Class<? extends PredatorInterceptor> runtimeInterceptor =
+                            finder.getRuntimeInterceptor(entity, element, context);
 
-                    element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
-                            annotationBuilder.value(encodedQuery.getQuery())
-                    );
+                    if (runtimeInterceptor != null) {
+                        Map<String, String> finalParameterBinding = parameterBinding;
+                        element.annotate(PredatorMethod.class, annotationBuilder -> {
+                            annotationBuilder.member("interceptor", runtimeInterceptor);
+                            if (finalParameterBinding != null) {
+                                AnnotationValue<?>[] parameters = new AnnotationValue[finalParameterBinding.size()];
+                                int i = 0;
+                                for (Map.Entry<String, String> entry : finalParameterBinding.entrySet()) {
+                                    parameters[i++] = AnnotationValue.builder(Property.class)
+                                                .member("name", entry.getKey())
+                                                .member("value", entry.getValue())
+                                                .build();
+                                }
+                                annotationBuilder.member("parameterBinding", parameters);
+                            }
+                        });
+                    }
                     return;
                 }
             }
+
+            context.fail("Unable to implement Repository method", element);
         }
     }
 
     private PersistentEntity resolvePersistentEntity(MethodElement element) {
         ClassElement returnType = element.getReturnType();
-        return resolvePersistentEntity(returnType);
+        PersistentEntity entity = resolvePersistentEntity(returnType);
+        if (entity != null) {
+            return entity;
+        } else {
+            Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(io.micronaut.data.repository.Repository.class);
+            if (!typeArguments.isEmpty()) {
+                ClassElement ce = typeArguments.get("E");
+                if (ce != null) {
+                    return new SourcePersistentEntity(ce);
+                }
+            }
+        }
+        return null;
     }
 
     private PersistentEntity resolvePersistentEntity(ClassElement returnType) {
