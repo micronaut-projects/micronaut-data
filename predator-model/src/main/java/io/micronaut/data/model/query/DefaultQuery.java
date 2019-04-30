@@ -18,7 +18,7 @@ import java.util.*;
  * @author Graeme Rocher
  * @since 1.0
  */
-public class DefaultQuery implements Query {
+public class DefaultQuery extends DefaultSort implements Query {
 
     private final PersistentEntity entity;
 
@@ -26,9 +26,8 @@ public class DefaultQuery implements Query {
     private Query.ProjectionList projections = new Query.ProjectionList();
     private int max = -1;
     private int offset = 0;
-    private List<Query.Order> orderBy = new ArrayList<>();
-    private Map<String, FetchType> fetchStrategies = new HashMap<>();
-    private Map<String, JoinType> joinTypes = new HashMap<>();
+    private Map<String, FetchType> fetchStrategies = new HashMap<>(2);
+    private Map<String, JoinType> joinTypes = new HashMap<>(2);
     private Boolean queryCache;
     private LockModeType lockResult;
 
@@ -253,26 +252,6 @@ public class DefaultQuery implements Query {
      */
     public DefaultQuery firstResult(int offset) {
         return offset(offset);
-    }
-
-    /**
-     * Specifies the order of results
-     * @param order The order object
-     * @return The Query instance
-     */
-    public DefaultQuery order(Query.Order order) {
-        if (order != null) {
-            orderBy.add(order);
-        }
-        return this;
-    }
-
-    /**
-     * Gets the Order entries for this query
-     * @return The order entries
-     */
-    public List<Query.Order> getOrderBy() {
-        return orderBy;
     }
 
     /**
@@ -576,20 +555,6 @@ public class DefaultQuery implements Query {
     @Override
     public DefaultQuery notIn(@Nonnull String propertyName, @Nonnull Query subquery) {
         criteria.add(Restrictions.notIn(propertyName, subquery));
-        return this;
-    }
-
-    @Nonnull
-    @Override
-    public DefaultQuery order(@Nonnull String propertyName) {
-        // TODO
-        return this;
-    }
-
-    @Nonnull
-    @Override
-    public DefaultQuery order(@Nonnull String propertyName, @Nonnull String direction) {
-        // TODO
         return this;
     }
 

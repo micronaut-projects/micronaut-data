@@ -9,7 +9,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public interface Query extends Criteria {
+/**
+ * Main interface for constructing queries at either compilation or runtime.
+ *
+ * @author graemerocher
+ * @since 1.0
+ */
+public interface Query extends Criteria, Sort {
 
     /**
      * @return The entity the criteria applies to
@@ -46,79 +52,6 @@ public interface Query extends Criteria {
      * Represents a criterion to be used in a criteria query
      */
     interface Criterion {}
-
-    /**
-     * The ordering of results.
-     */
-    class Order {
-        private Direction direction = Direction.ASC;
-        private String property;
-        private boolean ignoreCase = false;
-
-        public Order(String property) {
-            this.property = property;
-        }
-
-        public Order(String property, Direction direction) {
-            this.direction = direction;
-            this.property = property;
-        }
-
-        /**
-         * Whether to ignore the case for this order definition
-         *
-         * @return This order instance
-         */
-        public Order ignoreCase() {
-            this.ignoreCase = true;
-            return this;
-        }
-
-        public boolean isIgnoreCase() {
-            return ignoreCase;
-        }
-
-        /**
-         * @return The direction order by
-         */
-        public Direction getDirection() {
-            return direction;
-        }
-
-        /**
-         * @return The property name to order by
-         */
-        public String getProperty() {
-            return property;
-        }
-
-        /**
-         * Creates a new order for the given property in descending order
-         *
-         * @param property The property
-         * @return The order instance
-         */
-        public static Order desc(String property) {
-            return new Order(property, Direction.DESC);
-        }
-
-        /**
-         * Creates a new order for the given property in ascending order
-         *
-         * @param property The property
-         * @return The order instance
-         */
-        public static Order asc(String property) {
-            return new Order(property, Direction.ASC);
-        }
-
-        /**
-         * Represents the direction of the ordering
-         */
-        public static enum Direction {
-            ASC, DESC
-        }
-    }
 
     /**
      * Restricts a property to be null

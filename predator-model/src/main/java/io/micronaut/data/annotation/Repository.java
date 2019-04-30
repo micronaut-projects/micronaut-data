@@ -3,6 +3,7 @@ package io.micronaut.data.annotation;
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.encoder.JpaQueryEncoder;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
 
@@ -35,4 +36,11 @@ public @interface Repository {
      * @return The query encoder
      */
     Class<? extends QueryEncoder> queryEncoder() default JpaQueryEncoder.class;
+
+    /**
+     * The supported pagination types.
+     *
+     * @return The pagination types
+     */
+    Class<?>[] paginationTypes() default { Pageable.class };
 }

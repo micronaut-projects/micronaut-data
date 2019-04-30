@@ -39,4 +39,11 @@ public @interface PredatorMethod {
      * @return The parameter binding.
      */
     Property[] parameterBinding() default {};
+
+    /**
+     * The argument that defines the pageable.
+     *
+     * @return The pageable.
+     */
+    String pageable() default "";
 }

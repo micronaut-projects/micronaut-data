@@ -1,6 +1,7 @@
 package io.micronaut.data.hibernate.store;
 
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.store.Datastore;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
@@ -9,6 +10,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
+import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.Map;
 
@@ -42,6 +44,7 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> T findOne(@Nonnull Class<T> type, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
         Query<T> q = sessionFactory.getCurrentSession().createQuery(query, type);
         bindParameters(q, parameters);
+        q.setMaxResults(1);
         try {
             return q.getSingleResult();
         } catch (NoResultException e) {
@@ -54,9 +57,20 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> Iterable<T> findAll(
             @Nonnull Class<T> rootEntity,
             @Nonnull String query,
-            @Nonnull Map<String, Object> parameterValues) {
+            @Nonnull Map<String, Object> parameterValues,
+            @Nonnull Pageable pageable) {
+
         Query<T> q = sessionFactory.getCurrentSession().createQuery(query, rootEntity);
         bindParameters(q, parameterValues);
+        int max = pageable.getMax();
+        if (max > 0) {
+            q.setMaxResults(max);
+        }
+        long offset = pageable.getOffset();
+        if (offset > 0) {
+            q.setFirstResult((int) offset);
+        }
+
         return q.list();
     }
 

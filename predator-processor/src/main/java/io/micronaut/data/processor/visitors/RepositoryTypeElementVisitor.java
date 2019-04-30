@@ -4,10 +4,12 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.reflect.InstantiationUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.finders.FindByFinder;
 import io.micronaut.data.model.finders.FinderMethod;
@@ -16,7 +18,9 @@ import io.micronaut.data.model.query.encoder.EncodedQuery;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -24,7 +28,10 @@ import java.util.*;
 
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
 
+    private static final String[] DEFAULT_PAGINATORS = {Pageable.class.getName()};
     private ClassElement currentClass;
+    private QueryEncoder queryEncoder;
+    private String[] paginationTypes = DEFAULT_PAGINATORS;
     private List<FinderMethod> finders = Arrays.asList(
             new FindByFinder()
     );
@@ -32,11 +39,30 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         this.currentClass = element;
+        queryEncoder = resolveQueryEncoder(element, context);
+        paginationTypes = resolvePaginatorTypes(element);
+        if (queryEncoder == null) {
+            context.fail("QueryEncoder not present on annotation processor path", element);
+        }
+    }
+
+    private String[] resolvePaginatorTypes(ClassElement element) {
+        return element.getValue(Repository.class, "paginationTypes", AnnotationClassValue[].class)
+                .map(annotationClassValues ->
+                        {
+                            String[] names = Arrays.stream(annotationClassValues)
+                                    .map(AnnotationClassValue::getName).toArray(String[]::new);
+                            if (ArrayUtils.isNotEmpty(names)) {
+                                return names;
+                            }
+                            return DEFAULT_PAGINATORS;
+                        }
+                ).orElse(DEFAULT_PAGINATORS);
     }
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (currentClass != null && element.isAbstract() && !element.isStatic()) {
+        if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
             for (FinderMethod finder : finders) {
                 if (finder.isMethodMatch(element)) {
                     PersistentEntity entity = resolvePersistentEntity(element);
@@ -49,13 +75,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     final Query queryObject = finder.buildQuery(entity, element, context);
                     Map<String, String> parameterBinding = null;
                     if (queryObject != null) {
-                        QueryEncoder queryEncoder = resolveQueryEncoder(element, context);
-
-                        if (queryEncoder == null) {
-                            context.fail("QueryEncoder not present on annotation processor path", element);
-                            return;
-                        }
-
                         EncodedQuery encodedQuery;
                         try {
                             encodedQuery = queryEncoder.encodeQuery(queryObject);
@@ -89,6 +108,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                                 annotationBuilder.member("parameterBinding", parameters);
                             }
+                            Optional<ParameterElement> pagenationParam = Arrays.stream(element.getParameters()).filter(p -> {
+                                ClassElement t = p.getType();
+                                return t != null && Arrays.stream(paginationTypes).anyMatch(t::isAssignable);
+                            }).findFirst();
+                            pagenationParam.ifPresent(parameterElement -> annotationBuilder.member("pageable", parameterElement.getName()));
                         });
                     }
                     return;
@@ -133,7 +157,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private QueryEncoder resolveQueryEncoder(MethodElement element, VisitorContext context) {
+    private QueryEncoder resolveQueryEncoder(Element element, VisitorContext context) {
         return element.getValue(
                                 Repository.class,
                                 "queryEncoder",

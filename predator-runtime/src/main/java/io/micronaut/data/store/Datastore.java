@@ -1,5 +1,7 @@
 package io.micronaut.data.store;
 
+import io.micronaut.data.model.Pageable;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Serializable;
@@ -42,9 +44,32 @@ public interface Datastore {
      * @param <T> The generic type
      * @return An iterable result
      */
-    @Nonnull <T> Iterable<T> findAll(
+    default @Nonnull <T> Iterable<T> findAll(
             @Nonnull Class<T> rootEntity,
             @Nonnull String query,
             @Nonnull Map<String, Object> parameterValues
-    );
+    ) {
+        return findAll(
+                rootEntity,
+                query,
+                parameterValues,
+                Pageable.unpaged()
+        );
+    };
+
+    /**
+     * Finds all results for the given query.
+     * @param rootEntity The root entity
+     * @param query The query
+     * @param parameterValues The parameter values
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    @Nonnull <T> Iterable<T> findAll(
+            @Nonnull Class<T> rootEntity,
+            @Nonnull String query,
+            @Nonnull Map<String, Object> parameterValues,
+            @Nonnull Pageable pageable
+            );
 }

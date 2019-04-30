@@ -1,6 +1,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import org.hibernate.SessionFactory
 import spock.lang.Specification
@@ -39,6 +40,7 @@ class FindBySpec extends Specification {
         when:
         sessionFactory.currentSession.persist(new Person(name: "Fred"))
         sessionFactory.currentSession.persist(new Person(name: "Bob"))
+        sessionFactory.currentSession.persist(new Person(name: "Fredrick"))
         p = personRepository.findByName("Bob")
 
         then:
@@ -52,5 +54,17 @@ class FindBySpec extends Specification {
         then:
         results.size() == 1
         results[0].name == 'Bob'
+
+        when:
+        results = personRepository.findAllByNameLike("Fred%", Pageable.from(0, 10))
+
+        then:
+        results.size() == 2
+
+        when:
+        results = personRepository.findAllByNameLike("Fred%", Pageable.from(1, 10))
+
+        then:
+        results.size() == 1
     }
 }

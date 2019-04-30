@@ -30,7 +30,8 @@ public class DefaultFindAllInterceptor<T> extends AbstractQueryInterceptor<T, It
         Iterable<?> iterable = datastore.findAll(
                 preparedQuery.getRootEntity(),
                 preparedQuery.getQuery(),
-                preparedQuery.getParameterValues()
+                preparedQuery.getParameterValues(),
+                preparedQuery.getPageable()
         );
         return ConversionService.SHARED.convert(
                 iterable,

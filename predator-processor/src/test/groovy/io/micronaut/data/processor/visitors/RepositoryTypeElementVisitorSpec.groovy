@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.encoder.entities.Person
 import io.micronaut.inject.BeanDefinition
@@ -61,15 +62,16 @@ package test;
 import io.micronaut.data.annotation.Repository;
 import $returnType.name;
 import java.util.List;
+import io.micronaut.data.model.Pageable;
 
 @Repository
 interface MyInterface {
-    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')}, Pageable pager);    
 }
 
 
 """)
-        def parameterTypes = arguments.values() as Class[]
+        def parameterTypes = arguments.values() + Pageable as Class[]
 
         expect: "The finder is valid"
         !beanDefinition.isAbstract()
@@ -79,6 +81,7 @@ interface MyInterface {
         executableMethod.getAnnotationMetadata().hasAnnotation(Query)
         executableMethod.getValue(Query, String).get() == query
         executableMethod.getValue(PredatorMethod, "interceptor", Class).get() == interceptor
+        executableMethod.getValue(PredatorMethod, "pageable", String).get() == 'pager'
         validateParameterBinding(executableMethod, arguments)
 
         where:

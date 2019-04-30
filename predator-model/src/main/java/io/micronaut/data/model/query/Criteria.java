@@ -1,7 +1,5 @@
 package io.micronaut.data.model.query;
 
-import io.micronaut.data.model.PersistentEntity;
-
 import javax.annotation.Nonnull;
 import java.util.Map;
 
@@ -225,32 +223,6 @@ public interface Criteria  {
      * @return The criteria
      */
     @Nonnull Criteria notIn(@Nonnull String propertyName, @Nonnull Query subquery);
-
-    /**
-     * Orders by the specified property name (defaults to ascending).
-     *
-     * @param propertyName The property name to order by
-     * @return This criteria
-     */
-    @Nonnull Criteria order(@Nonnull String propertyName);
-
-//    /**
-//     * Adds an order object
-//     *
-//     * @param o The order object
-//     * @return The order object
-//     */
-//    Criteria order(Query.Order o);
-
-    /**
-     * Orders by the specified property name and direction.
-     *
-     * @param propertyName The property name to order by
-     * @param direction Either "asc" for ascending or "desc" for descending
-     *
-     * @return This criteria
-     */
-    @Nonnull Criteria order(@Nonnull String propertyName, @Nonnull String direction);
 
     /**
      * Creates a Criterion that constrains a collection property by size.

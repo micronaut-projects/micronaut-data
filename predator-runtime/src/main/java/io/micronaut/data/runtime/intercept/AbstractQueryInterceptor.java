@@ -3,11 +3,13 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.store.Datastore;
 
 import javax.annotation.Nonnull;
@@ -25,6 +27,8 @@ import java.util.Map;
  * @author graemerocher
  */
 abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
+    private static final String MEMBER_ROOT_MEMBER = "rootEntity";
+    private static final String MEMBER_PARAMETER_BINDING = "parameterBinding";
     protected final Datastore datastore;
 
     AbstractQueryInterceptor(@Nonnull Datastore datastore) {
@@ -47,13 +51,13 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             throw new IllegalStateException("No predator method configured");
         }
 
-        Class rootEntity = annotation.get("rootEntity", Class.class)
+        Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
 
-        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations("parameterBinding", Property.class);
+        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(MEMBER_PARAMETER_BINDING, Property.class);
         Map<String, Object> parameterValues;
+        Map<String, Object> parameterValueMap = context.getParameterValueMap();
         if (CollectionUtils.isNotEmpty(parameterData)) {
-            Map<String, Object> parameterValueMap = context.getParameterValueMap();
             parameterValues = new HashMap<>(parameterData.size());
             for (AnnotationValue<Property> annotationValue : parameterData) {
                 String name = annotationValue.get("name", String.class).orElse(null);
@@ -66,7 +70,10 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             parameterValues = Collections.emptyMap();
         }
 
-        return new PreparedQuery(rootEntity, query, parameterValues);
+        String pageableParam = annotation.get("pageable", String.class).orElse(null);
+        Pageable pageable = ConversionService.SHARED.convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
+
+        return new PreparedQuery(rootEntity, query, parameterValues, pageable);
     }
 
     /**
@@ -76,6 +83,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         private final @Nonnull Class rootEntity;
         private final @Nonnull String query;
         private final @Nonnull Map<String, Object> parameterValues;
+        private final Pageable pageable;
 
         /**
          * The default constructor.
@@ -83,13 +91,15 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
          * @param query The query itself
          * @param parameterValues The parameter values
          */
-        public PreparedQuery(
+        PreparedQuery(
                 @Nonnull Class rootEntity,
                 @Nonnull String query,
-                @Nullable Map<String, Object> parameterValues) {
+                @Nullable Map<String, Object> parameterValues,
+                @Nullable Pageable pageable) {
             this.rootEntity = rootEntity;
             this.query = query;
             this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
+            this.pageable = pageable;
         }
 
         @Nonnull
@@ -105,6 +115,11 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         @Nonnull
         public Map<String, Object> getParameterValues() {
             return parameterValues;
+        }
+
+        @Nonnull
+        public Pageable getPageable() {
+            return pageable != null ? pageable : Pageable.unpaged();
         }
     }
 }
