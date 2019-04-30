@@ -1,6 +1,7 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.Persisted;
@@ -75,6 +76,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     if (runtimeInterceptor != null) {
                         Map<String, String> finalParameterBinding = parameterBinding;
                         element.annotate(PredatorMethod.class, annotationBuilder -> {
+                            annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
                             annotationBuilder.member("interceptor", runtimeInterceptor);
                             if (finalParameterBinding != null) {
                                 AnnotationValue<?>[] parameters = new AnnotationValue[finalParameterBinding.size()];

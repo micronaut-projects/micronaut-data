@@ -2,5 +2,6 @@ rootProject.name = 'predator'
 
 include 'predator-model'
 include 'predator-processor'
-include 'predator-repository'
+include 'predator-runtime'
+include 'predator-runtime-hibernate-jpa'
 

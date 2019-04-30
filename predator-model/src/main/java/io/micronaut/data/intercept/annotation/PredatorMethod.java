@@ -26,6 +26,12 @@ public @interface PredatorMethod {
     Class<? extends PredatorInterceptor> interceptor();
 
     /**
+     * The root entity this method applies to.
+     * @return The root entity
+     */
+    Class<?> rootEntity();
+
+    /**
      * The parameter binding defines which method arguments bind to which
      * query parameters. The {@link Property#name()} is used to define the query parameter name and the
      * {@link Property#value()} is used to define method argument name to bind.

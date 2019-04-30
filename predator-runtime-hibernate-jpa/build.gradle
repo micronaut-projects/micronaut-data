@@ -1,0 +1,13 @@
+dependencies {
+    annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    compile project(":predator-runtime")
+    compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.1.0"
+
+    testCompile "io.micronaut.test:micronaut-test-spock:1.0.2"
+
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+    testCompile project(":predator-processor")
+    testRuntime "com.h2database:h2"
+    testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
+}

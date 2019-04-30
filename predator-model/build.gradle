@@ -1,4 +1,5 @@
 dependencies {
+	annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
 	compile "io.micronaut:micronaut-inject:$micronautVersion"
 	compile "io.micronaut:micronaut-aop:$micronautVersion"
 	compile 'javax.persistence:javax.persistence-api:2.2'
