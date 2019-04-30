@@ -14,4 +14,7 @@ class Person {
     String name
 
     int age
+
+    @GeneratedValue
+    Long someId
 }

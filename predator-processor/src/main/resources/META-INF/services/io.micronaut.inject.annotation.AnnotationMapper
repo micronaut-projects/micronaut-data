@@ -3,3 +3,4 @@ io.micronaut.data.processor.mappers.TableAnnotationMapper
 io.micronaut.data.processor.mappers.IdAnnotationMapper
 io.micronaut.data.processor.mappers.ColumnAnnotationMapper
 io.micronaut.data.processor.mappers.TransientAnnotationMapper
+io.micronaut.data.processor.mappers.GeneratedValueMapper

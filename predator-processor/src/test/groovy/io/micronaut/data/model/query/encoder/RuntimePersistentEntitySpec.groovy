@@ -16,5 +16,7 @@ class RuntimePersistentEntitySpec extends Specification {
         entity.identity.name == 'id'
         entity.persistentProperties
         entity.getPropertyByName("name")
+        !entity.getPropertyByName("name").isReadOnly()
+        entity.getPropertyByName("someId").isReadOnly()
     }
 }

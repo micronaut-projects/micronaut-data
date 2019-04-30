@@ -2,6 +2,7 @@ package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.data.annotation.GeneratedValue;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -49,6 +50,14 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      */
     default boolean isNullable() {
         return getAnnotationMetadata().hasAnnotation(Nullable.class);
+    }
+
+    /**
+     * Whether the property is read-only, for example for generated values.
+     * @return True if it is read-only
+     */
+    default boolean isReadOnly() {
+        return getAnnotationMetadata().hasAnnotation(GeneratedValue.class);
     }
 
     /**
