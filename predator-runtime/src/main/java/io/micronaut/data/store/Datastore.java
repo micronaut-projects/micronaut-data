@@ -33,4 +33,18 @@ public interface Datastore {
      * @return A result or null
      */
     @Nullable <T> T findOne(@Nonnull Class<T> type, @Nonnull String query, @Nonnull Map<String, Object> parameters);
+
+    /**
+     * Finds all results for the given query.
+     * @param rootEntity The root entity
+     * @param query The query
+     * @param parameterValues The parameter values
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    @Nonnull <T> Iterable<T> findAll(
+            @Nonnull Class<T> rootEntity,
+            @Nonnull String query,
+            @Nonnull Map<String, Object> parameterValues
+    );
 }

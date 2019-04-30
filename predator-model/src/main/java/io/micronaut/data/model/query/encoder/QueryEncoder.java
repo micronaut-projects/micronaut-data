@@ -1,6 +1,5 @@
 package io.micronaut.data.model.query.encoder;
 
-import io.micronaut.data.model.query.DefaultQuery;
 import io.micronaut.data.model.query.Query;
 
 import javax.annotation.Nonnull;

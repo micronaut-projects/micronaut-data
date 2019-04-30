@@ -178,6 +178,7 @@ public class JpaQueryEncoder implements QueryEncoder {
                             .append(DOT)
                             .append(name)
                             .append(operator)
+                            .append(':')
                             .append(parameterName);
         if (value instanceof QueryParameter) {
             queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
@@ -185,7 +186,7 @@ public class JpaQueryEncoder implements QueryEncoder {
     }
 
     private static String newParameter(AtomicInteger position) {
-        return PARAMETER_PREFIX + position.incrementAndGet();
+        return "p" + position.incrementAndGet();
     }
 
     static {
@@ -414,10 +415,12 @@ public class JpaQueryEncoder implements QueryEncoder {
             queryState.whereClause.append(OPEN_BRACKET)
                     .append(qualifiedName)
                     .append(" >= ")
+                    .append(':')
                     .append(fromParam);
             queryState.whereClause.append(" AND ")
                     .append(qualifiedName)
                     .append(" <= ")
+                    .append(':')
                     .append(toParam)
                     .append(CLOSE_BRACKET);
 
@@ -454,6 +457,7 @@ public class JpaQueryEncoder implements QueryEncoder {
                     .append(prop.getName())
                     .append(")")
                     .append(" like lower(")
+                    .append(':')
                     .append(parameterName)
                     .append(")");
             Object value = eq.getValue();
@@ -476,7 +480,7 @@ public class JpaQueryEncoder implements QueryEncoder {
             }
             else {
                 String parameterName = newParameter(queryState.position);
-                queryState.whereClause.append(parameterName);
+                queryState.whereClause.append(':').append(parameterName);
                 Object value = inQuery.getValue();
                 if (value instanceof QueryParameter) {
                     queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
@@ -649,7 +653,7 @@ public class JpaQueryEncoder implements QueryEncoder {
 
             queryString.append(SPACE).append(queryState.logicalName).append(DOT).append(propertyName).append('=');
             String param = newParameter(queryState.position);
-            queryString.append(param);
+            queryString.append(':').append(param);
             parameters.put(param, prop.getName());
             if (iterator.hasNext()) {
                 queryString.append(COMMA);

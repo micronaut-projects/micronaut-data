@@ -41,15 +41,30 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> T findOne(@Nonnull Class<T> type, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
         Query<T> q = sessionFactory.getCurrentSession().createQuery(query, type);
-        if (parameters != null) {
-            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-                q.setParameter(entry.getKey(), entry.getValue());
-            }
-        }
+        bindParameters(q, parameters);
         try {
             return q.getSingleResult();
         } catch (NoResultException e) {
             return null;
+        }
+    }
+
+    @Nonnull
+    @Override
+    public <T> Iterable<T> findAll(
+            @Nonnull Class<T> rootEntity,
+            @Nonnull String query,
+            @Nonnull Map<String, Object> parameterValues) {
+        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, rootEntity);
+        bindParameters(q, parameterValues);
+        return q.list();
+    }
+
+    private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {
+        if (parameters != null) {
+            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+                query.setParameter(entry.getKey(), entry.getValue());
+            }
         }
     }
 }

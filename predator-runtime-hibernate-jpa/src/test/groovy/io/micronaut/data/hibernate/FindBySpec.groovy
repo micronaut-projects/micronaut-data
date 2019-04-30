@@ -37,10 +37,18 @@ class FindBySpec extends Specification {
 
         when:
         sessionFactory.currentSession.persist(new Person(name: "Fred"))
-        p = personRepository.findByName("Fred")
+        sessionFactory.currentSession.persist(new Person(name: "Bob"))
+        p = personRepository.findByName("Bob")
 
         then:
         p != null
-        p.name == "Fred"
+        p.name == "Bob"
+
+        when:
+        def results = personRepository.findAllByName("Bob")
+
+        then:
+        results.size() == 1
+        results[0].name == 'Bob'
     }
 }

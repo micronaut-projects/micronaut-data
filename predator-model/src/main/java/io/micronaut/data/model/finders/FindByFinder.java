@@ -22,7 +22,7 @@ import java.util.stream.Stream;
  */
 public class FindByFinder extends AbstractFindByFinder {
 
-    private static final String METHOD_PATTERN = "((find|get|query|retrieve|read)By)([A-Z]\\w*)";
+    private static final String METHOD_PATTERN = "((find|get|query|retrieve|read)(\\S*?)By)([A-Z]\\w*)";
 
     public FindByFinder() {
         super(Pattern.compile(METHOD_PATTERN));

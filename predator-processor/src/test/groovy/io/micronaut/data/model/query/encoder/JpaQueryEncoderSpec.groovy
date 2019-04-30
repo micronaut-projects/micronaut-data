@@ -26,7 +26,7 @@ class JpaQueryEncoderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator :p1)"
-        encodedQuery.parameters == [':p1': 'test']
+        encodedQuery.parameters == ['p1': 'test']
 
         where:
         type   | method | property | operator
@@ -54,7 +54,7 @@ class JpaQueryEncoderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property IN (:p1))"
-        encodedQuery.parameters == [':p1': 'test']
+        encodedQuery.parameters == ['p1': 'test']
 
         where:
         type   | method   | property
@@ -77,7 +77,7 @@ class JpaQueryEncoderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE (($entity.decapitalizedName.$property >= :p1 AND $entity.decapitalizedName.$property <= :p2))"
-        encodedQuery.parameters == [':p1': 'from', ':p2': 'to']
+        encodedQuery.parameters == ['p1': 'from', 'p2': 'to']
 
         where:
         type   | method   | property

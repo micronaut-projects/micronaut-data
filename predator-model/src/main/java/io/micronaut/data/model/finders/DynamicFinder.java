@@ -123,7 +123,7 @@ abstract class DynamicFinder implements FinderMethod {
             expressions.add(booleanExpression);
         }
         else {
-            querySequence = match.group(3);
+            querySequence = match.group(4);
         }
         // if it contains operator and split
         boolean containsOperator = false;

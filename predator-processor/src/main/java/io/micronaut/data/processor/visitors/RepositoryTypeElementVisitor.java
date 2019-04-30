@@ -95,7 +95,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             }
 
-            context.fail("Unable to implement Repository method", element);
+            context.fail("Unable to implement Repository method. No possible implementations found.", element);
         }
     }
 

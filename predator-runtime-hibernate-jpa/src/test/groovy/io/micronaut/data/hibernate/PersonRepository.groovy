@@ -6,4 +6,6 @@ import io.micronaut.data.annotation.Repository
 interface PersonRepository {
 
     Person findByName(String name)
+
+    List<Person> findAllByName(String name)
 }
