@@ -72,4 +72,12 @@ public interface Datastore {
             @Nonnull Map<String, Object> parameterValues,
             @Nonnull Pageable pageable
             );
+
+    /**
+     * Persist the entity returning a possibly new entity.
+     * @param entity The entity
+     * @param <T> The generic type
+     * @return The entity
+     */
+    <T> T persist(@Nonnull T entity);
 }

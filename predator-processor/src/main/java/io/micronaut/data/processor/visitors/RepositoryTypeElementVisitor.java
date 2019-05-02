@@ -13,6 +13,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.finders.FindByFinder;
 import io.micronaut.data.model.finders.FinderMethod;
+import io.micronaut.data.model.finders.SaveMethod;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.encoder.EncodedQuery;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
@@ -33,7 +34,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private QueryEncoder queryEncoder;
     private String[] paginationTypes = DEFAULT_PAGINATORS;
     private List<FinderMethod> finders = Arrays.asList(
-            new FindByFinder()
+            new FindByFinder(),
+            new SaveMethod()
     );
 
     @Override
@@ -108,7 +110,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                                 annotationBuilder.member("parameterBinding", parameters);
                             }
-                            Optional<ParameterElement> pagenationParam = Arrays.stream(element.getParameters()).filter(p -> {
+                            ParameterElement[] parameters = element.getParameters();
+                            Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
+                                ClassElement t = p.getGenericType();
+                                return t != null && t.isAssignable(entity.getName());
+                            }).findFirst();
+                            entityParam.ifPresent(parameterElement -> annotationBuilder.member("entity", parameterElement.getName()));
+
+                            Optional<ParameterElement> pagenationParam = Arrays.stream(parameters).filter(p -> {
                                 ClassElement t = p.getType();
                                 return t != null && Arrays.stream(paginationTypes).anyMatch(t::isAssignable);
                             }).findFirst();
@@ -119,12 +128,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             }
 
-            context.fail("Unable to implement Repository method. No possible implementations found.", element);
+            context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
         }
     }
 
     private PersistentEntity resolvePersistentEntity(MethodElement element) {
-        ClassElement returnType = element.getReturnType();
+        ClassElement returnType = element.getGenericReturnType();
         PersistentEntity entity = resolvePersistentEntity(returnType);
         if (entity != null) {
             return entity;

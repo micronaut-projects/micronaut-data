@@ -23,6 +23,9 @@ class FindBySpec extends Specification {
     @Inject
     PersonRepository personRepository
 
+    @Inject
+    PersonCrudRepository crudRepository
+
     void "test setup"() {
         expect:
         dataSource != null
@@ -38,9 +41,9 @@ class FindBySpec extends Specification {
         !personRepository.findOptionalByName("Fred").isPresent()
 
         when:
-        sessionFactory.currentSession.persist(new Person(name: "Fred"))
-        sessionFactory.currentSession.persist(new Person(name: "Bob"))
-        sessionFactory.currentSession.persist(new Person(name: "Fredrick"))
+        crudRepository.save(new Person(name: "Fred"))
+        crudRepository.save(new Person(name: "Bob"))
+        crudRepository.save(new Person(name: "Fredrick"))
         p = personRepository.findByName("Bob")
 
         then:

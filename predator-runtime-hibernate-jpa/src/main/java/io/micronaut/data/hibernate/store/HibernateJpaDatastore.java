@@ -74,6 +74,12 @@ public class HibernateJpaDatastore implements Datastore {
         return q.list();
     }
 
+    @Override
+    public <T> T persist(@Nonnull T entity) {
+        sessionFactory.getCurrentSession().persist(entity);
+        return entity;
+    }
+
     private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {
         if (parameters != null) {
             for (Map.Entry<String, Object> entry : parameters.entrySet()) {

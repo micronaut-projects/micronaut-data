@@ -46,4 +46,10 @@ public @interface PredatorMethod {
      * @return The pageable.
      */
     String pageable() default "";
+
+    /**
+     * The argument that represents the entity for save operations etc.
+     * @return The entity argument
+     */
+    String entity();
 }

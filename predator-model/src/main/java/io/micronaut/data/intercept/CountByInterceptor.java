@@ -8,5 +8,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0
  */
-public interface CountInterceptor<T> extends PredatorInterceptor<T, Number> {
+public interface CountByInterceptor<T> extends PredatorInterceptor<T, Number> {
 }
