@@ -32,6 +32,12 @@ public @interface PredatorMethod {
     Class<?> rootEntity();
 
     /**
+     * The identifier type for the method being executed
+     * @return The ID type
+     */
+    Class<?> idType();
+
+    /**
      * The parameter binding defines which method arguments bind to which
      * query parameters. The {@link Property#name()} is used to define the query parameter name and the
      * {@link Property#value()} is used to define method argument name to bind.

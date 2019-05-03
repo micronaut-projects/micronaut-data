@@ -11,10 +11,8 @@ import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.finders.FindByFinder;
-import io.micronaut.data.model.finders.FinderMethod;
-import io.micronaut.data.model.finders.SaveAllMethod;
-import io.micronaut.data.model.finders.SaveMethod;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.finders.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.encoder.EncodedQuery;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
@@ -26,6 +24,7 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
+import javax.annotation.Nullable;
 import java.util.*;
 
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
@@ -36,6 +35,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private String[] paginationTypes = DEFAULT_PAGINATORS;
     private List<FinderMethod> finders = Arrays.asList(
             new FindByFinder(),
+            new ExistsByFinder(),
             new SaveMethod(),
             new SaveAllMethod()
     );
@@ -70,6 +70,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             for (FinderMethod finder : finders) {
                 if (finder.isMethodMatch(element)) {
                     PersistentEntity entity = resolvePersistentEntity(element);
+                    String idType = resolveIdType(entity);
 
                     if (entity == null) {
                         context.fail("Unable to establish persistent entity to query", element);
@@ -100,6 +101,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         Map<String, String> finalParameterBinding = parameterBinding;
                         element.annotate(PredatorMethod.class, annotationBuilder -> {
                             annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
+                            if (idType != null) {
+                                annotationBuilder.member("idType", idType);
+                            }
                             annotationBuilder.member("interceptor", runtimeInterceptor);
                             if (finalParameterBinding != null) {
                                 AnnotationValue<?>[] parameters = new AnnotationValue[finalParameterBinding.size()];
@@ -134,7 +138,22 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private PersistentEntity resolvePersistentEntity(MethodElement element) {
+    private @Nullable String resolveIdType(PersistentEntity entity) {
+        Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(io.micronaut.data.repository.Repository.class);
+        if (!typeArguments.isEmpty()) {
+            ClassElement ce = typeArguments.get("ID");
+            if (ce != null) {
+                return ce.getName();
+            }
+        }
+        PersistentProperty identity = entity.getIdentity();
+        if (identity != null) {
+            return identity.getName();
+        }
+        return null;
+    }
+
+    private @Nullable PersistentEntity resolvePersistentEntity(MethodElement element) {
         ClassElement returnType = element.getGenericReturnType();
         PersistentEntity entity = resolvePersistentEntity(returnType);
         if (entity != null) {

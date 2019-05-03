@@ -31,7 +31,7 @@ public class FindByFinder extends AbstractFindByFinder {
     }
 
     private boolean isCompatibleReturnType(MethodElement methodElement) {
-        ClassElement returnType = methodElement.getReturnType();
+        ClassElement returnType = methodElement.getGenericReturnType();
         if (returnType != null) {
             return returnType.hasAnnotation(Persisted.class) ||
                     isContainerType(returnType);
@@ -45,7 +45,7 @@ public class FindByFinder extends AbstractFindByFinder {
             @Nonnull PersistentEntity entity,
             @Nonnull MethodElement methodElement,
             @Nonnull VisitorContext visitorContext) {
-        ClassElement returnType = methodElement.getReturnType();
+        ClassElement returnType = methodElement.getGenericReturnType();
         if (returnType != null) {
             if (returnType.hasAnnotation(Persisted.class)) {
                 return FindOneInterceptor.class;

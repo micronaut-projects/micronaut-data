@@ -34,7 +34,10 @@ public interface Datastore {
      * @param <T> The generic type
      * @return A result or null
      */
-    @Nullable <T> T findOne(@Nonnull Class<T> type, @Nonnull String query, @Nonnull Map<String, Object> parameters);
+    @Nullable <T> T findOne(
+            @Nonnull Class<T> type,
+            @Nonnull String query,
+            @Nonnull Map<String, Object> parameters);
 
     /**
      * Finds all results for the given query.

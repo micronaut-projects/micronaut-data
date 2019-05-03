@@ -23,7 +23,7 @@ public class DefaultQuery extends DefaultSort implements Query {
     private final PersistentEntity entity;
 
     private Query.Junction criteria = new Query.Conjunction();
-    private Query.ProjectionList projections = new Query.ProjectionList();
+    private DefaultProjectionList projections = new DefaultProjectionList();
     private int max = -1;
     private int offset = 0;
     private Map<String, FetchType> fetchStrategies = new HashMap<>(2);
@@ -149,7 +149,8 @@ public class DefaultQuery extends DefaultSort implements Query {
     /**
      * @return The projections for this query.
      */
-    public Query.ProjectionList projections() {
+    @Override
+    public ProjectionList projections() {
         return projections;
     }
 

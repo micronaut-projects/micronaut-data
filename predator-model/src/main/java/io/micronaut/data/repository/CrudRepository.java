@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.Blocking;
 import javax.annotation.Nonnull;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 /**
  * A repository interface for performing CRUD (Create, Read, Update, Delete). This a blocking
@@ -36,24 +37,25 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      */
     @Nonnull
     <S extends E> Iterable<S> saveAll(@Valid @NotNull @Nonnull Iterable<S> entities);
-//
-//    /**
-//     * Retrieves an entity by its id.
-//     *
-//     * @param id The ID of the entity to retrieve. Must not be {@literal null}.
-//     * @return the entity with the given id or {@literal Optional#empty()} if none found
-//     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
-//     */
-//    @Nonnull Optional<E> findById(@NotNull @Nonnull ID id);
-//
-//    /**
-//     * Returns whether an entity with the given id exists.
-//     *
-//     * @param id must not be {@literal null}.
-//     * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
-//     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
-//     */
-//    boolean existsById(@NotNull @Nonnull ID id);
+
+    /**
+     * Retrieves an entity by its id.
+     *
+     * @param id The ID of the entity to retrieve. Must not be {@literal null}.
+     * @return the entity with the given id or {@literal Optional#empty()} if none found
+     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     */
+    @Nonnull
+    Optional<E> findById(@NotNull @Nonnull ID id);
+
+    /**
+     * Returns whether an entity with the given id exists.
+     *
+     * @param id must not be {@literal null}.
+     * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
+     * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     */
+    boolean existsById(@NotNull @Nonnull ID id);
 //
 //    /**
 //     * Returns all instances of the type.

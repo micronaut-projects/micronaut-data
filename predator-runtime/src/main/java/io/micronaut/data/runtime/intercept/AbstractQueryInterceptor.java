@@ -28,6 +28,7 @@ import java.util.Map;
  */
 abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
     private static final String MEMBER_ROOT_MEMBER = "rootEntity";
+    private static final String MEMBER_ID_TYPE = "idType";
     private static final String MEMBER_PARAMETER_BINDING = "parameterBinding";
     protected final Datastore datastore;
 
@@ -53,6 +54,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
+        Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
+                .orElse(null);
 
         List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(MEMBER_PARAMETER_BINDING, Property.class);
         Map<String, Object> parameterValues;
@@ -73,7 +76,13 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         String pageableParam = annotation.get("pageable", String.class).orElse(null);
         Pageable pageable = ConversionService.SHARED.convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
 
-        return new PreparedQuery(rootEntity, query, parameterValues, pageable);
+        return new PreparedQuery(
+                rootEntity,
+                idType,
+                query,
+                parameterValues,
+                pageable
+        );
     }
 
     /**
@@ -81,6 +90,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      */
     protected final class PreparedQuery {
         private final @Nonnull Class rootEntity;
+        private final @Nullable Class idType;
         private final @Nonnull String query;
         private final @Nonnull Map<String, Object> parameterValues;
         private final Pageable pageable;
@@ -89,17 +99,25 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
          * The default constructor.
          * @param rootEntity The root entity of the query
          * @param query The query itself
+         * @param idType The ID type
          * @param parameterValues The parameter values
          */
         PreparedQuery(
                 @Nonnull Class rootEntity,
+                @Nullable Class<?> idType,
                 @Nonnull String query,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable) {
             this.rootEntity = rootEntity;
+            this.idType = idType;
             this.query = query;
             this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
             this.pageable = pageable;
+        }
+
+        @Nullable
+        public Class getIdType() {
+            return idType;
         }
 
         @Nonnull

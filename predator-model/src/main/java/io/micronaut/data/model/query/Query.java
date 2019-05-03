@@ -2,11 +2,9 @@ package io.micronaut.data.model.query;
 
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.query.factory.Projections;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,6 +29,12 @@ public interface Query extends Criteria, Sort {
 
     @Nonnull
     List<Projection> getProjections();
+
+    /**
+     * @return The projection list.
+     */
+    @Nonnull
+    ProjectionList projections();
 
     /**
      * Adds the specified criterion instance to the query
@@ -659,112 +663,4 @@ public interface Query extends Criteria, Sort {
         }
     }
 
-    /**
-     * A list of projections
-     */
-    class ProjectionList implements io.micronaut.data.model.query.ProjectionList {
-
-        private List<Projection> projections = new ArrayList();
-
-        public List<Projection> getProjectionList() {
-            return Collections.unmodifiableList(projections);
-        }
-
-        public io.micronaut.data.model.query.ProjectionList add(Projection p) {
-            projections.add(p);
-            return this;
-        }
-
-        public io.micronaut.data.model.query.ProjectionList id() {
-            add(Projections.id());
-            return this;
-        }
-
-        public io.micronaut.data.model.query.ProjectionList count() {
-            add(Projections.count());
-            return this;
-        }
-
-        public io.micronaut.data.model.query.ProjectionList countDistinct(String property) {
-            add(Projections.countDistinct(property));
-            return this;
-        }
-
-        @Override
-        public io.micronaut.data.model.query.ProjectionList groupProperty(String property) {
-            add(Projections.groupProperty(property));
-            return this;
-        }
-
-        public boolean isEmpty() {
-            return projections.isEmpty();
-        }
-
-        public io.micronaut.data.model.query.ProjectionList distinct() {
-            return this;
-        }
-
-        public io.micronaut.data.model.query.ProjectionList distinct(String property) {
-            add(Projections.distinct(property));
-            return this;
-        }
-
-        public io.micronaut.data.model.query.ProjectionList rowCount() {
-            return count();
-        }
-
-        /**
-         * A projection that obtains the value of a property of an entity
-         * @param name The name of the property
-         * @return The PropertyProjection instance
-         */
-        public io.micronaut.data.model.query.ProjectionList property(String name) {
-            add(Projections.property(name));
-            return this;
-        }
-
-        /**
-         * Computes the sum of a property
-         *
-         * @param name The name of the property
-         * @return The PropertyProjection instance
-         */
-        public io.micronaut.data.model.query.ProjectionList sum(String name) {
-            add(Projections.sum(name));
-            return this;
-        }
-
-        /**
-         * Computes the min value of a property
-         *
-         * @param name The name of the property
-         * @return The PropertyProjection instance
-         */
-        public io.micronaut.data.model.query.ProjectionList min(String name) {
-            add(Projections.min(name));
-            return this;
-        }
-
-        /**
-         * Computes the max value of a property
-         *
-         * @param name The name of the property
-         * @return The PropertyProjection instance
-         */
-        public io.micronaut.data.model.query.ProjectionList max(String name) {
-            add(Projections.max(name));
-            return this;
-        }
-
-        /**
-         * Computes the average value of a property
-         *
-         * @param name The name of the property
-         * @return The PropertyProjection instance
-         */
-        public io.micronaut.data.model.query.ProjectionList avg(String name) {
-            add(Projections.avg(name));
-            return this;
-        }
-    }
 }
