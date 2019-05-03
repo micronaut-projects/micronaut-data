@@ -2,10 +2,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.data.intercept.FindAllInterceptor;
-import io.micronaut.data.intercept.FindOneInterceptor;
-import io.micronaut.data.intercept.FindOptionalInterceptor;
-import io.micronaut.data.intercept.SaveEntityInterceptor;
+import io.micronaut.data.intercept.*;
 import io.micronaut.data.store.Datastore;
 
 /**
@@ -15,7 +12,7 @@ import io.micronaut.data.store.Datastore;
  * @since 1.0
  */
 @Factory
-public class InterceptorFactory {
+public class PredatorInterceptorFactory {
 
     /**
      * Creates the {@link FindOneInterceptor} instances for each configured {@link Datastore}.
@@ -59,5 +56,16 @@ public class InterceptorFactory {
     @EachBean(Datastore.class)
     protected SaveEntityInterceptor saveEntityInterceptor(Datastore datastore) {
         return new DefaultSaveEntityInterceptor(datastore);
+    }
+
+    /**
+     * Creates the {@link io.micronaut.data.intercept.SaveAllInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link FindAllInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected SaveAllInterceptor saveAllInterceptor(Datastore datastore) {
+        return new DefaultSaveAllInterceptor(datastore);
     }
 }

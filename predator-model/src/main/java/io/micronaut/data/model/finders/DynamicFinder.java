@@ -1,22 +1,19 @@
 package io.micronaut.data.model.finders;
 
-
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.query.DefaultQuery;
 import io.micronaut.data.model.query.Query;
-import io.micronaut.data.model.query.factory.Restrictions;
-import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,9 +23,7 @@ import java.util.regex.Pattern;
  * @author Graeme Rocher
  * @since 1.0
  */
-abstract class DynamicFinder implements FinderMethod {
-
-    protected Pattern pattern;
+abstract class DynamicFinder extends AbstractPatternBasedMethod implements FinderMethod {
 
     public static final String OPERATOR_OR = "Or";
     public static final String OPERATOR_AND = "And";
@@ -71,7 +66,7 @@ abstract class DynamicFinder implements FinderMethod {
 
 
     protected DynamicFinder(final Pattern pattern, final String[] operators) {
-        this.pattern = pattern;
+        super(pattern);
         this.operators = operators;
         this.operatorPatterns = new Pattern[operators.length];
         populateOperators(operators);
@@ -205,15 +200,6 @@ abstract class DynamicFinder implements FinderMethod {
             }
         }
         return query;
-    }
-
-    /**
-     * Sets the pattern to use for this finder
-     *
-     * @param pattern A regular expression
-     */
-    public void setPattern(String pattern) {
-        this.pattern = Pattern.compile(pattern);
     }
 
     /**

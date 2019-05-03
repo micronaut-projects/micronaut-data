@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate.store;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.store.Datastore;
+import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 
@@ -12,6 +13,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -78,6 +80,19 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> T persist(@Nonnull T entity) {
         sessionFactory.getCurrentSession().persist(entity);
         return entity;
+    }
+
+    @Override
+    public <T> Iterable<T> persistAll(@Nonnull Iterable<T> entities) {
+        if (entities != null) {
+            Session session = sessionFactory.getCurrentSession();
+            for (T entity : entities) {
+                session.persist(entity);
+            }
+            return entities;
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {

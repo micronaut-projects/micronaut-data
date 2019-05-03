@@ -5,7 +5,6 @@ import io.micronaut.core.annotation.Blocking;
 import javax.annotation.Nonnull;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.Optional;
 
 /**
  * A repository interface for performing CRUD (Create, Read, Update, Delete). This a blocking
@@ -26,17 +25,17 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      */
     @Nonnull
-    E save(@Valid @NotNull @Nonnull E entity);
+    <S extends E> S save(@Valid @NotNull @Nonnull S entity);
 
-//    /**
-//     * Saves all given entities, possibly returning new instances representing the saved state
-//     *
-//     * @param entities The entities to saved. Must not be {@literal null}.
-//     * @return The saved entities objects. will never be {@literal null}.
-//     * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
-//     */
-//    @Nonnull
-//    Iterable<E> saveAll(@Valid @NotNull @Nonnull Iterable<E> entities);
+    /**
+     * Saves all given entities, possibly returning new instances representing the saved state
+     *
+     * @param entities The entities to saved. Must not be {@literal null}.
+     * @return The saved entities objects. will never be {@literal null}.
+     * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
+     */
+    @Nonnull
+    <S extends E> Iterable<S> saveAll(@Valid @NotNull @Nonnull Iterable<S> entities);
 //
 //    /**
 //     * Retrieves an entity by its id.

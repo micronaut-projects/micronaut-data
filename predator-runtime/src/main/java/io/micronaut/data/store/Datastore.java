@@ -80,4 +80,12 @@ public interface Datastore {
      * @return The entity
      */
     <T> T persist(@Nonnull T entity);
+
+    /**
+     * Persist all the given entities.
+     * @param entities The entities
+     * @param <T> The generic type
+     * @return The entities, possibly mutated
+     */
+    <T> Iterable<T> persistAll(@Nonnull Iterable<T> entities);
 }

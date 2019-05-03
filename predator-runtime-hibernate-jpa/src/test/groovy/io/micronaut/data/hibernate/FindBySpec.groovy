@@ -42,8 +42,7 @@ class FindBySpec extends Specification {
 
         when:
         crudRepository.save(new Person(name: "Fred"))
-        crudRepository.save(new Person(name: "Bob"))
-        crudRepository.save(new Person(name: "Fredrick"))
+        crudRepository.saveAll([new Person(name: "Bob"), new Person(name: "Fredrick")])
         p = personRepository.findByName("Bob")
 
         then:

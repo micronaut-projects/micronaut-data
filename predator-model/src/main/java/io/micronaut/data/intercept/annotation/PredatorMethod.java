@@ -41,14 +41,15 @@ public @interface PredatorMethod {
     Property[] parameterBinding() default {};
 
     /**
-     * The argument that defines the pageable.
+     * The argument that defines the pageable object.
      *
      * @return The pageable.
      */
     String pageable() default "";
 
     /**
-     * The argument that represents the entity for save operations etc.
+     * The argument that represents the entity for save, update, query by example operations etc.
+     *
      * @return The entity argument
      */
     String entity();

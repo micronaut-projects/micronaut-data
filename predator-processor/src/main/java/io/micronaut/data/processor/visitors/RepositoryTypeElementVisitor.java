@@ -13,6 +13,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.finders.FindByFinder;
 import io.micronaut.data.model.finders.FinderMethod;
+import io.micronaut.data.model.finders.SaveAllMethod;
 import io.micronaut.data.model.finders.SaveMethod;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.encoder.EncodedQuery;
@@ -35,7 +36,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private String[] paginationTypes = DEFAULT_PAGINATORS;
     private List<FinderMethod> finders = Arrays.asList(
             new FindByFinder(),
-            new SaveMethod()
+            new SaveMethod(),
+            new SaveAllMethod()
     );
 
     @Override

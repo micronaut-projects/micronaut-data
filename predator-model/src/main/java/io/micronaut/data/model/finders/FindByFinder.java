@@ -39,17 +39,6 @@ public class FindByFinder extends AbstractFindByFinder {
         return false;
     }
 
-    private boolean isContainerType(ClassElement returnType) {
-        return (returnType.isAssignable(Iterable.class) ||
-                returnType.isAssignable(Stream.class) ||
-                returnType.isAssignable(Publisher.class) ||
-                returnType.isAssignable(Optional.class)) && hasPersistedTypeArgument(returnType);
-    }
-
-    private Boolean hasPersistedTypeArgument(ClassElement returnType) {
-        return returnType.getFirstTypeArgument().map(t -> t.hasAnnotation(Persisted.class)).orElse(false);
-    }
-
     @Nullable
     @Override
     public Class<? extends PredatorInterceptor> getRuntimeInterceptor(
