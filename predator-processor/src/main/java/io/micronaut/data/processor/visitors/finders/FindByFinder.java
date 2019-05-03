@@ -1,10 +1,12 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 import org.reactivestreams.Publisher;
 
@@ -25,6 +27,30 @@ public class FindByFinder extends AbstractFindByFinder {
         super(Pattern.compile(METHOD_PATTERN));
     }
 
+    @Nullable
+    @Override
+    protected PredatorMethodInfo buildMethodInfo(@Nullable Query query, @Nonnull PersistentEntity entity, @Nonnull VisitorContext visitorContext, @Nonnull MethodElement methodElement, @Nullable ParameterElement paginationParameter, @Nonnull ParameterElement[] parameters) {
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (returnType != null) {
+            if (returnType.hasAnnotation(Persisted.class)) {
+                return new PredatorMethodInfo(query, FindOneInterceptor.class);
+            } else if (returnType.isAssignable(Iterable.class) && hasPersistedTypeArgument(returnType)) {
+                return new PredatorMethodInfo(query, FindAllByInterceptor.class);
+            } else if(returnType.isAssignable(Stream.class) && hasPersistedTypeArgument(returnType)) {
+                return new PredatorMethodInfo(query, FindStreamInterceptor.class);
+            } else if(returnType.isAssignable(Optional.class) && hasPersistedTypeArgument(returnType)) {
+                return new PredatorMethodInfo(query, FindOptionalInterceptor.class);
+            } else if(returnType.isAssignable(Publisher.class) && hasPersistedTypeArgument(returnType)) {
+                return new PredatorMethodInfo(query, FindReactivePublisherInterceptor.class);
+            } else {
+                // TODO: handle projections, reactive single etc.
+            }
+        }
+
+        visitorContext.fail("Unsupported Repository method return type", methodElement);
+        return null;
+    }
+
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
         return super.isMethodMatch(methodElement) && isCompatibleReturnType(methodElement);
@@ -39,30 +65,4 @@ public class FindByFinder extends AbstractFindByFinder {
         return false;
     }
 
-    @Nullable
-    @Override
-    public Class<? extends PredatorInterceptor> getRuntimeInterceptor(
-            @Nonnull PersistentEntity entity,
-            @Nonnull MethodElement methodElement,
-            @Nonnull VisitorContext visitorContext) {
-        ClassElement returnType = methodElement.getGenericReturnType();
-        if (returnType != null) {
-            if (returnType.hasAnnotation(Persisted.class)) {
-                return FindOneInterceptor.class;
-            } else if (returnType.isAssignable(Iterable.class) && hasPersistedTypeArgument(returnType)) {
-                return FindAllInterceptor.class;
-            } else if(returnType.isAssignable(Stream.class) && hasPersistedTypeArgument(returnType)) {
-                return FindStreamInterceptor.class;
-            } else if(returnType.isAssignable(Optional.class) && hasPersistedTypeArgument(returnType)) {
-                return FindOptionalInterceptor.class;
-            } else if(returnType.isAssignable(Publisher.class) && hasPersistedTypeArgument(returnType)) {
-                return FindReactivePublisherInterceptor.class;
-            } else {
-                // TODO: handle projections, reactive single etc.
-            }
-        }
-
-        visitorContext.fail("Unsupported Repository method return type", methodElement);
-        return null;
-    }
 }

@@ -3,6 +3,8 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Persisted;
@@ -12,11 +14,11 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.finders.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.encoder.EncodedQuery;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.visitors.finders.*;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
@@ -27,18 +29,24 @@ import io.micronaut.inject.visitor.VisitorContext;
 import javax.annotation.Nullable;
 import java.util.*;
 
+@Internal
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
 
     private static final String[] DEFAULT_PAGINATORS = {Pageable.class.getName()};
     private ClassElement currentClass;
     private QueryEncoder queryEncoder;
     private String[] paginationTypes = DEFAULT_PAGINATORS;
-    private List<FinderMethod> finders = Arrays.asList(
+    private List<PredatorMethodCandidate> finders = Arrays.asList(
             new FindByFinder(),
             new ExistsByFinder(),
             new SaveMethod(),
-            new SaveAllMethod()
+            new SaveAllMethod(),
+            new ListMethod()
     );
+
+    public RepositoryTypeElementVisitor() {
+        OrderUtil.sort(finders);
+    }
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
@@ -67,70 +75,85 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
-            for (FinderMethod finder : finders) {
+            for (PredatorMethodCandidate finder : finders) {
                 if (finder.isMethodMatch(element)) {
                     PersistentEntity entity = resolvePersistentEntity(element);
                     String idType = resolveIdType(entity);
+                    ParameterElement[] parameters = element.getParameters();
+                    ParameterElement pageParam = Arrays.stream(parameters).filter(p -> {
+                        ClassElement t = p.getType();
+                        return t != null && Arrays.stream(paginationTypes).anyMatch(t::isAssignable);
+                    }).findFirst().orElse(null);
+
 
                     if (entity == null) {
                         context.fail("Unable to establish persistent entity to query", element);
                         return;
                     }
 
-                    final Query queryObject = finder.buildQuery(entity, element, context);
-                    Map<String, String> parameterBinding = null;
-                    if (queryObject != null) {
-                        EncodedQuery encodedQuery;
-                        try {
-                            encodedQuery = queryEncoder.encodeQuery(queryObject);
-                        } catch (Exception e) {
-                            context.fail("Invalid query method: " + e.getMessage(), element);
-                            return;
+                    PredatorMethodInfo methodInfo = finder.buildMatchInfo(new MethodMatchContext(
+                            entity,
+                            context,
+                            element,
+                            pageParam,
+                            parameters
+                    ));
+                    if (methodInfo != null) {
+
+                        Query queryObject = methodInfo.getQuery();
+                        Map<String, String> parameterBinding = null;
+                        if (queryObject != null) {
+                            EncodedQuery encodedQuery;
+                            try {
+                                encodedQuery = queryEncoder.encodeQuery(queryObject);
+                            } catch (Exception e) {
+                                context.fail("Invalid query method: " + e.getMessage(), element);
+                                return;
+                            }
+
+                            parameterBinding = encodedQuery.getParameters();
+                            element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
+                                    annotationBuilder.value(encodedQuery.getQuery())
+                            );
                         }
 
-                        parameterBinding = encodedQuery.getParameters();
-                        element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
-                                annotationBuilder.value(encodedQuery.getQuery())
-                        );
-                    }
+                        Class<? extends PredatorInterceptor> runtimeInterceptor = methodInfo.getRuntimeInterceptor();
 
-                    Class<? extends PredatorInterceptor> runtimeInterceptor =
-                            finder.getRuntimeInterceptor(entity, element, context);
-
-                    if (runtimeInterceptor != null) {
-                        Map<String, String> finalParameterBinding = parameterBinding;
-                        element.annotate(PredatorMethod.class, annotationBuilder -> {
-                            annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
-                            if (idType != null) {
-                                annotationBuilder.member("idType", idType);
-                            }
-                            annotationBuilder.member("interceptor", runtimeInterceptor);
-                            if (finalParameterBinding != null) {
-                                AnnotationValue<?>[] parameters = new AnnotationValue[finalParameterBinding.size()];
-                                int i = 0;
-                                for (Map.Entry<String, String> entry : finalParameterBinding.entrySet()) {
-                                    parameters[i++] = AnnotationValue.builder(Property.class)
+                        if (runtimeInterceptor != null) {
+                            Map<String, String> finalParameterBinding = parameterBinding;
+                            element.annotate(PredatorMethod.class, annotationBuilder -> {
+                                annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
+                                if (idType != null) {
+                                    annotationBuilder.member("idType", idType);
+                                }
+                                annotationBuilder.member("interceptor", runtimeInterceptor);
+                                if (finalParameterBinding != null) {
+                                    AnnotationValue<?>[] annotationParameters = new AnnotationValue[finalParameterBinding.size()];
+                                    int i = 0;
+                                    for (Map.Entry<String, String> entry : finalParameterBinding.entrySet()) {
+                                        annotationParameters[i++] = AnnotationValue.builder(Property.class)
                                                 .member("name", entry.getKey())
                                                 .member("value", entry.getValue())
                                                 .build();
+                                    }
+                                    annotationBuilder.member("parameterBinding", annotationParameters);
                                 }
-                                annotationBuilder.member("parameterBinding", parameters);
-                            }
-                            ParameterElement[] parameters = element.getParameters();
-                            Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
-                                ClassElement t = p.getGenericType();
-                                return t != null && t.isAssignable(entity.getName());
-                            }).findFirst();
-                            entityParam.ifPresent(parameterElement -> annotationBuilder.member("entity", parameterElement.getName()));
+                                Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
+                                    ClassElement t = p.getGenericType();
+                                    return t != null && t.isAssignable(entity.getName());
+                                }).findFirst();
+                                entityParam.ifPresent(parameterElement -> annotationBuilder.member("entity", parameterElement.getName()));
 
-                            Optional<ParameterElement> pagenationParam = Arrays.stream(parameters).filter(p -> {
-                                ClassElement t = p.getType();
-                                return t != null && Arrays.stream(paginationTypes).anyMatch(t::isAssignable);
-                            }).findFirst();
-                            pagenationParam.ifPresent(parameterElement -> annotationBuilder.member("pageable", parameterElement.getName()));
-                        });
+                                if (pageParam != null) {
+                                    annotationBuilder.member("pageable", pageParam.getName());
+                                }
+                            });
+                            return;
+                        } else {
+                            context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.", element);
+                        }
                     }
-                    return;
+
                 }
             }
 

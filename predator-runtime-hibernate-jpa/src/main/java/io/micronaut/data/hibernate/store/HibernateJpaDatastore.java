@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
+import javax.persistence.criteria.CriteriaQuery;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.Collections;
@@ -56,6 +57,20 @@ public class HibernateJpaDatastore implements Datastore {
 
     @Nonnull
     @Override
+    public <T> Iterable<T> findAll(@Nonnull Class<T> rootEntity, @Nonnull Pageable pageable) {
+        Session session = sessionFactory.getCurrentSession();
+        CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(rootEntity);
+        query.from(rootEntity);
+        Query<T> q = session.createQuery(
+                query
+        );
+        bindPageable(q, pageable);
+
+        return q.list();
+    }
+
+    @Nonnull
+    @Override
     public <T> Iterable<T> findAll(
             @Nonnull Class<T> rootEntity,
             @Nonnull String query,
@@ -64,6 +79,12 @@ public class HibernateJpaDatastore implements Datastore {
 
         Query<T> q = sessionFactory.getCurrentSession().createQuery(query, rootEntity);
         bindParameters(q, parameterValues);
+        bindPageable(q, pageable);
+
+        return q.list();
+    }
+
+    private <T> void bindPageable(Query<T> q, @Nonnull Pageable pageable) {
         int max = pageable.getMax();
         if (max > 0) {
             q.setMaxResults(max);
@@ -72,8 +93,6 @@ public class HibernateJpaDatastore implements Datastore {
         if (offset > 0) {
             q.setFirstResult((int) offset);
         }
-
-        return q.list();
     }
 
     @Override

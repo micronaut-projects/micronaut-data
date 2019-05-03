@@ -3,10 +3,13 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
+import io.micronaut.data.intercept.ExistsByInterceptor
+import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.SaveAllInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.query.encoder.entities.Person
 import io.micronaut.inject.BeanDefinition
+import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
@@ -47,6 +50,26 @@ interface MyInterface extends CrudRepository<Person, Long> {
         saveAll.getArguments()[0].getFirstTypeVariable().get().type == Person
         saveAll.synthesize(PredatorMethod).rootEntity() == Person
         saveAll.synthesize(PredatorMethod).interceptor() == SaveAllInterceptor
+
+        when:"the exists by id method is retrieved"
+        def existsMethod = beanDefinition.getRequiredMethod("existsById", Long)
+
+        then:"The method is correctly configured"
+        existsMethod
+        existsMethod.getArguments()[0].getFirstTypeVariable().get().type == Long
+        existsMethod.synthesize(PredatorMethod).rootEntity() == Person
+        existsMethod.synthesize(PredatorMethod).idType() == Long
+        existsMethod.synthesize(PredatorMethod).interceptor() == ExistsByInterceptor
+
+        when:"the findAll method is retrieved"
+        def findAll = beanDefinition.getRequiredMethod("findAll")
+
+        then:"The method is correctly configured"
+        findAll
+        findAll.getReturnType().asArgument().getFirstTypeVariable().get().type == Person
+        findAll.synthesize(PredatorMethod).rootEntity() == Person
+        findAll.synthesize(PredatorMethod).idType() == Long
+        findAll.synthesize(PredatorMethod).interceptor() == FindAllInterceptor
     }
 
 

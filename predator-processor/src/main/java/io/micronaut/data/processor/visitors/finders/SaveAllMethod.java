@@ -1,12 +1,8 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.SaveAllInterceptor;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
-import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,21 +27,13 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
 
     @Nullable
     @Override
-    public Query buildQuery(
-            @Nonnull PersistentEntity entity,
-            @Nonnull MethodElement methodElement,
-            @Nonnull VisitorContext visitorContext) {
+    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         // default doesn't build a query and query construction left to runtime
-        // this is fine for JPA
-        return null;
-    }
+        // this is fine for JPA, for SQL we need to build an insert
 
-    @Nullable
-    @Override
-    public Class<? extends PredatorInterceptor> getRuntimeInterceptor(
-            @Nonnull PersistentEntity entity,
-            @Nonnull MethodElement methodElement,
-            @Nonnull VisitorContext visitorContext) {
-        return SaveAllInterceptor.class;
+        return new PredatorMethodInfo(
+                null,
+                SaveAllInterceptor.class
+        );
     }
 }

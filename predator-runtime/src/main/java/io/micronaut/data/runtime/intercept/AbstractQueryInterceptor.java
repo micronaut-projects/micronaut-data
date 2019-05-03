@@ -27,7 +27,7 @@ import java.util.Map;
  * @author graemerocher
  */
 abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
-    private static final String MEMBER_ROOT_MEMBER = "rootEntity";
+    static final String MEMBER_ROOT_MEMBER = "rootEntity";
     private static final String MEMBER_ID_TYPE = "idType";
     private static final String MEMBER_PARAMETER_BINDING = "parameterBinding";
     protected final Datastore datastore;

@@ -1,4 +1,4 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.StringUtils;
@@ -9,6 +9,7 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
  * @author Graeme Rocher
  * @since 1.0
  */
-abstract class DynamicFinder extends AbstractPatternBasedMethod implements FinderMethod {
+abstract class DynamicFinder extends AbstractPatternBasedMethod implements PredatorMethodCandidate {
 
     public static final String OPERATOR_OR = "Or";
     public static final String OPERATOR_AND = "And";
@@ -72,24 +73,15 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Finde
         populateOperators(operators);
     }
 
-    /**
-     * Builds a match specification that can be used to establish information about a dynamic finder compilation for the purposes of compilation etc.
-     *
-     * @param entity The persistent entity
-     * @param methodElement The method element
-     * @return The query or null if it cannot be built
-     */
     @Override
-    public Query buildQuery(
-            @Nonnull PersistentEntity entity,
-            @Nonnull MethodElement methodElement,
-            VisitorContext visitorContext) {
+    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         List<MethodExpression> expressions = new ArrayList<>();
-        ParameterElement[] arguments = methodElement.getParameters();
+        ParameterElement[] parameters = matchContext.getParameters();
+        MethodElement methodElement = matchContext.getMethodElement();
         String methodName = methodElement.getName();
-        if (arguments == null) {
-            arguments = new ParameterElement[0];
-        }
+        ParameterElement paginationParameter = matchContext.getPaginationParameter();
+        PersistentEntity entity = matchContext.getEntity();
+        VisitorContext visitorContext = matchContext.getVisitorContext();
         Matcher match = pattern.matcher(methodName);
         // find match
         match.find();
@@ -140,13 +132,13 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Finde
                         final int requiredArgs = currentExpression.getArgumentsRequired();
                         // populate the arguments into the Expression from the argument list
                         String[] currentArguments = new String[requiredArgs];
-                        if ((argumentCursor + requiredArgs) > arguments.length) {
+                        if ((argumentCursor + requiredArgs) > parameters.length) {
                             visitorContext.fail("Insufficient arguments to method", methodElement);
                             return null;
                         }
 
                         for (int k = 0; k < requiredArgs; k++, argumentCursor++) {
-                            ParameterElement argument = arguments[argumentCursor];
+                            ParameterElement argument = parameters[argumentCursor];
                             currentArguments[k] = argument.getName();
                         }
                         currentExpression = getInitializedExpression(currentExpression, currentArguments);
@@ -165,7 +157,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Finde
             MethodExpression solo = findMethodExpression(querySequence);
 
             final int requiredArguments = solo.getArgumentsRequired();
-            if (requiredArguments  > arguments.length) {
+            if (requiredArguments  > parameters.length) {
                 visitorContext.fail("Insufficient arguments to method", methodElement);
                 return null;
             }
@@ -173,7 +165,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Finde
             totalRequiredArguments += requiredArguments;
             String[] soloArgs = new String[requiredArguments];
             for (int i = 0; i < soloArgs.length; i++) {
-                soloArgs[i] = arguments[i].getName();
+                soloArgs[i] = parameters[i].getName();
             }
             solo = getInitializedExpression(solo, soloArgs);
             expressions.add(solo);
@@ -181,7 +173,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Finde
 
         // if the total of all the arguments necessary does not equal the number of arguments
         // throw exception
-        if (totalRequiredArguments > arguments.length) {
+        if (totalRequiredArguments > parameters.length) {
             visitorContext.fail("Insufficient arguments to method", methodElement);
             return null;
         }
@@ -199,8 +191,33 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Finde
                 query.add(expression.createCriterion());
             }
         }
-        return query;
+        return buildMethodInfo(
+                query,
+                entity,
+                visitorContext,
+                methodElement,
+                paginationParameter,
+                parameters
+        );
     }
+
+    /**
+     * Build the method info
+     * @param query The query
+     * @param entity The entity
+     * @param visitorContext the visitor context
+     * @param methodElement the method element
+     * @param paginationParameter the pagination parameter
+     * @param parameters The parameters
+     * @return The method info
+     */
+    protected abstract @Nullable PredatorMethodInfo buildMethodInfo(
+            @Nullable Query query,
+            @Nonnull PersistentEntity entity,
+            @Nonnull VisitorContext visitorContext,
+            @Nonnull MethodElement methodElement,
+            @Nullable ParameterElement paginationParameter,
+            @Nonnull ParameterElement[] parameters);
 
     /**
      * Checks whether the given method is a match

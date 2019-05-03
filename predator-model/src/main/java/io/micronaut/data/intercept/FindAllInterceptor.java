@@ -1,12 +1,12 @@
 package io.micronaut.data.intercept;
 
 /**
- * An interceptor that executes a {@link io.micronaut.data.annotation.Query} and returns an
- * iterable list of results.
+ * An interceptor that doesn't execute a query but instead just lists all the results.
  *
  * @param <T> The declaring type
- * @author graemerocher
+ * @param <R> The return result
  * @since 1.0
+ * @author graemerocher
  */
-public interface FindAllInterceptor<T> extends PredatorInterceptor<T, Iterable<Object>> {
+public interface FindAllInterceptor<T, R> extends IterableResultInterceptor<T, R> {
 }

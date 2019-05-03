@@ -1,4 +1,4 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.inject.ast.ClassElement;
@@ -11,7 +11,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-abstract class AbstractPatternBasedMethod implements FinderMethod {
+abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
 
     protected final Pattern pattern;
 

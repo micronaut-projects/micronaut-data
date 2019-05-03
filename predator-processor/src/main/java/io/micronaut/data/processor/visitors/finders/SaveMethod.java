@@ -1,11 +1,8 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Persisted;
-import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -16,7 +13,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class SaveMethod extends AbstractPatternBasedMethod implements FinderMethod {
+public class SaveMethod extends AbstractPatternBasedMethod implements PredatorMethodCandidate {
 
     private static final String METHOD_PATTERN = "^((save|persist|store|insert)(\\S*?))$";
 
@@ -33,30 +30,18 @@ public class SaveMethod extends AbstractPatternBasedMethod implements FinderMeth
 
     @Nullable
     @Override
-    public Query buildQuery(
-            @Nonnull PersistentEntity entity,
-            @Nonnull MethodElement methodElement,
-            @Nonnull VisitorContext visitorContext) {
-        // no query involved
-        return null;
-    }
-
-    @Nullable
-    @Override
-    public Class<? extends PredatorInterceptor> getRuntimeInterceptor(
-            @Nonnull PersistentEntity entity,
-            @Nonnull MethodElement methodElement,
-            @Nonnull VisitorContext visitorContext) {
-        ParameterElement[] parameters = methodElement.getParameters();
+    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+        VisitorContext visitorContext = matchContext.getVisitorContext();
+        ParameterElement[] parameters = matchContext.getParameters();
         if (ArrayUtils.isNotEmpty(parameters)) {
             if (Arrays.stream(parameters).anyMatch(p -> {
                 ClassElement t = p.getGenericType();
                 return t != null && t.hasAnnotation(Persisted.class);
             })) {
-                return SaveEntityInterceptor.class;
+                return new PredatorMethodInfo(null, SaveEntityInterceptor.class);
             }
         }
-        visitorContext.fail("Cannot implement save method for specified arguments and return type", methodElement);
+        visitorContext.fail("Cannot implement save method for specified arguments and return type", matchContext.getMethodElement());
         return null;
     }
 }

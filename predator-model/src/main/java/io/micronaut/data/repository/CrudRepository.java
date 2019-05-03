@@ -56,13 +56,13 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
      */
     boolean existsById(@NotNull @Nonnull ID id);
-//
-//    /**
-//     * Returns all instances of the type.
-//     *
-//     * @return all entities
-//     */
-//    @Nonnull Iterable<E> findAll();
+
+    /**
+     * Returns all instances of the type.
+     *
+     * @return all entities
+     */
+    @Nonnull Iterable<E> findAll();
 //
 //    /**
 //     * Returns all instances of the type with the given IDs.

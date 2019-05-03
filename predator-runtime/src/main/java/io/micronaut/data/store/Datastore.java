@@ -58,7 +58,34 @@ public interface Datastore {
                 parameterValues,
                 Pageable.unpaged()
         );
-    };
+    }
+
+    /**
+     * Finds all results for the given query.
+     * @param rootEntity The root entity
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    default @Nonnull <T> Iterable<T> findAll(
+            @Nonnull Class<T> rootEntity
+    ) {
+        return findAll(
+                rootEntity,
+                Pageable.unpaged()
+        );
+    }
+
+    /**
+     * Finds all results for the given query.
+     * @param rootEntity The root entity
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    @Nonnull <T> Iterable<T> findAll(
+            @Nonnull Class<T> rootEntity,
+            @Nonnull Pageable pageable
+    );
 
     /**
      * Finds all results for the given query.

@@ -1,4 +1,4 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import java.util.regex.Pattern;
 

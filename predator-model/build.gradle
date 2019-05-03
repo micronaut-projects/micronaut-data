@@ -6,3 +6,10 @@ dependencies {
 	compile 'javax.persistence:javax.persistence-api:2.2'
 	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
 }
+tasks.withType(GroovyCompile) {
+	groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
+}
+tasks.withType(JavaCompile){
+	options.encoding = "UTF-8"
+	options.compilerArgs.add('-parameters')
+}

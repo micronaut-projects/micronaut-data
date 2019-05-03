@@ -1,11 +1,13 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Stepwise
 
 import javax.inject.Inject
+import javax.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false)
 @Property(name = "datasources.default.name", value = "mydb")
@@ -25,6 +27,7 @@ class CrudRepositorySpec extends Specification {
         person.id != null
         crudRepository.findById(person.id).isPresent()
         crudRepository.existsById(person.id)
+        crudRepository.findAll().size() == 1
     }
 
     void "test save many"() {
@@ -37,5 +40,8 @@ class CrudRepositorySpec extends Specification {
         then:"all are saved"
         people.every { it.id != null }
         people.every { crudRepository.findById(it.id).isPresent() }
+        crudRepository.findAll().size() == 3
+        crudRepository.list(Pageable.from(1)).size() == 2
+        crudRepository.list(Pageable.from(0, 1)).size() == 1
     }
 }

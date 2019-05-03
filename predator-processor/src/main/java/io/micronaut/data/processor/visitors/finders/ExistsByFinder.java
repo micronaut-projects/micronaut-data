@@ -1,4 +1,4 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.intercept.PredatorInterceptor;
@@ -6,6 +6,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nonnull;
@@ -25,19 +26,22 @@ public class ExistsByFinder extends AbstractFindByFinder {
         return super.isMethodMatch(methodElement) && isCompatibleReturnType(methodElement);
     }
 
+    @Nullable
     @Override
-    public Query buildQuery(@Nonnull PersistentEntity entity, @Nonnull MethodElement methodElement, VisitorContext visitorContext) {
-        Query query = super.buildQuery(entity, methodElement, visitorContext);
+    protected PredatorMethodInfo buildMethodInfo(
+            @Nullable Query query,
+            @Nonnull PersistentEntity entity,
+            @Nonnull VisitorContext visitorContext,
+            @Nonnull MethodElement methodElement,
+            @Nullable ParameterElement paginationParameter,
+            @Nonnull ParameterElement[] parameters) {
         if (query != null) {
             query.projections().id();
         }
-        return query;
-    }
-
-    @Nullable
-    @Override
-    public Class<? extends PredatorInterceptor> getRuntimeInterceptor(@Nonnull PersistentEntity entity, @Nonnull MethodElement methodElement, @Nonnull VisitorContext visitorContext) {
-        return ExistsByInterceptor.class;
+        return new PredatorMethodInfo(
+                query,
+                ExistsByInterceptor.class
+        );
     }
 
     private boolean isCompatibleReturnType(MethodElement methodElement) {

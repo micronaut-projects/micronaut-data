@@ -1,4 +1,4 @@
-package io.micronaut.data.model.finders;
+package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
