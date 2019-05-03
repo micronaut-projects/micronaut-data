@@ -27,6 +27,8 @@ class CrudRepositorySpec extends Specification {
         person.id != null
         crudRepository.findById(person.id).isPresent()
         crudRepository.existsById(person.id)
+        crudRepository.count() == 1
+        crudRepository.count("Fred") == 1
         crudRepository.findAll().size() == 1
     }
 
@@ -41,6 +43,8 @@ class CrudRepositorySpec extends Specification {
         people.every { it.id != null }
         people.every { crudRepository.findById(it.id).isPresent() }
         crudRepository.findAll().size() == 3
+        crudRepository.count() == 3
+        crudRepository.count("Fred") == 1
         crudRepository.list(Pageable.from(1)).size() == 2
         crudRepository.list(Pageable.from(0, 1)).size() == 1
     }

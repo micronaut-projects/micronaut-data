@@ -85,6 +85,25 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         );
     }
 
+    @Nonnull
+    protected Class getRequiredRootEntity(MethodInvocationContext context) {
+        return context.getValue(PredatorMethod.class, MEMBER_ROOT_MEMBER, Class.class)
+                .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
+    }
+
+    @Nullable
+    protected Pageable getPageable(MethodInvocationContext context) {
+        String pageableParam = context.getValue(PredatorMethod.class, "pageable", String.class).orElse(null);
+        Pageable pageable = null;
+        if (pageableParam != null) {
+            Map<String, Object> parameterValueMap = context.getParameterValueMap();
+            pageable = ConversionService.SHARED
+                    .convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
+
+        }
+        return pageable;
+    }
+
     /**
      * Represents a prepared query.
      */

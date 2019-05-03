@@ -41,7 +41,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new ExistsByFinder(),
             new SaveMethod(),
             new SaveAllMethod(),
-            new ListMethod()
+            new ListMethod(),
+            new CountMethod()
     );
 
     public RepositoryTypeElementVisitor() {

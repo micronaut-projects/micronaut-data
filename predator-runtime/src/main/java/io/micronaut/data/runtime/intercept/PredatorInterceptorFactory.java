@@ -59,6 +59,28 @@ public class PredatorInterceptorFactory {
     }
 
     /**
+     * Creates the {@link CountAllInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link CountAllInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected CountAllInterceptor countAllInterceptor(Datastore datastore) {
+        return new DefaultCountInterceptor(datastore);
+    }
+
+    /**
+     * Creates the {@link CountByInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link CountByInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected CountByInterceptor countByInterceptor(Datastore datastore) {
+        return new DefaultCountByInterceptor(datastore);
+    }
+
+    /**
      * Creates the {@link io.micronaut.data.intercept.SaveEntityInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore

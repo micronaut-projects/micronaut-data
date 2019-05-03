@@ -1,5 +1,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -37,5 +39,25 @@ abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
 
     protected boolean hasPersistedTypeArgument(ClassElement returnType) {
         return returnType.getFirstTypeArgument().map(t -> t.hasAnnotation(Persisted.class)).orElse(false);
+    }
+
+    /**
+     * Does the method return an object convertible to a number.
+     * @param methodElement The method element
+     * @return True if it does
+     */
+    protected boolean doesReturnNumber(@Nonnull MethodElement methodElement) {
+        ClassElement returnType = methodElement.getGenericReturnType();
+        if (returnType != null) {
+            if (returnType.isPrimitive()) {
+                return ClassUtils.getPrimitiveType(returnType.getName()).map(aClass ->
+                        Number.class.isAssignableFrom(ReflectionUtils.getWrapperType(aClass))
+                ).orElse(false);
+            } else {
+                return returnType.isAssignable(Number.class);
+            }
+        } else {
+            return false;
+        }
     }
 }

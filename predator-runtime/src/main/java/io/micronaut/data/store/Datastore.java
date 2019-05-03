@@ -28,32 +28,32 @@ public interface Datastore {
     /**
      * Find one by Query.
      *
-     * @param type The type
+     * @param resultType The resultType
      * @param query The query to execute
      * @param parameters The parameters
-     * @param <T> The generic type
+     * @param <T> The generic resultType
      * @return A result or null
      */
     @Nullable <T> T findOne(
-            @Nonnull Class<T> type,
+            @Nonnull Class<T> resultType,
             @Nonnull String query,
             @Nonnull Map<String, Object> parameters);
 
     /**
      * Finds all results for the given query.
-     * @param rootEntity The root entity
+     * @param resultType The result type
      * @param query The query
      * @param parameterValues The parameter values
      * @param <T> The generic type
      * @return An iterable result
      */
     default @Nonnull <T> Iterable<T> findAll(
-            @Nonnull Class<T> rootEntity,
+            @Nonnull Class<T> resultType,
             @Nonnull String query,
             @Nonnull Map<String, Object> parameterValues
     ) {
         return findAll(
-                rootEntity,
+                resultType,
                 query,
                 parameterValues,
                 Pageable.unpaged()
@@ -88,8 +88,35 @@ public interface Datastore {
     );
 
     /**
-     * Finds all results for the given query.
+     * Counts all results for the given query.
      * @param rootEntity The root entity
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    default <T> long count(
+            @Nonnull Class<T> rootEntity
+    ) {
+        return count(
+                rootEntity,
+                Pageable.unpaged()
+        );
+    }
+
+    /**
+     * Counts all results for the given query.
+     * @param rootEntity The root entity
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    <T> long count(
+            @Nonnull Class<T> rootEntity,
+            @Nonnull Pageable pageable
+    );
+
+    /**
+     * Finds all results for the given query.
+     * @param resultType The result type
      * @param query The query
      * @param parameterValues The parameter values
      * @param pageable The pageable
@@ -97,7 +124,7 @@ public interface Datastore {
      * @return An iterable result
      */
     @Nonnull <T> Iterable<T> findAll(
-            @Nonnull Class<T> rootEntity,
+            @Nonnull Class<T> resultType,
             @Nonnull String query,
             @Nonnull Map<String, Object> parameterValues,
             @Nonnull Pageable pageable

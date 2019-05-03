@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
@@ -44,8 +45,8 @@ public class HibernateJpaDatastore implements Datastore {
 
     @Nullable
     @Override
-    public <T> T findOne(@Nonnull Class<T> type, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
-        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, type);
+    public <T> T findOne(@Nonnull Class<T> resultType, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
+        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, resultType);
         bindParameters(q, parameters);
         q.setMaxResults(1);
         try {
@@ -69,15 +70,29 @@ public class HibernateJpaDatastore implements Datastore {
         return q.list();
     }
 
+    @Override
+    public <T> long count(@Nonnull Class<T> rootEntity, @Nonnull Pageable pageable) {
+        Session session = sessionFactory.getCurrentSession();
+        CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+        CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
+        query = query.select(criteriaBuilder.count(query.from(rootEntity)));
+        Query<Long> q = session.createQuery(
+                query
+        );
+        bindPageable(q, pageable);
+
+        return q.getSingleResult();
+    }
+
     @Nonnull
     @Override
     public <T> Iterable<T> findAll(
-            @Nonnull Class<T> rootEntity,
+            @Nonnull Class<T> resultType,
             @Nonnull String query,
             @Nonnull Map<String, Object> parameterValues,
             @Nonnull Pageable pageable) {
 
-        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, rootEntity);
+        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, resultType);
         bindParameters(q, parameterValues);
         bindPageable(q, pageable);
 

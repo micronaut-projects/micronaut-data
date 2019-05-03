@@ -73,12 +73,12 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
 //     */
 //    @Nonnull Iterable<E> findAllById(@Nonnull @NotNull Iterable<ID> ids);
 //
-//    /**
-//     * Returns the number of entities available.
-//     *
-//     * @return the number of entities
-//     */
-//    long count();
+    /**
+     * Returns the number of entities available.
+     *
+     * @return the number of entities
+     */
+    long count();
 //
 //    /**
 //     * Deletes the entity with the given id.

@@ -10,4 +10,6 @@ import java.util.List;
 public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
     List<Person> list(Pageable pageable);
+
+    int count(String name);
 }
