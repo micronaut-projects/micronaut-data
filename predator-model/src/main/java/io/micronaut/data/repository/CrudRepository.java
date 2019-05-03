@@ -79,14 +79,14 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @return the number of entities
      */
     long count();
-//
-//    /**
-//     * Deletes the entity with the given id.
-//     *
-//     * @param id must not be {@literal null}.
-//     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
-//     */
-//    void deleteById(@Nonnull @NotNull ID id);
+
+    /**
+     * Deletes the entity with the given id.
+     *
+     * @param id must not be {@literal null}.
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     */
+    void deleteById(@Nonnull @NotNull ID id);
 //
 //    /**
 //     * Deletes a given entity.

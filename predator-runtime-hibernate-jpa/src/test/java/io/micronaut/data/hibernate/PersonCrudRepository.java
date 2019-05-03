@@ -12,4 +12,6 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
     List<Person> list(Pageable pageable);
 
     int count(String name);
+
+    Person findByName(String name);
 }

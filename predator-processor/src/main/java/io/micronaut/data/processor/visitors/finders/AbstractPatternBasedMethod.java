@@ -60,4 +60,8 @@ abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
             return false;
         }
     }
+
+    protected boolean doesReturnVoid(MethodElement methodElement) {
+        return methodElement.getReturnType() != null && methodElement.getReturnType().getName().equals("void");
+    }
 }

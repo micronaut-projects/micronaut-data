@@ -42,7 +42,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new SaveMethod(),
             new SaveAllMethod(),
             new ListMethod(),
-            new CountMethod()
+            new CountMethod(),
+            new DeleteByMethod()
     );
 
     public RepositoryTypeElementVisitor() {
@@ -106,7 +107,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         if (queryObject != null) {
                             EncodedQuery encodedQuery;
                             try {
-                                encodedQuery = queryEncoder.encodeQuery(queryObject);
+                                switch (methodInfo.getOperationType()) {
+                                    case DELETE:
+                                        encodedQuery = queryEncoder.encodeDelete(queryObject);
+                                    break;
+                                    default:
+                                        encodedQuery = queryEncoder.encodeQuery(queryObject);
+                                }
+
                             } catch (Exception e) {
                                 context.fail("Invalid query method: " + e.getMessage(), element);
                                 return;

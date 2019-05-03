@@ -48,4 +48,19 @@ class CrudRepositorySpec extends Specification {
         crudRepository.list(Pageable.from(1)).size() == 2
         crudRepository.list(Pageable.from(0, 1)).size() == 1
     }
+
+    void "test delete by id"() {
+        when:"an entity is retrieved"
+        def person = crudRepository.findByName("Frank")
+
+        then:"the person is not null"
+        person != null
+        crudRepository.findById(person.id).isPresent()
+
+        when:"the person is deleted"
+        crudRepository.deleteById(person.id)
+
+        then:"They are really deleted"
+        !crudRepository.findById(person.id).isPresent()
+    }
 }

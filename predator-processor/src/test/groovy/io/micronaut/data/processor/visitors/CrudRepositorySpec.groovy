@@ -3,8 +3,10 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.CountAllInterceptor
 import io.micronaut.data.intercept.CountByInterceptor
+import io.micronaut.data.intercept.DeleteByInterceptor
 import io.micronaut.data.intercept.ExistsByInterceptor
 import io.micronaut.data.intercept.FindAllByInterceptor
 import io.micronaut.data.intercept.FindAllInterceptor
@@ -12,7 +14,6 @@ import io.micronaut.data.intercept.SaveAllInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.query.encoder.entities.Person
 import io.micronaut.inject.BeanDefinition
-import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
@@ -108,6 +109,17 @@ interface MyInterface extends CrudRepository<Person, Long> {
         countPeople.synthesize(PredatorMethod).rootEntity() == Person
         countPeople.synthesize(PredatorMethod).idType() == Long
         countPeople.synthesize(PredatorMethod).interceptor() == CountByInterceptor
+
+        when:"the delete by id method is retrieved"
+        def deleteById = beanDefinition.getRequiredMethod("deleteById", Long)
+
+        then:"The method is correctly configured"
+        deleteById
+        deleteById.getReturnType().type == void .class
+        deleteById.synthesize(PredatorMethod).rootEntity() == Person
+        deleteById.synthesize(PredatorMethod).idType() == Long
+        deleteById.synthesize(Query).value() == "DELETE $Person.name person WHERE (person.id = :p1)"
+        deleteById.synthesize(PredatorMethod).interceptor() == DeleteByInterceptor
     }
 
 

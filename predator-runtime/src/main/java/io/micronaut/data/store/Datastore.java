@@ -6,6 +6,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Common interface for datastore implementations to implement.
@@ -145,4 +146,12 @@ public interface Datastore {
      * @return The entities, possibly mutated
      */
     <T> Iterable<T> persistAll(@Nonnull Iterable<T> entities);
+
+    /**
+     * Executes an update for the given query and parameter values. If it is possible to
+     * return the number of objects updated, then do so.
+     * @param query The query
+     * @param parameterValues the parameter values
+     */
+    Optional<Number> executeUpdate(String query, Map<String, Object> parameterValues);
 }

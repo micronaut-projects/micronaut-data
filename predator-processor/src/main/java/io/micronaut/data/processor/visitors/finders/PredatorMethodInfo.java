@@ -17,10 +17,16 @@ public class PredatorMethodInfo {
 
     private final Query query;
     private final Class<? extends PredatorInterceptor> interceptor;
+    private final OperationType operationType;
 
     public PredatorMethodInfo(Query query, Class<? extends PredatorInterceptor> interceptor) {
+        this(query, interceptor, OperationType.QUERY);
+    }
+
+    public PredatorMethodInfo(Query query, Class<? extends PredatorInterceptor> interceptor, OperationType operationType) {
         this.query = query;
         this.interceptor = interceptor;
+        this.operationType = operationType;
     }
 
     /**
@@ -38,5 +44,35 @@ public class PredatorMethodInfo {
      */
     @Nullable public Class<? extends PredatorInterceptor> getRuntimeInterceptor() {
         return interceptor;
+    }
+
+    /**
+     * The operation type to execute.
+     * @return The operation type
+     */
+    public OperationType getOperationType() {
+        return operationType;
+    }
+
+    /**
+     * Describes the operation type.
+     */
+    public enum OperationType {
+        /**
+         * A query operation.
+         */
+        QUERY,
+        /**
+         * An update operation.
+         */
+        UPDATE,
+        /**
+         * A delete operation.
+         */
+        DELETE,
+        /**
+         * An insert operation.
+         */
+        INSERT
     }
 }

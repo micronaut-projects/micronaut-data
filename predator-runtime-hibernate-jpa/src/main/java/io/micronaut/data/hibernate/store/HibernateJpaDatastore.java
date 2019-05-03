@@ -17,6 +17,7 @@ import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Implementation of the {@link Datastore} interface for Hibernate.
@@ -127,6 +128,14 @@ public class HibernateJpaDatastore implements Datastore {
         } else {
             return Collections.emptyList();
         }
+    }
+
+    @Override
+    public Optional<Number> executeUpdate(String query, Map<String, Object> parameterValues) {
+        Query q = sessionFactory.getCurrentSession().createQuery(query);
+        bindParameters(q, parameterValues);
+        return Optional.of(q.executeUpdate());
+
     }
 
     private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {
