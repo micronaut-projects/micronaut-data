@@ -1,5 +1,6 @@
 package io.micronaut.data.hibernate;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
@@ -19,4 +20,6 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
     List<Person> findByNameLike(String name);
 
+    @Query("from Person p where p.name = :n")
+    List<Person> listPeople(String n);
 }

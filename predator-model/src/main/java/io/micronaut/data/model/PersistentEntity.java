@@ -93,10 +93,17 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     @Nonnull List<String> getPersistentPropertyNames();
 
     /**
+     * @return The simple name without the package of entity
+     */
+    default String getSimpleName() {
+        return NameUtils.getSimpleName(getName());
+    }
+
+    /**
      * @return Returns the name of the class decapitalized form
      */
     default @Nonnull String getDecapitalizedName() {
-        return NameUtils.decapitalize(NameUtils.getSimpleName(getName()));
+        return NameUtils.decapitalize(getSimpleName());
     }
 
     /**

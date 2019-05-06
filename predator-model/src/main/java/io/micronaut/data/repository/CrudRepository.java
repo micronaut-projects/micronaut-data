@@ -63,16 +63,7 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @return all entities
      */
     @Nonnull Iterable<E> findAll();
-//
-//    /**
-//     * Returns all instances of the type with the given IDs.
-//     *
-//     * @param ids The identifiers
-//     * @return An iterable
-//     * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
-//     */
-//    @Nonnull Iterable<E> findAllById(@Nonnull @NotNull Iterable<ID> ids);
-//
+
     /**
      * Returns the number of entities available.
      *

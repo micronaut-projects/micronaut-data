@@ -37,7 +37,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 PersistentProperty prop = entity.getPropertyByName(paramName);
                 if (prop == null) {
                     matchContext.getVisitorContext().fail(
-                            "Cannot query entity on non-existent property: " + paramName,
+                            "Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + paramName,
                             queryParam
                     );
                     return null;

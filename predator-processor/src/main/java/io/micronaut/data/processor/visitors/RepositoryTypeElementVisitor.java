@@ -44,7 +44,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new ListMethod(),
             new CountMethod(),
             new DeleteByMethod(),
-            new DeleteMethod()
+            new DeleteMethod(),
+            new QueryListMethod()
     );
 
     public RepositoryTypeElementVisitor() {
@@ -106,31 +107,39 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         Query queryObject = methodInfo.getQuery();
                         Map<String, String> parameterBinding = null;
                         if (queryObject != null) {
-                            EncodedQuery encodedQuery;
-                            try {
-                                switch (methodInfo.getOperationType()) {
-                                    case DELETE:
-                                        encodedQuery = queryEncoder.encodeDelete(queryObject);
-                                    break;
-                                    case UPDATE:
-                                        // TODO
-                                        encodedQuery = queryEncoder.encodeUpdate(queryObject, Collections.emptyList());
-                                    break;
-                                    case INSERT:
-                                        // TODO
-                                    default:
-                                        encodedQuery = queryEncoder.encodeQuery(queryObject);
+                            if (queryObject instanceof RawQuery) {
+                                RawQuery rawQuery = (RawQuery) queryObject;
+
+                                // no need to annotation since already annotated, just replace the
+                                // the computed parameter names
+                                parameterBinding = rawQuery.getParameterBinding();
+                            } else {
+                                EncodedQuery encodedQuery;
+                                try {
+                                    switch (methodInfo.getOperationType()) {
+                                        case DELETE:
+                                            encodedQuery = queryEncoder.encodeDelete(queryObject);
+                                            break;
+                                        case UPDATE:
+                                            // TODO
+                                            encodedQuery = queryEncoder.encodeUpdate(queryObject, Collections.emptyList());
+                                            break;
+                                        case INSERT:
+                                            // TODO
+                                        default:
+                                            encodedQuery = queryEncoder.encodeQuery(queryObject);
+                                    }
+
+                                } catch (Exception e) {
+                                    context.fail("Invalid query method: " + e.getMessage(), element);
+                                    return;
                                 }
 
-                            } catch (Exception e) {
-                                context.fail("Invalid query method: " + e.getMessage(), element);
-                                return;
+                                parameterBinding = encodedQuery.getParameters();
+                                element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
+                                        annotationBuilder.value(encodedQuery.getQuery())
+                                );
                             }
-
-                            parameterBinding = encodedQuery.getParameters();
-                            element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
-                                    annotationBuilder.value(encodedQuery.getQuery())
-                            );
                         }
 
                         Class<? extends PredatorInterceptor> runtimeInterceptor = methodInfo.getRuntimeInterceptor();
