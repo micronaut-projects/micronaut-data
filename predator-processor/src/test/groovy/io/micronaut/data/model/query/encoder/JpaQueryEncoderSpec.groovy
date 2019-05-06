@@ -25,7 +25,7 @@ class JpaQueryEncoderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator :p1)"
+                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator :p1)"
         encodedQuery.parameters == ['p1': 'test']
 
         where:
@@ -53,7 +53,7 @@ class JpaQueryEncoderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property IN (:p1))"
+                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property IN (:p1))"
         encodedQuery.parameters == ['p1': 'test']
 
         where:
@@ -76,7 +76,7 @@ class JpaQueryEncoderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE (($entity.decapitalizedName.$property >= :p1 AND $entity.decapitalizedName.$property <= :p2))"
+                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE (($entity.decapitalizedName.$property >= :p1 AND $entity.decapitalizedName.$property <= :p2))"
         encodedQuery.parameters == ['p1': 'from', 'p2': 'to']
 
         where:
@@ -98,7 +98,7 @@ class JpaQueryEncoderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT DISTINCT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator )"
+                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator )"
         encodedQuery.parameters.isEmpty()
 
         where:

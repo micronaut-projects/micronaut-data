@@ -102,8 +102,7 @@ public class JpaQueryEncoder implements QueryEncoder {
 
     private static void buildSelect(StringBuilder queryString, List<Query.Projection> projectionList, String logicalName, PersistentEntity entity) {
         if (projectionList.isEmpty()) {
-            queryString.append(DISTINCT_CLAUSE)
-                    .append(logicalName);
+            queryString.append(logicalName);
         }
         else {
             for (Iterator i = projectionList.iterator(); i.hasNext();) {

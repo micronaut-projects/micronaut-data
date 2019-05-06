@@ -52,9 +52,9 @@ interface MyInterface {
 
         where:
         returnType | method                  | arguments        | query                                                                              | interceptor
-        Person     | 'findByName'            | [name: String]   | "SELECT DISTINCT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindOneInterceptor.class
-        Person     | 'getByAgeGreaterThan'   | [age: int.class] | "SELECT DISTINCT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindOneInterceptor.class
-        Person     | 'retrieveByAgeLessThan' | [age: int.class] | "SELECT DISTINCT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindOneInterceptor.class
+        Person     | 'findByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindOneInterceptor.class
+        Person     | 'getByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindOneInterceptor.class
+        Person     | 'retrieveByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindOneInterceptor.class
         Person     | 'savePerson'            | [person: Person] | null                                                                               | SaveEntityInterceptor.class
     }
 
@@ -91,9 +91,9 @@ interface MyInterface {
 
         where:
         returnType | method                     | arguments        | query                                                                              | interceptor
-        Person     | 'findAllByName'            | [name: String]   | "SELECT DISTINCT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindAllByInterceptor.class
-        Person     | 'getAllByAgeGreaterThan'   | [age: int.class] | "SELECT DISTINCT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindAllByInterceptor.class
-        Person     | 'retrieveAllByAgeLessThan' | [age: int.class] | "SELECT DISTINCT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindAllByInterceptor.class
+        Person     | 'findAllByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindAllByInterceptor.class
+        Person     | 'getAllByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindAllByInterceptor.class
+        Person     | 'retrieveAllByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindAllByInterceptor.class
     }
 
     boolean validateParameterBinding(String query, ExecutableMethod method, Map<String, Class<? extends Object>> argumentTypes) {
