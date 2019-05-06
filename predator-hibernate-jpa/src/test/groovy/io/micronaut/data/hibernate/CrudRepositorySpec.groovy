@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
@@ -16,7 +17,15 @@ import javax.validation.ConstraintViolationException
 class CrudRepositorySpec extends Specification {
 
     @Inject
+    @Shared
     PersonCrudRepository crudRepository
+
+    def setupSpec() {
+        crudRepository.saveAll([
+                new Person(name: "Jeff"),
+                new Person(name: "James")
+        ])
+    }
 
     void "test save one"() {
         when:"one is saved"
@@ -27,9 +36,9 @@ class CrudRepositorySpec extends Specification {
         person.id != null
         crudRepository.findById(person.id).isPresent()
         crudRepository.existsById(person.id)
-        crudRepository.count() == 1
+        crudRepository.count() == 3
         crudRepository.count("Fred") == 1
-        crudRepository.findAll().size() == 1
+        crudRepository.findAll().size() == 3
     }
 
     void "test save many"() {
@@ -42,10 +51,10 @@ class CrudRepositorySpec extends Specification {
         then:"all are saved"
         people.every { it.id != null }
         people.every { crudRepository.findById(it.id).isPresent() }
-        crudRepository.findAll().size() == 3
-        crudRepository.count() == 3
+        crudRepository.findAll().size() == 5
+        crudRepository.count() == 5
         crudRepository.count("Fred") == 1
-        crudRepository.list(Pageable.from(1)).size() == 2
+        crudRepository.list(Pageable.from(1)).size() == 4
         crudRepository.list(Pageable.from(0, 1)).size() == 1
     }
 
@@ -55,6 +64,7 @@ class CrudRepositorySpec extends Specification {
 
         then:"the person is not null"
         person != null
+        person.name == 'Frank'
         crudRepository.findById(person.id).isPresent()
 
         when:"the person is deleted"
@@ -62,5 +72,45 @@ class CrudRepositorySpec extends Specification {
 
         then:"They are really deleted"
         !crudRepository.findById(person.id).isPresent()
+        crudRepository.count() == 4
     }
+
+    void "test delete by multiple ids"() {
+        when:"A search for some people"
+        def people = crudRepository.findByNameLike("J%")
+
+        then:
+        people.size() == 2
+
+        when:"the people are deleted"
+        crudRepository.deleteAll(people)
+
+        then:"Only the correct people are deleted"
+        people.every { !crudRepository.findById(it.id).isPresent() }
+        crudRepository.count() == 2
+    }
+
+    void "test delete one"() {
+        when:"A specific person is found and deleted"
+        def bob = crudRepository.findByName("Bob")
+
+        then:"The person is present"
+        bob != null
+
+        when:"The person is deleted"
+        crudRepository.delete(bob)
+
+        then:"They are deleted"
+        !crudRepository.findById(bob.id).isPresent()
+        crudRepository.count() == 1
+    }
+
+    void "test delete all"() {
+        when:"everything is deleted"
+        crudRepository.deleteAll()
+
+        then:"data is gone"
+        crudRepository.count() == 0
+    }
+
 }

@@ -87,25 +87,25 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     void deleteById(@Nonnull @NotNull ID id);
-//
-//    /**
-//     * Deletes a given entity.
-//     *
-//     * @param entity The entity to delete
-//     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
-//     */
-//    void delete(@Nonnull @NotNull E entity);
-//
-//    /**
-//     * Deletes the given entities.
-//     *
-//     * @param entities The entities to delete
-//     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
-//     */
-//    void deleteAll(@Nonnull @NotNull Iterable<? extends E> entities);
-//
-//    /**
-//     * Deletes all entities managed by the repository.
-//     */
-//    void deleteAll();
+
+    /**
+     * Deletes a given entity.
+     *
+     * @param entity The entity to delete
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     */
+    void delete(@Nonnull @NotNull E entity);
+
+    /**
+     * Deletes the given entities.
+     *
+     * @param entities The entities to delete
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
+     */
+    void deleteAll(@Nonnull @NotNull Iterable<? extends E> entities);
+
+    /**
+     * Deletes all entities managed by the repository.
+     */
+    void deleteAll();
 }

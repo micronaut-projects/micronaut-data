@@ -25,7 +25,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
 
     @Nullable
     @Override
-    public final PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         ParameterElement paginationParameter = matchContext.getPaginationParameter();
         List<ParameterElement> queryParams = Arrays.stream(parameters).filter(p -> p != paginationParameter).collect(Collectors.toList());

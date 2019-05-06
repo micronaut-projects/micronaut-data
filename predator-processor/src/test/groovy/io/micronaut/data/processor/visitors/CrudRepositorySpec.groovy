@@ -6,7 +6,9 @@ import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.CountAllInterceptor
 import io.micronaut.data.intercept.CountByInterceptor
+import io.micronaut.data.intercept.DeleteAllInterceptor
 import io.micronaut.data.intercept.DeleteByInterceptor
+import io.micronaut.data.intercept.DeleteOneInterceptor
 import io.micronaut.data.intercept.ExistsByInterceptor
 import io.micronaut.data.intercept.FindAllByInterceptor
 import io.micronaut.data.intercept.FindAllInterceptor
@@ -120,6 +122,37 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteById.synthesize(PredatorMethod).idType() == Long
         deleteById.synthesize(Query).value() == "DELETE $Person.name person WHERE (person.id = :p1)"
         deleteById.synthesize(PredatorMethod).interceptor() == DeleteByInterceptor
+
+        when:"the deleteAll method is retrieved"
+        def deleteAll = beanDefinition.getRequiredMethod("deleteAll")
+
+        then:"The method is configured correctly"
+        deleteAll
+        deleteAll.getReturnType().type == void .class
+        deleteAll.synthesize(PredatorMethod).rootEntity() == Person
+        deleteAll.synthesize(PredatorMethod).idType() == Long
+        deleteAll.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
+
+        when:"the deleteOne method is retrieved"
+        def deleteOne = beanDefinition.getRequiredMethod("delete", Person)
+
+        then:"The method is configured correctly"
+        deleteOne
+        deleteOne.getReturnType().type == void .class
+        deleteOne.synthesize(PredatorMethod).rootEntity() == Person
+        deleteOne.synthesize(PredatorMethod).idType() == Long
+        deleteOne.synthesize(PredatorMethod).interceptor() == DeleteOneInterceptor
+
+        when:"the deleteAll with ids"
+        def deleteIds = beanDefinition.getRequiredMethod("deleteAll", Iterable)
+
+        then:"The method is configured correctly"
+        deleteIds
+        deleteIds.getReturnType().type == void .class
+        deleteIds.synthesize(PredatorMethod).rootEntity() == Person
+        deleteIds.synthesize(PredatorMethod).idType() == Long
+        deleteIds.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
+
     }
 
 

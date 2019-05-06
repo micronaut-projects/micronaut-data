@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
@@ -132,10 +133,29 @@ public class HibernateJpaDatastore implements Datastore {
 
     @Override
     public Optional<Number> executeUpdate(String query, Map<String, Object> parameterValues) {
-        Query q = sessionFactory.getCurrentSession().createQuery(query);
+        Query<?> q = sessionFactory.getCurrentSession().createQuery(query);
         bindParameters(q, parameterValues);
         return Optional.of(q.executeUpdate());
 
+    }
+
+    @Override
+    public <T> void deleteAll(@Nonnull Class<T> entityType, @Nonnull Iterable<? extends T> entities) {
+        Session session = sessionFactory.getCurrentSession();
+        for (T entity : entities) {
+            session.remove(entity);
+        }
+    }
+
+    @Override
+    public <T> void deleteAll(@Nonnull Class<T> entityType) {
+        Session session = sessionFactory.getCurrentSession();
+        CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
+        criteriaDelete.from(entityType);
+        Query query = session.createQuery(
+                criteriaDelete
+        );
+        query.executeUpdate();
     }
 
     private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {

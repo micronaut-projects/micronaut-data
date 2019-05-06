@@ -43,7 +43,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new SaveAllMethod(),
             new ListMethod(),
             new CountMethod(),
-            new DeleteByMethod()
+            new DeleteByMethod(),
+            new DeleteMethod()
     );
 
     public RepositoryTypeElementVisitor() {
@@ -111,6 +112,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     case DELETE:
                                         encodedQuery = queryEncoder.encodeDelete(queryObject);
                                     break;
+                                    case UPDATE:
+                                        // TODO
+                                        encodedQuery = queryEncoder.encodeUpdate(queryObject, Collections.emptyList());
+                                    break;
+                                    case INSERT:
+                                        // TODO
                                     default:
                                         encodedQuery = queryEncoder.encodeQuery(queryObject);
                                 }

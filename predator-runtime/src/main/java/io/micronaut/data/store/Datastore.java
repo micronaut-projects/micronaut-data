@@ -153,5 +153,20 @@ public interface Datastore {
      * @param query The query
      * @param parameterValues the parameter values
      */
-    Optional<Number> executeUpdate(String query, Map<String, Object> parameterValues);
+    @Nonnull Optional<Number> executeUpdate(@Nonnull String query, @Nonnull Map<String, Object> parameterValues);
+
+    /**
+     * Deletes all the entities of the given type
+     * @param entityType The entity type
+     * @param entities The entities
+     * @param <T> The generic type
+     */
+    <T> void deleteAll(@Nonnull Class<T> entityType, @Nonnull Iterable<? extends T> entities);
+
+    /**
+     * Deletes all the entities of the given type
+     * @param entityType The entity type
+     * @param <T> The generic type
+     */
+    <T> void deleteAll(@Nonnull Class<T> entityType);
 }

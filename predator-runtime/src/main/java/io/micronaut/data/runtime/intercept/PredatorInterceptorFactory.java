@@ -69,6 +69,27 @@ public class PredatorInterceptorFactory {
         return new DefaultDeleteByInterceptor(datastore);
     }
 
+    /**
+     * Creates the {@link DeleteAllInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link DeleteAllInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected DeleteAllInterceptor deleteAllInterceptor(Datastore datastore) {
+        return new DefaultDeleteAllInterceptor(datastore);
+    }
+
+    /**
+     * Creates the {@link DeleteOneInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link DeleteOneInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected DeleteOneInterceptor deleteOneInterceptor(Datastore datastore) {
+        return new DefaultDefaultOneInterceptor(datastore);
+    }
 
     /**
      * Creates the {@link CountAllInterceptor} instances for each configured {@link Datastore}.
