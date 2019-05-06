@@ -9,12 +9,10 @@ import org.hibernate.query.Query;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.EntityManagerFactory;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.CriteriaQuery;
-import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
@@ -102,7 +100,7 @@ public class HibernateJpaDatastore implements Datastore {
     }
 
     private <T> void bindPageable(Query<T> q, @Nonnull Pageable pageable) {
-        int max = pageable.getMax();
+        int max = pageable.getSize();
         if (max > 0) {
             q.setMaxResults(max);
         }

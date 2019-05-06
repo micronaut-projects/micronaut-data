@@ -22,4 +22,7 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
     @Query("from Person p where p.name = :n")
     List<Person> listPeople(String n);
+
+    @Query("from Person p where p.name = :n")
+    Person queryByName(String n);
 }

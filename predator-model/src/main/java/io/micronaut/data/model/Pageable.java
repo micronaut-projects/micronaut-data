@@ -21,7 +21,7 @@ public interface Pageable extends Sort {
      * Maximum size of the page to be returned. A value of -1 indicates no maximum.
      * @return size of the requested page of items
      */
-    default int getMax() {
+    default int getSize() {
         return -1;
     }
 

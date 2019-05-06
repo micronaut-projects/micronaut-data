@@ -45,7 +45,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new CountMethod(),
             new DeleteByMethod(),
             new DeleteMethod(),
-            new QueryListMethod()
+            new QueryListMethod(),
+            new QueryOneMethod()
     );
 
     public RepositoryTypeElementVisitor() {

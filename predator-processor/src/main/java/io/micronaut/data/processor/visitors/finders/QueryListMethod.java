@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 public class QueryListMethod extends ListMethod {
 
-    public static final int POSITION = DEFAULT_POSITION - 200;
+    static final int POSITION = DEFAULT_POSITION - 200;
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(":([a-zA-Z0-9]+)");
 
     @Override
@@ -30,7 +30,22 @@ public class QueryListMethod extends ListMethod {
 
     @Nullable
     @Override
-    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public final PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+        RawQuery query = buildRawQuery(matchContext);
+        if (query == null) {
+            return null;
+        }
+        return buildMatchInfo(matchContext, query);
+    }
+
+    protected PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
+        return new PredatorMethodInfo(
+                query,
+                FindAllByInterceptor.class
+        );
+    }
+
+    private RawQuery buildRawQuery(@Nonnull MethodMatchContext matchContext) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.getValue(Query.class, String.class).orElseThrow(() ->
             new IllegalStateException("Should only be called if Query has value!")
@@ -52,9 +67,7 @@ public class QueryListMethod extends ListMethod {
             }
         }
 
-        return new PredatorMethodInfo(
-            new RawQuery(matchContext.getEntity(), parameterBinding),
-            FindAllByInterceptor.class
-        );
+        RawQuery query = new RawQuery(matchContext.getEntity(), parameterBinding);
+        return query;
     }
 }

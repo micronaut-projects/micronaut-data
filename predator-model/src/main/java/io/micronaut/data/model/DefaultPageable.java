@@ -36,7 +36,7 @@ class DefaultPageable implements Pageable {
     }
 
     @Override
-    public @Min(1) int getMax() {
+    public @Min(1) int getSize() {
         return max;
     }
 

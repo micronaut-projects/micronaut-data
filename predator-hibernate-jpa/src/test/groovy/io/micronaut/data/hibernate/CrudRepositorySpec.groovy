@@ -66,6 +66,7 @@ class CrudRepositorySpec extends Specification {
         then:"the person is not null"
         person != null
         person.name == 'Frank'
+        crudRepository.queryByName("Frank").name == person.name
         crudRepository.findById(person.id).isPresent()
 
         when:"the person is deleted"

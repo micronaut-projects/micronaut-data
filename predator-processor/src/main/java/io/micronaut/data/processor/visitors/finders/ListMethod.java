@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
+import javax.annotation.Nonnull;
 import java.util.regex.Pattern;
 
 public class ListMethod extends AbstractListMethod {
@@ -22,12 +23,21 @@ public class ListMethod extends AbstractListMethod {
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
         ClassElement returnType = methodElement.getGenericReturnType();
-        return super.isMethodMatch(methodElement) && isValidReturnType(returnType);
+        return super.isMethodMatch(methodElement) && isValidReturnTypeInternal(returnType);
     }
 
-    private boolean isValidReturnType(ClassElement returnType) {
+    private boolean isValidReturnTypeInternal(ClassElement returnType) {
         return returnType != null &&
-                returnType.isAssignable(Iterable.class) &&
+                isValidReturnType(returnType);
+    }
+
+    /**
+     * Dictates whether this is a valid return type.
+     * @param returnType The return type.
+     * @return True if it is
+     */
+    protected boolean isValidReturnType(@Nonnull ClassElement returnType) {
+        return returnType.isAssignable(Iterable.class) &&
                 hasPersistedTypeArgument(returnType);
     }
 
