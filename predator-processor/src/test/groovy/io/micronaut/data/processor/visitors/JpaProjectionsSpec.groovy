@@ -5,6 +5,7 @@ import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.intercept.FindAllByInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.query.encoder.entities.Person
@@ -21,7 +22,7 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
 
 
     @Unroll
-    void "test JPA project finder project for method #method"() {
+    void "test JPA single result projection finder for method #method"() {
         given:
         BeanDefinition beanDefinition = compileRepository(returnType, method, arguments)
         def parameterTypes = arguments.values() as Class[]
@@ -46,7 +47,32 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
     }
 
     @Unroll
-    void "test JPA project finder project for method #method - compile errors"() {
+    void "test JPA iterable result projection finder for method #method"() {
+        given:
+        BeanDefinition beanDefinition = compileListRepository(resultType, method, arguments)
+        def parameterTypes = arguments.values() as Class[]
+
+        expect: "The finder is valid"
+        !beanDefinition.isAbstract()
+        beanDefinition != null
+
+        def executableMethod = beanDefinition.getRequiredMethod(method, parameterTypes)
+        def ann = executableMethod.synthesize(PredatorMethod)
+        ann.interceptor() == interceptor
+        ann.rootEntity() == rootEntity
+        ann.resultType() == resultType
+        executableMethod.getValue(PredatorMethod, "interceptor", Class).get() == interceptor
+        executableMethod.getValue(Query, String).orElse(null) == query
+
+        where:
+        rootEntity | resultType    | method               | arguments      | query                                                                               | interceptor
+        Person     | Person        | 'findDistinctByName' | [name: String] | "SELECT DISTINCT(person) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindAllByInterceptor
+        Person     | Integer.class | 'findAgeByName'      | [name: String] | "SELECT person.age FROM $rootEntity.name AS person WHERE (person.name = :p1)"       | FindAllByInterceptor
+        Person     | String     | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(person.name) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindAllByInterceptor.class
+    }
+
+    @Unroll
+    void "test JPA projection finder for method #method - compile errors"() {
         when:
         compileRepository(
                 returnType,
@@ -77,6 +103,26 @@ import io.micronaut.data.model.query.encoder.entities.Person;
 @Repository
 interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
     $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+}
+
+
+""")
+        return beanDefinition
+    }
+
+    @CompileStatic
+    BeanDefinition compileListRepository(Class returnType, String method, Map<String, Class> arguments) {
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Repository;
+${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
+import io.micronaut.data.model.query.encoder.entities.Person;
+import java.util.List;
+
+@Repository
+interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
 
 

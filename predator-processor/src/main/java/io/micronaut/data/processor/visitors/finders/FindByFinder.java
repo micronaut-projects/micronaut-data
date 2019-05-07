@@ -38,17 +38,19 @@ public class FindByFinder extends AbstractFindByFinder {
                     matchContext.fail("Query results in a type [" + queryResultType.getName()  + "] whilst method returns an incompatible type: " + returnType.getName());
                 }
             } else if(typeArgument != null) {
+                if (!areTypesCompatible(typeArgument, queryResultType)) {
+                    matchContext.fail("Query results in a type [" + queryResultType.getName()  + "] whilst method returns an incompatible type: " + returnType.getName());
+                    return null;
+                }
 
                 if (returnType.isAssignable(Iterable.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindAllByInterceptor.class);
                 } else if(returnType.isAssignable(Stream.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindStreamInterceptor.class);
-                } else if(returnType.isAssignable(Optional.class) && TypeUtils.hasPersistedTypeArgument(returnType)) {
+                } else if(returnType.isAssignable(Optional.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindOptionalInterceptor.class);
-                } else if(returnType.isAssignable(Publisher.class) && TypeUtils.hasPersistedTypeArgument(returnType)) {
+                } else if(returnType.isAssignable(Publisher.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindReactivePublisherInterceptor.class);
-                } else {
-                    // TODO: handle projections, reactive single etc.
                 }
             }
         }
@@ -81,7 +83,7 @@ public class FindByFinder extends AbstractFindByFinder {
             return returnType.hasStereotype(Introspected.class) ||
                     returnType.isPrimitive() ||
                     ClassUtils.isJavaBasicType(returnType.getName()) ||
-                    TypeUtils.isEntityContainerType(returnType);
+                    TypeUtils.isContainerType(returnType);
         }
         return false;
     }

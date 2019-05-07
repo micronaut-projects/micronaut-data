@@ -28,7 +28,7 @@ public class DefaultFindAllByInterceptor<T> extends AbstractQueryInterceptor<T, 
     public Iterable<Object> intercept(MethodInvocationContext<T, Iterable<Object>> context) {
         PreparedQuery preparedQuery = prepareQuery(context);
         Iterable<?> iterable = datastore.findAll(
-                preparedQuery.getRootEntity(),
+                preparedQuery.getResultType(),
                 preparedQuery.getQuery(),
                 preparedQuery.getParameterValues(),
                 preparedQuery.getPageable()

@@ -17,7 +17,7 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
     public Optional<Object> intercept(MethodInvocationContext<T, Optional<Object>> context) {
         PreparedQuery preparedQuery = prepareQuery(context);
         return Optional.ofNullable(datastore.findOne(
-                preparedQuery.getRootEntity(),
+                preparedQuery.getResultType(),
                 preparedQuery.getQuery(),
                 preparedQuery.getParameterValues()
         ));
