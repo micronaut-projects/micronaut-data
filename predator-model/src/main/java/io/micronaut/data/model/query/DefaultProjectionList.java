@@ -1,5 +1,6 @@
 package io.micronaut.data.model.query;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.query.factory.Projections;
 
 import java.util.ArrayList;
@@ -17,7 +18,8 @@ class DefaultProjectionList implements ProjectionList {
         return Collections.unmodifiableList(projections);
     }
 
-    public ProjectionList add(Query.Projection p) {
+    @Override
+    public ProjectionList add(@NonNull Query.Projection p) {
         projections.add(p);
         return this;
     }
@@ -48,6 +50,7 @@ class DefaultProjectionList implements ProjectionList {
     }
 
     public ProjectionList distinct() {
+        add(Projections.distinct());
         return this;
     }
 

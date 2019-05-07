@@ -40,6 +40,7 @@ public class QueryListMethod extends ListMethod {
 
     protected PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
         return new PredatorMethodInfo(
+                matchContext.getEntity(),
                 query,
                 FindAllByInterceptor.class
         );

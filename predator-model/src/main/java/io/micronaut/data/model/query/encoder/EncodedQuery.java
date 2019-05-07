@@ -21,9 +21,8 @@ public interface EncodedQuery {
     @Nonnull String getQuery();
 
     /**
-     * A map containing the parameter names and the references to the
-     * {@link io.micronaut.data.model.query.QueryParameter} names such that
-     * the values can be resolved at runtime.
+     * A map containing the parameter names and the references to the {@link io.micronaut.core.type.Argument} names which define the values.
+     * These can be used to resolve the runtime values to bind to the prepared statement.
      *
      * @return The map
      */

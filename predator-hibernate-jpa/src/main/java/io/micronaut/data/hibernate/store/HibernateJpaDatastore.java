@@ -1,5 +1,6 @@
 package io.micronaut.data.hibernate.store;
 
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.store.Datastore;
@@ -46,7 +47,7 @@ public class HibernateJpaDatastore implements Datastore {
     @Nullable
     @Override
     public <T> T findOne(@Nonnull Class<T> resultType, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
-        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, resultType);
+        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
         bindParameters(q, parameters);
         q.setMaxResults(1);
         try {
@@ -92,7 +93,7 @@ public class HibernateJpaDatastore implements Datastore {
             @Nonnull Map<String, Object> parameterValues,
             @Nonnull Pageable pageable) {
 
-        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, resultType);
+        Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
         bindParameters(q, parameterValues);
         bindPageable(q, pageable);
 

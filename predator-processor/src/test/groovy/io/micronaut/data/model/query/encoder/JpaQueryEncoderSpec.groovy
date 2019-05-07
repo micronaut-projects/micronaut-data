@@ -40,6 +40,32 @@ class JpaQueryEncoderSpec extends Specification {
     }
 
     @Unroll
+    void "test encode query #method - property projections"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(type)
+        Query q = Query.from(entity)
+        q."$method"(property, QueryParameter.of('test'))
+        q.projections()."$projection"(property)
+        QueryEncoder encoder = new JpaQueryEncoder()
+        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+
+
+        expect:
+        encodedQuery != null
+        encodedQuery.query ==
+                "SELECT ${projection.toUpperCase()}(${entity.decapitalizedName}.$property) FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator :p1)"
+        encodedQuery.parameters == ['p1': 'test']
+
+        where:
+        type   | method | property | operator | projection
+        Person | 'eq'   | 'name'   | '='      | 'max'
+        Person | 'gt'   | 'name'   | '>'      | 'min'
+        Person | 'lt'   | 'name'   | '<'      | 'sum'
+        Person | 'ge'   | 'name'   | '>='     | 'avg'
+        Person | 'le'   | 'name'   | '<='     | 'distinct'
+    }
+
+    @Unroll
     void "test encode query #method - inList"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)

@@ -1,13 +1,10 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.intercept.DeleteByInterceptor;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
-import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.regex.Pattern;
 
@@ -26,18 +23,14 @@ public class DeleteByMethod extends AbstractFindByFinder {
 
     @Nullable
     @Override
-    protected PredatorMethodInfo buildMethodInfo(
-            @Nullable Query query,
-            @Nonnull PersistentEntity entity,
-            @Nonnull VisitorContext visitorContext,
-            @Nonnull MethodElement methodElement,
-            @Nullable ParameterElement paginationParameter,
-            @Nonnull ParameterElement[] parameters) {
+    protected PredatorMethodInfo buildInfo(
+            MethodMatchContext matchContext, ClassElement queryResultType, @Nullable Query query) {
         if (query == null) {
-            visitorContext.fail("Unable to implement delete method with no query arguments", methodElement);
+            matchContext.fail("Unable to implement delete method with no query arguments");
             return null;
         } else {
             return new PredatorMethodInfo(
+                    null,
                     query,
                     DeleteByInterceptor.class,
                     PredatorMethodInfo.OperationType.DELETE

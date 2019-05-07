@@ -38,7 +38,7 @@ public class SaveMethod extends AbstractPatternBasedMethod implements PredatorMe
                 ClassElement t = p.getGenericType();
                 return t != null && t.hasAnnotation(Persisted.class);
             })) {
-                return new PredatorMethodInfo(null, SaveEntityInterceptor.class);
+                return new PredatorMethodInfo(matchContext.getReturnType(), null, SaveEntityInterceptor.class);
             }
         }
         visitorContext.fail("Cannot implement save method for specified arguments and return type", matchContext.getMethodElement());

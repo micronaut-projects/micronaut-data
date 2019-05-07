@@ -19,10 +19,7 @@ import io.micronaut.data.model.query.encoder.EncodedQuery;
 import io.micronaut.data.model.query.encoder.QueryEncoder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.finders.*;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.Element;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -46,7 +43,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new DeleteByMethod(),
             new DeleteMethod(),
             new QueryListMethod(),
-            new QueryOneMethod()
+            new QueryOneMethod(),
+            new CountByMethod()
     );
 
     public RepositoryTypeElementVisitor() {
@@ -79,10 +77,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
+        ClassElement genericReturnType = element.getGenericReturnType();
+        if (genericReturnType != null && queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
             for (PredatorMethodCandidate finder : finders) {
                 if (finder.isMethodMatch(element)) {
-                    PersistentEntity entity = resolvePersistentEntity(element);
+                    SourcePersistentEntity entity = resolvePersistentEntity(element, context);
+                    if (entity == null) {
+                        context.fail("Unable to establish persistent entity to query", element);
+                        return;
+                    }
+
                     String idType = resolveIdType(entity);
                     ParameterElement[] parameters = element.getParameters();
                     ParameterElement pageParam = Arrays.stream(parameters).filter(p -> {
@@ -90,15 +94,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         return t != null && Arrays.stream(paginationTypes).anyMatch(t::isAssignable);
                     }).findFirst().orElse(null);
 
-
-                    if (entity == null) {
-                        context.fail("Unable to establish persistent entity to query", element);
-                        return;
-                    }
-
                     PredatorMethodInfo methodInfo = finder.buildMatchInfo(new MethodMatchContext(
                             entity,
                             context,
+                            genericReturnType,
                             element,
                             pageParam,
                             parameters
@@ -149,6 +148,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             Map<String, String> finalParameterBinding = parameterBinding;
                             element.annotate(PredatorMethod.class, annotationBuilder -> {
                                 annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
+                                TypedElement resultType = methodInfo.getResultType();
+                                if (resultType != null) {
+                                    annotationBuilder.member("resultType", new AnnotationClassValue<>(resultType.getName()));
+                                }
                                 if (idType != null) {
                                     annotationBuilder.member("idType", idType);
                                 }
@@ -202,9 +205,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private @Nullable PersistentEntity resolvePersistentEntity(MethodElement element) {
+    private @Nullable SourcePersistentEntity resolvePersistentEntity(MethodElement element, VisitorContext context) {
         ClassElement returnType = element.getGenericReturnType();
-        PersistentEntity entity = resolvePersistentEntity(returnType);
+        SourcePersistentEntity entity = resolvePersistentEntity(returnType);
         if (entity != null) {
             return entity;
         } else {
@@ -216,17 +219,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             }
         }
+        context.fail("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
         return null;
     }
 
-    private PersistentEntity resolvePersistentEntity(ClassElement returnType) {
+    private SourcePersistentEntity resolvePersistentEntity(ClassElement returnType) {
         if (returnType != null) {
             if (returnType.hasAnnotation(Persisted.class)) {
                 return new SourcePersistentEntity(returnType);
             } else {
                 Collection<ClassElement> typeArguments = returnType.getTypeArguments().values();
                 for (ClassElement typeArgument : typeArguments) {
-                    PersistentEntity entity = resolvePersistentEntity(typeArgument);
+                    SourcePersistentEntity entity = resolvePersistentEntity(typeArgument);
                     if (entity != null) {
                         return entity;
                     }

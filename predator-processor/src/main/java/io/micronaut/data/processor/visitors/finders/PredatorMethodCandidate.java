@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -24,7 +25,7 @@ public interface PredatorMethodCandidate extends Ordered {
      * @param methodElement The method element
      * @return true if it does
      */
-    boolean isMethodMatch(MethodElement methodElement);
+    boolean isMethodMatch(@NonNull MethodElement methodElement);
 
     @Override
     default int getOrder() {

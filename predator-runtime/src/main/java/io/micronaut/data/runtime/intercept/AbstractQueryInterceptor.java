@@ -1,5 +1,7 @@
 package io.micronaut.data.runtime.intercept;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -12,8 +14,6 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.store.Datastore;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,12 +27,13 @@ import java.util.Map;
  * @author graemerocher
  */
 abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
-    static final String MEMBER_ROOT_MEMBER = "rootEntity";
+    private static final String MEMBER_ROOT_MEMBER = "rootEntity";
+    private static final String MEMBER_RESULT_TYPE = "resultType";
     private static final String MEMBER_ID_TYPE = "idType";
     private static final String MEMBER_PARAMETER_BINDING = "parameterBinding";
     protected final Datastore datastore;
 
-    AbstractQueryInterceptor(@Nonnull Datastore datastore) {
+    AbstractQueryInterceptor(@NonNull Datastore datastore) {
         ArgumentUtils.requireNonNull("datastore", datastore);
         this.datastore = datastore;
     }
@@ -54,6 +55,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
+        Class resultType = annotation.get(MEMBER_RESULT_TYPE, Class.class).orElse(rootEntity);
         Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
                 .orElse(null);
 
@@ -77,6 +79,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         Pageable pageable = ConversionService.SHARED.convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
 
         return new PreparedQuery(
+                resultType,
                 rootEntity,
                 idType,
                 query,
@@ -85,7 +88,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         );
     }
 
-    @Nonnull
+    @NonNull
     protected Class getRequiredRootEntity(MethodInvocationContext context) {
         return context.getValue(PredatorMethod.class, MEMBER_ROOT_MEMBER, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
@@ -108,10 +111,11 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * Represents a prepared query.
      */
     protected final class PreparedQuery {
-        private final @Nonnull Class rootEntity;
+        private final @NonNull Class resultType;
+        private final @NonNull Class rootEntity;
         private final @Nullable Class idType;
-        private final @Nonnull String query;
-        private final @Nonnull Map<String, Object> parameterValues;
+        private final @NonNull String query;
+        private final @NonNull Map<String, Object> parameterValues;
         private final Pageable pageable;
 
         /**
@@ -122,11 +126,13 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
          * @param parameterValues The parameter values
          */
         PreparedQuery(
-                @Nonnull Class rootEntity,
+                @NonNull Class resultType,
+                @NonNull Class rootEntity,
                 @Nullable Class<?> idType,
-                @Nonnull String query,
+                @NonNull String query,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable) {
+            this.resultType = resultType;
             this.rootEntity = rootEntity;
             this.idType = idType;
             this.query = query;
@@ -134,27 +140,32 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             this.pageable = pageable;
         }
 
+        @NonNull
+        public Class<?> getResultType() {
+            return resultType;
+        }
+
         @Nullable
         public Class getIdType() {
             return idType;
         }
 
-        @Nonnull
+        @NonNull
         public Class<?> getRootEntity() {
             return rootEntity;
         }
 
-        @Nonnull
+        @NonNull
         public String getQuery() {
             return query;
         }
 
-        @Nonnull
+        @NonNull
         public Map<String, Object> getParameterValues() {
             return parameterValues;
         }
 
-        @Nonnull
+        @NonNull
         public Pageable getPageable() {
             return pageable != null ? pageable : Pageable.unpaged();
         }

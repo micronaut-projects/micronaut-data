@@ -1,16 +1,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.ExistsByInterceptor;
-import io.micronaut.data.intercept.PredatorInterceptor;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
-import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.regex.Pattern;
 
 public class ExistsByFinder extends AbstractFindByFinder {
@@ -23,32 +19,22 @@ public class ExistsByFinder extends AbstractFindByFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && isCompatibleReturnType(methodElement);
+        return super.isMethodMatch(methodElement) && doesReturnBoolean(methodElement);
     }
 
     @Nullable
     @Override
-    protected PredatorMethodInfo buildMethodInfo(
-            @Nullable Query query,
-            @Nonnull PersistentEntity entity,
-            @Nonnull VisitorContext visitorContext,
-            @Nonnull MethodElement methodElement,
-            @Nullable ParameterElement paginationParameter,
-            @Nonnull ParameterElement[] parameters) {
+    protected PredatorMethodInfo buildInfo(
+            @NonNull MethodMatchContext matchContext,
+            ClassElement queryResultType, @Nullable Query query) {
         if (query != null) {
             query.projections().id();
         }
         return new PredatorMethodInfo(
+                matchContext.getReturnType(),
                 query,
                 ExistsByInterceptor.class
         );
     }
 
-    private boolean isCompatibleReturnType(MethodElement methodElement) {
-        ClassElement returnType = methodElement.getGenericReturnType();
-        if (returnType != null) {
-            return returnType.isAssignable(Boolean.class) || (returnType.isPrimitive() && returnType.getName().equals("boolean"));
-        }
-        return false;
-    }
 }

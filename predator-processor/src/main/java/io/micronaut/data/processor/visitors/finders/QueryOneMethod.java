@@ -15,6 +15,7 @@ public class QueryOneMethod extends QueryListMethod {
     @Override
     protected PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
         return new PredatorMethodInfo(
+            matchContext.getReturnType(),
             query,
             FindOneInterceptor.class
         );

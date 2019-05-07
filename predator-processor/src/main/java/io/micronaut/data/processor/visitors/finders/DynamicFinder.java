@@ -1,9 +1,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -28,30 +31,21 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
     public static final String OPERATOR_OR = "Or";
     public static final String OPERATOR_AND = "And";
-    private static final String[] DEFAULT_OPERATORS = {OPERATOR_AND, OPERATOR_OR};
     private Pattern[] operatorPatterns;
     private String[] operators;
 
     private static Pattern methodExpressionPattern;
-    private static final Pattern[] defaultOperationPatterns;
-
     private static final String NOT = "Not";
-    private static final Map<String, Constructor> methodExpressions = new LinkedHashMap<String, Constructor>();
+    private static final Map<String, Constructor> methodExpressions = new LinkedHashMap<>();
 
     static {
-        defaultOperationPatterns = new Pattern[2];
-        for (int i = 0; i < DEFAULT_OPERATORS.length; i++) {
-            String defaultOperator = DEFAULT_OPERATORS[i];
-            defaultOperationPatterns[i] = Pattern.compile("(\\w+)(" + defaultOperator + ")(\\p{Upper})(\\w+)");
-        }
-
         // populate the default method expressions
         try {
             Class[] classes = {
-                    MethodExpression.Equal.class, MethodExpression.NotEqual.class, MethodExpression.NotInList.class, MethodExpression.InList.class, MethodExpression.InRange.class, MethodExpression.Between.class, MethodExpression.Like.class, MethodExpression.Ilike.class, MethodExpression.Rlike.class,
-                    MethodExpression.GreaterThanEquals.class, MethodExpression.LessThanEquals.class, MethodExpression.GreaterThan.class,
-                    MethodExpression.LessThan.class, MethodExpression.IsNull.class, MethodExpression.IsNotNull.class, MethodExpression.IsEmpty.class,
-                    MethodExpression.IsEmpty.class, MethodExpression.IsNotEmpty.class };
+                    CriterionMethodExpression.Equal.class, CriterionMethodExpression.NotEqual.class, CriterionMethodExpression.NotInList.class, CriterionMethodExpression.InList.class, CriterionMethodExpression.InRange.class, CriterionMethodExpression.Between.class, CriterionMethodExpression.Like.class, CriterionMethodExpression.Ilike.class, CriterionMethodExpression.Rlike.class,
+                    CriterionMethodExpression.GreaterThanEquals.class, CriterionMethodExpression.LessThanEquals.class, CriterionMethodExpression.GreaterThan.class,
+                    CriterionMethodExpression.LessThan.class, CriterionMethodExpression.IsNull.class, CriterionMethodExpression.IsNotNull.class, CriterionMethodExpression.IsEmpty.class,
+                    CriterionMethodExpression.IsEmpty.class, CriterionMethodExpression.IsNotEmpty.class };
             Class[] constructorParamTypes = { String.class };
             for (Class c : classes) {
                 methodExpressions.put(c.getSimpleName(), c.getConstructor(constructorParamTypes));
@@ -63,6 +57,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         }
 
         resetMethodExpressionPattern();
+
     }
 
 
@@ -75,12 +70,12 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
     @Override
     public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
-        List<MethodExpression> expressions = new ArrayList<>();
+        List<CriterionMethodExpression> expressions = new ArrayList<>();
+        List<ProjectionMethodExpression> projectionExpressions = new ArrayList<>();
         ParameterElement[] parameters = matchContext.getParameters();
         MethodElement methodElement = matchContext.getMethodElement();
         String methodName = methodElement.getName();
-        ParameterElement paginationParameter = matchContext.getPaginationParameter();
-        PersistentEntity entity = matchContext.getEntity();
+        SourcePersistentEntity entity = matchContext.getEntity();
         VisitorContext visitorContext = matchContext.getVisitorContext();
         Matcher match = pattern.matcher(methodName);
         // find match
@@ -89,29 +84,9 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         String[] queryParameters;
         int totalRequiredArguments = 0;
         // get the sequence clauses
-        final String querySequence;
-        int groupCount = match.groupCount();
-        if (groupCount == 6) {
-            String booleanProperty = match.group(4);
-            if (booleanProperty == null) {
-                booleanProperty = match.group(6);
-                querySequence = null;
-            }
-            else {
-                querySequence = match.group(5);
-            }
-            Boolean arg = Boolean.TRUE;
-            if (booleanProperty.matches("Not[A-Z].*")) {
-                booleanProperty = booleanProperty.substring(3);
-                arg = Boolean.FALSE;
-            }
-            MethodExpression booleanExpression = findMethodExpression(booleanProperty);
-//          TODO:  booleanExpression.set(new Object[]{arg});
-            expressions.add(booleanExpression);
-        }
-        else {
-            querySequence = match.group(4);
-        }
+        final String querySequence = match.group(4);
+        String projectionSequence = match.group(3);
+
         // if it contains operator and split
         boolean containsOperator = false;
         String operatorInUse = null;
@@ -128,7 +103,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                     // calculating the number of arguments required for the expression
                     int argumentCursor = 0;
                     for (String queryParameter : queryParameters) {
-                        MethodExpression currentExpression = findMethodExpression(queryParameter);
+                        CriterionMethodExpression currentExpression = findMethodExpression(queryParameter);
                         final int requiredArgs = currentExpression.getArgumentsRequired();
                         // populate the arguments into the Expression from the argument list
                         String[] currentArguments = new String[requiredArgs];
@@ -152,9 +127,49 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                 }
             }
         }
+
+        if (StringUtils.isNotEmpty(projectionSequence)) {
+            boolean processedThroughOperator = false;
+            for (int i = 0; i < operators.length; i++) {
+                Matcher currentMatcher = operatorPatterns[i].matcher(projectionSequence);
+                if (currentMatcher.find()) {
+                    processedThroughOperator = true;
+                    String[] projections = projectionSequence.split(operators[i]);
+
+                    // loop through query parameters and create expressions
+                    // calculating the number of arguments required for the expression
+                    for (String projection : projections) {
+                        ProjectionMethodExpression currentExpression = ProjectionMethodExpression.matchProjection(
+                                matchContext,
+                                projection
+                        );
+
+                        if (currentExpression != null) {
+                            // add to list of expressions
+                            projectionExpressions.add(currentExpression);
+                        }
+
+                    }
+                    break;
+                }
+            }
+
+            if (!processedThroughOperator) {
+                ProjectionMethodExpression currentExpression = ProjectionMethodExpression.matchProjection(
+                        matchContext,
+                        projectionSequence
+                );
+
+                if (currentExpression != null) {
+                    // add to list of expressions
+                    projectionExpressions.add(currentExpression);
+                }
+            }
+        }
+
         // otherwise there is only one expression
         if (!containsOperator && querySequence != null) {
-            MethodExpression solo = findMethodExpression(querySequence);
+            CriterionMethodExpression solo = findMethodExpression(querySequence);
 
             final int requiredArguments = solo.getArgumentsRequired();
             if (requiredArguments  > parameters.length) {
@@ -179,45 +194,55 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         }
 
         Query query = Query.from(entity);
-        if (operatorInUse != null && "Or".equalsIgnoreCase(operatorInUse)) {
+        ClassElement queryResultType = entity.getClassElement();
+
+        if (CollectionUtils.isNotEmpty(projectionExpressions)) {
+
+            if (projectionExpressions.size() == 1) {
+                // only one projection so the return type should match the project result type
+                ProjectionMethodExpression projection = projectionExpressions.get(0);
+                queryResultType = projection.getExpectedResultType();
+                projection.apply(matchContext, query);
+            } else {
+                for (ProjectionMethodExpression projectionExpression : projectionExpressions) {
+                    projectionExpression.apply(matchContext, query);
+                }
+            }
+        }
+
+        if ("Or".equalsIgnoreCase(operatorInUse)) {
             Query.Disjunction disjunction = new Query.Disjunction();
-            for (MethodExpression expression : expressions) {
+            for (CriterionMethodExpression expression : expressions) {
                 disjunction.add(expression.createCriterion());
             }
 
             query.add(disjunction);
         } else {
-            for (MethodExpression expression : expressions) {
+            for (CriterionMethodExpression expression : expressions) {
                 query.add(expression.createCriterion());
             }
         }
-        return buildMethodInfo(
-                query,
-                entity,
-                visitorContext,
-                methodElement,
-                paginationParameter,
-                parameters
+
+        return buildInfo(
+                matchContext,
+                queryResultType,
+                query
         );
     }
 
     /**
      * Build the method info
+     *
+     * @param matchContext The method match context
+     * @param queryResultType The query result type
      * @param query The query
-     * @param entity The entity
-     * @param visitorContext the visitor context
-     * @param methodElement the method element
-     * @param paginationParameter the pagination parameter
-     * @param parameters The parameters
      * @return The method info
      */
-    protected abstract @Nullable PredatorMethodInfo buildMethodInfo(
-            @Nullable Query query,
-            @Nonnull PersistentEntity entity,
-            @Nonnull VisitorContext visitorContext,
-            @Nonnull MethodElement methodElement,
-            @Nullable ParameterElement paginationParameter,
-            @Nonnull ParameterElement[] parameters);
+    protected abstract @Nullable PredatorMethodInfo buildInfo(
+            @NonNull MethodMatchContext matchContext,
+            @NonNull ClassElement queryResultType,
+            @Nullable Query query
+    );
 
     /**
      * Checks whether the given method is a match
@@ -230,15 +255,15 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 
-    private MethodExpression getInitializedExpression(MethodExpression currentExpression, String[] currentArguments) {
+    private CriterionMethodExpression getInitializedExpression(CriterionMethodExpression currentExpression, String[] currentArguments) {
         currentExpression.setArgumentNames(currentArguments);
         return currentExpression;
     }
 
-    protected static MethodExpression findMethodExpression(String expression) {
-        MethodExpression me = null;
+    protected static CriterionMethodExpression findMethodExpression(String expression) {
+        CriterionMethodExpression me = null;
         final Matcher matcher = methodExpressionPattern.matcher(expression);
-        Class methodExpressionClass = MethodExpression.Equal.class;
+        Class methodExpressionClass = CriterionMethodExpression.Equal.class;
         Constructor methodExpressionConstructor = null;
         String clause = methodExpressionClass.getSimpleName();
         if (matcher.find()) {
@@ -264,17 +289,17 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         propertyName = NameUtils.decapitalize(propertyName);
         if(methodExpressionConstructor != null) {
             try {
-                me = (MethodExpression) methodExpressionConstructor.newInstance(propertyName);
+                me = (CriterionMethodExpression) methodExpressionConstructor.newInstance(propertyName);
             } catch (Exception e) {
                 // ignore
             }
         }
         if (me == null) {
-            me = new MethodExpression.Equal(propertyName);
+            me = new CriterionMethodExpression.Equal(propertyName);
         }
         if(negation) {
-            final MethodExpression finalMe = me;
-            return new MethodExpression(propertyName) {
+            final CriterionMethodExpression finalMe = me;
+            return new CriterionMethodExpression(propertyName) {
                 @Override
                 public Query.Criterion createCriterion() {
                     return new Query.Negation().add(finalMe.createCriterion());
@@ -302,7 +327,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
     private static String calcPropertyName(String queryParameter, String clause) {
         String propName;
-        if (clause != null && !clause.equals(MethodExpression.Equal.class.getSimpleName())) {
+        if (clause != null && !clause.equals(CriterionMethodExpression.Equal.class.getSimpleName())) {
             int i = queryParameter.indexOf(clause);
             propName = queryParameter.substring(0,i);
         }

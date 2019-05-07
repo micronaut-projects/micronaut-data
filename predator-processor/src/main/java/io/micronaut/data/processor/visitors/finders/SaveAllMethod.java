@@ -33,6 +33,7 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
 
         return new PredatorMethodInfo(
                 null,
+                null,
                 SaveAllInterceptor.class
         );
     }

@@ -1,5 +1,6 @@
 dependencies {
 	annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+	compile 'com.github.spotbugs:spotbugs-annotations:3.1.12'
 	compile "io.micronaut:micronaut-inject:$micronautVersion"
 	compile "io.micronaut:micronaut-validation:$micronautVersion"
 	compile "io.micronaut:micronaut-aop:$micronautVersion"

@@ -13,7 +13,7 @@ import java.util.Arrays;
  * @author graemerocher
  * @since 1.0
  */
-public abstract class MethodExpression {
+public abstract class CriterionMethodExpression {
 
     protected String propertyName;
     protected String[] argumentNames;
@@ -21,7 +21,7 @@ public abstract class MethodExpression {
 
     public abstract Query.Criterion createCriterion();
 
-    protected MethodExpression(String propertyName) {
+    protected CriterionMethodExpression(String propertyName) {
         this.propertyName = propertyName;
     }
 
@@ -41,7 +41,7 @@ public abstract class MethodExpression {
         return propertyName;
     }
 
-    public static class GreaterThan extends MethodExpression {
+    public static class GreaterThan extends CriterionMethodExpression {
         public GreaterThan(String propertyName) {
             super(propertyName);
         }
@@ -52,7 +52,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class GreaterThanEquals extends MethodExpression {
+    public static class GreaterThanEquals extends CriterionMethodExpression {
         public GreaterThanEquals(String propertyName) {
             super(propertyName);
         }
@@ -63,7 +63,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class LessThan extends MethodExpression {
+    public static class LessThan extends CriterionMethodExpression {
         public LessThan(String propertyName) {
             super(propertyName);
         }
@@ -74,7 +74,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class LessThanEquals extends MethodExpression {
+    public static class LessThanEquals extends CriterionMethodExpression {
         public LessThanEquals(String propertyName) {
             super(propertyName);
         }
@@ -85,7 +85,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class Like extends MethodExpression {
+    public static class Like extends CriterionMethodExpression {
         public Like(String propertyName) {
             super(propertyName);
         }
@@ -96,7 +96,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class Ilike extends MethodExpression {
+    public static class Ilike extends CriterionMethodExpression {
         public Ilike(String propertyName) {
             super(propertyName);
         }
@@ -107,7 +107,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class Rlike extends MethodExpression {
+    public static class Rlike extends CriterionMethodExpression {
         public Rlike(String propertyName) {
             super(propertyName);
         }
@@ -118,7 +118,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class NotInList extends MethodExpression {
+    public static class NotInList extends CriterionMethodExpression {
         public NotInList(String propertyName) {
             super(propertyName);
         }
@@ -131,7 +131,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class InList extends MethodExpression {
+    public static class InList extends CriterionMethodExpression {
 
         public InList(String propertyName) {
             super(propertyName);
@@ -143,7 +143,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class Between extends MethodExpression {
+    public static class Between extends CriterionMethodExpression {
 
         public Between(String propertyName) {
             super(propertyName);
@@ -156,7 +156,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class InRange extends MethodExpression {
+    public static class InRange extends CriterionMethodExpression {
 
         public InRange(String propertyName) {
             super(propertyName);
@@ -169,7 +169,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class IsNull extends MethodExpression {
+    public static class IsNull extends CriterionMethodExpression {
 
         public IsNull(String propertyName) {
             super(propertyName);
@@ -183,7 +183,7 @@ public abstract class MethodExpression {
 
     }
 
-    public static class IsNotNull extends MethodExpression {
+    public static class IsNotNull extends CriterionMethodExpression {
 
         public IsNotNull(String propertyName) {
             super(propertyName);
@@ -197,7 +197,7 @@ public abstract class MethodExpression {
 
     }
 
-    public static class IsEmpty extends MethodExpression {
+    public static class IsEmpty extends CriterionMethodExpression {
 
         public IsEmpty(String propertyName) {
             super(propertyName);
@@ -211,7 +211,7 @@ public abstract class MethodExpression {
 
     }
 
-    public static class IsNotEmpty extends MethodExpression {
+    public static class IsNotEmpty extends CriterionMethodExpression {
 
         public IsNotEmpty(String propertyName) {
             super(propertyName);
@@ -224,7 +224,7 @@ public abstract class MethodExpression {
         }
     }
 
-    public static class Equal extends MethodExpression {
+    public static class Equal extends CriterionMethodExpression {
 
         public Equal(String propertyName) {
             super(propertyName);
@@ -241,7 +241,7 @@ public abstract class MethodExpression {
         }
 
     }
-    public static class NotEqual extends MethodExpression {
+    public static class NotEqual extends CriterionMethodExpression {
 
         public NotEqual(String propertyName) {
             super(propertyName);

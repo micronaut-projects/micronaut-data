@@ -1,9 +1,9 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.FindAllByInterceptor;
 import io.micronaut.data.intercept.FindAllInterceptor;
-import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
 
-    public AbstractListMethod(@Nonnull Pattern pattern) {
+    protected AbstractListMethod(@Nonnull Pattern pattern) {
         super(pattern);
     }
 
@@ -45,26 +45,30 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                     query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
                 }
             }
-            return buildInfo(query);
+            return buildInfo(matchContext, query);
         } else {
-            return buildInfo(null);
+            return buildInfo(matchContext, null);
         }
     }
 
     /**
      * Builds the info.
+     *
+     * @param matchContext The match context
      * @param query The query
      * @return The info
      */
     protected @Nonnull PredatorMethodInfo buildInfo(
-            @Nullable Query query) {
+            @NonNull MethodMatchContext matchContext, @Nullable Query query) {
         if (query != null) {
             return new PredatorMethodInfo(
+                    matchContext.getEntity(),
                     query,
                     FindAllByInterceptor.class
             );
         } else {
             return new PredatorMethodInfo(
+                    matchContext.getEntity(),
                     null,
                     FindAllInterceptor.class
             );

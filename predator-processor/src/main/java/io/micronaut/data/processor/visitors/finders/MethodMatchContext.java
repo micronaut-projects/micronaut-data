@@ -1,12 +1,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.model.PersistentEntity;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * A match context for finding a matching method.
@@ -16,43 +16,51 @@ import javax.annotation.Nullable;
  */
 public class MethodMatchContext {
 
-    @Nonnull
-    private final PersistentEntity entity;
-    @Nonnull
+    @NonNull
+    private final SourcePersistentEntity entity;
+    @NonNull
     private final VisitorContext visitorContext;
-    @Nonnull
-    final MethodElement methodElement;
+    @NonNull
+    private final MethodElement methodElement;
     @Nullable
-    final ParameterElement paginationParameter;
-    @Nonnull
-    final ParameterElement[] parameters;
+    private final ParameterElement paginationParameter;
+    @NonNull
+    private final ParameterElement[] parameters;
+    private final ClassElement returnType;
 
     public MethodMatchContext(
-            @Nonnull PersistentEntity entity,
-            @Nonnull VisitorContext visitorContext,
-            @Nonnull MethodElement methodElement,
+            @NonNull SourcePersistentEntity entity,
+            @NonNull VisitorContext visitorContext,
+            @NonNull ClassElement returnType,
+            @NonNull MethodElement methodElement,
             @Nullable ParameterElement paginationParameter,
-            @Nonnull ParameterElement[] parameters) {
+            @NonNull ParameterElement[] parameters) {
         this.entity = entity;
         this.visitorContext = visitorContext;
         this.methodElement = methodElement;
         this.paginationParameter = paginationParameter;
         this.parameters = parameters;
+        this.returnType = returnType;
     }
 
-    @Nonnull
-    public PersistentEntity getEntity() {
+    @NonNull
+    public SourcePersistentEntity getEntity() {
         return entity;
     }
 
-    @Nonnull
+    @NonNull
     public VisitorContext getVisitorContext() {
         return visitorContext;
     }
 
-    @Nonnull
+    @NonNull
     public MethodElement getMethodElement() {
         return methodElement;
+    }
+
+    @NonNull
+    public ClassElement getReturnType() {
+        return returnType;
     }
 
     @Nullable
@@ -60,8 +68,16 @@ public class MethodMatchContext {
         return paginationParameter;
     }
 
-    @Nonnull
+    @NonNull
     public ParameterElement[] getParameters() {
         return parameters;
+    }
+
+    /**
+     * Fail compilation with the given message for the current method.
+     * @param message The message
+     */
+    public void fail(@NonNull String message) {
+        getVisitorContext().fail(message, methodElement);
     }
 }

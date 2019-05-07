@@ -32,6 +32,14 @@ public @interface PredatorMethod {
     Class<?> rootEntity();
 
     /**
+     * The computed result type. This represents the type that is to be read from the database. For example for a {@link java.util.List}
+     * this would return the value of the generic type parameter {@code E}. Or for an entity result the return type itself.
+     *
+     * @return The result type
+     */
+    Class<?> resultType();
+
+    /**
      * The identifier type for the method being executed
      * @return The ID type
      */

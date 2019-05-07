@@ -42,10 +42,12 @@ public class DeleteMethod extends AbstractListMethod {
 
                     return new PredatorMethodInfo(
                             null,
+                            null,
                             DeleteOneInterceptor.class
                     );
                 } else if(isIterableOfEntity(genericType)) {
                     return new PredatorMethodInfo(
+                            null,
                             null,
                             DeleteAllInterceptor.class
                     );
@@ -57,20 +59,24 @@ public class DeleteMethod extends AbstractListMethod {
 
     /**
      * Builds the info.
+     *
+     * @param matchContext
      * @param query The query
      * @return The info
      */
     @Override
     protected @Nonnull
     PredatorMethodInfo buildInfo(
-            @Nullable Query query) {
+            MethodMatchContext matchContext, @Nullable Query query) {
         if (query != null) {
             return new PredatorMethodInfo(
+                    null,
                     query,
                     DeleteByInterceptor.class
             );
         } else {
             return new PredatorMethodInfo(
+                    null,
                     null,
                     DeleteAllInterceptor.class
             );

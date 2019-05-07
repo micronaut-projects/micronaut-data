@@ -25,4 +25,6 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
     @Query("from Person p where p.name = :n")
     Person queryByName(String n);
+
+    int findAgeByName(String name);
 }

@@ -1,5 +1,7 @@
 package io.micronaut.data.model.query;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 /**
  * Models a list of projections
  *
@@ -95,4 +97,11 @@ public interface ProjectionList {
      * @return The PropertyProjection instance
      */
     ProjectionList avg(String name);
+
+    /**
+     * Adds a projection to the projection list.
+     * @param projection The projection to add
+     * @return This list
+     */
+    ProjectionList add(@NonNull Query.Projection projection);
 }

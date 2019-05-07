@@ -111,8 +111,11 @@ public class JpaQueryEncoder implements QueryEncoder {
                     queryString.append("COUNT(")
                             .append(logicalName)
                             .append(CLOSE_BRACKET);
-                }
-                else if (projection instanceof Query.IdProjection) {
+                } else if(projection instanceof Query.DistinctProjection) {
+                    queryString.append("DISTINCT(")
+                            .append(logicalName)
+                            .append(CLOSE_BRACKET);
+                } else if (projection instanceof Query.IdProjection) {
                     queryString.append(logicalName)
                             .append(DOT)
                             .append(entity.getIdentity().getName());
@@ -125,8 +128,13 @@ public class JpaQueryEncoder implements QueryEncoder {
                                 .append(DOT)
                                 .append(pp.getPropertyName())
                                 .append(CLOSE_BRACKET);
-                    }
-                    else if (projection instanceof Query.SumProjection) {
+                    } else if(projection instanceof Query.DistinctPropertyProjection) {
+                        queryString.append("DISTINCT(")
+                                .append(logicalName)
+                                .append(DOT)
+                                .append(pp.getPropertyName())
+                                .append(CLOSE_BRACKET);
+                    } else if (projection instanceof Query.SumProjection) {
                         queryString.append("SUM(")
                                 .append(logicalName)
                                 .append(DOT)

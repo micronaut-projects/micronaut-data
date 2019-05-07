@@ -14,6 +14,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.ast.TypedElement;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,19 +28,19 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 @Internal
-public class SourcePersistentEntity implements PersistentEntity {
+public class SourcePersistentEntity implements PersistentEntity, TypedElement {
 
     private final ClassElement classElement;
     private final Map<String, PropertyElement> beanProperties;
-    private final PersistentProperty[] id;
-    private final PersistentProperty version;
+    private final SourcePersistentProperty[] id;
+    private final SourcePersistentProperty version;
 
     public SourcePersistentEntity(ClassElement classElement) {
         this.classElement = classElement;
         final List<PropertyElement> beanProperties = classElement.getBeanProperties();
         this.beanProperties = new LinkedHashMap<>(beanProperties.size());
-        List<PersistentProperty> id = new ArrayList<>(2);
-        PersistentProperty version = null;
+        List<SourcePersistentProperty> id = new ArrayList<>(2);
+        SourcePersistentProperty version = null;
         for (PropertyElement beanProperty : beanProperties) {
             if (beanProperty.isReadOnly() || beanProperty.hasStereotype(Transient.class)) {
                 continue;
@@ -54,7 +55,24 @@ public class SourcePersistentEntity implements PersistentEntity {
         }
 
         this.version = version;
-        this.id = id.toArray(new PersistentProperty[0]);
+        this.id = id.toArray(new SourcePersistentProperty[0]);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SourcePersistentEntity that = (SourcePersistentEntity) o;
+        return classElement.getName().equals(that.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return classElement.getName().hashCode();
     }
 
     @Override
@@ -68,6 +86,26 @@ public class SourcePersistentEntity implements PersistentEntity {
         return classElement.getName();
     }
 
+    @Override
+    public String getSimpleName() {
+        return classElement.getSimpleName();
+    }
+
+    @Override
+    public boolean isProtected() {
+        return classElement.isProtected();
+    }
+
+    @Override
+    public boolean isPublic() {
+        return classElement.isPublic();
+    }
+
+    @Override
+    public Object getNativeType() {
+        return classElement.getNativeType();
+    }
+
     @Nullable
     @Override
     public PersistentProperty[] getCompositeIdentity() {
@@ -76,7 +114,7 @@ public class SourcePersistentEntity implements PersistentEntity {
 
     @Nullable
     @Override
-    public PersistentProperty getIdentity() {
+    public SourcePersistentProperty getIdentity() {
         if (ArrayUtils.isNotEmpty(id)) {
             return id[0];
         }
@@ -85,7 +123,7 @@ public class SourcePersistentEntity implements PersistentEntity {
 
     @Nullable
     @Override
-    public PersistentProperty getVersion() {
+    public SourcePersistentProperty getVersion() {
         return version;
     }
 
@@ -118,11 +156,19 @@ public class SourcePersistentEntity implements PersistentEntity {
 
     @Nullable
     @Override
-    public PersistentProperty getPropertyByName(String name) {
+    public SourcePersistentProperty getPropertyByName(String name) {
         if (StringUtils.isNotEmpty(name)) {
             final PropertyElement prop = beanProperties.get(name);
             if (prop != null) {
-                return new SourcePersistentProperty(this, prop);
+                if (prop.hasStereotype(Relation.class)) {
+                    if (isEmbedded(prop)) {
+                        return new SourceEmbedded(this, prop);
+                    } else {
+                        return new SourceAssociation(this, prop);
+                    }
+                } else {
+                    return new SourcePersistentProperty(this, prop);
+                }
             }
         }
         return null;
@@ -151,5 +197,11 @@ public class SourcePersistentEntity implements PersistentEntity {
 
     private boolean isEmbedded(PropertyElement bp) {
         return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
+    }
+
+    @Nullable
+    @Override
+    public ClassElement getType() {
+        return classElement;
     }
 }

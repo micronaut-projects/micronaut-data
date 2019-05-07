@@ -6,11 +6,14 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
+import io.micronaut.inject.ast.TypedElement;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.Objects;
 
 @Internal
-class SourcePersistentProperty implements PersistentProperty {
+public class SourcePersistentProperty implements PersistentProperty, TypedElement {
 
     private final SourcePersistentEntity owner;
     private final PropertyElement propertyElement;
@@ -18,6 +21,20 @@ class SourcePersistentProperty implements PersistentProperty {
     SourcePersistentProperty(SourcePersistentEntity owner, PropertyElement propertyElement) {
         this.owner = owner;
         this.propertyElement = propertyElement;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SourcePersistentProperty that = (SourcePersistentProperty) o;
+        return owner.equals(that.owner) &&
+                propertyElement.getName().equals(that.propertyElement.getName());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(owner, propertyElement.getName());
     }
 
     @Override
@@ -29,6 +46,21 @@ class SourcePersistentProperty implements PersistentProperty {
     @Override
     public String getName() {
         return propertyElement.getName();
+    }
+
+    @Override
+    public boolean isProtected() {
+        return propertyElement.isProtected();
+    }
+
+    @Override
+    public boolean isPublic() {
+        return propertyElement.isPublic();
+    }
+
+    @Override
+    public Object getNativeType() {
+        return propertyElement.getNativeType();
     }
 
     @Nonnull
@@ -49,5 +81,11 @@ class SourcePersistentProperty implements PersistentProperty {
 
     public PropertyElement getPropertyElement() {
         return propertyElement;
+    }
+
+    @Nullable
+    @Override
+    public ClassElement getType() {
+        return propertyElement.getType();
     }
 }

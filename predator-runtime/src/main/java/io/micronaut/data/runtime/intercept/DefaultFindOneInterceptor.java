@@ -25,7 +25,7 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
     public Object intercept(MethodInvocationContext<T, Object> context) {
         PreparedQuery preparedQuery = prepareQuery(context);
         return datastore.findOne(
-                preparedQuery.getRootEntity(),
+                preparedQuery.getResultType(),
                 preparedQuery.getQuery(),
                 preparedQuery.getParameterValues()
         );
