@@ -113,6 +113,7 @@ public abstract class ProjectionMethodExpression {
     /**
      * The distinct projection creator
      */
+    @SuppressWarnings("unused")
     public static class Distinct extends ProjectionMethodExpression {
 
         private String property;
@@ -159,32 +160,70 @@ public abstract class ProjectionMethodExpression {
     /**
      * Max projection.
      */
+    @SuppressWarnings("unused")
     public static class Max extends Property {
         @Override
         public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
             query.projections().max(getName());
         }
+    }
 
-        @NonNull
+    /**
+     * Sum projection.
+     */
+    @SuppressWarnings("unused")
+    public static class Sum extends Property {
         @Override
-        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement type) {
-            return matchContext.getVisitorContext().getClassElement(Number.class).orElse(super.resolveExpectedType(matchContext, type));
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+            query.projections().sum(getName());
+        }
+
+        @Override
+        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement classElement) {
+            if (TypeUtils.isNumber(classElement)) {
+                return matchContext.getVisitorContext().getClassElement(Long.class)
+                            .orElse(super.resolveExpectedType(matchContext, classElement));
+            } else {
+                return super.resolveExpectedType(matchContext, classElement);
+            }
         }
     }
 
     /**
+     * Avg projection.
+     */
+    @SuppressWarnings("unused")
+    public static class Avg extends Property {
+        @Override
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+            query.projections().avg(getName());
+        }
+
+        @Override
+        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement classElement) {
+            if (TypeUtils.isNumber(classElement)) {
+                return matchContext.getVisitorContext().getClassElement(Double.class)
+                        .orElse(super.resolveExpectedType(matchContext, classElement));
+            } else {
+                return super.resolveExpectedType(matchContext, classElement);
+            }
+        }
+    }
+
+
+    /**
      * Min projection.
      */
+    @SuppressWarnings("unused")
     public static class Min extends Property {
         @Override
         public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
             query.projections().min(getName());
         }
 
-        @NonNull
         @Override
-        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement type) {
-            return matchContext.getVisitorContext().getClassElement(Number.class).orElse(super.resolveExpectedType(matchContext, type));
+        protected ProjectionMethodExpression initProjection(@NonNull MethodMatchContext matchContext, String remaining) {
+            return super.initProjection(matchContext, remaining);
         }
     }
 
@@ -218,8 +257,8 @@ public abstract class ProjectionMethodExpression {
             }
         }
 
-        protected @NonNull ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement type) {
-            return type;
+        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement classElement) {
+            return classElement;
         }
 
         @Override

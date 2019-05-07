@@ -38,7 +38,7 @@ public class ListMethod extends AbstractListMethod {
      */
     protected boolean isValidReturnType(@Nonnull ClassElement returnType) {
         return returnType.isAssignable(Iterable.class) &&
-                hasPersistedTypeArgument(returnType);
+                TypeUtils.hasPersistedTypeArgument(returnType);
     }
 
 }

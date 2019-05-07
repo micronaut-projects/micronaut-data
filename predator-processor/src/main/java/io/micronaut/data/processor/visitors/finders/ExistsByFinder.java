@@ -19,7 +19,7 @@ public class ExistsByFinder extends AbstractFindByFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && doesReturnBoolean(methodElement);
+        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnBoolean(methodElement);
     }
 
     @Nullable

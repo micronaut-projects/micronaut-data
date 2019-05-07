@@ -1,6 +1,8 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.store.Datastore;
 
@@ -24,10 +26,22 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
     @Override
     public Object intercept(MethodInvocationContext<T, Object> context) {
         PreparedQuery preparedQuery = prepareQuery(context);
-        return datastore.findOne(
-                preparedQuery.getResultType(),
+        Class<?> resultType = preparedQuery.getResultType();
+
+        Object result = datastore.findOne(
+                resultType,
                 preparedQuery.getQuery(),
                 preparedQuery.getParameterValues()
         );
+        if (result != null) {
+            ReturnType<Object> returnType = context.getReturnType();
+            if (!returnType.getType().isInstance(result)) {
+                return ConversionService.SHARED.convert(result, returnType.asArgument())
+                            .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + result));
+            } else {
+                return result;
+            }
+        }
+        return result;
     }
 }

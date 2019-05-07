@@ -20,7 +20,7 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
         ParameterElement[] parameters = methodElement.getParameters();
         if(parameters.length == 1) {
             ParameterElement firstParameter = parameters[0];
-            return super.isMethodMatch(methodElement) && isIterableOfEntity(firstParameter.getGenericType());
+            return super.isMethodMatch(methodElement) && TypeUtils.isIterableOfEntity(firstParameter.getGenericType());
         }
         return false;
     }

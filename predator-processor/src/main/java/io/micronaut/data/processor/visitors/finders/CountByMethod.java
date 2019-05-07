@@ -39,6 +39,6 @@ public class CountByMethod extends AbstractFindByFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && doesReturnNumber(methodElement);
+        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnNumber(methodElement);
     }
 }

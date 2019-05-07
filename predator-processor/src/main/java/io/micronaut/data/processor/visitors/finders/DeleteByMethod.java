@@ -18,7 +18,7 @@ public class DeleteByMethod extends AbstractFindByFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && doesReturnVoid(methodElement); // void return
+        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnVoid(methodElement); // void return
     }
 
     @Nullable

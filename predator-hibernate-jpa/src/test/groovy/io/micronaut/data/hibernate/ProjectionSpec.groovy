@@ -32,5 +32,7 @@ class ProjectionSpec extends Specification {
         crudRepository.findAgeByName("Ivan") == 30
         crudRepository.findMaxAgeByNameLike("J%") == 40
         crudRepository.findMinAgeByNameLike("J%") == 35
+        crudRepository.getSumAgeByNameLike("J%") == 75
+        crudRepository.getAvgAgeByNameLike("J%") == 37
     }
 }

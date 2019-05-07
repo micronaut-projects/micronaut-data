@@ -28,7 +28,7 @@ public class DeleteMethod extends AbstractListMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && doesReturnVoid(methodElement); // void return
+        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnVoid(methodElement); // void return
     }
 
     @Nullable
@@ -45,7 +45,7 @@ public class DeleteMethod extends AbstractListMethod {
                             null,
                             DeleteOneInterceptor.class
                     );
-                } else if(isIterableOfEntity(genericType)) {
+                } else if(TypeUtils.isIterableOfEntity(genericType)) {
                     return new PredatorMethodInfo(
                             null,
                             null,

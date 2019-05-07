@@ -25,7 +25,7 @@ public class CountMethod extends AbstractListMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && doesReturnNumber(methodElement);
+        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnNumber(methodElement);
     }
 
     @Nonnull

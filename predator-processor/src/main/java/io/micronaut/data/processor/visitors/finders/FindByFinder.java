@@ -33,7 +33,7 @@ public class FindByFinder extends AbstractFindByFinder {
         if (!returnType.getName().equals("void")) {
             if (returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive()) {
                 if (areTypesCompatible(returnType, queryResultType)) {
-                    return new PredatorMethodInfo(returnType, query, FindOneInterceptor.class);
+                    return new PredatorMethodInfo(queryResultType, query, FindOneInterceptor.class);
                 } else {
                     matchContext.fail("Query results in a type [" + queryResultType.getName()  + "] whilst method returns an incompatible type: " + returnType.getName());
                 }
@@ -43,9 +43,9 @@ public class FindByFinder extends AbstractFindByFinder {
                     return new PredatorMethodInfo(typeArgument, query, FindAllByInterceptor.class);
                 } else if(returnType.isAssignable(Stream.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindStreamInterceptor.class);
-                } else if(returnType.isAssignable(Optional.class) && hasPersistedTypeArgument(returnType)) {
+                } else if(returnType.isAssignable(Optional.class) && TypeUtils.hasPersistedTypeArgument(returnType)) {
                     return new PredatorMethodInfo(typeArgument, query, FindOptionalInterceptor.class);
-                } else if(returnType.isAssignable(Publisher.class) && hasPersistedTypeArgument(returnType)) {
+                } else if(returnType.isAssignable(Publisher.class) && TypeUtils.hasPersistedTypeArgument(returnType)) {
                     return new PredatorMethodInfo(typeArgument, query, FindReactivePublisherInterceptor.class);
                 } else {
                     // TODO: handle projections, reactive single etc.
@@ -61,9 +61,9 @@ public class FindByFinder extends AbstractFindByFinder {
         if (returnType.isAssignable(queryResultType.getName())) {
             return true;
         } else {
-            if (isNumber(returnType) && isNumber(queryResultType)) {
+            if (TypeUtils.isNumber(returnType) && TypeUtils.isNumber(queryResultType)) {
                 return true;
-            } else if(isBoolean(returnType) && isBoolean(queryResultType)) {
+            } else if(TypeUtils.isBoolean(returnType) && TypeUtils.isBoolean(queryResultType)) {
                 return true;
             }
         }
@@ -81,7 +81,7 @@ public class FindByFinder extends AbstractFindByFinder {
             return returnType.hasStereotype(Introspected.class) ||
                     returnType.isPrimitive() ||
                     ClassUtils.isJavaBasicType(returnType.getName()) ||
-                    isEntityContainerType(returnType);
+                    TypeUtils.isEntityContainerType(returnType);
         }
         return false;
     }
