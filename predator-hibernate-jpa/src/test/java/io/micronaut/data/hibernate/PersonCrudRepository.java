@@ -27,4 +27,8 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
     Person queryByName(String n);
 
     int findAgeByName(String name);
+
+    int findMaxAgeByNameLike(String name);
+
+    int findMinAgeByNameLike(String name);
 }

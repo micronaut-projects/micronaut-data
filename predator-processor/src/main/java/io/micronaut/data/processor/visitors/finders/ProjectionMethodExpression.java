@@ -3,12 +3,14 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
+
+import javax.annotation.Nonnull;
 
 
 /**
@@ -53,7 +55,8 @@ public abstract class ProjectionMethodExpression {
 
 
                     if (o instanceof ProjectionMethodExpression) {
-                        ProjectionMethodExpression initialized = ((ProjectionMethodExpression) o).init(matchContext, projection);
+                        ProjectionMethodExpression pme = (ProjectionMethodExpression) o;
+                        ProjectionMethodExpression initialized = pme.init(matchContext, projection);
                         if (initialized != null) {
                             return initialized;
                         }
@@ -92,7 +95,7 @@ public abstract class ProjectionMethodExpression {
      * @param query The query object.
      * @return If the projection couldn't be applied because an error occurred.
      */
-    protected abstract boolean apply(@NonNull MethodMatchContext matchContext, @NonNull Query query);
+    protected abstract void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query);
 
     /**
      * @return The arguments required to satisfy this projection.
@@ -137,13 +140,12 @@ public abstract class ProjectionMethodExpression {
         }
 
         @Override
-        public boolean apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
             if (property == null) {
                 query.projections().distinct();
             } else {
                 query.projections().distinct(property);
             }
-            return true;
         }
 
         @NonNull
@@ -155,9 +157,41 @@ public abstract class ProjectionMethodExpression {
     }
 
     /**
+     * Max projection.
+     */
+    public static class Max extends Property {
+        @Override
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+            query.projections().max(getName());
+        }
+
+        @NonNull
+        @Override
+        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement type) {
+            return matchContext.getVisitorContext().getClassElement(Number.class).orElse(super.resolveExpectedType(matchContext, type));
+        }
+    }
+
+    /**
+     * Min projection.
+     */
+    public static class Min extends Property {
+        @Override
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+            query.projections().min(getName());
+        }
+
+        @NonNull
+        @Override
+        protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement type) {
+            return matchContext.getVisitorContext().getClassElement(Number.class).orElse(super.resolveExpectedType(matchContext, type));
+        }
+    }
+
+    /**
      * The property projection.
      */
-    public static class Property extends ProjectionMethodExpression {
+    public static class Property extends ProjectionMethodExpression implements Named {
 
         private String property;
         private ClassElement expectedType;
@@ -168,20 +202,29 @@ public abstract class ProjectionMethodExpression {
 
         @Override
         protected ProjectionMethodExpression initProjection(@NonNull MethodMatchContext matchContext, String remaining) {
-            this.property = NameUtils.decapitalize(remaining);
-            SourcePersistentProperty pp = matchContext.getEntity().getPropertyByName(property);
-            if (pp == null || pp.getType() == null) {
-                matchContext.fail("Cannot project on non-existent property " + property);
+            if (StringUtils.isEmpty(remaining)) {
+                matchContext.fail(getClass().getSimpleName() + " projection requires a property name");
                 return null;
+            } else {
+
+                this.property = NameUtils.decapitalize(remaining);
+                SourcePersistentProperty pp = matchContext.getEntity().getPropertyByName(property);
+                if (pp == null || pp.getType() == null) {
+                    matchContext.fail("Cannot project on non-existent property " + property);
+                    return null;
+                }
+                this.expectedType = resolveExpectedType(matchContext, pp.getType());
+                return this;
             }
-            this.expectedType = pp.getType();
-            return this;
+        }
+
+        protected @NonNull ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement type) {
+            return type;
         }
 
         @Override
-        public boolean apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
             query.projections().property(property);
-            return true;
         }
 
         @NonNull
@@ -190,6 +233,11 @@ public abstract class ProjectionMethodExpression {
             return expectedType;
         }
 
+        @Nonnull
+        @Override
+        public String getName() {
+            return property;
+        }
     }
 
 }
