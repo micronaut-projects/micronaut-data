@@ -6,14 +6,13 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 import javax.annotation.Nullable;
-import java.util.regex.Pattern;
 
-public class DeleteByMethod extends AbstractFindByFinder {
+public class DeleteByMethod extends DynamicFinder {
 
-    private static final String METHOD_PATTERN = "((delete|remove|erase)(\\S*?)By)([A-Z]\\w*)";
+    protected static final String[] PREFIXES = {"delete", "remove", "erase", "eliminate"};
 
     public DeleteByMethod() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super(PREFIXES);
     }
 
     @Override

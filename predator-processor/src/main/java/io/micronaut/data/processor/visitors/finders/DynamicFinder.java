@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.query.Query;
@@ -31,6 +32,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
     public static final String OPERATOR_OR = "Or";
     public static final String OPERATOR_AND = "And";
+    public static final String[] OPERATORS = { OPERATOR_AND, OPERATOR_OR };
     private Pattern[] operatorPatterns;
     private String[] operators;
 
@@ -60,12 +62,32 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
     }
 
+    protected DynamicFinder(final String...prefixes) {
+        this(compilePattern(prefixes), OPERATORS);
+    }
+
+    protected DynamicFinder(final String[] prefixes, final String[] operators) {
+        this(compilePattern(prefixes), operators);
+    }
+
+    protected DynamicFinder(final Pattern pattern) {
+        this(pattern, OPERATORS);
+    }
 
     protected DynamicFinder(final Pattern pattern, final String[] operators) {
         super(pattern);
         this.operators = operators;
         this.operatorPatterns = new Pattern[operators.length];
         populateOperators(operators);
+    }
+
+    private static Pattern compilePattern(String[] prefixes) {
+        if (ArrayUtils.isEmpty(prefixes)) {
+            throw new IllegalArgumentException("At least one prefix required");
+        }
+        String prefixPattern = String.join("|", prefixes);
+        String patternStr = "((" + prefixPattern + ")(\\S*?)By)([A-Z]\\w*)";
+        return Pattern.compile(patternStr);
     }
 
     @Override

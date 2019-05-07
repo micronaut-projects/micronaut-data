@@ -7,14 +7,10 @@ import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import java.util.regex.Pattern;
-
-public class ExistsByFinder extends AbstractFindByFinder {
-
-    private static final String METHOD_PATTERN = "((exists)(\\S*?)By)([A-Z]\\w*)";
+public class ExistsByFinder extends DynamicFinder {
 
     public ExistsByFinder() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super("exists");
     }
 
     @Override

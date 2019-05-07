@@ -17,12 +17,12 @@ import java.util.stream.Stream;
 /**
  * Finder used to return a single result
  */
-public class FindByFinder extends AbstractFindByFinder {
+public class FindByFinder extends DynamicFinder {
 
-    private static final String METHOD_PATTERN = "((find|get|query|retrieve|read)(\\S*?)By)([A-Z]\\w*)";
+    protected static final String[] PREFIXES = {"find", "get", "query", "retrieve", "read", "search"};
 
     public FindByFinder() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super(PREFIXES);
     }
 
     @Nullable
@@ -35,21 +35,21 @@ public class FindByFinder extends AbstractFindByFinder {
                 if (areTypesCompatible(returnType, queryResultType)) {
                     return new PredatorMethodInfo(queryResultType, query, FindOneInterceptor.class);
                 } else {
-                    matchContext.fail("Query results in a type [" + queryResultType.getName()  + "] whilst method returns an incompatible type: " + returnType.getName());
+                    matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
                 }
-            } else if(typeArgument != null) {
+            } else if (typeArgument != null) {
                 if (!areTypesCompatible(typeArgument, queryResultType)) {
-                    matchContext.fail("Query results in a type [" + queryResultType.getName()  + "] whilst method returns an incompatible type: " + returnType.getName());
+                    matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
                     return null;
                 }
 
                 if (returnType.isAssignable(Iterable.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindAllByInterceptor.class);
-                } else if(returnType.isAssignable(Stream.class)) {
+                } else if (returnType.isAssignable(Stream.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindStreamInterceptor.class);
-                } else if(returnType.isAssignable(Optional.class)) {
+                } else if (returnType.isAssignable(Optional.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindOptionalInterceptor.class);
-                } else if(returnType.isAssignable(Publisher.class)) {
+                } else if (returnType.isAssignable(Publisher.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindReactivePublisherInterceptor.class);
                 }
             }
@@ -65,7 +65,7 @@ public class FindByFinder extends AbstractFindByFinder {
         } else {
             if (TypeUtils.isNumber(returnType) && TypeUtils.isNumber(queryResultType)) {
                 return true;
-            } else if(TypeUtils.isBoolean(returnType) && TypeUtils.isBoolean(queryResultType)) {
+            } else if (TypeUtils.isBoolean(returnType) && TypeUtils.isBoolean(queryResultType)) {
                 return true;
             }
         }

@@ -8,14 +8,11 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 import javax.annotation.Nullable;
-import java.util.regex.Pattern;
 
-public class CountByMethod extends AbstractFindByFinder {
-
-    private static final String METHOD_PATTERN = "((count)(\\S*?)By)([A-Z]\\w*)";
+public class CountByMethod extends DynamicFinder {
 
     public CountByMethod() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super("count");
     }
 
     @Nullable
