@@ -37,4 +37,8 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
     long getAvgAgeByNameLike(String name);
 
     List<Integer> readAgeByNameLike(String name);
+
+    List<Person> findByNameLikeOrderByAge(String name);
+
+    List<Person> findByNameLikeOrderByAgeDesc(String name);
 }

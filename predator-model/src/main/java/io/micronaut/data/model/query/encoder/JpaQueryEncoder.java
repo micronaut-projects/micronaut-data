@@ -8,6 +8,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
+import io.micronaut.data.model.query.Sort;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -719,17 +720,24 @@ public class JpaQueryEncoder implements QueryEncoder {
     }
 
     private void appendOrder(Query query, QueryState queryState) {
-//        if (!orders.isEmpty()) {
-//            query.append( ORDER_BY_CLAUSE);
-//            for (Query.Order order : orders) {
-//                query.append(queryState)
-//                        .append(DOT)
-//                        .append(order.getProperty())
-//                        .append(SPACE)
-//                        .append(order.getDirection().toString())
-//                        .append(SPACE);
-//            }
-//        }
+        List<Sort.Order> orders = query.getOrderBy();
+        if (!orders.isEmpty()) {
+
+            StringBuilder buff = queryState.query;
+            buff.append( ORDER_BY_CLAUSE);
+            Iterator<Sort.Order> i = orders.iterator();
+            while (i.hasNext()) {
+                Sort.Order order = i.next();
+                buff.append(queryState.logicalName)
+                        .append(DOT)
+                        .append(order.getProperty())
+                        .append(SPACE)
+                        .append(order.getDirection().toString());
+                if (i.hasNext()) {
+                    buff.append(",");
+                }
+            }
+        }
     }
 
     private static void buildWhereClauseForCriterion(

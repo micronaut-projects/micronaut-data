@@ -3,6 +3,7 @@ package io.micronaut.data.model.query.encoder
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.Query
 import io.micronaut.data.model.query.QueryParameter
+import io.micronaut.data.model.query.Sort
 import io.micronaut.data.model.query.encoder.entities.Person
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.Specification
@@ -10,6 +11,31 @@ import spock.lang.Unroll
 
 class JpaQueryEncoderSpec extends Specification {
 
+    @Unroll
+    void "test encode query #statement - order by"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(type)
+        Query q = Query.from(entity)
+        for (p in props) {
+            q.order(Sort.Order."$direction"(p))
+        }
+
+        QueryEncoder encoder = new JpaQueryEncoder()
+        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+
+
+        expect:
+        encodedQuery != null
+        encodedQuery.query ==
+                "SELECT $entity.decapitalizedName FROM $entity.name AS ${entity.decapitalizedName} ORDER BY ${statement}"
+
+        where:
+        type   | direction | props           | statement
+        Person | 'asc'     | ["name"]        | 'person.name ASC'
+        Person | 'asc'     | ["name", "age"] | 'person.name ASC,person.age ASC'
+        Person | 'desc'     | ["name"]        | 'person.name DESC'
+        Person | 'desc'     | ["name", "age"] | 'person.name DESC,person.age DESC'
+    }
 
     @Unroll
     void "test encode query #method - comparison methods"() {
@@ -106,7 +132,7 @@ class JpaQueryEncoderSpec extends Specification {
         encodedQuery.parameters == ['p1': 'from', 'p2': 'to']
 
         where:
-        type   | method   | property
+        type   | method    | property
         Person | 'between' | 'name'
     }
 

@@ -35,5 +35,7 @@ class ProjectionSpec extends Specification {
         crudRepository.getSumAgeByNameLike("J%") == 75
         crudRepository.getAvgAgeByNameLike("J%") == 37
         crudRepository.readAgeByNameLike("J%").sort() == [35,40]
+        crudRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
+        crudRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
     }
 }
