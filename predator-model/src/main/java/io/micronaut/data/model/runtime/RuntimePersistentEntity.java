@@ -3,6 +3,7 @@ package io.micronaut.data.model.runtime;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Version;
@@ -10,6 +11,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.inject.ast.PropertyElement;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -52,7 +54,7 @@ public class RuntimePersistentEntity implements PersistentEntity {
     @Override
     public PersistentProperty getIdentity() {
         return introspection.getIndexedProperty(Id.class).map(bp ->
-            new RuntimePersistentProperty(this, bp)
+                new RuntimePersistentProperty(this, bp)
         ).orElse(null);
     }
 
@@ -68,10 +70,10 @@ public class RuntimePersistentEntity implements PersistentEntity {
     @Override
     public List<PersistentProperty> getPersistentProperties() {
         return introspection.getBeanProperties()
-                    .stream()
-                    .filter((bp) -> bp.isReadWrite() && !(bp.hasStereotype(Id.class, Version.class)) )
-                    .map(bp -> new RuntimePersistentProperty(this, bp))
-                    .collect(Collectors.toList());
+                .stream()
+                .filter((bp) -> bp.isReadWrite() && !(bp.hasStereotype(Id.class, Version.class)))
+                .map(bp -> new RuntimePersistentProperty(this, bp))
+                .collect(Collectors.toList());
     }
 
     @Nonnull
@@ -95,7 +97,17 @@ public class RuntimePersistentEntity implements PersistentEntity {
     @Nullable
     @Override
     public PersistentProperty getPropertyByName(String name) {
-        return introspection.getProperty(name).map(bp -> new RuntimePersistentProperty(this, bp)).orElse(null);
+        return introspection.getProperty(name).map(bp -> {
+            if (bp.hasStereotype(Relation.class)) {
+                if (isEmbedded(bp)) {
+                    return new RuntimeEmbedded(this, bp);
+                } else {
+                    return new RuntimeAssociation(this, bp);
+                }
+            } else {
+                return new RuntimePersistentProperty(this, bp);
+            }
+        }).orElse(null);
     }
 
     @Nonnull

@@ -4,11 +4,18 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
 
 /**
  * Models a persistent entity and provides an API that can be used both within the compiler and at runtime.
@@ -122,6 +129,52 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     @Nullable PersistentEntity getParentEntity();
 
     /**
+     * Computes a dot separated property path for the given camel case path.
+     * @param camelCasePath The camel case path
+     * @return The dot separated version or null if it cannot be computed
+     */
+    default Optional<String> getPath(String camelCasePath) {
+        List<String> path = Arrays.stream(CAMEL_CASE_SPLIT_PATTERN.split(camelCasePath))
+                                  .map(NameUtils::decapitalize)
+                                  .collect(Collectors.toList());
+
+        if (CollectionUtils.isNotEmpty(path)) {
+            Iterator<String> i = path.iterator();
+            StringBuilder b = new StringBuilder();
+            PersistentEntity currentEntity = this;
+            while(i.hasNext() && currentEntity != null) {
+
+                String name = i.next();
+                PersistentProperty sp = currentEntity.getPropertyByName(name);
+                if (sp != null) {
+                    b.append(name);
+                    if (i.hasNext()) {
+                        b.append('.');
+                    }
+                    if (sp instanceof Association) {
+                        currentEntity = ((Association) sp).getAssociatedEntity();
+                    }
+                } else if (i.hasNext()) {
+                    name = name + NameUtils.capitalize(i.next());
+                    sp = currentEntity.getPropertyByName(name);
+                    if (sp != null) {
+                        b.append(name);
+                        if (i.hasNext()) {
+                            b.append(".");
+                        }
+                    }
+                } else {
+                    return Optional.empty();
+                }
+            }
+
+            return Optional.of(b.toString());
+
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Obtains the root entity of an inheritance hierarchy
      * @return The root entity
      */
@@ -161,4 +214,30 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
         return new RuntimePersistentEntity(introspection);
     }
 
+    /**
+     * Return a property for a dot separated property path.
+     * @param path The path
+     * @return The property
+     */
+    default Optional<PersistentProperty> getPropertyByPath(String path) {
+        if (path.indexOf('.') == -1) {
+            return Optional.ofNullable(getPropertyByName(path));
+        } else {
+            String[] tokens = path.split("\\.");
+            PersistentEntity startingEntity = this;
+            PersistentProperty prop = null;
+            for (String token : tokens) {
+                prop = startingEntity.getPropertyByName(token);
+                if (prop == null) {
+                    return Optional.empty();
+                } else if (prop instanceof Association) {
+                    startingEntity = ((Association) prop).getAssociatedEntity();
+                    if (startingEntity == null) {
+                        return Optional.empty();
+                    }
+                }
+            }
+            return Optional.ofNullable(prop);
+        }
+    }
 }

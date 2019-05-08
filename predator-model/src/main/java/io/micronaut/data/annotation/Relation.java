@@ -38,5 +38,10 @@ public @interface Relation {
          * Embedded association.
          */
         EMBEDDED,
+
+        /**
+         * Many to one association.
+         */
+        MANY_TO_ONE
     }
 }

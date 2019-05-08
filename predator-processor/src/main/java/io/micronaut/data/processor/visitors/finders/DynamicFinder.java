@@ -5,6 +5,10 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -20,6 +24,7 @@ import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base class for dynamic finders. This class is designed to be used only within the compiler
@@ -126,7 +131,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                     // calculating the number of arguments required for the expression
                     int argumentCursor = 0;
                     for (String queryParameter : queryParameters) {
-                        CriterionMethodExpression currentExpression = findMethodExpression(queryParameter);
+                        CriterionMethodExpression currentExpression = findMethodExpression(entity, queryParameter);
                         final int requiredArgs = currentExpression.getArgumentsRequired();
                         // populate the arguments into the Expression from the argument list
                         String[] currentArguments = new String[requiredArgs];
@@ -139,7 +144,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                             ParameterElement argument = parameters[argumentCursor];
                             currentArguments[k] = argument.getName();
                         }
-                        currentExpression = getInitializedExpression(currentExpression, currentArguments);
+                        initializeExpression(currentExpression, currentArguments);
 
 
                         // add to list of expressions
@@ -192,7 +197,8 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
         // otherwise there is only one expression
         if (!containsOperator && querySequence != null) {
-            CriterionMethodExpression solo = findMethodExpression(querySequence);
+            CriterionMethodExpression solo = findMethodExpression(entity, querySequence);
+
 
             final int requiredArguments = solo.getArgumentsRequired();
             if (requiredArguments > parameters.length) {
@@ -205,7 +211,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
             for (int i = 0; i < soloArgs.length; i++) {
                 soloArgs[i] = parameters[i].getName();
             }
-            solo = getInitializedExpression(solo, soloArgs);
+            initializeExpression(solo, soloArgs);
             expressions.add(solo);
         }
 
@@ -253,7 +259,8 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
             query.add(disjunction);
         } else {
             for (CriterionMethodExpression expression : expressions) {
-                query.add(expression.createCriterion());
+                Query.Criterion criterion = expression.createCriterion();
+                query.add(criterion);
             }
         }
 
@@ -316,12 +323,11 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 
-    private CriterionMethodExpression getInitializedExpression(CriterionMethodExpression currentExpression, String[] currentArguments) {
+    private void initializeExpression(CriterionMethodExpression currentExpression, String[] currentArguments) {
         currentExpression.setArgumentNames(currentArguments);
-        return currentExpression;
     }
 
-    protected static CriterionMethodExpression findMethodExpression(String expression) {
+    protected static CriterionMethodExpression findMethodExpression(SourcePersistentEntity entity, String expression) {
         CriterionMethodExpression me = null;
         final Matcher matcher = methodExpressionPattern.matcher(expression);
         Class methodExpressionClass = CriterionMethodExpression.Equal.class;
@@ -348,6 +354,77 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         }
 
         propertyName = NameUtils.decapitalize(propertyName);
+
+        SourcePersistentProperty prop = entity.getPropertyByName(propertyName);
+        if (prop == null) {
+            Optional<String> propertyPath = entity.getPath(propertyName);
+            if (propertyPath.isPresent()) {
+                String[] pathArray = propertyPath.get().split("\\.");
+                PersistentEntity startingEntity = entity;
+                PersistentProperty startingProp;
+                AssociationQuery associationQuery = null;
+                AssociationQuery firstAssociationQuery = null;
+                CriterionMethodExpression subExpression = null;
+                for (String token : pathArray) {
+                    startingProp = startingEntity.getPropertyByName(token);
+                    if (startingProp == null) {
+                        return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
+                    } else if (startingProp instanceof Association) {
+                        Association association = (Association) startingProp;
+                        startingEntity = association.getAssociatedEntity();
+                        if (startingEntity == null) {
+                            return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
+                        } else {
+                            AssociationQuery newSubQuery = new AssociationQuery(association);
+                            if (associationQuery != null) {
+                                associationQuery.add(newSubQuery);
+                            } else {
+                                firstAssociationQuery = newSubQuery;
+                            }
+                            associationQuery = newSubQuery;
+                        }
+                    } else if (associationQuery != null) {
+                        subExpression = buildCriterionExpression(
+                                methodExpressionConstructor,
+                                startingProp.getName(),
+                                negation
+                        );
+                    }
+                }
+                if (firstAssociationQuery != null && subExpression != null) {
+                    AssociationQuery finalQuery = firstAssociationQuery;
+                    CriterionMethodExpression finalSubExpression = subExpression;
+                    return new CriterionMethodExpression(finalQuery.getAssociation().getName()) {
+                        @Override
+                        public Query.Criterion createCriterion() {
+                            Query.Criterion c = finalSubExpression.createCriterion();
+                            finalQuery.add(c);
+                            return finalQuery;
+                        }
+
+                        @Override
+                        public int getArgumentsRequired() {
+                            return finalSubExpression.getArgumentsRequired();
+                        }
+
+                        @Override
+                        public void setArgumentNames(String[] argumentNames) {
+                            finalSubExpression.setArgumentNames(argumentNames);
+                        }
+                    };
+                } else {
+                    return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
+                }
+            } else {
+                return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
+            }
+        } else {
+            return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
+        }
+    }
+
+    private static CriterionMethodExpression buildCriterionExpression(Constructor methodExpressionConstructor, String propertyName, boolean negation) {
+        CriterionMethodExpression me = null;
         if (methodExpressionConstructor != null) {
             try {
                 me = (CriterionMethodExpression) methodExpressionConstructor.newInstance(propertyName);
@@ -370,11 +447,15 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                 public int getArgumentsRequired() {
                     return finalMe.getArgumentsRequired();
                 }
+
+                @Override
+                public void setArgumentNames(String[] argumentNames) {
+                    finalMe.setArgumentNames(argumentNames);
+                }
             };
         }
         return me;
     }
-
 
     private static void resetMethodExpressionPattern() {
         String expressionPattern = String.join("|", methodExpressions.keySet());

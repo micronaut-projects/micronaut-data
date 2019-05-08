@@ -9,7 +9,7 @@ import javax.annotation.Nonnull;
  * @author graemerocher
  * @since 1.0
  */
-public class AssociationQuery extends DefaultQuery {
+public class AssociationQuery extends DefaultQuery implements Query.Criterion {
 
     private final Association association;
 

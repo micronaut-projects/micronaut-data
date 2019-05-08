@@ -24,6 +24,6 @@ public interface Association extends PersistentProperty {
      * @return The relationship kind
      */
     default @Nonnull Relation.Kind getKind() {
-        return getAnnotationMetadata().getValue(Relation.class, "kind", Relation.Kind.class).orElse(Relation.Kind.ONE_TO_ONE);
+        return getAnnotationMetadata().getValue(Relation.class, Relation.Kind.class).orElse(Relation.Kind.ONE_TO_ONE);
     }
 }

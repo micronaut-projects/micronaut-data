@@ -619,7 +619,7 @@ public class JpaQueryEncoder implements QueryEncoder {
 
         final String associationName = association.getName();
         // TODO: Allow customization of join strategy!
-        String joinType = " INNER JOIN ";
+        String joinType = " JOIN ";
         queryState.query.append(joinType)
                 .append(queryState.logicalName)
                 .append(DOT)
@@ -692,7 +692,7 @@ public class JpaQueryEncoder implements QueryEncoder {
                 }
             }
         }
-        PersistentProperty prop = entity.getPropertyByName(name);
+        PersistentProperty prop = entity.getPropertyByPath(name).orElse(null);
         if (prop == null) {
             throw new IllegalArgumentException("Cannot use [" +
                     criterionType.getSimpleName() + "] criterion on non-existent property: " + name);
@@ -753,19 +753,24 @@ public class JpaQueryEncoder implements QueryEncoder {
 
                 qh.handle(queryState, criterion);
             }
-//            else if (criterion instanceof AssociationCriteria) {
-//
-//                if (!allowJoins) {
-//                    throw new InvalidDataAccessResourceUsageException("Joins cannot be used in a DELETE or UPDATE operation");
-//                }
-//                AssociationCriteria ac = (AssociationCriteria) criterion;
-//                Association association = ac.getAssociation();
-//                List<Query.Criterion> associationCriteriaList = ac.getCriteria();
-//                handleAssociationCriteria(q, whereClause, logicalName, position, parameters, conversionService, allowJoins, association, new Query.Conjunction(), associationCriteriaList, hibernateCompatible);
-//            }
-//            else {
-//                throw new InvalidDataAccessResourceUsageException("Queries of type "+criterion.getClass().getSimpleName()+" are not supported by this implementation");
-//            }
+            else if (criterion instanceof AssociationQuery) {
+
+                if (!queryState.allowJoins) {
+                    throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
+                }
+                AssociationQuery ac = (AssociationQuery) criterion;
+                Association association = ac.getAssociation();
+                Query.Junction junction = ac.getCriteria();
+                handleAssociationCriteria(
+                        queryState,
+                        association,
+                        junction,
+                        junction.getCriteria()
+                );
+            }
+            else {
+                throw new IllegalArgumentException("Queries of type " + criterion.getClass().getSimpleName() + " are not supported by this implementation");
+            }
 
             if (iterator.hasNext()) {
                 queryState.whereClause.append(operator);

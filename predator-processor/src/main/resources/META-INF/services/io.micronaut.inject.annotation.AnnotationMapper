@@ -5,3 +5,7 @@ io.micronaut.data.processor.mappers.IdAnnotationMapper
 io.micronaut.data.processor.mappers.ColumnAnnotationMapper
 io.micronaut.data.processor.mappers.TransientAnnotationMapper
 io.micronaut.data.processor.mappers.GeneratedValueMapper
+io.micronaut.data.processor.mappers.ManyToManyMapper
+io.micronaut.data.processor.mappers.OneToManyMapper
+io.micronaut.data.processor.mappers.ManyToOneMapper
+io.micronaut.data.processor.mappers.OneToOneMapper

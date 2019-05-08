@@ -18,11 +18,35 @@ class ProjectionSpec extends Specification {
     @Shared
     PersonCrudRepository crudRepository
 
+    @Inject
+    @Shared
+    AuthorRepository authorRepository
+
+    @Inject
+    @Shared
+    BookRepository bookRepository
+
     def setupSpec() {
         crudRepository.saveAll([
                 new Person(name: "Jeff", age: 40),
                 new Person(name: "Ivan", age: 30),
                 new Person(name: "James", age: 35)
+        ])
+
+        def king = new Author(name: "Stephen King")
+        king.books.add(new Book(title: "The Stand", pages: 1000))
+        king.books.add(new Book(title: "The Shining", pages: 400))
+
+        def jp = new Author(name: "James Patterson")
+        jp.books.add(new Book(title: "Along Came a Spider", pages: 300 ))
+        jp.books.add(new Book(title: "Double Cross", pages: 300 ))
+        def dw = new Author(name: "Don Winslow")
+        dw.books.add(new Book(title: "The Power of the Dog", pages: 600))
+        dw.books.add(new Book(title: "The Border", pages: 700))
+        authorRepository.saveAll([
+                king,
+                jp,
+                dw
         ])
     }
 
@@ -37,5 +61,13 @@ class ProjectionSpec extends Specification {
         crudRepository.readAgeByNameLike("J%").sort() == [35,40]
         crudRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
         crudRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
+    }
+
+    void "test project on single ended association"() {
+        expect:
+        bookRepository.count() == 6
+        authorRepository.findByName("Stephen King").books.size() == 2
+        authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
+        authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
     }
 }
