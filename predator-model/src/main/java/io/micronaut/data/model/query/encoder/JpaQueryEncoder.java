@@ -1,6 +1,7 @@
 package io.micronaut.data.model.query.encoder;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -47,7 +48,7 @@ public class JpaQueryEncoder implements QueryEncoder {
     @Nonnull
     @Override
     public EncodedQuery encodeQuery(@Nonnull Query query) {
-        QueryState queryState = new QueryState(query.getPersistentEntity(), true);
+        QueryState queryState = new QueryState(query, true);
         queryState.query.append(SELECT_CLAUSE);
 
         buildSelectClause(query, queryState);
@@ -69,7 +70,7 @@ public class JpaQueryEncoder implements QueryEncoder {
             throw new IllegalArgumentException("No properties specified to update");
         }
         PersistentEntity entity = query.getPersistentEntity();
-        QueryState queryState = new QueryState(entity, false);
+        QueryState queryState = new QueryState(query, false);
         queryState.query.append(UPDATE_CLAUSE)
                 .append(entity.getName())
                 .append(SPACE)
@@ -83,7 +84,7 @@ public class JpaQueryEncoder implements QueryEncoder {
     @Override
     public EncodedQuery encodeDelete(@Nonnull Query query) {
         PersistentEntity entity = query.getPersistentEntity();
-        QueryState queryState = new QueryState(entity, false);
+        QueryState queryState = new QueryState(query, false);
         queryState.query.append(DELETE_CLAUSE).append(entity.getName()).append(SPACE).append(queryState.logicalName);
         buildWhereClause(query.getCriteria(), queryState);
         return EncodedQuery.of(queryState.query.toString(), queryState.parameters);
@@ -618,8 +619,29 @@ public class JpaQueryEncoder implements QueryEncoder {
         }
 
         final String associationName = association.getName();
-        // TODO: Allow customization of join strategy!
-        String joinType = " JOIN ";
+        JoinSpec.Type jt = queryState.queryObject.getJoinType(association).orElse(JoinSpec.Type.DEFAULT);
+        String joinType;
+        switch (jt) {
+            case LEFT:
+                joinType = " LEFT JOIN ";
+            break;
+            case LEFT_FETCH:
+                joinType = " LEFT JOIN FETCH ";
+            break;
+            case RIGHT:
+                joinType = " RIGHT JOIN ";
+            break;
+            case RIGHT_FETCH:
+                joinType = " RIGHT JOIN FETCH ";
+            break;
+            case INNER:
+                joinType = " JOIN ";
+            break;
+            case FETCH:
+            default:
+                joinType = " JOIN FETCH ";
+        }
+
         queryState.query.append(joinType)
                 .append(queryState.logicalName)
                 .append(DOT)
@@ -789,12 +811,14 @@ public class JpaQueryEncoder implements QueryEncoder {
         final StringBuilder query = new StringBuilder();
         final StringBuilder whereClause = new StringBuilder();
         final boolean allowJoins;
+        final Query queryObject;
         String logicalName;
         PersistentEntity entity;
 
-        QueryState(PersistentEntity entity, boolean allowJoins) {
+        QueryState(Query query, boolean allowJoins) {
             this.allowJoins = allowJoins;
-            this.entity = entity;
+            this.queryObject = query;
+            this.entity = query.getPersistentEntity();
             this.logicalName = entity.getDecapitalizedName();
         }
     }

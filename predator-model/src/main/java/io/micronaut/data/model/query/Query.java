@@ -1,11 +1,15 @@
 package io.micronaut.data.model.query;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Main interface for constructing queries at either compilation or runtime.
@@ -29,6 +33,23 @@ public interface Query extends Criteria, Sort {
 
     @Nonnull
     List<Projection> getProjections();
+
+    /**
+     * Join on the given association.
+     * @param association The association, never null
+     * @return The query
+     */
+    @NonNull Query join(@NonNull Association association);
+
+    Optional<JoinSpec.Type> getJoinType(Association association);
+
+    /**
+     * Join on the given association.
+     * @param association The association, never null
+     * @param joinType The join type
+     * @return The query
+     */
+    @NonNull Query join(@NonNull Association association, @NonNull JoinSpec.Type joinType);
 
     /**
      * @return The projection list.

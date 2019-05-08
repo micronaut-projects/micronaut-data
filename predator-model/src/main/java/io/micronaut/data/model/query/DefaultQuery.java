@@ -1,15 +1,14 @@
 package io.micronaut.data.model.query;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.factory.Restrictions;
 
 import javax.annotation.Nonnull;
-import javax.persistence.FetchType;
-import javax.persistence.LockModeType;
-import javax.persistence.criteria.JoinType;
 import java.util.*;
 
 /**
@@ -26,10 +25,7 @@ public class DefaultQuery extends DefaultSort implements Query {
     private DefaultProjectionList projections = new DefaultProjectionList();
     private int max = -1;
     private int offset = 0;
-    private Map<String, FetchType> fetchStrategies = new HashMap<>(2);
-    private Map<String, JoinType> joinTypes = new HashMap<>(2);
-    private Boolean queryCache;
-    private LockModeType lockResult;
+    private Map<Association, JoinSpec.Type> joinTypes = new HashMap<>(2);
 
     protected DefaultQuery(@Nonnull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
@@ -76,73 +72,37 @@ public class DefaultQuery extends DefaultSort implements Query {
     /**
      * Specifies whether a join query should be used (if join queries are supported by the underlying datastore)
      *
-     * @param property The property
+     * @param association The association
      * @return The query
      */
-    public DefaultQuery join(String property) {
-        fetchStrategies.put(property, FetchType.EAGER);
+    @Override
+    public DefaultQuery join(@NonNull Association association) {
+        joinTypes.put(association, JoinSpec.Type.DEFAULT);
         return this;
+    }
+
+    /**
+     * Obtain the joint for for a given association.
+     * @param association The join type
+     * @return The join type
+     */
+    @Override
+    public Optional<JoinSpec.Type> getJoinType(Association association) {
+        if (association != null) {
+            return Optional.ofNullable(joinTypes.get(association));
+        }
+        return Optional.empty();
     }
 
     /**
      * Specifies whether a join query should be used (if join queries are supported by the underlying datastore)
      *
-     * @param property The property
+     * @param association The property
      * @return The query
      */
-    public DefaultQuery join(String property, JoinType joinType) {
-        fetchStrategies.put(property, FetchType.EAGER);
-        joinTypes.put(property, joinType);
-        return this;
-    }
-
-    /**
-     * Specifies whether a select (lazy) query should be used (if join queries are supported by the underlying datastore)
-     *
-     * @param property The property
-     * @return The query
-     */
-    public DefaultQuery select(String property) {
-        fetchStrategies.put(property, FetchType.LAZY);
-        return this;
-    }
-
-    /**
-     * Specifies whether the query results should be cached (if supported by the underlying datastore)
-     *
-     * @param cache True if caching should be enabled
-     * @return The query
-     */
-    public DefaultQuery cache(boolean cache) {
-        queryCache = cache;
-        return this;
-    }
-
-    @Nonnull
     @Override
-    public Criteria readOnly(boolean readOnly) {
-        return null;
-    }
-
-    /**
-     * Specifies whether the query should obtain a pessimistic lock
-     *
-     * @param lock True if a lock should be obtained
-     * @return The query
-     */
-    public DefaultQuery lock(boolean lock) {
-        lockResult = LockModeType.PESSIMISTIC_WRITE;
-        return this;
-    }
-
-    /**
-     * Specifies whether the query should obtain a pessimistic lock
-     *
-     * @param lock True if a lock should be obtained
-     * @return The query
-     */
-    public DefaultQuery lock(LockModeType lock) {
-        lockResult = lock;
+    public DefaultQuery join(@NonNull Association association, JoinSpec.Type joinType) {
+        joinTypes.put(association, joinType != null ? joinType : JoinSpec.Type.DEFAULT);
         return this;
     }
 

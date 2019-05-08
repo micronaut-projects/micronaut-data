@@ -433,26 +433,4 @@ public interface Criteria  {
      */
     @Nonnull Criteria leSome(@Nonnull String propertyName, @Nonnull Criteria propertyValue);
 
-    /**
-     * <p>Configures the second-level cache with the default usage of 'read-write' and the default include of 'all' if
-     *  the passed argument is true.
-     *
-     * <code> { cache true } </code>
-     *
-     * @param shouldCache True if the default cache configuration should be applied
-     *
-     * @return This Criteria instance
-     */
-    @Nonnull Criteria cache(boolean shouldCache);
-
-    /**
-     * <p>Configures the readOnly property to avoid checking for changes on the objects if the passed argument is true
-     *
-     * <code> { readOnly true } </code>
-     *
-     * @param readOnly True to disable dirty checking
-     *
-     * @return This Criteria instance
-     */
-    @Nonnull Criteria readOnly(boolean readOnly);
 }

@@ -38,7 +38,7 @@ class AssociationQuerySpec extends AbstractTypeElementSpec {
 
         where:
         rootEntity | resultType | method             | arguments      | query                                                                 | interceptor
-        Book       | Book       | 'findByAuthorName' | [name: String] | "SELECT book FROM $rootEntity.name AS book JOIN book.author author WHERE (author.name = :p1)" | FindAllByInterceptor
+        Book       | Book       | 'findByAuthorName' | [name: String] | "SELECT book FROM $rootEntity.name AS book LEFT JOIN book.author author WHERE (author.name = :p1)" | FindAllByInterceptor
     }
 
     @CompileStatic
@@ -50,9 +50,11 @@ import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.query.encoder.entities.Person;
 import java.util.List;
+import io.micronaut.data.annotation.JoinSpec;
 
 @Repository
 interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
+    @JoinSpec(value="author", type=JoinSpec.Type.LEFT)
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
 

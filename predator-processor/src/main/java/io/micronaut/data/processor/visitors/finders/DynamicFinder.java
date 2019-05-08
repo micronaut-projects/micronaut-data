@@ -1,10 +1,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -22,6 +24,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -225,6 +228,20 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         Query query = Query.from(entity);
         ClassElement queryResultType = entity.getClassElement();
 
+        List<AnnotationValue<JoinSpec>> joinSpecs = methodElement.getAnnotationValuesByType(JoinSpec.class);
+        for (AnnotationValue<JoinSpec> joinSpec : joinSpecs) {
+            String association = joinSpec.getValue(String.class).orElse(null);
+            if (association != null) {
+
+                entity.getPropertyByPath(association).ifPresent(persistentProperty -> {
+                    if (persistentProperty instanceof Association) {
+                        JoinSpec.Type type = joinSpec.get("type", JoinSpec.Type.class).orElse(JoinSpec.Type.DEFAULT);
+                        query.join((Association) persistentProperty, type);
+                    }
+                });
+            }
+        }
+
         for (Sort.Order order : orderList) {
             String prop = order.getProperty();
             SourcePersistentProperty p = entity.getPropertyByName(prop);
@@ -304,8 +321,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
      * @param query           The query
      * @return The method info
      */
-    protected abstract @Nullable
-    PredatorMethodInfo buildInfo(
+    protected abstract @Nullable PredatorMethodInfo buildInfo(
             @NonNull MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
             @Nullable Query query
