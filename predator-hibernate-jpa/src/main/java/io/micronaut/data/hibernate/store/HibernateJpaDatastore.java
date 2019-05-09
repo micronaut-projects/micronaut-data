@@ -4,7 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;

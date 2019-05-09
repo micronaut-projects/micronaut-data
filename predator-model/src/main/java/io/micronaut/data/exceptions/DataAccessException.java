@@ -1,4 +1,4 @@
-package io.micronaut.data.exception;
+package io.micronaut.data.exceptions;
 
 /**
  * Parent class for data access related exceptions that occur at runtime.

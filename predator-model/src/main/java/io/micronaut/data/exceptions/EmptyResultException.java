@@ -1,4 +1,4 @@
-package io.micronaut.data.exception;
+package io.micronaut.data.exceptions;
 
 /**
  * Exception thrown if a query produces no result and the result type is not nullable.

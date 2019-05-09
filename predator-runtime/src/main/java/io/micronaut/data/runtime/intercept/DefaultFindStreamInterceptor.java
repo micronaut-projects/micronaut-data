@@ -5,7 +5,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindStreamInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 import java.util.stream.Stream;
 

@@ -2,7 +2,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.ExistsByInterceptor;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 import javax.annotation.Nonnull;
 

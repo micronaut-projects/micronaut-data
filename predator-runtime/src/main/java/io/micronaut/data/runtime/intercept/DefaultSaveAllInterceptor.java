@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.SaveAllInterceptor;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 public class DefaultSaveAllInterceptor<T, R> implements SaveAllInterceptor<T, R> {
 

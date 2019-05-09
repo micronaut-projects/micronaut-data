@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.data.intercept.*;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 /**
  * Factory for creating the different types of interceptors.

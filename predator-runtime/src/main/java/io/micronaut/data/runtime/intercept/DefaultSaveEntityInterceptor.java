@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 public class DefaultSaveEntityInterceptor<T> implements SaveEntityInterceptor<T> {
 

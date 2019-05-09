@@ -14,7 +14,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 import java.util.Collections;
 import java.util.HashMap;

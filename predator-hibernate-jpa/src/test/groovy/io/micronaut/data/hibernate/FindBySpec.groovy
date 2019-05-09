@@ -1,7 +1,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.exception.EmptyResultException
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import org.hibernate.SessionFactory

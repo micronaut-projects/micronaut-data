@@ -5,7 +5,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 import javax.annotation.Nonnull;
 import java.util.Iterator;

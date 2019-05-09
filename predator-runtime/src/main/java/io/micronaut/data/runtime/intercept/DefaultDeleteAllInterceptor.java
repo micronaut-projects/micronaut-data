@@ -1,10 +1,9 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
-import io.micronaut.data.store.Datastore;
+import io.micronaut.data.runtime.datastore.Datastore;
 
 import javax.annotation.Nonnull;
 
