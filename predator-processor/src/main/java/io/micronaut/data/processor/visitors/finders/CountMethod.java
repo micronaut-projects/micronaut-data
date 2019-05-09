@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.CountAllInterceptor;
 import io.micronaut.data.intercept.CountByInterceptor;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 import javax.annotation.Nonnull;
@@ -27,9 +28,9 @@ public class CountMethod extends AbstractListMethod {
         return super.isMethodMatch(methodElement) && TypeUtils.doesReturnNumber(methodElement);
     }
 
-    @Nonnull
+    @Nullable
     @Override
-    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @Nullable Query query) {
+    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
         if (query != null) {
             query.projections().count();
             return new PredatorMethodInfo(
@@ -45,4 +46,5 @@ public class CountMethod extends AbstractListMethod {
             );
         }
     }
+
 }

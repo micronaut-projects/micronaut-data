@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.intercept.FindAllByInterceptor;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.PersistentEntity;
@@ -9,6 +10,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
 import javax.annotation.Nonnull;
@@ -58,6 +60,8 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         }
         String methodName = matchContext.getMethodElement().getName();
         Matcher matcher = pattern.matcher(methodName);
+        ClassElement queryResultType = matchContext.getEntity().getClassElement();
+
         if (matcher.find()) {
             String querySequence = matcher.group(3);
             ArrayList<Sort.Order> orderBys = new ArrayList<>(2);
@@ -65,38 +69,51 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             if (CollectionUtils.isNotEmpty(orderBys)) {
                 if (query == null) {
                     query = Query.from(matchContext.getEntity());
-                    for (Sort.Order orderBy : orderBys) {
-                        query.order(orderBy);
+                }
+                for (Sort.Order orderBy : orderBys) {
+                    query.order(orderBy);
+                }
+            }
+
+            if (StringUtils.isNotEmpty(querySequence)) {
+                ArrayList<ProjectionMethodExpression> projections = new ArrayList<>();
+                matchProjections(matchContext, projections, querySequence);
+                if (CollectionUtils.isNotEmpty(projections)) {
+                    if (query == null) {
+                        query = Query.from(matchContext.getEntity());
+                    }
+                    for (ProjectionMethodExpression projection : projections) {
+                        projection.apply(matchContext, query);
+                        queryResultType = projection.getExpectedResultType();
+                    }
+
+                    if (projections.size() > 1) {
+                        queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(matchContext.getEntity().getClassElement());
                     }
                 }
             }
         }
 
+
         if (query != null) {
-            return buildInfo(matchContext, query);
+            return buildInfo(matchContext, queryResultType, query);
         } else {
-            return buildInfo(matchContext, null);
+            return buildInfo(matchContext, queryResultType, null);
         }
     }
 
-    /**
-     * Builds the info.
-     *
-     * @param matchContext The match context
-     * @param query The query
-     * @return The info
-     */
-    protected @Nonnull PredatorMethodInfo buildInfo(
-            @NonNull MethodMatchContext matchContext, @Nullable Query query) {
+    @Nullable
+    @Override
+    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
         if (query != null) {
             return new PredatorMethodInfo(
-                    matchContext.getEntity(),
+                    queryResultType,
                     query,
                     FindAllByInterceptor.class
             );
         } else {
             return new PredatorMethodInfo(
-                    matchContext.getEntity(),
+                    queryResultType,
                     null,
                     FindAllInterceptor.class
             );

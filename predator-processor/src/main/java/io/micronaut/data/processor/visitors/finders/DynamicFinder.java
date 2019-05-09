@@ -169,15 +169,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                     // loop through query parameters and create expressions
                     // calculating the number of arguments required for the expression
                     for (String projection : projections) {
-                        ProjectionMethodExpression currentExpression = ProjectionMethodExpression.matchProjection(
-                                matchContext,
-                                projection
-                        );
-
-                        if (currentExpression != null) {
-                            // add to list of expressions
-                            projectionExpressions.add(currentExpression);
-                        }
+                        matchProjections(matchContext, projectionExpressions, projection);
 
                     }
                     break;
@@ -185,15 +177,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
             }
 
             if (!processedThroughOperator) {
-                ProjectionMethodExpression currentExpression = ProjectionMethodExpression.matchProjection(
-                        matchContext,
-                        projectionSequence
-                );
-
-                if (currentExpression != null) {
-                    // add to list of expressions
-                    projectionExpressions.add(currentExpression);
-                }
+                matchProjections(matchContext, projectionExpressions, projectionSequence);
             }
         }
 
@@ -286,20 +270,6 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                 query
         );
     }
-
-    /**
-     * Build the method info
-     *
-     * @param matchContext    The method match context
-     * @param queryResultType The query result type
-     * @param query           The query
-     * @return The method info
-     */
-    protected abstract @Nullable PredatorMethodInfo buildInfo(
-            @NonNull MethodMatchContext matchContext,
-            @NonNull ClassElement queryResultType,
-            @Nullable Query query
-    );
 
     /**
      * Checks whether the given method is a match

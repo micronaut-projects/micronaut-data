@@ -1,6 +1,9 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.SaveAllInterceptor;
+import io.micronaut.data.model.query.Query;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
@@ -13,6 +16,13 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
 
     public SaveAllMethod() {
         super(Pattern.compile(METHOD_PATTERN));
+    }
+
+    @Nullable
+    @Override
+    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+        // no-op
+        return null;
     }
 
     @Override

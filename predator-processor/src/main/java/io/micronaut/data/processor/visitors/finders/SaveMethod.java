@@ -1,8 +1,10 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
+import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -42,6 +44,13 @@ public class SaveMethod extends AbstractPatternBasedMethod implements PredatorMe
             }
         }
         visitorContext.fail("Cannot implement save method for specified arguments and return type", matchContext.getMethodElement());
+        return null;
+    }
+
+    @Nullable
+    @Override
+    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+        // no-op
         return null;
     }
 }

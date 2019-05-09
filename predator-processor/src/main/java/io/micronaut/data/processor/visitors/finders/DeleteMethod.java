@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.DeleteByInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
@@ -54,17 +55,9 @@ public class DeleteMethod extends AbstractListMethod {
         return super.buildMatchInfo(matchContext);
     }
 
-    /**
-     * Builds the info.
-     *
-     * @param matchContext
-     * @param query The query
-     * @return The info
-     */
+    @Nullable
     @Override
-    protected @Nonnull
-    PredatorMethodInfo buildInfo(
-            MethodMatchContext matchContext, @Nullable Query query) {
+    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
         if (query != null) {
             return new PredatorMethodInfo(
                     null,
@@ -79,4 +72,5 @@ public class DeleteMethod extends AbstractListMethod {
             );
         }
     }
-}
+
+ }
