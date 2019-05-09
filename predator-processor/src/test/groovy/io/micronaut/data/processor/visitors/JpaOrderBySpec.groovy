@@ -73,7 +73,7 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         where:
         rootEntity | returnType | method                | arguments | message
         Person     | Person     | 'listOrderByJunk'     | [:]       | 'Cannot order by non-existent property: junk'
-//        Person     | Person     | 'listNameOrderByName' | [:]       | 'Cannot order by non-existent property: junk'
+        Person     | Person     | 'listJunkOrderByName' | [:]       | 'Cannot project on non-existent property: junk'
     }
 
     @CompileStatic

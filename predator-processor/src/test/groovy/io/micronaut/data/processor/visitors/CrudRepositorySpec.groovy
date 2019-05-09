@@ -37,9 +37,9 @@ import java.util.List;
 @Repository
 interface MyInterface extends CrudRepository<Person, Long> {
 
-    List<Person> listPeople(String name);   
+    List<Person> list(String name);   
     
-    int countPeople(String name);
+    int count(String name);
 }
 """)
 
@@ -93,7 +93,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         count.synthesize(PredatorMethod).interceptor() == CountAllInterceptor
 
         when:"the list method with named query paremeters is retrieved"
-        def listPeople = beanDefinition.getRequiredMethod("listPeople", String)
+        def listPeople = beanDefinition.getRequiredMethod("list", String)
 
         then:"The method is correctly configured"
         listPeople
@@ -103,7 +103,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         listPeople.synthesize(PredatorMethod).interceptor() == FindAllByInterceptor
 
         when:"the count method with named query parameters is retrieved"
-        def countPeople = beanDefinition.getRequiredMethod("countPeople", String)
+        def countPeople = beanDefinition.getRequiredMethod("count", String)
 
         then:"The method is correctly configured"
         countPeople

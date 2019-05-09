@@ -11,6 +11,7 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 
 import javax.annotation.Nonnull;
+import java.util.Optional;
 
 
 /**
@@ -38,8 +39,8 @@ public abstract class ProjectionMethodExpression {
         Class<?>[] innerClasses = ProjectionMethodExpression.class.getClasses();
         SourcePersistentEntity entity = matchContext.getEntity();
         String decapitilized = NameUtils.decapitalize(projection);
-        SourcePersistentProperty projectedProperty = entity.getPropertyByName(decapitilized);
-        if (projectedProperty != null) {
+        Optional<String> path = entity.getPath(decapitilized);
+        if (path.isPresent()) {
             return new Property().init(matchContext, projection);
         } else {
 
@@ -61,6 +62,13 @@ public abstract class ProjectionMethodExpression {
                             return initialized;
                         }
                     }
+                }
+            }
+            if (!decapitilized.equals("all")) {
+                // if the return type simple name is the same then we assume this is ok
+                // this allows for Optional findOptionalByName
+                if (!projection.equals(matchContext.getReturnType().getSimpleName())) {
+                    matchContext.fail("Cannot project on non-existent property: " + decapitilized);
                 }
             }
             return null;
@@ -247,7 +255,7 @@ public abstract class ProjectionMethodExpression {
             } else {
 
                 this.property = NameUtils.decapitalize(remaining);
-                SourcePersistentProperty pp = matchContext.getEntity().getPropertyByName(property);
+                SourcePersistentProperty pp = (SourcePersistentProperty) matchContext.getEntity().getPropertyByPath(property).orElse(null);
                 if (pp == null || pp.getType() == null) {
                     matchContext.fail("Cannot project on non-existent property " + property);
                     return null;

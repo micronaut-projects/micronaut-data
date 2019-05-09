@@ -162,6 +162,8 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
                         if (i.hasNext()) {
                             b.append(".");
                         }
+                    } else {
+                        return Optional.empty();
                     }
                 } else {
                     return Optional.empty();

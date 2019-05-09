@@ -27,6 +27,7 @@ public class MethodMatchContext {
     @NonNull
     private final ParameterElement[] parameters;
     private final ClassElement returnType;
+    private boolean failing = false;
 
     public MethodMatchContext(
             @NonNull SourcePersistentEntity entity,
@@ -78,6 +79,15 @@ public class MethodMatchContext {
      * @param message The message
      */
     public void fail(@NonNull String message) {
+        this.failing = true;
         getVisitorContext().fail(message, methodElement);
+    }
+
+    /**
+     * Is there a current error.
+     * @return True if there is an error
+     */
+    public boolean isFailing() {
+        return failing;
     }
 }
