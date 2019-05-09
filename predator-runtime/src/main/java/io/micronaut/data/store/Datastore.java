@@ -153,7 +153,10 @@ public interface Datastore {
      * @param query The query
      * @param parameterValues the parameter values
      */
-    @Nonnull Optional<Number> executeUpdate(@Nonnull String query, @Nonnull Map<String, Object> parameterValues);
+    @Nonnull Optional<Number> executeUpdate(
+            @Nonnull String query,
+            @Nonnull Map<String, Object> parameterValues
+    );
 
     /**
      * Deletes all the entities of the given type
