@@ -1,9 +1,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
@@ -119,24 +117,6 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             return buildInfo(matchContext, queryResultType, query);
         } else {
             return buildInfo(matchContext, queryResultType, null);
-        }
-    }
-
-    @Nullable
-    @Override
-    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
-        if (query != null) {
-            return new PredatorMethodInfo(
-                    queryResultType,
-                    query,
-                    FindAllInterceptor.class
-            );
-        } else {
-            return new PredatorMethodInfo(
-                    queryResultType,
-                    null,
-                    FindAllInterceptor.class
-            );
         }
     }
 
