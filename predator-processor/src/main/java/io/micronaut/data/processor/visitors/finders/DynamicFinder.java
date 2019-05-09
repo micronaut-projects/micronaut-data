@@ -1,6 +1,5 @@
 package io.micronaut.data.processor.visitors.finders;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -21,13 +20,10 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract base class for dynamic finders. This class is designed to be used only within the compiler
@@ -116,6 +112,11 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         List<Sort.Order> orderList = new ArrayList<>();
         final String querySequence = matchOrder(match.group(4), orderList);
         String projectionSequence = match.group(3);
+
+        if (projectionSequence.endsWith("Order") && methodName.contains("OrderBy" + querySequence)) {
+            // disambiguate from a query with only OrderBy
+            return null;
+        }
 
         // if it contains operator and split
         boolean containsOperator = false;

@@ -176,6 +176,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 if (pageParam != null) {
                                     annotationBuilder.member("pageable", pageParam.getName());
                                 }
+                                if (queryObject != null) {
+                                    int max = queryObject.getMax();
+                                    if (max > -1) {
+                                        annotationBuilder.member("max", max);
+                                    }
+                                    long offset = queryObject.getOffset();
+                                    if (offset > 0) {
+                                        annotationBuilder.member("offset", offset);
+                                    }
+                                }
                             });
                             return;
                         } else {

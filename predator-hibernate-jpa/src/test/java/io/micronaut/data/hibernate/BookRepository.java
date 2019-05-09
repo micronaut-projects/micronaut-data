@@ -11,4 +11,6 @@ import java.util.List;
 public interface BookRepository extends CrudRepository<Book, Long> {
 
     List<Book> findByAuthorName(String name);
+
+    List<Book> findTop3OrderByTitle();
 }

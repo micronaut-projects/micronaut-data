@@ -67,4 +67,17 @@ public @interface PredatorMethod {
      * @return The entity argument
      */
     String entity();
+
+    /**
+     * An explicit max (in absence of a pageable).
+     * @return The max
+     */
+    int max() default -1;
+
+    /**
+     * An explicit offset (in absence of a pageable).
+     *
+     * @return The offset
+     */
+    long offset() default 0;
 }

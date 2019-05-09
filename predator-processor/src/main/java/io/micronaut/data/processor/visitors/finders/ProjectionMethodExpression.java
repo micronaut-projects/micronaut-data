@@ -12,6 +12,8 @@ import io.micronaut.inject.ast.ClassElement;
 
 import javax.annotation.Nonnull;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -64,7 +66,13 @@ public abstract class ProjectionMethodExpression {
                     }
                 }
             }
+
+            // allow findAllBy as an alternative to findBy
             if (!decapitilized.equals("all")) {
+                Matcher topMatcher = Pattern.compile("^(top|first)(\\d*)$").matcher(decapitilized);
+                if (topMatcher.find()) {
+                    return new RestrictMaxResultProjection(topMatcher, matchContext).initProjection(matchContext, decapitilized);
+                }
                 // if the return type simple name is the same then we assume this is ok
                 // this allows for Optional findOptionalByName
                 if (!projection.equals(matchContext.getReturnType().getSimpleName())) {
@@ -287,4 +295,45 @@ public abstract class ProjectionMethodExpression {
         }
     }
 
+    /**
+     * Restricts the max result.
+     */
+    private static class RestrictMaxResultProjection extends ProjectionMethodExpression {
+
+        private final Matcher topMatcher;
+        private final MethodMatchContext matchContext;
+        int max;
+
+        RestrictMaxResultProjection(Matcher topMatcher, MethodMatchContext matchContext) {
+            super(0);
+            this.topMatcher = topMatcher;
+            this.matchContext = matchContext;
+            max = -1;
+        }
+
+        @Override
+        protected ProjectionMethodExpression initProjection(@NonNull MethodMatchContext matchContext, @Nullable String remaining) {
+            String str = topMatcher.group(2);
+            try {
+                max = StringUtils.isNotEmpty(str) ? Integer.parseInt(str) : 1;
+            } catch (NumberFormatException e) {
+                matchContext.fail("Invalid number specified to top: " + str);
+                return null;
+            }
+            return this;
+        }
+
+        @Override
+        protected void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+            if (max > -1) {
+                query.max(max);
+            }
+        }
+
+        @NonNull
+        @Override
+        public ClassElement getExpectedResultType() {
+            return matchContext.getEntity().getClassElement();
+        }
+    }
 }

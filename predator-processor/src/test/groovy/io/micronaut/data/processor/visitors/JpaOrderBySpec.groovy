@@ -26,7 +26,7 @@ class JpaOrderBySpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
-import io.micronaut.data.model.query.encoder.entities.Person;
+import io.micronaut.data.model.query.encoder.entities.*;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;
@@ -41,6 +41,9 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
     
     List<String> listNameOrderByName();
     
+    List<Person> listTop3OrderByName();
+    
+    List<Book> findTop3OrderByTitle();
 }
 """)
 
@@ -48,6 +51,7 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         def findOne = beanDefinition.getRequiredMethod("queryByNameOrderByName", String.class)
         def list = beanDefinition.getRequiredMethod("listOrderByName")
         def listName = beanDefinition.getRequiredMethod("listNameOrderByName")
+        def listTop3 = beanDefinition.getRequiredMethod("listTop3OrderByName")
 
         then: "It was correctly compiled"
         findOne.synthesize(Query).value() == "SELECT person FROM $Person.name AS person WHERE (person.name = :p1) ORDER BY person.name ASC"
@@ -55,6 +59,8 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         list.synthesize(PredatorMethod).resultType() == Person
         listName.synthesize(Query).value() == "SELECT person.name FROM $Person.name AS person ORDER BY person.name ASC"
         listName.synthesize(PredatorMethod).resultType() == String
+        listTop3.synthesize(Query).value() == "SELECT person FROM $Person.name AS person ORDER BY person.name ASC"
+        listTop3.synthesize(PredatorMethod).max() == 3
     }
 
     @Unroll

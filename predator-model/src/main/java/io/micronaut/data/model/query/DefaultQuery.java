@@ -24,7 +24,7 @@ public class DefaultQuery extends DefaultSort implements Query {
     private Query.Junction criteria = new Query.Conjunction();
     private DefaultProjectionList projections = new DefaultProjectionList();
     private int max = -1;
-    private int offset = 0;
+    private long offset = 0;
     private Map<Association, JoinSpec.Type> joinTypes = new HashMap<>(2);
 
     protected DefaultQuery(@Nonnull PersistentEntity entity) {
@@ -182,18 +182,20 @@ public class DefaultQuery extends DefaultSort implements Query {
      * @param max The max results
      * @return This query instance
      */
+    @Override
     public DefaultQuery max(int max) {
         this.max = max;
         return this;
     }
 
-    /**
-     * Defines the maximum number of results to return
-     * @param max The max results
-     * @return This query instance
-     */
-    public DefaultQuery maxResults(int max) {
-        return max(max);
+    @Override
+    public int getMax() {
+        return this.max;
+    }
+
+    @Override
+    public long getOffset() {
+        return this.offset;
     }
 
     /**
@@ -201,7 +203,8 @@ public class DefaultQuery extends DefaultSort implements Query {
      * @param offset The offset
      * @return This query instance
      */
-    public DefaultQuery offset(int offset) {
+    @Override
+    public DefaultQuery offset(long offset) {
         this.offset = offset;
         return this;
     }

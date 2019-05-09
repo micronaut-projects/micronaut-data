@@ -65,6 +65,20 @@ public interface Query extends Criteria, Sort {
     @Nonnull Query add(@Nonnull Criterion criterion);
 
     /**
+     * Limits the maximum result.
+     * @param max The max
+     * @return This query
+     */
+    Query max(int max);
+
+    /**
+     * Sets the offset.
+     * @param offset The offset
+     * @return This query
+     */
+    Query offset(long offset);
+
+    /**
      * Creates a query from the given entity.
      * @param entity The entity
      */
@@ -72,6 +86,18 @@ public interface Query extends Criteria, Sort {
         ArgumentUtils.requireNonNull("entity", entity);
         return new DefaultQuery(entity);
     }
+
+    /**
+     * Get the max results to return.
+     * @return The max results
+     */
+    int getMax();
+
+    /**
+     * Get the offset of the query.
+     * @return The offset
+     */
+    long getOffset();
 
     /**
      * Represents a criterion to be used in a criteria query

@@ -77,8 +77,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             parameterValues = Collections.emptyMap();
         }
 
-        String pageableParam = annotation.get("pageable", String.class).orElse(null);
-        Pageable pageable = ConversionService.SHARED.convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
+        Pageable pageable = getPageable(context);
 
         return new PreparedQuery(
                 resultType,
@@ -105,6 +104,17 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             pageable = ConversionService.SHARED
                     .convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
 
+        } else {
+            int max = context.getValue(PredatorMethod.class, "max", int.class).orElse(-1);
+            long offset = context.getValue(PredatorMethod.class, "offset", long.class).orElse(0L);
+            boolean hasMax = max > -1;
+            if (offset > 0 || hasMax) {
+                if (hasMax) {
+                    pageable = Pageable.from(offset, max);
+                } else {
+                    pageable = Pageable.from(offset);
+                }
+            }
         }
         return pageable;
     }
