@@ -88,7 +88,7 @@ public class PredatorInterceptorFactory {
      */
     @EachBean(Datastore.class)
     protected DeleteOneInterceptor deleteOneInterceptor(Datastore datastore) {
-        return new DefaultDefaultOneInterceptor(datastore);
+        return new DefaultDeleteOneInterceptor(datastore);
     }
 
     /**

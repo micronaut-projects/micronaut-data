@@ -7,9 +7,9 @@ import io.micronaut.data.store.Datastore;
 import javax.annotation.Nonnull;
 import java.util.Collections;
 
-public class DefaultDefaultOneInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteOneInterceptor<T> {
+public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteOneInterceptor<T> {
 
-    DefaultDefaultOneInterceptor(@Nonnull Datastore datastore) {
+    DefaultDeleteOneInterceptor(@Nonnull Datastore datastore) {
         super(datastore);
     }
 

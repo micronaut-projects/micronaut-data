@@ -1,5 +1,7 @@
 package io.micronaut.data.annotation;
 
+import io.micronaut.data.annotation.repeatable.JoinSpecifications;
+
 import java.lang.annotation.*;
 
 /**

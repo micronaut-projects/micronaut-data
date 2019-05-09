@@ -1,6 +1,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.exception.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import org.hibernate.SessionFactory
@@ -37,7 +38,8 @@ class FindBySpec extends Specification {
         Person p = personRepository.findByName("Fred")
 
         then:
-        p == null
+        thrown(EmptyResultException)
+        crudRepository.findByName("Fred") == null // declares nullable
         !personRepository.findOptionalByName("Fred").isPresent()
 
         when:

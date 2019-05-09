@@ -4,8 +4,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
@@ -105,6 +107,18 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         }
         return pageable;
+    }
+
+    /**
+     * Return whether the metadata indicates the instance is nullable.
+     * @param metadata The metadata
+     * @return True if it is nullable
+     */
+    protected boolean isNullable(@NonNull AnnotationMetadata metadata) {
+        return metadata
+                .getDeclaredAnnotationNames()
+                .stream()
+                .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
     }
 
     /**

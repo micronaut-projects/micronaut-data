@@ -1,5 +1,6 @@
 package io.micronaut.data.hibernate;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Pageable;
@@ -16,7 +17,7 @@ public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
     int count(String name);
 
-    Person findByName(String name);
+    @Nullable Person findByName(String name);
 
     List<Person> findByNameLike(String name);
 

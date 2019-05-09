@@ -1,8 +1,12 @@
 package io.micronaut.data.runtime.intercept;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.type.ReturnType;
+import io.micronaut.data.exception.EmptyResultException;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.store.Datastore;
 
@@ -41,7 +45,12 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
             } else {
                 return result;
             }
+        } else {
+            if (!isNullable(context.getAnnotationMetadata())) {
+                throw new EmptyResultException();
+            }
         }
         return result;
     }
+
 }
