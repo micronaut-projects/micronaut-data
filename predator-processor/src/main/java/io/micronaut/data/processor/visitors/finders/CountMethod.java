@@ -1,15 +1,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.intercept.CountAllInterceptor;
-import io.micronaut.data.intercept.CountByInterceptor;
+import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.regex.Pattern;
 
 public class CountMethod extends AbstractListMethod {
 
@@ -36,13 +33,13 @@ public class CountMethod extends AbstractListMethod {
             return new PredatorMethodInfo(
                     matchContext.getReturnType(),
                     query,
-                    CountByInterceptor.class
+                    CountInterceptor.class
             );
         } else {
             return new PredatorMethodInfo(
                     matchContext.getReturnType(),
                     null,
-                    CountAllInterceptor.class
+                    CountInterceptor.class
             );
         }
     }

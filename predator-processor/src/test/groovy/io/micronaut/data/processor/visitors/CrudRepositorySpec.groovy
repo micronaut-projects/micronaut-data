@@ -4,8 +4,8 @@ import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.CountAllInterceptor
-import io.micronaut.data.intercept.CountByInterceptor
+import io.micronaut.data.intercept.CountInterceptor
+
 import io.micronaut.data.intercept.DeleteAllInterceptor
 import io.micronaut.data.intercept.DeleteByInterceptor
 import io.micronaut.data.intercept.DeleteOneInterceptor
@@ -90,7 +90,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         count.getReturnType().type == long.class
         count.synthesize(PredatorMethod).rootEntity() == Person
         count.synthesize(PredatorMethod).idType() == Long
-        count.synthesize(PredatorMethod).interceptor() == CountAllInterceptor
+        count.synthesize(PredatorMethod).interceptor() == CountInterceptor
 
         when:"the list method with named query paremeters is retrieved"
         def listPeople = beanDefinition.getRequiredMethod("list", String)
@@ -110,7 +110,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         countPeople.getReturnType().type == int.class
         countPeople.synthesize(PredatorMethod).rootEntity() == Person
         countPeople.synthesize(PredatorMethod).idType() == Long
-        countPeople.synthesize(PredatorMethod).interceptor() == CountByInterceptor
 
         when:"the delete by id method is retrieved"
         def deleteById = beanDefinition.getRequiredMethod("deleteById", Long)

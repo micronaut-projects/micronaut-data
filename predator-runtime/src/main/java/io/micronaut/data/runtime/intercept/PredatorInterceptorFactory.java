@@ -92,25 +92,14 @@ public class PredatorInterceptorFactory {
     }
 
     /**
-     * Creates the {@link CountAllInterceptor} instances for each configured {@link Datastore}.
+     * Creates the {@link CountInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore
-     * @return The {@link CountAllInterceptor}
+     * @return The {@link CountInterceptor}
      */
     @EachBean(Datastore.class)
-    protected CountAllInterceptor countAllInterceptor(Datastore datastore) {
+    protected CountInterceptor countInterceptor(Datastore datastore) {
         return new DefaultCountInterceptor(datastore);
-    }
-
-    /**
-     * Creates the {@link CountByInterceptor} instances for each configured {@link Datastore}.
-     *
-     * @param datastore The datastore
-     * @return The {@link CountByInterceptor}
-     */
-    @EachBean(Datastore.class)
-    protected CountByInterceptor countByInterceptor(Datastore datastore) {
-        return new DefaultCountByInterceptor(datastore);
     }
 
     /**

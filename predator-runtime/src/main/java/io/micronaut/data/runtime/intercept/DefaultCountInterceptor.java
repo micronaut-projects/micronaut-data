@@ -2,13 +2,15 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.data.intercept.CountAllInterceptor;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.store.Datastore;
 
 import javax.annotation.Nonnull;
+import java.util.Iterator;
 
-public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements CountAllInterceptor<T> {
+public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements CountInterceptor<T> {
 
     DefaultCountInterceptor(@Nonnull Datastore datastore) {
         super(datastore);
@@ -16,13 +18,26 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
 
     @Override
     public Number intercept(MethodInvocationContext<T, Number> context) {
-        Class<?> rootEntity = getRequiredRootEntity(context);
-        Pageable pageable = getPageable(context);
         long result;
-        if (pageable != null) {
-            result = datastore.count(rootEntity, pageable);
+        if (context.hasAnnotation(Query.class)) {
+            PreparedQuery preparedQuery = prepareQuery(context);
+            Iterable<Long> iterable = datastore.findAll(
+                    Long.class,
+                    preparedQuery.getQuery(),
+                    preparedQuery.getParameterValues(),
+                    preparedQuery.getPageable()
+            );
+            Iterator<Long> i = iterable.iterator();
+            result = i.hasNext() ? i.next() : 0;
         } else {
-            result = datastore.count(rootEntity);
+            Class<?> rootEntity = getRequiredRootEntity(context);
+            Pageable pageable = getPageable(context);
+
+            if (pageable != null) {
+                result = datastore.count(rootEntity, pageable);
+            } else {
+                result = datastore.count(rootEntity);
+            }
         }
 
         return ConversionService.SHARED.convert(
