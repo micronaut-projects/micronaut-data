@@ -11,10 +11,9 @@ import javax.annotation.Nullable;
 import java.util.regex.Pattern;
 
 public class CountMethod extends AbstractListMethod {
-    private static final String METHOD_PATTERN = "^((count)(\\S*?))$";
 
     public CountMethod() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super("count");
     }
 
     @Override

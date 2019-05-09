@@ -10,14 +10,11 @@ import io.micronaut.inject.ast.ParameterElement;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.regex.Pattern;
 
 public class DeleteMethod extends AbstractListMethod {
 
-    private static final String METHOD_PATTERN = "(delete|remove|erase)([a-zA-Z]*?)";
-
     public DeleteMethod() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super("delete", "remove", "erase", "eliminate");
     }
 
     @Override

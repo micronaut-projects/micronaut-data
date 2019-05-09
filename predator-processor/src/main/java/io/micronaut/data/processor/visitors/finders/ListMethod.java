@@ -8,10 +8,11 @@ import java.util.regex.Pattern;
 
 public class ListMethod extends AbstractListMethod {
 
-    private static final String METHOD_PATTERN = "^((list|find|search|query)(\\S*?))$";
 
     public ListMethod() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super(
+                "list","find","search","query"
+        );
     }
 
     @Override

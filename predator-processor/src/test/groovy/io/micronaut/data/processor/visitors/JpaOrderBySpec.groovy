@@ -34,14 +34,18 @@ interface MyInterface {
 
     List<Person> queryByNameOrderByName(String n);
     
+    List<Person> listOrderByName();
+    
 }
 """)
 
         when: "the query method is retrieved"
         def findOne = beanDefinition.getRequiredMethod("queryByNameOrderByName", String.class)
+        def list = beanDefinition.getRequiredMethod("listOrderByName")
 
         then: "It was correctly compiled"
         findOne.synthesize(Query).value() == "SELECT person FROM $Person.name AS person WHERE (person.name = :p1) ORDER BY person.name ASC"
+        list.synthesize(Query).value() == "SELECT person FROM $Person.name AS person ORDER BY person.name ASC"
     }
 
     @Override

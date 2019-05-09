@@ -68,7 +68,6 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
     private Pattern[] operatorPatterns;
     private String[] operators;
-    private Pattern orderByPattern = Pattern.compile("(.+)OrderBy([\\w\\d]+)");
 
     protected DynamicFinder(final String... prefixes) {
         this(compilePattern(prefixes), OPERATORS);
@@ -286,31 +285,6 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
                 queryResultType,
                 query
         );
-    }
-
-    private String matchOrder(String querySequence, List<Sort.Order> orders) {
-        if (orderByPattern.matcher(querySequence).matches()) {
-
-            Matcher matcher = orderByPattern.matcher(querySequence);
-            StringBuffer buffer = new StringBuffer();
-            while(matcher.find()) {
-                matcher.appendReplacement(buffer, "$1");
-                String orderDef = matcher.group(2);
-                if (StringUtils.isNotEmpty(orderDef)) {
-                    String prop = NameUtils.decapitalize(orderDef);
-                    if (prop.endsWith("Desc")) {
-                        orders.add(Sort.Order.desc(prop.substring(0, prop.length() - 4)));
-                    } else if (prop.equalsIgnoreCase("Asc")) {
-                        orders.add(Sort.Order.asc(prop.substring(0, prop.length() - 3)));
-                    } else {
-                        orders.add(Sort.Order.asc(prop));
-                    }
-                }
-            }
-            matcher.appendTail(buffer);
-            return buffer.toString();
-        }
-        return querySequence;
     }
 
     /**
