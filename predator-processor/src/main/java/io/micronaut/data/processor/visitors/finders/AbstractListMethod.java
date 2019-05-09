@@ -10,6 +10,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
@@ -18,6 +19,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,15 +42,15 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         ParameterElement paginationParameter = matchContext.getPaginationParameter();
         List<ParameterElement> queryParams = Arrays.stream(parameters).filter(p -> p != paginationParameter).collect(Collectors.toList());
         Query query = null;
+        SourcePersistentEntity rootEntity = matchContext.getEntity();
         if (CollectionUtils.isNotEmpty(queryParams)) {
-            PersistentEntity entity = matchContext.getEntity();
-            query = Query.from(entity);
+            query = Query.from(rootEntity);
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
-                PersistentProperty prop = entity.getPropertyByName(paramName);
+                PersistentProperty prop = ((PersistentEntity) rootEntity).getPropertyByName(paramName);
                 if (prop == null) {
                     matchContext.getVisitorContext().fail(
-                            "Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + paramName,
+                            "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName,
                             queryParam
                     );
                     return null;
@@ -60,7 +62,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         }
         String methodName = matchContext.getMethodElement().getName();
         Matcher matcher = pattern.matcher(methodName);
-        ClassElement queryResultType = matchContext.getEntity().getClassElement();
+        ClassElement queryResultType = rootEntity.getClassElement();
 
         if (matcher.find()) {
             String querySequence = matcher.group(3);
@@ -68,10 +70,17 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             querySequence = matchOrder(querySequence, orderBys);
             if (CollectionUtils.isNotEmpty(orderBys)) {
                 if (query == null) {
-                    query = Query.from(matchContext.getEntity());
+                    query = Query.from(rootEntity);
                 }
                 for (Sort.Order orderBy : orderBys) {
-                    query.order(orderBy);
+                    String property = orderBy.getProperty();
+                    Optional<String> propertyPath = rootEntity.getPath(property);
+                    if (propertyPath.isPresent()) {
+                        query.order(orderBy);
+                    } else {
+                        matchContext.fail("Cannot order by non-existent property: " + property);
+                        return null;
+                    }
                 }
             }
 
@@ -80,7 +89,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 matchProjections(matchContext, projections, querySequence);
                 if (CollectionUtils.isNotEmpty(projections)) {
                     if (query == null) {
-                        query = Query.from(matchContext.getEntity());
+                        query = Query.from(rootEntity);
                     }
                     for (ProjectionMethodExpression projection : projections) {
                         projection.apply(matchContext, query);
@@ -88,7 +97,19 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                     }
 
                     if (projections.size() > 1) {
-                        queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(matchContext.getEntity().getClassElement());
+                        queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(rootEntity.getClassElement());
+                    }
+
+                    for (Query.Projection projection : query.getProjections()) {
+                        if (projection instanceof Query.PropertyProjection) {
+                            Query.PropertyProjection pp = (Query.PropertyProjection) projection;
+                            String prop = pp.getPropertyName();
+                            Optional<String> path = rootEntity.getPath(prop);
+                            if (!path.isPresent()) {
+                                matchContext.fail("Cannot project on non-existent property: " + prop);
+                                return null;
+                            }
+                        }
                     }
                 }
             }

@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors
 
+import groovy.transform.CompileStatic
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
@@ -13,8 +14,10 @@ import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
+import javax.persistence.Entity
 
 class JpaOrderBySpec extends AbstractTypeElementSpec {
 
@@ -52,6 +55,45 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         list.synthesize(PredatorMethod).resultType() == Person
         listName.synthesize(Query).value() == "SELECT person.name FROM $Person.name AS person ORDER BY person.name ASC"
         listName.synthesize(PredatorMethod).resultType() == String
+    }
+
+    @Unroll
+    void "test order by errors for method #method"() {
+        when:
+        compileListRepository(
+                returnType,
+                method,
+                arguments
+        )
+
+        then: "The finder failed to compile"
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        rootEntity | returnType | method                | arguments | message
+        Person     | Person     | 'listOrderByJunk'     | [:]       | 'Cannot order by non-existent property: junk'
+//        Person     | Person     | 'listNameOrderByName' | [:]       | 'Cannot order by non-existent property: junk'
+    }
+
+    @CompileStatic
+    BeanDefinition compileListRepository(Class returnType, String method, Map<String, Class> arguments) {
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.Repository;
+${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
+import io.micronaut.data.model.query.encoder.entities.Person;
+import java.util.List;
+
+@Repository
+interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
+    List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
+}
+
+
+""")
+        return beanDefinition
     }
 
     @Override

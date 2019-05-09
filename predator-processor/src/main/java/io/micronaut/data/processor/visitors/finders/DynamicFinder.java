@@ -227,8 +227,7 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
 
         for (Sort.Order order : orderList) {
             String prop = order.getProperty();
-            SourcePersistentProperty p = entity.getPropertyByName(prop);
-            if (p == null) {
+            if (!entity.getPath(prop).isPresent()) {
                 visitorContext.fail("Cannot order by non-existent property: " + prop, methodElement);
                 return null;
             } else {
