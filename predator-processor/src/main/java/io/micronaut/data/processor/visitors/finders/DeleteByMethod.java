@@ -1,6 +1,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.intercept.DeleteByInterceptor;
+import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -31,7 +31,7 @@ public class DeleteByMethod extends DynamicFinder {
             return new PredatorMethodInfo(
                     null,
                     query,
-                    DeleteByInterceptor.class,
+                    DeleteAllInterceptor.class,
                     PredatorMethodInfo.OperationType.DELETE
             );
         }

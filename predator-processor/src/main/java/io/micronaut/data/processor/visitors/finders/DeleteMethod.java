@@ -2,7 +2,6 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
-import io.micronaut.data.intercept.DeleteByInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.ClassElement;
@@ -62,7 +61,7 @@ public class DeleteMethod extends AbstractListMethod {
             return new PredatorMethodInfo(
                     null,
                     query,
-                    DeleteByInterceptor.class
+                    DeleteAllInterceptor.class
             );
         } else {
             return new PredatorMethodInfo(

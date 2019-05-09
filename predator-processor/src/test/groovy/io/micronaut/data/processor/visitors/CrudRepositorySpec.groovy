@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.CountInterceptor
 
 import io.micronaut.data.intercept.DeleteAllInterceptor
-import io.micronaut.data.intercept.DeleteByInterceptor
+
 import io.micronaut.data.intercept.DeleteOneInterceptor
 import io.micronaut.data.intercept.ExistsByInterceptor
 
@@ -120,7 +120,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteById.synthesize(PredatorMethod).rootEntity() == Person
         deleteById.synthesize(PredatorMethod).idType() == Long
         deleteById.synthesize(Query).value() == "DELETE $Person.name person WHERE (person.id = :p1)"
-        deleteById.synthesize(PredatorMethod).interceptor() == DeleteByInterceptor
+        deleteById.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
 
         when:"the deleteAll method is retrieved"
         def deleteAll = beanDefinition.getRequiredMethod("deleteAll")
