@@ -3,7 +3,6 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.intercept.FindAllByInterceptor;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -130,7 +129,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             return new PredatorMethodInfo(
                     queryResultType,
                     query,
-                    FindAllByInterceptor.class
+                    FindAllInterceptor.class
             );
         } else {
             return new PredatorMethodInfo(

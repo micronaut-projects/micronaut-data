@@ -5,7 +5,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.FindAllByInterceptor
+import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.SaveEntityInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
@@ -91,9 +91,9 @@ interface MyInterface {
 
         where:
         returnType | method                     | arguments        | query                                                                              | interceptor
-        Person     | 'findAllByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindAllByInterceptor.class
-        Person     | 'getAllByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindAllByInterceptor.class
-        Person     | 'retrieveAllByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindAllByInterceptor.class
+        Person     | 'findAllByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindAllInterceptor.class
+        Person     | 'getAllByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindAllInterceptor.class
+        Person     | 'retrieveAllByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindAllInterceptor.class
     }
 
     boolean validateParameterBinding(String query, ExecutableMethod method, Map<String, Class<? extends Object>> argumentTypes) {

@@ -5,7 +5,7 @@ import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.FindAllByInterceptor
+import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.query.encoder.entities.Book
 import io.micronaut.inject.BeanDefinition
@@ -38,7 +38,7 @@ class AssociationQuerySpec extends AbstractTypeElementSpec {
 
         where:
         rootEntity | resultType | method             | arguments      | query                                                                 | interceptor
-        Book       | Book       | 'findByAuthorName' | [name: String] | "SELECT book FROM $rootEntity.name AS book LEFT JOIN book.author author WHERE (author.name = :p1)" | FindAllByInterceptor
+        Book       | Book       | 'findByAuthorName' | [name: String] | "SELECT book FROM $rootEntity.name AS book LEFT JOIN book.author author WHERE (author.name = :p1)" | FindAllInterceptor
     }
 
     @CompileStatic

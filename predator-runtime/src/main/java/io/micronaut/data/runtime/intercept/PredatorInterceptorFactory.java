@@ -37,17 +37,6 @@ public class PredatorInterceptorFactory {
     }
 
     /**
-     * Creates the {@link FindAllByInterceptor} instances for each configured {@link Datastore}.
-     *
-     * @param datastore The datastore
-     * @return The {@link FindAllByInterceptor}
-     */
-    @EachBean(Datastore.class)
-    protected FindAllByInterceptor findAllByInterceptor(Datastore datastore) {
-        return new DefaultFindAllByInterceptor(datastore);
-    }
-
-    /**
      * Creates the {@link FindAllInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore
@@ -106,7 +95,7 @@ public class PredatorInterceptorFactory {
      * Creates the {@link io.micronaut.data.intercept.SaveEntityInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore
-     * @return The {@link FindAllByInterceptor}
+     * @return The {@link SaveEntityInterceptor}
      */
     @EachBean(Datastore.class)
     protected SaveEntityInterceptor saveEntityInterceptor(Datastore datastore) {
@@ -117,7 +106,7 @@ public class PredatorInterceptorFactory {
      * Creates the {@link io.micronaut.data.intercept.SaveAllInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore
-     * @return The {@link FindAllByInterceptor}
+     * @return The {@link SaveAllInterceptor}
      */
     @EachBean(Datastore.class)
     protected SaveAllInterceptor saveAllInterceptor(Datastore datastore) {
@@ -128,7 +117,7 @@ public class PredatorInterceptorFactory {
      * Creates the {@link io.micronaut.data.intercept.ExistsByInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore
-     * @return The {@link FindAllByInterceptor}
+     * @return The {@link ExistsByInterceptor}
      */
     @EachBean(Datastore.class)
     protected ExistsByInterceptor existsByInterceptor(Datastore datastore) {

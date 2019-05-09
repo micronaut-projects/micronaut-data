@@ -10,7 +10,7 @@ import io.micronaut.data.intercept.DeleteAllInterceptor
 import io.micronaut.data.intercept.DeleteByInterceptor
 import io.micronaut.data.intercept.DeleteOneInterceptor
 import io.micronaut.data.intercept.ExistsByInterceptor
-import io.micronaut.data.intercept.FindAllByInterceptor
+
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.SaveAllInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
@@ -100,7 +100,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         listPeople.getReturnType().type == List.class
         listPeople.synthesize(PredatorMethod).rootEntity() == Person
         listPeople.synthesize(PredatorMethod).idType() == Long
-        listPeople.synthesize(PredatorMethod).interceptor() == FindAllByInterceptor
+        listPeople.synthesize(PredatorMethod).interceptor() == FindAllInterceptor
 
         when:"the count method with named query parameters is retrieved"
         def countPeople = beanDefinition.getRequiredMethod("count", String)

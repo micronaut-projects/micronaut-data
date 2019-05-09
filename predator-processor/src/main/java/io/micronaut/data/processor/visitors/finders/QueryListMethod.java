@@ -2,7 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.intercept.FindAllByInterceptor;
+import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
@@ -42,7 +42,7 @@ public class QueryListMethod extends ListMethod {
         return new PredatorMethodInfo(
                 matchContext.getEntity(),
                 query,
-                FindAllByInterceptor.class
+                FindAllInterceptor.class
         );
     }
 

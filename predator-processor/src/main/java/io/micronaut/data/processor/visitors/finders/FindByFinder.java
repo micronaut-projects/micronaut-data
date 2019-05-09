@@ -44,7 +44,7 @@ public class FindByFinder extends DynamicFinder {
                 }
 
                 if (returnType.isAssignable(Iterable.class)) {
-                    return new PredatorMethodInfo(typeArgument, query, FindAllByInterceptor.class);
+                    return new PredatorMethodInfo(typeArgument, query, FindAllInterceptor.class);
                 } else if (returnType.isAssignable(Stream.class)) {
                     return new PredatorMethodInfo(typeArgument, query, FindStreamInterceptor.class);
                 } else if (returnType.isAssignable(Optional.class)) {

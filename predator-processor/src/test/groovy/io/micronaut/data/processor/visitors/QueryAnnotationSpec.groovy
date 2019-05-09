@@ -3,7 +3,7 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.data.intercept.FindAllByInterceptor
+import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.query.encoder.entities.Person
@@ -46,7 +46,7 @@ interface MyInterface {
         then: "It was correctly compiled"
         def ann = listMethod.synthesize(PredatorMethod)
         ann.rootEntity() == Person
-        ann.interceptor() == FindAllByInterceptor
+        ann.interceptor() == FindAllInterceptor
         ann.parameterBinding()[0].name() == 'n'
         ann.parameterBinding()[0].value() == 'n'
         listMethod.getReturnType().type == List
