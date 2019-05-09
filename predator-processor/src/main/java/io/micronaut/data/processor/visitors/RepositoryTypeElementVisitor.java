@@ -25,6 +25,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 @Internal
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
@@ -44,7 +45,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             new DeleteMethod(),
             new QueryListMethod(),
             new QueryOneMethod(),
-            new CountByMethod()
+            new CountByMethod(),
+            new UpdateMethod()
     );
 
     public RepositoryTypeElementVisitor() {
@@ -121,8 +123,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             encodedQuery = queryEncoder.encodeDelete(queryObject);
                                             break;
                                         case UPDATE:
-                                            // TODO
-                                            encodedQuery = queryEncoder.encodeUpdate(queryObject, Collections.emptyList());
+                                            encodedQuery = queryEncoder
+                                                    .encodeUpdate(
+                                                            queryObject,
+                                                            methodInfo.getUpdateProperties());
                                             break;
                                         case INSERT:
                                             // TODO
@@ -148,6 +152,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             Map<String, String> finalParameterBinding = parameterBinding;
                             element.annotate(PredatorMethod.class, annotationBuilder -> {
                                 annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
+
+                                // include the roles
+                                methodInfo.getParameterRoles()
+                                        .forEach(annotationBuilder::member);
+
                                 TypedElement resultType = methodInfo.getResultType();
                                 if (resultType != null) {
                                     annotationBuilder.member("resultType", new AnnotationClassValue<>(resultType.getName()));

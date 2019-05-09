@@ -1,6 +1,7 @@
 package io.micronaut.data.hibernate;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Pageable;
@@ -12,6 +13,8 @@ import java.util.List;
 @Repository
 @Transactional
 public interface PersonCrudRepository extends CrudRepository<Person, Long> {
+
+//    void updatePerson(@Id Long id, String name);
 
     List<Person> list(Pageable pageable);
 

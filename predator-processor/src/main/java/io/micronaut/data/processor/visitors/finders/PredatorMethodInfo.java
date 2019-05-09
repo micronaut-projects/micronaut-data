@@ -7,6 +7,8 @@ import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.TypedElement;
 
+import java.util.*;
+
 
 /**
  * The predator method info. This class describes the pre-computed method handling for a
@@ -23,6 +25,9 @@ public class PredatorMethodInfo {
     private final Query query;
     private final Class<? extends PredatorInterceptor> interceptor;
     private final OperationType operationType;
+    private final String[] updateProperties;
+
+    private Map<String, String> parameterRoles = new HashMap<>(2);
 
     /**
      * Creates a method info.
@@ -43,16 +48,47 @@ public class PredatorMethodInfo {
      * @param query The query, can be null for interceptors that don't execute queries.
      * @param interceptor The interceptor type to execute at runtime
      * @param operationType The operation type
+     * @param updateProperties the update properties
      */
     public PredatorMethodInfo(
             @Nullable TypedElement resultType,
             @Nullable Query query,
             @Nullable Class<? extends PredatorInterceptor> interceptor,
-            @NonNull OperationType operationType) {
+            @NonNull OperationType operationType,
+            String... updateProperties) {
         this.query = query;
         this.interceptor = interceptor;
         this.operationType = operationType;
         this.resultType = resultType;
+        this.updateProperties = updateProperties;
+    }
+
+    /**
+     * Adds a parameter role. This indicates that a parameter is involved
+     * somehow in the query.
+     * @param role The role name
+     * @param name The parameter
+     */
+    public void addParameterRole(CharSequence role, String name) {
+        parameterRoles.put(role.toString(), name);
+    }
+
+    /**
+     * @return The parameter roles
+     */
+    public Map<String, String> getParameterRoles() {
+        return Collections.unmodifiableMap(parameterRoles);
+    }
+
+    /**
+     * @return The properties to update for an update operation.
+     */
+    @NonNull public List<String> getUpdateProperties() {
+        if (updateProperties == null) {
+            return Collections.emptyList();
+        } else {
+            return Arrays.asList(updateProperties);
+        }
     }
 
     /**
@@ -109,5 +145,15 @@ public class PredatorMethodInfo {
          * An insert operation.
          */
         INSERT
+    }
+
+    /**
+     * Parameter roles.
+     */
+    public enum ParameterRoles {
+        entity,
+        id,
+        pageable,
+        sort;
     }
 }

@@ -66,7 +66,13 @@ public @interface PredatorMethod {
      *
      * @return The entity argument
      */
-    String entity();
+    String entity() default "";
+
+    /**
+     * The member that defines the ID for lookup, delete, update by ID.
+     * @return The ID
+     */
+    String id() default "";
 
     /**
      * An explicit max (in absence of a pageable).
