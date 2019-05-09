@@ -35,7 +35,7 @@ class ProjectionSpec extends Specification {
 
         def king = new Author(name: "Stephen King")
         king.books.add(new Book(author: king, title: "The Stand", pages: 1000))
-        king.books.add(new Book(author: king, title: "The Shining", pages: 400))
+        king.books.add(new Book(author: king, title: "Pet Cemetery", pages: 400))
 
         def jp = new Author(name: "James Patterson")
         jp.books.add(new Book(author: jp, title: "Along Came a Spider", pages: 300 ))
@@ -68,6 +68,10 @@ class ProjectionSpec extends Specification {
     void "test project on single ended association"() {
         expect:
         bookRepository.count() == 6
+        bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                .findFirst().get().title == "Pet Cemetery"
+        bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                      .count() == 2
         authorRepository.findByName("Stephen King").books.size() == 2
         authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
         authorRepository.findByBooksTitle("The Border").name == "Don Winslow"

@@ -1,5 +1,6 @@
 package io.micronaut.data.hibernate.store;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Pageable;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Implementation of the {@link Datastore} interface for Hibernate.
@@ -178,6 +180,37 @@ public class HibernateJpaDatastore implements Datastore {
             query.executeUpdate();
             return null;
         });
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> findStream(
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues,
+            @NonNull Pageable pageable) {
+        //noinspection ConstantConditions
+        return readTransactionTemplate.execute(status -> {
+            Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
+            bindParameters(q, parameterValues);
+            bindPageable(q, pageable);
+
+            return q.stream();
+        });
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> findStream(@NonNull Class<T> entity, @NonNull Pageable pageable) {
+        Session session = sessionFactory.getCurrentSession();
+        CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(entity);
+        query.from(entity);
+        Query<T> q = session.createQuery(
+                query
+        );
+        bindPageable(q, pageable);
+
+        return q.stream();
     }
 
     private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {

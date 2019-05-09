@@ -1,12 +1,13 @@
 package io.micronaut.data.store;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.Pageable;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Common interface for datastore implementations to implement.
@@ -24,7 +25,7 @@ public interface Datastore {
      * @param <T> The generic type
      * @return A result or null
      */
-    @Nullable <T> T findOne(@Nonnull Class<T> type, @Nonnull Serializable id);
+    @Nullable <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id);
 
     /**
      * Find one by Query.
@@ -36,9 +37,9 @@ public interface Datastore {
      * @return A result or null
      */
     @Nullable <T> T findOne(
-            @Nonnull Class<T> resultType,
-            @Nonnull String query,
-            @Nonnull Map<String, Object> parameters);
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameters);
 
     /**
      * Finds all results for the given query.
@@ -48,10 +49,10 @@ public interface Datastore {
      * @param <T> The generic type
      * @return An iterable result
      */
-    default @Nonnull <T> Iterable<T> findAll(
-            @Nonnull Class<T> resultType,
-            @Nonnull String query,
-            @Nonnull Map<String, Object> parameterValues
+    default @NonNull <T> Iterable<T> findAll(
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues
     ) {
         return findAll(
                 resultType,
@@ -67,8 +68,8 @@ public interface Datastore {
      * @param <T> The generic type
      * @return An iterable result
      */
-    default @Nonnull <T> Iterable<T> findAll(
-            @Nonnull Class<T> rootEntity
+    default @NonNull <T> Iterable<T> findAll(
+            @NonNull Class<T> rootEntity
     ) {
         return findAll(
                 rootEntity,
@@ -83,9 +84,9 @@ public interface Datastore {
      * @param <T> The generic type
      * @return An iterable result
      */
-    @Nonnull <T> Iterable<T> findAll(
-            @Nonnull Class<T> rootEntity,
-            @Nonnull Pageable pageable
+    @NonNull <T> Iterable<T> findAll(
+            @NonNull Class<T> rootEntity,
+            @NonNull Pageable pageable
     );
 
     /**
@@ -95,7 +96,7 @@ public interface Datastore {
      * @return An iterable result
      */
     default <T> long count(
-            @Nonnull Class<T> rootEntity
+            @NonNull Class<T> rootEntity
     ) {
         return count(
                 rootEntity,
@@ -111,8 +112,8 @@ public interface Datastore {
      * @return An iterable result
      */
     <T> long count(
-            @Nonnull Class<T> rootEntity,
-            @Nonnull Pageable pageable
+            @NonNull Class<T> rootEntity,
+            @NonNull Pageable pageable
     );
 
     /**
@@ -124,11 +125,11 @@ public interface Datastore {
      * @param <T> The generic type
      * @return An iterable result
      */
-    @Nonnull <T> Iterable<T> findAll(
-            @Nonnull Class<T> resultType,
-            @Nonnull String query,
-            @Nonnull Map<String, Object> parameterValues,
-            @Nonnull Pageable pageable
+    @NonNull <T> Iterable<T> findAll(
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues,
+            @NonNull Pageable pageable
             );
 
     /**
@@ -137,7 +138,7 @@ public interface Datastore {
      * @param <T> The generic type
      * @return The entity
      */
-    <T> T persist(@Nonnull T entity);
+    @NonNull <T> T persist(@NonNull T entity);
 
     /**
      * Persist all the given entities.
@@ -145,7 +146,7 @@ public interface Datastore {
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    <T> Iterable<T> persistAll(@Nonnull Iterable<T> entities);
+    @NonNull <T> Iterable<T> persistAll(@NonNull Iterable<T> entities);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -153,9 +154,9 @@ public interface Datastore {
      * @param query The query
      * @param parameterValues the parameter values
      */
-    @Nonnull Optional<Number> executeUpdate(
-            @Nonnull String query,
-            @Nonnull Map<String, Object> parameterValues
+    @NonNull Optional<Number> executeUpdate(
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues
     );
 
     /**
@@ -164,12 +165,49 @@ public interface Datastore {
      * @param entities The entities
      * @param <T> The generic type
      */
-    <T> void deleteAll(@Nonnull Class<T> entityType, @Nonnull Iterable<? extends T> entities);
+    <T> void deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
 
     /**
      * Deletes all the entities of the given type
      * @param entityType The entity type
      * @param <T> The generic type
      */
-    <T> void deleteAll(@Nonnull Class<T> entityType);
+    <T> void deleteAll(@NonNull Class<T> entityType);
+
+    /**
+     * Finds a stream for the given arguments.
+     * @param resultType The result type
+     * @param query The query
+     * @param parameterValues The parameter values
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @return The stream
+     */
+    @NonNull <T> Stream<T> findStream(
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues,
+            @NonNull Pageable pageable);
+
+    /**
+     * Finds a stream for the given arguments.
+     * @param entity The result type
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @return The stream
+     */
+    @NonNull <T> Stream<T> findStream(
+            @NonNull Class<T> entity,
+            @NonNull Pageable pageable);
+
+    /**
+     * Finds a stream for the given arguments.
+     * @param entity The result type
+     * @param <T> The generic type
+     * @return The stream
+     */
+    default @NonNull <T> Stream<T> findStream(
+            @NonNull Class<T> entity) {
+        return findStream(entity, Pageable.unpaged());
+    };
 }

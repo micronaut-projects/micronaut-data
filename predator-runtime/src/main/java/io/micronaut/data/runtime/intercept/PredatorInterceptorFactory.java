@@ -26,6 +26,17 @@ public class PredatorInterceptorFactory {
     }
 
     /**
+     * Creates the {@link FindStreamInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link FindStreamInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected FindStreamInterceptor findStreamInterceptor(Datastore datastore) {
+        return new DefaultFindStreamInterceptor(datastore);
+    }
+
+    /**
      * Creates the {@link FindOptionalInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore
