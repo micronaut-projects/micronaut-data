@@ -41,9 +41,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
-        ParameterElement[] parameters = matchContext.getParameters();
-        ParameterElement paginationParameter = matchContext.getPaginationParameter();
-        List<ParameterElement> queryParams = Arrays.stream(parameters).filter(p -> p != paginationParameter).collect(Collectors.toList());
+        List<ParameterElement> queryParams = matchContext.getParametersNotInRole();
         Query query = null;
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         if (CollectionUtils.isNotEmpty(queryParams)) {

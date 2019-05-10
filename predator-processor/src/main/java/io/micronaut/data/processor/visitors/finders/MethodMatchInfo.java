@@ -66,6 +66,7 @@ public class MethodMatchInfo {
      * somehow in the query.
      * @param role The role name
      * @param name The parameter
+     * @see io.micronaut.data.annotation.ParameterRole
      */
     public void addParameterRole(CharSequence role, String name) {
         parameterRoles.put(role.toString(), name);

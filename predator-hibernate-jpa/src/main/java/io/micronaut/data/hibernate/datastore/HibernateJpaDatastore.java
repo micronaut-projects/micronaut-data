@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -14,10 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaDelete;
-import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
@@ -66,11 +64,7 @@ public class HibernateJpaDatastore implements Datastore {
             Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
             bindParameters(q, parameters);
             q.setMaxResults(1);
-            try {
-                return q.getSingleResult();
-            } catch (NoResultException e) {
-                return null;
-            }
+            return q.uniqueResultOptional().orElse(null);
         });
     }
 
@@ -80,11 +74,13 @@ public class HibernateJpaDatastore implements Datastore {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session session = sessionFactory.getCurrentSession();
-            CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(rootEntity);
-            query.from(rootEntity);
+            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            CriteriaQuery<T> query = criteriaBuilder.createQuery(rootEntity);
+            Root<T> root = query.from(rootEntity);
             Query<T> q = session.createQuery(
                     query
             );
+            bindCriteriaSort(query, root, criteriaBuilder, pageable);
             bindPageable(q, pageable);
 
             return q.list();
@@ -98,10 +94,12 @@ public class HibernateJpaDatastore implements Datastore {
             Session session = sessionFactory.getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
-            query = query.select(criteriaBuilder.count(query.from(rootEntity)));
+            Root<T> root = query.from(rootEntity);
+            query = query.select(criteriaBuilder.count(root));
             Query<Long> q = session.createQuery(
                     query
             );
+            bindCriteriaSort(query, root, criteriaBuilder, pageable);
             bindPageable(q, pageable);
 
             return q.getSingleResult();
@@ -120,7 +118,6 @@ public class HibernateJpaDatastore implements Datastore {
             Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
             bindParameters(q, parameterValues);
             bindPageable(q, pageable);
-
             return q.list();
         });
     }
@@ -230,6 +227,24 @@ public class HibernateJpaDatastore implements Datastore {
         long offset = pageable.getOffset();
         if (offset > 0) {
             q.setFirstResult((int) offset);
+        }
+    }
+
+    private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @Nonnull Sort sort) {
+        for (Sort.Order order : sort.getOrderBy()) {
+            Path<String> path = root.get(order.getProperty());
+            Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
+            switch (order.getDirection()) {
+                case ASC:
+                    criteriaQuery.orderBy(
+                            builder.asc(expression)
+                    );
+                continue;
+                case DESC:
+                    criteriaQuery.orderBy(
+                            builder.asc(expression)
+                    );
+            }
         }
     }
 }

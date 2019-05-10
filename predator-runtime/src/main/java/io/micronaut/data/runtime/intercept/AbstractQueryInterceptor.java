@@ -10,10 +10,12 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.ParameterRole;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import java.util.Collections;
@@ -97,7 +99,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
     @Nullable
     protected Pageable getPageable(MethodInvocationContext context) {
-        String pageableParam = context.getValue(PredatorMethod.class, "pageable", String.class).orElse(null);
+        String pageableParam = context.getValue(PredatorMethod.class, ParameterRole.PAGEABLE, String.class).orElse(null);
         Pageable pageable = null;
         if (pageableParam != null) {
             Map<String, Object> parameterValueMap = context.getParameterValueMap();
@@ -105,14 +107,23 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                     .convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
 
         } else {
-            int max = context.getValue(PredatorMethod.class, "max", int.class).orElse(-1);
-            long offset = context.getValue(PredatorMethod.class, "offset", long.class).orElse(0L);
-            boolean hasMax = max > -1;
-            if (offset > 0 || hasMax) {
-                if (hasMax) {
-                    pageable = Pageable.from(offset, max);
-                } else {
-                    pageable = Pageable.from(offset);
+            Sort sortParam = context.getValue(PredatorMethod.class, ParameterRole.SORT, Sort.class).orElse(null);
+            if (sortParam != null) {
+                pageable = Pageable.unpaged();
+                for (Sort.Order order : sortParam.getOrderBy()) {
+                    pageable.getSort().order(order);
+                }
+                return pageable;
+            } else {
+                int max = context.getValue(PredatorMethod.class, "max", int.class).orElse(-1);
+                long offset = context.getValue(PredatorMethod.class, "offset", long.class).orElse(0L);
+                boolean hasMax = max > -1;
+                if (offset > 0 || hasMax) {
+                    if (hasMax) {
+                        pageable = Pageable.from(offset, max);
+                    } else {
+                        pageable = Pageable.from(offset);
+                    }
                 }
             }
         }

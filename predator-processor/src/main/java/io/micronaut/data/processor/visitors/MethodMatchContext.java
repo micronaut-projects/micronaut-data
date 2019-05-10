@@ -1,12 +1,17 @@
 package io.micronaut.data.processor.visitors;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A match context for finding a matching method.
@@ -22,11 +27,10 @@ public class MethodMatchContext {
     private final VisitorContext visitorContext;
     @NonNull
     private final MethodElement methodElement;
-    @Nullable
-    private final ParameterElement paginationParameter;
     @NonNull
     private final ParameterElement[] parameters;
     private final ClassElement returnType;
+    private final Map<String, ParameterElement> parametersInRole;
     private boolean failing = false;
 
     /**
@@ -35,7 +39,7 @@ public class MethodMatchContext {
      * @param visitorContext The visitor context
      * @param returnType The return type
      * @param methodElement The method element
-     * @param paginationParameter The pagination parameter
+     * @param parametersInRole Parameters that fulfill a query execution role
      * @param parameters The parameters
      */
     MethodMatchContext(
@@ -43,14 +47,22 @@ public class MethodMatchContext {
             @NonNull VisitorContext visitorContext,
             @NonNull ClassElement returnType,
             @NonNull MethodElement methodElement,
-            @Nullable ParameterElement paginationParameter,
+            @NonNull Map<String, ParameterElement> parametersInRole,
             @NonNull ParameterElement[] parameters) {
         this.entity = entity;
         this.visitorContext = visitorContext;
         this.methodElement = methodElement;
-        this.paginationParameter = paginationParameter;
+        this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
         this.parameters = parameters;
         this.returnType = returnType;
+    }
+
+    /**
+     * @return Parameters that fulfill a query execution role
+     */
+    @NonNull
+    public Map<String, ParameterElement> getParametersInRole() {
+        return parametersInRole;
     }
 
     /**
@@ -87,14 +99,6 @@ public class MethodMatchContext {
     }
 
     /**
-     * @return The pagination parameter
-     */
-    @Nullable
-    public ParameterElement getPaginationParameter() {
-        return paginationParameter;
-    }
-
-    /**
      * @return The parameters
      */
     @NonNull
@@ -118,5 +122,15 @@ public class MethodMatchContext {
      */
     public boolean isFailing() {
         return failing;
+    }
+
+    /**
+     * Returns a list of parameters that are not fulfilling a specific query role.
+     * @return The parameters not in role
+     */
+    public @NonNull List<ParameterElement> getParametersNotInRole() {
+        return Arrays.stream(parameters).filter(p ->
+            !this.parametersInRole.containsValue(p)
+        ).collect(Collectors.toList());
     }
 }

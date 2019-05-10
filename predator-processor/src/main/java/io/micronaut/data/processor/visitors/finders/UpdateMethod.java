@@ -1,6 +1,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.ParameterRole;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
@@ -111,7 +112,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         );
 
         info.addParameterRole(
-                MethodMatchInfo.ParameterRoles.id.name(),
+                ParameterRole.ID,
                 idParameter.getName()
         );
         return info;

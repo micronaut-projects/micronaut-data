@@ -4,6 +4,7 @@ import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 
@@ -38,9 +39,12 @@ public @interface Repository {
     Class<? extends QueryBuilder> queryBuilder() default JpaQueryBuilder.class;
 
     /**
-     * The supported pagination types.
+     * Configures {@link ParameterRole} behaviour for a repository.
      *
-     * @return The pagination types
+     * @return The parameter roles
      */
-    Class<?>[] paginationTypes() default { Pageable.class };
+    ParameterRole[] parameterRoles() default {
+        @ParameterRole(role = ParameterRole.PAGEABLE, type = Pageable.class),
+        @ParameterRole(role = ParameterRole.SORT, type = Sort.class)
+    };
 }
