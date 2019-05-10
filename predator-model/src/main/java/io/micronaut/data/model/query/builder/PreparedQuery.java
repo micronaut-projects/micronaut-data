@@ -1,4 +1,4 @@
-package io.micronaut.data.model.query.encoder;
+package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.util.ArgumentUtils;
 
@@ -13,7 +13,7 @@ import java.util.Map;
  * @author graemerocher
  * @since 1.0
  */
-public interface EncodedQuery {
+public interface PreparedQuery {
 
     /**
      * @return A string representation of the original query.
@@ -34,9 +34,10 @@ public interface EncodedQuery {
      * @param parameters The parameters
      * @return The query
      */
-    static @Nonnull EncodedQuery of(@Nonnull String query, @Nullable Map<String, String> parameters) {
+    static @Nonnull
+    PreparedQuery of(@Nonnull String query, @Nullable Map<String, String> parameters) {
         ArgumentUtils.requireNonNull("query", query);
-        return new EncodedQuery() {
+        return new PreparedQuery() {
             @Nonnull
             @Override
             public String getQuery() {

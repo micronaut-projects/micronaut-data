@@ -8,7 +8,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
-import io.micronaut.data.model.query.encoder.entities.Person
+import io.micronaut.data.model.query.builder.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -65,10 +65,10 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
         executableMethod.getValue(Query, String).orElse(null) == query
 
         where:
-        rootEntity | resultType    | method               | arguments      | query                                                                               | interceptor
-        Person     | Person        | 'findDistinctByName' | [name: String] | "SELECT DISTINCT(person) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindAllInterceptor
-        Person     | Integer.class | 'findAgeByName'      | [name: String] | "SELECT person.age FROM $rootEntity.name AS person WHERE (person.name = :p1)"       | FindAllInterceptor
-        Person     | String     | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(person.name) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindAllInterceptor.class
+        rootEntity | resultType    | method                   | arguments      | query                                                                                    | interceptor
+        Person     | Person        | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(person) FROM $rootEntity.name AS person WHERE (person.name = :p1)"      | FindAllInterceptor
+        Person     | Integer.class | 'findAgeByName'          | [name: String] | "SELECT person.age FROM $rootEntity.name AS person WHERE (person.name = :p1)"            | FindAllInterceptor
+        Person     | String        | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(person.name) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindAllInterceptor.class
     }
 
     @Unroll
@@ -98,7 +98,7 @@ package test;
 
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
-import io.micronaut.data.model.query.encoder.entities.Person;
+import io.micronaut.data.model.query.builder.entities.Person;
 
 @Repository
 interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
@@ -117,7 +117,7 @@ package test;
 
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
-import io.micronaut.data.model.query.encoder.entities.Person;
+import io.micronaut.data.model.query.builder.entities.Person;
 import java.util.List;
 
 @Repository

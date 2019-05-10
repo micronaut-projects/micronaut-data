@@ -1,10 +1,10 @@
-package io.micronaut.data.model.query.encoder
+package io.micronaut.data.model.query.builder
 
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.model.PersistentEntity
-import io.micronaut.data.model.query.encoder.entities.Author
-import io.micronaut.data.model.query.encoder.entities.Book
-import io.micronaut.data.model.query.encoder.entities.Person
+import io.micronaut.data.model.query.builder.entities.Author
+import io.micronaut.data.model.query.builder.entities.Book
+import io.micronaut.data.model.query.builder.entities.Person
 import spock.lang.Specification
 
 class RuntimePersistentEntitySpec extends Specification {

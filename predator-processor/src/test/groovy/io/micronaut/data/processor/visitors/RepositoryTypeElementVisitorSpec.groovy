@@ -10,7 +10,7 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.SaveEntityInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.query.encoder.entities.Person
+import io.micronaut.data.model.query.builder.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
@@ -51,11 +51,11 @@ interface MyInterface {
         validateParameterBinding(query, executableMethod, arguments)
 
         where:
-        returnType | method                  | arguments        | query                                                                              | interceptor
+        returnType | method                  | arguments        | query                                                                     | interceptor
         Person     | 'findByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindOneInterceptor.class
         Person     | 'getByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindOneInterceptor.class
         Person     | 'retrieveByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindOneInterceptor.class
-        Person     | 'savePerson'            | [person: Person] | null                                                                               | SaveEntityInterceptor.class
+        Person     | 'savePerson'            | [person: Person] | null                                                                      | SaveEntityInterceptor.class
     }
 
     @Unroll

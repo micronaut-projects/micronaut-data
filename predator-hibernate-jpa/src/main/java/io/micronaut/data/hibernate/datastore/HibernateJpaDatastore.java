@@ -38,7 +38,7 @@ public class HibernateJpaDatastore implements Datastore {
 
     /**
      * Default constructor.
-     * 
+     *
      * @param sessionFactory The session factory
      */
     protected HibernateJpaDatastore(@Nonnull SessionFactory sessionFactory) {

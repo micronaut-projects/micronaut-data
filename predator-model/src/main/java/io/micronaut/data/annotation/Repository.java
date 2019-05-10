@@ -4,8 +4,8 @@ import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.encoder.JpaQueryEncoder;
-import io.micronaut.data.model.query.encoder.QueryEncoder;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 
 import java.lang.annotation.*;
 
@@ -31,11 +31,11 @@ public @interface Repository {
     String value() default "";
 
     /**
-     * The encoder to use to encode queries. Defaults to JPA-QL.
+     * The builder to use to encode queries. Defaults to JPA-QL.
      *
-     * @return The query encoder
+     * @return The query builder
      */
-    Class<? extends QueryEncoder> queryEncoder() default JpaQueryEncoder.class;
+    Class<? extends QueryBuilder> queryBuilder() default JpaQueryBuilder.class;
 
     /**
      * The supported pagination types.

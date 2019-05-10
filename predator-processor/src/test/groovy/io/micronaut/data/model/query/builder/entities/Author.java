@@ -1,4 +1,4 @@
-package io.micronaut.data.model.query.encoder.entities;
+package io.micronaut.data.model.query.builder.entities;
 
 import javax.persistence.*;
 import java.util.HashSet;

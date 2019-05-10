@@ -1,15 +1,16 @@
-package io.micronaut.data.model.query.encoder
+package io.micronaut.data.model.query.builder
 
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.Query
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.Sort
-import io.micronaut.data.model.query.encoder.entities.Person
+import io.micronaut.data.model.query.builder.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class JpaQueryEncoderSpec extends Specification {
+class JpaQueryBuilderSpec extends Specification {
 
     @Unroll
     void "test encode query #statement - order by"() {
@@ -20,8 +21,8 @@ class JpaQueryEncoderSpec extends Specification {
             q.order(Sort.Order."$direction"(p))
         }
 
-        QueryEncoder encoder = new JpaQueryEncoder()
-        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+        QueryBuilder encoder = new JpaQueryBuilder()
+        PreparedQuery encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -33,8 +34,8 @@ class JpaQueryEncoderSpec extends Specification {
         type   | direction | props           | statement
         Person | 'asc'     | ["name"]        | 'person.name ASC'
         Person | 'asc'     | ["name", "age"] | 'person.name ASC,person.age ASC'
-        Person | 'desc'     | ["name"]        | 'person.name DESC'
-        Person | 'desc'     | ["name", "age"] | 'person.name DESC,person.age DESC'
+        Person | 'desc'    | ["name"]        | 'person.name DESC'
+        Person | 'desc'    | ["name", "age"] | 'person.name DESC,person.age DESC'
     }
 
     @Unroll
@@ -44,8 +45,8 @@ class JpaQueryEncoderSpec extends Specification {
         Query q = Query.from(entity)
         q."$method"(property, QueryParameter.of('test'))
 
-        QueryEncoder encoder = new JpaQueryEncoder()
-        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+        QueryBuilder encoder = new JpaQueryBuilder()
+        PreparedQuery encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -72,8 +73,8 @@ class JpaQueryEncoderSpec extends Specification {
         Query q = Query.from(entity)
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
-        QueryEncoder encoder = new JpaQueryEncoder()
-        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+        QueryBuilder encoder = new JpaQueryBuilder()
+        PreparedQuery encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -98,8 +99,8 @@ class JpaQueryEncoderSpec extends Specification {
         Query q = Query.from(entity)
         q."$method"(property, QueryParameter.of('test'))
 
-        QueryEncoder encoder = new JpaQueryEncoder()
-        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+        QueryBuilder encoder = new JpaQueryBuilder()
+        PreparedQuery encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -121,8 +122,8 @@ class JpaQueryEncoderSpec extends Specification {
         Query q = Query.from(entity)
         q.between(property, QueryParameter.of("from"), QueryParameter.of("to"))
 
-        QueryEncoder encoder = new JpaQueryEncoder()
-        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+        QueryBuilder encoder = new JpaQueryBuilder()
+        PreparedQuery encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -143,8 +144,8 @@ class JpaQueryEncoderSpec extends Specification {
         Query q = Query.from(entity)
         q."$method"(property)
 
-        QueryEncoder encoder = new JpaQueryEncoder()
-        EncodedQuery encodedQuery = encoder.encodeQuery(q)
+        QueryBuilder encoder = new JpaQueryBuilder()
+        PreparedQuery encodedQuery = encoder.buildQuery(q)
 
 
         expect:

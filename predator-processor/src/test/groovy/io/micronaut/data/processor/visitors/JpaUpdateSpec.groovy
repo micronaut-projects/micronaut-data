@@ -6,7 +6,7 @@ import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
-import io.micronaut.data.model.query.encoder.entities.Person
+import io.micronaut.data.model.query.builder.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -21,7 +21,7 @@ class JpaUpdateSpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
-import io.micronaut.data.model.query.encoder.entities.*;
+import io.micronaut.data.model.query.builder.entities.*;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;

@@ -17,8 +17,8 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
-import io.micronaut.data.model.query.encoder.EncodedQuery;
-import io.micronaut.data.model.query.encoder.QueryEncoder;
+import io.micronaut.data.model.query.builder.PreparedQuery;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.finders.*;
 import io.micronaut.inject.ast.*;
@@ -40,7 +40,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private static final String[] DEFAULT_PAGINATORS = {Pageable.class.getName()};
     private ClassElement currentClass;
-    private QueryEncoder queryEncoder;
+    private QueryBuilder queryEncoder;
     private String[] paginationTypes = DEFAULT_PAGINATORS;
     private List<MethodCandidate> finders;
 
@@ -107,22 +107,22 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 // the computed parameter names
                                 parameterBinding = rawQuery.getParameterBinding();
                             } else {
-                                EncodedQuery encodedQuery;
+                                PreparedQuery encodedQuery;
                                 try {
                                     switch (methodInfo.getOperationType()) {
                                         case DELETE:
-                                            encodedQuery = queryEncoder.encodeDelete(queryObject);
+                                            encodedQuery = queryEncoder.buildDelete(queryObject);
                                             break;
                                         case UPDATE:
                                             encodedQuery = queryEncoder
-                                                    .encodeUpdate(
+                                                    .buildUpdate(
                                                             queryObject,
                                                             methodInfo.getUpdateProperties());
                                             break;
                                         case INSERT:
                                             // TODO
                                         default:
-                                            encodedQuery = queryEncoder.encodeQuery(queryObject);
+                                            encodedQuery = queryEncoder.buildQuery(queryObject);
                                     }
 
                                 } catch (Exception e) {
@@ -294,15 +294,15 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private QueryEncoder resolveQueryEncoder(Element element, VisitorContext context) {
+    private QueryBuilder resolveQueryEncoder(Element element, VisitorContext context) {
         return element.getValue(
                                 Repository.class,
-                                "queryEncoder",
+                                "queryBuilder",
                                 String.class
                         ).flatMap(type -> {
                             Object o = InstantiationUtils.tryInstantiate(type, RepositoryTypeElementVisitor.class.getClassLoader()).orElse(null);
-                            if (o instanceof QueryEncoder) {
-                                return Optional.of((QueryEncoder) o);
+                            if (o instanceof QueryBuilder) {
+                                return Optional.of((QueryBuilder) o);
                             } else {
                                 context.fail("QueryEncoder of type [" + type + "] not present on annotation processor path", element);
                                 return Optional.empty();

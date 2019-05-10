@@ -7,7 +7,7 @@ import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
-import io.micronaut.data.model.query.encoder.entities.Book
+import io.micronaut.data.model.query.builder.entities.Book
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -37,7 +37,7 @@ class AssociationQuerySpec extends AbstractTypeElementSpec {
         executableMethod.getValue(Query, String).orElse(null) == query
 
         where:
-        rootEntity | resultType | method             | arguments      | query                                                                 | interceptor
+        rootEntity | resultType | method             | arguments      | query                                                                                              | interceptor
         Book       | Book       | 'findByAuthorName' | [name: String] | "SELECT book FROM $rootEntity.name AS book LEFT JOIN book.author author WHERE (author.name = :p1)" | FindAllInterceptor
     }
 
@@ -48,7 +48,7 @@ package test;
 
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
-import io.micronaut.data.model.query.encoder.entities.Person;
+import io.micronaut.data.model.query.builder.entities.Person;
 import java.util.List;
 import io.micronaut.data.annotation.JoinSpec;
 

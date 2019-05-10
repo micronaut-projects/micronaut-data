@@ -1,4 +1,4 @@
-package io.micronaut.data.model.query.encoder;
+package io.micronaut.data.model.query.builder;
 
 import io.micronaut.data.model.query.Query;
 
@@ -11,7 +11,7 @@ import java.util.List;
  * @author graemerocher
  * @since 1.0
  */
-public interface QueryEncoder {
+public interface QueryBuilder {
 
     /**
      * Encode the given query into the encoded query instance.
@@ -19,7 +19,8 @@ public interface QueryEncoder {
      * @param query The query
      * @return The encoded query
      */
-    @Nonnull EncodedQuery encodeQuery(@Nonnull Query query);
+    @Nonnull
+    PreparedQuery buildQuery(@Nonnull Query query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -27,7 +28,8 @@ public interface QueryEncoder {
      * @param query The query
      * @return The encoded query
      */
-    @Nonnull EncodedQuery encodeUpdate(@Nonnull Query query, List<String> propertiesToUpdate);
+    @Nonnull
+    PreparedQuery buildUpdate(@Nonnull Query query, List<String> propertiesToUpdate);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -35,7 +37,8 @@ public interface QueryEncoder {
      * @param query The query
      * @return The encoded query
      */
-    @Nonnull EncodedQuery encodeDelete(@Nonnull Query query);
+    @Nonnull
+    PreparedQuery buildDelete(@Nonnull Query query);
 
     /**
      * When producing the query this dedicates whether to use the mapped names (such as the column name)

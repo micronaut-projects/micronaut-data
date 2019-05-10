@@ -1,4 +1,4 @@
-package io.micronaut.data.model.query.encoder;
+package io.micronaut.data.model.query.builder.jpa;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.JoinSpec;
@@ -10,6 +10,8 @@ import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.query.builder.PreparedQuery;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -22,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 1.0
  */
 @Internal
-public class JpaQueryEncoder implements QueryEncoder {
+public class JpaQueryBuilder implements QueryBuilder {
     private static final String DISTINCT_CLAUSE = "DISTINCT ";
     private static final String SELECT_CLAUSE = "SELECT ";
     private static final String AS_CLAUSE = " AS ";
@@ -33,7 +35,6 @@ public class JpaQueryEncoder implements QueryEncoder {
     private static final char CLOSE_BRACKET = ')';
     private static final char OPEN_BRACKET = '(';
     private static final char SPACE = ' ';
-    private static final char QUESTIONMARK = '?';
     private static final char DOT = '.';
     private static final String NOT_CLAUSE = " NOT";
     private static final String LOGICAL_AND = " AND ";
@@ -41,13 +42,10 @@ public class JpaQueryEncoder implements QueryEncoder {
     private static final String DELETE_CLAUSE = "DELETE ";
     private static final String LOGICAL_OR = " OR ";
     private static final Map<Class, QueryHandler> queryHandlers = new HashMap<>();
-    private static final String PARAMETER_NAME_PREFIX = "p";
-    private static final String PARAMETER_PREFIX = ":p";
-
 
     @Nonnull
     @Override
-    public EncodedQuery encodeQuery(@Nonnull Query query) {
+    public PreparedQuery buildQuery(@Nonnull Query query) {
         QueryState queryState = new QueryState(query, true);
         queryState.query.append(SELECT_CLAUSE);
 
@@ -60,12 +58,12 @@ public class JpaQueryEncoder implements QueryEncoder {
         }
 
         appendOrder(query, queryState);
-        return EncodedQuery.of(queryState.query.toString(), parameters);
+        return PreparedQuery.of(queryState.query.toString(), parameters);
     }
 
     @Nonnull
     @Override
-    public EncodedQuery encodeUpdate(@Nonnull Query query, List<String> propertiesToUpdate) {
+    public PreparedQuery buildUpdate(@Nonnull Query query, List<String> propertiesToUpdate) {
         if (propertiesToUpdate.isEmpty()) {
             throw new IllegalArgumentException("No properties specified to update");
         }
@@ -77,17 +75,17 @@ public class JpaQueryEncoder implements QueryEncoder {
                 .append(queryState.logicalName);
         buildUpdateStatement(queryState, propertiesToUpdate);
         buildWhereClause(query.getCriteria(), queryState);
-        return EncodedQuery.of(queryState.query.toString(), queryState.parameters);
+        return PreparedQuery.of(queryState.query.toString(), queryState.parameters);
     }
 
     @Nonnull
     @Override
-    public EncodedQuery encodeDelete(@Nonnull Query query) {
+    public PreparedQuery buildDelete(@Nonnull Query query) {
         PersistentEntity entity = query.getPersistentEntity();
         QueryState queryState = new QueryState(query, false);
         queryState.query.append(DELETE_CLAUSE).append(entity.getName()).append(SPACE).append(queryState.logicalName);
         buildWhereClause(query.getCriteria(), queryState);
-        return EncodedQuery.of(queryState.query.toString(), queryState.parameters);
+        return PreparedQuery.of(queryState.query.toString(), queryState.parameters);
     }
 
     private void buildSelectClause(Query query, QueryState queryState) {
