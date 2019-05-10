@@ -48,6 +48,16 @@ class RuntimePersistentProperty implements PersistentProperty {
     }
 
     @Override
+    public boolean isAssignable(@NonNull String type) {
+        throw new UnsupportedOperationException("Use isAssignable(Class) instead");
+    }
+
+    @Override
+    public boolean isAssignable(@NonNull Class<?> type) {
+        return type.isAssignableFrom(getProperty().getType());
+    }
+
+    @Override
     public AnnotationMetadata getAnnotationMetadata() {
         return property.getAnnotationMetadata();
     }

@@ -1,5 +1,6 @@
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.Query
 import io.micronaut.data.model.query.QueryParameter
@@ -158,7 +159,7 @@ class JpaQueryBuilderSpec extends Specification {
         type   | method       | property | operator
         Person | 'isNull'     | 'name'   | 'IS NULL'
         Person | 'isNotNull'  | 'name'   | 'IS NOT NULL'
-        Person | 'isEmpty'    | 'name'   | 'IS EMPTY'
-        Person | 'isNotEmpty' | 'name'   | 'IS NOT EMPTY'
+        Person | 'isEmpty'    | 'name'   | "IS NULL OR ${NameUtils.decapitalize(Person.simpleName)}.$property = \'\'"
+        Person | 'isNotEmpty' | 'name'   | "IS NOT NULL AND ${NameUtils.decapitalize(Person.simpleName)}.$property <> \'\'"
     }
 }

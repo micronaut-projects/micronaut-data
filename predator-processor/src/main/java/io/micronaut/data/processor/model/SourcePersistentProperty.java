@@ -91,6 +91,12 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return owner;
     }
 
+    @Override
+    public boolean isAssignable(@NonNull String type) {
+        ClassElement t = getType();
+        return t != null && t.isAssignable(type);
+    }
+
     /**
      * @return The property element.
      */

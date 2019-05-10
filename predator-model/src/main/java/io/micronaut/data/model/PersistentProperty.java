@@ -1,5 +1,6 @@
 package io.micronaut.data.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -74,5 +75,16 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      */
     default boolean isGenerated() {
         return getAnnotationMetadata().hasAnnotation(GeneratedValue.class);
+    }
+
+    /**
+     * Is the property assignable to the given type name.
+     * @param type The type name
+     * @return True if it is
+     */
+    boolean isAssignable(@NonNull String type);
+
+    default boolean isAssignable(@NonNull Class<?> type) {
+        return isAssignable(type.getName());
     }
 }

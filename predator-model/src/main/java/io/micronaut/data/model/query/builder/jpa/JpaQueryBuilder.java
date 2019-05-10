@@ -12,6 +12,7 @@ import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.PreparedQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.factory.Restrictions;
 
 import javax.annotation.Nonnull;
 import java.util.*;
@@ -346,21 +347,39 @@ public class JpaQueryBuilder implements QueryBuilder {
         queryHandlers.put(Query.IsEmpty.class, (queryState, criterion) -> {
             Query.IsEmpty isEmpty = (Query.IsEmpty) criterion;
             final String name = isEmpty.getProperty();
-            validateProperty(queryState.entity, name, Query.IsEmpty.class);
-            queryState.whereClause.append(queryState.logicalName)
-                    .append(DOT)
-                    .append(name)
-                    .append(" IS EMPTY ");
+            PersistentProperty property = validateProperty(queryState.entity, name, Query.IsEmpty.class);
+            if (property.isAssignable(CharSequence.class)) {
+                String path = queryState.logicalName + DOT + name;
+                queryState.whereClause.append(path)
+                        .append(" IS NULL OR ")
+                        .append(path)
+                        .append(" = '' ");
+
+            } else {
+                queryState.whereClause.append(queryState.logicalName)
+                        .append(DOT)
+                        .append(name)
+                        .append(" IS EMPTY ");
+            }
         });
 
         queryHandlers.put(Query.IsNotEmpty.class, (queryState, criterion) -> {
             Query.IsNotEmpty isNotEmpty = (Query.IsNotEmpty) criterion;
             final String name = isNotEmpty.getProperty();
-            validateProperty(queryState.entity, name, Query.IsNotEmpty.class);
-            queryState.whereClause.append(queryState.logicalName)
-                    .append(DOT)
-                    .append(name)
-                    .append(" IS NOT EMPTY ");
+            PersistentProperty property = validateProperty(queryState.entity, name, Query.IsNotEmpty.class);
+            if (property.isAssignable(CharSequence.class)) {
+                String path = queryState.logicalName + DOT + name;
+                queryState.whereClause.append(path)
+                        .append(" IS NOT NULL AND ")
+                        .append(path)
+                        .append(" <> '' ");
+            } else {
+
+                queryState.whereClause.append(queryState.logicalName)
+                        .append(DOT)
+                        .append(name)
+                        .append(" IS NOT EMPTY ");
+            }
         });
 
         queryHandlers.put(Query.IdEquals.class, (queryState, criterion) -> {

@@ -33,21 +33,7 @@ class ProjectionSpec extends Specification {
                 new Person(name: "James", age: 35)
         ])
 
-        def king = new Author(name: "Stephen King")
-        king.books.add(new Book(author: king, title: "The Stand", pages: 1000))
-        king.books.add(new Book(author: king, title: "Pet Cemetery", pages: 400))
-
-        def jp = new Author(name: "James Patterson")
-        jp.books.add(new Book(author: jp, title: "Along Came a Spider", pages: 300 ))
-        jp.books.add(new Book(author: jp, title: "Double Cross", pages: 300 ))
-        def dw = new Author(name: "Don Winslow")
-        dw.books.add(new Book(author: dw, title: "The Power of the Dog", pages: 600))
-        dw.books.add(new Book(author: dw, title: "The Border", pages: 700))
-        authorRepository.saveAll([
-                king,
-                jp,
-                dw
-        ])
+        bookRepository.setupData()
     }
 
     void "test project on single property"() {
