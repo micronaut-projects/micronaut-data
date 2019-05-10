@@ -6,17 +6,26 @@ import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Support for finder based updates.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class UpdateByMethod extends DynamicFinder {
 
+    /**
+     * Default constructor.
+     */
     public UpdateByMethod() {
         super("update");
     }
@@ -28,7 +37,7 @@ public class UpdateByMethod extends DynamicFinder {
 
     @Nullable
     @Override
-    protected PredatorMethodInfo buildInfo(
+    protected MethodMatchInfo buildInfo(
             MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
             @Nullable Query query) {
@@ -61,7 +70,7 @@ public class UpdateByMethod extends DynamicFinder {
             matchContext.fail("At least one parameter required to update");
             return null;
         }
-        SourcePersistentEntity entity = matchContext.getEntity();
+        SourcePersistentEntity entity = matchContext.getRootEntity();
         String[] updateProperties = new String[updateParameters.size()];
         for (int i = 0; i < updateProperties.length; i++) {
             ParameterElement parameter = updateParameters.get(i);
@@ -74,11 +83,11 @@ public class UpdateByMethod extends DynamicFinder {
                 return null;
             }
         }
-        return new PredatorMethodInfo(
+        return new MethodMatchInfo(
                 queryResultType,
                 query,
                 UpdateInterceptor.class,
-                PredatorMethodInfo.OperationType.UPDATE,
+                MethodMatchInfo.OperationType.UPDATE,
                 updateProperties
         );
     }

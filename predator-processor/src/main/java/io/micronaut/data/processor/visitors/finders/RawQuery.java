@@ -17,6 +17,11 @@ public class RawQuery extends DefaultQuery implements Query {
 
     private final Map<String, String> parameterBinding;
 
+    /**
+     * Represents a raw query provided by the user.
+     * @param entity The entity
+     * @param parameterBinding The parameter binding.
+     */
     protected RawQuery(@Nonnull PersistentEntity entity, @Nonnull Map<String, String> parameterBinding) {
         super(entity);
         this.parameterBinding = parameterBinding;

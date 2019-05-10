@@ -6,12 +6,21 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 /**
- * Finder used to return a single result
+ * Finder used to return a single result.
+ *
+ * @author graemerocher
+ * @since 1.0.0
  */
 public class FindByFinder extends DynamicFinder {
 
-    protected static final String[] PREFIXES = {"find", "get", "query", "retrieve", "read", "search"};
+    /**
+     * The prefixes used.
+     */
+    public static final String[] PREFIXES = {"find", "get", "query", "retrieve", "read", "search"};
 
+    /**
+     * Default constructor.
+     */
     public FindByFinder() {
         super(PREFIXES);
     }

@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
@@ -12,9 +13,16 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Implements support for explicit queries.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class QueryListMethod extends ListMethod {
 
-    static final int POSITION = DEFAULT_POSITION - 200;
+    public static final int POSITION = DEFAULT_POSITION - 200;
+
     private static final Pattern VARIABLE_PATTERN = Pattern.compile(":([a-zA-Z0-9]+)");
 
     @Override
@@ -30,7 +38,7 @@ public class QueryListMethod extends ListMethod {
 
     @Nullable
     @Override
-    public final PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public final MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         RawQuery query = buildRawQuery(matchContext);
         if (query == null) {
             return null;
@@ -38,9 +46,9 @@ public class QueryListMethod extends ListMethod {
         return buildMatchInfo(matchContext, query);
     }
 
-    protected PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
-        return new PredatorMethodInfo(
-                matchContext.getEntity(),
+    protected MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
+        return new MethodMatchInfo(
+                matchContext.getRootEntity(),
                 query,
                 FindAllInterceptor.class
         );
@@ -68,7 +76,6 @@ public class QueryListMethod extends ListMethod {
             }
         }
 
-        RawQuery query = new RawQuery(matchContext.getEntity(), parameterBinding);
-        return query;
+        return new RawQuery(matchContext.getRootEntity(), parameterBinding);
     }
 }

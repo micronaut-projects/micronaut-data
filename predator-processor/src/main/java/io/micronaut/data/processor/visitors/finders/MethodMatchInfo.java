@@ -2,7 +2,6 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.TypedElement;
@@ -18,8 +17,7 @@ import java.util.*;
  * @author graemerocher
  * @since 1.0
  */
-@Internal
-public class PredatorMethodInfo {
+public class MethodMatchInfo {
 
     private final TypedElement resultType;
     private final Query query;
@@ -35,7 +33,7 @@ public class PredatorMethodInfo {
      * @param query The query
      * @param interceptor The interceptor type to execute at runtime
      */
-    public PredatorMethodInfo(
+    public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable Query query,
             @Nullable Class<? extends PredatorInterceptor> interceptor) {
@@ -50,7 +48,7 @@ public class PredatorMethodInfo {
      * @param operationType The operation type
      * @param updateProperties the update properties
      */
-    public PredatorMethodInfo(
+    public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable Query query,
             @Nullable Class<? extends PredatorInterceptor> interceptor,

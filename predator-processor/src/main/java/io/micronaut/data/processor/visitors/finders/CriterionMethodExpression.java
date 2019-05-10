@@ -19,26 +19,34 @@ public abstract class CriterionMethodExpression {
     protected String[] argumentNames;
     protected int argumentsRequired = 1;
 
-    public abstract Query.Criterion createCriterion();
-
+    /**
+     * Default constructor.
+     * @param propertyName The property name the criterion expression relates to
+     */
     protected CriterionMethodExpression(String propertyName) {
         this.propertyName = propertyName;
     }
 
+    /**
+     * Creates the criterion.
+     * @return The criterion
+     */
+    public abstract Query.Criterion createCriterion();
+
+    /**
+     * The arguments required to satisfy the criterion.
+     * @return The arguments required
+     */
     public int getArgumentsRequired() {
         return argumentsRequired;
     }
 
+    /**
+     * Sets the argument names to use.
+     * @param argumentNames The argument names.
+     */
     public void setArgumentNames(String[] argumentNames) {
         this.argumentNames = argumentNames;
-    }
-
-    public String[] getArgumentNames() {
-        return Arrays.copyOf(argumentNames, argumentNames.length);
-    }
-
-    public String getPropertyName() {
-        return propertyName;
     }
 
     public static class GreaterThan extends CriterionMethodExpression {

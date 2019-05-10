@@ -8,6 +8,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 
 import javax.annotation.Nonnull;
@@ -26,6 +27,10 @@ public abstract class ProjectionMethodExpression {
 
     private final int requiredProperties;
 
+    /**
+     * Default constructor.
+     * @param requiredProperties The number of required properties.
+     */
     ProjectionMethodExpression(int requiredProperties) {
         this.requiredProperties = requiredProperties;
     }
@@ -39,7 +44,7 @@ public abstract class ProjectionMethodExpression {
     public static @Nullable ProjectionMethodExpression matchProjection(@NonNull MethodMatchContext matchContext, @NonNull String projection) {
 
         Class<?>[] innerClasses = ProjectionMethodExpression.class.getClasses();
-        SourcePersistentEntity entity = matchContext.getEntity();
+        SourcePersistentEntity entity = matchContext.getRootEntity();
         String decapitilized = NameUtils.decapitalize(projection);
         Optional<String> path = entity.getPath(decapitilized);
         if (path.isPresent()) {
@@ -102,14 +107,22 @@ public abstract class ProjectionMethodExpression {
         }
     }
 
-    protected abstract ProjectionMethodExpression initProjection(@NonNull MethodMatchContext matchContext, @Nullable String remaining);
+    /**
+     * Initialize the projection, returning null if it cannot be initialized.
+     * @param matchContext The match context
+     * @param remaining The remaing projection string
+     * @return The projection method expression
+     */
+    protected abstract @Nullable ProjectionMethodExpression initProjection(
+            @NonNull MethodMatchContext matchContext,
+            @Nullable String remaining
+    );
 
     /**
      * Apply the projection to the query object.
      *
      * @param matchContext The match context.
      * @param query The query object.
-     * @return If the projection couldn't be applied because an error occurred.
      */
     protected abstract void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query);
 
@@ -142,11 +155,11 @@ public abstract class ProjectionMethodExpression {
         @Override
         protected ProjectionMethodExpression initProjection(@NonNull MethodMatchContext matchContext, String remaining) {
             if (StringUtils.isEmpty(remaining)) {
-                this.expectedType = matchContext.getEntity().getType();
+                this.expectedType = matchContext.getRootEntity().getType();
                 return this;
             } else {
                 this.property = NameUtils.decapitalize(remaining);
-                SourcePersistentProperty pp = matchContext.getEntity().getPropertyByName(property);
+                SourcePersistentProperty pp = matchContext.getRootEntity().getPropertyByName(property);
                 if (pp == null || pp.getType() == null) {
                     matchContext.fail("Cannot project on non-existent property " + property);
                     return null;
@@ -263,7 +276,7 @@ public abstract class ProjectionMethodExpression {
             } else {
 
                 this.property = NameUtils.decapitalize(remaining);
-                SourcePersistentProperty pp = (SourcePersistentProperty) matchContext.getEntity().getPropertyByPath(property).orElse(null);
+                SourcePersistentProperty pp = (SourcePersistentProperty) matchContext.getRootEntity().getPropertyByPath(property).orElse(null);
                 if (pp == null || pp.getType() == null) {
                     matchContext.fail("Cannot project on non-existent property " + property);
                     return null;
@@ -333,7 +346,7 @@ public abstract class ProjectionMethodExpression {
         @NonNull
         @Override
         public ClassElement getExpectedResultType() {
-            return matchContext.getEntity().getClassElement();
+            return matchContext.getRootEntity().getClassElement();
         }
     }
 }

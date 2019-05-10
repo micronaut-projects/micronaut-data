@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.order.Ordered;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -14,11 +15,13 @@ import javax.annotation.Nullable;
  * @author graeme rocher
  * @since 1.0
  */
-public interface PredatorMethodCandidate extends Ordered {
+public interface MethodCandidate extends Ordered {
+
     /**
      * The default position.
      */
     int DEFAULT_POSITION = 0;
+
     /**
      * Whether the given method name matches this finder.
      *
@@ -41,6 +44,6 @@ public interface PredatorMethodCandidate extends Ordered {
      * the passed {@link VisitorContext}
      */
     @Nullable
-    PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext);
+    MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext);
 
 }

@@ -4,6 +4,8 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.io.service.ServiceDefinition;
+import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -25,8 +27,14 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.BiConsumer;
 
+/**
+ * The main {@link TypeElementVisitor} that visits interfaces annotated with {@link Repository}
+ * and generates queries for each abstract method.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Internal
 public class RepositoryTypeElementVisitor implements TypeElementVisitor<Repository, Object> {
 
@@ -34,24 +42,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private ClassElement currentClass;
     private QueryEncoder queryEncoder;
     private String[] paginationTypes = DEFAULT_PAGINATORS;
-    private List<PredatorMethodCandidate> finders = Arrays.asList(
-            new FindByFinder(),
-            new ExistsByFinder(),
-            new SaveMethod(),
-            new SaveAllMethod(),
-            new ListMethod(),
-            new CountMethod(),
-            new DeleteByMethod(),
-            new DeleteMethod(),
-            new QueryListMethod(),
-            new QueryOneMethod(),
-            new CountByMethod(),
-            new UpdateMethod(),
-            new UpdateByMethod()
-    );
+    private List<MethodCandidate> finders;
 
+    /**
+     * Default constructor.
+     */
     public RepositoryTypeElementVisitor() {
-        OrderUtil.sort(finders);
+
     }
 
     @Override
@@ -62,27 +59,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (queryEncoder == null) {
             context.fail("QueryEncoder not present on annotation processor path", element);
         }
-    }
-
-    private String[] resolvePaginatorTypes(ClassElement element) {
-        return element.getValue(Repository.class, "paginationTypes", AnnotationClassValue[].class)
-                .map(annotationClassValues ->
-                        {
-                            String[] names = Arrays.stream(annotationClassValues)
-                                    .map(AnnotationClassValue::getName).toArray(String[]::new);
-                            if (ArrayUtils.isNotEmpty(names)) {
-                                return names;
-                            }
-                            return DEFAULT_PAGINATORS;
-                        }
-                ).orElse(DEFAULT_PAGINATORS);
+        if (finders == null) {
+            finders = initializeMethodCandidates(context);
+        }
     }
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         ClassElement genericReturnType = element.getGenericReturnType();
         if (genericReturnType != null && queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
-            for (PredatorMethodCandidate finder : finders) {
+            for (MethodCandidate finder : finders) {
                 if (finder.isMethodMatch(element)) {
                     SourcePersistentEntity entity = resolvePersistentEntity(element, context);
                     if (entity == null) {
@@ -97,7 +83,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         return t != null && Arrays.stream(paginationTypes).anyMatch(t::isAssignable);
                     }).findFirst().orElse(null);
 
-                    PredatorMethodInfo methodInfo = finder.buildMatchInfo(new MethodMatchContext(
+                    MethodMatchInfo methodInfo = finder.buildMatchInfo(new MethodMatchContext(
                             entity,
                             context,
                             genericReturnType,
@@ -208,6 +194,50 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
         }
+    }
+
+    private List<MethodCandidate> initializeMethodCandidates(VisitorContext context) {
+        List<MethodCandidate> finderList = Arrays.asList(
+                new FindByFinder(),
+                new ExistsByFinder(),
+                new SaveMethod(),
+                new SaveAllMethod(),
+                new ListMethod(),
+                new CountMethod(),
+                new DeleteByMethod(),
+                new DeleteMethod(),
+                new QueryListMethod(),
+                new QueryOneMethod(),
+                new CountByMethod(),
+                new UpdateMethod(),
+                new UpdateByMethod()
+        );
+        SoftServiceLoader<MethodCandidate> otherCandidates = SoftServiceLoader.load(MethodCandidate.class);
+        for (ServiceDefinition<MethodCandidate> definition : otherCandidates) {
+            if (definition.isPresent()) {
+                try {
+                    finderList.add(definition.load());
+                } catch (Exception e) {
+                    context.warn("Could not load Predator method candidate [" + definition.getName() + "]: " + e.getMessage(), null);
+                }
+            }
+        }
+        OrderUtil.sort(finderList);
+        return finderList;
+    }
+
+    private String[] resolvePaginatorTypes(ClassElement element) {
+        return element.getValue(Repository.class, "paginationTypes", AnnotationClassValue[].class)
+                .map(annotationClassValues ->
+                        {
+                            String[] names = Arrays.stream(annotationClassValues)
+                                    .map(AnnotationClassValue::getName).toArray(String[]::new);
+                            if (ArrayUtils.isNotEmpty(names)) {
+                                return names;
+                            }
+                            return DEFAULT_PAGINATORS;
+                        }
+                ).orElse(DEFAULT_PAGINATORS);
     }
 
     private @Nullable String resolveIdType(PersistentEntity entity) {

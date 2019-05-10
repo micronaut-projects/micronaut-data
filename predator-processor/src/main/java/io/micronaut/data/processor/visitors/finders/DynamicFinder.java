@@ -14,6 +14,7 @@ import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -31,7 +32,7 @@ import java.util.regex.Pattern;
  * @author Graeme Rocher
  * @since 1.0
  */
-abstract class DynamicFinder extends AbstractPatternBasedMethod implements PredatorMethodCandidate {
+public abstract class DynamicFinder extends AbstractPatternBasedMethod implements MethodCandidate {
 
     public static final String OPERATOR_OR = "Or";
     public static final String OPERATOR_AND = "And";
@@ -65,18 +66,19 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
     private Pattern[] operatorPatterns;
     private String[] operators;
 
+    /**
+     * The prefixes to use.
+     * @param prefixes The prefixes
+     */
     protected DynamicFinder(final String... prefixes) {
         this(compilePattern(prefixes), OPERATORS);
     }
 
-    protected DynamicFinder(final String[] prefixes, final String[] operators) {
-        this(compilePattern(prefixes), operators);
-    }
-
-    protected DynamicFinder(final Pattern pattern) {
-        this(pattern, OPERATORS);
-    }
-
+    /**
+     * A custom finder and pattern.
+     * @param pattern The pattern.
+     * @param operators The operators to support
+     */
     protected DynamicFinder(final Pattern pattern, final String[] operators) {
         super(pattern);
         this.operators = operators;
@@ -84,23 +86,26 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         populateOperators(operators);
     }
 
-    private static Pattern compilePattern(String[] prefixes) {
-        if (ArrayUtils.isEmpty(prefixes)) {
-            throw new IllegalArgumentException("At least one prefix required");
-        }
-        String prefixPattern = String.join("|", prefixes);
-        String patternStr = "((" + prefixPattern + ")([\\w\\d]*?)By)([A-Z]\\w*)";
-        return Pattern.compile(patternStr);
+    /**
+     * Checks whether the given method is a match
+     *
+     * @param methodElement The method element
+     * @return True if it is
+     */
+    @Override
+    public boolean isMethodMatch(MethodElement methodElement) {
+        String methodName = methodElement.getName();
+        return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 
     @Override
-    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         List<CriterionMethodExpression> expressions = new ArrayList<>();
         List<ProjectionMethodExpression> projectionExpressions = new ArrayList<>();
         ParameterElement[] parameters = matchContext.getParameters();
         MethodElement methodElement = matchContext.getMethodElement();
         String methodName = methodElement.getName();
-        SourcePersistentEntity entity = matchContext.getEntity();
+        SourcePersistentEntity entity = matchContext.getRootEntity();
         VisitorContext visitorContext = matchContext.getVisitorContext();
         Matcher match = pattern.matcher(methodName);
         // find match
@@ -271,23 +276,20 @@ abstract class DynamicFinder extends AbstractPatternBasedMethod implements Preda
         );
     }
 
-    /**
-     * Checks whether the given method is a match
-     *
-     * @param methodElement The method element
-     * @return True if it is
-     */
-    @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        String methodName = methodElement.getName();
-        return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
-    }
-
     private void initializeExpression(CriterionMethodExpression currentExpression, String[] currentArguments) {
         currentExpression.setArgumentNames(currentArguments);
     }
 
-    protected static CriterionMethodExpression findMethodExpression(SourcePersistentEntity entity, String expression) {
+    private static Pattern compilePattern(String[] prefixes) {
+        if (ArrayUtils.isEmpty(prefixes)) {
+            throw new IllegalArgumentException("At least one prefix required");
+        }
+        String prefixPattern = String.join("|", prefixes);
+        String patternStr = "((" + prefixPattern + ")([\\w\\d]*?)By)([A-Z]\\w*)";
+        return Pattern.compile(patternStr);
+    }
+
+    private static CriterionMethodExpression findMethodExpression(SourcePersistentEntity entity, String expression) {
         CriterionMethodExpression me = null;
         final Matcher matcher = methodExpressionPattern.matcher(expression);
         Class methodExpressionClass = CriterionMethodExpression.Equal.class;

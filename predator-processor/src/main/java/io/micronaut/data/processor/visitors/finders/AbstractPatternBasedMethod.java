@@ -8,6 +8,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
@@ -20,13 +21,28 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
+/**
+ * A method candidate based on pattern matching.
+ *
+ * @author graemerocher
+ * @since 1.1.0
+ */
+public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
     protected final Pattern pattern;
 
-    public AbstractPatternBasedMethod(@Nonnull Pattern pattern) {
+    /**
+     * Default constructor.
+     * @param pattern The pattern to match
+     */
+    protected AbstractPatternBasedMethod(@Nonnull Pattern pattern) {
         this.pattern = pattern;
+    }
+
+    @Override
+    public boolean isMethodMatch(MethodElement methodElement) {
+        return pattern.matcher(methodElement.getName()).find();
     }
 
     /**
@@ -79,13 +95,13 @@ abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
     }
 
     @Nullable
-    protected PredatorMethodInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
         ClassElement returnType = matchContext.getReturnType();
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (!returnType.getName().equals("void")) {
             if (returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive()) {
                 if (areTypesCompatible(returnType, queryResultType)) {
-                    return new PredatorMethodInfo(queryResultType, query, FindOneInterceptor.class);
+                    return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
                 } else {
                     matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
                 }
@@ -96,13 +112,13 @@ abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
                 }
 
                 if (returnType.isAssignable(Iterable.class)) {
-                    return new PredatorMethodInfo(typeArgument, query, FindAllInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class);
                 } else if (returnType.isAssignable(Stream.class)) {
-                    return new PredatorMethodInfo(typeArgument, query, FindStreamInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class);
                 } else if (returnType.isAssignable(Optional.class)) {
-                    return new PredatorMethodInfo(typeArgument, query, FindOptionalInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindOptionalInterceptor.class);
                 } else if (returnType.isAssignable(Publisher.class)) {
-                    return new PredatorMethodInfo(typeArgument, query, FindReactivePublisherInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindReactivePublisherInterceptor.class);
                 }
             }
         }
@@ -122,11 +138,6 @@ abstract class AbstractPatternBasedMethod implements PredatorMethodCandidate {
             }
         }
         return false;
-    }
-
-    @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return pattern.matcher(methodElement.getName()).find();
     }
 
 }

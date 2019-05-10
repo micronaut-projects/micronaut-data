@@ -8,6 +8,7 @@ import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
@@ -21,25 +22,30 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * An abstract list based method.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
 
+    /**
+     * Default constructor.
+     * @param prefixes The method prefixes to match
+     */
     protected AbstractListMethod(String...prefixes) {
         super(computePattern(prefixes));
     }
 
-    private static Pattern computePattern(String[] prefixes) {
-        String prefixPattern = String.join("|", prefixes);
-        return Pattern.compile("^((" + prefixPattern + ")(\\S*?))$");
-    }
-
     @Nullable
     @Override
-    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         ParameterElement paginationParameter = matchContext.getPaginationParameter();
         List<ParameterElement> queryParams = Arrays.stream(parameters).filter(p -> p != paginationParameter).collect(Collectors.toList());
         Query query = null;
-        SourcePersistentEntity rootEntity = matchContext.getEntity();
+        SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         if (CollectionUtils.isNotEmpty(queryParams)) {
             query = Query.from(rootEntity);
             for (ParameterElement queryParam : queryParams) {
@@ -118,6 +124,11 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         } else {
             return buildInfo(matchContext, queryResultType, null);
         }
+    }
+
+    private static Pattern computePattern(String[] prefixes) {
+        String prefixPattern = String.join("|", prefixes);
+        return Pattern.compile("^((" + prefixPattern + ")(\\S*?))$");
     }
 
 }

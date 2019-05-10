@@ -1,4 +1,4 @@
-package io.micronaut.data.processor.visitors.finders;
+package io.micronaut.data.processor.visitors;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -29,7 +29,16 @@ public class MethodMatchContext {
     private final ClassElement returnType;
     private boolean failing = false;
 
-    public MethodMatchContext(
+    /**
+     * Creates the context.
+     * @param entity The entity
+     * @param visitorContext The visitor context
+     * @param returnType The return type
+     * @param methodElement The method element
+     * @param paginationParameter The pagination parameter
+     * @param parameters The parameters
+     */
+    MethodMatchContext(
             @NonNull SourcePersistentEntity entity,
             @NonNull VisitorContext visitorContext,
             @NonNull ClassElement returnType,
@@ -44,31 +53,50 @@ public class MethodMatchContext {
         this.returnType = returnType;
     }
 
+    /**
+     * The root entity being queried.
+     * @return The root entity
+     */
     @NonNull
-    public SourcePersistentEntity getEntity() {
+    public SourcePersistentEntity getRootEntity() {
         return entity;
     }
 
+    /**
+     * @return The visitor context
+     */
     @NonNull
     public VisitorContext getVisitorContext() {
         return visitorContext;
     }
 
+    /**
+     * @return The method element
+     */
     @NonNull
     public MethodElement getMethodElement() {
         return methodElement;
     }
 
+    /**
+     * @return The return type
+     */
     @NonNull
     public ClassElement getReturnType() {
         return returnType;
     }
 
+    /**
+     * @return The pagination parameter
+     */
     @Nullable
     public ParameterElement getPaginationParameter() {
         return paginationParameter;
     }
 
+    /**
+     * @return The parameters
+     */
     @NonNull
     public ParameterElement[] getParameters() {
         return parameters;
@@ -85,6 +113,7 @@ public class MethodMatchContext {
 
     /**
      * Is there a current error.
+     *
      * @return True if there is an error
      */
     public boolean isFailing() {

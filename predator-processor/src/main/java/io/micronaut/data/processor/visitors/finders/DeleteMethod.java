@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -11,14 +12,23 @@ import io.micronaut.inject.ast.ParameterElement;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+/**
+ * Support for simple delete operations.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DeleteMethod extends AbstractListMethod {
 
+    /**
+     * Default constructor.
+     */
     public DeleteMethod() {
         super("delete", "remove", "erase", "eliminate");
     }
 
     @Override
-    public int getOrder() {
+    public final int getOrder() {
         // lower priority than dynamic finder
         return DEFAULT_POSITION + 100;
     }
@@ -30,20 +40,20 @@ public class DeleteMethod extends AbstractListMethod {
 
     @Nullable
     @Override
-    public PredatorMethodInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         if (parameters.length == 1) {
             ClassElement genericType = parameters[0].getGenericType();
             if (genericType != null) {
-                if (genericType.isAssignable(matchContext.getEntity().getName())) {
+                if (genericType.isAssignable(matchContext.getRootEntity().getName())) {
 
-                    return new PredatorMethodInfo(
+                    return new MethodMatchInfo(
                             null,
                             null,
                             DeleteOneInterceptor.class
                     );
                 } else if(TypeUtils.isIterableOfEntity(genericType)) {
-                    return new PredatorMethodInfo(
+                    return new MethodMatchInfo(
                             null,
                             null,
                             DeleteAllInterceptor.class
@@ -56,15 +66,15 @@ public class DeleteMethod extends AbstractListMethod {
 
     @Nullable
     @Override
-    protected PredatorMethodInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
         if (query != null) {
-            return new PredatorMethodInfo(
+            return new MethodMatchInfo(
                     null,
                     query,
                     DeleteAllInterceptor.class
             );
         } else {
-            return new PredatorMethodInfo(
+            return new MethodMatchInfo(
                     null,
                     null,
                     DeleteAllInterceptor.class

@@ -1,12 +1,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -19,8 +19,17 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Support for simple updates by ID.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class UpdateMethod extends AbstractPatternBasedMethod {
 
+    /**
+     * Default constructor.
+     */
     public UpdateMethod() {
         super(Pattern.compile("^update\\w*$"));
     }
@@ -49,7 +58,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
 
     @Nullable
     @Override
-    public PredatorMethodInfo buildMatchInfo(
+    public MethodMatchInfo buildMatchInfo(
             @Nonnull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getMethodElement().getParameters();
         List<ParameterElement> remainingParameters = Arrays.stream(parameters)
@@ -63,7 +72,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             return null;
         }
 
-        SourcePersistentEntity entity = matchContext.getEntity();
+        SourcePersistentEntity entity = matchContext.getRootEntity();
 
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity == null) {
@@ -93,16 +102,16 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                 properiesToUpdate.add(name);
             }
         }
-        PredatorMethodInfo info = new PredatorMethodInfo(
+        MethodMatchInfo info = new MethodMatchInfo(
                 matchContext.getReturnType(),
                 query,
                 UpdateInterceptor.class,
-                PredatorMethodInfo.OperationType.UPDATE,
+                MethodMatchInfo.OperationType.UPDATE,
                 properiesToUpdate.toArray(new String[0])
         );
 
         info.addParameterRole(
-                PredatorMethodInfo.ParameterRoles.id.name(),
+                MethodMatchInfo.ParameterRoles.id.name(),
                 idParameter.getName()
         );
         return info;
