@@ -57,7 +57,7 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      * @return True if it is read-only
      */
     default boolean isReadOnly() {
-        return getAnnotationMetadata().hasAnnotation(GeneratedValue.class);
+        return isGenerated();
     }
 
     /**
@@ -65,5 +65,14 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      */
     default boolean isInherited() {
         return false;
+    }
+
+    /**
+     * Whether the property is generated.
+     *
+     * @return True if is generated
+     */
+    default boolean isGenerated() {
+        return getAnnotationMetadata().hasAnnotation(GeneratedValue.class);
     }
 }

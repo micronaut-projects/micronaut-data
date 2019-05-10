@@ -4,6 +4,7 @@ dependencies {
 
 	testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
 	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
+	testCompile 'javax.persistence:javax.persistence-api:2.2'
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testCompile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}

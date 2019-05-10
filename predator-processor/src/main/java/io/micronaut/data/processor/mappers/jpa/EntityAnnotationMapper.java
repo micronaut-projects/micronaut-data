@@ -1,5 +1,6 @@
-package io.micronaut.data.processor.mappers;
+package io.micronaut.data.processor.mappers.jpa;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Introspected;
@@ -10,7 +11,6 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
@@ -21,8 +21,8 @@ import java.util.List;
  * @author graemerocher
  * @since 1.0
  */
-public class EntityAnnotationMapper implements NamedAnnotationMapper {
-    @Nonnull
+public final class EntityAnnotationMapper implements NamedAnnotationMapper {
+    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.Entity";

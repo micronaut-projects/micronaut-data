@@ -7,8 +7,20 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 
+/**
+ * Source code level implementation of {@link Association}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Internal
 class SourceAssociation extends SourcePersistentProperty implements Association {
+
+    /**
+     * Default constructor.
+     * @param owner The owner
+     * @param propertyElement The property element
+     */
     SourceAssociation(SourcePersistentEntity owner, PropertyElement propertyElement) {
         super(owner, propertyElement);
     }

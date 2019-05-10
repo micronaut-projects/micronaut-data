@@ -1,5 +1,7 @@
 package io.micronaut.data.processor.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
@@ -16,8 +18,6 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,7 +35,11 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
     private final SourcePersistentProperty[] id;
     private final SourcePersistentProperty version;
 
-    public SourcePersistentEntity(ClassElement classElement) {
+    /**
+     * Default constructor.
+     * @param classElement The class element
+     */
+    public SourcePersistentEntity(@NonNull ClassElement classElement) {
         this.classElement = classElement;
         final List<PropertyElement> beanProperties = classElement.getBeanProperties();
         this.beanProperties = new LinkedHashMap<>(beanProperties.size());
@@ -80,7 +84,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
         return classElement.getAnnotationMetadata();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return classElement.getName();
@@ -127,7 +131,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
         return version;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<PersistentProperty> getPersistentProperties() {
         return beanProperties.values().stream().map(propertyElement ->
@@ -136,7 +140,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
         .collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<Association> getAssociations() {
         return beanProperties.values().stream()
@@ -145,7 +149,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
                 .collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<Embedded> getEmbedded() {
         return beanProperties.values().stream()
@@ -174,7 +178,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
         return Collections.unmodifiableList(new ArrayList<>(beanProperties.keySet()));

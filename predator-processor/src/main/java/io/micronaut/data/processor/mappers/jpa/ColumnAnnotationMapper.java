@@ -1,26 +1,35 @@
-package io.micronaut.data.processor.mappers;
+package io.micronaut.data.processor.mappers.jpa;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.Persisted;
-import io.micronaut.inject.annotation.TypedAnnotationMapper;
+import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nullable;
-import javax.persistence.Column;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ColumnAnnotationMapper implements TypedAnnotationMapper<Column> {
+/**
+ * Maps JPA column annotation to {@link Persisted}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
+public final class ColumnAnnotationMapper implements NamedAnnotationMapper {
+
+    @NonNull
     @Override
-    public Class<Column> annotationType() {
-        return Column.class;
+    public String getName() {
+        return "javax.persistence.Column";
     }
 
     @Override
-    public List<AnnotationValue<?>> map(AnnotationValue<Column> annotation, VisitorContext visitorContext) {
+    public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         final String name = annotation.get("name", String.class).orElse(null);
         final boolean nullable = annotation.get("nullable", boolean.class).orElse(false);
-        AnnotationValue<Persisted> persistedAnnotationValue = null;
+        AnnotationValue<Persisted> persistedAnnotationValue;
         List<AnnotationValue<?>> values = new ArrayList<>(2);
         if (name != null) {
             persistedAnnotationValue = AnnotationValue.builder(Persisted.class)
@@ -36,4 +45,5 @@ public class ColumnAnnotationMapper implements TypedAnnotationMapper<Column> {
 
         return values;
     }
+
 }

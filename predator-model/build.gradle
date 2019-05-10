@@ -4,7 +4,6 @@ dependencies {
 	compile "io.micronaut:micronaut-inject:$micronautVersion"
 	compile "io.micronaut:micronaut-validation:$micronautVersion"
 	compile "io.micronaut:micronaut-aop:$micronautVersion"
-	compile 'javax.persistence:javax.persistence-api:2.2'
 	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
 }
 tasks.withType(GroovyCompile) {

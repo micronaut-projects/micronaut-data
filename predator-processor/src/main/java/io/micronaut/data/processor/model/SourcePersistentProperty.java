@@ -1,5 +1,7 @@
 package io.micronaut.data.processor.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
@@ -8,16 +10,26 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Objects;
 
+/**
+ * Source code level implementation of {@link PersistentProperty}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 @Internal
 public class SourcePersistentProperty implements PersistentProperty, TypedElement {
 
     private final SourcePersistentEntity owner;
     private final PropertyElement propertyElement;
 
+    /**
+     * Default constructor.
+     *
+     * @param owner The owner
+     * @param propertyElement The property element
+     */
     SourcePersistentProperty(SourcePersistentEntity owner, PropertyElement propertyElement) {
         this.owner = owner;
         this.propertyElement = propertyElement;
@@ -42,7 +54,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return propertyElement.getAnnotationMetadata();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return propertyElement.getName();
@@ -63,7 +75,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return propertyElement.getNativeType();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getTypeName() {
         final ClassElement type = propertyElement.getType();
@@ -73,13 +85,16 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return type.getName();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public PersistentEntity getOwner() {
         return owner;
     }
 
-    public PropertyElement getPropertyElement() {
+    /**
+     * @return The property element.
+     */
+    public @NonNull PropertyElement getPropertyElement() {
         return propertyElement;
     }
 

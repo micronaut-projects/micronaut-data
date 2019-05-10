@@ -1,4 +1,4 @@
-package io.micronaut.data.processor.mappers;
+package io.micronaut.data.processor.mappers.jta;
 
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
@@ -10,6 +10,12 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Maps JTA's transaction annotation.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class JtaTransactionalMapper implements NamedAnnotationMapper {
     @Nonnull
     @Override
