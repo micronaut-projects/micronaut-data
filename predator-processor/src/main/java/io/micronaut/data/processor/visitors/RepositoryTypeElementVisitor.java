@@ -52,6 +52,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     @Override
+    public void start(VisitorContext visitorContext) {
+        if (finders == null) {
+            finders = initializeMethodCandidates(visitorContext);
+        }
+    }
+
+    @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         this.currentClass = element;
         queryEncoder = resolveQueryEncoder(element, context);
@@ -59,15 +66,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (queryEncoder == null) {
             context.fail("QueryEncoder not present on annotation processor path", element);
         }
-        if (finders == null) {
-            finders = initializeMethodCandidates(context);
-        }
     }
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         ClassElement genericReturnType = element.getGenericReturnType();
-        if (genericReturnType != null && queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic()) {
+        if (genericReturnType != null && queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic() && finders != null) {
             for (MethodCandidate finder : finders) {
                 if (finder.isMethodMatch(element)) {
                     SourcePersistentEntity entity = resolvePersistentEntity(element, context);
