@@ -70,6 +70,17 @@ public class PredatorInterceptorFactory {
     }
 
     /**
+     * Creates the {@link UpdateInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link UpdateInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected UpdateInterceptor updateInterceptor(Datastore datastore) {
+        return new DefaultUpdateInterceptor(datastore);
+    }
+
+    /**
      * Creates the {@link DeleteOneInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore

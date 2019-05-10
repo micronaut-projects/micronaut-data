@@ -35,8 +35,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
 
     private boolean isValidReturnType(ClassElement returnType) {
         if (returnType != null) {
-            return returnType.getName().equals("void") ||
-                    returnType.hasStereotype(Persisted.class);
+            return returnType.getName().equals("void");
         }
         return false;
     }

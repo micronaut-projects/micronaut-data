@@ -14,7 +14,7 @@ import java.util.List;
 @Transactional
 public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
-//    void updatePerson(@Id Long id, String name);
+    void updatePerson(@Id Long id, String name);
 
     List<Person> list(Pageable pageable);
 

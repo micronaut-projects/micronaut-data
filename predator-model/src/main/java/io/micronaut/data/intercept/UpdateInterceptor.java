@@ -6,7 +6,6 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0
  * @param <T>
- * @param <R>
  */
-public interface UpdateInterceptor<T, R> extends PredatorInterceptor<T, R> {
+public interface UpdateInterceptor<T> extends PredatorInterceptor<T, Void> {
 }

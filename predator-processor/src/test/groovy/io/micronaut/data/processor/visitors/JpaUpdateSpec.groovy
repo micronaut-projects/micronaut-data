@@ -44,6 +44,10 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         ann.interceptor() == UpdateInterceptor
         query.value() == "UPDATE $Person.name person SET person.name=:p1 WHERE (person.id = :p2)"
         ann.id() == 'myId'
+        ann.parameterBinding()[0].name() =='p1'
+        ann.parameterBinding()[0].value() =='name'
+        ann.parameterBinding()[1].name() =='p2'
+        ann.parameterBinding()[1].value() =='myId'
     }
 
 

@@ -107,6 +107,21 @@ class CrudRepositorySpec extends Specification {
         crudRepository.count() == 1
     }
 
+    void "test update one"() {
+        when:"A person is retrieved"
+        def fred = crudRepository.findByName("Fred")
+
+        then:"The person is present"
+        fred != null
+
+        when:"The person is updated"
+        crudRepository.updatePerson(fred.id, "Jack")
+
+        then:"the person is updated"
+        crudRepository.findByName("Fred") == null
+        crudRepository.findByName("Jack") != null
+    }
+
     void "test delete all"() {
         when:"everything is deleted"
         crudRepository.deleteAll()
