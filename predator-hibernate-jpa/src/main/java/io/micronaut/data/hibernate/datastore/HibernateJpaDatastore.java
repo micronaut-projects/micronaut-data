@@ -1,4 +1,4 @@
-package io.micronaut.data.hibernate.store;
+package io.micronaut.data.hibernate.datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -38,6 +38,7 @@ public class HibernateJpaDatastore implements Datastore {
 
     /**
      * Default constructor.
+     * 
      * @param sessionFactory The session factory
      */
     protected HibernateJpaDatastore(@Nonnull SessionFactory sessionFactory) {
