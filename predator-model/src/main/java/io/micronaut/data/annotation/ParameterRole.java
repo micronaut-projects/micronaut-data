@@ -16,7 +16,7 @@ import java.lang.annotation.*;
  * @since 1.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Documented
 public @interface ParameterRole {
     /**
@@ -38,6 +38,11 @@ public @interface ParameterRole {
      * The parameter that defines an instance of the entity.
      */
     String ENTITY = "entity";
+
+    /**
+     * The last updated property of the entity for an update operation.
+     */
+    String LAST_UPDATED_PROPERTY = "lastUpdatedProperty";
 
     /**
      * The name of the role.

@@ -3,10 +3,12 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
+import io.micronaut.data.annotation.ParameterRole
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
-import io.micronaut.data.model.query.builder.entities.Person
+import io.micronaut.data.model.entities.Company
+import io.micronaut.data.model.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -21,7 +23,7 @@ class JpaUpdateSpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
-import io.micronaut.data.model.query.builder.entities.*;
+import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;
@@ -62,6 +64,53 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         updateByAnn.parameterBinding()[1].value() =='nameToUpdate'
     }
 
+
+    void "test update with last updated property"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.model.entities.Company;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Query;
+import java.util.List;
+import io.micronaut.data.annotation.Id;
+
+@Repository
+interface MyInterface extends io.micronaut.data.repository.Repository<Company, Long> {
+
+    void update(@Id Long myId, String name);
+    
+    void updateByName(String nameToUpdate, String name);
+}
+""")
+
+        when: "update method is retrieved"
+        def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
+        def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
+        def updateAnn = updateMethod.synthesize(PredatorMethod)
+        def updateQuery = updateMethod.synthesize(Query)
+        def updateByAnn = updateByMethod.synthesize(PredatorMethod)
+        def updateByQuery = updateByMethod.synthesize(Query)
+
+        then: "It was correctly compiled"
+        updateByMethod.getValue(PredatorMethod.class, ParameterRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
+        updateAnn.interceptor() == UpdateInterceptor
+        updateQuery.value() == "UPDATE $Company.name company SET company.name=:p1, company.lastUpdated=:p2 WHERE (company.myId = :p3)"
+        updateAnn.id() == 'myId'
+        updateAnn.parameterBinding()[0].name() =='p1'
+        updateAnn.parameterBinding()[0].value() =='name'
+        updateAnn.parameterBinding()[1].name() =='p2'
+        updateAnn.parameterBinding()[1].value() =='lastUpdated'
+
+        updateByAnn.interceptor() == UpdateInterceptor
+        updateByQuery.value() == "UPDATE $Company.name company SET company.name=:p1, company.lastUpdated=:p2 WHERE (company.name = :p3)"
+        updateByAnn.parameterBinding()[0].name() =='p1'
+        updateByAnn.parameterBinding()[0].value() =='name'
+        updateByAnn.parameterBinding()[1].name() =='p2'
+        updateByAnn.parameterBinding()[1].value() =='lastUpdated'
+    }
 
     @Override
     protected JavaParser newJavaParser() {

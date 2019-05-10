@@ -1,26 +1,33 @@
 package io.micronaut.data.runtime.intercept;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.annotation.ParameterRole;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-public class DefaultSaveEntityInterceptor<T> implements SaveEntityInterceptor<T> {
+/**
+ * Default implementation of {@link SaveEntityInterceptor}.
+ *
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
+public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements SaveEntityInterceptor<T> {
 
-    private final Datastore datastore;
-
-    public DefaultSaveEntityInterceptor(Datastore datastore) {
-        this.datastore = datastore;
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
+    protected DefaultSaveEntityInterceptor(@NonNull Datastore datastore) {
+        super(datastore);
     }
 
     @Override
     public Object intercept(MethodInvocationContext<T, Object> context) {
-        String entityParam = context.getValue(PredatorMethod.class, "entity", String.class)
-                .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
-        Object o = context.getParameterValueMap().get(entityParam);
-        if (o == null) {
-            throw new IllegalArgumentException("Entity argument cannot be null");
-        }
+        Object o = getRequiredEntity(context);
         return datastore.persist(o);
     }
+
 }

@@ -8,9 +8,7 @@ import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -99,10 +97,22 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             SourcePersistentProperty prop = entity.getPropertyByName(name);
             if (prop == null) {
                 matchContext.fail("Cannot update non-existent property" + name);
+                return null;
             } else {
-                properiesToUpdate.add(name);
+                if (prop.isGenerated()) {
+                    matchContext.fail("Cannot update a generated property" + name);
+                    return null;
+                } else {
+                    properiesToUpdate.add(name);
+                }
             }
         }
+
+        Element element = matchContext.getParametersInRole().get(ParameterRole.LAST_UPDATED_PROPERTY);
+        if (element instanceof PropertyElement) {
+            properiesToUpdate.add(element.getName());
+        }
+
         MethodMatchInfo info = new MethodMatchInfo(
                 matchContext.getReturnType(),
                 query,

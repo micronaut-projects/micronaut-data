@@ -22,6 +22,7 @@ import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.PreparedQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
 import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -29,6 +30,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import javax.annotation.Nullable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The main {@link TypeElementVisitor} that visits interfaces annotated with {@link Repository}
@@ -85,7 +87,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         ClassElement genericReturnType = element.getGenericReturnType();
         if (genericReturnType != null && queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic() && finders != null) {
             ParameterElement[] parameters = element.getParameters();
-            Map<String, ParameterElement> parametersInRole = new HashMap<>(2);
+            Map<String, Element> parametersInRole = new HashMap<>(2);
             for (ParameterElement parameter : parameters) {
                 ClassElement type = parameter.getType();
                 if (type != null) {
@@ -102,7 +104,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             for (MethodCandidate finder : finders) {
                 if (finder.isMethodMatch(element)) {
-                    SourcePersistentEntity entity = resolvePersistentEntity(element, context);
+                    SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole, context);
+
                     if (entity == null) {
                         context.fail("Unable to establish persistent entity to query", element);
                         return;
@@ -122,7 +125,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     if (methodInfo != null) {
 
                         // populate parameter roles
-                        for (Map.Entry<String, ParameterElement> entry : parametersInRole.entrySet()) {
+                        for (Map.Entry<String, Element> entry : parametersInRole.entrySet()) {
                             methodInfo.addParameterRole(
                                     entry.getKey(),
                                     entry.getValue().getName()
@@ -277,22 +280,34 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private @Nullable SourcePersistentEntity resolvePersistentEntity(MethodElement element, VisitorContext context) {
+    private @Nullable SourcePersistentEntity resolvePersistentEntity(MethodElement element, Map<String, Element> parametersInRole, VisitorContext context) {
         ClassElement returnType = element.getGenericReturnType();
         SourcePersistentEntity entity = resolvePersistentEntity(returnType);
-        if (entity != null) {
-            return entity;
-        } else {
+        if (entity == null) {
             Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(io.micronaut.data.repository.Repository.class);
             if (!typeArguments.isEmpty()) {
                 ClassElement ce = typeArguments.get("E");
                 if (ce != null) {
-                    return new SourcePersistentEntity(ce);
+                    entity = new SourcePersistentEntity(ce);
                 }
             }
         }
-        context.fail("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
-        return null;
+
+        if (entity != null) {
+            List<PersistentProperty> propertiesInRole = entity.getPersistentProperties()
+                    .stream().filter(pp -> pp.getAnnotationMetadata().hasStereotype(ParameterRole.class))
+                    .collect(Collectors.toList());
+            for (PersistentProperty persistentProperty : propertiesInRole) {
+                String role = persistentProperty.getAnnotationMetadata().getValue(ParameterRole.class, "role", String.class).orElse(null);
+                if (role != null) {
+                    parametersInRole.put(role, ((SourcePersistentProperty) persistentProperty).getPropertyElement());
+                }
+            }
+            return entity;
+        } else {
+            context.fail("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
+            return null;
+        }
     }
 
     private SourcePersistentEntity resolvePersistentEntity(ClassElement returnType) {

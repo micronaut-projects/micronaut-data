@@ -61,7 +61,9 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> T findOne(@Nonnull Class<T> resultType, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
         return readTransactionTemplate.execute(status -> {
-            Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
+            Class wrapperType = ReflectionUtils.getWrapperType(resultType);
+            Query<T> q = sessionFactory.getCurrentSession()
+                                       .createQuery(query, wrapperType);
             bindParameters(q, parameters);
             q.setMaxResults(1);
             return q.uniqueResultOptional().orElse(null);
@@ -122,6 +124,7 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public <T> T persist(@Nonnull T entity) {
         return writeTransactionTemplate.execute(status -> {
@@ -130,6 +133,7 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public <T> Iterable<T> persistAll(@Nonnull Iterable<T> entities) {
         return writeTransactionTemplate.execute(status -> {

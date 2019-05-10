@@ -1,6 +1,7 @@
 package io.micronaut.data.model.query.builder.jpa;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
@@ -247,15 +248,13 @@ public class JpaQueryBuilder implements QueryBuilder {
         queryHandlers.put(Query.Equals.class, (queryState, criterion) -> {
             Query.Equals eq = (Query.Equals) criterion;
             final String name = eq.getProperty();
-            validateProperty(queryState.entity, name, Query.Equals.class);
+            PersistentProperty prop = validateProperty(queryState.entity, name, Query.Equals.class);
             appendCriteriaForOperator(
                     queryState,
-                    name,
+                    name.indexOf('.') == -1 ? prop.getName() : name,
                     eq.getValue(),
                     " = "
             );
-
-
         });
 
         queryHandlers.put(Query.EqualsProperty.class, (queryState, criterion) -> {
@@ -733,8 +732,16 @@ public class JpaQueryBuilder implements QueryBuilder {
         }
         PersistentProperty prop = entity.getPropertyByPath(name).orElse(null);
         if (prop == null) {
-            throw new IllegalArgumentException("Cannot use [" +
-                    criterionType.getSimpleName() + "] criterion on non-existent property: " + name);
+
+            if (name.equals("id")) {
+                // special case handling for ID
+                if (identity != null) {
+                    return identity;
+                }
+            } else {
+                throw new IllegalArgumentException("Cannot use [" +
+                        criterionType.getSimpleName() + "] criterion on non-existent property: " + name);
+            }
         }
         return prop;
     }

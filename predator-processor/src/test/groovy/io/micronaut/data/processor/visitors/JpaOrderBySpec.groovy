@@ -6,7 +6,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.PredatorMethod
-import io.micronaut.data.model.query.builder.entities.Person
+import io.micronaut.data.model.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -23,7 +23,8 @@ class JpaOrderBySpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
-import io.micronaut.data.model.query.builder.entities.*;
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.model.entities.Book;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;
@@ -86,7 +87,7 @@ package test;
 
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
-import io.micronaut.data.model.query.builder.entities.Person;
+import io.micronaut.data.model.entities.Person;
 import java.util.List;
 
 @Repository

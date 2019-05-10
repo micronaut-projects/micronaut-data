@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -30,7 +31,7 @@ public class MethodMatchContext {
     @NonNull
     private final ParameterElement[] parameters;
     private final ClassElement returnType;
-    private final Map<String, ParameterElement> parametersInRole;
+    private final Map<String, Element> parametersInRole;
     private boolean failing = false;
 
     /**
@@ -47,7 +48,7 @@ public class MethodMatchContext {
             @NonNull VisitorContext visitorContext,
             @NonNull ClassElement returnType,
             @NonNull MethodElement methodElement,
-            @NonNull Map<String, ParameterElement> parametersInRole,
+            @NonNull Map<String, Element> parametersInRole,
             @NonNull ParameterElement[] parameters) {
         this.entity = entity;
         this.visitorContext = visitorContext;
@@ -61,7 +62,7 @@ public class MethodMatchContext {
      * @return Parameters that fulfill a query execution role
      */
     @NonNull
-    public Map<String, ParameterElement> getParametersInRole() {
+    public Map<String, Element> getParametersInRole() {
         return parametersInRole;
     }
 

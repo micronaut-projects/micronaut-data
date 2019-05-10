@@ -1,4 +1,4 @@
-package io.micronaut.data.model.query.builder.entities;
+package io.micronaut.data.model.entities;
 
 
 import javax.persistence.Entity;

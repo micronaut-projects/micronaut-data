@@ -5,7 +5,7 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.Query
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.Sort
-import io.micronaut.data.model.query.builder.entities.Person
+import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import spock.lang.Specification

@@ -4,10 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Persisted;
-import io.micronaut.data.annotation.Transient;
-import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.*;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -39,6 +36,10 @@ public final class EntityAnnotationMapper implements NamedAnnotationMapper {
                                 .member("annotation", Id.class).build(),
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
                                 .member("annotation", Version.class).build(),
+                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
+                                .member("annotation", DateCreated.class).build(),
+                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
+                                .member("annotation", DateUpdated.class).build(),
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
                                 .member("annotation", Persisted.class)
                                 .member("member", "value").build()

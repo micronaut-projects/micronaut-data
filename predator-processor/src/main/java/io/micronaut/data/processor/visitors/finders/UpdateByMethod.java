@@ -2,14 +2,13 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.ParameterRole;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
-import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.*;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -64,16 +63,20 @@ public class UpdateByMethod extends DynamicFinder {
                 }
             }
         }
-        List<ParameterElement> updateParameters = Arrays.stream(matchContext.getParameters()).filter(p -> !queryParameters.contains(p.getName()))
+        List<Element> updateParameters = Arrays.stream(matchContext.getParameters()).filter(p -> !queryParameters.contains(p.getName()))
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(updateParameters)) {
             matchContext.fail("At least one parameter required to update");
             return null;
         }
+        Element element = matchContext.getParametersInRole().get(ParameterRole.LAST_UPDATED_PROPERTY);
+        if (element instanceof PropertyElement) {
+            updateParameters.add(element);
+        }
         SourcePersistentEntity entity = matchContext.getRootEntity();
         String[] updateProperties = new String[updateParameters.size()];
         for (int i = 0; i < updateProperties.length; i++) {
-            ParameterElement parameter = updateParameters.get(i);
+            Element parameter = updateParameters.get(i);
             String parameterName = parameter.getName();
             Optional<String> path = entity.getPath(parameterName);
             if (path.isPresent()) {

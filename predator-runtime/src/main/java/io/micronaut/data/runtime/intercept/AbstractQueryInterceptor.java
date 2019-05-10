@@ -6,6 +6,8 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -18,10 +20,14 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
 
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
@@ -36,6 +42,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
     private static final String MEMBER_ID_TYPE = "idType";
     private static final String MEMBER_PARAMETER_BINDING = "parameterBinding";
     protected final Datastore datastore;
+    private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
 
     AbstractQueryInterceptor(@NonNull Datastore datastore) {
         ArgumentUtils.requireNonNull("datastore", datastore);
@@ -72,7 +79,24 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 String name = annotationValue.get("name", String.class).orElse(null);
                 String argument = annotationValue.get("value", String.class).orElse(null);
                 if (name != null && argument != null) {
-                    parameterValues.put(name, parameterValueMap.get(argument));
+                    if (parameterValueMap.containsKey(argument)) {
+                        parameterValues.put(name, parameterValueMap.get(argument));
+                    } else {
+                        String v = context.getValue(PredatorMethod.class, ParameterRole.LAST_UPDATED_PROPERTY, String.class).orElse(null);
+                        if (v != null && v.equals(argument)) {
+                            Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
+                            if (lastUpdatedType == null) {
+                                throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
+                            }
+                            Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+                            if (timestamp == null) {
+                                throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+                            }
+                            parameterValues.put(name, timestamp);
+                        } else {
+                            throw new IllegalArgumentException("Missing query arguments: " + argument);
+                        }
+                    }
                 }
             }
         } else {
@@ -89,6 +113,20 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 parameterValues,
                 pageable
         );
+    }
+
+    private Class<?> getLastUpdatedType(Class<?> rootEntity, String property) {
+        Class<?> type = lastUpdatedTypes.get(rootEntity);
+        if (type == null) {
+            type = BeanIntrospector.SHARED
+                    .findIntrospection(rootEntity)
+                    .flatMap(bp -> bp.getProperty(property))
+                    .map(BeanProperty::getType).orElse(null);
+            if (type != null) {
+                lastUpdatedTypes.put(rootEntity, type);
+            }
+        }
+        return type;
     }
 
     @NonNull
@@ -140,6 +178,22 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 .getDeclaredAnnotationNames()
                 .stream()
                 .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
+    }
+
+    /**
+     * Looks up the entity to persist from the execution context, or throws an exception.
+     * @param context The context
+     * @return The entity
+     */
+    protected @NonNull Object getRequiredEntity(MethodInvocationContext<T, Object> context) {
+        String entityParam = context.getValue(PredatorMethod.class, ParameterRole.ENTITY, String.class)
+                .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
+
+        Object o = context.getParameterValueMap().get(entityParam);
+        if (o == null) {
+            throw new IllegalArgumentException("Entity argument cannot be null");
+        }
+        return o;
     }
 
     /**
