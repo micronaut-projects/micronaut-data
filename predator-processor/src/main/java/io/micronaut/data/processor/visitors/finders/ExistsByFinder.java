@@ -22,7 +22,8 @@ public class ExistsByFinder extends DynamicFinder {
     @Override
     protected PredatorMethodInfo buildInfo(
             @NonNull MethodMatchContext matchContext,
-            ClassElement queryResultType, @Nullable Query query) {
+            @NonNull ClassElement queryResultType,
+            @Nullable Query query) {
         if (query != null) {
             query.projections().id();
         }

@@ -32,22 +32,34 @@ import io.micronaut.data.annotation.Id;
 interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long> {
 
     void update(@Id Long myId, String name);
+    
+    void updateByName(String nameToUpdate, String name);
 }
 """)
 
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
-        def ann = updateMethod.synthesize(PredatorMethod)
-        def query = updateMethod.synthesize(Query)
+        def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
+        def updateAnn = updateMethod.synthesize(PredatorMethod)
+        def updateQuery = updateMethod.synthesize(Query)
+        def updateByAnn = updateByMethod.synthesize(PredatorMethod)
+        def updateByQuery = updateByMethod.synthesize(Query)
 
         then: "It was correctly compiled"
-        ann.interceptor() == UpdateInterceptor
-        query.value() == "UPDATE $Person.name person SET person.name=:p1 WHERE (person.id = :p2)"
-        ann.id() == 'myId'
-        ann.parameterBinding()[0].name() =='p1'
-        ann.parameterBinding()[0].value() =='name'
-        ann.parameterBinding()[1].name() =='p2'
-        ann.parameterBinding()[1].value() =='myId'
+        updateAnn.interceptor() == UpdateInterceptor
+        updateQuery.value() == "UPDATE $Person.name person SET person.name=:p1 WHERE (person.id = :p2)"
+        updateAnn.id() == 'myId'
+        updateAnn.parameterBinding()[0].name() =='p1'
+        updateAnn.parameterBinding()[0].value() =='name'
+        updateAnn.parameterBinding()[1].name() =='p2'
+        updateAnn.parameterBinding()[1].value() =='myId'
+
+        updateByAnn.interceptor() == UpdateInterceptor
+        updateByQuery.value() == "UPDATE $Person.name person SET person.name=:p1 WHERE (person.name = :p2)"
+        updateByAnn.parameterBinding()[0].name() =='p1'
+        updateByAnn.parameterBinding()[0].value() =='name'
+        updateByAnn.parameterBinding()[1].name() =='p2'
+        updateByAnn.parameterBinding()[1].value() =='nameToUpdate'
     }
 
 
