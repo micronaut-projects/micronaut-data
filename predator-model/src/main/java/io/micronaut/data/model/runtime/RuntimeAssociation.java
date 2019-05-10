@@ -1,16 +1,25 @@
 package io.micronaut.data.model.runtime;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
 
-import javax.annotation.Nullable;
-
+/**
+ * A runtime representation of {@link Association}.
+ *
+ * @author graemerocher
+ * @since 1.0
+ */
 class RuntimeAssociation extends RuntimePersistentProperty implements Association {
 
-    public RuntimeAssociation(PersistentEntity owner, BeanProperty<?, ?> property) {
+    /**
+     * Default constructor.
+     * @param owner The owner
+     * @param property The property
+     */
+    RuntimeAssociation(PersistentEntity owner, BeanProperty<?, ?> property) {
         super(owner, property);
     }
 

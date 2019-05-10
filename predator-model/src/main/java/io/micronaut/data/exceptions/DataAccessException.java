@@ -9,10 +9,19 @@ package io.micronaut.data.exceptions;
  */
 public class DataAccessException extends RuntimeException {
 
+    /**
+     * Default constructor.
+     * @param message The message
+     */
     public DataAccessException(String message) {
         super(message);
     }
 
+    /**
+     * Default constructor.
+     * @param message The message
+     * @param cause The cause
+     */
     public DataAccessException(String message, Throwable cause) {
         super(message, cause);
     }

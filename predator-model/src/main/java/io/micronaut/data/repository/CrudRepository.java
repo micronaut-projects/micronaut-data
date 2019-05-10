@@ -1,8 +1,8 @@
 package io.micronaut.data.repository;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Blocking;
 
-import javax.annotation.Nonnull;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import java.util.Optional;
@@ -25,8 +25,8 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @return The saved entity will never be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      */
-    @Nonnull
-    <S extends E> S save(@Valid @NotNull @Nonnull S entity);
+    @NonNull
+    <S extends E> S save(@Valid @NotNull @NonNull S entity);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state
@@ -35,8 +35,8 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @return The saved entities objects. will never be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
      */
-    @Nonnull
-    <S extends E> Iterable<S> saveAll(@Valid @NotNull @Nonnull Iterable<S> entities);
+    @NonNull
+    <S extends E> Iterable<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
@@ -45,8 +45,8 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @return the entity with the given id or {@literal Optional#empty()} if none found
      * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
      */
-    @Nonnull
-    Optional<E> findById(@NotNull @Nonnull ID id);
+    @NonNull
+    Optional<E> findById(@NotNull @NonNull ID id);
 
     /**
      * Returns whether an entity with the given id exists.
@@ -55,14 +55,14 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
      * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
      */
-    boolean existsById(@NotNull @Nonnull ID id);
+    boolean existsById(@NotNull @NonNull ID id);
 
     /**
      * Returns all instances of the type.
      *
      * @return all entities
      */
-    @Nonnull Iterable<E> findAll();
+    @NonNull Iterable<E> findAll();
 
     /**
      * Returns the number of entities available.
@@ -77,7 +77,7 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @param id must not be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    void deleteById(@Nonnull @NotNull ID id);
+    void deleteById(@NonNull @NotNull ID id);
 
     /**
      * Deletes a given entity.
@@ -85,7 +85,7 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @param entity The entity to delete
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    void delete(@Nonnull @NotNull E entity);
+    void delete(@NonNull @NotNull E entity);
 
     /**
      * Deletes the given entities.
@@ -93,7 +93,7 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @param entities The entities to delete
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    void deleteAll(@Nonnull @NotNull Iterable<? extends E> entities);
+    void deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.

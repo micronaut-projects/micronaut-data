@@ -1,6 +1,7 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.query.Sort;
 
 import javax.annotation.Nonnull;
@@ -12,6 +13,7 @@ import javax.validation.constraints.Min;
  * @author graemerocher
  * @since 1.0
  */
+@Introspected
 class DefaultPageable implements Pageable {
 
     private final int max;

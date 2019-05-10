@@ -193,30 +193,6 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     }
 
     /**
-     * Creates a new persistent entity representation of the given type. The type
-     * must be annotated with {@link io.micronaut.core.annotation.Introspected}.
-     *
-     * @param type The type
-     * @return The entity
-     */
-    static @Nonnull PersistentEntity of(@Nonnull Class<?> type) {
-        ArgumentUtils.requireNonNull("type", type);
-        return new RuntimePersistentEntity(type);
-    }
-
-    /**
-     * Creates a new persistent entity representation of the given type. The type
-     * must be annotated with {@link io.micronaut.core.annotation.Introspected}.
-     *
-     * @param introspection The introspection
-     * @return The entity
-     */
-    static @Nonnull PersistentEntity of(@Nonnull BeanIntrospection<?> introspection) {
-        ArgumentUtils.requireNonNull("introspection", introspection);
-        return new RuntimePersistentEntity(introspection);
-    }
-
-    /**
      * Return a property for a dot separated property path.
      * @param path The path
      * @return The property
@@ -241,5 +217,29 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
             }
             return Optional.ofNullable(prop);
         }
+    }
+
+    /**
+     * Creates a new persistent entity representation of the given type. The type
+     * must be annotated with {@link io.micronaut.core.annotation.Introspected}.
+     *
+     * @param type The type
+     * @return The entity
+     */
+    static @Nonnull PersistentEntity of(@Nonnull Class<?> type) {
+        ArgumentUtils.requireNonNull("type", type);
+        return new RuntimePersistentEntity(type);
+    }
+
+    /**
+     * Creates a new persistent entity representation of the given type. The type
+     * must be annotated with {@link io.micronaut.core.annotation.Introspected}.
+     *
+     * @param introspection The introspection
+     * @return The entity
+     */
+    static @Nonnull PersistentEntity of(@Nonnull BeanIntrospection<?> introspection) {
+        ArgumentUtils.requireNonNull("introspection", introspection);
+        return new RuntimePersistentEntity(introspection);
     }
 }

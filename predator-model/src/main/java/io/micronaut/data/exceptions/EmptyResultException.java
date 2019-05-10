@@ -7,6 +7,10 @@ package io.micronaut.data.exceptions;
  * @since 1.0.0
  */
 public class EmptyResultException extends DataAccessException {
+
+    /**
+     * Default constructor.
+     */
     public EmptyResultException() {
         super("Query produced no result");
     }

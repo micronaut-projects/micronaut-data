@@ -1,8 +1,9 @@
 package io.micronaut.data.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.util.ArgumentUtils;
 
-import javax.annotation.Nonnull;
 import java.util.function.Function;
 
 /**
@@ -39,13 +40,19 @@ public enum NamingStrategies implements NamingStrategy {
 
     private final Function<String, String> mapper;
 
-    NamingStrategies(Function<String, String> mapper) {
+    /**
+     * Default constructor.
+     * @param mapper The mapper
+     */
+    NamingStrategies(@NonNull Function<String, String> mapper) {
+        ArgumentUtils.requireNonNull("mapper", mapper);
         this.mapper = mapper;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public String mappedName(@Nonnull String name) {
+    public String mappedName(@NonNull String name) {
+        ArgumentUtils.requireNonNull("name", name);
         return mapper.apply(name);
     }
 }

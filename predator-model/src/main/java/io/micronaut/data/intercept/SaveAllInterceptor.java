@@ -2,6 +2,7 @@ package io.micronaut.data.intercept;
 
 /**
  * Interface for the interceptor that handles saving a list or iterable of objects.
+ *
  * @param <T> The declaring type
  * @param <R> The return type
  *

@@ -1,9 +1,10 @@
 package io.micronaut.data.model.runtime;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Version;
@@ -11,10 +12,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.inject.ast.PropertyElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,16 +27,24 @@ public class RuntimePersistentEntity implements PersistentEntity {
 
     private final BeanIntrospection<?> introspection;
 
-    public RuntimePersistentEntity(@Nonnull Class<?> type) {
+    /**
+     * Default constructor.
+     * @param type The type
+     */
+    public RuntimePersistentEntity(@NonNull Class<?> type) {
         this(BeanIntrospection.getIntrospection(type));
     }
 
-    public RuntimePersistentEntity(@Nonnull BeanIntrospection<?> introspection) {
+    /**
+     * Default constructor.
+     * @param introspection The introspection
+     */
+    public RuntimePersistentEntity(@NonNull BeanIntrospection<?> introspection) {
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return introspection.getBeanType().getName();
@@ -66,7 +72,7 @@ public class RuntimePersistentEntity implements PersistentEntity {
         ).orElse(null);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<PersistentProperty> getPersistentProperties() {
         return introspection.getBeanProperties()
@@ -76,7 +82,7 @@ public class RuntimePersistentEntity implements PersistentEntity {
                 .collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<Association> getAssociations() {
         return introspection.getBeanProperties().stream()
@@ -85,7 +91,7 @@ public class RuntimePersistentEntity implements PersistentEntity {
                 .collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<Embedded> getEmbedded() {
         return introspection.getBeanProperties().stream()
@@ -110,7 +116,7 @@ public class RuntimePersistentEntity implements PersistentEntity {
         }).orElse(null);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
         return Arrays.asList(introspection.getPropertyNames());

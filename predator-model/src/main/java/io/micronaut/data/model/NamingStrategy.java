@@ -1,8 +1,9 @@
 package io.micronaut.data.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Persisted;
 
-import javax.annotation.Nonnull;
 
 /**
  * A strategy interface for resolving the mapped name of an entity or property.
@@ -13,14 +14,32 @@ import javax.annotation.Nonnull;
 @FunctionalInterface
 public interface NamingStrategy {
 
-    @Nonnull String mappedName(@Nonnull String name);
+    /**
+     * Return the mapped name for the given name.
+     * @param name The name
+     * @return The mapped name
+     */
+    @NonNull
+    String mappedName(@NonNull String name);
 
-    default @Nonnull String mappedName(@Nonnull PersistentEntity entity) {
+    /**
+     * Return the mapped name for the given entity.
+     * @param entity The entity
+     * @return The mapped name
+     */
+    default @NonNull String mappedName(@NonNull PersistentEntity entity) {
+        ArgumentUtils.requireNonNull("entity", entity);
         return entity.getAnnotationMetadata().getValue(Persisted.class, String.class)
                 .orElseGet(() -> mappedName(entity.getName()));
     }
 
-    default @Nonnull String mappedName(@Nonnull PersistentProperty property) {
+    /**
+     * Return the mapped name for the given property.
+     * @param property The property
+     * @return The mapped name
+     */
+    default @NonNull String mappedName(@NonNull PersistentProperty property) {
+        ArgumentUtils.requireNonNull("property", property);
         return property.getAnnotationMetadata().getValue(Persisted.class, String.class)
                 .orElseGet(() -> mappedName(property.getName()));
     }
