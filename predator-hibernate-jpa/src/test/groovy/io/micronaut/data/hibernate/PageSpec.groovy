@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -65,11 +66,17 @@ class PageSpec extends Specification {
 
     void "test pageable findBy"() {
         when:"People are searched for"
-        Page<Person> page = personRepository.findByNameLike("A%", Pageable.from(0, 10))
+        def pageable = Pageable.from(0, 10)
+        Page<Person> page = personRepository.findByNameLike("A%", pageable)
+        Slice<Person> slice = personRepository.queryByNameLike("A%", pageable)
 
         then:"The page is correct"
         page.offset == 0
         page.totalSize == 5
+        slice.offset == 0
+        slice.size == 10
+        slice.content
+        page.content
         personRepository.findByNameLike("A%", page.nextPageable()).isEmpty()
     }
 }

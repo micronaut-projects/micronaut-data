@@ -200,6 +200,20 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
     }
 
+    /**
+     * Retrieves a pageable from the context.
+     * @param context The pageable
+     * @return The pageable
+     */
+    protected @NonNull Pageable getRequiredPageable(MethodInvocationContext context) {
+        Pageable pageable = getPageable(context);
+        if (pageable == null) {
+            throw new IllegalStateException("Pageable argument missing");
+        }
+
+        return pageable;
+    }
+
     @Nullable
     protected Pageable getPageable(MethodInvocationContext context) {
         String pageableParam = context.getValue(PredatorMethod.class, TypeRole.PAGEABLE, String.class).orElse(null);
