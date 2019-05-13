@@ -89,7 +89,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * @return The query
      */
     protected final PreparedQuery prepareCountQuery(MethodInvocationContext<T, R> context) {
-        String query = context.getValue(Query.class, PredatorMethod.MEMBER_COUNT_QUERY, String.class).orElseThrow(() ->
+        String query = context.getValue(Query.class, PredatorMethod.META_MEMBER_COUNT_QUERY, String.class).orElseThrow(() ->
                 new IllegalStateException("No query present in method")
         );
         AnnotationValue<PredatorMethod> annotation = context.getAnnotation(PredatorMethod.class);
@@ -107,7 +107,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         @SuppressWarnings("ConstantConditions") Map<String, Object> parameterValues = buildParameterBinding(
                 context,
                 context.getAnnotation(Query.class),
-                PredatorMethod.MEMBER_COUNT_PARAMETERS,
+                PredatorMethod.META_MEMBER_COUNT_PARAMETERS,
                 rootEntity
         );
 

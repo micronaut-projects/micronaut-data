@@ -42,7 +42,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+    public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         return pattern.matcher(methodElement.getName()).find();
     }
 

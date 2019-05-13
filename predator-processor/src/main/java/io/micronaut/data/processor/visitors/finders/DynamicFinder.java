@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -21,7 +22,6 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -95,13 +95,13 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
      * @return True if it is
      */
     @Override
-    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+    public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         String methodName = methodElement.getName();
         return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 
     @Override
-    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         List<CriterionMethodExpression> expressions = new ArrayList<>();
         List<ProjectionMethodExpression> projectionExpressions = new ArrayList<>();
         ParameterElement[] parameters = matchContext.getParameters();

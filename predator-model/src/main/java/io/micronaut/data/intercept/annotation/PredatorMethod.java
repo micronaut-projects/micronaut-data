@@ -23,12 +23,52 @@ public @interface PredatorMethod {
     /**
      * The member that holds the count query.
      */
-    String MEMBER_COUNT_QUERY = "countQuery";
+    String META_MEMBER_COUNT_QUERY = "countQuery";
 
     /**
      * The member that holds the count parameters.
      */
-    String MEMBER_COUNT_PARAMETERS = "countParameters";
+    String META_MEMBER_COUNT_PARAMETERS = "countParameters";
+
+    /**
+     * The member name that holds the result type.
+     */
+    String META_MEMBER_RESULT_TYPE = "resultType";
+
+    /**
+     * The member name that holds the root entity type.
+     */
+    String META_MEMBER_ROOT_ENTITY = "rootEntity";
+
+    /**
+     * The member name that holds the interceptor type.
+     */
+    String META_MEMBER_INTERCEPTOR = "interceptor";
+
+    /**
+     * The member name that holds parameter binding.
+     */
+    String META_MEMBER_PARAMETER_BINDING = "parameterBinding";
+
+    /**
+     * The ID type.
+     */
+    String META_MEMBER_ID_TYPE = "idType";
+
+    /**
+     * The parameter that holds the max value.
+     */
+    String META_MEMBER_MAX = "max";
+
+    /**
+     * The parameter that holds the offset value.
+     */
+    String META_MEMBER_OFFSET = "offset";
+
+    /**
+     * The parameter that references the entity.
+     */
+    String META_MEMBER_ENTITY = "entity";
 
     /**
      * @return The child interceptor to use for the method execution.

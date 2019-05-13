@@ -41,7 +41,10 @@ public @interface Repository {
     Class<? extends QueryBuilder> queryBuilder() default JpaQueryBuilder.class;
 
     /**
-     * Configures {@link TypeRole} behaviour for a repository.
+     * Configures {@link TypeRole} behaviour for a repository. This member allows for configuration of
+     * custom types that play different roles in the construction and execution of repositories. Note that
+     * additional {@link io.micronaut.core.convert.TypeConverter} instances may need to be registered if types
+     * that do not extend from the defaults are registered.
      *
      * @return The parameter roles
      */

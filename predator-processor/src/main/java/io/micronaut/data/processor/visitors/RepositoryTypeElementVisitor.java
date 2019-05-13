@@ -19,7 +19,6 @@ import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.PreparedQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
-import io.micronaut.data.model.query.factory.Restrictions;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
@@ -196,9 +195,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                     element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
                                                 annotationBuilder.value(encodedQuery.getQuery());
-                                                annotationBuilder.member(PredatorMethod.MEMBER_COUNT_QUERY, preparedCount.getQuery());
+                                                annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_QUERY, preparedCount.getQuery());
                                                 AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(preparedCount.getParameters());
-                                                annotationBuilder.member(PredatorMethod.MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                                annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
                                             }
                                     );
                                 } else {
@@ -214,7 +213,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         if (runtimeInterceptor != null) {
                             Map<String, String> finalParameterBinding = parameterBinding;
                             element.annotate(PredatorMethod.class, annotationBuilder -> {
-                                annotationBuilder.member("rootEntity", new AnnotationClassValue<>(entity.getName()));
+                                annotationBuilder.member(PredatorMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
 
                                 // include the roles
                                 methodInfo.getParameterRoles()
@@ -222,21 +221,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                 TypedElement resultType = methodInfo.getResultType();
                                 if (resultType != null) {
-                                    annotationBuilder.member("resultType", new AnnotationClassValue<>(resultType.getName()));
+                                    annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));
                                 }
                                 if (idType != null) {
-                                    annotationBuilder.member("idType", idType);
+                                    annotationBuilder.member(PredatorMethod.META_MEMBER_ID_TYPE, idType);
                                 }
-                                annotationBuilder.member("interceptor", runtimeInterceptor);
+                                annotationBuilder.member(PredatorMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
                                 if (finalParameterBinding != null) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalParameterBinding);
-                                    annotationBuilder.member("parameterBinding", annotationParameters);
+                                    annotationBuilder.member(PredatorMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
                                 }
                                 Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
                                     ClassElement t = p.getGenericType();
                                     return t != null && t.isAssignable(entity.getName());
                                 }).findFirst();
-                                entityParam.ifPresent(parameterElement -> annotationBuilder.member("entity", parameterElement.getName()));
+                                entityParam.ifPresent(parameterElement -> annotationBuilder.member(PredatorMethod.META_MEMBER_ENTITY, parameterElement.getName()));
 
                                 for (Map.Entry<String, String> entry : methodInfo.getParameterRoles().entrySet()) {
                                     annotationBuilder.member(entry.getKey(), entry.getValue());
@@ -244,11 +243,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 if (queryObject != null) {
                                     int max = queryObject.getMax();
                                     if (max > -1) {
-                                        annotationBuilder.member("max", max);
+                                        annotationBuilder.member(PredatorMethod.META_MEMBER_MAX, max);
                                     }
                                     long offset = queryObject.getOffset();
                                     if (offset > 0) {
-                                        annotationBuilder.member("offset", offset);
+                                        annotationBuilder.member(PredatorMethod.META_MEMBER_OFFSET, offset);
                                     }
                                 }
                             });

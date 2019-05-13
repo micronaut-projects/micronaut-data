@@ -6,10 +6,8 @@ import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindPageInterceptor
-import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.model.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -48,7 +46,7 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         listAnn.interceptor() == FindPageInterceptor
         findAnn.interceptor() == FindPageInterceptor
         findMethod.getValue(Query.class, "countQuery", String).get() == 'SELECT COUNT(person) FROM io.micronaut.data.model.entities.Person AS person WHERE (person.name = :p1)'
-        findMethod.getValue(Query.class, PredatorMethod.MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
+        findMethod.getValue(Query.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
                   .get()[0]
 
     }
