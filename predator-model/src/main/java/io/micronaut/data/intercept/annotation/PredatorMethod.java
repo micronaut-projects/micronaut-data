@@ -71,6 +71,11 @@ public @interface PredatorMethod {
     String META_MEMBER_ENTITY = "entity";
 
     /**
+     * The parameter that references the ID.
+     */
+    String META_MEMBER_ID = "id";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends PredatorInterceptor> interceptor();

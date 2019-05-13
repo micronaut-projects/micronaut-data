@@ -102,9 +102,23 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         if (!returnType.getName().equals("void")) {
             if (returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive()) {
                 if (areTypesCompatible(returnType, queryResultType)) {
-                    return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                    if (query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName())) {
+                        List<Query.Criterion> criterionList = query.getCriteria().getCriteria();
+                        if (criterionList.size() == 1 && criterionList.get(0) instanceof Query.IdEquals) {
+                            return new MethodMatchInfo(
+                                    matchContext.getReturnType(),
+                                    query,
+                                    FindByIdInterceptor.class
+                            );
+                        } else {
+                            return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                        }
+                    } else {
+                        return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                    }
                 } else {
                     matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
+                    return null;
                 }
             } else if (typeArgument != null) {
                 if (!areTypesCompatible(typeArgument, queryResultType)) {

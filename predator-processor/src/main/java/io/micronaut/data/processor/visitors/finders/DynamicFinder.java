@@ -12,6 +12,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -267,7 +268,18 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         } else {
             for (CriterionMethodExpression expression : expressions) {
                 Query.Criterion criterion = expression.createCriterion();
-                query.add(criterion);
+                if (criterion instanceof Query.Equals) {
+                    Query.Equals equals = (Query.Equals) criterion;
+                    String property = equals.getProperty();
+                    SourcePersistentProperty identity = entity.getIdentity();
+                    if (identity != null && identity.getName().equals(property)) {
+                        query.idEq((QueryParameter) equals.getValue());
+                    } else {
+                        query.add(criterion);
+                    }
+                } else {
+                    query.add(criterion);
+                }
             }
         }
 

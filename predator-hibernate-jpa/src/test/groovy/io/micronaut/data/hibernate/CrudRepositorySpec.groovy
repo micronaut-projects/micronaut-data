@@ -35,6 +35,7 @@ class CrudRepositorySpec extends Specification {
         then:"the instance is persisted"
         person.id != null
         crudRepository.findById(person.id).isPresent()
+        crudRepository.get(person.id).name == 'Fred'
         crudRepository.existsById(person.id)
         crudRepository.count() == 3
         crudRepository.count("Fred") == 1

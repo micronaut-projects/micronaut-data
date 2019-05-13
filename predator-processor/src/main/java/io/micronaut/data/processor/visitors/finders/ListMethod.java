@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -35,7 +36,7 @@ public class ListMethod extends AbstractListMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+    public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         return super.isMethodMatch(methodElement, matchContext)
                 && isValidReturnType(matchContext.getReturnType(), matchContext);
 

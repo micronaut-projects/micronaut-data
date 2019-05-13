@@ -297,7 +297,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new QuerySliceMethod(),
                 new FindPageByMethod(),
                 new ListPageMethod(),
-                new QueryPageMethod()
+                new QueryPageMethod(),
+                new FindOneMethod()
         );
         SoftServiceLoader<MethodCandidate> otherCandidates = SoftServiceLoader.load(MethodCandidate.class);
         for (ServiceDefinition<MethodCandidate> definition : otherCandidates) {

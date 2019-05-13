@@ -50,6 +50,18 @@ public class PredatorInterceptorFactory {
     }
 
     /**
+     * Creates the {@link FindByIdInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link FindByIdInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected FindByIdInterceptor findByIdInterceptor(Datastore datastore) {
+        return new DefaultFindByIdInterceptor(datastore);
+    }
+
+
+    /**
      * Creates the {@link FindPageInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore

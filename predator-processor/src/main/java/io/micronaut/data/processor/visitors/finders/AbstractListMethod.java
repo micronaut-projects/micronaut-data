@@ -1,13 +1,16 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -50,11 +53,16 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 String paramName = queryParam.getName();
                 PersistentProperty prop = ((PersistentEntity) rootEntity).getPropertyByName(paramName);
                 if (prop == null) {
-                    matchContext.getVisitorContext().fail(
-                            "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName,
-                            queryParam
-                    );
-                    return null;
+                    SourcePersistentProperty identity = rootEntity.getIdentity();
+                    if (identity != null && identity.getName().equals(paramName)) {
+                        query.idEq(new QueryParameter(queryParam.getName()));
+                    } else {
+                        matchContext.getVisitorContext().fail(
+                                "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName,
+                                queryParam
+                        );
+                        return null;
+                    }
                 } else {
                     query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
                 }
