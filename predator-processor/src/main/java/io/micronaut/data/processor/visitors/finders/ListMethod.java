@@ -1,10 +1,10 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 import javax.annotation.Nonnull;
-import java.util.regex.Pattern;
 
 /**
  * Simple list method support.
@@ -35,23 +35,20 @@ public class ListMethod extends AbstractListMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        ClassElement returnType = methodElement.getGenericReturnType();
-        return super.isMethodMatch(methodElement) && isValidReturnTypeInternal(returnType);
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext)
+                && isValidReturnType(matchContext.getReturnType(), matchContext);
+
     }
 
     /**
      * Dictates whether this is a valid return type.
      * @param returnType The return type.
+     * @param matchContext The match context
      * @return True if it is
      */
-    protected boolean isValidReturnType(@Nonnull ClassElement returnType) {
+    protected boolean isValidReturnType(@Nonnull ClassElement returnType, MatchContext matchContext) {
         return returnType.isAssignable(Iterable.class);
-    }
-
-    private boolean isValidReturnTypeInternal(ClassElement returnType) {
-        return returnType != null &&
-                isValidReturnType(returnType);
     }
 
 }

@@ -3,7 +3,7 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.data.annotation.ParameterRole
+import io.micronaut.data.annotation.TypeRole
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
@@ -95,7 +95,7 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Company, L
         def updateByQuery = updateByMethod.synthesize(Query)
 
         then: "It was correctly compiled"
-        updateByMethod.getValue(PredatorMethod.class, ParameterRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
+        updateByMethod.getValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
         updateAnn.interceptor() == UpdateInterceptor
         updateQuery.value() == "UPDATE $Company.name company SET company.name=:p1, company.lastUpdated=:p2 WHERE (company.myId = :p3)"
         updateAnn.id() == 'myId'

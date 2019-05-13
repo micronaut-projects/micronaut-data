@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.inject.ast.TypedElement;
@@ -66,7 +67,7 @@ public class MethodMatchInfo {
      * somehow in the query.
      * @param role The role name
      * @param name The parameter
-     * @see io.micronaut.data.annotation.ParameterRole
+     * @see TypeRole
      */
     public void addParameterRole(CharSequence role, String name) {
         parameterRoles.put(role.toString(), name);

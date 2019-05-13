@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -32,8 +33,8 @@ public class QueryListMethod extends ListMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return methodElement.getValue(Query.class, String.class).map(StringUtils::isNotEmpty).orElse(false) && super.isMethodMatch(methodElement);
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return methodElement.getValue(Query.class, String.class).map(StringUtils::isNotEmpty).orElse(false) && super.isMethodMatch(methodElement, matchContext);
     }
 
     @Nullable

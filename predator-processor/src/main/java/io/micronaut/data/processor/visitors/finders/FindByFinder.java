@@ -1,7 +1,9 @@
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
@@ -26,11 +28,17 @@ public class FindByFinder extends DynamicFinder {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && isCompatibleReturnType(methodElement);
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) && isCompatibleReturnType(methodElement, matchContext);
     }
 
-    private boolean isCompatibleReturnType(MethodElement methodElement) {
+    /**
+     * Is the return type compatible.
+     * @param methodElement The method element
+     * @param matchContext The match context
+     * @return The return type
+     */
+    protected boolean isCompatibleReturnType(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         ClassElement returnType = methodElement.getGenericReturnType();
         if (returnType != null && !returnType.getName().equals("void")) {
             return returnType.hasStereotype(Introspected.class) ||

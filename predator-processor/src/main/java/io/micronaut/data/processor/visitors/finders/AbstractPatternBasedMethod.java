@@ -8,6 +8,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -41,7 +42,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         return pattern.matcher(methodElement.getName()).find();
     }
 

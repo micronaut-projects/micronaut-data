@@ -1,6 +1,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.intercept.SaveAllInterceptor;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -27,11 +28,11 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = methodElement.getParameters();
         if(parameters.length == 1) {
             ParameterElement firstParameter = parameters[0];
-            return super.isMethodMatch(methodElement) && TypeUtils.isIterableOfEntity(firstParameter.getGenericType());
+            return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isIterableOfEntity(firstParameter.getGenericType());
         }
         return false;
     }

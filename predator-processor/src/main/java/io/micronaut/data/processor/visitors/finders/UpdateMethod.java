@@ -1,12 +1,13 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.ParameterRole;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.*;
 
@@ -34,8 +35,8 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) &&
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) &&
                 methodElement.getParameters().length > 1 &&
                 isValidReturnType(methodElement.getReturnType()) &&
                 hasIdParameter(methodElement.getParameters());
@@ -108,7 +109,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             }
         }
 
-        Element element = matchContext.getParametersInRole().get(ParameterRole.LAST_UPDATED_PROPERTY);
+        Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
         if (element instanceof PropertyElement) {
             properiesToUpdate.add(element.getName());
         }
@@ -122,7 +123,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         );
 
         info.addParameterRole(
-                ParameterRole.ID,
+                TypeRole.ID,
                 idParameter.getName()
         );
         return info;

@@ -3,6 +3,7 @@ package io.micronaut.data.hibernate.datastore;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
@@ -18,6 +19,7 @@ import javax.annotation.Nullable;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -213,6 +215,28 @@ public class HibernateJpaDatastore implements Datastore {
         bindPageable(q, pageable);
 
         return q.stream();
+    }
+
+    @Override
+    public <T> Page<T> findPage(@NonNull Class<T> entity, @NonNull Pageable pageable) {
+        //noinspection ConstantConditions
+        return readTransactionTemplate.execute(status -> {
+            Session session = sessionFactory.getCurrentSession();
+            CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
+            CriteriaQuery<T> query = criteriaBuilder.createQuery(entity);
+            Root<T> root = query.from(entity);
+            Query<T> q = session.createQuery(
+                    query
+            );
+            bindCriteriaSort(query, root, criteriaBuilder, pageable);
+            bindPageable(q, pageable);
+
+            List<T> resultList = q.list();
+            CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
+            countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
+            Long total = session.createQuery(countQuery).getSingleResult();
+            return Page.of(resultList, pageable, total);
+        });
     }
 
     private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {

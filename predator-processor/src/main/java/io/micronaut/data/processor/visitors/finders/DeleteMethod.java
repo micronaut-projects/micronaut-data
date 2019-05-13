@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -34,8 +35,8 @@ public class DeleteMethod extends AbstractListMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnVoid(methodElement); // void return
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnVoid(methodElement); // void return
     }
 
     @Nullable

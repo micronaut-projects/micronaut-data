@@ -14,6 +14,7 @@ import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -90,10 +91,11 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
      * Checks whether the given method is a match
      *
      * @param methodElement The method element
+     * @param matchContext
      * @return True if it is
      */
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         String methodName = methodElement.getName();
         return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }

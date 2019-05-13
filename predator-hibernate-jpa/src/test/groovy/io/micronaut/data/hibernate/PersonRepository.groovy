@@ -1,10 +1,15 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.data.annotation.Repository
+import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 
 @Repository
 interface PersonRepository {
+
+    Page<Person> findByNameLike(String name, Pageable pageable)
+
+    Page<Person> list(Pageable pageable)
 
     Optional<Person> findOptionalByName(String name)
 

@@ -3,7 +3,7 @@ package io.micronaut.data.annotation;
 import java.lang.annotation.*;
 
 /**
- * A parameter role indicates a method parameter in a repository play a role in query execution and should
+ * A type role indicates a method element in a repository that plays a role in query execution and should
  * not be factored into query calculation but instead made available at runtime using the specified role name.
  *
  * <p>This is used for example to configure a {@link io.micronaut.data.model.Pageable} object to be handled differently
@@ -18,7 +18,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Documented
-public @interface ParameterRole {
+public @interface TypeRole {
     /**
      * The parameter that is used for pagination.
      */
@@ -43,6 +43,16 @@ public @interface ParameterRole {
      * The last updated property of the entity for an update operation.
      */
     String LAST_UPDATED_PROPERTY = "lastUpdatedProperty";
+
+    /**
+     * The parameter that is used to represent a {@link io.micronaut.data.model.Slice}.
+     */
+    String SLICE = "slice";
+
+    /**
+     * The parameter that is used to represent a {@link io.micronaut.data.model.Page}.
+     */
+    String PAGE = "page";
 
     /**
      * The name of the role.

@@ -3,7 +3,9 @@ package io.micronaut.data.annotation;
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -39,12 +41,14 @@ public @interface Repository {
     Class<? extends QueryBuilder> queryBuilder() default JpaQueryBuilder.class;
 
     /**
-     * Configures {@link ParameterRole} behaviour for a repository.
+     * Configures {@link TypeRole} behaviour for a repository.
      *
      * @return The parameter roles
      */
-    ParameterRole[] parameterRoles() default {
-        @ParameterRole(role = ParameterRole.PAGEABLE, type = Pageable.class),
-        @ParameterRole(role = ParameterRole.SORT, type = Sort.class)
+    TypeRole[] typeRoles() default {
+        @TypeRole(role = TypeRole.PAGEABLE, type = Pageable.class),
+        @TypeRole(role = TypeRole.SORT, type = Sort.class),
+        @TypeRole(role = TypeRole.SLICE, type = Slice.class),
+        @TypeRole(role = TypeRole.PAGE, type = Page.class)
     };
 }

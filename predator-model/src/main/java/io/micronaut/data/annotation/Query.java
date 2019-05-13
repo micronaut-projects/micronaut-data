@@ -12,6 +12,7 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 @Documented
 public @interface Query {
+
     /**
      * @return The raw query string.
      */

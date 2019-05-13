@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -32,10 +33,10 @@ public class SaveMethod extends AbstractPatternBasedMethod implements MethodCand
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ClassElement returnType = methodElement.getGenericReturnType();
         boolean returnTypeValid = returnType == null || returnType.hasAnnotation(Persisted.class);
-        return returnTypeValid && super.isMethodMatch(methodElement);
+        return returnTypeValid && super.isMethodMatch(methodElement, matchContext);
     }
 
     @Nullable

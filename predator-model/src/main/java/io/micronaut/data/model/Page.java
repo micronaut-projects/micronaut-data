@@ -2,6 +2,7 @@ package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,5 +41,14 @@ public interface Page<T> extends Slice<T> {
      */
     static @NonNull <T2> Page<T2> of(@NonNull List<T2> content, @NonNull Pageable pageable, long totalSize) {
         return new DefaultPage<>(content, pageable, totalSize);
+    }
+
+    /**
+     * Creates an empty page object.
+     * @param <T2> The generic type
+     * @return The slice
+     */
+    static @NonNull <T2> Page<T2> empty() {
+        return new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);
     }
 }

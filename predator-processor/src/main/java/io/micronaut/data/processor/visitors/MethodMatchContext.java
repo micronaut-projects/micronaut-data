@@ -20,17 +20,10 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0
  */
-public class MethodMatchContext {
+public class MethodMatchContext extends MatchContext {
 
     @NonNull
     private final SourcePersistentEntity entity;
-    @NonNull
-    private final VisitorContext visitorContext;
-    @NonNull
-    private final MethodElement methodElement;
-    @NonNull
-    private final ParameterElement[] parameters;
-    private final ClassElement returnType;
     private final Map<String, Element> parametersInRole;
     private boolean failing = false;
 
@@ -41,6 +34,7 @@ public class MethodMatchContext {
      * @param returnType The return type
      * @param methodElement The method element
      * @param parametersInRole Parameters that fulfill a query execution role
+     * @param typeRoles The type roles
      * @param parameters The parameters
      */
     MethodMatchContext(
@@ -49,13 +43,21 @@ public class MethodMatchContext {
             @NonNull ClassElement returnType,
             @NonNull MethodElement methodElement,
             @NonNull Map<String, Element> parametersInRole,
+            @NonNull Map<String, String> typeRoles,
             @NonNull ParameterElement[] parameters) {
+        super(visitorContext, methodElement, typeRoles, returnType, parameters);
         this.entity = entity;
-        this.visitorContext = visitorContext;
-        this.methodElement = methodElement;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
-        this.parameters = parameters;
-        this.returnType = returnType;
+    }
+
+    /**
+     * Check whether a parameter is available in the given role.
+     * @param role The role
+     * @return True if there is a parameter available in the given role
+     */
+    @SuppressWarnings("ConstantConditions")
+    public boolean hasParameterInRole(@NonNull String role) {
+        return role != null && parametersInRole.containsKey(role);
     }
 
     /**
@@ -76,44 +78,12 @@ public class MethodMatchContext {
     }
 
     /**
-     * @return The visitor context
-     */
-    @NonNull
-    public VisitorContext getVisitorContext() {
-        return visitorContext;
-    }
-
-    /**
-     * @return The method element
-     */
-    @NonNull
-    public MethodElement getMethodElement() {
-        return methodElement;
-    }
-
-    /**
-     * @return The return type
-     */
-    @NonNull
-    public ClassElement getReturnType() {
-        return returnType;
-    }
-
-    /**
-     * @return The parameters
-     */
-    @NonNull
-    public ParameterElement[] getParameters() {
-        return parameters;
-    }
-
-    /**
      * Fail compilation with the given message for the current method.
      * @param message The message
      */
     public void fail(@NonNull String message) {
         this.failing = true;
-        getVisitorContext().fail(message, methodElement);
+        getVisitorContext().fail(message, getMethodElement());
     }
 
     /**
@@ -130,7 +100,7 @@ public class MethodMatchContext {
      * @return The parameters not in role
      */
     public @NonNull List<ParameterElement> getParametersNotInRole() {
-        return Arrays.stream(parameters).filter(p ->
+        return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsValue(p)
         ).collect(Collectors.toList());
     }

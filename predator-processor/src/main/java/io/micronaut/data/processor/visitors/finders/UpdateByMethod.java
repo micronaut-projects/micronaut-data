@@ -2,11 +2,12 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.ParameterRole;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.*;
 
@@ -30,8 +31,8 @@ public class UpdateByMethod extends DynamicFinder {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnVoid(methodElement);
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnVoid(methodElement);
     }
 
     @Nullable
@@ -69,7 +70,7 @@ public class UpdateByMethod extends DynamicFinder {
             matchContext.fail("At least one parameter required to update");
             return null;
         }
-        Element element = matchContext.getParametersInRole().get(ParameterRole.LAST_UPDATED_PROPERTY);
+        Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
         if (element instanceof PropertyElement) {
             updateParameters.add(element);
         }

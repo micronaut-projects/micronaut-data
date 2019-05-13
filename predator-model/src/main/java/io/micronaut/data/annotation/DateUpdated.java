@@ -13,6 +13,6 @@ import java.time.OffsetDateTime;
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Documented
 @GeneratedValue
-@ParameterRole(role = ParameterRole.LAST_UPDATED_PROPERTY, type = OffsetDateTime.class)
+@TypeRole(role = TypeRole.LAST_UPDATED_PROPERTY, type = OffsetDateTime.class)
 public @interface DateUpdated {
 }

@@ -12,7 +12,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.ParameterRole;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
@@ -20,7 +20,6 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,14 +62,90 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             // this should never happen
             throw new IllegalStateException("No predator method configured");
         }
-
         Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
         Class resultType = annotation.get(MEMBER_RESULT_TYPE, Class.class).orElse(rootEntity);
+
         Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
                 .orElse(null);
 
-        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(MEMBER_PARAMETER_BINDING, Property.class);
+        Map<String, Object> parameterValues = buildParameterBinding(context, annotation, rootEntity);
+
+        Pageable pageable = getPageable(context);
+
+        return new PreparedQuery(
+                resultType,
+                rootEntity,
+                idType,
+                query,
+                parameterValues,
+                pageable
+        );
+    }
+
+    /**
+     * Prepares a query for the given context.
+     * @param context The context
+     * @return The query
+     */
+    protected final PreparedQuery prepareCountQuery(MethodInvocationContext<T, R> context) {
+        String query = context.getValue(Query.class, PredatorMethod.MEMBER_COUNT_QUERY, String.class).orElseThrow(() ->
+                new IllegalStateException("No query present in method")
+        );
+        AnnotationValue<PredatorMethod> annotation = context.getAnnotation(PredatorMethod.class);
+        if (annotation == null) {
+            // this should never happen
+            throw new IllegalStateException("No predator method configured");
+        }
+        Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
+                .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
+        Class resultType = annotation.get(MEMBER_RESULT_TYPE, Class.class).orElse(rootEntity);
+
+        Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
+                .orElse(null);
+
+        @SuppressWarnings("ConstantConditions") Map<String, Object> parameterValues = buildParameterBinding(
+                context,
+                context.getAnnotation(Query.class),
+                PredatorMethod.MEMBER_COUNT_PARAMETERS,
+                rootEntity
+        );
+
+        Pageable pageable = getPageable(context);
+
+        return new PreparedQuery(
+                resultType,
+                rootEntity,
+                idType,
+                query,
+                parameterValues,
+                pageable
+        );
+    }
+
+    @NonNull
+    private Map<String, Object> buildParameterBinding(
+            @NonNull MethodInvocationContext<T, R> context,
+            @NonNull AnnotationValue<PredatorMethod> annotation,
+            @NonNull Class<?> rootEntity) {
+        return buildParameterBinding(context, annotation, MEMBER_PARAMETER_BINDING, rootEntity);
+    }
+
+    /**
+     * Builds the parameter data.
+     * @param context The context
+     * @param annotation The predator annotation
+     * @param parameterBindingMember The member that holds the parameter binding
+     * @param rootEntity The root entity
+     * @return The parameter data
+     */
+    private Map<String, Object> buildParameterBinding(
+            @NonNull MethodInvocationContext<T, R> context,
+            @NonNull AnnotationValue<?> annotation,
+            String parameterBindingMember,
+            @NonNull Class<?> rootEntity) {
+        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
+                Property.class);
         Map<String, Object> parameterValues;
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         if (CollectionUtils.isNotEmpty(parameterData)) {
@@ -82,7 +157,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                     if (parameterValueMap.containsKey(argument)) {
                         parameterValues.put(name, parameterValueMap.get(argument));
                     } else {
-                        String v = context.getValue(PredatorMethod.class, ParameterRole.LAST_UPDATED_PROPERTY, String.class).orElse(null);
+                        String v = context.getValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY, String.class).orElse(null);
                         if (v != null && v.equals(argument)) {
                             Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
                             if (lastUpdatedType == null) {
@@ -102,17 +177,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         } else {
             parameterValues = Collections.emptyMap();
         }
-
-        Pageable pageable = getPageable(context);
-
-        return new PreparedQuery(
-                resultType,
-                rootEntity,
-                idType,
-                query,
-                parameterValues,
-                pageable
-        );
+        return parameterValues;
     }
 
     private Class<?> getLastUpdatedType(Class<?> rootEntity, String property) {
@@ -137,7 +202,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
     @Nullable
     protected Pageable getPageable(MethodInvocationContext context) {
-        String pageableParam = context.getValue(PredatorMethod.class, ParameterRole.PAGEABLE, String.class).orElse(null);
+        String pageableParam = context.getValue(PredatorMethod.class, TypeRole.PAGEABLE, String.class).orElse(null);
         Pageable pageable = null;
         if (pageableParam != null) {
             Map<String, Object> parameterValueMap = context.getParameterValueMap();
@@ -145,7 +210,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                     .convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
 
         } else {
-            Sort sortParam = context.getValue(PredatorMethod.class, ParameterRole.SORT, Sort.class).orElse(null);
+            Sort sortParam = context.getValue(PredatorMethod.class, TypeRole.SORT, Sort.class).orElse(null);
             if (sortParam != null) {
                 pageable = Pageable.unpaged();
                 for (Sort.Order order : sortParam.getOrderBy()) {
@@ -186,7 +251,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * @return The entity
      */
     protected @NonNull Object getRequiredEntity(MethodInvocationContext<T, Object> context) {
-        String entityParam = context.getValue(PredatorMethod.class, ParameterRole.ENTITY, String.class)
+        String entityParam = context.getValue(PredatorMethod.class, TypeRole.ENTITY, String.class)
                 .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
 
         Object o = context.getParameterValueMap().get(entityParam);

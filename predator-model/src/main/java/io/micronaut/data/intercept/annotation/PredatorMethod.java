@@ -21,6 +21,16 @@ import java.lang.annotation.Target;
 public @interface PredatorMethod {
 
     /**
+     * The member that holds the count query.
+     */
+    String MEMBER_COUNT_QUERY = "countQuery";
+
+    /**
+     * The member that holds the count parameters.
+     */
+    String MEMBER_COUNT_PARAMETERS = "countParameters";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends PredatorInterceptor> interceptor();

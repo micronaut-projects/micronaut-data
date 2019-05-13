@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -26,8 +27,8 @@ public class DeleteByMethod extends DynamicFinder {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnVoid(methodElement); // void return
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnVoid(methodElement); // void return
     }
 
     @Nullable

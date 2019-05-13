@@ -9,21 +9,26 @@ import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.ParameterRole;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.PreparedQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.factory.Restrictions;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
+import io.micronaut.data.processor.visitors.finders.page.FindPageByMethod;
+import io.micronaut.data.processor.visitors.finders.page.ListPageMethod;
+import io.micronaut.data.processor.visitors.finders.page.QueryPageMethod;
+import io.micronaut.data.processor.visitors.finders.slice.FindSliceByMethod;
+import io.micronaut.data.processor.visitors.finders.slice.ListSliceMethod;
+import io.micronaut.data.processor.visitors.finders.slice.QuerySliceMethod;
 import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -44,7 +49,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private ClassElement currentClass;
     private QueryBuilder queryEncoder;
-    private Map<String, String> parameterRoles = new HashMap<>();
+    private Map<String, String> typeRoles = new HashMap<>();
     private List<MethodCandidate> finders;
 
     /**
@@ -59,21 +64,23 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (finders == null) {
             finders = initializeMethodCandidates(visitorContext);
         }
-        parameterRoles.put(Pageable.class.getName(), ParameterRole.PAGEABLE);
-        parameterRoles.put(Sort.class.getName(), ParameterRole.SORT);
+        typeRoles.put(Pageable.class.getName(), TypeRole.PAGEABLE);
+        typeRoles.put(Sort.class.getName(), TypeRole.SORT);
+        typeRoles.put(Page.class.getName(), TypeRole.PAGE);
+        typeRoles.put(Slice.class.getName(), TypeRole.SLICE);
     }
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         this.currentClass = element;
         queryEncoder = resolveQueryEncoder(element, context);
-        AnnotationValue[] roleArray = element.getAnnotationMetadata().getValue(Repository.class, "roleArray", AnnotationValue[].class).orElse(new AnnotationValue[0]);
+        AnnotationValue[] roleArray = element.getAnnotationMetadata().getValue(Repository.class, "typeRoles", AnnotationValue[].class).orElse(new AnnotationValue[0]);
         for (AnnotationValue<?> parameterRole : roleArray) {
             String role = parameterRole.get("role", String.class).orElse(null);
             AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
             if (StringUtils.isNotEmpty(role) && cv != null) {
                 context.getClassElement(cv.getName()).ifPresent(ce ->
-                    parameterRoles.put(ce.getName(), role)
+                        typeRoles.put(ce.getName(), role)
                 );
             }
         }
@@ -91,19 +98,26 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             for (ParameterElement parameter : parameters) {
                 ClassElement type = parameter.getType();
                 if (type != null) {
-                    this.parameterRoles.entrySet().stream().filter(entry ->
+                    this.typeRoles.entrySet().stream().filter(entry ->
                             {
                                 String roleType = entry.getKey();
                                 return type.isAssignable(roleType);
                             }
                     ).forEach(entry ->
-                        parametersInRole.put(entry.getValue(), parameter)
+                            parametersInRole.put(entry.getValue(), parameter)
                     );
                 }
             }
 
+            MatchContext matchContext = new MatchContext(
+                    context,
+                    element,
+                    typeRoles,
+                    genericReturnType,
+                    parameters
+            );
             for (MethodCandidate finder : finders) {
-                if (finder.isMethodMatch(element)) {
+                if (finder.isMethodMatch(element, matchContext)) {
                     SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole, context);
 
                     if (entity == null) {
@@ -114,18 +128,20 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     String idType = resolveIdType(entity);
 
 
-                    MethodMatchInfo methodInfo = finder.buildMatchInfo(new MethodMatchContext(
+                    MethodMatchContext methodMatchContext = new MethodMatchContext(
                             entity,
                             context,
                             genericReturnType,
                             element,
                             parametersInRole,
+                            typeRoles,
                             parameters
-                    ));
+                    );
+                    MethodMatchInfo methodInfo = finder.buildMatchInfo(methodMatchContext);
                     if (methodInfo != null) {
 
                         // populate parameter roles
-                        for (Map.Entry<String, Element> entry : parametersInRole.entrySet()) {
+                        for (Map.Entry<String, Element> entry : methodMatchContext.getParametersInRole().entrySet()) {
                             methodInfo.addParameterRole(
                                     entry.getKey(),
                                     entry.getValue().getName()
@@ -133,6 +149,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         }
 
                         Query queryObject = methodInfo.getQuery();
+                        Query countQuery;
                         Map<String, String> parameterBinding = null;
                         if (queryObject != null) {
                             if (queryObject instanceof RawQuery) {
@@ -166,9 +183,29 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
 
                                 parameterBinding = encodedQuery.getParameters();
-                                element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
-                                        annotationBuilder.value(encodedQuery.getQuery())
-                                );
+
+                                if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
+                                    countQuery = Query.from(queryObject.getPersistentEntity());
+                                    countQuery.projections().count();
+                                    Query.Junction junction = queryObject.getCriteria();
+                                    for (Query.Criterion criterion : junction.getCriteria()) {
+                                        countQuery.add(criterion);
+                                    }
+
+                                    PreparedQuery preparedCount = queryEncoder.buildQuery(countQuery);
+
+                                    element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
+                                                annotationBuilder.value(encodedQuery.getQuery());
+                                                annotationBuilder.member(PredatorMethod.MEMBER_COUNT_QUERY, preparedCount.getQuery());
+                                                AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(preparedCount.getParameters());
+                                                annotationBuilder.member(PredatorMethod.MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                            }
+                                    );
+                                } else {
+                                    element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
+                                            annotationBuilder.value(encodedQuery.getQuery())
+                                    );
+                                }
                             }
                         }
 
@@ -192,14 +229,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                                 annotationBuilder.member("interceptor", runtimeInterceptor);
                                 if (finalParameterBinding != null) {
-                                    AnnotationValue<?>[] annotationParameters = new AnnotationValue[finalParameterBinding.size()];
-                                    int i = 0;
-                                    for (Map.Entry<String, String> entry : finalParameterBinding.entrySet()) {
-                                        annotationParameters[i++] = AnnotationValue.builder(Property.class)
-                                                .member("name", entry.getKey())
-                                                .member("value", entry.getValue())
-                                                .build();
-                                    }
+                                    AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalParameterBinding);
                                     annotationBuilder.member("parameterBinding", annotationParameters);
                                 }
                                 Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
@@ -235,6 +265,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
+    private AnnotationValue<?>[] parameterBindingToAnnotationValues(Map<String, String> finalParameterBinding) {
+        AnnotationValue<?>[] annotationParameters = new AnnotationValue[finalParameterBinding.size()];
+        int i = 0;
+        for (Map.Entry<String, String> entry : finalParameterBinding.entrySet()) {
+            annotationParameters[i++] = AnnotationValue.builder(Property.class)
+                    .member("name", entry.getKey())
+                    .member("value", entry.getValue())
+                    .build();
+        }
+        return annotationParameters;
+    }
+
     private List<MethodCandidate> initializeMethodCandidates(VisitorContext context) {
         List<MethodCandidate> finderList = Arrays.asList(
                 new FindByFinder(),
@@ -249,7 +291,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new QueryOneMethod(),
                 new CountByMethod(),
                 new UpdateMethod(),
-                new UpdateByMethod()
+                new UpdateByMethod(),
+                new ListSliceMethod(),
+                new FindSliceByMethod(),
+                new ListSliceMethod(),
+                new QuerySliceMethod(),
+                new FindPageByMethod(),
+                new ListPageMethod(),
+                new QueryPageMethod()
         );
         SoftServiceLoader<MethodCandidate> otherCandidates = SoftServiceLoader.load(MethodCandidate.class);
         for (ServiceDefinition<MethodCandidate> definition : otherCandidates) {
@@ -265,7 +314,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return finderList;
     }
 
-    private @Nullable String resolveIdType(PersistentEntity entity) {
+    private @Nullable
+    String resolveIdType(PersistentEntity entity) {
         Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(io.micronaut.data.repository.Repository.class);
         if (!typeArguments.isEmpty()) {
             ClassElement ce = typeArguments.get("ID");
@@ -280,7 +330,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private @Nullable SourcePersistentEntity resolvePersistentEntity(MethodElement element, Map<String, Element> parametersInRole, VisitorContext context) {
+    private @Nullable
+    SourcePersistentEntity resolvePersistentEntity(MethodElement element, Map<String, Element> parametersInRole, VisitorContext context) {
         ClassElement returnType = element.getGenericReturnType();
         SourcePersistentEntity entity = resolvePersistentEntity(returnType);
         if (entity == null) {
@@ -295,10 +346,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
         if (entity != null) {
             List<PersistentProperty> propertiesInRole = entity.getPersistentProperties()
-                    .stream().filter(pp -> pp.getAnnotationMetadata().hasStereotype(ParameterRole.class))
+                    .stream().filter(pp -> pp.getAnnotationMetadata().hasStereotype(TypeRole.class))
                     .collect(Collectors.toList());
             for (PersistentProperty persistentProperty : propertiesInRole) {
-                String role = persistentProperty.getAnnotationMetadata().getValue(ParameterRole.class, "role", String.class).orElse(null);
+                String role = persistentProperty.getAnnotationMetadata().getValue(TypeRole.class, "role", String.class).orElse(null);
                 if (role != null) {
                     parametersInRole.put(role, ((SourcePersistentProperty) persistentProperty).getPropertyElement());
                 }
@@ -329,17 +380,17 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private QueryBuilder resolveQueryEncoder(Element element, VisitorContext context) {
         return element.getValue(
-                                Repository.class,
-                                "queryBuilder",
-                                String.class
-                        ).flatMap(type -> {
-                            Object o = InstantiationUtils.tryInstantiate(type, RepositoryTypeElementVisitor.class.getClassLoader()).orElse(null);
-                            if (o instanceof QueryBuilder) {
-                                return Optional.of((QueryBuilder) o);
-                            } else {
-                                context.fail("QueryEncoder of type [" + type + "] not present on annotation processor path", element);
-                                return Optional.empty();
-                            }
-                        }).orElse(null);
+                Repository.class,
+                "queryBuilder",
+                String.class
+        ).flatMap(type -> {
+            Object o = InstantiationUtils.tryInstantiate(type, RepositoryTypeElementVisitor.class.getClassLoader()).orElse(null);
+            if (o instanceof QueryBuilder) {
+                return Optional.of((QueryBuilder) o);
+            } else {
+                context.fail("QueryEncoder of type [" + type + "] not present on annotation processor path", element);
+                return Optional.empty();
+            }
+        }).orElse(null);
     }
 }

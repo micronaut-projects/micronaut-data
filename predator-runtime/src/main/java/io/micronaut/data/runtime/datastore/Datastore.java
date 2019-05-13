@@ -2,6 +2,7 @@ package io.micronaut.data.runtime.datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 
 import java.io.Serializable;
@@ -210,4 +211,14 @@ public interface Datastore {
             @NonNull Class<T> entity) {
         return findStream(entity, Pageable.unpaged());
     };
+
+    /**
+     * Find a page for the given entity and pageable.
+     * @param entity The entity
+     * @param pageable The pageable
+     * @param <R> The entity generic type
+     * @return The page type
+     */
+    <R> Page<R> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable);
+
 }

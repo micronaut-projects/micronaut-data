@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.intercept.FindOneInterceptor;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 
@@ -15,7 +16,7 @@ import javax.annotation.Nonnull;
  */
 public class QueryOneMethod extends QueryListMethod {
     @Override
-    protected boolean isValidReturnType(@Nonnull ClassElement returnType) {
+    protected boolean isValidReturnType(@Nonnull ClassElement returnType, MatchContext matchContext) {
         return returnType.hasStereotype(Introspected.class);
     }
 

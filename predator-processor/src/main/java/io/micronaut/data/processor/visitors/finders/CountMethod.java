@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -28,8 +29,8 @@ public class CountMethod extends AbstractListMethod {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnNumber(methodElement);
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnNumber(methodElement);
     }
 
     @Nullable

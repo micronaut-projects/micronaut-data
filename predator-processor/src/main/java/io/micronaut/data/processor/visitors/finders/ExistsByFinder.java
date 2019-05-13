@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.model.query.Query;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -29,8 +30,8 @@ public class ExistsByFinder extends DynamicFinder {
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement) {
-        return super.isMethodMatch(methodElement) && TypeUtils.doesReturnBoolean(methodElement);
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnBoolean(methodElement);
     }
 
     @Nullable

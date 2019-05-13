@@ -1,13 +1,13 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.order.Ordered;
+import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * Implementation of dynamic finders.
@@ -25,10 +25,11 @@ public interface MethodCandidate extends Ordered {
     /**
      * Whether the given method name matches this finder.
      *
-     * @param methodElement The method element
+     * @param methodElement The method element. Never null.
+     * @param matchContext The match context. Never null.
      * @return true if it does
      */
-    boolean isMethodMatch(@NonNull MethodElement methodElement);
+    boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext);
 
     @Override
     default int getOrder() {
@@ -36,7 +37,7 @@ public interface MethodCandidate extends Ordered {
     }
 
     /**
-     * Builds the method info. The method {@link #isMethodMatch(MethodElement)} should be
+     * Builds the method info. The method {@link #isMethodMatch(MethodElement, MatchContext)} should be
      * invoked and checked prior to calling this method.
      *
      * @param matchContext The match context
@@ -44,6 +45,6 @@ public interface MethodCandidate extends Ordered {
      * the passed {@link VisitorContext}
      */
     @Nullable
-    MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext);
+    MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext);
 
 }
