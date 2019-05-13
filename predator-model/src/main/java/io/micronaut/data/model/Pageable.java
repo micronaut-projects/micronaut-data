@@ -1,6 +1,7 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.query.Sort;
 
@@ -40,6 +41,34 @@ public interface Pageable extends Sort {
         return Sort.unsorted();
     }
 
+    /**
+     * @return The next pageable.
+     */
+    default @NonNull Pageable next() {
+        int size = getSize();
+        long newOffset = getOffset() + size;
+        // handle overflow
+        if (newOffset < 0) {
+            return Pageable.from(0, size, getSort());
+        } else {
+            return Pageable.from(newOffset, size, getSort());
+        }
+    }
+
+    /**
+     * @return The previous pageable
+     */
+    default @NonNull Pageable previous() {
+        int size = getSize();
+        long newOffset = getOffset() - size;
+        // handle overflow
+        if (newOffset < 0) {
+            return Pageable.from(0, size, getSort());
+        } else {
+            return Pageable.from(newOffset, size, getSort());
+        }
+    }
+
     @NonNull
     @Override
     default Pageable order(@NonNull String propertyName) {
@@ -73,7 +102,7 @@ public interface Pageable extends Sort {
      * @return The pageable
      */
     static @NonNull Pageable from(long offset) {
-        return new DefaultPageable(-1, offset);
+        return new DefaultPageable(-1, offset, null);
     }
 
     /**
@@ -83,13 +112,24 @@ public interface Pageable extends Sort {
      * @return The pageable
      */
     static @NonNull Pageable from(long offset, int max) {
-        return new DefaultPageable(max, offset);
+        return new DefaultPageable(max, offset, null);
+    }
+
+    /**
+     * Creates a new {@link Pageable} at the given offset.
+     * @param offset The offset
+     * @param max the max
+     * @param sort the sort
+     * @return The pageable
+     */
+    static @NonNull Pageable from(long offset, int max, @Nullable Sort sort) {
+        return new DefaultPageable(max, offset, sort);
     }
 
     /**
      * @return A new instance without paging data.
      */
     static @NonNull Pageable unpaged() {
-        return new DefaultPageable(-1, 0);
+        return new DefaultPageable(-1, 0, null);
     }
 }
