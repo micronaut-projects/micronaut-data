@@ -10,3 +10,10 @@ io.micronaut.data.processor.mappers.jpa.OneToManyMapper
 io.micronaut.data.processor.mappers.jpa.ManyToOneMapper
 io.micronaut.data.processor.mappers.jpa.OneToOneMapper
 io.micronaut.data.processor.mappers.spring.SpringTransactionalMapper
+io.micronaut.data.processor.mappers.spring.SpringCreatedDateMapper
+io.micronaut.data.processor.mappers.spring.SpringIdMapper
+io.micronaut.data.processor.mappers.spring.SpringLastModifiedDateMapper
+io.micronaut.data.processor.mappers.spring.SpringPersistenceConstructorMapper
+io.micronaut.data.processor.mappers.spring.SpringPersistentAnnotationMapper
+io.micronaut.data.processor.mappers.spring.SpringTransientMapper
+io.micronaut.data.processor.mappers.spring.SpringVersionMapper
