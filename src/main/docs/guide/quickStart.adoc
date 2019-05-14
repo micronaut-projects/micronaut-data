@@ -1,0 +1,10 @@
+To get started with Predator add the following dependency to your annotation processor path:
+
+dependency:io.micronaut.data:micronaut-predator-processor[scope="annotationProcessor", version="{version}"]
+
+NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
+
+You should then configure a runtime dependency that matches the implementation you wish to use. For example for Hibernate:
+
+dependency:io.micronaut.data:micronaut-predator-hibernate-jpa[version="{version}"]
+

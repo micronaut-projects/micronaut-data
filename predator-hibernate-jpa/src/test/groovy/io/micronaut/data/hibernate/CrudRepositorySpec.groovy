@@ -23,7 +23,6 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 
 import javax.inject.Inject
-import javax.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false)
 @Property(name = "datasources.default.name", value = "mydb")

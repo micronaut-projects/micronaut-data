@@ -155,7 +155,7 @@ subprojects { Project subproject ->
     checkstyleTest.enabled = false
 }
 
-apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v1.0.0.RC1/gradle/docs.gradle"
+apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v${micronautDocsVersion}/gradle/docs.gradle"
 
 allprojects {
     apply plugin: 'idea'

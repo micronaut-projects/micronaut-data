@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<factorypath>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-processor/1.0.0.BUILD-SNAPSHOT/micronaut-predator-processor-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-inject-java/1.1.1/6ba50501e2add648f28ff31148ab09862e758f1/micronaut-inject-java-1.1.1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-model/1.0.0.BUILD-SNAPSHOT/micronaut-predator-model-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-validation/1.1.1/ce3c24318689bd42724a12f5f65182cf9375d6/micronaut-validation-1.1.1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-aop/1.1.1/11a6fbeea487ee21500b40714decb91c0efd4f9a/micronaut-aop-1.1.1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-http/1.1.1/10b6ca790dc5f6c1b0dfc32cae8e8a9bacbf3270/micronaut-http-1.1.1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-inject/1.1.1/17b8bc3a2430959de6a8ff5000df89022f3d9e1e/micronaut-inject-1.1.1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-core/1.1.1/635fc72579b87ab66fc68c5cdc8b4bca18a196db/micronaut-core-1.1.1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.25/da76ca59f6a57ee3102f8f9bd9cee742973efa8a/slf4j-api-1.7.25.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/javax.validation/validation-api/2.0.1.Final/cb855558e6271b1b32e716d24cb85c7f583ce09e/validation-api-2.0.1.Final.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/com.github.spotbugs/spotbugs-annotations/3.1.12/ba2c77a05091820668987292f245f3b089387bfa/spotbugs-annotations-3.1.12.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/javax.annotation/javax.annotation-api/1.3.2/934c04d3cfef185a8008e7bf34331b79730a9d43/javax.annotation-api-1.3.2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/javax.inject/javax.inject/1/6975da39a7040257bd51d21a231b76c915872d38/javax.inject-1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/1.23/ec62d74fe50689c28c0ff5b35d3aebcaa8b5be68/snakeyaml-1.23.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/com.google.code.findbugs/jsr305/3.0.2/25ea2e8b0c338a877313bd4672d3fe056ea78f0d/jsr305-3.0.2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/org.reactivestreams/reactive-streams/1.0.2/323964c36556eb0e6209f65c1cef72b53b461ab8/reactive-streams-1.0.2.jar" enabled="true" runInBatchMode="false"/>
+</factorypath>

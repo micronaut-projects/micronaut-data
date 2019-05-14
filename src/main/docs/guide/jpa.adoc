@@ -1,0 +1,4 @@
+To get started with Predator for JPA you should first https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate[Configure Hibernate].
+
+
+
