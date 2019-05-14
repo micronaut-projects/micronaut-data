@@ -58,7 +58,7 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         listName.synthesize(Query).value() == "SELECT person.name FROM $Person.name AS person ORDER BY person.name ASC"
         listName.synthesize(PredatorMethod).resultType() == String
         listTop3.synthesize(Query).value() == "SELECT person FROM $Person.name AS person ORDER BY person.name ASC"
-        listTop3.synthesize(PredatorMethod).max() == 3
+        listTop3.synthesize(PredatorMethod).pageSize() == 3
     }
 
     @Unroll

@@ -60,7 +60,7 @@ public class Projections {
     }
 
     /**
-     * Computes the max value of a property
+     * Computes the pageSize value of a property
      *
      * @param name The name of the property
      * @return The PropertyProjection instance

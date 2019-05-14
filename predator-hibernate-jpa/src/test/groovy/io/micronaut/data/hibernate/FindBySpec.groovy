@@ -65,10 +65,5 @@ class FindBySpec extends Specification {
         then:
         results.size() == 2
 
-        when:
-        results = personRepository.findAllByNameLike("Fred%", Pageable.from(1, 10))
-
-        then:
-        results.size() == 1
     }
 }

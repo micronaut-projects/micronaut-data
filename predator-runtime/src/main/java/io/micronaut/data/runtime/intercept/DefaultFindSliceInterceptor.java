@@ -2,6 +2,7 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindSliceInterceptor;
@@ -17,14 +18,14 @@ import io.micronaut.data.runtime.datastore.Datastore;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<T, Slice<R>> implements FindSliceInterceptor<T, R> {
+public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements FindSliceInterceptor<T, R> {
 
     protected DefaultFindSliceInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 
     @Override
-    public Slice<R> intercept(MethodInvocationContext<T, Slice<R>> context) {
+    public R intercept(MethodInvocationContext<T, R> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery preparedQuery = prepareQuery(context);
             Pageable pageable = preparedQuery.getPageable();
@@ -34,13 +35,22 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
                     preparedQuery.getParameterValues(),
                     pageable
             );
-            return Slice.of(CollectionUtils.iterableToList(iterable), pageable);
+            Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
+            return convertOrFail(context, slice);
         } else {
             Class rootEntity = getRequiredRootEntity(context);
             Pageable pageable = getRequiredPageable(context);
 
             Iterable iterable = datastore.findAll(rootEntity, pageable);
-            return Slice.of(CollectionUtils.iterableToList(iterable), pageable);
+            Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
+            return convertOrFail(context, slice);
         }
+    }
+
+    private R convertOrFail(MethodInvocationContext<T, R> context, Slice<R> slice) {
+        return ConversionService.SHARED.convert(
+                slice,
+                context.getReturnType().asArgument()
+        ).orElseThrow(() -> new IllegalStateException("Unsupported slice interface: " + context.getReturnType().getType()));
     }
 }

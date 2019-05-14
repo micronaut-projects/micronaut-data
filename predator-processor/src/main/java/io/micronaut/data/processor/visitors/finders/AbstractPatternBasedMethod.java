@@ -4,14 +4,17 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.visitor.VisitorContext;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
@@ -155,4 +158,18 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return false;
     }
 
+    protected boolean applyOrderBy(@NonNull MethodMatchContext context, @NonNull Query query, @NonNull List<Sort.Order> orderList) {
+        if (CollectionUtils.isNotEmpty(orderList)) {
+            SourcePersistentEntity entity = context.getRootEntity();
+            for (Sort.Order order : orderList) {
+                String prop = order.getProperty();
+                if (!entity.getPath(prop).isPresent()) {
+                    context.fail("Cannot order by non-existent property: " + prop);
+                    return true;
+                }
+            }
+            query.sort(Sort.of(orderList));
+        }
+        return false;
+    }
 }

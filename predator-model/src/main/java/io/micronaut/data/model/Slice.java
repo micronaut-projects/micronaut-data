@@ -29,6 +29,13 @@ public interface Slice<T> extends Iterable<T> {
     @NonNull Pageable getPageable();
 
     /**
+     * @return The page number
+     */
+    default int getPageNumber() {
+        return getPageable().getNumber();
+    }
+
+    /**
      * @return The next pageable
      */
     default @NonNull Pageable nextPageable() {

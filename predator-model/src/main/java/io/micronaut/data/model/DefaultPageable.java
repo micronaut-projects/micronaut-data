@@ -18,26 +18,30 @@ import javax.validation.constraints.Min;
 class DefaultPageable implements Pageable {
 
     private final int max;
-    private final long offset;
+    private final int number;
     private final Sort sort;
 
     /**
      * Default constructor.
      *
-     * @param max The max
-     * @param offset The offset
+     * @param index The index
+     * @param size The size
      */
-    DefaultPageable(int max, long offset, @Nullable Sort sort) {
-        this.max = max;
-        this.offset = offset;
+    @Creator
+    DefaultPageable(int index, int size, @Nullable Sort sort) {
+        if (index < 0) {
+            throw new IllegalArgumentException("Page index cannot be negative");
+        }
+        if (size < 1) {
+            throw new IllegalArgumentException("Max size cannot be less than 1");
+        }
+        this.max = size;
+        this.number = index;
         this.sort = sort == null ? Sort.unsorted() : sort;
     }
 
-    @Creator
-    DefaultPageable() {
-        this.max = -1;
-        this.offset = 0;
-        this.sort = Sort.unsorted();
+    DefaultPageable(int index, int size) {
+        this(index, size, Sort.unsorted());
     }
 
     @Override
@@ -46,8 +50,8 @@ class DefaultPageable implements Pageable {
     }
 
     @Override
-    public @Min(0) long getOffset() {
-        return offset;
+    public int getNumber() {
+        return number;
     }
 
     @Nonnull

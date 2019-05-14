@@ -8,4 +8,5 @@ dependencies {
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testCompile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}
+	testCompile 'org.springframework.data:spring-data-commons:2.1.8.RELEASE'
 }

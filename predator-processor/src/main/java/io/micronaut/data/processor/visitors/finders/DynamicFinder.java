@@ -234,14 +234,8 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             }
         }
 
-        for (Sort.Order order : orderList) {
-            String prop = order.getProperty();
-            if (!entity.getPath(prop).isPresent()) {
-                visitorContext.fail("Cannot order by non-existent property: " + prop, methodElement);
-                return null;
-            } else {
-                query.order(order);
-            }
+        if (applyOrderBy(matchContext, query, orderList)) {
+            return null;
         }
 
         if (CollectionUtils.isNotEmpty(projectionExpressions)) {

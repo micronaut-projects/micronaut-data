@@ -1,6 +1,7 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 
 import java.util.Collections;
@@ -19,8 +20,9 @@ class DefaultSlice<T> implements Slice<T> {
     private final Pageable pageable;
 
     DefaultSlice(List<T> content, Pageable pageable) {
+        ArgumentUtils.requireNonNull("pageable", pageable);
         this.content = CollectionUtils.isEmpty(content) ? Collections.emptyList() : content;
-        this.pageable = pageable == null ? Pageable.unpaged() : pageable;
+        this.pageable = pageable;
     }
 
     @NonNull

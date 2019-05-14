@@ -1,24 +1,24 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.model.Pageable
+import io.micronaut.data.hibernate.spring.SpringCrudRepository
 import io.micronaut.test.annotation.MicronautTest
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
 import javax.inject.Inject
-import javax.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false)
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise
-class CrudRepositorySpec extends Specification {
-
+class SpringCrudRepositorySpec extends Specification {
     @Inject
     @Shared
-    PersonCrudRepository crudRepository
+    SpringCrudRepository crudRepository
 
     def setupSpec() {
         crudRepository.saveAll([
@@ -56,8 +56,9 @@ class CrudRepositorySpec extends Specification {
         crudRepository.findAll().size() == 5
         crudRepository.count() == 5
         crudRepository.count("Fred") == 1
-        crudRepository.list(Pageable.from(1)).isEmpty()
-        crudRepository.list(Pageable.from(0, 1)).size() == 1
+        !crudRepository.queryAll(PageRequest.of(0, 1)).isEmpty()
+        crudRepository.list(PageRequest.of(1, 10)).isEmpty()
+        crudRepository.list(PageRequest.of(0, 1)).size() == 1
     }
 
     void "test delete by id"() {

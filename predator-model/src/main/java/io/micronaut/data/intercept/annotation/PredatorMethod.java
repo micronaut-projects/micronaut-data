@@ -56,14 +56,14 @@ public @interface PredatorMethod {
     String META_MEMBER_ID_TYPE = "idType";
 
     /**
-     * The parameter that holds the max value.
+     * The parameter that holds the pageSize value.
      */
-    String META_MEMBER_MAX = "max";
+    String META_MEMBER_PAGE_SIZE = "pageSize";
 
     /**
      * The parameter that holds the offset value.
      */
-    String META_MEMBER_OFFSET = "offset";
+    String META_MEMBER_PAGE_INDEX = "pageIndex";
 
     /**
      * The parameter that references the entity.
@@ -130,15 +130,15 @@ public @interface PredatorMethod {
     String id() default "";
 
     /**
-     * An explicit max (in absence of a pageable).
-     * @return The max
+     * An explicit pageSize (in absence of a pageable).
+     * @return The pageSize
      */
-    int max() default -1;
+    int pageSize() default -1;
 
     /**
      * An explicit offset (in absence of a pageable).
      *
      * @return The offset
      */
-    long offset() default 0;
+    long pageIndex() default 0;
 }

@@ -225,22 +225,14 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         } else {
             Sort sortParam = context.getValue(PredatorMethod.class, TypeRole.SORT, Sort.class).orElse(null);
-            if (sortParam != null) {
-                pageable = Pageable.unpaged();
-                for (Sort.Order order : sortParam.getOrderBy()) {
-                    pageable.getSort().order(order);
-                }
-                return pageable;
-            } else {
-                int max = context.getValue(PredatorMethod.class, "max", int.class).orElse(-1);
-                long offset = context.getValue(PredatorMethod.class, "offset", long.class).orElse(0L);
-                boolean hasMax = max > -1;
-                if (offset > 0 || hasMax) {
-                    if (hasMax) {
-                        pageable = Pageable.from(offset, max);
-                    } else {
-                        pageable = Pageable.from(offset);
-                    }
+            int max = context.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_SIZE, int.class).orElse(-1);
+            int pageIndex = context.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_INDEX, int.class).orElse(0);
+            boolean hasSize = max > 0;
+            if (hasSize) {
+                if (sortParam != null) {
+                    pageable = Pageable.from(pageIndex, max, sortParam);
+                } else {
+                    pageable = Pageable.from(pageIndex, max);
                 }
             }
         }

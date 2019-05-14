@@ -18,19 +18,37 @@ import java.util.List;
 public interface Pageable extends Sort {
 
     /**
+     * Constant for no pagination.
+     */
+    Pageable UNPAGED = new Pageable() {
+        @Override
+        public int getNumber() {
+            return 0;
+        }
+
+        @Override
+        public int getSize() {
+            return 0;
+        }
+    };
+
+    /**
+     * @return The page number.
+     */
+    int getNumber();
+
+    /**
      * Maximum size of the page to be returned. A value of -1 indicates no maximum.
      * @return size of the requested page of items
      */
-    default int getSize() {
-        return -1;
-    }
+    int getSize();
 
     /**
      * Offset in the requested collection. Defaults to zero.
      * @return offset in the requested collection
      */
     default long getOffset() {
-        return 0;
+        return getNumber() * getSize();
     }
 
     /**
@@ -46,12 +64,12 @@ public interface Pageable extends Sort {
      */
     default @NonNull Pageable next() {
         int size = getSize();
-        long newOffset = getOffset() + size;
+        int newNumber = getNumber() + 1;
         // handle overflow
-        if (newOffset < 0) {
+        if (newNumber < 0) {
             return Pageable.from(0, size, getSort());
         } else {
-            return Pageable.from(newOffset, size, getSort());
+            return Pageable.from(newNumber, size, getSort());
         }
     }
 
@@ -60,34 +78,34 @@ public interface Pageable extends Sort {
      */
     default @NonNull Pageable previous() {
         int size = getSize();
-        long newOffset = getOffset() - size;
+        int newNumber = getNumber() - size;
         // handle overflow
-        if (newOffset < 0) {
+        if (newNumber < 0) {
             return Pageable.from(0, size, getSort());
         } else {
-            return Pageable.from(newOffset, size, getSort());
+            return Pageable.from(newNumber, size, getSort());
         }
     }
 
     @NonNull
     @Override
     default Pageable order(@NonNull String propertyName) {
-        getSort().order(propertyName);
-        return this;
+        Sort newSort = getSort().order(propertyName);
+        return Pageable.from(getNumber(), getSize(), newSort);
     }
 
     @NonNull
     @Override
     default Pageable order(@NonNull Order order) {
-        getSort().order(order);
-        return this;
+        Sort newSort = getSort().order(order);
+        return Pageable.from(getNumber(), getSize(), newSort);
     }
 
     @NonNull
     @Override
     default Pageable order(@NonNull String propertyName, @NonNull Order.Direction direction) {
-        getSort().order(propertyName, direction);
-        return this;
+        Sort newSort = getSort().order(propertyName, direction);
+        return Pageable.from(getNumber(), getSize(), newSort);
     }
 
     @NonNull
@@ -97,39 +115,39 @@ public interface Pageable extends Sort {
     }
 
     /**
-     * Creates a new {@link Pageable} at the given offset.
-     * @param offset The offset
+     * Creates a new {@link Pageable} at the given offset with a default size of 10.
+     * @param index The index
      * @return The pageable
      */
-    static @NonNull Pageable from(long offset) {
-        return new DefaultPageable(-1, offset, null);
+    static @NonNull Pageable from(int index) {
+        return new DefaultPageable(index, 10, null);
     }
 
     /**
      * Creates a new {@link Pageable} at the given offset.
-     * @param offset The offset
-     * @param max the max
+     * @param index The index
+     * @param size the size
      * @return The pageable
      */
-    static @NonNull Pageable from(long offset, int max) {
-        return new DefaultPageable(max, offset, null);
+    static @NonNull Pageable from(int index, int size) {
+        return new DefaultPageable(index, size, null);
     }
 
     /**
      * Creates a new {@link Pageable} at the given offset.
-     * @param offset The offset
-     * @param max the max
+     * @param number The offset
+     * @param size the size
      * @param sort the sort
      * @return The pageable
      */
-    static @NonNull Pageable from(long offset, int max, @Nullable Sort sort) {
-        return new DefaultPageable(max, offset, sort);
+    static @NonNull Pageable from(int number, int size, @Nullable Sort sort) {
+        return new DefaultPageable(number, size, sort);
     }
 
     /**
      * @return A new instance without paging data.
      */
     static @NonNull Pageable unpaged() {
-        return new DefaultPageable(-1, 0, null);
+        return UNPAGED;
     }
 }

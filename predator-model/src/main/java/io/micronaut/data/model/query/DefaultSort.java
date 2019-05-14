@@ -1,7 +1,10 @@
 package io.micronaut.data.model.query;
 
+import io.micronaut.core.util.ArgumentUtils;
+
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,12 +16,19 @@ import java.util.List;
 class DefaultSort implements Sort {
     private final List<Order> orderBy;
 
+    /**
+     * Constructor that takes an order.
+     * @param orderBy The order by
+     */
     DefaultSort(List<Order> orderBy) {
         this.orderBy = orderBy;
     }
 
+    /**
+     * Default constructor.
+     */
     DefaultSort() {
-        this.orderBy = new ArrayList<>(2);
+        this.orderBy = Collections.emptyList();
     }
 
     /**
@@ -27,10 +37,10 @@ class DefaultSort implements Sort {
      * @return The Query instance
      */
     public @Nonnull DefaultSort order(@Nonnull Order order) {
-        if (order != null) {
-            orderBy.add(order);
-        }
-        return this;
+        ArgumentUtils.requireNonNull("order", order);
+        List<Order> newOrderBy = new ArrayList<>(orderBy);
+        newOrderBy.add(order);
+        return new DefaultSort(newOrderBy);
     }
 
     /**
@@ -39,7 +49,7 @@ class DefaultSort implements Sort {
      */
     @Override
     public @Nonnull List<Order> getOrderBy() {
-        return orderBy;
+        return Collections.unmodifiableList(orderBy);
     }
 
     @Nonnull
@@ -51,6 +61,6 @@ class DefaultSort implements Sort {
     @Nonnull
     @Override
     public DefaultSort order(@Nonnull String propertyName, @Nonnull Order.Direction direction) {
-        return order(new Order(propertyName, direction));
+        return order(new Order(propertyName, direction, false));
     }
 }

@@ -309,7 +309,7 @@ public abstract class ProjectionMethodExpression {
     }
 
     /**
-     * Restricts the max result.
+     * Restricts the pageSize result.
      */
     private static class RestrictMaxResultProjection extends ProjectionMethodExpression {
 

@@ -6,7 +6,6 @@ import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,21 +16,21 @@ import java.util.Optional;
  * @author graemerocher
  * @since 1.0
  */
-public interface Query extends Criteria, Sort {
+public interface Query extends Criteria {
 
     /**
      * @return The entity the criteria applies to
      */
-    @Nonnull
+    @NonNull
     PersistentEntity getPersistentEntity();
 
     /**
      * @return The criteria for this query
      */
-    @Nonnull
+    @NonNull
     Query.Junction getCriteria();
 
-    @Nonnull
+    @NonNull
     List<Projection> getProjections();
 
     /**
@@ -41,6 +40,12 @@ public interface Query extends Criteria, Sort {
      */
     @NonNull Query join(@NonNull Association association);
 
+    /**
+     * Obtain the join type for the given association.
+     * @param association The association
+     *                    The joint type
+     * @return
+     */
     Optional<JoinSpec.Type> getJoinType(Association association);
 
     /**
@@ -54,7 +59,7 @@ public interface Query extends Criteria, Sort {
     /**
      * @return The projection list.
      */
-    @Nonnull
+    @NonNull
     ProjectionList projections();
 
     /**
@@ -62,11 +67,11 @@ public interface Query extends Criteria, Sort {
      *
      * @param criterion The criterion instance
      */
-    @Nonnull Query add(@Nonnull Criterion criterion);
+    @NonNull Query add(@NonNull Criterion criterion);
 
     /**
      * Limits the maximum result.
-     * @param max The max
+     * @param max The pageSize
      * @return This query
      */
     Query max(int max);
@@ -79,17 +84,32 @@ public interface Query extends Criteria, Sort {
     Query offset(long offset);
 
     /**
+     * The sort to apply
+     * @return The sort
+     */
+    default Sort getSort() {
+        return Sort.unsorted();
+    }
+
+    /**
+     * Apply the given sort.
+     * @param sort The sort to apply
+     * @return This query
+     */
+    @NonNull Query sort(@NonNull Sort sort);
+
+    /**
      * Creates a query from the given entity.
      * @param entity The entity
      */
-    static @Nonnull Query from(@Nonnull PersistentEntity entity) {
+    static @NonNull Query from(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         return new DefaultQuery(entity);
     }
 
     /**
-     * Get the max results to return.
-     * @return The max results
+     * Get the pageSize results to return.
+     * @return The pageSize results
      */
     int getMax();
 
@@ -684,7 +704,7 @@ public interface Query extends Criteria, Sort {
     }
 
     /**
-     * Computes the max value of a property
+     * Computes the pageSize value of a property
      */
     class MaxProjection extends PropertyProjection {
         public MaxProjection(String propertyName) {

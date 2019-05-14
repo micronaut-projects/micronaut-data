@@ -81,15 +81,8 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 if (query == null) {
                     query = Query.from(rootEntity);
                 }
-                for (Sort.Order orderBy : orderBys) {
-                    String property = orderBy.getProperty();
-                    Optional<String> propertyPath = rootEntity.getPath(property);
-                    if (propertyPath.isPresent()) {
-                        query.order(orderBy);
-                    } else {
-                        matchContext.fail("Cannot order by non-existent property: " + property);
-                        return null;
-                    }
+                if (applyOrderBy(matchContext, query, orderBys)) {
+                    return null;
                 }
             }
 
@@ -100,6 +93,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                     if (query == null) {
                         query = Query.from(rootEntity);
                     }
+
                     for (ProjectionMethodExpression projection : projections) {
                         projection.apply(matchContext, query);
                         queryResultType = projection.getExpectedResultType();

@@ -18,6 +18,8 @@ import java.util.List;
  */
 public interface Page<T> extends Slice<T> {
 
+    Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);
+
     /**
      * @return The total size of the all records.
      */
@@ -48,7 +50,8 @@ public interface Page<T> extends Slice<T> {
      * @param <T2> The generic type
      * @return The slice
      */
+    @SuppressWarnings("unchecked")
     static @NonNull <T2> Page<T2> empty() {
-        return new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);
+        return (Page<T2>) EMPTY;
     }
 }

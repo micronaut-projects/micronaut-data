@@ -12,6 +12,7 @@ dependencies {
     testCompile project(":predator-processor")
     testRuntime "com.h2database:h2"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testCompile 'org.springframework.data:spring-data-commons:2.1.8.RELEASE'
 
 //    compileTestGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
 

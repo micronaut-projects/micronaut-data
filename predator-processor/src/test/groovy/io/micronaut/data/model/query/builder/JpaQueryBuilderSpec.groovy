@@ -18,9 +18,7 @@ class JpaQueryBuilderSpec extends Specification {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
         Query q = Query.from(entity)
-        for (p in props) {
-            q.order(Sort.Order."$direction"(p))
-        }
+        q.sort Sort.of(props.collect() { Sort.Order."$direction"(it)})
 
         QueryBuilder encoder = new JpaQueryBuilder()
         PreparedQuery encodedQuery = encoder.buildQuery(q)

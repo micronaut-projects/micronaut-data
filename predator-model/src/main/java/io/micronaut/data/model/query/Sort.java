@@ -1,8 +1,10 @@
 package io.micronaut.data.model.query;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.CollectionUtils;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
@@ -14,21 +16,26 @@ import java.util.List;
 public interface Sort {
 
     /**
+     * Constant for unsorted.
+     */
+    Sort UNSORTED = new DefaultSort();
+
+    /**
      * Orders by the specified property name (defaults to ascending).
      *
      * @param propertyName The property name to order by
-     * @return This criteria
+     * @return A new sort with the order applied
      */
-    @Nonnull
-    Sort order(@Nonnull String propertyName);
+    @NonNull
+    Sort order(@NonNull String propertyName);
 
     /**
      * Adds an order object
      *
      * @param order The order object
-     * @return The order object
+     * @return A new sort with the order applied
      */
-    @Nonnull Sort order(@Nonnull Sort.Order order);
+    @NonNull Sort order(@NonNull Sort.Order order);
 
     /**
      * Orders by the specified property name and direction.
@@ -36,20 +43,32 @@ public interface Sort {
      * @param propertyName The property name to order by
      * @param direction Either "asc" for ascending or "desc" for descending
      *
-     * @return This criteria
+     * @return A new sort with the order applied
      */
-    @Nonnull Sort order(@Nonnull String propertyName, @Nonnull Sort.Order.Direction direction);
+    @NonNull Sort order(@NonNull String propertyName, @NonNull Sort.Order.Direction direction);
 
     /**
      * @return The order definitions for this sort.
      */
-    @Nonnull List<Order> getOrderBy();
+    @NonNull List<Order> getOrderBy();
 
     /**
      * @return Default unsorted sort instance.
      */
     static Sort unsorted() {
-        return new DefaultSort();
+        return UNSORTED;
+    }
+
+    /**
+     * Create a sort from the given list of orders
+     * @param orderList The order list
+     * @return The sort
+     */
+    static @NonNull Sort of(@Nullable List<Order> orderList) {
+        if (CollectionUtils.isEmpty(orderList)) {
+            return UNSORTED;
+        }
+        return new DefaultSort(orderList);
     }
 
     /**
@@ -58,36 +77,28 @@ public interface Sort {
     class Order {
         private final String property;
         private final Direction direction;
-        private boolean ignoreCase = false;
+        private final boolean ignoreCase;
 
         /**
          * Constructs an order for the given property in ascending order.
          * @param property The property
          */
-        public Order(@Nonnull String property) {
-            this(property, Direction.ASC);
+        public Order(@NonNull String property) {
+            this(property, Direction.ASC, false);
         }
 
         /**
          * Constructs an order for the given property with the given direction.
          * @param property The property
          * @param direction The direction
+         * @param ignoreCase Whether to ignore case
          */
-        public Order(@Nonnull String property, @Nonnull Direction direction) {
+        public Order(@NonNull String property, @NonNull Direction direction, boolean ignoreCase) {
             ArgumentUtils.requireNonNull("direction", direction);
             ArgumentUtils.requireNonNull("property", property);
             this.direction = direction;
             this.property = property;
-        }
-
-        /**
-         * Whether to ignore the case for this order definition
-         *
-         * @return This order instance
-         */
-        public Order ignoreCase() {
-            this.ignoreCase = true;
-            return this;
+            this.ignoreCase = ignoreCase;
         }
 
         /**
@@ -118,7 +129,7 @@ public interface Sort {
          * @return The order instance
          */
         public static Order desc(String property) {
-            return new Order(property, Direction.DESC);
+            return new Order(property, Direction.DESC, false);
         }
 
         /**
@@ -128,7 +139,34 @@ public interface Sort {
          * @return The order instance
          */
         public static Order asc(String property) {
-            return new Order(property, Direction.ASC);
+            return new Order(property, Direction.ASC, false);
+        }
+
+        /**
+         * Creates a new order for the given property in descending order
+         *
+         * @param property The property
+         * @return The order instance
+         */
+        public static Order desc(String property, boolean ignoreCase) {
+            return new Order(property, Direction.DESC, ignoreCase);
+        }
+
+        /**
+         * Creates a new order for the given property in ascending order
+         *
+         * @param property The property
+         * @return The order instance
+         */
+        public static Order asc(String property, boolean ignoreCase) {
+            return new Order(property, Direction.ASC, ignoreCase);
+        }
+
+        /**
+         * @return Is the order ascending
+         */
+        public boolean isAscending() {
+            return getDirection() == Direction.ASC;
         }
 
         /**

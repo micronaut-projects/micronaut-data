@@ -17,7 +17,7 @@ import java.util.*;
  * @author Graeme Rocher
  * @since 1.0
  */
-public class DefaultQuery extends DefaultSort implements Query {
+public class DefaultQuery implements Query {
 
     private final PersistentEntity entity;
 
@@ -26,6 +26,7 @@ public class DefaultQuery extends DefaultSort implements Query {
     private int max = -1;
     private long offset = 0;
     private Map<Association, JoinSpec.Type> joinTypes = new HashMap<>(2);
+    private Sort sort = Sort.unsorted();
 
     protected DefaultQuery(@Nonnull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
@@ -179,7 +180,7 @@ public class DefaultQuery extends DefaultSort implements Query {
 
     /**
      * Defines the maximum number of results to return
-     * @param max The max results
+     * @param max The pageSize results
      * @return This query instance
      */
     @Override
@@ -209,13 +210,17 @@ public class DefaultQuery extends DefaultSort implements Query {
         return this;
     }
 
-    /**
-     * Defines the offset (the first result index) of the query
-     * @param offset The offset
-     * @return This query instance
-     */
-    public DefaultQuery firstResult(int offset) {
-        return offset(offset);
+    @Override
+    public Sort getSort() {
+        return this.sort;
+    }
+
+    @NonNull
+    @Override
+    public Query sort(@NonNull Sort sort) {
+        ArgumentUtils.requireNonNull("sort", sort);
+        this.sort = sort;
+        return this;
     }
 
     /**

@@ -10,5 +10,5 @@ import io.micronaut.data.model.Page;
  * @param <R> The return type
  * @since 1.0.0
  */
-public interface FindPageInterceptor<T, R> extends PredatorInterceptor<T, Page<R>> {
+public interface FindPageInterceptor<T, R> extends PredatorInterceptor<T, R> {
 }

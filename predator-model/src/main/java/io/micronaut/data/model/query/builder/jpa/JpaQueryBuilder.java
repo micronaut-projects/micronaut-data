@@ -766,7 +766,7 @@ public class JpaQueryBuilder implements QueryBuilder {
     }
 
     private void appendOrder(Query query, QueryState queryState) {
-        List<Sort.Order> orders = query.getOrderBy();
+        List<Sort.Order> orders = query.getSort().getOrderBy();
         if (!orders.isEmpty()) {
 
             StringBuilder buff = queryState.query;

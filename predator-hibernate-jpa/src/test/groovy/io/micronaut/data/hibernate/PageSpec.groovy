@@ -26,7 +26,7 @@ class PageSpec extends Specification {
     def setupSpec() {
 
         List<Person> people = []
-        5.times { num ->
+        50.times { num ->
             ('A'..'Z').each {
                 people << new Person(name: it * 5 + num)
             }
@@ -41,7 +41,7 @@ class PageSpec extends Specification {
         def count = crudRepository.count()
 
         then:"the count is correct"
-        count == 130
+        count == 1300
 
         when:"10 people are paged"
         Page<Person> page = personRepository.list(Pageable.from(0, 10))
@@ -51,8 +51,8 @@ class PageSpec extends Specification {
         page.content.every() { it instanceof Person }
         page.content[0].name.startsWith("A")
         page.content[1].name.startsWith("B")
-        page.totalSize == 130
-        page.totalPages == 13
+        page.totalSize == 1300
+        page.totalPages == 130
         page.nextPageable().offset == 10
         page.nextPageable().size == 10
 
@@ -61,6 +61,7 @@ class PageSpec extends Specification {
 
         then:"it is correct"
         page.offset == 10
+        page.pageNumber == 1
         page.content[0].name.startsWith("K")
     }
 
@@ -72,11 +73,23 @@ class PageSpec extends Specification {
 
         then:"The page is correct"
         page.offset == 0
-        page.totalSize == 5
+        page.pageNumber == 0
+        page.totalSize == 50
         slice.offset == 0
+        slice.pageNumber == 0
         slice.size == 10
         slice.content
         page.content
-        personRepository.findByNameLike("A%", page.nextPageable()).isEmpty()
+
+        when:"The next page is retrieved"
+        page = personRepository.findByNameLike("A%", page.nextPageable())
+
+        then:"it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.totalSize == 50
+        page.nextPageable().offset == 20
+        page.nextPageable().number == 2
+
     }
 }
