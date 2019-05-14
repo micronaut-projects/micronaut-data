@@ -33,7 +33,7 @@ import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 

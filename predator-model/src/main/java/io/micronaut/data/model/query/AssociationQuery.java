@@ -1,7 +1,7 @@
 package io.micronaut.data.model.query;
 
 import io.micronaut.data.model.Association;
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Extends a query and allows querying an association.
@@ -13,7 +13,7 @@ public class AssociationQuery extends DefaultQuery implements Query.Criterion {
 
     private final Association association;
 
-    public AssociationQuery(@Nonnull Association association) {
+    public AssociationQuery(@NonNull Association association) {
         super(association.getAssociatedEntity());
         this.association = association;
     }

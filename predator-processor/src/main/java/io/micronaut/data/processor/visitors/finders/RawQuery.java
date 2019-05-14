@@ -4,7 +4,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.DefaultQuery;
 import io.micronaut.data.model.query.Query;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
 
 /**
@@ -22,7 +22,7 @@ public class RawQuery extends DefaultQuery implements Query {
      * @param entity The entity
      * @param parameterBinding The parameter binding.
      */
-    protected RawQuery(@Nonnull PersistentEntity entity, @Nonnull Map<String, String> parameterBinding) {
+    protected RawQuery(@NonNull PersistentEntity entity, @NonNull Map<String, String> parameterBinding) {
         super(entity);
         this.parameterBinding = parameterBinding;
     }

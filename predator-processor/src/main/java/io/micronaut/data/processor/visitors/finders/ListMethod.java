@@ -5,7 +5,7 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Simple list method support.
@@ -48,7 +48,7 @@ public class ListMethod extends AbstractListMethod {
      * @param matchContext The match context
      * @return True if it is
      */
-    protected boolean isValidReturnType(@Nonnull ClassElement returnType, MatchContext matchContext) {
+    protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {
         return returnType.isAssignable(Iterable.class);
     }
 

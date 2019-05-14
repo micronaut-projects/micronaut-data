@@ -6,7 +6,7 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Support for explicit queries that return a single result.
@@ -16,12 +16,12 @@ import javax.annotation.Nonnull;
  */
 public class QueryOneMethod extends QueryListMethod {
     @Override
-    protected boolean isValidReturnType(@Nonnull ClassElement returnType, MatchContext matchContext) {
+    protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {
         return returnType.hasStereotype(Introspected.class);
     }
 
     @Override
-    protected MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
+    protected MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext, @NonNull RawQuery query) {
         return new MethodMatchInfo(
             matchContext.getReturnType(),
             query,

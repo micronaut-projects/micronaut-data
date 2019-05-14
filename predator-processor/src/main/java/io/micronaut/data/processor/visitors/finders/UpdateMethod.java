@@ -11,8 +11,8 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -59,7 +59,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(
-            @Nonnull MethodMatchContext matchContext) {
+            @NonNull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getMethodElement().getParameters();
         List<ParameterElement> remainingParameters = Arrays.stream(parameters)
                 .filter(p -> !p.hasAnnotation(Id.class))

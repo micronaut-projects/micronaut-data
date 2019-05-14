@@ -14,8 +14,8 @@ import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.Collections;
@@ -41,7 +41,7 @@ public class HibernateJpaDatastore implements Datastore {
      *
      * @param sessionFactory The session factory
      */
-    protected HibernateJpaDatastore(@Nonnull SessionFactory sessionFactory) {
+    protected HibernateJpaDatastore(@NonNull SessionFactory sessionFactory) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
         this.sessionFactory = sessionFactory;
         HibernateTransactionManager transactionManager = new HibernateTransactionManager(sessionFactory);
@@ -53,7 +53,7 @@ public class HibernateJpaDatastore implements Datastore {
 
     @Nullable
     @Override
-    public <T> T findOne(@Nonnull Class<T> type, @Nonnull Serializable id) {
+    public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
         return readTransactionTemplate.execute(status ->
                 sessionFactory.getCurrentSession().byId(type).load(id)
         );
@@ -61,7 +61,7 @@ public class HibernateJpaDatastore implements Datastore {
 
     @Nullable
     @Override
-    public <T> T findOne(@Nonnull Class<T> resultType, @Nonnull String query, @Nonnull Map<String, Object> parameters) {
+    public <T> T findOne(@NonNull Class<T> resultType, @NonNull String query, @NonNull Map<String, Object> parameters) {
         return readTransactionTemplate.execute(status -> {
             Class wrapperType = ReflectionUtils.getWrapperType(resultType);
             Query<T> q = sessionFactory.getCurrentSession()
@@ -72,9 +72,9 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public <T> Iterable<T> findAll(@Nonnull Class<T> rootEntity, @Nonnull Pageable pageable) {
+    public <T> Iterable<T> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session session = sessionFactory.getCurrentSession();
@@ -92,7 +92,7 @@ public class HibernateJpaDatastore implements Datastore {
     }
 
     @Override
-    public <T> long count(@Nonnull Class<T> rootEntity, @Nonnull Pageable pageable) {
+    public <T> long count(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session session = sessionFactory.getCurrentSession();
@@ -110,13 +110,13 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public <T> Iterable<T> findAll(
-            @Nonnull Class<T> resultType,
-            @Nonnull String query,
-            @Nonnull Map<String, Object> parameterValues,
-            @Nonnull Pageable pageable) {
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues,
+            @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
@@ -128,7 +128,7 @@ public class HibernateJpaDatastore implements Datastore {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public <T> T persist(@Nonnull T entity) {
+    public <T> T persist(@NonNull T entity) {
         return writeTransactionTemplate.execute(status -> {
             sessionFactory.getCurrentSession().persist(entity);
             return entity;
@@ -137,7 +137,7 @@ public class HibernateJpaDatastore implements Datastore {
 
     @SuppressWarnings("ConstantConditions")
     @Override
-    public <T> Iterable<T> persistAll(@Nonnull Iterable<T> entities) {
+    public <T> Iterable<T> persistAll(@NonNull Iterable<T> entities) {
         return writeTransactionTemplate.execute(status -> {
             if (entities != null) {
                 Session session = sessionFactory.getCurrentSession();
@@ -162,7 +162,7 @@ public class HibernateJpaDatastore implements Datastore {
     }
 
     @Override
-    public <T> void deleteAll(@Nonnull Class<T> entityType, @Nonnull Iterable<? extends T> entities) {
+    public <T> void deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
         writeTransactionTemplate.execute(status -> {
             Session session = sessionFactory.getCurrentSession();
             for (T entity : entities) {
@@ -173,7 +173,7 @@ public class HibernateJpaDatastore implements Datastore {
     }
 
     @Override
-    public <T> void deleteAll(@Nonnull Class<T> entityType) {
+    public <T> void deleteAll(@NonNull Class<T> entityType) {
         writeTransactionTemplate.execute(status -> {
             Session session = sessionFactory.getCurrentSession();
             CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
@@ -239,7 +239,7 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
-    private <T> void bindParameters(@Nonnull Query<T> query, Map<String, Object> parameters) {
+    private <T> void bindParameters(@NonNull Query<T> query, Map<String, Object> parameters) {
         if (parameters != null) {
             for (Map.Entry<String, Object> entry : parameters.entrySet()) {
                 query.setParameter(entry.getKey(), entry.getValue());
@@ -247,7 +247,7 @@ public class HibernateJpaDatastore implements Datastore {
         }
     }
 
-    private <T> void bindPageable(Query<T> q, @Nonnull Pageable pageable) {
+    private <T> void bindPageable(Query<T> q, @NonNull Pageable pageable) {
         int max = pageable.getSize();
         if (max > 0) {
             q.setMaxResults(max);
@@ -258,7 +258,7 @@ public class HibernateJpaDatastore implements Datastore {
         }
     }
 
-    private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @Nonnull Sort sort) {
+    private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
         for (Sort.Order order : sort.getOrderBy()) {
             Path<String> path = root.get(order.getProperty());
             Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;

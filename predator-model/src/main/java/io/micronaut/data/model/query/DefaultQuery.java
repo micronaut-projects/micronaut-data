@@ -8,7 +8,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.factory.Restrictions;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.*;
 
 /**
@@ -28,7 +28,7 @@ public class DefaultQuery implements Query {
     private Map<Association, JoinSpec.Type> joinTypes = new HashMap<>(2);
     private Sort sort = Sort.unsorted();
 
-    protected DefaultQuery(@Nonnull PersistentEntity entity) {
+    protected DefaultQuery(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         this.entity = entity;
     }
@@ -51,7 +51,7 @@ public class DefaultQuery implements Query {
         return new AssociationQuery(association);
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public PersistentEntity getPersistentEntity() {
         return entity;
@@ -64,7 +64,7 @@ public class DefaultQuery implements Query {
         return criteria;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<Projection> getProjections() {
         return projections.getProjectionList();
@@ -121,7 +121,7 @@ public class DefaultQuery implements Query {
      * @param criterion The criterion instance
      */
     @Override
-    public @Nonnull Query add(@Nonnull Query.Criterion criterion) {
+    public @NonNull Query add(@NonNull Query.Criterion criterion) {
         ArgumentUtils.requireNonNull("criterion", criterion);
         Query.Junction currentJunction = criteria;
         add(currentJunction, criterion);
@@ -231,8 +231,8 @@ public class DefaultQuery implements Query {
      * @return This query instance
      */
     @Override
-    public @Nonnull
-    DefaultQuery eq(@Nonnull String property, @Nonnull QueryParameter parameter) {
+    public @NonNull
+    DefaultQuery eq(@NonNull String property, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.eq(property,parameter));
         return this;
     }
@@ -243,8 +243,8 @@ public class DefaultQuery implements Query {
      * @param values The values
      * @return This query instance
      */
-    public @Nonnull
-    DefaultQuery allEq(@Nonnull Map<String, QueryParameter> values) {
+    public @NonNull
+    DefaultQuery allEq(@NonNull Map<String, QueryParameter> values) {
         Query.Junction conjunction = conjunction();
         for (String property : values.keySet()) {
             QueryParameter value = values.get(property);
@@ -253,61 +253,61 @@ public class DefaultQuery implements Query {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria eqAll(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria eqAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria gtAll(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria gtAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria ltAll(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria ltAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria geAll(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria geAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria leAll(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria leAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria gtSome(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria gtSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria geSome(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria geSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria ltSome(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria ltSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria leSome(@Nonnull String propertyName, @Nonnull Criteria propertyValue) {
+    public Criteria leSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Criteria idEquals(QueryParameter parameter) {
         return null;
@@ -319,8 +319,8 @@ public class DefaultQuery implements Query {
      * @param property The property name
      */
     @Override
-    public @Nonnull
-    DefaultQuery isEmpty(@Nonnull String property) {
+    public @NonNull
+    DefaultQuery isEmpty(@NonNull String property) {
         criteria.add(Restrictions.isEmpty(property));
         return this;
     }
@@ -331,8 +331,8 @@ public class DefaultQuery implements Query {
      * @param property The property name
      */
     @Override
-    public @Nonnull
-    DefaultQuery isNotEmpty(@Nonnull String property) {
+    public @NonNull
+    DefaultQuery isNotEmpty(@NonNull String property) {
         criteria.add(Restrictions.isNotEmpty(property));
         return this;
     }
@@ -343,8 +343,8 @@ public class DefaultQuery implements Query {
      * @param property The property name
      */
     @Override
-    public @Nonnull
-    DefaultQuery isNull(@Nonnull String property) {
+    public @NonNull
+    DefaultQuery isNull(@NonNull String property) {
         criteria.add(Restrictions.isNull(property));
         return this;
     }
@@ -355,8 +355,8 @@ public class DefaultQuery implements Query {
      * @param property The property name
      */
     @Override
-    public @Nonnull
-    DefaultQuery isNotNull(@Nonnull String property) {
+    public @NonNull
+    DefaultQuery isNotNull(@NonNull String property) {
         criteria.add(Restrictions.isNotNull(property));
         return this;
     }
@@ -368,15 +368,15 @@ public class DefaultQuery implements Query {
      * @return This query instance
      */
     @Override
-    public @Nonnull
-    DefaultQuery idEq(@Nonnull QueryParameter value) {
+    public @NonNull
+    DefaultQuery idEq(@NonNull QueryParameter value) {
         criteria.add(Restrictions.idEq(value));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria ne(@Nonnull String propertyName, @Nonnull QueryParameter parameter) {
+    public Criteria ne(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.ne(propertyName, parameter));
         return this;
     }
@@ -389,8 +389,8 @@ public class DefaultQuery implements Query {
      * @return This query instance
      */
     @Override
-    public @Nonnull
-    DefaultQuery gt(@Nonnull String property, @Nonnull QueryParameter value) {
+    public @NonNull
+    DefaultQuery gt(@NonNull String property, @NonNull QueryParameter value) {
         criteria.add(Restrictions.gt(property, value));
         return this;
     }
@@ -458,51 +458,51 @@ public class DefaultQuery implements Query {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery like(@Nonnull String propertyName, @Nonnull QueryParameter parameter) {
+    public DefaultQuery like(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.like(propertyName, parameter));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery ilike(@Nonnull String propertyName, @Nonnull QueryParameter parameter) {
+    public DefaultQuery ilike(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.ilike(propertyName, parameter));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery rlike(@Nonnull String propertyName, @Nonnull QueryParameter parameter) {
+    public DefaultQuery rlike(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.rlike(propertyName, parameter));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria and(@Nonnull Criteria other) {
+    public Criteria and(@NonNull Criteria other) {
         // TODO
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria or(@Nonnull Criteria other) {
+    public Criteria or(@NonNull Criteria other) {
         // TODO
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Criteria not(@Nonnull Criteria other) {
+    public Criteria not(@NonNull Criteria other) {
         // TODO
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery inList(@Nonnull String propertyName, @Nonnull Query subquery) {
+    public DefaultQuery inList(@NonNull String propertyName, @NonNull Query subquery) {
         criteria.add(Restrictions.in(propertyName, subquery));
         return this;
     }
@@ -520,93 +520,93 @@ public class DefaultQuery implements Query {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery notIn(@Nonnull String propertyName, @Nonnull Query subquery) {
+    public DefaultQuery notIn(@NonNull String propertyName, @NonNull Query subquery) {
         criteria.add(Restrictions.notIn(propertyName, subquery));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery sizeEq(@Nonnull String propertyName, @Nonnull QueryParameter size) {
+    public DefaultQuery sizeEq(@NonNull String propertyName, @NonNull QueryParameter size) {
         criteria.add(Restrictions.sizeEq(propertyName, size));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery sizeGt(@Nonnull String propertyName, @Nonnull QueryParameter size) {
+    public DefaultQuery sizeGt(@NonNull String propertyName, @NonNull QueryParameter size) {
         criteria.add(Restrictions.sizeGt(propertyName, size));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery sizeGe(@Nonnull String propertyName, @Nonnull QueryParameter size) {
+    public DefaultQuery sizeGe(@NonNull String propertyName, @NonNull QueryParameter size) {
         criteria.add(Restrictions.sizeGe(propertyName, size));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery sizeLe(@Nonnull String propertyName, @Nonnull QueryParameter size) {
+    public DefaultQuery sizeLe(@NonNull String propertyName, @NonNull QueryParameter size) {
         criteria.add(Restrictions.sizeLe(propertyName, size));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery sizeLt(@Nonnull String propertyName, @Nonnull QueryParameter size) {
+    public DefaultQuery sizeLt(@NonNull String propertyName, @NonNull QueryParameter size) {
         criteria.add(Restrictions.sizeLt(propertyName, size));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery sizeNe(@Nonnull String propertyName, @Nonnull QueryParameter size) {
+    public DefaultQuery sizeNe(@NonNull String propertyName, @NonNull QueryParameter size) {
         criteria.add(Restrictions.sizeNe(propertyName, size));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery eqProperty(@Nonnull String propertyName, @Nonnull String otherPropertyName) {
+    public DefaultQuery eqProperty(@NonNull String propertyName, @NonNull String otherPropertyName) {
         criteria.add(Restrictions.eqProperty(propertyName, otherPropertyName));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery neProperty(@Nonnull String propertyName, @Nonnull String otherPropertyName) {
+    public DefaultQuery neProperty(@NonNull String propertyName, @NonNull String otherPropertyName) {
         criteria.add(Restrictions.neProperty(propertyName, otherPropertyName));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery gtProperty(@Nonnull String propertyName, @Nonnull String otherPropertyName) {
+    public DefaultQuery gtProperty(@NonNull String propertyName, @NonNull String otherPropertyName) {
         criteria.add(Restrictions.gtProperty(propertyName, otherPropertyName));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery geProperty(@Nonnull String propertyName, @Nonnull String otherPropertyName) {
+    public DefaultQuery geProperty(@NonNull String propertyName, @NonNull String otherPropertyName) {
         criteria.add(Restrictions.geProperty(propertyName, otherPropertyName));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery ltProperty(@Nonnull String propertyName, @Nonnull String otherPropertyName) {
+    public DefaultQuery ltProperty(@NonNull String propertyName, @NonNull String otherPropertyName) {
         criteria.add(Restrictions.ltProperty(propertyName, otherPropertyName));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultQuery leProperty(String propertyName, @Nonnull String otherPropertyName) {
+    public DefaultQuery leProperty(String propertyName, @NonNull String otherPropertyName) {
         criteria.add(Restrictions.leProperty(propertyName, otherPropertyName));
         return this;
     }

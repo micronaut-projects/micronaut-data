@@ -15,7 +15,7 @@ import io.micronaut.data.model.query.builder.PreparedQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.factory.Restrictions;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,9 +45,9 @@ public class JpaQueryBuilder implements QueryBuilder {
     private static final String LOGICAL_OR = " OR ";
     private static final Map<Class, QueryHandler> queryHandlers = new HashMap<>();
 
-    @Nonnull
+    @NonNull
     @Override
-    public PreparedQuery buildQuery(@Nonnull Query query) {
+    public PreparedQuery buildQuery(@NonNull Query query) {
         QueryState queryState = new QueryState(query, true);
         queryState.query.append(SELECT_CLAUSE);
 
@@ -63,9 +63,9 @@ public class JpaQueryBuilder implements QueryBuilder {
         return PreparedQuery.of(queryState.query.toString(), parameters);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public PreparedQuery buildUpdate(@Nonnull Query query, List<String> propertiesToUpdate) {
+    public PreparedQuery buildUpdate(@NonNull Query query, List<String> propertiesToUpdate) {
         if (propertiesToUpdate.isEmpty()) {
             throw new IllegalArgumentException("No properties specified to update");
         }
@@ -80,9 +80,9 @@ public class JpaQueryBuilder implements QueryBuilder {
         return PreparedQuery.of(queryState.query.toString(), queryState.parameters);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public PreparedQuery buildDelete(@Nonnull Query query) {
+    public PreparedQuery buildDelete(@NonNull Query query) {
         PersistentEntity entity = query.getPersistentEntity();
         QueryState queryState = new QueryState(query, false);
         queryState.query.append(DELETE_CLAUSE).append(entity.getName()).append(SPACE).append(queryState.logicalName);

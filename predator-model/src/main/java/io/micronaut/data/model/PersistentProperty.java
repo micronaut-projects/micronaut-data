@@ -5,8 +5,8 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Models a persistent property. That is a property that is saved and retrieved from the database.
@@ -20,13 +20,13 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      * The name of the property
      * @return The property name
      */
-    @Nonnull String getName();
+    @NonNull String getName();
 
     /**
      * The name with the first letter in upper case as per Java bean conventions
      * @return The capitilized name
      */
-    default @Nonnull String getCapitilizedName() {
+    default @NonNull String getCapitilizedName() {
         return NameUtils.capitalize(getName());
     }
 
@@ -34,7 +34,7 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      * The type of the property
      * @return The property type
      */
-    @Nonnull String getTypeName();
+    @NonNull String getTypeName();
 
 
     /**
@@ -42,7 +42,7 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      *
      * @return The owner
      */
-    @Nonnull PersistentEntity getOwner();
+    @NonNull PersistentEntity getOwner();
 
     /**
      * Whether the property can be set to null

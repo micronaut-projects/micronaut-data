@@ -10,8 +10,8 @@ import io.micronaut.data.processor.visitors.finders.ListMethod;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.inject.ast.ClassElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Method that lists and returns a slice.
@@ -43,7 +43,7 @@ public class ListSliceMethod extends ListMethod {
     }
 
     @Override
-    protected boolean isValidReturnType(@Nonnull ClassElement returnType, MatchContext matchContext) {
+    protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {
         return matchContext.isTypeInRole(
                 matchContext.getReturnType(),
                 TypeRole.SLICE

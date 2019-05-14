@@ -8,8 +8,8 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,7 +39,7 @@ public class QueryListMethod extends ListMethod {
 
     @Nullable
     @Override
-    public final MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public final MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         RawQuery query = buildRawQuery(matchContext);
         if (query == null) {
             return null;
@@ -47,7 +47,7 @@ public class QueryListMethod extends ListMethod {
         return buildMatchInfo(matchContext, query);
     }
 
-    protected MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext, @Nonnull RawQuery query) {
+    protected MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext, @NonNull RawQuery query) {
         return new MethodMatchInfo(
                 matchContext.getRootEntity(),
                 query,
@@ -55,7 +55,7 @@ public class QueryListMethod extends ListMethod {
         );
     }
 
-    private RawQuery buildRawQuery(@Nonnull MethodMatchContext matchContext) {
+    private RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.getValue(Query.class, String.class).orElseThrow(() ->
             new IllegalStateException("Should only be called if Query has value!")

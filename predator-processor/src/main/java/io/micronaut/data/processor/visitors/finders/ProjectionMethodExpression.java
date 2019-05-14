@@ -11,7 +11,7 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -301,7 +301,7 @@ public abstract class ProjectionMethodExpression {
             return expectedType;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return property;

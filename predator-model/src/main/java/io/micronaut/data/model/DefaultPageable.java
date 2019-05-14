@@ -5,7 +5,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.query.Sort;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.validation.constraints.Min;
 
 /**
@@ -54,7 +54,7 @@ class DefaultPageable implements Pageable {
         return number;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Sort getSort() {
         return sort;

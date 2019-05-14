@@ -3,7 +3,7 @@ package io.micronaut.data.model.query;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.ArgumentUtils;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Objects;
 
 /**
@@ -16,12 +16,12 @@ public class QueryParameter implements Named {
 
     private final String name;
 
-    public QueryParameter(@Nonnull String name) {
+    public QueryParameter(@NonNull String name) {
         ArgumentUtils.requireNonNull("name", name);
         this.name = name;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return name;
@@ -45,7 +45,7 @@ public class QueryParameter implements Named {
      * @param name The name
      * @return The parameter
      */
-    public static @Nonnull QueryParameter of(@Nonnull String name) {
+    public static @NonNull QueryParameter of(@NonNull String name) {
         return new QueryParameter(name);
     }
 }

@@ -2,8 +2,8 @@ package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.util.ArgumentUtils;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Collections;
 import java.util.Map;
 
@@ -18,7 +18,7 @@ public interface PreparedQuery {
     /**
      * @return A string representation of the original query.
      */
-    @Nonnull String getQuery();
+    @NonNull String getQuery();
 
     /**
      * A map containing the parameter names and the references to the {@link io.micronaut.core.type.Argument} names which define the values.
@@ -26,7 +26,7 @@ public interface PreparedQuery {
      *
      * @return The map
      */
-    @Nonnull Map<String, String> getParameters();
+    @NonNull Map<String, String> getParameters();
 
     /**
      * Creates a new encoded query.
@@ -34,17 +34,17 @@ public interface PreparedQuery {
      * @param parameters The parameters
      * @return The query
      */
-    static @Nonnull
-    PreparedQuery of(@Nonnull String query, @Nullable Map<String, String> parameters) {
+    static @NonNull
+    PreparedQuery of(@NonNull String query, @Nullable Map<String, String> parameters) {
         ArgumentUtils.requireNonNull("query", query);
         return new PreparedQuery() {
-            @Nonnull
+            @NonNull
             @Override
             public String getQuery() {
                 return query;
             }
 
-            @Nonnull
+            @NonNull
             @Override
             public Map<String, String> getParameters() {
                 return parameters != null ? parameters : Collections.emptyMap();

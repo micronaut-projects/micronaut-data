@@ -4,10 +4,10 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, Boolean> implements ExistsByInterceptor<T> {
-    DefaultExistsByInterceptor(@Nonnull Datastore datastore) {
+    DefaultExistsByInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

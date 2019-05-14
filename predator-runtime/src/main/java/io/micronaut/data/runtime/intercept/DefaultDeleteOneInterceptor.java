@@ -4,12 +4,12 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 
 public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteOneInterceptor<T> {
 
-    DefaultDeleteOneInterceptor(@Nonnull Datastore datastore) {
+    DefaultDeleteOneInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

@@ -10,13 +10,13 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.QueryListMethod;
 import io.micronaut.inject.ast.ClassElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class QuerySliceMethod extends QueryListMethod {
 
     @Override
-    protected boolean isValidReturnType(@Nonnull ClassElement returnType, MatchContext matchContext) {
+    protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {
         return matchContext.isTypeInRole(returnType, TypeRole.SLICE);
     }
 

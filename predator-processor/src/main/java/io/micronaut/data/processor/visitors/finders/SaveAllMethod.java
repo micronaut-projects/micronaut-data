@@ -6,8 +6,8 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.regex.Pattern;
 
 /**
@@ -39,7 +39,7 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
 
     @Nullable
     @Override
-    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         // default doesn't build a query and query construction left to runtime
         // this is fine for JPA, for SQL we need to build an insert
 

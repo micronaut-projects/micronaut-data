@@ -11,8 +11,8 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 
 /**
@@ -45,7 +45,7 @@ public class FindOneMethod extends AbstractListMethod {
 
     @Nullable
     @Override
-    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         if (!rootEntity.getName().equals(matchContext.getReturnType().getName())) {
             matchContext.fail("Simple find method must return an entity of type: " + rootEntity.getName());

@@ -7,7 +7,7 @@ import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Default implementation of the {@link FindOneInterceptor} interface.
@@ -20,7 +20,7 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
      * The default constructor.
      * @param datastore The datastore
      */
-    protected DefaultFindOneInterceptor(@Nonnull Datastore datastore) {
+    protected DefaultFindOneInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

@@ -5,11 +5,11 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteAllInterceptor<T> {
 
-    public DefaultDeleteAllInterceptor(@Nonnull Datastore datastore) {
+    public DefaultDeleteAllInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

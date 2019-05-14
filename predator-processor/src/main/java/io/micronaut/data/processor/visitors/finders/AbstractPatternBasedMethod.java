@@ -17,8 +17,8 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.VisitorContext;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -40,7 +40,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
      * Default constructor.
      * @param pattern The pattern to match
      */
-    protected AbstractPatternBasedMethod(@Nonnull Pattern pattern) {
+    protected AbstractPatternBasedMethod(@NonNull Pattern pattern) {
         this.pattern = pattern;
     }
 
@@ -86,7 +86,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
      * @param projectionExpressions the projection expressions
      * @param projectionSequence The sequence
      */
-    protected void matchProjections(@Nonnull MethodMatchContext matchContext, List<ProjectionMethodExpression> projectionExpressions, String projectionSequence) {
+    protected void matchProjections(@NonNull MethodMatchContext matchContext, List<ProjectionMethodExpression> projectionExpressions, String projectionSequence) {
         ProjectionMethodExpression currentExpression = ProjectionMethodExpression.matchProjection(
                 matchContext,
                 projectionSequence

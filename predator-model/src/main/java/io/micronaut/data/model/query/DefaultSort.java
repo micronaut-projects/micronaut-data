@@ -2,7 +2,7 @@ package io.micronaut.data.model.query;
 
 import io.micronaut.core.util.ArgumentUtils;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -36,7 +36,7 @@ class DefaultSort implements Sort {
      * @param order The order object
      * @return The Query instance
      */
-    public @Nonnull DefaultSort order(@Nonnull Order order) {
+    public @NonNull DefaultSort order(@NonNull Order order) {
         ArgumentUtils.requireNonNull("order", order);
         List<Order> newOrderBy = new ArrayList<>(orderBy);
         newOrderBy.add(order);
@@ -48,19 +48,19 @@ class DefaultSort implements Sort {
      * @return The order entries
      */
     @Override
-    public @Nonnull List<Order> getOrderBy() {
+    public @NonNull List<Order> getOrderBy() {
         return Collections.unmodifiableList(orderBy);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultSort order(@Nonnull String propertyName) {
+    public DefaultSort order(@NonNull String propertyName) {
         return order(new Order(propertyName));
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public DefaultSort order(@Nonnull String propertyName, @Nonnull Order.Direction direction) {
+    public DefaultSort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
         return order(new Order(propertyName, direction, false));
     }
 }

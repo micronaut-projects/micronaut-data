@@ -10,8 +10,8 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Support for simple delete operations.
@@ -41,7 +41,7 @@ public class DeleteMethod extends AbstractListMethod {
 
     @Nullable
     @Override
-    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         if (parameters.length == 1) {
             ClassElement genericType = parameters[0].getGenericType();

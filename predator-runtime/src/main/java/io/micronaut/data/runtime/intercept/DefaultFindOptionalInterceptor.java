@@ -4,12 +4,12 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 
 public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<T, Optional<Object>> implements FindOptionalInterceptor<T> {
 
-    public DefaultFindOptionalInterceptor(@Nonnull Datastore datastore) {
+    public DefaultFindOptionalInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

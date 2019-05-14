@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.spring;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.Sort;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.*;
 
 /**
@@ -21,16 +21,16 @@ class SortDelegate implements Sort {
         this.sort = sort;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Sort order(@Nonnull String propertyName) {
+    public Sort order(@NonNull String propertyName) {
         this.sort = this.sort.and(new org.springframework.data.domain.Sort(org.springframework.data.domain.Sort.Direction.ASC, propertyName));
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Sort order(@Nonnull Order order) {
+    public Sort order(@NonNull Order order) {
         org.springframework.data.domain.Sort.Direction direction =
                 order.isAscending() ? org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
         String property = order.getProperty();
@@ -48,9 +48,9 @@ class SortDelegate implements Sort {
         );
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Sort order(@Nonnull String propertyName, @Nonnull Order.Direction direction) {
+    public Sort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
         org.springframework.data.domain.Sort.Direction d = org.springframework.data.domain.Sort.Direction.valueOf(
                 direction.name()
         );
@@ -61,7 +61,7 @@ class SortDelegate implements Sort {
         return this;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<Order> getOrderBy() {
         return iteratorToList(sort.iterator());

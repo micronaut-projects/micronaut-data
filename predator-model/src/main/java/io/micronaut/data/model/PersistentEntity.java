@@ -7,8 +7,8 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +31,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      *
      * @return The entity name
      */
-    @Nonnull String getName();
+    @NonNull String getName();
 
     /**
      * The composite id
@@ -67,7 +67,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      * A list of properties to be persisted
      * @return A list of PersistentProperty instances
      */
-    @Nonnull List<PersistentProperty> getPersistentProperties();
+    @NonNull List<PersistentProperty> getPersistentProperties();
 
     /**
      * A list of the associations for this entity. This is typically
@@ -75,7 +75,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      *
      * @return A list of associations
      */
-    @Nonnull List<Association> getAssociations();
+    @NonNull List<Association> getAssociations();
 
     /**
      * A list of embedded associations for this entity. This is typically
@@ -83,7 +83,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      *
      * @return A list of associations
      */
-    @Nonnull List<Embedded> getEmbedded();
+    @NonNull List<Embedded> getEmbedded();
 
     /**
      * Obtains a PersistentProperty instance by name
@@ -97,7 +97,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      * A list of property names that a persistent
      * @return A List of strings
      */
-    @Nonnull List<String> getPersistentPropertyNames();
+    @NonNull List<String> getPersistentPropertyNames();
 
     /**
      * @return The simple name without the package of entity
@@ -109,7 +109,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     /**
      * @return Returns the name of the class decapitalized form
      */
-    default @Nonnull String getDecapitalizedName() {
+    default @NonNull String getDecapitalizedName() {
         return NameUtils.decapitalize(getSimpleName());
     }
 
@@ -180,7 +180,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      * Obtains the root entity of an inheritance hierarchy
      * @return The root entity
      */
-    default @Nonnull PersistentEntity getRootEntity() {
+    default @NonNull PersistentEntity getRootEntity() {
         return this;
     }
 
@@ -226,7 +226,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      * @param type The type
      * @return The entity
      */
-    static @Nonnull PersistentEntity of(@Nonnull Class<?> type) {
+    static @NonNull PersistentEntity of(@NonNull Class<?> type) {
         ArgumentUtils.requireNonNull("type", type);
         return new RuntimePersistentEntity(type);
     }
@@ -238,7 +238,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
      * @param introspection The introspection
      * @return The entity
      */
-    static @Nonnull PersistentEntity of(@Nonnull BeanIntrospection<?> introspection) {
+    static @NonNull PersistentEntity of(@NonNull BeanIntrospection<?> introspection) {
         ArgumentUtils.requireNonNull("introspection", introspection);
         return new RuntimePersistentEntity(introspection);
     }

@@ -7,12 +7,12 @@ import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 
 public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements CountInterceptor<T> {
 
-    DefaultCountInterceptor(@Nonnull Datastore datastore) {
+    DefaultCountInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

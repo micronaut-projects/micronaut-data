@@ -11,7 +11,7 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 public class FindSliceByMethod extends FindByFinder {
 

@@ -15,8 +15,8 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,7 +43,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
 
     @Nullable
     @Override
-    public MethodMatchInfo buildMatchInfo(@Nonnull MethodMatchContext matchContext) {
+    public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         List<ParameterElement> queryParams = matchContext.getParametersNotInRole();
         Query query = null;
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
