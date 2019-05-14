@@ -38,13 +38,13 @@ import java.util.regex.Pattern;
  */
 public class SaveMethod extends AbstractPatternBasedMethod implements MethodCandidate {
 
-    private static final String METHOD_PATTERN = "^((save|persist|store|insert)(\\S*?))$";
+    public static final Pattern METHOD_PATTERN = Pattern.compile("^((save|persist|store|insert)(\\S*?))$");
 
     /**
      * The default constructor.
      */
     public SaveMethod() {
-        super(Pattern.compile(METHOD_PATTERN));
+        super(METHOD_PATTERN);
     }
 
     @Override

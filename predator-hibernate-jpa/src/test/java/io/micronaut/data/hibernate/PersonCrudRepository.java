@@ -29,6 +29,8 @@ import java.util.List;
 @Transactional
 public interface PersonCrudRepository extends CrudRepository<Person, Long> {
 
+    Person save(String name, int age);
+
     Person get(Long id);
 
     void updatePerson(@Id Long id, String name);

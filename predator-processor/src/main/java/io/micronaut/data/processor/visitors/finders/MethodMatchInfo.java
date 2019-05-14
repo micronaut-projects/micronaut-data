@@ -161,13 +161,4 @@ public class MethodMatchInfo {
         INSERT
     }
 
-    /**
-     * Parameter roles.
-     */
-    public enum ParameterRoles {
-        entity,
-        id,
-        pageable,
-        sort;
-    }
 }

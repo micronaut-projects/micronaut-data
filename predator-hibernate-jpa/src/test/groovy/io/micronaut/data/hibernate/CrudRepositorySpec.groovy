@@ -60,10 +60,9 @@ class CrudRepositorySpec extends Specification {
 
     void "test save many"() {
         when:"many are saved"
-        def p1 = new Person(name: "Frank")
-        def p2 = new Person(name: "Bob")
-        def people = [p1, p2]
-        crudRepository.saveAll(people)
+        def p1 = crudRepository.save("Frank", 0)
+        def p2 = crudRepository.save("Bob", 0)
+        def people = [p1,p2]
 
         then:"all are saved"
         people.every { it.id != null }

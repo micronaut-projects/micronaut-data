@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
+package io.micronaut.data.intercept.reactive;
 
+import io.micronaut.data.intercept.PredatorInterceptor;
 import org.reactivestreams.Publisher;
 
 /**

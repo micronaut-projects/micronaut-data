@@ -23,6 +23,7 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.intercept.*;
+import io.micronaut.data.intercept.reactive.FindReactivePublisherInterceptor;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;

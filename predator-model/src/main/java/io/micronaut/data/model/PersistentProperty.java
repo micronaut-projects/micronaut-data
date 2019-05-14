@@ -16,7 +16,7 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
@@ -63,7 +63,7 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      * @return True if it can
      */
     default boolean isNullable() {
-        return getAnnotationMetadata().hasAnnotation(Nullable.class);
+        return isNullable(getAnnotationMetadata());
     }
 
     /**
@@ -105,4 +105,17 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
     default boolean isAssignable(@NonNull Class<?> type) {
         return isAssignable(type.getName());
     }
+
+    /**
+     * Return whether the metadata indicates the instance is nullable.
+     * @param metadata The metadata
+     * @return True if it is nullable
+     */
+    static boolean isNullable(@NonNull AnnotationMetadata metadata) {
+        return metadata
+                .getDeclaredAnnotationNames()
+                .stream()
+                .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
+    }
+
 }

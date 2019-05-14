@@ -67,6 +67,17 @@ public class PredatorInterceptorFactory {
     }
 
     /**
+     * Creates the {@link FindOneInterceptor} instances for each configured {@link Datastore}.
+     *
+     * @param datastore The datastore
+     * @return The {@link FindOneInterceptor}
+     */
+    @EachBean(Datastore.class)
+    protected SaveOneInterceptor saveOneInterceptor(Datastore datastore) {
+        return new DefaultSaveOneInterceptor(datastore);
+    }
+
+    /**
      * Creates the {@link FindByIdInterceptor} instances for each configured {@link Datastore}.
      *
      * @param datastore The datastore

@@ -290,6 +290,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             return;
                         } else {
                             context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.", element);
+                            return;
                         }
                     }
 
@@ -317,6 +318,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new FindByFinder(),
                 new ExistsByFinder(),
                 new SaveMethod(),
+                new SaveOneMethod(),
                 new SaveAllMethod(),
                 new ListMethod(),
                 new CountMethod(),
