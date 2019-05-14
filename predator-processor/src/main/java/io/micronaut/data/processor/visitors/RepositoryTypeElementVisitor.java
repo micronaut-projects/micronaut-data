@@ -134,8 +134,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             for (ParameterElement parameter : parameters) {
                 ClassElement type = parameter.getType();
                 if (type != null) {
-                    this.typeRoles.entrySet().stream().filter(entry ->
-                            {
+                    this.typeRoles.entrySet().stream().filter(entry -> {
                                 String roleType = entry.getKey();
                                 return type.isAssignable(roleType);
                             }

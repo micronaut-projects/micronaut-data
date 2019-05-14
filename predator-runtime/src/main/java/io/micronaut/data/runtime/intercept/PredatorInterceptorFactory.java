@@ -25,7 +25,6 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Date;
-import java.util.function.Function;
 
 /**
  * Factory for creating the different types of interceptors.
@@ -36,6 +35,9 @@ import java.util.function.Function;
 @Factory
 public class PredatorInterceptorFactory {
 
+    /**
+     * Default constructor.
+     */
     public PredatorInterceptorFactory() {
         ConversionService<?> conversionService = ConversionService.SHARED;
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime ->

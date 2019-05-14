@@ -39,14 +39,16 @@ public interface CrudRepository<E, ID> extends Repository<E, ID> {
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @param <S> The generic type
      */
     @NonNull
     <S extends E> S save(@Valid @NotNull @NonNull S entity);
 
     /**
-     * Saves all given entities, possibly returning new instances representing the saved state
+     * Saves all given entities, possibly returning new instances representing the saved state.
      *
      * @param entities The entities to saved. Must not be {@literal null}.
+     * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
      */

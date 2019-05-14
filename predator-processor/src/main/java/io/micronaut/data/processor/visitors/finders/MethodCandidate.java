@@ -21,8 +21,6 @@ import io.micronaut.core.order.Ordered;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.visitor.VisitorContext;
-
 
 /**
  * Implementation of dynamic finders.
@@ -57,7 +55,7 @@ public interface MethodCandidate extends Ordered {
      *
      * @param matchContext The match context
      * @return The method info or null if it cannot be built. If the method info cannot be built an error will be reported to
-     * the passed {@link VisitorContext}
+     * the passed {@link MethodMatchContext}
      */
     @Nullable
     MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext);

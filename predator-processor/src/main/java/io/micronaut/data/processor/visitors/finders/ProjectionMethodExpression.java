@@ -25,8 +25,6 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -155,7 +153,7 @@ public abstract class ProjectionMethodExpression {
 
 
     /**
-     * The distinct projection creator
+     * The distinct projection creator.
      */
     @SuppressWarnings("unused")
     public static class Distinct extends ProjectionMethodExpression {
@@ -163,6 +161,9 @@ public abstract class ProjectionMethodExpression {
         private String property;
         private ClassElement expectedType;
 
+        /**
+         * Default constructor.
+         */
         public Distinct() {
             super(0);
         }
@@ -279,6 +280,9 @@ public abstract class ProjectionMethodExpression {
         private String property;
         private ClassElement expectedType;
 
+        /**
+         * Default constructor.
+         */
         public Property() {
             super(1);
         }
@@ -301,6 +305,12 @@ public abstract class ProjectionMethodExpression {
             }
         }
 
+        /**
+         * Resolve the expected type for the projection.
+         * @param matchContext The match context
+         * @param classElement The class element
+         * @return The expected type
+         */
         protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement classElement) {
             return classElement;
         }
@@ -330,7 +340,7 @@ public abstract class ProjectionMethodExpression {
 
         private final Matcher topMatcher;
         private final MethodMatchContext matchContext;
-        int max;
+        private int max;
 
         RestrictMaxResultProjection(Matcher topMatcher, MethodMatchContext matchContext) {
             super(0);

@@ -15,10 +15,8 @@
  */
 package io.micronaut.data.intercept;
 
-import io.micronaut.data.model.Page;
-
 /**
- * An interceptor that handles a return type of {@link Page}.
+ * An interceptor that handles a return type of {@link io.micronaut.data.model.Page}.
  *
  * @author graemerocher
  * @param <T> The declaring type

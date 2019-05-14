@@ -22,8 +22,18 @@ import io.micronaut.data.runtime.datastore.Datastore;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Optional;
 
+/**
+ * Default implementation of {@link FindOptionalInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<T, Optional<Object>> implements FindOptionalInterceptor<T> {
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     public DefaultFindOptionalInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }

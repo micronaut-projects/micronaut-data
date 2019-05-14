@@ -37,13 +37,16 @@ import java.util.regex.Pattern;
  */
 public class FindByIdsMethod extends AbstractPatternBasedMethod {
 
+    /**
+     * Default constructor.
+     */
+    public FindByIdsMethod() {
+        super(Pattern.compile("^(find|search|get|list)ByIds$"));
+    }
+
     @Override
     public int getOrder() {
         return FindByFinder.DEFAULT_POSITION - 200;
-    }
-
-    public FindByIdsMethod() {
-        super(Pattern.compile("^(find|search|get|list)ByIds$"));
     }
 
     @Override

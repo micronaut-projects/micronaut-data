@@ -87,7 +87,7 @@ public interface Criteria  {
     @NonNull Criteria idEq(QueryParameter parameter);
 
     /**
-     * Creates a "not equals" Criterion based on the specified property name and value
+     * Creates a "not equals" Criterion based on the specified property name and value.
      *
      * @param propertyName The property name
      * @param parameter The parameter that provides the value
@@ -391,6 +391,7 @@ public interface Criteria  {
      * @return This criterion instance
      */
     @NonNull Criteria ltAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
     /**
      * Creates a subquery criterion that ensures the given property is greater than or equals to all the given returned values.
      *
@@ -399,6 +400,7 @@ public interface Criteria  {
      * @return This criterion instance
      */
     @NonNull Criteria geAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
     /**
      * Creates a subquery criterion that ensures the given property is less than or equal to all the given returned values.
      *

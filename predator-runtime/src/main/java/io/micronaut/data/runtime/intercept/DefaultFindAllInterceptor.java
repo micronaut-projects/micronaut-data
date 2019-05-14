@@ -24,7 +24,19 @@ import io.micronaut.data.runtime.datastore.Datastore;
 
 import java.util.Collections;
 
-public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,Iterable<R>> implements FindAllInterceptor<T, R> {
+/**
+ * The default implementation of {@link FindAllInterceptor}.
+ * @param <T> The declaring type
+ * @param <R> The return generic type
+ * @author graemerocher
+ * @since 1.0.0
+ */
+public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T, Iterable<R>> implements FindAllInterceptor<T, R> {
+
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
 
     protected DefaultFindAllInterceptor(Datastore datastore) {
         super(datastore);

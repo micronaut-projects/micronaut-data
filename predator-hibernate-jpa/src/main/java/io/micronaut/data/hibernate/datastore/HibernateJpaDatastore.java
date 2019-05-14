@@ -29,7 +29,6 @@ import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
@@ -263,6 +262,11 @@ public class HibernateJpaDatastore implements Datastore {
     }
 
     private <T> void bindPageable(Query<T> q, @NonNull Pageable pageable) {
+        if (pageable  == Pageable.UNPAGED) {
+            // no pagination
+            return;
+        }
+
         int max = pageable.getSize();
         if (max > 0) {
             q.setMaxResults(max);
@@ -278,12 +282,14 @@ public class HibernateJpaDatastore implements Datastore {
             Path<String> path = root.get(order.getProperty());
             Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
             switch (order.getDirection()) {
-                case ASC:
+
+                case DESC:
                     criteriaQuery.orderBy(
                             builder.asc(expression)
                     );
-                continue;
-                case DESC:
+                    continue;
+                default:
+                case ASC:
                     criteriaQuery.orderBy(
                             builder.asc(expression)
                     );

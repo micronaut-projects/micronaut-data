@@ -24,5 +24,5 @@ import java.util.stream.Stream;
  * @since 1.0
  * @param <T> The declaring type
  */
-public interface FindStreamInterceptor<T> extends PredatorInterceptor<T, Stream<Object>>{
+public interface FindStreamInterceptor<T> extends PredatorInterceptor<T, Stream<Object>> {
 }

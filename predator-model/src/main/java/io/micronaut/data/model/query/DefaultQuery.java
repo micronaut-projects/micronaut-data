@@ -22,8 +22,6 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.factory.Restrictions;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.*;
 
 /**
@@ -43,13 +41,17 @@ public class DefaultQuery implements Query {
     private Map<Association, JoinSpec.Type> joinTypes = new HashMap<>(2);
     private Sort sort = Sort.unsorted();
 
+    /**
+     * Default constructor.
+     * @param entity The entity the query applies to.
+     */
     protected DefaultQuery(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         this.entity = entity;
     }
 
     /**
-     * Creates an association query
+     * Creates an association query.
      *
      * @param associationName The assocation name
      * @return The Query instance
@@ -86,7 +88,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Specifies whether a join query should be used (if join queries are supported by the underlying datastore)
+     * Specifies whether a join query should be used (if join queries are supported by the underlying datastore).
      *
      * @param association The association
      * @return The query
@@ -111,7 +113,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Specifies whether a join query should be used (if join queries are supported by the underlying datastore)
+     * Specifies whether a join query should be used (if join queries are supported by the underlying datastore).
      *
      * @param association The property
      * @return The query
@@ -131,7 +133,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Adds the specified criterion instance to the query
+     * Adds the specified criterion instance to the query.
      *
      * @param criterion The criterion instance
      */
@@ -144,7 +146,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Adds the specified criterion instance to the given junction
+     * Adds the specified criterion instance to the given junction.
      *
      * @param currentJunction The junction to add the criterion to
      * @param criterion The criterion instance
@@ -161,7 +163,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Creates a disjunction (OR) query
+     * Creates a disjunction (OR) query.
      * @return The Junction instance
      */
     public Query.Junction disjunction() {
@@ -170,7 +172,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Creates a conjunction (AND) query
+     * Creates a conjunction (AND) query.
      * @return The Junction instance
      */
     public Query.Junction conjunction() {
@@ -179,7 +181,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Creates a negation of several criterion
+     * Creates a negation of several criterion.
      * @return The negation
      */
     public Query.Junction negation() {
@@ -194,7 +196,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Defines the maximum number of results to return
+     * Defines the maximum number of results to return.
      * @param max The pageSize results
      * @return This query instance
      */
@@ -215,7 +217,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Defines the offset (the first result index) of the query
+     * Defines the offset (the first result index) of the query.
      * @param offset The offset
      * @return This query instance
      */
@@ -239,7 +241,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Restricts the results by the given properties value
+     * Restricts the results by the given properties value.
      *
      * @param property The name of the property
      * @param parameter The parameter that provides the value
@@ -248,12 +250,12 @@ public class DefaultQuery implements Query {
     @Override
     public @NonNull
     DefaultQuery eq(@NonNull String property, @NonNull QueryParameter parameter) {
-        criteria.add(Restrictions.eq(property,parameter));
+        criteria.add(Restrictions.eq(property, parameter));
         return this;
     }
 
     /**
-     * Shortcut to restrict the query to multiple given property values
+     * Shortcut to restrict the query to multiple given property values.
      *
      * @param values The values
      * @return This query instance
@@ -329,7 +331,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be empty (such as a blank string or an empty collection)
+     * Used to restrict a value to be empty (such as a blank string or an empty collection).
      *
      * @param property The property name
      */
@@ -341,7 +343,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be not empty (such as a blank string or an empty collection)
+     * Used to restrict a value to be not empty (such as a blank string or an empty collection).
      *
      * @param property The property name
      */
@@ -353,7 +355,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a property to be null
+     * Used to restrict a property to be null.
      *
      * @param property The property name
      */
@@ -365,7 +367,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a property to be not null
+     * Used to restrict a property to be not null.
      *
      * @param property The property name
      */
@@ -377,7 +379,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Restricts the results by the given properties value
+     * Restricts the results by the given properties value.
      *
      * @param value The value to restrict by
      * @return This query instance
@@ -397,7 +399,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be greater than the given value
+     * Used to restrict a value to be greater than the given value.
      *
      * @param property The name of the property
      * @param value The value to restrict by
@@ -411,7 +413,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be greater than or equal to the given value
+     * Used to restrict a value to be greater than or equal to the given value.
      *
      * @param property The name of the property
      * @param value The value to restrict by
@@ -424,7 +426,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be less than or equal to the given value
+     * Used to restrict a value to be less than or equal to the given value.
      *
      * @param property The name of the property
      * @param value The value to restrict by
@@ -437,7 +439,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be greater than or equal to the given value
+     * Used to restrict a value to be greater than or equal to the given value.
      *
      * @param property The name of the property
      * @param value The value to restrict by
@@ -449,7 +451,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be less than or equal to the given value
+     * Used to restrict a value to be less than or equal to the given value.
      *
      * @param property The name of the property
      * @param value The value to restrict by
@@ -461,7 +463,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Used to restrict a value to be less than the given value
+     * Used to restrict a value to be less than the given value.
      *
      * @param property The name of the property
      * @param value The value to restrict by
@@ -523,7 +525,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Restricts the results by the given property values
+     * Restricts the results by the given property values.
      *
      * @param property The name of the property
      * @param values The values to restrict by
@@ -627,7 +629,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Restricts the results by the given property value range
+     * Restricts the results by the given property value range.
      *
      * @param property The name of the property
      * @param start The start of the range
@@ -641,7 +643,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Creates a conjunction using two specified criterion
+     * Creates a conjunction using two specified criterion.
      *
      * @param a The left hand side
      * @param b The right hand side
@@ -655,7 +657,7 @@ public class DefaultQuery implements Query {
     }
 
     /**
-     * Creates a disjunction using two specified criterion
+     * Creates a disjunction using two specified criterion.
      *
      * @param a The left hand side
      * @param b The right hand side
@@ -680,10 +682,6 @@ public class DefaultQuery implements Query {
         return con;
     }
 
-
-    /**
-     * A criterion is used to restrict the results of a query
-     */
     private void addToJunction(Query.Junction currentJunction, Query.Criterion criterion) {
         if (criterion instanceof Query.PropertyCriterion) {
             final Query.PropertyCriterion pc = (Query.PropertyCriterion) criterion;
@@ -694,21 +692,18 @@ public class DefaultQuery implements Query {
             Query.Junction j = (Query.Junction) criterion;
             Query.Junction newj;
             if (j instanceof Query.Disjunction) {
-                newj= disjunction(currentJunction);
+                newj = disjunction(currentJunction);
             } else if (j instanceof Query.Negation) {
-                newj= negation(currentJunction);
-            }
-            else {
-                newj= conjunction(currentJunction);
+                newj = negation(currentJunction);
+            } else {
+                newj = conjunction(currentJunction);
             }
             for (Query.Criterion c : j.getCriteria()) {
                 addToJunction(newj, c);
             }
-        }
-        else {
+        } else {
             currentJunction.add(criterion);
         }
     }
-
 
 }

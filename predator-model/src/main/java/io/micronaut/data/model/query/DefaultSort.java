@@ -47,7 +47,8 @@ class DefaultSort implements Sort {
     }
 
     /**
-     * Specifies the order of results
+     * Specifies the order of results.
+     *
      * @param order The order object
      * @return The Query instance
      */
@@ -59,7 +60,8 @@ class DefaultSort implements Sort {
     }
 
     /**
-     * Gets the Order entries for this query
+     * Gets the Order entries for this query.
+     *
      * @return The order entries
      */
     @Override

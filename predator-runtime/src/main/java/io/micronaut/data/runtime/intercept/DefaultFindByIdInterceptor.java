@@ -29,6 +29,10 @@ import java.io.Serializable;
  */
 public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements FindByIdInterceptor<T> {
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     public DefaultFindByIdInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }

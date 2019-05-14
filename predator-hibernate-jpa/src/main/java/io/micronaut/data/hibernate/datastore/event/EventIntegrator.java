@@ -26,17 +26,18 @@ import io.micronaut.data.annotation.DateUpdated;
 import org.hibernate.boot.Metadata;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
-import org.hibernate.event.spi.*;
+import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent;
+import org.hibernate.event.spi.EventType;
+import org.hibernate.event.spi.PreInsertEventListener;
+import org.hibernate.event.spi.PreUpdateEventListener;
 import org.hibernate.integrator.spi.Integrator;
 import org.hibernate.mapping.PersistentClass;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 import org.hibernate.tuple.entity.EntityMetamodel;
 
 import javax.inject.Singleton;
-import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -123,8 +124,7 @@ public class EventIntegrator implements Integrator {
             BeanProperty dateCreatedProp = dateCreated.get(entity.getClass());
             if (dateCreatedProp != null) {
                 now = OffsetDateTime.now();
-                conversionService.convert(now, dateCreatedProp.getType()).ifPresent(o ->
-                        {
+                conversionService.convert(now, dateCreatedProp.getType()).ifPresent(o -> {
                             dateCreatedProp.set(entity, o);
                             EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
                             int i = entityMetamodel.getPropertyIndex(dateCreatedProp.getName());
@@ -138,8 +138,7 @@ public class EventIntegrator implements Integrator {
         BeanProperty lastUpdatedProp = lastUpdates.get(entity.getClass());
         if (lastUpdatedProp != null) {
             now = now != null ? now : OffsetDateTime.now();
-            conversionService.convert(now, lastUpdatedProp.getType()).ifPresent(o ->
-                    {
+            conversionService.convert(now, lastUpdatedProp.getType()).ifPresent(o -> {
                         lastUpdatedProp.set(entity, o);
                         EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
                         int i = entityMetamodel.getPropertyIndex(lastUpdatedProp.getName());

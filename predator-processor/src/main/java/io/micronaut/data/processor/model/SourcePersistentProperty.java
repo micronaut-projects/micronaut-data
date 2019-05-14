@@ -52,8 +52,12 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         SourcePersistentProperty that = (SourcePersistentProperty) o;
         return owner.equals(that.owner) &&
                 propertyElement.getName().equals(that.propertyElement.getName());

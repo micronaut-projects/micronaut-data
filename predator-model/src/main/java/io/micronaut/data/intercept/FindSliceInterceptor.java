@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.intercept;
 
-
 /**
  * An interceptor that handles a return type of {@link io.micronaut.data.model.Slice}.
  *

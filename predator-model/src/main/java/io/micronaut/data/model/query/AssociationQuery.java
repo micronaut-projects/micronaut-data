@@ -28,6 +28,10 @@ public class AssociationQuery extends DefaultQuery implements Query.Criterion {
 
     private final Association association;
 
+    /**
+     * Default constructor.
+     * @param association The association.
+     */
     public AssociationQuery(@NonNull Association association) {
         super(association.getAssociatedEntity());
         this.association = association;

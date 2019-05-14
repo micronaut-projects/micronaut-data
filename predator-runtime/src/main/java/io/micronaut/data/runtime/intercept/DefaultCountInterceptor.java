@@ -25,9 +25,19 @@ import io.micronaut.data.runtime.datastore.Datastore;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Iterator;
 
+/**
+ * Default implementation of {@link CountInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements CountInterceptor<T> {
 
-    DefaultCountInterceptor(@NonNull Datastore datastore) {
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
+    protected DefaultCountInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

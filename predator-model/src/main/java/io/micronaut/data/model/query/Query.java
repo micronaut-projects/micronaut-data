@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.Association;
@@ -45,6 +46,9 @@ public interface Query extends Criteria {
     @NonNull
     Query.Junction getCriteria();
 
+    /**
+     * @return The projections that apply to this query.
+     */
     @NonNull
     List<Projection> getProjections();
 
@@ -59,7 +63,7 @@ public interface Query extends Criteria {
      * Obtain the join type for the given association.
      * @param association The association
      *                    The joint type
-     * @return
+     * @return The join type for the association.
      */
     Optional<JoinSpec.Type> getJoinType(Association association);
 
@@ -78,9 +82,10 @@ public interface Query extends Criteria {
     ProjectionList projections();
 
     /**
-     * Adds the specified criterion instance to the query
+     * Adds the specified criterion instance to the query.
      *
      * @param criterion The criterion instance
+     * @return This query
      */
     @NonNull Query add(@NonNull Criterion criterion);
 
@@ -99,7 +104,7 @@ public interface Query extends Criteria {
     Query offset(long offset);
 
     /**
-     * The sort to apply
+     * The sort to apply.
      * @return The sort
      */
     default Sort getSort() {
@@ -115,7 +120,9 @@ public interface Query extends Criteria {
 
     /**
      * Creates a query from the given entity.
+     *
      * @param entity The entity
+     * @return The query
      */
     static @NonNull Query from(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
@@ -135,138 +142,235 @@ public interface Query extends Criteria {
     long getOffset();
 
     /**
-     * Represents a criterion to be used in a criteria query
+     * Represents a criterion to be used in a criteria query.
      */
-    interface Criterion {}
+    interface Criterion {
+    }
 
     /**
-     * Restricts a property to be null
+     * Restricts a property to be null.
      */
     class IsNull extends Query.PropertyNameCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         */
         public IsNull(String name) {
             super(name);
         }
     }
 
     /**
-     * Restricts a property to be empty (such as a blank string)
+     * Restricts a property to be empty (such as a blank string).
      */
     class IsEmpty extends Query.PropertyNameCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         */
         public IsEmpty(String name) {
             super(name);
         }
     }
 
     /**
-     * Restricts a property to be empty (such as a blank string)
+     * Restricts a property to be empty (such as a blank string).
      */
     class IsNotEmpty extends Query.PropertyNameCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         */
         public IsNotEmpty(String name) {
             super(name);
         }
     }
 
     /**
-     * Restricts a property to be not null
+     * Restricts a property to be not null.
      */
     class IsNotNull extends Query.PropertyNameCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         */
         public IsNotNull(String name) {
             super(name);
         }
     }
 
     /**
-     * A Criterion that applies to a property
+     * A Criterion that applies to a property.
      */
     class PropertyNameCriterion implements Criterion {
         protected String name;
 
+        /**
+         * Default constructor.
+         * @param name The name of the property.
+         */
         public PropertyNameCriterion(String name) {
             this.name = name;
         }
 
+        /**
+         * @return The name of the property
+         */
         public String getProperty() {
             return name;
         }
     }
 
     /**
-     * A Criterion that compares to properties
+     * A Criterion that compares to properties.
      */
-    class PropertyComparisonCriterion extends PropertyNameCriterion{
-        protected String otherProperty;
+    class PropertyComparisonCriterion extends PropertyNameCriterion {
+        final String otherProperty;
 
-        public PropertyComparisonCriterion(String property, String otherProperty) {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
+        protected PropertyComparisonCriterion(String property, String otherProperty) {
             super(property);
             this.otherProperty = otherProperty;
         }
 
+        /**
+         * @return The other property
+         */
         public String getOtherProperty() {
             return otherProperty;
         }
     }
 
+    /**
+     * A criterion for one property equaling another.
+     */
     class EqualsProperty extends PropertyComparisonCriterion {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
         public EqualsProperty(String property, String otherProperty) {
             super(property, otherProperty);
         }
     }
 
+    /**
+     * A criterion for one property not equaling another.
+     */
     class NotEqualsProperty extends PropertyComparisonCriterion {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
         public NotEqualsProperty(String property, String otherProperty) {
             super(property, otherProperty);
         }
     }
 
+    /**
+     * A criterion for one property being greater than another.
+     */
     class GreaterThanProperty extends PropertyComparisonCriterion {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
         public GreaterThanProperty(String property, String otherProperty) {
             super(property, otherProperty);
         }
     }
 
+    /**
+     * A criterion for one property being greater than or equal to another.
+     */
     class GreaterThanEqualsProperty extends PropertyComparisonCriterion {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
         public GreaterThanEqualsProperty(String property, String otherProperty) {
             super(property, otherProperty);
         }
     }
 
+    /**
+     * A criterion for one property being less than another.
+     */
     class LessThanProperty extends PropertyComparisonCriterion {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
         public LessThanProperty(String property, String otherProperty) {
             super(property, otherProperty);
         }
     }
 
+    /**
+     * A criterion for one property being less than or equal to another.
+     */
     class LessThanEqualsProperty extends PropertyComparisonCriterion {
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param otherProperty The other property name
+         */
         public LessThanEqualsProperty(String property, String otherProperty) {
             super(property, otherProperty);
         }
     }
 
     /**
-     * Criterion that applies to a property and value
+     * Criterion that applies to a property and value.
      */
     class PropertyCriterion extends PropertyNameCriterion {
 
         protected Object value;
 
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public PropertyCriterion(String name, Object value) {
             super(name);
             this.value = value;
         }
 
+        /**
+         * @return The value
+         */
         public Object getValue() {
             return value;
         }
 
+        /**
+         * Sets the value.
+         * @param v The value to set
+         */
         public void setValue(Object v) {
             this.value = v;
         }
     }
 
     /**
-     * Used to differentiate criterion that require a subquery
+     * Used to differentiate criterion that require a subquery.
      */
     class SubqueryCriterion extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public SubqueryCriterion(String name, Query value) {
             super(name, value);
         }
@@ -278,158 +382,269 @@ public interface Query extends Criteria {
     }
 
     /**
-     * Restricts a value to be equal to all the given values
+     * Restricts a value to be equal to all the given values.
      */
-    class EqualsAll extends SubqueryCriterion{
+    class EqualsAll extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public EqualsAll(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be not equal to all the given values
+     * Restricts a value to be not equal to all the given values.
      */
-    class NotEqualsAll extends SubqueryCriterion{
+    class NotEqualsAll extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public NotEqualsAll(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be greater than all the given values
+     * Restricts a value to be greater than all the given values.
      */
     class GreaterThanAll extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public GreaterThanAll(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be greater than some of the given values
+     * Restricts a value to be greater than some of the given values.
      */
-    class GreaterThanSome extends SubqueryCriterion{
+    class GreaterThanSome extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public GreaterThanSome(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be greater than some of the given values
+     * Restricts a value to be greater than some of the given values.
      */
-    class GreaterThanEqualsSome extends SubqueryCriterion{
+    class GreaterThanEqualsSome extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public GreaterThanEqualsSome(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be less than some of the given values
+     * Restricts a value to be less than some of the given values.
      */
-    class LessThanSome extends SubqueryCriterion{
+    class LessThanSome extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public LessThanSome(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be less than some of the given values
+     * Restricts a value to be less than some of the given values.
      */
     class LessThanEqualsSome extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public LessThanEqualsSome(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be less than all the given values
+     * Restricts a value to be less than all the given values.
      */
     class LessThanAll extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public LessThanAll(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be greater than or equal to all the given values
+     * Restricts a value to be greater than or equal to all the given values.
      */
     class GreaterThanEqualsAll extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public GreaterThanEqualsAll(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * Restricts a value to be less than or equal to all the given values
+     * Restricts a value to be less than or equal to all the given values.
      */
-    class LessThanEqualsAll extends SubqueryCriterion{
+    class LessThanEqualsAll extends SubqueryCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The criterion value
+         */
         public LessThanEqualsAll(String name, Query value) {
             super(name, value);
         }
     }
 
     /**
-     * A criterion that restricts the results based on equality
+     * A criterion that restricts the results based on equality.
      */
     class Equals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public Equals(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
+    /**
+     * Size equals criterion.
+     */
     class SizeEquals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public SizeEquals(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
-    class SizeNotEquals extends PropertyCriterion{
+    /**
+     * Size not equals criterion.
+     */
+    class SizeNotEquals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public SizeNotEquals(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
-    class SizeGreaterThan extends PropertyCriterion{
+    /**
+     * Size greater than criterion.
+     */
+    class SizeGreaterThan extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public SizeGreaterThan(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
-    class SizeGreaterThanEquals extends PropertyCriterion{
+    /**
+     * Size greater than equals criterion.
+     */
+    class SizeGreaterThanEquals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public SizeGreaterThanEquals(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
-    class SizeLessThanEquals extends PropertyCriterion{
+    /**
+     * Size less than equals criterion.
+     */
+    class SizeLessThanEquals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public SizeLessThanEquals(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
-    class SizeLessThan extends PropertyCriterion{
+    /**
+     * Size less than criterion.
+     */
+    class SizeLessThan extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param parameter The parameter
+         */
         public SizeLessThan(String name, QueryParameter parameter) {
             super(name, parameter);
         }
     }
 
     /**
-     * A criterion that restricts the results based on the equality of the identifier
+     * A criterion that restricts the results based on the equality of the identifier.
      */
     class IdEquals extends PropertyCriterion {
 
         private static final String ID = "id";
 
+        /**
+         * Default constructor.
+         * @param value The parameter
+         */
         public IdEquals(QueryParameter value) {
             super(ID, value);
         }
-
     }
 
     /**
-     * A criterion that restricts the results based on equality
+     * A criterion that restricts the results based on equality.
      */
     class NotEquals extends PropertyCriterion {
 
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The parameter
+         */
         public NotEquals(String name, QueryParameter value) {
             super(name, value);
         }
@@ -437,124 +652,190 @@ public interface Query extends Criteria {
     }
 
     /**
-     * Criterion used to restrict the results based on a list of values
+     * Criterion used to restrict the results based on a list of values.
      */
     class In extends PropertyCriterion {
         private Query subquery;
 
+        /**
+         * Constructor for an individual parameter.
+         * @param name The name
+         * @param parameter The parameter
+         */
         public In(String name, QueryParameter parameter) {
             super(name, parameter);
         }
 
+        /**
+         * Constructor for a subquery.
+         * @param name The name
+         * @param subquery The subquery
+         */
         public In(String name, Query subquery) {
             super(name, subquery);
             this.subquery = subquery;
         }
 
+        /**
+         * @return The name
+         */
         public String getName() {
             return getProperty();
         }
 
-        public Query getSubquery() {
+        /**
+         * @return The subquery
+         */
+        public @Nullable Query getSubquery() {
             return subquery;
         }
     }
 
     /**
-     * Criterion used to restrict the results based on a list of values
+     * Criterion used to restrict the results based on a list of values.
      */
     class NotIn extends SubqueryCriterion {
         private Query subquery;
 
-
+        /**
+         * Constructor for a subquery.
+         * @param name The name
+         * @param subquery The subquery
+         */
         public NotIn(String name, Query subquery) {
             super(name, subquery);
             this.subquery = subquery;
         }
 
+        /**
+         * @return The name
+         */
         public String getName() {
             return getProperty();
         }
 
+        /**
+         * @return The subquery
+         */
         public Query getSubquery() {
             return subquery;
         }
     }
 
     /**
-     * Used for exists subquery
+     * Used for exists subquery.
      */
     class Exists implements Criterion {
         private Query subquery;
 
+        /**
+         * Constructor for a subquery.
+         * @param subquery The subquery
+         */
         public Exists(Query subquery) {
             this.subquery = subquery;
         }
 
+        /**
+         * @return The subquery
+         */
         public Query getSubquery() {
             return subquery;
         }
     }
 
     /**
-     * Used for exists subquery
+     * Used for exists subquery.
      */
     class NotExists implements Criterion {
         private Query subquery;
 
+        /**
+         * Constructor for a subquery.
+         * @param subquery The subquery
+         */
         public NotExists(Query subquery) {
             this.subquery = subquery;
         }
 
+        /**
+         * @return The subquery
+         */
         public Query getSubquery() {
             return subquery;
         }
     }
 
     /**
-     * Used to restrict a value to be greater than the given value
+     * Used to restrict a value to be greater than the given value.
      */
     class GreaterThan extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The parameter
+         */
         public GreaterThan(String name, QueryParameter value) {
             super(name, value);
         }
     }
 
     /**
-     * Used to restrict a value to be greater than or equal to the given value
+     * Used to restrict a value to be greater than or equal to the given value.
      */
     class GreaterThanEquals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The parameter
+         */
         public GreaterThanEquals(String name, QueryParameter value) {
             super(name, value);
         }
     }
 
     /**
-     * Used to restrict a value to be less than the given value
+     * Used to restrict a value to be less than the given value.
      */
     class LessThan extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The parameter
+         */
         public LessThan(String name, QueryParameter value) {
             super(name, value);
         }
     }
 
     /**
-     * Used to restrict a value to be less than the given value
+     * Used to restrict a value to be less than the given value.
      */
     class LessThanEquals extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param value The parameter
+         */
         public LessThanEquals(String name, QueryParameter value) {
             super(name, value);
         }
     }
 
     /**
-     * Criterion used to restrict the result to be between values (range query)
+     * Criterion used to restrict the result to be between values (range query).
      */
     class Between extends PropertyCriterion {
         private String property;
         private QueryParameter from;
         private QueryParameter to;
 
+        /**
+         * Default constructor.
+         * @param property The property name
+         * @param from The from parameter
+         * @param to The to parameter
+         */
         public Between(String property, QueryParameter from, QueryParameter to) {
             super(property, from);
             this.property = property;
@@ -567,53 +848,89 @@ public interface Query extends Criteria {
             return property;
         }
 
+        /**
+         * @return The from parameter
+         */
         public QueryParameter getFrom() {
             return from;
         }
 
+        /**
+         * @return The to parameter
+         */
         public QueryParameter getTo() {
             return to;
         }
     }
 
     /**
-     * Criterion used to restrict the results based on a pattern (likeness)
+     * Criterion used to restrict the results based on a pattern (likeness).
      */
     class Like extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param expression The parameter
+         */
         public Like(String name, QueryParameter expression) {
             super(name, expression);
         }
     }
 
     /**
-     * Criterion used to restrict the results based on a pattern (likeness)
+     * Criterion used to restrict the results based on a pattern (likeness).
      */
     class ILike extends Like {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param expression The parameter
+         */
         public ILike(String name, QueryParameter expression) {
             super(name, expression);
         }
     }
 
     /**
-     * Criterion used to restrict the results based on a regular expression pattern
+     * Criterion used to restrict the results based on a regular expression pattern.
      */
     class RLike extends Like {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param expression The parameter
+         */
         public RLike(String name, QueryParameter expression) {
             super(name, expression);
         }
 
     }
 
+    /**
+     * base class for a junction (AND or OR or NOT).
+     */
     abstract class Junction implements Criterion {
         private List<Criterion> criteria = new ArrayList<Criterion>();
 
+        /**
+         * Default constructor.
+         */
         protected Junction() {
         }
 
+        /**
+         * Creates a junction for a list of citeria.
+         * @param criteria the criteria
+         */
         public Junction(List<Criterion> criteria) {
             this.criteria = criteria;
         }
 
+        /**
+         * Adds an additional criterion.
+         * @param c The criterion
+         * @return This junction
+         */
         public Junction add(Criterion c) {
             if (c != null) {
                 criteria.add(c);
@@ -621,125 +938,185 @@ public interface Query extends Criteria {
             return this;
         }
 
+        /**
+         * @return The Criterion for the junction.
+         */
         public List<Criterion> getCriteria() {
             return criteria;
         }
 
+        /**
+         * @return Whether the junction is empty
+         */
         public boolean isEmpty() {
             return criteria.isEmpty();
         }
     }
 
     /**
-     * A Criterion used to combine to criterion in a logical AND
+     * A Criterion used to combine to criterion in a logical AND.
      */
     class Conjunction extends Junction {
+        /**
+         * Default constructor.
+         */
         public Conjunction() {
         }
-
-        public Conjunction(List<Criterion> criteria) {
-            super(criteria);
-        }
     }
 
     /**
-     * A Criterion used to combine to criterion in a logical OR
+     * A Criterion used to combine to criterion in a logical OR.
      */
     class Disjunction extends Junction {
+        /**
+         * Default constructor.
+         */
         public Disjunction() {
-        }
-
-        public Disjunction(List<Criterion> criteria) {
-            super(criteria);
         }
     }
 
     /**
-     * A criterion used to negate several other criterion
+     * A criterion used to negate several other criterion.
      */
-    class Negation extends Junction {}
+    class Negation extends Junction {
+
+    }
 
     /**
-     * A projection
+     * A projection.
      */
-    class Projection {}
+    class Projection {
+    }
 
     /**
-     * A projection used to obtain the identifier of an object
+     * A projection used to obtain the identifier of an object.
      */
-    class IdProjection extends Projection {}
+    class IdProjection extends Projection {
+
+    }
 
     /**
-     * Used to count the results of a query
+     * Used to count the results of a query.
      */
-    class CountProjection extends Projection {}
+    class CountProjection extends Projection {
 
-    class DistinctProjection extends Projection {}
+    }
 
     /**
-     * A projection that obtains the value of a property of an entity
+     * Distinct result projection.
+     */
+    class DistinctProjection extends Projection {
+
+    }
+
+    /**
+     * A projection that obtains the value of a property of an entity.
      */
     class PropertyProjection extends Projection {
         private String propertyName;
 
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         */
         public PropertyProjection(String propertyName) {
             this.propertyName = propertyName;
         }
 
+        /**
+         * @return The property name
+         */
         public String getPropertyName() {
             return propertyName;
         }
     }
 
-    class DistinctPropertyProjection extends PropertyProjection{
+    /**
+     * Projection to return distinct property names.
+     */
+    class DistinctPropertyProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         */
         public DistinctPropertyProjection(String propertyName) {
             super(propertyName);
         }
     }
 
-    class CountDistinctProjection extends PropertyProjection{
+    /**
+     * Projection to count distinct property names.
+     */
+    class CountDistinctProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param property The property name
+         */
         public CountDistinctProjection(String property) {
             super(property);
         }
     }
 
-    class GroupPropertyProjection extends PropertyProjection{
+    /**
+     * Group by property projection.
+     */
+    class GroupPropertyProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param property The property name
+         */
         public GroupPropertyProjection(String property) {
             super(property);
         }
     }
 
     /**
-     * Computes the average value of a property
+     * Computes the average value of a property.
      */
     class AvgProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         */
         public AvgProjection(String propertyName) {
             super(propertyName);
         }
     }
 
     /**
-     * Computes the pageSize value of a property
+     * Computes the pageSize value of a property.
      */
     class MaxProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         */
         public MaxProjection(String propertyName) {
             super(propertyName);
         }
     }
 
     /**
-     * Computes the min value of a property
+     * Computes the min value of a property.
      */
     class MinProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         */
         public MinProjection(String propertyName) {
             super(propertyName);
         }
     }
 
     /**
-     * Computes the sum of a property
+     * Computes the sum of a property.
      */
     class SumProjection extends PropertyProjection {
+        /**
+         * Default constructor.
+         * @param propertyName The property name
+         */
         public SumProjection(String propertyName) {
             super(propertyName);
         }

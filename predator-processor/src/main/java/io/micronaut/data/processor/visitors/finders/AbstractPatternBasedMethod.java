@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
@@ -29,11 +30,8 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
-import io.micronaut.inject.visitor.VisitorContext;
 import org.reactivestreams.Publisher;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -75,7 +73,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
             Matcher matcher = ORDER_BY_PATTERN.matcher(querySequence);
             StringBuffer buffer = new StringBuffer();
-            while(matcher.find()) {
+            while (matcher.find()) {
                 matcher.appendReplacement(buffer, "$1");
                 String orderDef = matcher.group(2);
                 if (StringUtils.isNotEmpty(orderDef)) {
@@ -113,8 +111,18 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         }
     }
 
+    /**
+     * Build the {@link MethodMatchInfo}.
+     * @param matchContext The match context
+     * @param queryResultType The query result type
+     * @param query The query
+     * @return The info or null if it can't be built
+     */
     @Nullable
-    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildInfo(
+            @NonNull MethodMatchContext matchContext,
+            @NonNull ClassElement queryResultType,
+            @Nullable Query query) {
         ClassElement returnType = matchContext.getReturnType();
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (!returnType.getName().equals("void")) {
@@ -173,6 +181,13 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return false;
     }
 
+    /**
+     * Apply ordering.
+     * @param context The context
+     * @param query The query
+     * @param orderList The list mutate
+     * @return If ordering was applied or if an error occurred false
+     */
     protected boolean applyOrderBy(@NonNull MethodMatchContext context, @NonNull Query query, @NonNull List<Sort.Order> orderList) {
         if (CollectionUtils.isNotEmpty(orderList)) {
             SourcePersistentEntity entity = context.getRootEntity();

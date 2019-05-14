@@ -42,6 +42,9 @@ public class RawQuery extends DefaultQuery implements Query {
         this.parameterBinding = parameterBinding;
     }
 
+    /**
+     * @return The parameter binding to use for the raw query.
+     */
     public Map<String, String> getParameterBinding() {
         return this.parameterBinding;
     }

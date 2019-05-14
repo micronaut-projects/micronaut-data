@@ -34,6 +34,11 @@ class DefaultSlice<T> implements Slice<T> {
     private final List<T> content;
     private final Pageable pageable;
 
+    /**
+     * Default constructor.
+     * @param content The content
+     * @param pageable The pageable
+     */
     DefaultSlice(List<T> content, Pageable pageable) {
         ArgumentUtils.requireNonNull("pageable", pageable);
         this.content = CollectionUtils.isEmpty(content) ? Collections.emptyList() : content;

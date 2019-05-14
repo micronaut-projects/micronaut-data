@@ -27,7 +27,7 @@ import io.micronaut.data.model.query.QueryParameter;
 public class Restrictions {
 
     /**
-     * Restricts the property to be equal to the given value
+     * Restricts the property to be equal to the given value.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return An instance of Query.Equals
@@ -37,7 +37,7 @@ public class Restrictions {
     }
 
     /**
-     * Restricts the property to be equal to the given value
+     * Restricts the property to be equal to the given value.
      * @param parameter The parameter that provides the value
      * @return An instance of Query.Equals
      */
@@ -46,7 +46,7 @@ public class Restrictions {
     }
 
     /**
-     * Restricts the property to be not equal to the given value
+     * Restricts the property to be not equal to the given value.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return An instance of Query.Equals
@@ -57,7 +57,7 @@ public class Restrictions {
     }
 
     /**
-     * Restricts the property to be in the list of given values
+     * Restricts the property to be in the list of given values.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return An instance of Query.In
@@ -67,7 +67,7 @@ public class Restrictions {
     }
 
     /**
-     * Restricts the property to be in the list of given values
+     * Restricts the property to be in the list of given values.
      * @param property The property
      * @param subquery The subquery
      * @return An instance of Query.In
@@ -78,7 +78,7 @@ public class Restrictions {
 
 
     /**
-     * Restricts the property to be in the list of given values
+     * Restricts the property to be in the list of given values.
      * @param property The property
      * @param subquery The subquery
      * @return An instance of Query.In
@@ -98,7 +98,7 @@ public class Restrictions {
     }
 
     /**
-     * Case insensitive like
+     * Case insensitive like.
      *
      * @param property The property
      * @param expression The expression
@@ -119,16 +119,28 @@ public class Restrictions {
         return new Query.RLike(property, expression);
     }
 
+    /**
+     * Logical OR.
+     * @param a The left criterion
+     * @param b The right criterion
+     * @return The criterion
+     */
     public static Query.Criterion and(Query.Criterion a, Query.Criterion b) {
         return new Query.Conjunction().add(a).add(b);
     }
 
+    /**
+     * Logical OR.
+     * @param a The left criterion
+     * @param b The right criterion
+     * @return The criterion
+     */
     public static Query.Criterion or(Query.Criterion a, Query.Criterion b) {
         return new Query.Disjunction().add(a).add(b);
     }
 
     /**
-     * Restricts the results by the given property value range
+     * Restricts the results by the given property value range.
      *
      * @param property The name of the property
      * @param start The start of the range
@@ -140,7 +152,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be greater than the given value
+     * Used to restrict a value to be greater than the given value.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return The GreaterThan instance
@@ -150,7 +162,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be less than the given value
+     * Used to restrict a value to be less than the given value.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return The LessThan instance
@@ -160,7 +172,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be greater than or equal to the given value
+     * Used to restrict a value to be greater than or equal to the given value.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return The LessThan instance
@@ -170,7 +182,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be less than or equal to the given value
+     * Used to restrict a value to be less than or equal to the given value.
      * @param property The property
      * @param parameter The parameter that provides the value
      * @return The LessThan instance
@@ -180,7 +192,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be null
+     * Used to restrict a value to be null.
      *
      * @param property The property name
      * @return The IsNull instance
@@ -190,7 +202,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be empty (such as a blank string or an empty collection)
+     * Used to restrict a value to be empty (such as a blank string or an empty collection).
      *
      * @param property The property name
      * @return The IsEmpty instance
@@ -200,7 +212,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be not empty (such as a non-blank string)
+     * Used to restrict a value to be not empty (such as a non-blank string).
      *
      * @param property The property name
      * @return The IsEmpty instance
@@ -210,7 +222,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict a value to be null
+     * Used to restrict a value to be null.
      *
      * @param property The property name
      * @return The IsNull instance
@@ -220,7 +232,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict the size of a collection property
+     * Used to restrict the size of a collection property.
      *
      * @param property The property
      * @param size The size to restrict
@@ -231,7 +243,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict the size of a collection property to be greater than the given value
+     * Used to restrict the size of a collection property to be greater than the given value.
      *
      * @param property The property
      * @param size The size to restrict
@@ -242,7 +254,7 @@ public class Restrictions {
     }
 
     /**
-     * Used to restrict the size of a collection property to be greater than or equal to the given value
+     * Used to restrict the size of a collection property to be greater than or equal to the given value.
      *
      * @param property The property
      * @param size The size to restrict
@@ -253,7 +265,7 @@ public class Restrictions {
     }
 
     /**
-     * Creates a Criterion that contrains a collection property to be less than or equal to the given size
+     * Creates a Criterion that contrains a collection property to be less than or equal to the given size.
      *
      * @param property The property name
      * @param size The size to constrain by
@@ -265,7 +277,7 @@ public class Restrictions {
     }
 
     /**
-     * Creates a Criterion that contrains a collection property to be less than to the given size
+     * Creates a Criterion that contrains a collection property to be less than to the given size.
      *
      * @param property The property name
      * @param size The size to constrain by
@@ -277,7 +289,7 @@ public class Restrictions {
     }
 
     /**
-     * Creates a Criterion that contrains a collection property to be not equal to the given size
+     * Creates a Criterion that contrains a collection property to be not equal to the given size.
      *
      * @param property The property name
      * @param size The size to constrain by
@@ -289,7 +301,7 @@ public class Restrictions {
     }
 
     /**
-     * Constraints a property to be equal to a specified other property
+     * Constraints a property to be equal to a specified other property.
      *
      * @param propertyName      The property
      * @param otherPropertyName The other property
@@ -300,7 +312,7 @@ public class Restrictions {
     }
 
     /**
-     * Constraints a property to be not equal to a specified other property
+     * Constraints a property to be not equal to a specified other property.
      *
      * @param propertyName      The property
      * @param otherPropertyName The other property
@@ -311,7 +323,7 @@ public class Restrictions {
     }
 
     /**
-     * Constraints a property to be greater than a specified other property
+     * Constraints a property to be greater than a specified other property.
      *
      * @param propertyName      The property
      * @param otherPropertyName The other property
@@ -322,7 +334,7 @@ public class Restrictions {
     }
 
     /**
-     * Constraints a property to be greater than or equal to a specified other property
+     * Constraints a property to be greater than or equal to a specified other property.
      *
      * @param propertyName      The property
      * @param otherPropertyName The other property
@@ -333,7 +345,7 @@ public class Restrictions {
     }
 
     /**
-     * Constraints a property to be less than a specified other property
+     * Constraints a property to be less than a specified other property.
      *
      * @param propertyName      The property
      * @param otherPropertyName The other property
@@ -344,7 +356,7 @@ public class Restrictions {
     }
 
     /**
-     * Constraints a property to be less than or equal to a specified other property
+     * Constraints a property to be less than or equal to a specified other property.
      *
      * @param propertyName      The property
      * @param otherPropertyName The other property

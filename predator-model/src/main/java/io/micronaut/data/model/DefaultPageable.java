@@ -41,6 +41,7 @@ class DefaultPageable implements Pageable {
      *
      * @param index The index
      * @param size The size
+     * @param sort The sort
      */
     @Creator
     DefaultPageable(int index, int size, @Nullable Sort sort) {
@@ -53,10 +54,6 @@ class DefaultPageable implements Pageable {
         this.max = size;
         this.number = index;
         this.sort = sort == null ? Sort.unsorted() : sort;
-    }
-
-    DefaultPageable(int index, int size) {
-        this(index, size, Sort.unsorted());
     }
 
     @Override

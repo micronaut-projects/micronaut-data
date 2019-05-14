@@ -43,7 +43,6 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract base class for dynamic finders. This class is designed to be used only within the compiler
@@ -56,20 +55,19 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     public static final String OPERATOR_OR = "Or";
     public static final String OPERATOR_AND = "And";
     public static final String[] OPERATORS = {OPERATOR_AND, OPERATOR_OR};
-    private static Pattern methodExpressionPattern;
     private static final String NOT = "Not";
-    private static final Map<String, Constructor> methodExpressions = new LinkedHashMap<>();
+    private static final Map<String, Constructor> METHOD_EXPRESSIONS = new LinkedHashMap<>();
+    private static Pattern methodExpressionPattern;
 
     static {
         // populate the default method expressions
         try {
-            ;
             Class[] classes = Arrays.stream(CriterionMethodExpression.class.getClasses()).filter(c ->
                     CriterionMethodExpression.class.isAssignableFrom(c) && !Modifier.isAbstract(c.getModifiers())
             ).toArray(Class[]::new);
             Class[] constructorParamTypes = {String.class};
             for (Class c : classes) {
-                methodExpressions.put(c.getSimpleName(), c.getConstructor(constructorParamTypes));
+                METHOD_EXPRESSIONS.put(c.getSimpleName(), c.getConstructor(constructorParamTypes));
             }
         } catch (SecurityException e) {
             // ignore
@@ -105,7 +103,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     }
 
     /**
-     * Checks whether the given method is a match
+     * Checks whether the given method is a match.
      *
      * @param methodElement The method element
      * @param matchContext
@@ -321,7 +319,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         String clause = methodExpressionClass.getSimpleName();
         if (matcher.find()) {
             clause = matcher.group(1);
-            methodExpressionConstructor = methodExpressions.get(clause);
+            methodExpressionConstructor = METHOD_EXPRESSIONS.get(clause);
             if (methodExpressionConstructor != null) {
                 methodExpressionClass = methodExpressionConstructor.getDeclaringClass();
             }
@@ -444,7 +442,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     }
 
     private static void resetMethodExpressionPattern() {
-        String expressionPattern = String.join("|", methodExpressions.keySet());
+        String expressionPattern = String.join("|", METHOD_EXPRESSIONS.keySet());
         methodExpressionPattern = Pattern.compile("\\p{Upper}[\\p{Lower}\\d]+(" + expressionPattern + ")");
     }
 

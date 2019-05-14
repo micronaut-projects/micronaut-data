@@ -77,6 +77,9 @@ class RuntimePersistentProperty implements PersistentProperty {
         return property.getAnnotationMetadata();
     }
 
+    /**
+     * @return The backing bean property
+     */
     public BeanProperty<?, ?> getProperty() {
         return property;
     }

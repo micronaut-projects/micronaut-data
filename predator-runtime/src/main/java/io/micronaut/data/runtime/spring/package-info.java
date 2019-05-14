@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
- * Contains Spring Data Specific integrations
+ * Contains Spring Data Specific integrations.
  */
 @Configuration
 @Requires(classes = Repository.class)

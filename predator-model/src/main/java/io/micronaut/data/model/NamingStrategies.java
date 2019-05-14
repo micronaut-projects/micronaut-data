@@ -29,27 +29,27 @@ import java.util.function.Function;
  */
 public enum NamingStrategies implements NamingStrategy {
     /**
-     * Example: FOO_BAR
+     * Example: FOO_BAR.
      */
     UNDER_SCORED_SEPARATED_UPPER_CASE(NameUtils::environmentName),
     /**
-     * Example: foo_bar
+     * Example: foo_bar.
      */
     UNDER_SCORED_SEPARATED_LOWER_CASE(NameUtils::underscoreSeparate),
     /**
-     * Example: foo-bar
+     * Example: foo-bar.
      */
     HYPHENATED_SEPARATED_LOWER_CASE(NameUtils::hyphenate),
     /**
-     * Example: foobar
+     * Example: foobar.
      */
     LOWER_CASE(String::toLowerCase),
     /**
-     * Example: foobar
+     * Example: foobar.
      */
     UPPER_CASE(String::toUpperCase),
     /**
-     * No naming conversion
+     * No naming conversion.
      */
     RAW((str) -> str);
 

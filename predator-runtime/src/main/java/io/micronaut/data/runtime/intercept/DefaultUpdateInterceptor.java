@@ -20,8 +20,18 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
+/**
+ * Default implementation of {@link UpdateInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements UpdateInterceptor<T> {
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     public DefaultUpdateInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }

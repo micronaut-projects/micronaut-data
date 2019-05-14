@@ -58,6 +58,10 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
     protected final Datastore datastore;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     AbstractQueryInterceptor(@NonNull Datastore datastore) {
         ArgumentUtils.requireNonNull("datastore", datastore);
         this.datastore = datastore;
@@ -209,8 +213,14 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         return type;
     }
 
+    /**
+     * Obtains the root entity or throws an exception if it not available.
+     * @param context The context
+     * @return The root entity type
+     * @throws IllegalStateException If the root entity is unavailable
+     */
     @NonNull
-    protected Class getRequiredRootEntity(MethodInvocationContext context) {
+    protected Class<?> getRequiredRootEntity(MethodInvocationContext context) {
         return context.getValue(PredatorMethod.class, MEMBER_ROOT_MEMBER, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
     }
@@ -229,6 +239,11 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         return pageable;
     }
 
+    /**
+     * Resolves the {@link Pageable} for the given context.
+     * @param context The pageable
+     * @return The pageable or null
+     */
     @Nullable
     protected Pageable getPageable(MethodInvocationContext context) {
         String pageableParam = context.getValue(PredatorMethod.class, TypeRole.PAGEABLE, String.class).orElse(null);
@@ -295,10 +310,12 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         /**
          * The default constructor.
+         * @param resultType The result type of the query
          * @param rootEntity The root entity of the query
          * @param query The query itself
          * @param idType The ID type
          * @param parameterValues The parameter values
+         * @param pageable The pageable
          */
         PreparedQuery(
                 @NonNull Class resultType,
@@ -315,31 +332,49 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             this.pageable = pageable;
         }
 
+        /**
+         * @return The result type
+         */
         @NonNull
         public Class<?> getResultType() {
             return resultType;
         }
 
+        /**
+         * @return The ID type
+         */
         @Nullable
         public Class getIdType() {
             return idType;
         }
 
+        /**
+         * @return The root entity type
+         */
         @NonNull
         public Class<?> getRootEntity() {
             return rootEntity;
         }
 
+        /**
+         * @return The query to execute
+         */
         @NonNull
         public String getQuery() {
             return query;
         }
 
+        /**
+         * @return The parameter values to bind to the query
+         */
         @NonNull
         public Map<String, Object> getParameterValues() {
             return parameterValues;
         }
 
+        /**
+         * @return The pageable
+         */
         @NonNull
         public Pageable getPageable() {
             return pageable != null ? pageable : Pageable.unpaged();

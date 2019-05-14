@@ -62,6 +62,12 @@ public class QueryListMethod extends ListMethod {
         return buildMatchInfo(matchContext, query);
     }
 
+    /**
+     * Build the match info for a raw query.
+     * @param matchContext The match context
+     * @param query The raw query
+     * @return The method info
+     */
     protected MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext, @NonNull RawQuery query) {
         return new MethodMatchInfo(
                 matchContext.getRootEntity(),

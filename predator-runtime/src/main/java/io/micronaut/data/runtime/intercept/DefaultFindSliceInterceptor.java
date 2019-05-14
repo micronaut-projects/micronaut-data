@@ -36,6 +36,10 @@ import io.micronaut.data.runtime.datastore.Datastore;
  */
 public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<T, R> implements FindSliceInterceptor<T, R> {
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     protected DefaultFindSliceInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }

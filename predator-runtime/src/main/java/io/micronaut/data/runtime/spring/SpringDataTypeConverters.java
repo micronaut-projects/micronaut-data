@@ -35,16 +35,25 @@ import java.util.Optional;
 @Internal
 public class SpringDataTypeConverters {
 
+    /**
+     * @return The page converter
+     */
     @Singleton
     TypeConverter<io.micronaut.data.model.Page, Page> pageConverter() {
         return (object, targetType, context) -> Optional.of(new PageDelegate(object));
     }
 
+    /**
+     * @return The pageable converter
+     */
     @Singleton
     TypeConverter<Pageable, io.micronaut.data.model.Pageable> pageableConverter() {
         return (object, targetType, context) -> Optional.of(new PageableDelegate(object));
     }
 
+    /**
+     * @return The sort converter
+     */
     @Singleton
     TypeConverter<Sort, io.micronaut.data.model.query.Sort> sortConverter() {
         return (object, targetType, context) -> Optional.of(new SortDelegate(object));

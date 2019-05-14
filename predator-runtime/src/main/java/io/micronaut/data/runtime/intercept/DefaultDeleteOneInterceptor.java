@@ -22,9 +22,19 @@ import io.micronaut.data.runtime.datastore.Datastore;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
 
+/**
+ * The default implementation of {@link DeleteOneInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteOneInterceptor<T> {
 
-    DefaultDeleteOneInterceptor(@NonNull Datastore datastore) {
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
+    protected DefaultDeleteOneInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

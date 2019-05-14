@@ -18,7 +18,7 @@ package io.micronaut.data.model.query.factory;
 import io.micronaut.data.model.query.Query;
 
 /**
- * Projections used to customize the results of a query
+ * Projections used to customize the results of a query.
  *
  * @author Graeme Rocher
  * @since 1.0
@@ -28,7 +28,7 @@ public class Projections {
     public static final Query.CountProjection COUNT_PROJECTION = new Query.CountProjection();
 
     /**
-     * Projection used to obtain the id of an object
+     * Projection used to obtain the id of an object.
      * @return The IdProjection instance
      */
     public static Query.IdProjection id() {
@@ -36,7 +36,7 @@ public class Projections {
     }
 
     /**
-     * Projection that returns the number of records from the query
+     * Projection that returns the number of records from the query.
      * instead of the results themselves
      *
      * @return The CountProjection instance
@@ -46,7 +46,7 @@ public class Projections {
     }
 
     /**
-     * A projection that obtains the value of a property of an entity
+     * A projection that obtains the value of a property of an entity.
      * @param name The name of the property
      * @return The PropertyProjection instance
      */
@@ -55,7 +55,7 @@ public class Projections {
     }
 
     /**
-     * Computes the sum of a property
+     * Computes the sum of a property.
      *
      * @param name The name of the property
      * @return The PropertyProjection instance
@@ -65,7 +65,7 @@ public class Projections {
     }
 
     /**
-     * Computes the min value of a property
+     * Computes the min value of a property.
      *
      * @param name The name of the property
      * @return The PropertyProjection instance
@@ -75,7 +75,7 @@ public class Projections {
     }
 
     /**
-     * Computes the pageSize value of a property
+     * Computes the pageSize value of a property.
      *
      * @param name The name of the property
      * @return The PropertyProjection instance
@@ -85,7 +85,7 @@ public class Projections {
     }
 
     /**
-     * Computes the average value of a property
+     * Computes the average value of a property.
      *
      * @param name The name of the property
      * @return The PropertyProjection instance
@@ -95,7 +95,7 @@ public class Projections {
     }
 
     /**
-     * Projection that signifies to return only distinct results
+     * Projection that signifies to return only distinct results.
      *
      * @return Distinct projection
      */
@@ -104,7 +104,7 @@ public class Projections {
     }
 
     /**
-     * Projection that signifies to return only distinct results
+     * Projection that signifies to return only distinct results.
      *
      * @param property The name of the property
      * @return Distinct projection
@@ -114,7 +114,7 @@ public class Projections {
     }
 
     /**
-     * Projection that signifies to return only distinct results
+     * Projection that signifies to return only distinct results.
      *
      * @param property The name of the property
      * @return Distinct projection
@@ -124,7 +124,7 @@ public class Projections {
     }
 
     /**
-     * Defines a group by projection for datastores that support it
+     * Defines a group by projection for datastores that support it.
      *
      * @param property The property name
      *

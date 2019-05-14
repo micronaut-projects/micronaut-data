@@ -42,21 +42,21 @@ import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
 public interface PersistentEntity extends AnnotationMetadataProvider {
 
     /**
-     * The entity name including any package prefix
+     * The entity name including any package prefix.
      *
      * @return The entity name
      */
     @NonNull String getName();
 
     /**
-     * The composite id
+     * The composite id.
      *
      * @return The composite id or null if there isn't one
      */
     @Nullable PersistentProperty[] getCompositeIdentity();
 
     /**
-     * Returns the identity of the instance
+     * Returns the identity of the instance.
      *
      * @return The identity or null if there isn't one
      */
@@ -79,7 +79,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     }
 
     /**
-     * A list of properties to be persisted
+     * A list of properties to be persisted.
      * @return A list of PersistentProperty instances
      */
     @NonNull List<PersistentProperty> getPersistentProperties();
@@ -101,7 +101,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     @NonNull List<Embedded> getEmbedded();
 
     /**
-     * Obtains a PersistentProperty instance by name
+     * Obtains a PersistentProperty instance by name.
      *
      * @param name The name of the property
      * @return The PersistentProperty or null if it doesn't exist
@@ -109,7 +109,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     @Nullable PersistentProperty getPropertyByName(String name);
 
     /**
-     * A list of property names that a persistent
+     * A list of property names that a persistent.
      * @return A List of strings
      */
     @NonNull List<String> getPersistentPropertyNames();
@@ -130,7 +130,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
 
     /**
      * Returns whether the specified entity asserts ownership over this
-     * entity
+     * entity.
      *
      * @param owner The owning entity
      * @return True if it does own this entity
@@ -138,7 +138,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     boolean isOwningEntity(PersistentEntity owner);
 
     /**
-     * Returns the parent entity of this entity
+     * Returns the parent entity of this entity.
      * @return The ParentEntity instance
      */
     @Nullable PersistentEntity getParentEntity();
@@ -157,7 +157,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
             Iterator<String> i = path.iterator();
             StringBuilder b = new StringBuilder();
             PersistentEntity currentEntity = this;
-            while(i.hasNext() && currentEntity != null) {
+            while (i.hasNext() && currentEntity != null) {
 
                 String name = i.next();
                 PersistentProperty sp = currentEntity.getPropertyByName(name);
@@ -192,7 +192,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     }
 
     /**
-     * Obtains the root entity of an inheritance hierarchy
+     * Obtains the root entity of an inheritance hierarchy.
      * @return The root entity
      */
     default @NonNull PersistentEntity getRootEntity() {
@@ -200,7 +200,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     }
 
     /**
-     * Whether this entity is a root entity
+     * Whether this entity is a root entity.
      * @return True if it is a root entity
      */
     default boolean isRoot() {

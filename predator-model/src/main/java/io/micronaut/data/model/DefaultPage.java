@@ -28,6 +28,12 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
 
     private final long totalSize;
 
+    /**
+     * Default constructor.
+     * @param content The content
+     * @param pageable The pageable
+     * @param totalSize The total size
+     */
     DefaultPage(List<T> content, Pageable pageable, long totalSize) {
         super(content, pageable);
         this.totalSize = totalSize;

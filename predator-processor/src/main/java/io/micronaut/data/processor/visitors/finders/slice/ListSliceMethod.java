@@ -24,8 +24,6 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.ListMethod;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.inject.ast.ClassElement;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**

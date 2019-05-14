@@ -22,9 +22,19 @@ import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+/**
+ * Default implementation of {@link DeleteAllInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteAllInterceptor<T> {
 
-    public DefaultDeleteAllInterceptor(@NonNull Datastore datastore) {
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
+    protected DefaultDeleteAllInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

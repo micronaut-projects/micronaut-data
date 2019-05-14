@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @param <T> The paged type
  */
 @Internal
 class PageDelegate<T> implements Page<T> {
@@ -80,7 +81,6 @@ class PageDelegate<T> implements Page<T> {
                 )
         );
     }
-
 
     @Override
     public Iterator<T> iterator() {
@@ -137,6 +137,9 @@ class PageDelegate<T> implements Page<T> {
         return new PageableDelegate(delegate.previousPageable());
     }
 
+    /**
+     * A pageable delegate impl.
+     */
     private class PageableDelegate implements Pageable {
 
         private final io.micronaut.data.model.Pageable pageable;
@@ -178,7 +181,7 @@ class PageDelegate<T> implements Page<T> {
         @Override
         public Pageable first() {
             return new PageableDelegate(
-                    io.micronaut.data.model.Pageable.from(0, delegate.getSize(), delegate.getSort() )
+                    io.micronaut.data.model.Pageable.from(0, delegate.getSize(), delegate.getSort())
             );
         }
 
@@ -188,6 +191,9 @@ class PageDelegate<T> implements Page<T> {
         }
     }
 
+    /**
+     * A sort delegate impl.
+     */
     private class SortDelegate extends Sort {
 
         private final io.micronaut.data.model.query.Sort delegate;

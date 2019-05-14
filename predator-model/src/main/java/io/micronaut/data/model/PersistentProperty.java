@@ -16,12 +16,10 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Models a persistent property. That is a property that is saved and retrieved from the database.
@@ -32,13 +30,13 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 public interface PersistentProperty extends AnnotationMetadataProvider {
 
     /**
-     * The name of the property
+     * The name of the property.
      * @return The property name
      */
     @NonNull String getName();
 
     /**
-     * The name with the first letter in upper case as per Java bean conventions
+     * The name with the first letter in upper case as per Java bean conventions.
      * @return The capitilized name
      */
     default @NonNull String getCapitilizedName() {
@@ -46,21 +44,21 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
     }
 
     /**
-     * The type of the property
+     * The type of the property.
      * @return The property type
      */
     @NonNull String getTypeName();
 
 
     /**
-     * Obtains the owner of this persistent property
+     * Obtains the owner of this persistent property.
      *
      * @return The owner
      */
     @NonNull PersistentEntity getOwner();
 
     /**
-     * Whether the property can be set to null
+     * Whether the property can be set to null.
      *
      * @return True if it can
      */
@@ -99,6 +97,11 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      */
     boolean isAssignable(@NonNull String type);
 
+    /**
+     * Is the property assignable to the given type.
+     * @param type The type
+     * @return True it is
+     */
     default boolean isAssignable(@NonNull Class<?> type) {
         return isAssignable(type.getName());
     }

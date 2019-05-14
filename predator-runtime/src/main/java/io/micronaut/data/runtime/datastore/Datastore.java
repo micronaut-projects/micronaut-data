@@ -169,6 +169,7 @@ public interface Datastore {
      * return the number of objects updated, then do so.
      * @param query The query
      * @param parameterValues the parameter values
+     * @return An optional number with the count of the number of records updated
      */
     @NonNull Optional<Number> executeUpdate(
             @NonNull String query,
@@ -176,7 +177,7 @@ public interface Datastore {
     );
 
     /**
-     * Deletes all the entities of the given type
+     * Deletes all the entities of the given type.
      * @param entityType The entity type
      * @param entities The entities
      * @param <T> The generic type
@@ -184,7 +185,7 @@ public interface Datastore {
     <T> void deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
 
     /**
-     * Deletes all the entities of the given type
+     * Deletes all the entities of the given type.
      * @param entityType The entity type
      * @param <T> The generic type
      */
@@ -225,7 +226,7 @@ public interface Datastore {
     default @NonNull <T> Stream<T> findStream(
             @NonNull Class<T> entity) {
         return findStream(entity, Pageable.unpaged());
-    };
+    }
 
     /**
      * Find a page for the given entity and pageable.

@@ -210,17 +210,20 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
         return null;
     }
 
+    /**
+     * @return The class element
+     */
     public ClassElement getClassElement() {
         return classElement;
-    }
-
-    private boolean isEmbedded(PropertyElement bp) {
-        return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
     }
 
     @Nullable
     @Override
     public ClassElement getType() {
         return classElement;
+    }
+
+    private boolean isEmbedded(PropertyElement bp) {
+        return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
     }
 }

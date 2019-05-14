@@ -20,8 +20,6 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * Simple list method support.
  *

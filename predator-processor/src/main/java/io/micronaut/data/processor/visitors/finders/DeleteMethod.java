@@ -24,8 +24,6 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
@@ -68,7 +66,7 @@ public class DeleteMethod extends AbstractListMethod {
                             null,
                             DeleteOneInterceptor.class
                     );
-                } else if(TypeUtils.isIterableOfEntity(genericType)) {
+                } else if (TypeUtils.isIterableOfEntity(genericType)) {
                     return new MethodMatchInfo(
                             null,
                             null,

@@ -28,6 +28,12 @@ import io.micronaut.inject.ast.MethodElement;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
+/**
+ * Handles dynamic finders that return a {@link io.micronaut.data.model.Slice}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class FindSliceByMethod extends FindByFinder {
 
     public static final int POSITION = DEFAULT_POSITION - 150;

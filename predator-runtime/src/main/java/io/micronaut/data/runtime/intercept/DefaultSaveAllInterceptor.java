@@ -20,10 +20,21 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
+/**
+ * Default implementation of {@link SaveAllInterceptor}.
+ * @param <T> The declaring type
+ * @param <R> The return type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultSaveAllInterceptor<T, R> implements SaveAllInterceptor<T, R> {
 
     private final Datastore datastore;
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     protected DefaultSaveAllInterceptor(Datastore datastore) {
         this.datastore = datastore;
     }

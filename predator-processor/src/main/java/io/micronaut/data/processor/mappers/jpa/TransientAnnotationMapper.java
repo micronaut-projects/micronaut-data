@@ -17,7 +17,6 @@ package io.micronaut.data.processor.mappers.jpa;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.data.annotation.Persisted;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -26,7 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Maps JPA's {@code Transient} annotation to {@link Persisted}.
+ * Maps JPA's {@code Transient} annotation to {@link io.micronaut.data.annotation.Transient}.
  *
  * @author graemerocher
  * @since 1.0.0

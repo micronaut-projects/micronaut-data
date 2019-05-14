@@ -19,9 +19,6 @@ import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.factory.Restrictions;
 
-import java.util.Arrays;
-
-
 /**
  *  Method expression used to evaluate a dynamic finder.
  *
@@ -64,7 +61,14 @@ public abstract class CriterionMethodExpression {
         this.argumentNames = argumentNames;
     }
 
+    /**
+     * Greater than expression.
+     */
     public static class GreaterThan extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public GreaterThan(String propertyName) {
             super(propertyName);
         }
@@ -75,19 +79,40 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Same as {@link GreaterThan}.
+     */
     public static class After extends GreaterThan {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public After(String propertyName) {
             super(propertyName);
         }
     }
 
+    /**
+     * Same as {@link LessThan}.
+     */
     public static class Before extends LessThan {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public Before(String propertyName) {
             super(propertyName);
         }
     }
 
+    /**
+     * Greater than equals.
+     */
     public static class GreaterThanEquals extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public GreaterThanEquals(String propertyName) {
             super(propertyName);
         }
@@ -98,7 +123,14 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Less than.
+     */
     public static class LessThan extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public LessThan(String propertyName) {
             super(propertyName);
         }
@@ -109,7 +141,14 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Less than equals.
+     */
     public static class LessThanEquals extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public LessThanEquals(String propertyName) {
             super(propertyName);
         }
@@ -120,7 +159,14 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Like criterion.
+     */
     public static class Like extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public Like(String propertyName) {
             super(propertyName);
         }
@@ -131,7 +177,14 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Case insensitive like.
+     */
     public static class Ilike extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public Ilike(String propertyName) {
             super(propertyName);
         }
@@ -142,7 +195,14 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Regex like.
+     */
     public static class Rlike extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public Rlike(String propertyName) {
             super(propertyName);
         }
@@ -153,7 +213,14 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Not in list.
+     */
     public static class NotInList extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public NotInList(String propertyName) {
             super(propertyName);
         }
@@ -166,8 +233,15 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * In list.
+     */
     public static class InList extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public InList(String propertyName) {
             super(propertyName);
         }
@@ -178,14 +252,28 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * In criterion.
+     */
     public static class In extends InList {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public In(String propertyName) {
             super(propertyName);
         }
     }
 
+    /**
+     * Between criterion.
+     */
     public static class Between extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public Between(String propertyName) {
             super(propertyName);
             argumentsRequired = 2;
@@ -197,21 +285,29 @@ public abstract class CriterionMethodExpression {
         }
     }
 
-    public static class InRange extends CriterionMethodExpression {
+    /**
+     * In range criterion.
+     */
+    public static class InRange extends Between {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public InRange(String propertyName) {
             super(propertyName);
-            argumentsRequired = 1;
-        }
-
-        @Override
-        public Query.Criterion createCriterion() {
-            return Restrictions.between(propertyName, new QueryParameter(argumentNames[0]), new QueryParameter(argumentNames[1]));
         }
     }
 
+    /**
+     * Is null criterion.
+     */
     public static class IsNull extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public IsNull(String propertyName) {
             super(propertyName);
             argumentsRequired = 0;
@@ -224,8 +320,15 @@ public abstract class CriterionMethodExpression {
 
     }
 
+    /**
+     * Is not null criterion.
+     */
     public static class IsNotNull extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public IsNotNull(String propertyName) {
             super(propertyName);
             argumentsRequired = 0;
@@ -238,8 +341,15 @@ public abstract class CriterionMethodExpression {
 
     }
 
+    /**
+     * Is empty criterion.
+     */
     public static class IsEmpty extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public IsEmpty(String propertyName) {
             super(propertyName);
             argumentsRequired = 0;
@@ -252,8 +362,15 @@ public abstract class CriterionMethodExpression {
 
     }
 
+    /**
+     * Is not empty criterion.
+     */
     public static class IsNotEmpty extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public IsNotEmpty(String propertyName) {
             super(propertyName);
             argumentsRequired = 0;
@@ -265,8 +382,15 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    /**
+     * Is equal criterion.
+     */
     public static class Equal extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public Equal(String propertyName) {
             super(propertyName);
         }
@@ -282,8 +406,16 @@ public abstract class CriterionMethodExpression {
         }
 
     }
+
+    /**
+     * Is not equal criterion.
+     */
     public static class NotEqual extends CriterionMethodExpression {
 
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
         public NotEqual(String propertyName) {
             super(propertyName);
         }

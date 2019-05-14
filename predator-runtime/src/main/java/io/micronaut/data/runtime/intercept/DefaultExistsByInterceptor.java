@@ -21,8 +21,19 @@ import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+/**
+ * The default implementation of {@link ExistsByInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, Boolean> implements ExistsByInterceptor<T> {
-    DefaultExistsByInterceptor(@NonNull Datastore datastore) {
+
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
+    protected DefaultExistsByInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 

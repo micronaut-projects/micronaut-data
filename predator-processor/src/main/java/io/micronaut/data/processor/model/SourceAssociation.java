@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.model;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;

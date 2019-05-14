@@ -24,10 +24,14 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.QueryListMethod;
 import io.micronaut.inject.ast.ClassElement;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
+/**
+ * hands a query result of type {@link io.micronaut.data.model.Page}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class QueryPageMethod extends QueryListMethod {
     @Override
     protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {

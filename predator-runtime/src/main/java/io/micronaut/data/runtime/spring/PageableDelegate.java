@@ -31,6 +31,10 @@ class PageableDelegate implements Pageable {
 
     private final org.springframework.data.domain.Pageable target;
 
+    /**
+     * Default constructor.
+     * @param target The pageable target
+     */
     PageableDelegate(org.springframework.data.domain.Pageable target) {
         this.target = target;
     }

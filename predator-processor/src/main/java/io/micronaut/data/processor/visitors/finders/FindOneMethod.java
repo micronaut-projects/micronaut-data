@@ -26,7 +26,6 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.List;
 
@@ -43,6 +42,9 @@ public class FindOneMethod extends AbstractListMethod {
      */
     public static final String[] PREFIXES = {"get", "find", "search", "query"};
 
+    /**
+     * Find one method.
+     */
     public FindOneMethod() {
         super(PREFIXES);
     }

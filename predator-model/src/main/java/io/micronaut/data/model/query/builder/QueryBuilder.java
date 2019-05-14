@@ -41,6 +41,7 @@ public interface QueryBuilder {
      * Encode the given query into the encoded query instance.
      *
      * @param query The query
+     * @param propertiesToUpdate The property names to update
      * @return The encoded query
      */
     @NonNull

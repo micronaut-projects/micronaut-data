@@ -110,7 +110,8 @@ public @interface PredatorMethod {
     Class<?> resultType();
 
     /**
-     * The identifier type for the method being executed
+     * The identifier type for the method being executed.
+     *
      * @return The ID type
      */
     Class<?> idType();

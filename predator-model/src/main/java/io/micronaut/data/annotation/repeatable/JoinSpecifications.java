@@ -31,5 +31,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 public @interface JoinSpecifications {
+    /**
+     * @return The {@link JoinSpec} definitions
+     */
     JoinSpec[] value();
 }

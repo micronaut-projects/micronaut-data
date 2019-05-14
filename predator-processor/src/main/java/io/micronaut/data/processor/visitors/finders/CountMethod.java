@@ -33,6 +33,9 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  */
 public class CountMethod extends AbstractListMethod {
 
+    /**
+     * Default constructor.
+     */
     public CountMethod() {
         super("count");
     }

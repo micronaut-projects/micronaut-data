@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query.builder.jpa;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
@@ -28,7 +27,6 @@ import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.model.query.builder.PreparedQuery;
 import io.micronaut.data.model.query.builder.QueryBuilder;
-import io.micronaut.data.model.query.factory.Restrictions;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.*;
@@ -58,7 +56,7 @@ public class JpaQueryBuilder implements QueryBuilder {
     private static final String UPDATE_CLAUSE = "UPDATE ";
     private static final String DELETE_CLAUSE = "DELETE ";
     private static final String LOGICAL_OR = " OR ";
-    private static final Map<Class, QueryHandler> queryHandlers = new HashMap<>();
+    private static final Map<Class, QueryHandler> QUERY_HANDLERS = new HashMap<>();
 
     @NonNull
     @Override
@@ -113,22 +111,21 @@ public class JpaQueryBuilder implements QueryBuilder {
 
         queryString.append(FROM_CLAUSE)
                 .append(entity.getName())
-                .append(AS_CLAUSE )
+                .append(AS_CLAUSE)
                 .append(logicalName);
     }
 
     private static void buildSelect(StringBuilder queryString, List<Query.Projection> projectionList, String logicalName, PersistentEntity entity) {
         if (projectionList.isEmpty()) {
             queryString.append(logicalName);
-        }
-        else {
+        } else {
             for (Iterator i = projectionList.iterator(); i.hasNext();) {
                 Query.Projection projection = (Query.Projection) i.next();
                 if (projection instanceof Query.CountProjection) {
                     queryString.append("COUNT(")
                             .append(logicalName)
                             .append(CLOSE_BRACKET);
-                } else if(projection instanceof Query.DistinctProjection) {
+                } else if (projection instanceof Query.DistinctProjection) {
                     queryString.append("DISTINCT(")
                             .append(logicalName)
                             .append(CLOSE_BRACKET);
@@ -136,8 +133,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                     queryString.append(logicalName)
                             .append(DOT)
                             .append(entity.getIdentity().getName());
-                }
-                else if (projection instanceof Query.PropertyProjection) {
+                } else if (projection instanceof Query.PropertyProjection) {
                     Query.PropertyProjection pp = (Query.PropertyProjection) projection;
                     if (projection instanceof Query.AvgProjection) {
                         queryString.append("AVG(")
@@ -145,7 +141,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                                 .append(DOT)
                                 .append(pp.getPropertyName())
                                 .append(CLOSE_BRACKET);
-                    } else if(projection instanceof Query.DistinctPropertyProjection) {
+                    } else if (projection instanceof Query.DistinctPropertyProjection) {
                         queryString.append("DISTINCT(")
                                 .append(logicalName)
                                 .append(DOT)
@@ -157,29 +153,25 @@ public class JpaQueryBuilder implements QueryBuilder {
                                 .append(DOT)
                                 .append(pp.getPropertyName())
                                 .append(CLOSE_BRACKET);
-                    }
-                    else if (projection instanceof Query.MinProjection) {
+                    } else if (projection instanceof Query.MinProjection) {
                         queryString.append("MIN(")
                                 .append(logicalName)
                                 .append(DOT)
                                 .append(pp.getPropertyName())
                                 .append(CLOSE_BRACKET);
-                    }
-                    else if (projection instanceof Query.MaxProjection) {
+                    } else if (projection instanceof Query.MaxProjection) {
                         queryString.append("MAX(")
                                 .append(logicalName)
                                 .append(DOT)
                                 .append(pp.getPropertyName())
                                 .append(CLOSE_BRACKET);
-                    }
-                    else if (projection instanceof Query.CountDistinctProjection) {
+                    } else if (projection instanceof Query.CountDistinctProjection) {
                         queryString.append("COUNT(DISTINCT ")
                                 .append(logicalName)
                                 .append(DOT)
                                 .append(pp.getPropertyName())
                                 .append(CLOSE_BRACKET);
-                    }
-                    else {
+                    } else {
                         queryString.append(logicalName)
                                 .append(DOT)
                                 .append(pp.getPropertyName());
@@ -215,7 +207,7 @@ public class JpaQueryBuilder implements QueryBuilder {
 
     static {
 
-        queryHandlers.put(AssociationQuery.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(AssociationQuery.class, (queryState, criterion) -> {
 
             if (!queryState.allowJoins) {
                 throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
@@ -230,12 +222,12 @@ public class JpaQueryBuilder implements QueryBuilder {
             );
         });
 
-        queryHandlers.put(Query.Negation.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.Negation.class, (queryState, criterion) -> {
 
             queryState.whereClause.append(NOT_CLAUSE)
                                   .append(OPEN_BRACKET);
 
-            final Query.Negation negation = (Query.Negation)criterion;
+            final Query.Negation negation = (Query.Negation) criterion;
             buildWhereClauseForCriterion(
                     queryState,
                     negation,
@@ -244,23 +236,23 @@ public class JpaQueryBuilder implements QueryBuilder {
             queryState.whereClause.append(CLOSE_BRACKET);
         });
 
-        queryHandlers.put(Query.Conjunction.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.Conjunction.class, (queryState, criterion) -> {
             queryState.whereClause.append(OPEN_BRACKET);
 
-            final Query.Conjunction conjunction = (Query.Conjunction)criterion;
+            final Query.Conjunction conjunction = (Query.Conjunction) criterion;
             buildWhereClauseForCriterion(queryState, conjunction, conjunction.getCriteria());
             queryState.whereClause.append(CLOSE_BRACKET);
         });
 
-        queryHandlers.put(Query.Disjunction.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.Disjunction.class, (queryState, criterion) -> {
             queryState.whereClause.append(OPEN_BRACKET);
 
-            final Query.Disjunction disjunction = (Query.Disjunction)criterion;
+            final Query.Disjunction disjunction = (Query.Disjunction) criterion;
             buildWhereClauseForCriterion(queryState, disjunction, disjunction.getCriteria());
             queryState.whereClause.append(CLOSE_BRACKET);
         });
 
-        queryHandlers.put(Query.Equals.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.Equals.class, (queryState, criterion) -> {
             Query.Equals eq = (Query.Equals) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.Equals.class);
@@ -272,7 +264,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             );
         });
 
-        queryHandlers.put(Query.EqualsProperty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.EqualsProperty.class, (queryState, criterion) -> {
             final PersistentEntity entity = queryState.entity;
             Query.EqualsProperty eq = (Query.EqualsProperty) criterion;
             final String propertyName = eq.getProperty();
@@ -283,7 +275,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             appendPropertyComparison(queryState.whereClause, queryState.logicalName, propertyName, otherProperty, "=");
         });
 
-        queryHandlers.put(Query.NotEqualsProperty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.NotEqualsProperty.class, (queryState, criterion) -> {
             final PersistentEntity entity = queryState.entity;
             Query.PropertyComparisonCriterion eq = (Query.PropertyComparisonCriterion) criterion;
             final String propertyName = eq.getProperty();
@@ -294,7 +286,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             appendPropertyComparison(queryState.whereClause, queryState.logicalName, propertyName, otherProperty, "!=");
         });
 
-        queryHandlers.put(Query.GreaterThanProperty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanProperty.class, (queryState, criterion) -> {
             PersistentEntity entity = queryState.entity;
             Query.PropertyComparisonCriterion eq = (Query.PropertyComparisonCriterion) criterion;
             final String propertyName = eq.getProperty();
@@ -305,7 +297,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             appendPropertyComparison(queryState.whereClause, queryState.logicalName, propertyName, otherProperty, ">");
         });
 
-        queryHandlers.put(Query.GreaterThanEqualsProperty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanEqualsProperty.class, (queryState, criterion) -> {
             PersistentEntity entity = queryState.entity;
             Query.PropertyComparisonCriterion eq = (Query.PropertyComparisonCriterion) criterion;
             final String propertyName = eq.getProperty();
@@ -316,7 +308,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             appendPropertyComparison(queryState.whereClause, queryState.logicalName, propertyName, otherProperty, ">=");
         });
 
-        queryHandlers.put(Query.LessThanProperty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanProperty.class, (queryState, criterion) -> {
             PersistentEntity entity = queryState.entity;
             Query.PropertyComparisonCriterion eq = (Query.PropertyComparisonCriterion) criterion;
             final String propertyName = eq.getProperty();
@@ -327,7 +319,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             appendPropertyComparison(queryState.whereClause, queryState.logicalName, propertyName, otherProperty, "<");
         });
 
-        queryHandlers.put(Query.LessThanEqualsProperty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanEqualsProperty.class, (queryState, criterion) -> {
             PersistentEntity entity = queryState.entity;
             Query.PropertyComparisonCriterion eq = (Query.PropertyComparisonCriterion) criterion;
             final String propertyName = eq.getProperty();
@@ -338,7 +330,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             appendPropertyComparison(queryState.whereClause, queryState.logicalName, propertyName, otherProperty, "<=");
         });
 
-        queryHandlers.put(Query.IsNull.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.IsNull.class, (queryState, criterion) -> {
             Query.IsNull isNull = (Query.IsNull) criterion;
             final String name = isNull.getProperty();
             validateProperty(queryState.entity, name, Query.IsNull.class);
@@ -348,7 +340,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                     .append(" IS NULL ");
         });
 
-        queryHandlers.put(Query.IsNotNull.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.IsNotNull.class, (queryState, criterion) -> {
             Query.IsNotNull isNotNull = (Query.IsNotNull) criterion;
             final String name = isNotNull.getProperty();
             validateProperty(queryState.entity, name, Query.IsNotNull.class);
@@ -358,7 +350,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                     .append(" IS NOT NULL ");
         });
 
-        queryHandlers.put(Query.IsEmpty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.IsEmpty.class, (queryState, criterion) -> {
             Query.IsEmpty isEmpty = (Query.IsEmpty) criterion;
             final String name = isEmpty.getProperty();
             PersistentProperty property = validateProperty(queryState.entity, name, Query.IsEmpty.class);
@@ -377,7 +369,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             }
         });
 
-        queryHandlers.put(Query.IsNotEmpty.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.IsNotEmpty.class, (queryState, criterion) -> {
             Query.IsNotEmpty isNotEmpty = (Query.IsNotEmpty) criterion;
             final String name = isNotEmpty.getProperty();
             PersistentProperty property = validateProperty(queryState.entity, name, Query.IsNotEmpty.class);
@@ -396,7 +388,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             }
         });
 
-        queryHandlers.put(Query.IdEquals.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.IdEquals.class, (queryState, criterion) -> {
             PersistentProperty prop = queryState.entity.getIdentity();
             if (prop == null) {
                 throw new IllegalStateException("No id found for name entity: " + queryState.entity.getIdentity());
@@ -409,43 +401,43 @@ public class JpaQueryBuilder implements QueryBuilder {
             );
         });
 
-        queryHandlers.put(Query.NotEquals.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.NotEquals.class, (queryState, criterion) -> {
             Query.NotEquals eq = (Query.NotEquals) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.NotEquals.class);
             appendCriteriaForOperator(
-                    queryState,prop.getName(), eq.getValue(), " != "
+                    queryState, prop.getName(), eq.getValue(), " != "
             );
         });
 
-        queryHandlers.put(Query.GreaterThan.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThan.class, (queryState, criterion) -> {
             Query.GreaterThan eq = (Query.GreaterThan) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.GreaterThan.class);
             appendCriteriaForOperator(
-                    queryState,prop.getName(), eq.getValue(), " > "
+                    queryState, prop.getName(), eq.getValue(), " > "
             );
         });
 
-        queryHandlers.put(Query.LessThanEquals.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanEquals.class, (queryState, criterion) -> {
             Query.LessThanEquals eq = (Query.LessThanEquals) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.LessThanEquals.class);
             appendCriteriaForOperator(
-                    queryState,prop.getName(), eq.getValue(), " <= "
+                    queryState, prop.getName(), eq.getValue(), " <= "
             );
         });
 
-        queryHandlers.put(Query.GreaterThanEquals.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanEquals.class, (queryState, criterion) -> {
             Query.GreaterThanEquals eq = (Query.GreaterThanEquals) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.GreaterThanEquals.class);
             appendCriteriaForOperator(
-                    queryState,prop.getName(), eq.getValue(), " >= "
+                    queryState, prop.getName(), eq.getValue(), " >= "
             );
         });
 
-        queryHandlers.put(Query.Between.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.Between.class, (queryState, criterion) -> {
             Query.Between between = (Query.Between) criterion;
             final String name = between.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.Between.class);
@@ -468,25 +460,25 @@ public class JpaQueryBuilder implements QueryBuilder {
             queryState.parameters.put(toParam, between.getTo().getName());
         });
 
-        queryHandlers.put(Query.LessThan.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThan.class, (queryState, criterion) -> {
             Query.LessThan eq = (Query.LessThan) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.LessThan.class);
             appendCriteriaForOperator(
-                    queryState,prop.getName(), eq.getValue(), " < "
+                    queryState, prop.getName(), eq.getValue(), " < "
             );
         });
 
-        queryHandlers.put(Query.Like.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.Like.class, (queryState, criterion) -> {
             Query.Like eq = (Query.Like) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.Like.class);
             appendCriteriaForOperator(
-                    queryState,prop.getName(), eq.getValue(), " like "
+                    queryState, prop.getName(), eq.getValue(), " like "
             );
         });
 
-        queryHandlers.put(Query.ILike.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.ILike.class, (queryState, criterion) -> {
             Query.ILike eq = (Query.ILike) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.ILike.class);
@@ -506,7 +498,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             }
         });
 
-        queryHandlers.put(Query.In.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.In.class, (queryState, criterion) -> {
             Query.In inQuery = (Query.In) criterion;
             final String name = inQuery.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, Query.In.class);
@@ -515,10 +507,9 @@ public class JpaQueryBuilder implements QueryBuilder {
                     .append(name)
                     .append(" IN (");
             Query subquery = inQuery.getSubquery();
-            if(subquery != null) {
+            if (subquery != null) {
                 buildSubQuery(queryState, subquery);
-            }
-            else {
+            } else {
                 String parameterName = newParameter(queryState.position);
                 queryState.whereClause.append(':').append(parameterName);
                 Object value = inQuery.getValue();
@@ -530,57 +521,57 @@ public class JpaQueryBuilder implements QueryBuilder {
 
         });
 
-        queryHandlers.put(Query.NotIn.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.NotIn.class, (queryState, criterion) -> {
             String comparisonExpression = " NOT IN (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.EqualsAll.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.EqualsAll.class, (queryState, criterion) -> {
             String comparisonExpression = " = ALL (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.NotEqualsAll.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.NotEqualsAll.class, (queryState, criterion) -> {
             String comparisonExpression = " != ALL (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.GreaterThanAll.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanAll.class, (queryState, criterion) -> {
             String comparisonExpression = " > ALL (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.GreaterThanSome.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanSome.class, (queryState, criterion) -> {
             String comparisonExpression = " > SOME (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.GreaterThanEqualsAll.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanEqualsAll.class, (queryState, criterion) -> {
             String comparisonExpression = " >= ALL (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.GreaterThanEqualsSome.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.GreaterThanEqualsSome.class, (queryState, criterion) -> {
             String comparisonExpression = " >= SOME (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.LessThanAll.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanAll.class, (queryState, criterion) -> {
             String comparisonExpression = " < ALL (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.LessThanSome.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanSome.class, (queryState, criterion) -> {
             String comparisonExpression = " < SOME (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.LessThanEqualsAll.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanEqualsAll.class, (queryState, criterion) -> {
             String comparisonExpression = " <= ALL (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
 
-        queryHandlers.put(Query.LessThanEqualsSome.class, (queryState, criterion) -> {
+        QUERY_HANDLERS.put(Query.LessThanEqualsSome.class, (queryState, criterion) -> {
             String comparisonExpression = " <= SOME (";
             handleSubQuery(queryState, (Query.SubqueryCriterion) criterion, comparisonExpression);
         });
@@ -612,7 +603,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                 .append(" WHERE ");
         List<Query.Criterion> criteria = subquery.getCriteria().getCriteria();
         for (Query.Criterion subCriteria : criteria) {
-            QueryHandler queryHandler = queryHandlers.get(subCriteria.getClass());
+            QueryHandler queryHandler = QUERY_HANDLERS.get(subCriteria.getClass());
             if (queryHandler != null) {
                 queryHandler.handle(
                         queryState,
@@ -738,9 +729,9 @@ public class JpaQueryBuilder implements QueryBuilder {
             return identity;
         }
         PersistentProperty[] compositeIdentity = entity.getCompositeIdentity();
-        if(compositeIdentity != null) {
+        if (compositeIdentity != null) {
             for (PersistentProperty property : compositeIdentity) {
-                if(property.getName().equals(name)) {
+                if (property.getName().equals(name)) {
                     return property;
                 }
             }
@@ -785,7 +776,7 @@ public class JpaQueryBuilder implements QueryBuilder {
         if (!orders.isEmpty()) {
 
             StringBuilder buff = queryState.query;
-            buff.append( ORDER_BY_CLAUSE);
+            buff.append(ORDER_BY_CLAUSE);
             Iterator<Sort.Order> i = orders.iterator();
             while (i.hasNext()) {
                 Sort.Order order = i.next();
@@ -809,12 +800,11 @@ public class JpaQueryBuilder implements QueryBuilder {
             Query.Criterion criterion = iterator.next();
 
             final String operator = criteria instanceof Query.Conjunction ? LOGICAL_AND : LOGICAL_OR;
-            QueryHandler qh = queryHandlers.get(criterion.getClass());
+            QueryHandler qh = QUERY_HANDLERS.get(criterion.getClass());
             if (qh != null) {
 
                 qh.handle(queryState, criterion);
-            }
-            else if (criterion instanceof AssociationQuery) {
+            } else if (criterion instanceof AssociationQuery) {
 
                 if (!queryState.allowJoins) {
                     throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
@@ -828,8 +818,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                         junction,
                         junction.getCriteria()
                 );
-            }
-            else {
+            } else {
                 throw new IllegalArgumentException("Queries of type " + criterion.getClass().getSimpleName() + " are not supported by this implementation");
             }
 
@@ -840,10 +829,16 @@ public class JpaQueryBuilder implements QueryBuilder {
 
     }
 
+    /**
+     * A query handler.
+     */
     private interface QueryHandler {
         void handle(QueryState queryState, Query.Criterion criterion);
     }
 
+    /**
+     * The state of the query.
+     */
     private class QueryState {
         final AtomicInteger position = new AtomicInteger(0);
         final Map<String, String> parameters  = new LinkedHashMap<>();

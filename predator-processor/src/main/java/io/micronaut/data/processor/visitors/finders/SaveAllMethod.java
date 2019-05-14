@@ -45,7 +45,7 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = methodElement.getParameters();
-        if(parameters.length == 1) {
+        if (parameters.length == 1) {
             ParameterElement firstParameter = parameters[0];
             return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isIterableOfEntity(firstParameter.getGenericType());
         }

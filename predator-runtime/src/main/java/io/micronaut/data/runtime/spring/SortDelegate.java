@@ -32,6 +32,10 @@ class SortDelegate implements Sort {
 
     private org.springframework.data.domain.Sort sort;
 
+    /**
+     * Default constructor.
+     * @param sort The target sort
+     */
     SortDelegate(org.springframework.data.domain.Sort sort) {
         this.sort = sort;
     }

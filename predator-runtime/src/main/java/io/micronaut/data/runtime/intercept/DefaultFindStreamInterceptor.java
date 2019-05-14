@@ -24,8 +24,18 @@ import io.micronaut.data.runtime.datastore.Datastore;
 
 import java.util.stream.Stream;
 
+/**
+ * Default implementation of {@link FindStreamInterceptor}.
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T, Stream<Object>> implements FindStreamInterceptor<T> {
 
+    /**
+     * Default constructor.
+     * @param datastore The datastore
+     */
     public DefaultFindStreamInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }

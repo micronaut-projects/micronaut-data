@@ -45,7 +45,7 @@ public interface Sort {
     Sort order(@NonNull String propertyName);
 
     /**
-     * Adds an order object
+     * Adds an order object.
      *
      * @param order The order object
      * @return A new sort with the order applied
@@ -75,7 +75,8 @@ public interface Sort {
     }
 
     /**
-     * Create a sort from the given list of orders
+     * Create a sort from the given list of orders.
+     *
      * @param orderList The order list
      * @return The sort
      */
@@ -138,7 +139,7 @@ public interface Sort {
         }
 
         /**
-         * Creates a new order for the given property in descending order
+         * Creates a new order for the given property in descending order.
          *
          * @param property The property
          * @return The order instance
@@ -148,7 +149,7 @@ public interface Sort {
         }
 
         /**
-         * Creates a new order for the given property in ascending order
+         * Creates a new order for the given property in ascending order.
          *
          * @param property The property
          * @return The order instance
@@ -158,9 +159,10 @@ public interface Sort {
         }
 
         /**
-         * Creates a new order for the given property in descending order
+         * Creates a new order for the given property in descending order.
          *
          * @param property The property
+         * @param ignoreCase Whether to ignore case
          * @return The order instance
          */
         public static Order desc(String property, boolean ignoreCase) {
@@ -168,9 +170,10 @@ public interface Sort {
         }
 
         /**
-         * Creates a new order for the given property in ascending order
+         * Creates a new order for the given property in ascending order.
          *
          * @param property The property
+         * @param ignoreCase  Whether to ignore case
          * @return The order instance
          */
         public static Order asc(String property, boolean ignoreCase) {
@@ -185,7 +188,7 @@ public interface Sort {
         }
 
         /**
-         * Represents the direction of the ordering
+         * Represents the direction of the ordering.
          */
         public enum Direction {
             ASC, DESC

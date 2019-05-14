@@ -33,7 +33,7 @@ import io.micronaut.inject.ast.MethodElement;
 public class ExistsByFinder extends DynamicFinder {
 
     /**
-     * The prefixes used
+     * The prefixes used.
      */
     public static final String[] PREFIXES = new String[] { "exists" };
 

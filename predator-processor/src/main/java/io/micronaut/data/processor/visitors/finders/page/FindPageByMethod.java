@@ -29,9 +29,15 @@ import io.micronaut.inject.ast.MethodElement;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 
+/**
+ * Handles a result of type {@link io.micronaut.data.model.Page}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class FindPageByMethod extends FindByFinder {
 
-    protected static final int POSITION = FindSliceByMethod.POSITION + 10;
+    public static final int POSITION = FindSliceByMethod.POSITION + 10;
 
     @Override
     public int getOrder() {

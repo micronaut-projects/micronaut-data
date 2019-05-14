@@ -26,7 +26,12 @@ import io.micronaut.data.processor.visitors.finders.ListMethod;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.inject.ast.ClassElement;
 
-
+/**
+ * Handles a return type of type {@link io.micronaut.data.model.Page}.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class ListPageMethod extends ListMethod {
     protected static final int POSITION = FindPageByMethod.POSITION + 25;
 

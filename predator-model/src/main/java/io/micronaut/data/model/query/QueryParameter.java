@@ -31,6 +31,10 @@ public class QueryParameter implements Named {
 
     private final String name;
 
+    /**
+     * Default constructor.
+     * @param name The parameter name
+     */
     public QueryParameter(@NonNull String name) {
         ArgumentUtils.requireNonNull("name", name);
         this.name = name;
@@ -44,8 +48,12 @@ public class QueryParameter implements Named {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         QueryParameter that = (QueryParameter) o;
         return name.equals(that.name);
     }
@@ -56,7 +64,7 @@ public class QueryParameter implements Named {
     }
 
     /**
-     * Creates a new query parameter for the given name
+     * Creates a new query parameter for the given name.
      * @param name The name
      * @return The parameter
      */
