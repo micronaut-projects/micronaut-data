@@ -24,9 +24,11 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract base class for dynamic finders. This class is designed to be used only within the compiler
@@ -46,11 +48,10 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     static {
         // populate the default method expressions
         try {
-            Class[] classes = {
-                    CriterionMethodExpression.Equal.class, CriterionMethodExpression.NotEqual.class, CriterionMethodExpression.NotInList.class, CriterionMethodExpression.InList.class, CriterionMethodExpression.InRange.class, CriterionMethodExpression.Between.class, CriterionMethodExpression.Like.class, CriterionMethodExpression.Ilike.class, CriterionMethodExpression.Rlike.class,
-                    CriterionMethodExpression.GreaterThanEquals.class, CriterionMethodExpression.LessThanEquals.class, CriterionMethodExpression.GreaterThan.class,
-                    CriterionMethodExpression.LessThan.class, CriterionMethodExpression.IsNull.class, CriterionMethodExpression.IsNotNull.class, CriterionMethodExpression.IsEmpty.class,
-                    CriterionMethodExpression.IsEmpty.class, CriterionMethodExpression.IsNotEmpty.class};
+            ;
+            Class[] classes = Arrays.stream(CriterionMethodExpression.class.getClasses()).filter(c ->
+                    CriterionMethodExpression.class.isAssignableFrom(c) && !Modifier.isAbstract(c.getModifiers())
+            ).toArray(Class[]::new);
             Class[] constructorParamTypes = {String.class};
             for (Class c : classes) {
                 methodExpressions.put(c.getSimpleName(), c.getConstructor(constructorParamTypes));

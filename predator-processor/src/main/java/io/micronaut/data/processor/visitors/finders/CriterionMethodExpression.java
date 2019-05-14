@@ -60,6 +60,18 @@ public abstract class CriterionMethodExpression {
         }
     }
 
+    public static class After extends GreaterThan {
+        public After(String propertyName) {
+            super(propertyName);
+        }
+    }
+
+    public static class Before extends LessThan {
+        public Before(String propertyName) {
+            super(propertyName);
+        }
+    }
+
     public static class GreaterThanEquals extends CriterionMethodExpression {
         public GreaterThanEquals(String propertyName) {
             super(propertyName);
@@ -148,6 +160,12 @@ public abstract class CriterionMethodExpression {
         @Override
         public Query.Criterion createCriterion() {
             return Restrictions.in(propertyName, new QueryParameter(argumentNames[0]));
+        }
+    }
+
+    public static class In extends InList {
+        public In(String propertyName) {
+            super(propertyName);
         }
     }
 
