@@ -5,6 +5,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindByIdInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.FindPageInterceptor
@@ -34,6 +35,8 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
     Person find(Long id, String name);
     
     Person findById(Long id);
+    
+    Iterable<Person> findByIds(Iterable<Long> ids);
 }
 """)
 
@@ -42,15 +45,19 @@ interface MyInterface extends io.micronaut.data.repository.Repository<Person, Lo
         def findMethod = beanDefinition.getRequiredMethod("find", Long)
         def findMethod2 = beanDefinition.getRequiredMethod("find", Long, String)
         def findMethod3 = beanDefinition.getRequiredMethod("findById", Long)
+        def findByIds = beanDefinition.getRequiredMethod("findByIds", Iterable.class)
 
         def findAnn = findMethod.synthesize(PredatorMethod)
         def findAnn2 = findMethod2.synthesize(PredatorMethod)
         def findAnn3 = findMethod3.synthesize(PredatorMethod)
+        def findByIdsAnn = findByIds.synthesize(PredatorMethod)
 
         then:"it is configured correctly"
         findAnn.interceptor() == FindByIdInterceptor
         findAnn3.interceptor() == FindByIdInterceptor
         findAnn2.interceptor() == FindOneInterceptor
+        findByIdsAnn.interceptor() == FindAllInterceptor
+        findByIds.synthesize(Query).value() == 'SELECT person FROM io.micronaut.data.model.entities.Person AS person WHERE (person.id IN (:p1))'
     }
 
     @Override
