@@ -49,9 +49,8 @@ public class SaveMethod extends AbstractPatternBasedMethod implements MethodCand
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        ClassElement returnType = methodElement.getGenericReturnType();
-        boolean returnTypeValid = returnType == null || returnType.hasAnnotation(Persisted.class);
-        return returnTypeValid && super.isMethodMatch(methodElement, matchContext);
+        ParameterElement[] parameters = matchContext.getParameters();
+        return parameters.length == 1 && super.isMethodMatch(methodElement, matchContext) && isValidReturnType(matchContext);
     }
 
     @Nullable
@@ -69,6 +68,12 @@ public class SaveMethod extends AbstractPatternBasedMethod implements MethodCand
         }
         visitorContext.fail("Cannot implement save method for specified arguments and return type", matchContext.getMethodElement());
         return null;
+    }
+
+    private boolean isValidReturnType(MatchContext matchContext) {
+        ClassElement returnType = matchContext.getReturnType();
+        ClassElement parameterType = matchContext.getParameters()[0].getGenericType();
+        return returnType.hasAnnotation(Persisted.class) && parameterType != null && returnType.getName().equals(parameterType.getName());
     }
 
 }
