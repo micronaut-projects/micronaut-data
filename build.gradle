@@ -117,7 +117,7 @@ subprojects { Project subproject ->
         }
 
         testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
-        testCompile 'io.micronaut.test:micronaut-test-spock:1.0.1'
+        testCompile "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
         testCompile "cglib:cglib-nodep:2.2.2"
         testCompile "org.objenesis:objenesis:1.4"
 
