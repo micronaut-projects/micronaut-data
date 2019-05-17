@@ -68,6 +68,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private QueryBuilder queryEncoder;
     private Map<String, String> typeRoles = new HashMap<>();
     private List<MethodCandidate> finders;
+    private boolean failing = false;
 
     /**
      * Default constructor.
@@ -88,6 +89,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
+        if (failing) {
+            return;
+        }
         this.currentClass = element;
 
         queryEncoder = resolveQueryEncoder(element, context);
@@ -123,7 +127,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (currentClass == null) {
+        if (currentClass == null || failing) {
             return;
         }
 
@@ -213,7 +217,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     }
 
                                 } catch (Exception e) {
-                                    context.fail("Invalid query method: " + e.getMessage(), element);
+                                    methodMatchContext.fail("Invalid query method: " + e.getMessage());
+                                    this.failing = true;
                                     return;
                                 }
 
@@ -289,14 +294,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             });
                             return;
                         } else {
-                            context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.", element);
+                            methodMatchContext.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.");
+                            this.failing = true;
                             return;
                         }
                     }
 
+                    this.failing = methodMatchContext.isFailing();
+
                 }
             }
 
+            this.failing = true;
             context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
         }
     }
