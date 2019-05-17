@@ -40,7 +40,6 @@ public class MethodMatchContext extends MatchContext {
     @NonNull
     private final SourcePersistentEntity entity;
     private final Map<String, Element> parametersInRole;
-    private boolean failing = false;
 
     /**
      * Creates the context.
@@ -90,24 +89,6 @@ public class MethodMatchContext extends MatchContext {
     @NonNull
     public SourcePersistentEntity getRootEntity() {
         return entity;
-    }
-
-    /**
-     * Fail compilation with the given message for the current method.
-     * @param message The message
-     */
-    public void fail(@NonNull String message) {
-        this.failing = true;
-        getVisitorContext().fail(message, getMethodElement());
-    }
-
-    /**
-     * Is there a current error.
-     *
-     * @return True if there is an error
-     */
-    public boolean isFailing() {
-        return failing;
     }
 
     /**

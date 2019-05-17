@@ -160,7 +160,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole, context);
 
                     if (entity == null) {
-                        context.fail("Unable to establish persistent entity to query", element);
+                        matchContext.fail("Unable to establish persistent entity to query for method: " + element.getName());
+                        this.failing = matchContext.isFailing();
                         return;
                     }
 

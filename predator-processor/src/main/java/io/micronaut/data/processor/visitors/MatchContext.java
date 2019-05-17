@@ -40,6 +40,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     protected final ClassElement returnType;
     @NonNull
     protected final ParameterElement[] parameters;
+    private boolean failing = false;
 
     /**
      * Default constructor.
@@ -112,5 +113,23 @@ public class MatchContext implements AnnotationMetadataProvider {
     @NonNull
     public ParameterElement[] getParameters() {
         return parameters;
+    }
+
+    /**
+     * Fail compilation with the given message for the current method.
+     * @param message The message
+     */
+    public void fail(@NonNull String message) {
+        this.failing = true;
+        getVisitorContext().fail(message, getMethodElement());
+    }
+
+    /**
+     * Is there a current error.
+     *
+     * @return True if there is an error
+     */
+    public boolean isFailing() {
+        return failing;
     }
 }
