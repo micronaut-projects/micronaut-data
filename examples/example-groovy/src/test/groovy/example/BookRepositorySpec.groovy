@@ -14,10 +14,10 @@ class BookRepositorySpec extends Specification {
     void "test perform CRUD"() {
         // Create: Save a new book
         when:"A book is saved"
-        Book book = new Book()
-        book.setTitle("The Stand")
-        book.setPages(1000)
+        // tag::save[]
+        Book book = new Book(title:"The Stand", pages:1000)
         bookRepository.save(book)
+        // end::save[]
 
         Long id = book.getId()
 
@@ -26,7 +26,9 @@ class BookRepositorySpec extends Specification {
 
         // Read: Read a book from the database
         when:"A book is retrieved by ID"
+        // tag::read[]
         book = bookRepository.findById(id).orElse(null)
+        // end::read[]
 
         then:"The book is present"
         book != null
@@ -37,8 +39,10 @@ class BookRepositorySpec extends Specification {
 
         when:"The book is updated"
         // Update: Update the book and save it again
-        book.setTitle("Changed")
+        // tag::update[]
+        book.title = "Changed"
         bookRepository.save(book)
+        // end::update[]
         book = bookRepository.findById(id).orElse(null)
 
         then:"The book was updated"
@@ -46,7 +50,9 @@ class BookRepositorySpec extends Specification {
 
         // Delete: Delete the book
         when:"The book is deleted"
+        // tag::delete[]
         bookRepository.deleteById(id)
+        // end::delete[]
 
         then:"It is gone"
         bookRepository.count() == 0

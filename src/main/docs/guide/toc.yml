@@ -2,7 +2,6 @@ introduction:
   title: Introduction
 quickStart:
   title: Quick Start
-  crud:
 jpa:
   title: Predator with JPA
 sql:

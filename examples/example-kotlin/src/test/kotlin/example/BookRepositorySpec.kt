@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 import javax.inject.Inject
 
 @MicronautTest(rollback = false)
-class BookRepositoryTest {
+class BookRepositorySpec {
 
     @Inject
     lateinit var bookRepository: BookRepository
