@@ -1,0 +1,62 @@
+plugins {
+    id "io.spring.dependency-management" version "1.0.6.RELEASE"
+    id "groovy"
+    id "com.github.johnrengelman.shadow" version "4.0.2"
+    id "application"
+}
+
+version "0.1"
+group "example"
+
+repositories {
+    mavenLocal()
+    maven { url "https://jcenter.bintray.com" }
+
+}
+
+dependencyManagement {
+    imports {
+        mavenBom 'io.micronaut:micronaut-bom:1.1.2.BUILD-SNAPSHOT'
+    }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly 
+}
+
+ext {
+    predatorVersion = "1.0.0.BUILD-SNAPSHOT"
+}
+dependencies {
+
+    compile "io.micronaut:micronaut-http-client"
+    compile "io.micronaut.data:micronaut-predator-hibernate-jpa:$predatorVersion"
+    compile "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    compile "io.micronaut:micronaut-http-server-netty"
+    compile "io.micronaut:micronaut-runtime-groovy"
+    compile "io.micronaut:micronaut-validation"
+    compileOnly "io.micronaut.data:micronaut-predator-processor:$predatorVersion"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    runtime "ch.qos.logback:logback-classic:1.2.3"
+    runtime "com.h2database:h2"
+    testCompile("org.spockframework:spock-core") {
+        exclude group: "org.codehaus.groovy", module: "groovy-all"
+    }
+    testCompile "io.micronaut:micronaut-inject-groovy"
+    testCompile "io.micronaut.test:micronaut-test-spock"
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "example.Application"
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.classpath += configurations.developmentOnly
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
+tasks.withType(GroovyCompile) {
+    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
+}
