@@ -13,16 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.repository;
 
 /**
- * Parent repository interface for all repositories.
+ * Common data access exceptions.
  *
  * @author graemerocher
- * @since 1.0
- *
- * @param <E> The entity type
- * @param <ID> The ID type
+ * @since 1.0.0
  */
-public interface Repository<E, ID> {
-}
+package io.micronaut.data.exceptions;

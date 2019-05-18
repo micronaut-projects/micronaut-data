@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
 
 /**
- * An interceptor that accepts a single entity to be saved and returns either the entity or nothing.
- * @param <T> The declaring type.
+ * Query build interfaces.
  *
  * @author graemerocher
- * @since 1.0
+ * @since 1.0.0
  */
-public interface SaveOneInterceptor<T> extends PredatorInterceptor<T, Object> {
-}
+package io.micronaut.data.model.query.builder;

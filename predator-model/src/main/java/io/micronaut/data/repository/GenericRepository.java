@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
+package io.micronaut.data.repository;
 
 /**
- * An interceptor that accepts a single entity to be saved and returns either the entity or nothing.
- * @param <T> The declaring type.
+ * Parent repository interface for all repositories.
  *
  * @author graemerocher
  * @since 1.0
+ *
+ * @param <E> The entity type
+ * @param <ID> The ID type
  */
-public interface SaveOneInterceptor<T> extends PredatorInterceptor<T, Object> {
+public interface GenericRepository<E, ID> {
 }

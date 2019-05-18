@@ -44,6 +44,7 @@ import io.micronaut.data.processor.visitors.finders.page.QueryPageMethod;
 import io.micronaut.data.processor.visitors.finders.slice.FindSliceByMethod;
 import io.micronaut.data.processor.visitors.finders.slice.ListSliceMethod;
 import io.micronaut.data.processor.visitors.finders.slice.QuerySliceMethod;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -364,7 +365,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private @Nullable String resolveIdType(PersistentEntity entity) {
-        Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(io.micronaut.data.repository.Repository.class);
+        Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(GenericRepository.class);
         String varName = "ID";
         if (typeArguments.isEmpty()) {
             typeArguments = currentClass.getTypeArguments(SPRING_REPO);
@@ -386,7 +387,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         ClassElement returnType = element.getGenericReturnType();
         SourcePersistentEntity entity = resolvePersistentEntity(returnType);
         if (entity == null) {
-            Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(io.micronaut.data.repository.Repository.class);
+            Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(GenericRepository.class);
             String argName = "E";
             if (typeArguments.isEmpty()) {
                 argName = "T";

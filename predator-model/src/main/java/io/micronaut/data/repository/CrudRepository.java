@@ -32,7 +32,7 @@ import java.util.Optional;
  * @param <ID> The ID type
  */
 @Blocking
-public interface CrudRepository<E, ID> extends Repository<E, ID> {
+public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state.
      *

@@ -44,9 +44,10 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;
 import java.util.List;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long> {
+interface MyInterface extends GenericRepository<Person, Long> {
 
     void update(@Id Long myId, String name);
     
@@ -91,9 +92,10 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;
 import java.util.List;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-interface MyInterface extends io.micronaut.data.repository.Repository<Company, Long> {
+interface MyInterface extends GenericRepository<Company, Long> {
 
     void update(@Id Long myId, String name);
     

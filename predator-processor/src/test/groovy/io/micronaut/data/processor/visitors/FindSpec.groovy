@@ -42,8 +42,10 @@ package test;
 
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+
 @Repository
-interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long> {
+interface MyInterface extends GenericRepository<Person, Long> {
 
     Person find(Long id);
     

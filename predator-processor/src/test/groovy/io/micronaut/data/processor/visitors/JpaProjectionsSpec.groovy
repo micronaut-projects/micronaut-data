@@ -114,9 +114,10 @@ package test;
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
+interface MyInterface extends GenericRepository<Person, Long>{
     $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
 
@@ -134,9 +135,10 @@ import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.entities.Person;
 import java.util.List;
+import io.micronaut.data.repository.GenericRepository;
 
 @Repository
-interface MyInterface extends io.micronaut.data.repository.Repository<Person, Long>{
+interface MyInterface extends GenericRepository<Person, Long>{
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
 
