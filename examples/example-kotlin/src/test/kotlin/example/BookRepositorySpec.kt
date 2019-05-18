@@ -8,24 +8,28 @@ import javax.inject.Inject
 @MicronautTest(rollback = false)
 class BookRepositorySpec {
 
+    // tag::inject[]
     @Inject
     lateinit var bookRepository: BookRepository
+    // end::inject[]
 
     @Test
     fun testCrud() {
         assertNotNull(bookRepository)
 
         // Create: Save a new book
-        var book = Book(0,"The Stand")
-        book.title = "The Stand"
-        book.pages = 1000
+        // tag::save[]
+        var book = Book(0,"The Stand", 1000)
         bookRepository.save(book)
+        // end::save[]
 
         val id = book.id
         assertNotNull(id)
 
         // Read: Read a book from the database
+        // tag::read[]
         book = bookRepository.findById(id).orElse(null)
+        // end::read[]
         assertNotNull(book)
         assertEquals("The Stand", book.title)
 
@@ -34,13 +38,17 @@ class BookRepositorySpec {
         assertTrue(bookRepository.findAll().iterator().hasNext())
 
         // Update: Update the book and save it again
+        // tag::update[]
         book.title = "Changed"
         bookRepository.save(book)
+        // end::update[]
         book = bookRepository.findById(id).orElse(null)
         assertEquals("Changed", book.title)
 
         // Delete: Delete the book
+        // tag::delete[]
         bookRepository.deleteById(id)
+        // end::delete[]
         assertEquals(0, bookRepository.count())
     }
 }

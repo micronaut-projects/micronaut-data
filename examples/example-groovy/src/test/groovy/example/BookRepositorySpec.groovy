@@ -9,7 +9,9 @@ import javax.inject.Inject
 class BookRepositorySpec extends Specification {
 
 
+    // tag::inject[]
     @Inject BookRepository bookRepository
+    // end::inject[]
 
     void "test perform CRUD"() {
         // Create: Save a new book
