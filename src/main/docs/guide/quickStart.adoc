@@ -16,7 +16,7 @@ snippet::example.Book[project-base="examples/example", source="main"]
 
 Followed by an interface that extends from api:data.repository.CrudRepository[]
 
-snippet::example.BookRepository[project-base="examples/example", source="main"]
+snippet::example.BookRepository[project-base="examples/example", source="main", tags="repository"]
 
 <1> The interface is annotated with ann:data.annotation.Repository[]
 <2> The `CrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `Long`)

@@ -4,6 +4,7 @@ quickStart:
   title: Quick Start
 querying:
   title: Writing Queries
+  criteria: Query Criteria
   pagination: Pagination
   projections: Query Projections
   joinQueries: Join Queries

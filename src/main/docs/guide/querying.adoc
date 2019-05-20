@@ -1,1 +1,70 @@
-TODO
+The implementation of querying in Predator is based on the dynamic finders in https://gorm.grails.org[GORM].
+
+A pattern matching approach is taken at compilation time. The general pattern of query methods is:
+
+.Query Method Pattern
+image::finderpattern.svg[]
+
+As shown in Figure 1, the most common query stem is `find`, but you can also use `search`, `query`, `get`, `read` or `retrieve`.
+
+The projection and ordering parts of the query pattern are optional (more on those later). The following snippet demonstrates 3 simple queries that use a different stem but perform the same query:
+
+snippet::example.BookRepository[project-base="examples/example", source="main", tags="simple", indent="0"]
+
+The above examples return a single instance of an entity, the supported return types are described in the following table:
+
+.Supported Return Types for Finder Methods
+[cols=2*]
+|===
+|Return Type
+|Description
+
+|`List<Book>`
+|A `java.util.List` or any common `Iterable` type
+
+|`Stream<Book>`
+|A Java 8 `java.util.stream.Steam` instance
+
+|`Optional<Book>`
+|An optional value, if `null` is retrieved otherwise a api:data.exceptions.EmptyResultException[] is thrown
+
+|`Page<Book>`
+|An instance of api:data.model.Page[] for pagination.
+
+|`Slice<Book>`
+|An instance of api:data.model.Slice[] for pagination.
+
+|Primitive/Simple Types
+|In the case of projections primitive/basic types can be returned
+|===
+
+In addition, to the standard `findBy*` pattern, a few other patterns exist that have special return type requirements.
+
+The following table summarizes the possible alternative patterns, behaviour and expected return types:
+
+.Method Patterns and Return Types
+[cols=3*]
+|===
+|Method Pattern
+|Expected Return Type
+|Description
+
+|`countBy*`
+|A primitive number of an instance of `java.lang.Number`
+|Counts the number of records
+
+|`existsBy*`
+|A primitive or wrapper `boolean`
+|Checks whether a record exists
+
+|`deleteBy*`
+|A `void` return type
+|Batch delete for the given finder
+
+|`updateBy*`
+|A `void` return type
+|Batch update for the given finder
+
+|===
+
+TIP: More details about the batch update variants of these methods is covered in the <<dataUpdates, Data Updates>> section.

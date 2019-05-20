@@ -1,0 +1,76 @@
+The previous example presented a simple `findByTitle` query which searches for all `Book` instances that have a `title` property _equal to_ the given value.
+
+This is the simplest type of query supported by Predator, but you can use an optional suffix on the property name to modify the type of criterion to apply.
+
+For example the following query pattern will execute a query that finds only `Book` instances that have a page count greater than the given value:
+
+snippet::example.BookRepository[project-base="examples/example", source="main", tags="greaterthan", indent="0"]
+
+The following table summarizes the possible suffixes and behaviour:
+
+.Property Criterion Suffixes
+[cols=3*]
+|===
+|Example Suffix
+|Description
+|Sample
+
+|`After`
+|Find results where the property is after the given value
+|`findByDateCreatedAfter`
+
+|`Before`
+|Find results where the property is before the given value
+|`findByDateCreatedBefore`
+
+|`GreaterThan`
+|Find results where the property is greater than the given value
+|`findByPagesGreaterThan`
+
+|`GreaterThanEquals`
+|Find results where the property is greater than or equal to the given value
+|`findByPagesGreaterThanEquals`
+
+|`LessThan`
+|Find results where the property is less than the given value
+|`findByPagesLessThan`
+
+|`LessThanEquals`
+|Find results where the property is less than or equal to the given value
+|`findByPagesGreaterThanEquals`
+
+|`Like`
+|Finds string values "like" the given expression
+|`findByTitleLike`
+
+|`ILike`
+|Case insensitive "like" query
+|`findByTitleILike`
+
+|`InList` or `In`
+|Find results where the property is that are contained within the given list
+|`findByTitleInList`
+
+|`Between` or `InRange`
+|Find results where the property is between the given values
+|`findByDateCreatedBetween`
+
+|`IsNull`
+|Finds results where the property is `null`
+|`findByAuthorIsNull`
+
+|`IsNotNull`
+|Finds results where the property is `IsNotNull`
+|`findByAuthorIsNotNull`
+
+|`IsEmpty`
+|Finds results where the property is empty or `null`
+|`findByAuthorIsEmpty`
+
+|`IsNotEmpty`
+|Finds results where the property is not empty or `null`
+|`findByAuthorIsNotEmpty`
+
+|===
+
+TIP: Any of these criterion expressions can be negated by adding the word `Not` before the expression (for example `NotInList`).
