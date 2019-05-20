@@ -173,7 +173,7 @@ project.afterEvaluate {
     allprojects.repositories.each { handler ->
         handler.each {
             if (it.url.toString().startsWith("http://")) {
-                throw new RuntimeException("Build should not define insecure HTTP-based Maven repostories")
+                throw new GradleException("Build should not define insecure HTTP-based Maven repostories")
             }
         }
     }
