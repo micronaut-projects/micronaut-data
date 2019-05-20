@@ -2,6 +2,20 @@ introduction:
   title: Introduction
 quickStart:
   title: Quick Start
+querying:
+  title: Writing Queries
+  pagination: Pagination
+  projections: Query Projections
+  joinQueries: Join Queries
+  explicitQueries: Explicit Queries
+dataUpdates:
+  title: Updating Data
+  transactions: Transactions
+  timestamps: Entity Timestamps
+howItWorks:
+  title: How Predator Works
+spring:
+  title: Spring Integration
 jpa:
   title: Predator with JPA
 sql:
