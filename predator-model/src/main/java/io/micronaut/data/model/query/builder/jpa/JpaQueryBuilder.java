@@ -641,35 +641,40 @@ public class JpaQueryBuilder implements QueryBuilder {
         }
 
         final String associationName = association.getName();
-        JoinSpec.Type jt = queryState.queryObject.getJoinType(association).orElse(JoinSpec.Type.DEFAULT);
-        String joinType;
-        switch (jt) {
-            case LEFT:
-                joinType = " LEFT JOIN ";
-            break;
-            case LEFT_FETCH:
-                joinType = " LEFT JOIN FETCH ";
-            break;
-            case RIGHT:
-                joinType = " RIGHT JOIN ";
-            break;
-            case RIGHT_FETCH:
-                joinType = " RIGHT JOIN FETCH ";
-            break;
-            case INNER:
-                joinType = " JOIN ";
-            break;
-            case FETCH:
-            default:
-                joinType = " JOIN FETCH ";
-        }
+        String associationPath = queryState.logicalName + DOT + associationName;
+        if (!queryState.appliedJoinPaths.contains(associationPath)) {
+            queryState.appliedJoinPaths.add(associationPath);
+            JoinSpec.Type jt = queryState.queryObject.getJoinType(association).orElse(JoinSpec.Type.DEFAULT);
+            String joinType;
+            switch (jt) {
+                case LEFT:
+                    joinType = " LEFT JOIN ";
+                    break;
+                case LEFT_FETCH:
+                    joinType = " LEFT JOIN FETCH ";
+                    break;
+                case RIGHT:
+                    joinType = " RIGHT JOIN ";
+                    break;
+                case RIGHT_FETCH:
+                    joinType = " RIGHT JOIN FETCH ";
+                    break;
+                case INNER:
+                    joinType = " JOIN ";
+                    break;
+                case FETCH:
+                default:
+                    joinType = " JOIN FETCH ";
+            }
 
-        queryState.query.append(joinType)
-                .append(queryState.logicalName)
-                .append(DOT)
-                .append(associationName)
-                .append(SPACE)
-                .append(associationName);
+
+            queryState.query.append(joinType)
+                    .append(queryState.logicalName)
+                    .append(DOT)
+                    .append(associationName)
+                    .append(SPACE)
+                    .append(associationName);
+        }
 
         try {
             queryState.entity = associatedEntity;
@@ -864,6 +869,7 @@ public class JpaQueryBuilder implements QueryBuilder {
      * The state of the query.
      */
     private class QueryState {
+        final Set<String> appliedJoinPaths = new HashSet<>();
         final AtomicInteger position = new AtomicInteger(0);
         final Map<String, String> parameters  = new LinkedHashMap<>();
         final StringBuilder query = new StringBuilder();
