@@ -52,6 +52,14 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun listBooks(t: String): List<Book>
     // end::explicit[]
 
+    // tag::save[]
+    fun persist(entity: Book): Book
+    // end::save[]
+
+    // tag::save2[]
+    fun persist(title: String, pages: Int): Book
+    // end::save2[]
+
 
 // tag::repository[]
 }

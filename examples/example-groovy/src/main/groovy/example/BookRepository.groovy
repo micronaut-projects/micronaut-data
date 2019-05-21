@@ -52,6 +52,13 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     List<Book> listBooks(String t)
     // end::explicit[]
 
+    // tag::save[]
+    Book persist(Book entity)
+    // end::save[]
+
+    // tag::save2[]
+    Book persist(String title, int pages)
+    // end::save2[]
 
 // tag::repository[]
 }

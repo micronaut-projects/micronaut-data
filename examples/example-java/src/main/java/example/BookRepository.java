@@ -1,13 +1,10 @@
 // tag::repository[]
 package example;
 
-import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
-
 import java.util.List;
 
 @Repository // <1>
@@ -56,6 +53,15 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     @Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
     List<Book> listBooks(String t);
     // end::explicit[]
+
+    // tag::save[]
+    Book persist(Book entity);
+    // end::save[]
+
+    // tag::save2[]
+    Book persist(String title, int pages);
+    // end::save2[]
+
 
 // tag::repository[]
 }

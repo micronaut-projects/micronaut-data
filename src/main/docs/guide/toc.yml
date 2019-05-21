@@ -14,6 +14,8 @@ querying:
 dataUpdates:
   title: Updating Data
   transactions: Transactions
+  batchUpdates: Batch Updates
+  batchDeletes: Batch Deletes
   timestamps: Entity Timestamps
 howItWorks:
   title: How Predator Works
