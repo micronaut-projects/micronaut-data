@@ -235,16 +235,9 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         ClassElement queryResultType = entity.getClassElement();
 
         List<AnnotationValue<JoinSpec>> joinSpecs = methodElement.getAnnotationValuesByType(JoinSpec.class);
-        for (AnnotationValue<JoinSpec> joinSpec : joinSpecs) {
-            String association = joinSpec.getValue(String.class).orElse(null);
-            if (association != null) {
-
-                entity.getPropertyByPath(association).ifPresent(persistentProperty -> {
-                    if (persistentProperty instanceof Association) {
-                        JoinSpec.Type type = joinSpec.get("type", JoinSpec.Type.class).orElse(JoinSpec.Type.DEFAULT);
-                        query.join((Association) persistentProperty, type);
-                    }
-                });
+        if (CollectionUtils.isNotEmpty(joinSpecs)) {
+            if (applyJoinSpecs(matchContext, query, entity, joinSpecs)) {
+                return null;
             }
         }
 

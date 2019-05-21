@@ -1,1 +1,22 @@
-TODO
+To optimize your queries you may need to alter joins to fetch exactly the data you need in the result set.
+
+TIP: If a `LazyInitializationException` occurs this is not a bug in Predator or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
+
+Consider a `Product` entity:
+
+snippet::example.Product[project-base="examples/example", source="main"]
+
+That has an association to a `Manufacturer` entity:
+
+snippet::example.Manufacturer[project-base="examples/example", source="main"]
+
+In this case when you read each `Product` from the database an additional select is required to retrieve the `Manufacturer` for each `Product`. This leads to `N + 1` queries.
+
+To resolve this you can use the ann:data.annotation.JoinSpec[] annotation on your repository interface to specify that a `JOIN FETCH` should be executed to retrieve the associated `Manufacturer`.
+
+snippet::example.ProductRepository[project-base="examples/example", source="main"]
+
+
+<1> The ann:data.annotation.JoinSpec[] is used to indicate a `JOIN FETCH` clause should be included.
+
+Note that the ann:data.annotation.JoinSpec[] annotation is repeatable and hence can be specified multiple time for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.

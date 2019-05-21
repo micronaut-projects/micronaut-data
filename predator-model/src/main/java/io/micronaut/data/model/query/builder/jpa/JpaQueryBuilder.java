@@ -765,8 +765,11 @@ public class JpaQueryBuilder implements QueryBuilder {
             }
             whereClause.append(OPEN_BRACKET);
             buildWhereClauseForCriterion(queryState, criteria, criterionList);
-            queryState.query.append(whereClause.toString());
-            queryState.query.append(CLOSE_BRACKET);
+            String whereStr = whereClause.toString();
+            if (!whereStr.equals(WHERE_CLAUSE + OPEN_BRACKET)) {
+                queryState.query.append(whereStr);
+                queryState.query.append(CLOSE_BRACKET);
+            }
         }
         return queryState.parameters;
     }
@@ -796,34 +799,55 @@ public class JpaQueryBuilder implements QueryBuilder {
             final QueryState queryState,
             Query.Junction criteria,
             final List<Query.Criterion> criterionList) {
+        boolean isFirst = true;
         for (Iterator<Query.Criterion> iterator = criterionList.iterator(); iterator.hasNext();) {
             Query.Criterion criterion = iterator.next();
 
+
             final String operator = criteria instanceof Query.Conjunction ? LOGICAL_AND : LOGICAL_OR;
             QueryHandler qh = QUERY_HANDLERS.get(criterion.getClass());
+            boolean isAssociationCriteria = criterion instanceof AssociationQuery;
             if (qh != null) {
+                if (!isFirst) {
+                    if (isAssociationCriteria) {
+                        if (!((AssociationQuery) criterion).getCriteria().getCriteria().isEmpty()) {
+                            queryState.whereClause.append(operator);
+                        }
+                    } else {
+                        queryState.whereClause.append(operator);
+                    }
+
+                }
 
                 qh.handle(queryState, criterion);
-            } else if (criterion instanceof AssociationQuery) {
-
-                if (!queryState.allowJoins) {
-                    throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
-                }
-                AssociationQuery ac = (AssociationQuery) criterion;
-                Association association = ac.getAssociation();
-                Query.Junction junction = ac.getCriteria();
-                handleAssociationCriteria(
-                        queryState,
-                        association,
-                        junction,
-                        junction.getCriteria()
-                );
             } else {
-                throw new IllegalArgumentException("Queries of type " + criterion.getClass().getSimpleName() + " are not supported by this implementation");
+                if (isAssociationCriteria) {
+
+                    if (!queryState.allowJoins) {
+                        throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
+                    }
+                    AssociationQuery ac = (AssociationQuery) criterion;
+                    Association association = ac.getAssociation();
+                    Query.Junction junction = ac.getCriteria();
+                    handleAssociationCriteria(
+                            queryState,
+                            association,
+                            junction,
+                            junction.getCriteria()
+                    );
+                } else {
+                    throw new IllegalArgumentException("Queries of type " + criterion.getClass().getSimpleName() + " are not supported by this implementation");
+                }
             }
 
-            if (iterator.hasNext()) {
-                queryState.whereClause.append(operator);
+            if (isFirst) {
+                if (isAssociationCriteria) {
+                    if (!((AssociationQuery) criterion).getCriteria().getCriteria().isEmpty()) {
+                        isFirst = false;
+                    }
+                } else {
+                    isFirst = false;
+                }
             }
         }
 

@@ -10,6 +10,7 @@ querying:
   projections: Query Projections
   joinQueries: Join Queries
   explicitQueries: Explicit Queries
+  nativeQueries: Native Queries
 dataUpdates:
   title: Updating Data
   transactions: Transactions

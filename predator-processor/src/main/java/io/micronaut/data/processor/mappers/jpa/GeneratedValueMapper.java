@@ -21,7 +21,7 @@ import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.annotation.Annotation;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -40,8 +40,11 @@ public class GeneratedValueMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        return Collections.singletonList(AnnotationValue.builder(io.micronaut.data.annotation.GeneratedValue.class)
-                .build());
+        return Arrays.asList(
+                AnnotationValue.builder(io.micronaut.data.annotation.GeneratedValue.class).build(),
+                // include nullable for generated values, so they are excluded from null checks
+                AnnotationValue.builder("javax.annotation.Nullable").build()
+        );
     }
 
 }

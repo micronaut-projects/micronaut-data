@@ -18,6 +18,8 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.model.PersistentProperty;
@@ -29,10 +31,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -101,6 +100,7 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
                     return null;
                 }
                 requiredProps.remove(name);
+                constructorArgs.remove(name);
             } else {
                 ClassElement argType = constructorArg.getGenericType();
                 if (argType == null) {
@@ -121,8 +121,13 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
             return null;
         }
         if (!constructorArgs.isEmpty()) {
-            if (!constructorArgs.values().stream().allMatch(PersistentProperty::isNullable)) {
-                matchContext.fail("Save method missing required constructor arguments: " + constructorArgs.keySet());
+            Collection<ParameterElement> values = constructorArgs.values();
+            Set<String> names = values.stream().filter(pe -> {
+                SourcePersistentProperty prop = rootEntity.getPropertyByName(pe.getName());
+                return prop != null && prop.isRequired();
+            }).map(ParameterElement::getName).collect(Collectors.toSet());
+            if (CollectionUtils.isNotEmpty(names)) {
+                matchContext.fail("Save method missing required constructor arguments: " + names);
                 return null;
             }
         }

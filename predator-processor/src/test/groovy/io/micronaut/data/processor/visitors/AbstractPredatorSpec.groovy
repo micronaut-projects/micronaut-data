@@ -18,13 +18,30 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
+import io.micronaut.core.naming.NameUtils
+import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
+import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
 class AbstractPredatorSpec extends AbstractTypeElementSpec {
 
+    BeanDefinition<?> buildRepository(String name, String source) {
+        def pkg = NameUtils.getPackageName(name)
+        return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package $pkg;
+
+import io.micronaut.data.model.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.annotation.*;
+import java.util.*;
+
+$source
+""")
+
+    }
     @Override
     protected JavaParser newJavaParser() {
         return new JavaParser() {

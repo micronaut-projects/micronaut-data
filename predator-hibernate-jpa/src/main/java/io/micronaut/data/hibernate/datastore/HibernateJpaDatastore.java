@@ -69,7 +69,7 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
         return readTransactionTemplate.execute(status ->
-                sessionFactory.getCurrentSession().byId(type).load(id)
+                getCurrentSession().byId(type).load(id)
         );
     }
 
@@ -77,8 +77,8 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> T findOne(@NonNull Class<T> resultType, @NonNull String query, @NonNull Map<String, Object> parameters) {
         return readTransactionTemplate.execute(status -> {
-            Class wrapperType = ReflectionUtils.getWrapperType(resultType);
-            Query<T> q = sessionFactory.getCurrentSession()
+            Class<T> wrapperType = ReflectionUtils.getWrapperType(resultType);
+            Query<T> q = getCurrentSession()
                                        .createQuery(query, wrapperType);
             bindParameters(q, parameters);
             q.setMaxResults(1);
@@ -91,15 +91,9 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> Iterable<T> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Session session = sessionFactory.getCurrentSession();
+            Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<T> query = criteriaBuilder.createQuery(rootEntity);
-            Root<T> root = query.from(rootEntity);
-            Query<T> q = session.createQuery(
-                    query
-            );
-            bindCriteriaSort(query, root, criteriaBuilder, pageable);
-            bindPageable(q, pageable);
+            Query<T> q = buildCriteriaQuery(session, rootEntity, criteriaBuilder, pageable);
 
             return q.list();
         });
@@ -109,7 +103,7 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> long count(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Session session = sessionFactory.getCurrentSession();
+            Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
             Root<T> root = query.from(rootEntity);
@@ -133,7 +127,9 @@ public class HibernateJpaDatastore implements Datastore {
             @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
+            Class<T> wrapperType = ReflectionUtils.getWrapperType(resultType);
+            Query<T> q = getCurrentSession()
+                    .createQuery(query, wrapperType);
             bindParameters(q, parameterValues);
             bindPageable(q, pageable);
             return q.list();
@@ -144,7 +140,7 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> T persist(@NonNull T entity) {
         return writeTransactionTemplate.execute(status -> {
-            sessionFactory.getCurrentSession().persist(entity);
+            getCurrentSession().persist(entity);
             return entity;
         });
     }
@@ -154,7 +150,7 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> Iterable<T> persistAll(@NonNull Iterable<T> entities) {
         return writeTransactionTemplate.execute(status -> {
             if (entities != null) {
-                Session session = sessionFactory.getCurrentSession();
+                Session session = getCurrentSession();
                 for (T entity : entities) {
                     session.persist(entity);
                 }
@@ -169,7 +165,7 @@ public class HibernateJpaDatastore implements Datastore {
     public Optional<Number> executeUpdate(String query, Map<String, Object> parameterValues) {
         //noinspection ConstantConditions
         return writeTransactionTemplate.execute(status -> {
-            Query<?> q = sessionFactory.getCurrentSession().createQuery(query);
+            Query<?> q = getCurrentSession().createQuery(query);
             bindParameters(q, parameterValues);
             return Optional.of(q.executeUpdate());
         });
@@ -178,7 +174,7 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> void deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
         writeTransactionTemplate.execute(status -> {
-            Session session = sessionFactory.getCurrentSession();
+            Session session = getCurrentSession();
             for (T entity : entities) {
                 session.remove(entity);
             }
@@ -189,7 +185,7 @@ public class HibernateJpaDatastore implements Datastore {
     @Override
     public <T> void deleteAll(@NonNull Class<T> entityType) {
         writeTransactionTemplate.execute(status -> {
-            Session session = sessionFactory.getCurrentSession();
+            Session session = getCurrentSession();
             CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
             criteriaDelete.from(entityType);
             Query query = session.createQuery(
@@ -209,7 +205,7 @@ public class HibernateJpaDatastore implements Datastore {
             @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Query<T> q = sessionFactory.getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
+            Query<T> q = getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
             bindParameters(q, parameterValues);
             bindPageable(q, pageable);
 
@@ -220,7 +216,7 @@ public class HibernateJpaDatastore implements Datastore {
     @NonNull
     @Override
     public <T> Stream<T> findStream(@NonNull Class<T> entity, @NonNull Pageable pageable) {
-        Session session = sessionFactory.getCurrentSession();
+        Session session = getCurrentSession();
         CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(entity);
         query.from(entity);
         Query<T> q = session.createQuery(
@@ -235,22 +231,30 @@ public class HibernateJpaDatastore implements Datastore {
     public <T> Page<T> findPage(@NonNull Class<T> entity, @NonNull Pageable pageable) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Session session = sessionFactory.getCurrentSession();
+            Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            CriteriaQuery<T> query = criteriaBuilder.createQuery(entity);
-            Root<T> root = query.from(entity);
-            Query<T> q = session.createQuery(
-                    query
-            );
-            bindCriteriaSort(query, root, criteriaBuilder, pageable);
-            bindPageable(q, pageable);
-
+            Query<T> q = buildCriteriaQuery(session, entity, criteriaBuilder, pageable);
             List<T> resultList = q.list();
             CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
             countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
             Long total = session.createQuery(countQuery).getSingleResult();
             return Page.of(resultList, pageable, total);
         });
+    }
+
+    private Session getCurrentSession() {
+        return sessionFactory.getCurrentSession();
+    }
+
+    private <T> Query<T> buildCriteriaQuery(Session session, @NonNull Class<T> rootEntity, CriteriaBuilder criteriaBuilder, @NonNull Pageable pageable) {
+        CriteriaQuery<T> query = criteriaBuilder.createQuery(rootEntity);
+        Root<T> root = query.from(rootEntity);
+        Query<T> q = session.createQuery(
+                query
+        );
+        bindCriteriaSort(query, root, criteriaBuilder, pageable);
+        bindPageable(q, pageable);
+        return q;
     }
 
     private <T> void bindParameters(@NonNull Query<T> query, Map<String, Object> parameters) {

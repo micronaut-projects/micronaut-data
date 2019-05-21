@@ -17,13 +17,18 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.intercept.reactive.FindReactivePublisherInterceptor;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -33,6 +38,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -187,7 +193,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
      * @param context The context
      * @param query The query
      * @param orderList The list mutate
-     * @return If ordering was applied or if an error occurred false
+     * @return True if an error occurred applying the order
      */
     protected boolean applyOrderBy(@NonNull MethodMatchContext context, @NonNull Query query, @NonNull List<Sort.Order> orderList) {
         if (CollectionUtils.isNotEmpty(orderList)) {
@@ -200,6 +206,45 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 }
             }
             query.sort(Sort.of(orderList));
+        }
+        return false;
+    }
+
+    /**
+     * Apply the configured join specifications to the given query.
+     * @param matchContext The match context
+     * @param query The query
+     * @param rootEntity the root entity
+     * @param joinSpecs The join specs
+     * @return True if an error occurred applying the specs
+     */
+    protected boolean applyJoinSpecs(
+            @NonNull MethodMatchContext matchContext,
+            @NonNull Query query,
+            @Nonnull SourcePersistentEntity rootEntity,
+            @NonNull List<AnnotationValue<JoinSpec>> joinSpecs) {
+        for (AnnotationValue<JoinSpec> joinSpec : joinSpecs) {
+            String path = joinSpec.getValue(String.class).orElse(null);
+            JoinSpec.Type type = joinSpec.get("type", JoinSpec.Type.class).orElse(JoinSpec.Type.DEFAULT);
+            if (path != null) {
+                PersistentProperty prop = rootEntity.getPropertyByPath(path).orElse(null);
+                if (!(prop instanceof Association)) {
+                    matchContext.fail("Invalid join spec: " + path);
+                    return true;
+                } else {
+                    boolean hasExisting = query.getCriteria().getCriteria().stream().anyMatch(c -> {
+                        if (c instanceof AssociationQuery) {
+                            AssociationQuery aq = (AssociationQuery) c;
+                            return aq.getAssociation().equals(prop);
+                        }
+                        return false;
+                    });
+                    if (!hasExisting) {
+                        query.add(new AssociationQuery((Association) prop));
+                    }
+                    query.join((Association) prop, type);
+                }
+            }
         }
         return false;
     }

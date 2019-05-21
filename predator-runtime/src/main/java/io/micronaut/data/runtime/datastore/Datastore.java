@@ -59,42 +59,6 @@ public interface Datastore {
 
     /**
      * Finds all results for the given query.
-     * @param resultType The result type
-     * @param query The query
-     * @param parameterValues The parameter values
-     * @param <T> The generic type
-     * @return An iterable result
-     */
-    default @NonNull <T> Iterable<T> findAll(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues
-    ) {
-        return findAll(
-                resultType,
-                query,
-                parameterValues,
-                Pageable.unpaged()
-        );
-    }
-
-    /**
-     * Finds all results for the given query.
-     * @param rootEntity The root entity
-     * @param <T> The generic type
-     * @return An iterable result
-     */
-    default @NonNull <T> Iterable<T> findAll(
-            @NonNull Class<T> rootEntity
-    ) {
-        return findAll(
-                rootEntity,
-                Pageable.unpaged()
-        );
-    }
-
-    /**
-     * Finds all results for the given query.
      * @param rootEntity The root entity
      * @param pageable The pageable
      * @param <T> The generic type
@@ -104,21 +68,6 @@ public interface Datastore {
             @NonNull Class<T> rootEntity,
             @NonNull Pageable pageable
     );
-
-    /**
-     * Counts all results for the given query.
-     * @param rootEntity The root entity
-     * @param <T> The generic type
-     * @return An iterable result
-     */
-    default <T> long count(
-            @NonNull Class<T> rootEntity
-    ) {
-        return count(
-                rootEntity,
-                Pageable.unpaged()
-        );
-    }
 
     /**
      * Counts all results for the given query.
@@ -145,8 +94,7 @@ public interface Datastore {
             @NonNull Class<T> resultType,
             @NonNull String query,
             @NonNull Map<String, Object> parameterValues,
-            @NonNull Pageable pageable
-            );
+            @NonNull Pageable pageable);
 
     /**
      * Persist the entity returning a possibly new entity.
@@ -218,6 +166,15 @@ public interface Datastore {
             @NonNull Pageable pageable);
 
     /**
+     * Find a page for the given entity and pageable.
+     * @param entity The entity
+     * @param pageable The pageable
+     * @param <R> The entity generic type
+     * @return The page type
+     */
+    <R> Page<R> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable);
+
+    /**
      * Finds a stream for the given arguments.
      * @param entity The result type
      * @param <T> The generic type
@@ -229,12 +186,52 @@ public interface Datastore {
     }
 
     /**
-     * Find a page for the given entity and pageable.
-     * @param entity The entity
-     * @param pageable The pageable
-     * @param <R> The entity generic type
-     * @return The page type
+     * Finds all results for the given query.
+     * @param resultType The result type
+     * @param query The query
+     * @param parameterValues The parameter values
+     * @param <T> The generic type
+     * @return An iterable result
      */
-    <R> Page<R> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable);
+    default @NonNull <T> Iterable<T> findAll(
+            @NonNull Class<T> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues
+    ) {
+        return findAll(
+                resultType,
+                query,
+                parameterValues,
+                Pageable.unpaged()
+        );
+    }
+
+    /**
+     * Finds all results for the given query.
+     * @param rootEntity The root entity
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    default @NonNull <T> Iterable<T> findAll(
+            @NonNull Class<T> rootEntity
+    ) {
+        return findAll(
+                rootEntity,
+                Pageable.unpaged()
+        );
+    }
+
+    /**
+     * Counts all results for the given query.
+     * @param rootEntity The root entity
+     * @param <T> The generic type
+     * @return An iterable result
+     */
+    default <T> long count(@NonNull Class<T> rootEntity) {
+        return count(
+                rootEntity,
+                Pageable.unpaged()
+        );
+    }
 
 }

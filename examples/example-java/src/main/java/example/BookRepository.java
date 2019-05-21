@@ -1,6 +1,7 @@
 // tag::repository[]
 package example;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -42,7 +43,7 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::simple-projection[]
 
     // tag::top-projection[]
-    List<String> findTop3ByTitleLike(String title);
+    List<Book> findTop3ByTitleLike(String title);
     // end::top-projection[]
 
     // tag::ordering[]
@@ -51,6 +52,10 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     List<Book> listOrderByTitleDesc();
     // end::ordering[]
 
+    // tag::explicit[]
+    @Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+    List<Book> listBooks(String t);
+    // end::explicit[]
 
 // tag::repository[]
 }

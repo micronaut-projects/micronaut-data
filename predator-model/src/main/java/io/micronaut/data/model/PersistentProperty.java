@@ -67,6 +67,18 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
     }
 
     /**
+     * Whether a property is required to be specified. This returns
+     * false if the property is both not nullable and not generated.
+     *
+     * @see #isNullable()
+     * @see #isGenerated()
+     * @return True if the property is required
+     */
+    default boolean isRequired() {
+       return !isNullable() && !isGenerated();
+    }
+
+    /**
      * Whether the property is read-only, for example for generated values.
      * @return True if it is read-only
      */

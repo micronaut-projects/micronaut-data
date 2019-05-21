@@ -1,7 +1,7 @@
 // tag::repository[]
 package example
 
-import io.micronaut.data.annotation.Repository
+import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
@@ -38,7 +38,7 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     // end::simple-projection[]
 
     // tag::top-projection[]
-    fun findTop3ByTitleLike(title: String): List<String>
+    fun findTop3ByTitleLike(title: String): List<Book>
     // end::top-projection[]
 
     // tag::ordering[]
@@ -46,6 +46,12 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
 
     fun listOrderByTitleDesc(): List<Book>
     // end::ordering[]
+
+    // tag::explicit[]
+    @Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+    fun listBooks(t: String): List<Book>
+    // end::explicit[]
+
 
 // tag::repository[]
 }

@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
@@ -60,9 +61,14 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
             for (int i = 0; i < constructorArguments.length; i++) {
                 Argument<?> argument = constructorArguments[i];
 
-                Object v = parameterValueMap.get(argument.getName());
-                if (v == null && !PersistentProperty.isNullable(argument.getAnnotationMetadata())) {
-                    throw new IllegalArgumentException("Argument [" + argument.getName() + "] cannot be null");
+                String argumentName = argument.getName();
+                Object v = parameterValueMap.get(argumentName);
+                AnnotationMetadata argMetadata = argument.getAnnotationMetadata();
+                if (v == null && !PersistentProperty.isNullable(argMetadata)) {
+                    PersistentProperty prop = entity.getPropertyByName(argumentName);
+                    if (prop == null || prop.isRequired()) {
+                        throw new IllegalArgumentException("Argument [" + argumentName + "] cannot be null");
+                    }
                 }
                 arguments[i] = v;
             }
