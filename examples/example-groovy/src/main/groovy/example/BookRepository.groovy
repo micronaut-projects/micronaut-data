@@ -31,6 +31,13 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Slice<Book> list(Pageable pageable)
     // end::pageable[]
 
+    // tag::simple-projection[]
+    List<String> findTitleByPagesGreaterThan(int pageCount)
+    // end::simple-projection[]
+
+    // tag::top-projection[]
+    List<String> findTop3ByTitleLike(String title)
+    // end::top-projection[]
 
 // tag::repository[]
 }

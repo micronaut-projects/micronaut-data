@@ -29,6 +29,13 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun list(pageable: Pageable): Slice<Book>
     // end::pageable[]
 
+    // tag::simple-projection[]
+    fun findTitleByPagesGreaterThan(pageCount: Int): List<String>
+    // end::simple-projection[]
+
+    // tag::top-projection[]
+    fun findTop3ByTitleLike(title: String): List<String>
+    // end::top-projection[]
 
 // tag::repository[]
 }

@@ -6,6 +6,7 @@ querying:
   title: Writing Queries
   criteria: Query Criteria
   pagination: Pagination
+  ordering: Ordering
   projections: Query Projections
   joinQueries: Join Queries
   explicitQueries: Explicit Queries

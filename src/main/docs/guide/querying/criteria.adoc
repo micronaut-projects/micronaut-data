@@ -6,9 +6,9 @@ For example the following query pattern will execute a query that finds only `Bo
 
 snippet::example.BookRepository[project-base="examples/example", source="main", tags="greaterthan", indent="0"]
 
-The following table summarizes the possible suffixes and behaviour:
+The following table summarizes the possible expressions and behaviour:
 
-.Property Criterion Suffixes
+.Property Criterion Expressions
 [cols=3*]
 |===
 |Example Suffix
