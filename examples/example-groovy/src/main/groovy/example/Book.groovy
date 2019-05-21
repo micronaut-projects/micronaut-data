@@ -11,5 +11,13 @@ class Book {
     Long id
     String title
     int pages
+
+    Book(String title, int pages) {
+        this.title = title
+        this.pages = pages
+    }
+
+    Book() {
+    }
 }
 

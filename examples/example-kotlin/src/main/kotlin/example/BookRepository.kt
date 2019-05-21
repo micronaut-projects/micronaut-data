@@ -2,6 +2,7 @@
 package example
 
 import io.micronaut.data.annotation.Repository
+import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
 @Repository // <1>
@@ -19,6 +20,15 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     // tag::greaterthan[]
     fun findByPagesGreaterThan(pageCount: Int): List<Book>
     // end::greaterthan[]
+
+    // tag::pageable[]
+    fun findByPagesGreaterThan(pageCount: Int, pageable: Pageable): List<Book>
+
+    fun findByTitleLike(title: String, pageable: Pageable): Page<Book>
+
+    fun list(pageable: Pageable): Slice<Book>
+    // end::pageable[]
+
 
 // tag::repository[]
 }

@@ -1,8 +1,10 @@
 package example
 
+import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import java.util.*
 import javax.inject.Inject
 
 @MicronautTest(rollback = false)
@@ -50,5 +52,44 @@ class BookRepositorySpec {
         bookRepository.deleteById(id)
         // end::delete[]
         assertEquals(0, bookRepository.count())
+    }
+
+    @Test
+    fun testPageable() {
+        // tag::saveall[]
+        bookRepository.saveAll(Arrays.asList(
+                Book(0,"The Stand", 1000),
+                Book(0,"The Shining", 600),
+                Book(0,"The Power of the Dog", 500),
+                Book(0,"The Border", 700),
+                Book(0,"Along Came a Spider", 300),
+                Book(0,"Pet Cemetery", 400),
+                Book(0,"A Game of Thrones", 900),
+                Book(0,"A Clash of Kings", 1100)
+        ))
+        // end::saveall[]
+
+        // tag::pageable[]
+        val slice = bookRepository.list(Pageable.from(0, 3))
+        val resultList = bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3))
+        val page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))
+        // end::pageable[]
+
+        assertEquals(
+                3,
+                slice.numberOfElements
+        )
+        assertEquals(
+                3,
+                resultList.size
+        )
+        assertEquals(
+                3,
+                page.numberOfElements
+        )
+        assertEquals(
+                4,
+                page.totalSize
+        )
     }
 }

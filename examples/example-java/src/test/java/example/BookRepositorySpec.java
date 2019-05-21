@@ -1,6 +1,9 @@
 package example;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
 import io.micronaut.test.annotation.MicronautTest;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,6 +11,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import javax.inject.Inject;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+import java.util.List;
 
 @MicronautTest(rollback = false)
 @Property(name = "datasources.default.name", value = "mydb")
@@ -56,5 +62,45 @@ class BookRepositorySpec {
 		bookRepository.deleteById(id);
         // end::delete[]
 		assertEquals(0, bookRepository.count());
+	}
+
+	@Test
+	void testPageable() {
+		// tag::saveall[]
+		bookRepository.saveAll(Arrays.asList(
+				new Book("The Stand", 1000),
+				new Book("The Shining", 600),
+				new Book("The Power of the Dog", 500),
+				new Book("The Border", 700),
+				new Book("Along Came a Spider", 300),
+				new Book("Pet Cemetery", 400),
+				new Book("A Game of Thrones", 900),
+				new Book("A Clash of Kings", 1100)
+		));
+		// end::saveall[]
+
+		// tag::pageable[]
+		Slice<Book> slice = bookRepository.list(Pageable.from(0, 3));
+		List<Book> resultList =
+				bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3));
+		Page<Book> page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3));
+		// end::pageable[]
+
+		assertEquals(
+				3,
+				slice.getNumberOfElements()
+		);
+		assertEquals(
+				3,
+				resultList.size()
+		);
+		assertEquals(
+				3,
+				page.getNumberOfElements()
+		);
+		assertEquals(
+				4,
+				page.getTotalSize()
+		);
 	}
 }

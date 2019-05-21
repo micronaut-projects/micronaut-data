@@ -10,6 +10,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>example.ApplicationKt</exec.mainClass>
     <kotlinVersion>1.3.21</kotlinVersion>
+    <kotlin.compiler.jvmTarget>1.8</kotlin.compiler.jvmTarget>
   </properties>
   <repositories>
     <repository>
@@ -220,13 +221,15 @@
           </execution>
           <execution>
             <id>compile</id>
+            <phase>compile</phase>
             <goals>
               <goal>compile</goal>
             </goals>
             <configuration>
               <sourceDirs>
-                <sourceDir>src/main/kotlin</sourceDir>
-                <sourceDir>src/main/java</sourceDir>
+                <source>src/main/kotlin</source>
+                <source>target/generated-sources/kapt</source>
+                <source>target/generated-sources/kaptKotlin</source>
               </sourceDirs>
             </configuration>
           </execution>

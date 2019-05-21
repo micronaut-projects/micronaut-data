@@ -1,5 +1,8 @@
 package example
 
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Slice
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 
@@ -58,5 +61,34 @@ class BookRepositorySpec extends Specification {
 
         then:"It is gone"
         bookRepository.count() == 0
+    }
+
+    void "test pageable"() {
+        given:"Some test data"
+        // tag::saveall[]
+        bookRepository.saveAll(Arrays.asList(
+                new Book("The Stand", 1000),
+                new Book("The Shining", 600),
+                new Book("The Power of the Dog", 500),
+                new Book("The Border", 700),
+                new Book("Along Came a Spider", 300),
+                new Book("Pet Cemetery", 400),
+                new Book("A Game of Thrones", 900),
+                new Book("A Clash of Kings", 1100)
+        ))
+        // end::saveall[]
+
+        // tag::pageable[]
+        Slice<Book> slice = bookRepository.list(Pageable.from(0, 3))
+        List<Book> resultList =
+                bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3))
+        Page<Book> page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))
+        // end::pageable[]
+
+        expect:
+        slice.getNumberOfElements() == 3
+        resultList.size() == 3
+        page.getNumberOfElements() == 3
+        page.getTotalSize() == 4
     }
 }
