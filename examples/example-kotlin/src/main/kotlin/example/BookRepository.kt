@@ -41,6 +41,12 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun findTop3ByTitleLike(title: String): List<String>
     // end::top-projection[]
 
+    // tag::ordering[]
+    fun listOrderByTitle(): List<Book>
+
+    fun listOrderByTitleDesc(): List<Book>
+    // end::ordering[]
+
 // tag::repository[]
 }
 // end::repository[]

@@ -43,6 +43,12 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     List<String> findTop3ByTitleLike(String title)
     // end::top-projection[]
 
+    // tag::ordering[]
+    List<Book> listOrderByTitle()
+
+    List<Book> listOrderByTitleDesc()
+    // end::ordering[]
+
 // tag::repository[]
 }
 // end::repository[]
