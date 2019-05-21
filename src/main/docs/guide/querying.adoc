@@ -68,3 +68,9 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |===
 
 TIP: More details about the batch update variants of these methods is covered in the <<dataUpdates, Data Updates>> section.
+
+Finally, as an alternative to the `By` syntax you also define simple finders that use the parameter names to match properties to query. This syntax is less flexible, but is more readable in certain circumstances. For example the following can be used as an alternative to `findByTitle`:
+
+snippet::example.BookRepository[project-base="examples/example", source="main", tags="simple-alt", indent="0"]
+
+Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specific more than one parameter to perform a logical `AND`.

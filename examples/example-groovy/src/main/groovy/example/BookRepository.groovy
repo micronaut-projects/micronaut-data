@@ -19,6 +19,10 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Book retrieveByTitle(String title)
     // end::simple[]
 
+    // tag::simple-alt[]
+    Book find(String title)
+    // end::simple-alt[]
+
     // tag::greaterthan[]
     List<Book> findByPagesGreaterThan(int pageCount)
     // end::greaterthan[]

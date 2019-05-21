@@ -17,6 +17,10 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun retrieveByTitle(title: String): Book
     // end::simple[]
 
+    // tag::simple-alt[]
+    fun find(title: String): Book
+    // end::simple-alt[]
+
     // tag::greaterthan[]
     fun findByPagesGreaterThan(pageCount: Int): List<Book>
     // end::greaterthan[]
