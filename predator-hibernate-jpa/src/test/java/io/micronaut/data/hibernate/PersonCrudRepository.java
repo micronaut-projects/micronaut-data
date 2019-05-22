@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
@@ -46,6 +47,10 @@ public interface PersonCrudRepository extends PageableRepository<Person, Long> {
 
     @Query("from Person p where p.name = :n")
     List<Person> listPeople(String n);
+
+    @Query(value = "from Person p where p.name like :n",
+          countQuery = "select count(p) from Person p where p.name like :n")
+    Page<Person> findPeople(String n, Pageable pageable);
 
     @Query("from Person p where p.name = :n")
     Person queryByName(String n);

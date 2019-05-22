@@ -32,4 +32,9 @@ public @interface Query {
      * @return The raw query string.
      */
     String value();
+
+    /**
+     * @return The count query used for queries that return a {@link io.micronaut.data.model.Page}
+     */
+    String countQuery() default "";
 }

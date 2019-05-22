@@ -18,13 +18,12 @@ package io.micronaut.data.processor.visitors.finders.slice;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.FindSliceInterceptor;
-import io.micronaut.data.model.query.Query;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.QueryListMethod;
+import io.micronaut.data.processor.visitors.finders.RawQuery;
 import io.micronaut.inject.ast.ClassElement;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Handles a query result of type {@link io.micronaut.data.model.Slice}.
@@ -39,15 +38,14 @@ public class QuerySliceMethod extends QueryListMethod {
         return matchContext.isTypeInRole(returnType, TypeRole.SLICE);
     }
 
-    @Nullable
     @Override
-    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext, @NonNull RawQuery query) {
         if (!matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             matchContext.fail("Method must accept an argument that is a Pageable");
             return null;
         }
         return new MethodMatchInfo(
-                queryResultType,
+                matchContext.getReturnType().getFirstTypeArgument().orElse(matchContext.getRootEntity().getType()),
                 query,
                 FindSliceInterceptor.class
         );

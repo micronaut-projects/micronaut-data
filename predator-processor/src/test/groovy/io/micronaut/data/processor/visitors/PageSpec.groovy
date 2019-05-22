@@ -30,18 +30,13 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
-class PageSpec extends AbstractTypeElementSpec {
+class PageSpec extends AbstractPredatorSpec {
 
     void "test page method match"() {
         given:
-        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
-package test;
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
 
 import io.micronaut.data.model.entities.Person;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.repository.GenericRepository;
 
 @Repository
 interface MyInterface extends GenericRepository<Person, Long> {
@@ -66,6 +61,42 @@ interface MyInterface extends GenericRepository<Person, Long> {
         findMethod.getValue(Query.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
                   .get()[0]
 
+    }
+
+    void "test page with @Query that is missing pageable"() {
+        when:
+        buildRepository('test.MyInterface' , """
+
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    @Query("from Person p where p.name = :name")
+    Page<Person> list(String name);
+}
+""")
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Method must accept an argument that is a Pageable')
+    }
+
+    void "test page with @Query that is missing count query"() {
+        when:
+        buildRepository('test.MyInterface' , """
+
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    @Query("from Person p where p.name = :name")
+    Page<Person> list(String name, Pageable pageable);
+}
+""")
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Query returns a Page and does not specify a \'countQuery\' member')
     }
 
     @Override

@@ -123,12 +123,27 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
                 .orElse(null);
 
-        @SuppressWarnings("ConstantConditions") Map<String, Object> parameterValues = buildParameterBinding(
-                context,
-                context.getAnnotation(Query.class),
-                PredatorMethod.META_MEMBER_COUNT_PARAMETERS,
-                rootEntity
-        );
+        @SuppressWarnings("ConstantConditions") Map<String, Object> parameterValues = Collections.emptyMap();
+
+        AnnotationValue<Query> queryAnn = context.getAnnotation(Query.class);
+        if (queryAnn != null) {
+            if (queryAnn.contains(PredatorMethod.META_MEMBER_COUNT_PARAMETERS)) {
+
+                parameterValues = buildParameterBinding(
+                        context,
+                        queryAnn,
+                        PredatorMethod.META_MEMBER_COUNT_PARAMETERS,
+                        rootEntity
+                );
+            } else {
+                parameterValues = buildParameterBinding(
+                        context,
+                        annotation,
+                        PredatorMethod.META_MEMBER_PARAMETER_BINDING,
+                        rootEntity
+                );
+            }
+        }
 
         Pageable pageable = getPageable(context);
 

@@ -199,6 +199,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 // no need to annotation since already annotated, just replace the
                                 // the computed parameter names
                                 parameterBinding = rawQuery.getParameterBinding();
+                                if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
+                                    String cq = matchContext.getAnnotationMetadata().getValue(io.micronaut.data.annotation.Query.class, "countQuery", String.class)
+                                            .orElse(null);
+
+                                    if (StringUtils.isEmpty(cq)) {
+                                        methodMatchContext.fail("Query returns a Page and does not specify a 'countQuery' member.");
+                                        this.failing = true;
+                                        return;
+                                    }
+                                }
                             } else {
                                 PreparedQuery encodedQuery;
                                 try {

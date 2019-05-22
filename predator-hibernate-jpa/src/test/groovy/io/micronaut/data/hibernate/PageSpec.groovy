@@ -84,12 +84,14 @@ class PageSpec extends Specification {
         when:"People are searched for"
         def pageable = Pageable.from(0, 10)
         Page<Person> page = personRepository.findByNameLike("A%", pageable)
+        Page<Person> page2 = crudRepository.findPeople("A%", pageable)
         Slice<Person> slice = personRepository.queryByNameLike("A%", pageable)
 
         then:"The page is correct"
         page.offset == 0
         page.pageNumber == 0
         page.totalSize == 50
+        page2.totalSize == page.totalSize
         slice.offset == 0
         slice.pageNumber == 0
         slice.size == 10

@@ -18,13 +18,12 @@ package io.micronaut.data.processor.visitors.finders.page;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.FindPageInterceptor;
-import io.micronaut.data.model.query.Query;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.QueryListMethod;
+import io.micronaut.data.processor.visitors.finders.RawQuery;
 import io.micronaut.inject.ast.ClassElement;
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * hands a query result of type {@link io.micronaut.data.model.Page}.
@@ -33,20 +32,25 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  * @since 1.0.0
  */
 public class QueryPageMethod extends QueryListMethod {
+
+    @Override
+    public int getOrder() {
+        return super.getOrder() - 10;
+    }
+
     @Override
     protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {
         return matchContext.isTypeInRole(returnType, TypeRole.PAGE);
     }
 
-    @Nullable
     @Override
-    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext, @NonNull RawQuery query) {
         if (!matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             matchContext.fail("Method must accept an argument that is a Pageable");
             return null;
         }
         return new MethodMatchInfo(
-                queryResultType,
+                matchContext.getReturnType().getFirstTypeArgument().orElse(matchContext.getRootEntity().getType()),
                 query,
                 FindPageInterceptor.class
         );
