@@ -24,6 +24,8 @@ class BookRepositorySpec {
 	@Inject BookRepository bookRepository;
     // end::inject[]
 
+	@Inject AbstractBookRepository abstractBookRepository;
+
 	@Test
 	void testCrud() {
 		assertNotNull(bookRepository);
@@ -102,5 +104,10 @@ class BookRepositorySpec {
 				4,
 				page.getTotalSize()
 		);
+
+		List<Book> results = abstractBookRepository.findByTitle("The Shining");
+
+		assertEquals(1, results.size());
 	}
+
 }

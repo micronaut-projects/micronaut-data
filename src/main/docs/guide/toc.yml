@@ -2,6 +2,8 @@ introduction:
   title: Introduction
 quickStart:
   title: Quick Start
+repositories:
+  title: Repository Interfaces
 querying:
   title: Writing Queries
   criteria: Query Criteria

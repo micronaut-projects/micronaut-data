@@ -15,6 +15,10 @@ class BookRepositorySpec {
     lateinit var bookRepository: BookRepository
     // end::inject[]
 
+    @Inject
+    lateinit var abstractBookRepository: AbstractBookRepository
+
+
     @Test
     fun testCrud() {
         assertNotNull(bookRepository)
@@ -91,5 +95,9 @@ class BookRepositorySpec {
                 4,
                 page.totalSize
         )
+
+        val results = abstractBookRepository.findByTitle("The Shining")
+
+        assertEquals(1, results.size)
     }
 }
