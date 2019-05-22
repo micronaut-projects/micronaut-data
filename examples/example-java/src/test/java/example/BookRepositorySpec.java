@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-@MicronautTest(rollback = false)
+@MicronautTest
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = "jpa.default.properties.hibernate.hbm2ddl.auto", value = "create-drop")
 class BookRepositorySpec {
@@ -110,4 +110,11 @@ class BookRepositorySpec {
 		assertEquals(1, results.size());
 	}
 
+	@Test
+	void testDto() {
+		bookRepository.save(new Book("The Shining", 400));
+		BookDTO book = bookRepository.findOne("The Shining");
+
+		assertEquals("The Shining", book.getTitle());
+	}
 }

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import java.util.*
 import javax.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest
 class BookRepositorySpec {
 
     // tag::inject[]
@@ -99,5 +99,13 @@ class BookRepositorySpec {
         val results = abstractBookRepository.findByTitle("The Shining")
 
         assertEquals(1, results.size)
+    }
+
+    @Test
+    fun testDto() {
+        bookRepository.save(Book(0, "The Shining", 400))
+        val bookDTO = bookRepository.findOne("The Shining")
+
+        assertEquals("The Shining", bookDTO.title)
     }
 }

@@ -84,6 +84,10 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun deleteByTitleLike(title: String)
     // end::deleteby[]
 
+    // tag::dto[]
+    fun findOne(title: String): BookDTO
+    // end::dto[]
+
 // tag::repository[]
 }
 // end::repository[]

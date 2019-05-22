@@ -91,4 +91,13 @@ class BookRepositorySpec extends Specification {
         page.getNumberOfElements() == 3
         page.getTotalSize() == 4
     }
+
+    void "test DTO"() {
+        when:"A DTO object is queried for"
+        bookRepository.save(new Book("The Shining", 400))
+        BookDTO book = bookRepository.findOne("The Shining")
+
+        then:"The result is correct"
+        book.title == "The Shining"
+    }
 }

@@ -85,6 +85,10 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     void deleteByTitleLike(String title);
     // end::deleteby[]
 
+    // tag::dto[]
+    BookDTO findOne(String title);
+    // end::dto[]
+
 // tag::repository[]
 }
 // end::repository[]
