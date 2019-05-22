@@ -5,3 +5,5 @@ snippet::example.BookRepository[project-base="examples/example", source="main", 
 You specify named parameters using colon (`:`) followed by the name and these must match a parameter specified to the method otherwise a compilation error will occur.
 
 NOTE: Currently Predator does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Predator.
+
+Note that if the method returns a api:data.model.Page[] for pagination then you must additionally specify a query that performs the equivalent count using the `countQuery` member of the ann:data.annotation.Query[] annotation.

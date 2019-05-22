@@ -2,9 +2,9 @@ Micronaut Predator (short for **Pre**computed **Dat**a **R**epositories) is a da
 
 Predator is inspired by https://gorm.grails.org[GORM] and https://spring.io/projects/spring-data[Spring Data], however improves on those solutions in the following ways:
 
-* *No runtime model* - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows.
+* *No runtime model* - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models.
 * *No query translation* - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query. No such translation exists in Predator and this work is carried out by the Micronaut compiler.
-* *No Reflection or Runtime Proxies* - Predator uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption (Note that the backing implementation, for example Hibernate, may use reflection).
+* *No Reflection or Runtime Proxies* - Predator uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).
 * *Type Safety* - Predator will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.
 
 Predator provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:
