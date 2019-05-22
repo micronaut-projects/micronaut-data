@@ -2,7 +2,6 @@
 package example;
 
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
@@ -22,6 +21,10 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // tag::greaterthan[]
     List<Book> findByPagesGreaterThan(int pageCount);
     // end::greaterthan[]
+
+    // tag::logical[]
+    List<Book> findByPagesGreaterThanOrTitleLike(int pageCount, String title);
+    // end::logical[]
 
     // tag::simple-alt[]
     Book find(String title);

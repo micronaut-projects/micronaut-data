@@ -25,6 +25,10 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun findByPagesGreaterThan(pageCount: Int): List<Book>
     // end::greaterthan[]
 
+    // tag::logical[]
+    fun findByPagesGreaterThanOrTitleLike(pageCount: Int, title: String): List<Book>
+    // end::logical[]
+
     // tag::pageable[]
     fun findByPagesGreaterThan(pageCount: Int, pageable: Pageable): List<Book>
 
