@@ -272,6 +272,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 methodInfo.getParameterRoles()
                                         .forEach(annotationBuilder::member);
 
+                                if (methodInfo.isDto()) {
+                                    annotationBuilder.member(PredatorMethod.META_MEMBER_DTO, true);
+                                }
+
                                 TypedElement resultType = methodInfo.getResultType();
                                 if (resultType != null) {
                                     annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));

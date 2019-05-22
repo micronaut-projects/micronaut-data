@@ -16,8 +16,11 @@
 package io.micronaut.data.hibernate.datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
@@ -29,13 +32,14 @@ import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -49,6 +53,7 @@ public class HibernateJpaDatastore implements Datastore {
     private final SessionFactory sessionFactory;
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
+    private final ConversionService<?> conversionService = ConversionService.SHARED;
 
     /**
      * Default constructor.
@@ -133,6 +138,25 @@ public class HibernateJpaDatastore implements Datastore {
             bindParameters(q, parameterValues);
             bindPageable(q, pageable);
             return q.list();
+        });
+    }
+
+    @Override
+    public <T, R> Iterable<R> findAllProjected(
+            Class<T> rootEntity,
+            Class<R> resultType,
+            String query,
+            Map<String, Object> parameterValues,
+            Pageable pageable) {
+        return readTransactionTemplate.execute(status -> {
+            Query<Tuple> q = getCurrentSession()
+                    .createQuery(query, Tuple.class);
+            bindParameters(q, parameterValues);
+            bindPageable(q, pageable);
+            return q.stream()
+                    .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
+                    .map(tuple, resultType))
+                    .collect(Collectors.toList());
         });
     }
 

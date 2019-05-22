@@ -24,6 +24,7 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.intercept.reactive.FindReactivePublisherInterceptor;
 import io.micronaut.data.model.Association;
@@ -31,11 +32,14 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.query.factory.Projections;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.PropertyElement;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
@@ -134,7 +138,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (!returnType.getName().equals("void")) {
             if (returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive()) {
-                if (areTypesCompatible(returnType, queryResultType)) {
+                if (areTypesCompatible(returnType, queryResultType, matchContext)) {
                     if (query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName())) {
                         List<Query.Criterion> criterionList = query.getCriteria().getCriteria();
                         if (criterionList.size() == 1 && criterionList.get(0) instanceof Query.IdEquals) {
@@ -150,23 +154,40 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
                     }
                 } else {
-                    matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
-                    return null;
+                    if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+                        if (attemptProjection(matchContext, queryResultType, query, returnType)) {
+                            return null;
+                        }
+
+                        return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class, true);
+                    } else {
+
+                        matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
+                        return null;
+                    }
                 }
             } else if (typeArgument != null) {
-                if (!areTypesCompatible(typeArgument, queryResultType)) {
-                    matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
-                    return null;
+                boolean dto = false;
+                if (!areTypesCompatible(typeArgument, queryResultType, matchContext)) {
+                    if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+                        if (attemptProjection(matchContext, queryResultType, query, typeArgument)) {
+                            return null;
+                        }
+                        dto = true;
+                    } else {
+                        matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + typeArgument.getName());
+                        return null;
+                    }
                 }
 
                 if (returnType.isAssignable(Iterable.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class, dto);
                 } else if (returnType.isAssignable(Stream.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class, dto);
                 } else if (returnType.isAssignable(Optional.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindOptionalInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindOptionalInterceptor.class, dto);
                 } else if (returnType.isAssignable(Publisher.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindReactivePublisherInterceptor.class);
+                    return new MethodMatchInfo(typeArgument, query, FindReactivePublisherInterceptor.class, dto);
                 }
             }
         }
@@ -175,7 +196,28 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return null;
     }
 
-    private boolean areTypesCompatible(ClassElement returnType, ClassElement queryResultType) {
+    private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull Query query, ClassElement returnType) {
+        List<PropertyElement> beanProperties = returnType.getBeanProperties();
+        SourcePersistentEntity entity = new SourcePersistentEntity(queryResultType);
+        for (PropertyElement beanProperty : beanProperties) {
+            String propertyName = beanProperty.getName();
+            SourcePersistentProperty pp = entity.getPropertyByName(propertyName);
+            if (pp == null) {
+                matchContext.fail("Property " + propertyName + " is not present in entity: " + entity.getName());
+                return true;
+            }
+
+            if (!areTypesCompatible(beanProperty.getType(), pp.getType(), matchContext)) {
+                matchContext.fail("Property [" + propertyName + "] of type [" + beanProperty.getType().getName() + "] is not compatible with equivalent property declared in entity: " + entity.getName());
+                return true;
+            }
+            // add an alias projection for each property
+            query.projections().add(Projections.property(propertyName).aliased());
+        }
+        return false;
+    }
+
+    private boolean areTypesCompatible(ClassElement returnType, ClassElement queryResultType, MethodMatchContext matchContext) {
         if (returnType.isAssignable(queryResultType.getName())) {
             return true;
         } else {

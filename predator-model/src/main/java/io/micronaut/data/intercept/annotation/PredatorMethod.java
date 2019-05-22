@@ -91,6 +91,11 @@ public @interface PredatorMethod {
     String META_MEMBER_ID = "id";
 
     /**
+     * Does the query result in a DTO object.
+     */
+    String META_MEMBER_DTO = "dto";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends PredatorInterceptor> interceptor();

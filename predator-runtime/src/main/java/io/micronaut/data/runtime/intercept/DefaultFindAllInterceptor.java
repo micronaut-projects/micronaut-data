@@ -46,12 +46,25 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     public Iterable<R> intercept(MethodInvocationContext<T, Iterable<R>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery preparedQuery = prepareQuery(context);
-            Iterable<?> iterable = datastore.findAll(
-                    preparedQuery.getResultType(),
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues(),
-                    preparedQuery.getPageable()
-            );
+            Iterable<?> iterable;
+
+            if (preparedQuery.isDto()) {
+                iterable = datastore.findAllProjected(
+                        preparedQuery.getRootEntity(),
+                        preparedQuery.getResultType(),
+                        preparedQuery.getQuery(),
+                        preparedQuery.getParameterValues(),
+                        preparedQuery.getPageable()
+                );
+            } else {
+
+                iterable = datastore.findAll(
+                        preparedQuery.getResultType(),
+                        preparedQuery.getQuery(),
+                        preparedQuery.getParameterValues(),
+                        preparedQuery.getPageable()
+                );
+            }
             return ConversionService.SHARED.convert(
                     iterable,
                     context.getReturnType().asArgument()

@@ -123,7 +123,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         return propertyElement;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public ClassElement getType() {
         return propertyElement.getType();

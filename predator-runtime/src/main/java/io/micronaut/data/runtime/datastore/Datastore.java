@@ -97,6 +97,23 @@ public interface Datastore {
             @NonNull Pageable pageable);
 
     /**
+     * Finds a projected result set.
+     * @param rootEntity The root entity
+     * @param resultType The result type
+     * @param query The query
+     * @param parameterValues The parameter values
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @return The result
+     */
+    <T, R> Iterable<R> findAllProjected(
+            Class<T> rootEntity,
+            Class<R> resultType,
+            String query,
+            Map<String, Object> parameterValues,
+            Pageable pageable);
+
+    /**
      * Persist the entity returning a possibly new entity.
      * @param entity The entity
      * @param <T> The generic type
@@ -233,5 +250,6 @@ public interface Datastore {
                 Pageable.unpaged()
         );
     }
+
 
 }

@@ -78,4 +78,5 @@ class ProjectionSpec extends Specification {
         authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
         bookRepository.findByAuthorName("Stephen King").size() == 2
     }
+
 }

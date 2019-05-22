@@ -41,6 +41,7 @@ public class MethodMatchInfo {
     private final String[] updateProperties;
 
     private Map<String, String> parameterRoles = new HashMap<>(2);
+    private boolean dto;
 
     /**
      * Creates a method info.
@@ -53,6 +54,22 @@ public class MethodMatchInfo {
             @Nullable Query query,
             @Nullable Class<? extends PredatorInterceptor> interceptor) {
         this(resultType, query, interceptor, OperationType.QUERY);
+    }
+
+    /**
+     * Creates a method info.
+     * @param resultType The result type
+     * @param query The query
+     * @param interceptor The interceptor type to execute at runtime
+     * @param dto indicate that this is a DTO query
+     */
+    public MethodMatchInfo(
+            @Nullable TypedElement resultType,
+            @Nullable Query query,
+            @Nullable Class<? extends PredatorInterceptor> interceptor,
+            boolean dto) {
+        this(resultType, query, interceptor, OperationType.QUERY);
+        this.dto = dto;
     }
 
     /**
@@ -74,6 +91,14 @@ public class MethodMatchInfo {
         this.operationType = operationType;
         this.resultType = resultType;
         this.updateProperties = updateProperties;
+    }
+
+    /**
+     * Is the query result a DTO query.
+     * @return True if it is
+     */
+    public boolean isDto() {
+        return dto;
     }
 
     /**

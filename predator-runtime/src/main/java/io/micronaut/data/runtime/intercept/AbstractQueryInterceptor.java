@@ -98,7 +98,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 idType,
                 query,
                 parameterValues,
-                pageable
+                pageable,
+                context.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO)
         );
     }
 
@@ -153,7 +154,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 idType,
                 query,
                 parameterValues,
-                pageable
+                pageable,
+                false
         );
     }
 
@@ -322,6 +324,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         private final @NonNull String query;
         private final @NonNull Map<String, Object> parameterValues;
         private final Pageable pageable;
+        private final boolean dto;
 
         /**
          * The default constructor.
@@ -331,6 +334,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
          * @param idType The ID type
          * @param parameterValues The parameter values
          * @param pageable The pageable
+         * @param dto Is the query a DTO query
          */
         PreparedQuery(
                 @NonNull Class resultType,
@@ -338,13 +342,22 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 @Nullable Class<?> idType,
                 @NonNull String query,
                 @Nullable Map<String, Object> parameterValues,
-                @Nullable Pageable pageable) {
+                @Nullable Pageable pageable,
+                boolean dto) {
             this.resultType = resultType;
             this.rootEntity = rootEntity;
             this.idType = idType;
             this.query = query;
             this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
             this.pageable = pageable;
+            this.dto = dto;
+        }
+
+        /**
+         * @return Whether the query is a DTO query
+         */
+        public boolean isDto() {
+            return dto;
         }
 
         /**

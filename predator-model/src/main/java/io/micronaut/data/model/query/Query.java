@@ -1014,6 +1014,7 @@ public interface Query extends Criteria {
      */
     class PropertyProjection extends Projection {
         private String propertyName;
+        private String alias;
 
         /**
          * Default constructor.
@@ -1028,6 +1029,22 @@ public interface Query extends Criteria {
          */
         public String getPropertyName() {
             return propertyName;
+        }
+
+        /**
+         * Include an alias that is the same as the property name.
+         * @return This property
+         */
+        public PropertyProjection aliased() {
+            this.alias = propertyName;
+            return this;
+        }
+
+        /**
+         * @return The alias to use for the projection.
+         */
+        public Optional<String> getAlias() {
+            return Optional.ofNullable(alias);
         }
     }
 

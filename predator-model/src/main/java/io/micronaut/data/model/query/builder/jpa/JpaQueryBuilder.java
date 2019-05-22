@@ -135,6 +135,7 @@ public class JpaQueryBuilder implements QueryBuilder {
                             .append(entity.getIdentity().getName());
                 } else if (projection instanceof Query.PropertyProjection) {
                     Query.PropertyProjection pp = (Query.PropertyProjection) projection;
+                    String alias = pp.getAlias().orElse(null);
                     if (projection instanceof Query.AvgProjection) {
                         queryString.append("AVG(")
                                 .append(logicalName)
@@ -175,6 +176,10 @@ public class JpaQueryBuilder implements QueryBuilder {
                         queryString.append(logicalName)
                                 .append(DOT)
                                 .append(pp.getPropertyName());
+                    }
+                    if (alias != null) {
+                        queryString.append(AS_CLAUSE)
+                                   .append(alias);
                     }
                 }
 
