@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 /**
  * Default implementation of {@link UpdateInterceptor}.
@@ -38,11 +39,8 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Voi
 
     @Override
     public Void intercept(MethodInvocationContext<T, Void> context) {
-        PreparedQuery preparedQuery = prepareQuery(context);
-        datastore.executeUpdate(
-                preparedQuery.getQuery(),
-                preparedQuery.getParameterValues()
-        );
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+        datastore.executeUpdate(preparedQuery);
         return null;
     }
 }

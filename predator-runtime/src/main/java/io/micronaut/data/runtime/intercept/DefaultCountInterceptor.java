@@ -23,6 +23,8 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
+
 import java.util.Iterator;
 
 /**
@@ -45,13 +47,8 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
     public Number intercept(MethodInvocationContext<T, Number> context) {
         long result;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery preparedQuery = prepareQuery(context);
-            Iterable<Long> iterable = datastore.findAll(
-                    Long.class,
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues(),
-                    preparedQuery.getPageable()
-            );
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(context, Long.class);
+            Iterable<Long> iterable = datastore.findAll(preparedQuery);
             Iterator<Long> i = iterable.iterator();
             result = i.hasNext() ? i.next() : 0;
         } else {

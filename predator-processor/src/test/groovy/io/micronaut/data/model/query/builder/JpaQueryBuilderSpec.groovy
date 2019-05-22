@@ -36,7 +36,7 @@ class JpaQueryBuilderSpec extends Specification {
         q.sort Sort.of(props.collect() { Sort.Order."$direction"(it)})
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        PreparedQuery encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -60,7 +60,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        PreparedQuery encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -88,7 +88,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
         QueryBuilder encoder = new JpaQueryBuilder()
-        PreparedQuery encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -114,7 +114,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        PreparedQuery encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -137,7 +137,7 @@ class JpaQueryBuilderSpec extends Specification {
         q.between(property, QueryParameter.of("from"), QueryParameter.of("to"))
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        PreparedQuery encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(q)
 
 
         expect:
@@ -159,7 +159,7 @@ class JpaQueryBuilderSpec extends Specification {
         q."$method"(property)
 
         QueryBuilder encoder = new JpaQueryBuilder()
-        PreparedQuery encodedQuery = encoder.buildQuery(q)
+        QueryResult encodedQuery = encoder.buildQuery(q)
 
 
         expect:

@@ -20,6 +20,8 @@ import io.micronaut.data.intercept.FindOptionalInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
+
 import java.util.Optional;
 
 /**
@@ -40,23 +42,8 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
 
     @Override
     public Optional<Object> intercept(MethodInvocationContext<T, Optional<Object>> context) {
-        PreparedQuery preparedQuery = prepareQuery(context);
-        Object result;
-
-        if (preparedQuery.isDtoProjection()) {
-            result = datastore.findProjected(
-                    preparedQuery.getRootEntity(),
-                    preparedQuery.getResultType(),
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues()
-            );
-        } else {
-            result = datastore.findOne(
-                    preparedQuery.getResultType(),
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues()
-            );
-        }
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+        Object result = datastore.findOne(preparedQuery);
         return Optional.ofNullable(result);
     }
 }

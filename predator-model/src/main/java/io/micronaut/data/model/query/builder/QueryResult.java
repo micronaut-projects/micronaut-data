@@ -23,12 +23,12 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * Used to represent and encoded query that is computed at compilation time.
+ * Used to represent a built query that is computed at compilation time.
  *
  * @author graemerocher
  * @since 1.0
  */
-public interface PreparedQuery {
+public interface QueryResult {
 
     /**
      * @return A string representation of the original query.
@@ -49,10 +49,9 @@ public interface PreparedQuery {
      * @param parameters The parameters
      * @return The query
      */
-    static @NonNull
-    PreparedQuery of(@NonNull String query, @Nullable Map<String, String> parameters) {
+    static @NonNull QueryResult of(@NonNull String query, @Nullable Map<String, String> parameters) {
         ArgumentUtils.requireNonNull("query", query);
-        return new PreparedQuery() {
+        return new QueryResult() {
             @NonNull
             @Override
             public String getQuery() {

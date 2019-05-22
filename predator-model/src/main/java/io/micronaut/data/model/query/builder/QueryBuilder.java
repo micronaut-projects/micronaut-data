@@ -35,7 +35,7 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    PreparedQuery buildQuery(@NonNull Query query);
+    QueryResult buildQuery(@NonNull Query query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -45,7 +45,7 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    PreparedQuery buildUpdate(@NonNull Query query, List<String> propertiesToUpdate);
+    QueryResult buildUpdate(@NonNull Query query, List<String> propertiesToUpdate);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -54,7 +54,7 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    PreparedQuery buildDelete(@NonNull Query query);
+    QueryResult buildDelete(@NonNull Query query);
 
     /**
      * When producing the query this dedicates whether to use the mapped names (such as the column name)

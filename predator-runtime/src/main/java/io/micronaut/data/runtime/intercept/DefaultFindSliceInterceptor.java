@@ -25,6 +25,7 @@ import io.micronaut.data.intercept.FindSliceInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 /**
  * Default implementation of {@link FindSliceInterceptor}.
@@ -48,26 +49,9 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
     @Override
     public R intercept(MethodInvocationContext<T, R> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery preparedQuery = prepareQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
             Pageable pageable = preparedQuery.getPageable();
-            Iterable<R> iterable;
-
-            if (preparedQuery.isDtoProjection()) {
-                iterable = (Iterable<R>) datastore.findAllProjected(
-                        preparedQuery.getRootEntity(),
-                        preparedQuery.getResultType(),
-                        preparedQuery.getQuery(),
-                        preparedQuery.getParameterValues(),
-                        pageable
-                );
-            } else {
-                iterable = (Iterable<R>) datastore.findAll(
-                        preparedQuery.getResultType(),
-                        preparedQuery.getQuery(),
-                        preparedQuery.getParameterValues(),
-                        pageable
-                );
-            }
+            Iterable<R> iterable = (Iterable<R>) datastore.findAll(preparedQuery);
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
             return convertOrFail(context, slice);
         } else {

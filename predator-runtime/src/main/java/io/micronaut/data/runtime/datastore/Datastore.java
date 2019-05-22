@@ -21,7 +21,6 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -46,33 +45,12 @@ public interface Datastore {
     /**
      * Find one by Query.
      *
-     * @param resultType The resultType
-     * @param query The query to execute
-     * @param parameters The parameters
+     * @param preparedQuery The prepared query
      * @param <T> The generic resultType
+     * @param <R> The result type
      * @return A result or null
      */
-    @Nullable <T> T findOne(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameters);
-
-    /**
-     * Find one by Query.
-     *
-     * @param rootEntity The root entity
-     * @param resultType The resultType
-     * @param query The query to execute
-     * @param parameters The parameters
-     * @param <T> The generic resultType
-     * @param <R> The result type.
-     * @return A result or null
-     */
-    @Nullable <T, R> R findProjected(
-            @NonNull Class<T> rootEntity,
-            @NonNull Class<R> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameters);
+    @Nullable <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
      * Finds all results for the given query.
@@ -100,36 +78,12 @@ public interface Datastore {
 
     /**
      * Finds all results for the given query.
-     * @param resultType The result type
-     * @param query The query
-     * @param parameterValues The parameter values
-     * @param pageable The pageable
-     * @param <T> The generic type
+     * @param preparedQuery The prepared query
+     * @param <T> The entity type
+     * @param <R> The result type
      * @return An iterable result
      */
-    @NonNull <T> Iterable<T> findAll(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues,
-            @NonNull Pageable pageable);
-
-    /**
-     * Finds a projected result set.
-     * @param rootEntity The root entity
-     * @param resultType The result type
-     * @param query The query
-     * @param parameterValues The parameter values
-     * @param pageable The pageable
-     * @param <T> The generic type
-     * @param <R> The result type
-     * @return The result
-     */
-    <T, R> Iterable<R> findAllProjected(
-            Class<T> rootEntity,
-            Class<R> resultType,
-            String query,
-            Map<String, Object> parameterValues,
-            Pageable pageable);
+    @NonNull <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
      * Persist the entity returning a possibly new entity.
@@ -150,13 +104,11 @@ public interface Datastore {
     /**
      * Executes an update for the given query and parameter values. If it is possible to
      * return the number of objects updated, then do so.
-     * @param query The query
-     * @param parameterValues the parameter values
+     * @param preparedQuery The prepared query
      * @return An optional number with the count of the number of records updated
      */
     @NonNull Optional<Number> executeUpdate(
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues
+            @NonNull PreparedQuery<?, Number> preparedQuery
     );
 
     /**
@@ -175,38 +127,13 @@ public interface Datastore {
     <T> void deleteAll(@NonNull Class<T> entityType);
 
     /**
-     * Finds a stream for the given arguments.
-     * @param resultType The result type
-     * @param query The query
-     * @param parameterValues The parameter values
-     * @param pageable The pageable
-     * @param <T> The generic type
-     * @return The stream
+     * Finds all results for the given query.
+     * @param preparedQuery The prepared query
+     * @param <T> The entity type
+     * @param <R> The result type
+     * @return An iterable result
      */
-    @NonNull <T> Stream<T> findStream(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues,
-            @NonNull Pageable pageable);
-
-    /**
-     * Finds a stream for the given arguments.
-     * @param rootEntity The root entity to query
-     * @param resultType The result type
-     * @param query The query
-     * @param parameterValues The parameter values
-     * @param pageable The pageable
-     * @param <T> The generic type
-     * @param <R> The result generic type
-     * @return The stream
-     */
-    @NonNull <T, R> Stream<R> findProjectedStream(
-            @NonNull Class<T> rootEntity,
-            @NonNull Class<R> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues,
-            @NonNull Pageable pageable);
-
+    @NonNull <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
      * Finds a stream for the given arguments.
@@ -237,27 +164,6 @@ public interface Datastore {
     default @NonNull <T> Stream<T> findStream(
             @NonNull Class<T> entity) {
         return findStream(entity, Pageable.unpaged());
-    }
-
-    /**
-     * Finds all results for the given query.
-     * @param resultType The result type
-     * @param query The query
-     * @param parameterValues The parameter values
-     * @param <T> The generic type
-     * @return An iterable result
-     */
-    default @NonNull <T> Iterable<T> findAll(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues
-    ) {
-        return findAll(
-                resultType,
-                query,
-                parameterValues,
-                Pageable.unpaged()
-        );
     }
 
     /**

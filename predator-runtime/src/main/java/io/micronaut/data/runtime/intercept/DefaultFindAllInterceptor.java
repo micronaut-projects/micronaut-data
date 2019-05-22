@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 import java.util.Collections;
 
@@ -45,26 +46,8 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     @Override
     public Iterable<R> intercept(MethodInvocationContext<T, Iterable<R>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery preparedQuery = prepareQuery(context);
-            Iterable<?> iterable;
-
-            if (preparedQuery.isDtoProjection()) {
-                iterable = datastore.findAllProjected(
-                        preparedQuery.getRootEntity(),
-                        preparedQuery.getResultType(),
-                        preparedQuery.getQuery(),
-                        preparedQuery.getParameterValues(),
-                        preparedQuery.getPageable()
-                );
-            } else {
-
-                iterable = datastore.findAll(
-                        preparedQuery.getResultType(),
-                        preparedQuery.getQuery(),
-                        preparedQuery.getParameterValues(),
-                        preparedQuery.getPageable()
-                );
-            }
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            Iterable<?> iterable = datastore.findAll(preparedQuery);
             return ConversionService.SHARED.convert(
                     iterable,
                     context.getReturnType().asArgument()

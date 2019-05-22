@@ -25,6 +25,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
@@ -80,29 +81,28 @@ public class HibernateJpaDatastore implements Datastore {
 
     @Nullable
     @Override
-    public <T> T findOne(@NonNull Class<T> resultType, @NonNull String query, @NonNull Map<String, Object> parameters) {
+    public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return readTransactionTemplate.execute(status -> {
-            Class<T> wrapperType = ReflectionUtils.getWrapperType(resultType);
-            Query<T> q = getCurrentSession()
-                                       .createQuery(query, wrapperType);
-            bindParameters(q, parameters);
-            q.setMaxResults(1);
-            return q.uniqueResultOptional().orElse(null);
-        });
-    }
-
-    @Nullable
-    @Override
-    public <T, R> R findProjected(@NonNull Class<T> rootEntity, @NonNull Class<R> resultType, @NonNull String query, @NonNull Map<String, Object> parameters) {
-        return readTransactionTemplate.execute(status -> {
-            Query<Tuple> q = getCurrentSession()
-                    .createQuery(query, Tuple.class);
-            bindParameters(q, parameters);
-            q.setMaxResults(1);
-            return q.uniqueResultOptional()
-                    .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
-                    .map(tuple, resultType))
-                    .orElse(null);
+            Class<R> resultType = preparedQuery.getResultType();
+            String query = preparedQuery.getQuery();
+            Map<String, Object> parameters = preparedQuery.getParameterValues();
+            if (preparedQuery.isDtoProjection()) {
+                Query<Tuple> q = getCurrentSession()
+                        .createQuery(query, Tuple.class);
+                bindParameters(q, parameters);
+                q.setMaxResults(1);
+                return q.uniqueResultOptional()
+                        .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
+                                .map(tuple, resultType))
+                        .orElse(null);
+            } else {
+                Class<R> wrapperType = ReflectionUtils.getWrapperType(resultType);
+                Query<R> q = getCurrentSession()
+                        .createQuery(query, wrapperType);
+                bindParameters(q, parameters);
+                q.setMaxResults(1);
+                return q.uniqueResultOptional().orElse(null);
+            }
         });
     }
 
@@ -140,55 +140,28 @@ public class HibernateJpaDatastore implements Datastore {
 
     @NonNull
     @Override
-    public <T> Iterable<T> findAll(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues,
-            @NonNull Pageable pageable) {
+    public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Class<T> wrapperType = ReflectionUtils.getWrapperType(resultType);
-            Query<T> q = getCurrentSession()
-                    .createQuery(query, wrapperType);
-            bindParameters(q, parameterValues);
-            bindPageable(q, pageable);
-            return q.list();
-        });
-    }
+            if (preparedQuery.isDtoProjection()) {
+                Query<Tuple> q = getCurrentSession()
+                        .createQuery(preparedQuery.getQuery(), Tuple.class);
+                bindParameters(q, preparedQuery.getParameterValues());
+                bindPageable(q, preparedQuery.getPageable());
+                return q.stream()
+                        .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
+                                .map(tuple, preparedQuery.getResultType()))
+                        .collect(Collectors.toList());
+            } else {
 
-    @Override
-    public <T, R> Iterable<R> findAllProjected(
-            Class<T> rootEntity,
-            Class<R> resultType,
-            String query,
-            Map<String, Object> parameterValues,
-            Pageable pageable) {
-        return readTransactionTemplate.execute(status -> {
-            Query<Tuple> q = getCurrentSession()
-                    .createQuery(query, Tuple.class);
-            bindParameters(q, parameterValues);
-            bindPageable(q, pageable);
-            return q.stream()
-                    .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
-                    .map(tuple, resultType))
-                    .collect(Collectors.toList());
+                Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+                Query<R> q = getCurrentSession()
+                        .createQuery(preparedQuery.getQuery(), wrapperType);
+                bindParameters(q, preparedQuery.getParameterValues());
+                bindPageable(q, preparedQuery.getPageable());
+                return q.list();
+            }
         });
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    @NonNull
-    @Override
-    public <T, R> Stream<R> findProjectedStream(@NonNull Class<T> rootEntity, @NonNull Class<R> resultType, @NonNull String query, @NonNull Map<String, Object> parameterValues, @NonNull Pageable pageable) {
-        return readTransactionTemplate.execute(status -> {
-            Query<Tuple> q = getCurrentSession()
-                    .createQuery(query, Tuple.class);
-            bindParameters(q, parameterValues);
-            bindPageable(q, pageable);
-            return q.stream()
-                    .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
-                            .map(tuple, resultType));
-        });
-
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -216,12 +189,13 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
+    @NonNull
     @Override
-    public Optional<Number> executeUpdate(String query, Map<String, Object> parameterValues) {
+    public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         //noinspection ConstantConditions
         return writeTransactionTemplate.execute(status -> {
-            Query<?> q = getCurrentSession().createQuery(query);
-            bindParameters(q, parameterValues);
+            Query<?> q = getCurrentSession().createQuery(preparedQuery.getQuery());
+            bindParameters(q, preparedQuery.getParameterValues());
             return Optional.of(q.executeUpdate());
         });
     }
@@ -253,18 +227,28 @@ public class HibernateJpaDatastore implements Datastore {
 
     @NonNull
     @Override
-    public <T> Stream<T> findStream(
-            @NonNull Class<T> resultType,
-            @NonNull String query,
-            @NonNull Map<String, Object> parameterValues,
-            @NonNull Pageable pageable) {
+    public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
-            Query<T> q = getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(resultType));
-            bindParameters(q, parameterValues);
-            bindPageable(q, pageable);
+            String query = preparedQuery.getQuery();
+            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
+            Pageable pageable = preparedQuery.getPageable();
+            if (preparedQuery.isDtoProjection()) {
+                Query<Tuple> q = getCurrentSession()
+                        .createQuery(query, Tuple.class);
+                bindParameters(q, parameterValues);
+                bindPageable(q, pageable);
+                return q.stream()
+                        .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
+                                .map(tuple, preparedQuery.getResultType()));
 
-            return q.stream();
+            } else {
+                Query<R> q = getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
+                bindParameters(q, parameterValues);
+                bindPageable(q, pageable);
+
+                return q.stream();
+            }
         });
     }
 

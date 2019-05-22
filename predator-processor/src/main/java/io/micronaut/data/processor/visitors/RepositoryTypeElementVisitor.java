@@ -32,7 +32,7 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.Sort;
-import io.micronaut.data.model.query.builder.PreparedQuery;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -210,7 +210,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     }
                                 }
                             } else {
-                                PreparedQuery encodedQuery;
+                                QueryResult encodedQuery;
                                 try {
                                     switch (methodInfo.getOperationType()) {
                                         case DELETE:
@@ -244,7 +244,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         countQuery.add(criterion);
                                     }
 
-                                    PreparedQuery preparedCount = queryEncoder.buildQuery(countQuery);
+                                    QueryResult preparedCount = queryEncoder.buildQuery(countQuery);
 
                                     element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
                                                 annotationBuilder.value(encodedQuery.getQuery());

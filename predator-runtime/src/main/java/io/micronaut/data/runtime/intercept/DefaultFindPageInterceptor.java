@@ -24,9 +24,9 @@ import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Default implementation of {@link FindPageInterceptor}.
@@ -49,37 +49,12 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
     @Override
     public R intercept(MethodInvocationContext<T, R> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery preparedQuery = prepareQuery(context);
-            PreparedQuery countQuery = prepareCountQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(context);
 
-            Iterable<?> iterable;
-            Class<?> resultType = preparedQuery.getResultType();
-            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
-            Pageable pageable = preparedQuery.getPageable();
-            if (preparedQuery.isDtoProjection()) {
-                iterable = datastore.findAllProjected(
-                        preparedQuery.getRootEntity(),
-                        resultType,
-                        preparedQuery.getQuery(),
-                        parameterValues,
-                        pageable
-                );
-            } else {
-                iterable = datastore.findAll(
-                        resultType,
-                        preparedQuery.getQuery(),
-                        parameterValues,
-                        pageable
-                );
-            }
-
-
+            Iterable<?> iterable = datastore.findAll(preparedQuery);
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
-            Long result = datastore.findOne(
-                    Long.class,
-                    countQuery.getQuery(),
-                    countQuery.getParameterValues()
-            );
+            Long result = datastore.findOne(countQuery).longValue();
             Page<R> page = Page.of(resultList, getPageable(context), result);
             return ConversionService.SHARED.convert(page, context.getReturnType().getType())
                         .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + context.getReturnType().getType()));

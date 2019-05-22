@@ -25,7 +25,7 @@ import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.Query;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.Sort;
-import io.micronaut.data.model.query.builder.PreparedQuery;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -60,7 +60,7 @@ public class JpaQueryBuilder implements QueryBuilder {
 
     @NonNull
     @Override
-    public PreparedQuery buildQuery(@NonNull Query query) {
+    public QueryResult buildQuery(@NonNull Query query) {
         QueryState queryState = new QueryState(query, true);
         queryState.query.append(SELECT_CLAUSE);
 
@@ -73,12 +73,12 @@ public class JpaQueryBuilder implements QueryBuilder {
         }
 
         appendOrder(query, queryState);
-        return PreparedQuery.of(queryState.query.toString(), parameters);
+        return QueryResult.of(queryState.query.toString(), parameters);
     }
 
     @NonNull
     @Override
-    public PreparedQuery buildUpdate(@NonNull Query query, List<String> propertiesToUpdate) {
+    public QueryResult buildUpdate(@NonNull Query query, List<String> propertiesToUpdate) {
         if (propertiesToUpdate.isEmpty()) {
             throw new IllegalArgumentException("No properties specified to update");
         }
@@ -90,17 +90,17 @@ public class JpaQueryBuilder implements QueryBuilder {
                 .append(queryState.logicalName);
         buildUpdateStatement(queryState, propertiesToUpdate);
         buildWhereClause(query.getCriteria(), queryState);
-        return PreparedQuery.of(queryState.query.toString(), queryState.parameters);
+        return QueryResult.of(queryState.query.toString(), queryState.parameters);
     }
 
     @NonNull
     @Override
-    public PreparedQuery buildDelete(@NonNull Query query) {
+    public QueryResult buildDelete(@NonNull Query query) {
         PersistentEntity entity = query.getPersistentEntity();
         QueryState queryState = new QueryState(query, false);
         queryState.query.append(DELETE_CLAUSE).append(entity.getName()).append(SPACE).append(queryState.logicalName);
         buildWhereClause(query.getCriteria(), queryState);
-        return PreparedQuery.of(queryState.query.toString(), queryState.parameters);
+        return QueryResult.of(queryState.query.toString(), queryState.parameters);
     }
 
     private void buildSelectClause(Query query, QueryState queryState) {

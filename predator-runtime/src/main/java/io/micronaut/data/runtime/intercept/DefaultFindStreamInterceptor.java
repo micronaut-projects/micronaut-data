@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindStreamInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 import java.util.stream.Stream;
 
@@ -30,7 +31,7 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T, Stream<Object>> implements FindStreamInterceptor<T> {
+public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T, Stream<T>> implements FindStreamInterceptor<T> {
 
     /**
      * Default constructor.
@@ -41,25 +42,10 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Stream<Object> intercept(MethodInvocationContext<T, Stream<Object>> context) {
+    public Stream<T> intercept(MethodInvocationContext<T, Stream<T>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery preparedQuery = prepareQuery(context);
-            if (preparedQuery.isDtoProjection()) {
-                return datastore.findProjectedStream(
-                        preparedQuery.getRootEntity(),
-                        (Class<Object>) preparedQuery.getResultType(),
-                        preparedQuery.getQuery(),
-                        preparedQuery.getParameterValues(),
-                        preparedQuery.getPageable()
-                );
-            } else {
-                return datastore.findStream(
-                        (Class<Object>) preparedQuery.getResultType(),
-                        preparedQuery.getQuery(),
-                        preparedQuery.getParameterValues(),
-                        preparedQuery.getPageable()
-                );
-            }
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            return (Stream<T>) datastore.findStream(preparedQuery);
         } else {
             Class rootEntity = getRequiredRootEntity(context);
             Pageable pageable = getPageable(context);

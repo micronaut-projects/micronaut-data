@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 /**
  * Default implementation of {@link DeleteAllInterceptor}.
@@ -41,11 +42,8 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
     @Override
     public Void intercept(MethodInvocationContext<T, Void> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery preparedQuery = prepareQuery(context);
-            datastore.executeUpdate(
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues()
-            );
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+            datastore.executeUpdate(preparedQuery);
         } else {
             Object[] parameterValues = context.getParameterValues();
             Class rootEntity = getRequiredRootEntity(context);

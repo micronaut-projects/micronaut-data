@@ -23,6 +23,7 @@ import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.runtime.datastore.PreparedQuery;
 
 /**
  * Default implementation of the {@link FindOneInterceptor} interface.
@@ -41,24 +42,8 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
 
     @Override
     public Object intercept(MethodInvocationContext<T, Object> context) {
-        PreparedQuery preparedQuery = prepareQuery(context);
-        Object result;
-        Class<?> resultType = preparedQuery.getResultType();
-        if (preparedQuery.isDtoProjection()) {
-
-            result = datastore.findProjected(
-                    preparedQuery.getRootEntity(),
-                    resultType,
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues()
-            );
-        } else {
-            result = datastore.findOne(
-                    resultType,
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues()
-            );
-        }
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+        Object result = datastore.findOne(preparedQuery);
 
         if (result != null) {
             ReturnType<Object> returnType = context.getReturnType();
