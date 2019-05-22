@@ -25,7 +25,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
-import io.micronaut.data.runtime.datastore.PreparedQuery;
+import io.micronaut.data.runtime.query.PreparedQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;

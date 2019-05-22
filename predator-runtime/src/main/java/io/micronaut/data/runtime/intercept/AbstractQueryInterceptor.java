@@ -34,7 +34,7 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.Sort;
 import io.micronaut.data.runtime.datastore.Datastore;
-import io.micronaut.data.runtime.datastore.PreparedQuery;
+import io.micronaut.data.runtime.query.PreparedQuery;
 
 import java.time.OffsetDateTime;
 import java.util.Collections;

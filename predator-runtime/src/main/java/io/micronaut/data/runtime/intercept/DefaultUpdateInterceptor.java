@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.runtime.datastore.Datastore;
-import io.micronaut.data.runtime.datastore.PreparedQuery;
+import io.micronaut.data.runtime.query.PreparedQuery;
 
 /**
  * Default implementation of {@link UpdateInterceptor}.

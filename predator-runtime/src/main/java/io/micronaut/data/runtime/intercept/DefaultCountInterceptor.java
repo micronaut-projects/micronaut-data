@@ -23,7 +23,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.runtime.datastore.PreparedQuery;
+import io.micronaut.data.runtime.query.PreparedQuery;
 
 import java.util.Iterator;
 

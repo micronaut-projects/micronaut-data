@@ -21,7 +21,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
-import io.micronaut.data.runtime.datastore.PreparedQuery;
+import io.micronaut.data.runtime.query.PreparedQuery;
 
 import java.util.Collections;
 
