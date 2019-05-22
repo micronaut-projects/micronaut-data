@@ -62,6 +62,25 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     Book persist(String title, int pages);
     // end::save2[]
 
+    // tag::update[]
+    void update(@Id Long id, int pages);
+    // end::update[]
+
+    // tag::update2[]
+    void updateByTitle(String title, int pages);
+    // end::update2[]
+
+    // tag::deleteall[]
+    void deleteAll();
+    // end::deleteall[]
+
+    // tag::deleteone[]
+    void delete(String title);
+    // end::deleteone[]
+
+    // tag::deleteby[]
+    void deleteByTitleLike(String title);
+    // end::deleteby[]
 
 // tag::repository[]
 }

@@ -60,6 +60,25 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun persist(title: String, pages: Int): Book
     // end::save2[]
 
+    // tag::update[]
+    fun update(@Id id: Long?, pages: Int)
+    // end::update[]
+
+    // tag::update2[]
+    fun updateByTitle(title: String, pages: Int)
+    // end::update2[]
+
+    // tag::deleteall[]
+    override fun deleteAll()
+    // end::deleteall[]
+
+    // tag::deleteone[]
+    fun delete(title: String)
+    // end::deleteone[]
+
+    // tag::deleteby[]
+    fun deleteByTitleLike(title: String)
+    // end::deleteby[]
 
 // tag::repository[]
 }

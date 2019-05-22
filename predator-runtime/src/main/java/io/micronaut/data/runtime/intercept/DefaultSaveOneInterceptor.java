@@ -64,7 +64,7 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
                 String argumentName = argument.getName();
                 Object v = parameterValueMap.get(argumentName);
                 AnnotationMetadata argMetadata = argument.getAnnotationMetadata();
-                if (v == null && !PersistentProperty.isNullable(argMetadata)) {
+                if (v == null && !PersistentProperty.isNullableMetadata(argMetadata)) {
                     PersistentProperty prop = entity.getPropertyByName(argumentName);
                     if (prop == null || prop.isRequired()) {
                         throw new IllegalArgumentException("Argument [" + argumentName + "] cannot be null");
@@ -85,7 +85,7 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
             } else {
                 String propName = prop.getName();
                 Object v = parameterValueMap.get(propName);
-                if (v == null && !prop.isNullable()) {
+                if (v == null && !prop.isOptional()) {
                     throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
                 }
                 wrapper.setProperty(propName, v);

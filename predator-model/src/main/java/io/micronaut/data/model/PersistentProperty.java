@@ -62,20 +62,20 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      *
      * @return True if it can
      */
-    default boolean isNullable() {
-        return isNullable(getAnnotationMetadata());
+    default boolean isOptional() {
+        return isNullableMetadata(getAnnotationMetadata());
     }
 
     /**
      * Whether a property is required to be specified. This returns
      * false if the property is both not nullable and not generated.
      *
-     * @see #isNullable()
+     * @see #isOptional()
      * @see #isGenerated()
      * @return True if the property is required
      */
     default boolean isRequired() {
-       return !isNullable() && !isGenerated();
+       return !isOptional() && !isGenerated();
     }
 
     /**
@@ -123,7 +123,7 @@ public interface PersistentProperty extends AnnotationMetadataProvider {
      * @param metadata The metadata
      * @return True if it is nullable
      */
-    static boolean isNullable(@NonNull AnnotationMetadata metadata) {
+    static boolean isNullableMetadata(@NonNull AnnotationMetadata metadata) {
         return metadata
                 .getDeclaredAnnotationNames()
                 .stream()

@@ -1,1 +1,1 @@
-TODO
+It is common to want to add a field that represents the time when an entity is was first persisted and the time when it was last updated.

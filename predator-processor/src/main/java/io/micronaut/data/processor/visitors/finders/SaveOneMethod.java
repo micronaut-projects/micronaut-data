@@ -67,7 +67,7 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
 
         Set<String> requiredProps = rootEntity.getPersistentProperties()
                 .stream()
-                .filter(pp -> !pp.isNullable() && !pp.isReadOnly())
+                .filter(pp -> !pp.isOptional() && !pp.isReadOnly())
                 .map(PersistentProperty::getName)
                 .collect(Collectors.toSet());
         ParameterElement[] parameterElements = rootEntity.getClassElement().getPrimaryConstructor().map(MethodElement::getParameters).orElse(null);
