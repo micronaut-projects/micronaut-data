@@ -91,6 +91,21 @@ public class HibernateJpaDatastore implements Datastore {
         });
     }
 
+    @Nullable
+    @Override
+    public <T, R> R findProjected(@NonNull Class<T> rootEntity, @NonNull Class<R> resultType, @NonNull String query, @NonNull Map<String, Object> parameters) {
+        return readTransactionTemplate.execute(status -> {
+            Query<Tuple> q = getCurrentSession()
+                    .createQuery(query, Tuple.class);
+            bindParameters(q, parameters);
+            q.setMaxResults(1);
+            return q.uniqueResultOptional()
+                    .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
+                    .map(tuple, resultType))
+                    .orElse(null);
+        });
+    }
+
     @NonNull
     @Override
     public <T> Iterable<T> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
@@ -158,6 +173,22 @@ public class HibernateJpaDatastore implements Datastore {
                     .map(tuple, resultType))
                     .collect(Collectors.toList());
         });
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @NonNull
+    @Override
+    public <T, R> Stream<R> findProjectedStream(@NonNull Class<T> rootEntity, @NonNull Class<R> resultType, @NonNull String query, @NonNull Map<String, Object> parameterValues, @NonNull Pageable pageable) {
+        return readTransactionTemplate.execute(status -> {
+            Query<Tuple> q = getCurrentSession()
+                    .createQuery(query, Tuple.class);
+            bindParameters(q, parameterValues);
+            bindPageable(q, pageable);
+            return q.stream()
+                    .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
+                            .map(tuple, resultType));
+        });
+
     }
 
     @SuppressWarnings("ConstantConditions")

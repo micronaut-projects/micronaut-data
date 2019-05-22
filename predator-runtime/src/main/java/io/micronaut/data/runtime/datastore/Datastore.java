@@ -58,6 +58,23 @@ public interface Datastore {
             @NonNull Map<String, Object> parameters);
 
     /**
+     * Find one by Query.
+     *
+     * @param rootEntity The root entity
+     * @param resultType The resultType
+     * @param query The query to execute
+     * @param parameters The parameters
+     * @param <T> The generic resultType
+     * @param <R> The result type.
+     * @return A result or null
+     */
+    @Nullable <T, R> R findProjected(
+            @NonNull Class<T> rootEntity,
+            @NonNull Class<R> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameters);
+
+    /**
      * Finds all results for the given query.
      * @param rootEntity The root entity
      * @param pageable The pageable
@@ -104,6 +121,7 @@ public interface Datastore {
      * @param parameterValues The parameter values
      * @param pageable The pageable
      * @param <T> The generic type
+     * @param <R> The result type
      * @return The result
      */
     <T, R> Iterable<R> findAllProjected(
@@ -170,6 +188,25 @@ public interface Datastore {
             @NonNull String query,
             @NonNull Map<String, Object> parameterValues,
             @NonNull Pageable pageable);
+
+    /**
+     * Finds a stream for the given arguments.
+     * @param rootEntity The root entity to query
+     * @param resultType The result type
+     * @param query The query
+     * @param parameterValues The parameter values
+     * @param pageable The pageable
+     * @param <T> The generic type
+     * @param <R> The result generic type
+     * @return The stream
+     */
+    @NonNull <T, R> Stream<R> findProjectedStream(
+            @NonNull Class<T> rootEntity,
+            @NonNull Class<R> resultType,
+            @NonNull String query,
+            @NonNull Map<String, Object> parameterValues,
+            @NonNull Pageable pageable);
+
 
     /**
      * Finds a stream for the given arguments.
@@ -250,6 +287,5 @@ public interface Datastore {
                 Pageable.unpaged()
         );
     }
-
 
 }

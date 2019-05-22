@@ -26,6 +26,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.runtime.datastore.Datastore;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Default implementation of {@link FindPageInterceptor}.
@@ -50,12 +51,29 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery preparedQuery = prepareQuery(context);
             PreparedQuery countQuery = prepareCountQuery(context);
-            Iterable<?> iterable = datastore.findAll(
-                    preparedQuery.getResultType(),
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues(),
-                    preparedQuery.getPageable()
-            );
+
+            Iterable<?> iterable;
+            Class<?> resultType = preparedQuery.getResultType();
+            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
+            Pageable pageable = preparedQuery.getPageable();
+            if (preparedQuery.isDtoProjection()) {
+                iterable = datastore.findAllProjected(
+                        preparedQuery.getRootEntity(),
+                        resultType,
+                        preparedQuery.getQuery(),
+                        parameterValues,
+                        pageable
+                );
+            } else {
+                iterable = datastore.findAll(
+                        resultType,
+                        preparedQuery.getQuery(),
+                        parameterValues,
+                        pageable
+                );
+            }
+
+
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
             Long result = datastore.findOne(
                     Long.class,

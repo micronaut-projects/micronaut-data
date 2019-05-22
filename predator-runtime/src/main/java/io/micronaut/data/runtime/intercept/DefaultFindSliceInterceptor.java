@@ -44,17 +44,30 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
         super(datastore);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public R intercept(MethodInvocationContext<T, R> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery preparedQuery = prepareQuery(context);
             Pageable pageable = preparedQuery.getPageable();
-            @SuppressWarnings("unchecked") Iterable<R> iterable = (Iterable<R>) datastore.findAll(
-                    preparedQuery.getResultType(),
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues(),
-                    pageable
-            );
+            Iterable<R> iterable;
+
+            if (preparedQuery.isDtoProjection()) {
+                iterable = (Iterable<R>) datastore.findAllProjected(
+                        preparedQuery.getRootEntity(),
+                        preparedQuery.getResultType(),
+                        preparedQuery.getQuery(),
+                        preparedQuery.getParameterValues(),
+                        pageable
+                );
+            } else {
+                iterable = (Iterable<R>) datastore.findAll(
+                        preparedQuery.getResultType(),
+                        preparedQuery.getQuery(),
+                        preparedQuery.getParameterValues(),
+                        pageable
+                );
+            }
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
             return convertOrFail(context, slice);
         } else {

@@ -44,12 +44,22 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
     public Stream<Object> intercept(MethodInvocationContext<T, Stream<Object>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery preparedQuery = prepareQuery(context);
-            return datastore.findStream(
-                    (Class<Object>) preparedQuery.getResultType(),
-                    preparedQuery.getQuery(),
-                    preparedQuery.getParameterValues(),
-                    preparedQuery.getPageable()
-            );
+            if (preparedQuery.isDtoProjection()) {
+                return datastore.findProjectedStream(
+                        preparedQuery.getRootEntity(),
+                        (Class<Object>) preparedQuery.getResultType(),
+                        preparedQuery.getQuery(),
+                        preparedQuery.getParameterValues(),
+                        preparedQuery.getPageable()
+                );
+            } else {
+                return datastore.findStream(
+                        (Class<Object>) preparedQuery.getResultType(),
+                        preparedQuery.getQuery(),
+                        preparedQuery.getParameterValues(),
+                        preparedQuery.getPageable()
+                );
+            }
         } else {
             Class rootEntity = getRequiredRootEntity(context);
             Pageable pageable = getPageable(context);

@@ -41,10 +41,22 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
     @Override
     public Optional<Object> intercept(MethodInvocationContext<T, Optional<Object>> context) {
         PreparedQuery preparedQuery = prepareQuery(context);
-        return Optional.ofNullable(datastore.findOne(
-                preparedQuery.getResultType(),
-                preparedQuery.getQuery(),
-                preparedQuery.getParameterValues()
-        ));
+        Object result;
+
+        if (preparedQuery.isDtoProjection()) {
+            result = datastore.findProjected(
+                    preparedQuery.getRootEntity(),
+                    preparedQuery.getResultType(),
+                    preparedQuery.getQuery(),
+                    preparedQuery.getParameterValues()
+            );
+        } else {
+            result = datastore.findOne(
+                    preparedQuery.getResultType(),
+                    preparedQuery.getQuery(),
+                    preparedQuery.getParameterValues()
+            );
+        }
+        return Optional.ofNullable(result);
     }
 }

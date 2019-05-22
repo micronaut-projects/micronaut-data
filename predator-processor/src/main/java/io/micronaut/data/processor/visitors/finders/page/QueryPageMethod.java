@@ -17,7 +17,6 @@ package io.micronaut.data.processor.visitors.finders.page;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
@@ -48,11 +47,9 @@ public class QueryPageMethod extends QueryListMethod {
         if (!matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             matchContext.fail("Method must accept an argument that is a Pageable");
             return null;
+        } else {
+            ClassElement resultType = matchContext.getReturnType().getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
+            return super.buildInfo(matchContext, resultType, query);
         }
-        return new MethodMatchInfo(
-                matchContext.getReturnType().getFirstTypeArgument().orElse(matchContext.getRootEntity().getType()),
-                query,
-                FindPageInterceptor.class
-        );
     }
 }

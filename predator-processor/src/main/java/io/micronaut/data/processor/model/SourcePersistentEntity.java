@@ -217,7 +217,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
         return classElement;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public ClassElement getType() {
         return classElement;

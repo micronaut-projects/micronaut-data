@@ -48,7 +48,7 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
             PreparedQuery preparedQuery = prepareQuery(context);
             Iterable<?> iterable;
 
-            if (preparedQuery.isDto()) {
+            if (preparedQuery.isDtoProjection()) {
                 iterable = datastore.findAllProjected(
                         preparedQuery.getRootEntity(),
                         preparedQuery.getResultType(),

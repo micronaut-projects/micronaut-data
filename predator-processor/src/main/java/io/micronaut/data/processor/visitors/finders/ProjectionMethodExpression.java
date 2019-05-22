@@ -25,6 +25,8 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
+
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,7 +88,7 @@ public abstract class ProjectionMethodExpression {
             }
 
             // allow findAllBy as an alternative to findBy
-            if (!decapitilized.equals("all")) {
+            if (!Arrays.asList("all", "one").contains(decapitilized)) {
                 Matcher topMatcher = Pattern.compile("^(top|first)(\\d*)$").matcher(decapitilized);
                 if (topMatcher.find()) {
                     return new RestrictMaxResultProjection(topMatcher, matchContext).initProjection(matchContext, decapitilized);

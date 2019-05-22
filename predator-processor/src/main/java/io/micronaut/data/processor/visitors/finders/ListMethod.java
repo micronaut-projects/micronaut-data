@@ -62,7 +62,7 @@ public class ListMethod extends AbstractListMethod {
      * @return True if it is
      */
     protected boolean isValidReturnType(@NonNull ClassElement returnType, MatchContext matchContext) {
-        return returnType.isAssignable(Iterable.class);
+        return TypeUtils.isContainerType(returnType);
     }
 
 }

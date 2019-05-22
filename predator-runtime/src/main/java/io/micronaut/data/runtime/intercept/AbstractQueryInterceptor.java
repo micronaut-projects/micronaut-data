@@ -356,7 +356,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         /**
          * @return Whether the query is a DTO query
          */
-        public boolean isDto() {
+        public boolean isDtoProjection() {
             return dto;
         }
 

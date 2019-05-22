@@ -25,6 +25,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.intercept.reactive.FindReactivePublisherInterceptor;
 import io.micronaut.data.model.Association;
@@ -159,7 +160,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                             return null;
                         }
 
-                        return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class, true);
+                        return new MethodMatchInfo(returnType, query, FindOneInterceptor.class, true);
                     } else {
 
                         matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
@@ -180,7 +181,17 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 }
 
-                if (returnType.isAssignable(Iterable.class)) {
+                if (matchContext.isTypeInRole(
+                        matchContext.getReturnType(),
+                        TypeRole.PAGE
+                )) {
+                    return new MethodMatchInfo(typeArgument, query, FindPageInterceptor.class, dto);
+                } else if (matchContext.isTypeInRole(
+                        matchContext.getReturnType(),
+                        TypeRole.SLICE
+                )) {
+                    return new MethodMatchInfo(typeArgument, query, FindSliceInterceptor.class, dto);
+                } else if (returnType.isAssignable(Iterable.class)) {
                     return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class, dto);
                 } else if (returnType.isAssignable(Stream.class)) {
                     return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class, dto);

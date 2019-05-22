@@ -2,6 +2,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
@@ -52,6 +53,12 @@ import io.micronaut.core.annotation.Introspected;
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<PersonDto> list(String name);
+    
+    PersonDto find(String name);
+    
+    Page<PersonDto> searchByNameLike(String title, Pageable pageable);
+    
+    java.util.stream.Stream<PersonDto> queryByNameLike(String title, Pageable pageable);
 }
 
 @Introspected
@@ -76,5 +83,17 @@ class PersonDto {
         ann.rootEntity() == Person
         method.synthesize(Query).value() == "SELECT person.name AS name FROM $Person.name AS person WHERE (person.name = :p1)"
         method.isTrue(PredatorMethod, PredatorMethod.META_MEMBER_DTO)
+
+        and:
+        def findMethod = repository.getRequiredMethod("find", String)
+        findMethod.synthesize(PredatorMethod).resultType().simpleName == "PersonDto"
+
+        and:
+        def pageMethod = repository.getRequiredMethod("searchByNameLike", String, Pageable)
+        pageMethod.synthesize(PredatorMethod).resultType().simpleName == "PersonDto"
+
+        and:
+        def streamMethod = repository.getRequiredMethod("queryByNameLike", String, Pageable)
+        streamMethod.synthesize(PredatorMethod).resultType().simpleName == "PersonDto"
     }
 }
