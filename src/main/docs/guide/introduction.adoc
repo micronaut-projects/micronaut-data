@@ -13,3 +13,5 @@ Predator provides a general API for translating a compile time Query model into 
 * SQL (JDBC)
 
 Further implementations for other databases is planned in the future.
+
+The following sections will take you through the basics of querying and using Predator, if you wish to understand more detail about how Predator works check out the <<howItWorks, How Predator Works>> section.

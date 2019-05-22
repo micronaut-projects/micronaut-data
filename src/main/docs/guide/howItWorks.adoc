@@ -1,1 +1,23 @@
-TODO
+Predator uses two key features of https://micronaut.io[Micronaut]: The https://docs.micronaut.io/latest/api/io/micronaut/inject/visitor/TypeElementVisitor.html[TypeElementVisitor] API and https://docs.micronaut.io/latest/guide/index.html#introductionAdvice[Introduction Advice].
+
+Predator defines a api:data.processor.visitors.RepositoryTypeElementVisitor[] that at compilation time visits all interfaces in the source tree that are annotated with the ann:data.annotation.Repository[] annotation.
+
+The `RepositoryTypeElementVisitor` uses service loader to load all available api:data.processor.visitors.finders.MethodCandidate[] implementations and iterate over them.
+
+TIP: You can add additional method candidates by creating a library that depends on `micronaut-predator-processor` and defining the `META-INF/services` definition for the method candidate. The new library should be added to your annotation processor path.
+
+The `MethodCandidate` interface features a `isMethodMatch` method which allows matching a https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html[MethodElement]. Once a `MethodElement` has been matched the `buildMatchInfo` method of the `MethodCandidate` is invoked which returns an instance of api:data.processor.visitors.finders.MethodMatchInfo[].
+
+The constructor for `MethodMatchInfo` allows specifying the runtime api:data.intercept.PredatorInterceptor[] to execute, which typically differs based on the return type and behaviour required and an optional api:data.model.query.Query[] instance which represents the query model of the query to be executed.
+
+The `RepositoryTypeElementVisitor` takes the `MethodMatchInfo` and converts the api:data.model.query.Query[] instance into the equivalent String-based query (such as JPA-QL) using the api:data.model.query.builder.QueryBuilder[] that is configured by the ann:data.annotation.Repository[] annotation.
+
+A binding between runtime method parameters and named query parameters is also created.
+
+The visited `MethodElement` is then dynamically annotated with the following information:
+
+* The constructed string-based query (for example JPA-QL)
+* The parameter binding (A map containing the named parameter in the query as key and the name of the method argument as a value)
+* The runtime api:data.intercept.PredatorInterceptor[] to execute.
+
+At runtime all the api:data.intercept.PredatorInterceptor[] has to do is retrieve the query, read the method parameter values using the parameter binding and execute the query.
