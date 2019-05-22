@@ -21,13 +21,14 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.PageableRepository;
 
 import javax.transaction.Transactional;
 import java.util.List;
 
 @Repository
 @Transactional
-public interface PersonCrudRepository extends CrudRepository<Person, Long> {
+public interface PersonCrudRepository extends PageableRepository<Person, Long> {
 
     Person save(String name, int age);
 

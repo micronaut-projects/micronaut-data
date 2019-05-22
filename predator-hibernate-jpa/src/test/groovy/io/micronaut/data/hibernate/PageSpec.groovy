@@ -72,7 +72,7 @@ class PageSpec extends Specification {
         page.nextPageable().size == 10
 
         when:"The next page is selected"
-        page = personRepository.list(page.nextPageable())
+        page = crudRepository.findAll(page.nextPageable())
 
         then:"it is correct"
         page.offset == 10
