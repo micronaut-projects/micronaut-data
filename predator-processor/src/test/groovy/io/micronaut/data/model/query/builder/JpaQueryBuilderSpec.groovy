@@ -29,6 +29,30 @@ import spock.lang.Unroll
 class JpaQueryBuilderSpec extends Specification {
 
     @Unroll
+    void "test encode order by #statement"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(type)
+        QueryModel q = QueryModel.from(entity)
+        q.sort Sort.of(props.collect() { Sort.Order."$direction"(it)})
+
+        QueryBuilder encoder = new JpaQueryBuilder()
+        QueryResult encodedQuery = encoder.buildOrderBy(entity, q.getSort())
+
+
+        expect:
+        encodedQuery != null
+        encodedQuery.query ==
+                " ORDER BY ${statement}"
+
+        where:
+        type   | direction | props           | statement
+        Person | 'asc'     | ["name"]        | 'person.name ASC'
+        Person | 'asc'     | ["name", "age"] | 'person.name ASC,person.age ASC'
+        Person | 'desc'    | ["name"]        | 'person.name DESC'
+        Person | 'desc'    | ["name", "age"] | 'person.name DESC,person.age DESC'
+    }
+
+    @Unroll
     void "test encode query #statement - order by"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)

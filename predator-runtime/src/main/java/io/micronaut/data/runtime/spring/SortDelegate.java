@@ -40,6 +40,11 @@ class SortDelegate implements Sort {
         this.sort = sort;
     }
 
+    @Override
+    public boolean isSorted() {
+        return sort.isSorted();
+    }
+
     @NonNull
     @Override
     public Sort order(@NonNull String propertyName) {

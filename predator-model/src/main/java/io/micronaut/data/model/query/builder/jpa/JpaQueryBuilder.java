@@ -16,6 +16,8 @@
 package io.micronaut.data.model.query.builder.jpa;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
@@ -101,6 +103,39 @@ public class JpaQueryBuilder implements QueryBuilder {
         queryState.query.append(DELETE_CLAUSE).append(entity.getName()).append(SPACE).append(queryState.logicalName);
         buildWhereClause(query.getCriteria(), queryState);
         return QueryResult.of(queryState.query.toString(), queryState.parameters);
+    }
+
+    @NonNull
+    @Override
+    public QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort) {
+        ArgumentUtils.requireNonNull("entity", entity);
+        ArgumentUtils.requireNonNull("sort", sort);
+        List<Sort.Order> orders = sort.getOrderBy();
+        if (CollectionUtils.isEmpty(orders)) {
+            throw new IllegalArgumentException("Sort is empty");
+        }
+        for (Sort.Order order : orders) {
+            String property = order.getProperty();
+            if (!entity.getPropertyByPath(property).isPresent()) {
+                throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
+            }
+        }
+
+        StringBuilder buff = new StringBuilder(ORDER_BY_CLAUSE);
+        Iterator<Sort.Order> i = orders.iterator();
+        while (i.hasNext()) {
+            Sort.Order order = i.next();
+            buff.append(entity.getDecapitalizedName())
+                    .append(DOT)
+                    .append(order.getProperty())
+                    .append(SPACE)
+                    .append(order.getDirection().toString());
+            if (i.hasNext()) {
+                buff.append(",");
+            }
+        }
+
+        return QueryResult.of(buff.toString(), Collections.emptyMap());
     }
 
     private void buildSelectClause(QueryModel query, QueryState queryState) {

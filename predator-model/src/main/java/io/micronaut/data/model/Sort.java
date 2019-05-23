@@ -36,6 +36,11 @@ public interface Sort {
     Sort UNSORTED = new DefaultSort();
 
     /**
+     * @return Is sorting applied
+     */
+    boolean isSorted();
+
+    /**
      * Orders by the specified property name (defaults to ascending).
      *
      * @param propertyName The property name to order by

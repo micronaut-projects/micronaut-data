@@ -18,6 +18,8 @@ package io.micronaut.data.model;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
+import io.micronaut.core.naming.Named;
+
 import java.util.Map;
 
 /**
@@ -28,7 +30,7 @@ import java.util.Map;
  * @param <E> The entity type
  * @param <R> The result type
  */
-public interface PreparedQuery<E, R> extends AnnotationMetadataProvider {
+public interface PreparedQuery<E, R> extends AnnotationMetadataProvider, Named {
 
     /**
      * @return Whether the query is native.
@@ -75,4 +77,10 @@ public interface PreparedQuery<E, R> extends AnnotationMetadataProvider {
      */
     @NonNull
     Pageable getPageable();
+
+    /**
+     * @return The argument types
+     */
+    @NonNull
+    Class<?>[] getArgumentTypes();
 }

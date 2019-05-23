@@ -27,15 +27,20 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.backend.Datastore;
 import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 
+import javax.annotation.Nonnull;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,10 +57,6 @@ import java.util.concurrent.ConcurrentMap;
  * @author graemerocher
  */
 abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
-    private static final String MEMBER_ROOT_MEMBER = "rootEntity";
-    private static final String MEMBER_RESULT_TYPE = "resultType";
-    private static final String MEMBER_ID_TYPE = "idType";
-    private static final String MEMBER_PARAMETER_BINDING = "parameterBinding";
     protected final Datastore datastore;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
 
@@ -92,13 +93,13 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             // this should never happen
             throw new IllegalStateException("No predator method configured");
         }
-        Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
+        @SuppressWarnings("unchecked")
+        Class<Object> rootEntity = annotation.get(PredatorMethod.META_MEMBER_ROOT_ENTITY, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
         if (resultType == null) {
-            resultType = annotation.get(MEMBER_RESULT_TYPE, Class.class).orElse(rootEntity);
+            //noinspection unchecked
+            resultType = annotation.get(PredatorMethod.META_MEMBER_RESULT_TYPE, Class.class).orElse(rootEntity);
         }
-        Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
-                .orElse(null);
 
         Map<String, Object> parameterValues = buildParameterBinding(context, annotation, rootEntity);
 
@@ -106,18 +107,30 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         String query = context.getValue(Query.class, String.class).orElseThrow(() ->
                 new IllegalStateException("No query present in method")
         );
-        boolean isNative = context.getValue(Query.class, "nativeQuery", Boolean.class).orElse(false);
-        return new DefaultPreparedQuery(
-                context.getAnnotationMetadata(),
+        if (pageable != null) {
+            Sort sort = pageable.getSort();
+            if (sort.isSorted()) {
+                QueryBuilder queryBuilder = getRequiredQueryBuilder(context);
+                query += queryBuilder.buildOrderBy(PersistentEntity.of(rootEntity), sort).getQuery();
+            }
+        }
+        return new DefaultPreparedQuery<>(
+                context,
                 resultType,
                 rootEntity,
-                idType,
                 query,
                 parameterValues,
-                pageable,
-                context.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO),
-                isNative
-        );
+                pageable);
+    }
+
+    /**
+     * Obtains the configured query builder.
+     * @param context The context
+     * @return The query builder
+     */
+    protected @NonNull QueryBuilder getRequiredQueryBuilder(@NonNull MethodInvocationContext<T, R> context) {
+        return context.getValue(Repository.class, PredatorMethod.META_MEMBER_QUERY_BUILDER, QueryBuilder.class)
+                .orElse(new JpaQueryBuilder());
     }
 
     /**
@@ -125,7 +138,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * @param context The context
      * @return The query
      */
-    protected final PreparedQuery<?, Number> prepareCountQuery(MethodInvocationContext<T, R> context) {
+    protected final PreparedQuery<?, Number> prepareCountQuery(@NonNull MethodInvocationContext<T, R> context) {
         String query = context.getValue(Query.class, PredatorMethod.META_MEMBER_COUNT_QUERY, String.class).orElseThrow(() ->
                 new IllegalStateException("No query present in method")
         );
@@ -134,15 +147,12 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             // this should never happen
             throw new IllegalStateException("No predator method configured");
         }
-        Class rootEntity = annotation.get(MEMBER_ROOT_MEMBER, Class.class)
+        Class rootEntity = annotation.get(PredatorMethod.META_MEMBER_ROOT_ENTITY, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
-        Class idType = annotation.get(MEMBER_ID_TYPE, Class.class)
-                .orElse(null);
 
-        @SuppressWarnings("ConstantConditions") Map<String, Object> parameterValues = Collections.emptyMap();
+        Map<String, Object> parameterValues = Collections.emptyMap();
 
         AnnotationValue<Query> queryAnn = context.getAnnotation(Query.class);
-        boolean isNative = false;
         if (queryAnn != null) {
             if (queryAnn.contains(PredatorMethod.META_MEMBER_COUNT_PARAMETERS)) {
 
@@ -160,23 +170,24 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                         rootEntity
                 );
             }
-
-            isNative = queryAnn.get("nativeQuery", Boolean.class).orElse(false);
         }
 
         Pageable pageable = getPageable(context);
 
+        //noinspection unchecked
         return new DefaultPreparedQuery(
-                context.getAnnotationMetadata(),
+                context,
                 Long.class,
                 rootEntity,
-                idType,
                 query,
                 parameterValues,
-                pageable,
-                false,
-                isNative
-        );
+                pageable
+        ) {
+            @Override
+            public boolean isDtoProjection() {
+                return false;
+            }
+        };
     }
 
     @NonNull
@@ -184,7 +195,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             @NonNull MethodInvocationContext<T, R> context,
             @NonNull AnnotationValue<PredatorMethod> annotation,
             @NonNull Class<?> rootEntity) {
-        return buildParameterBinding(context, annotation, MEMBER_PARAMETER_BINDING, rootEntity);
+        return buildParameterBinding(context, annotation, PredatorMethod.META_MEMBER_PARAMETER_BINDING, rootEntity);
     }
 
     /**
@@ -258,7 +269,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      */
     @NonNull
     protected Class<?> getRequiredRootEntity(MethodInvocationContext context) {
-        return context.getValue(PredatorMethod.class, MEMBER_ROOT_MEMBER, Class.class)
+        return context.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ROOT_ENTITY, Class.class)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
     }
 
@@ -282,22 +293,24 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * @return The pageable or null
      */
     @Nullable
-    protected Pageable getPageable(MethodInvocationContext context) {
+    protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
         String pageableParam = context.getValue(PredatorMethod.class, TypeRole.PAGEABLE, String.class).orElse(null);
         Pageable pageable = null;
+        Map<String, Object> parameterValueMap = context.getParameterValueMap();
         if (pageableParam != null) {
-            Map<String, Object> parameterValueMap = context.getParameterValueMap();
             pageable = ConversionService.SHARED
                     .convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
 
         } else {
-            Sort sortParam = context.getValue(PredatorMethod.class, TypeRole.SORT, Sort.class).orElse(null);
+            String sortParam = context.getValue(PredatorMethod.class, TypeRole.SORT, String.class).orElse(null);
+            Sort sort = ConversionService.SHARED
+                    .convert(parameterValueMap.get(sortParam), Sort.class).orElse(null);
             int max = context.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_SIZE, int.class).orElse(-1);
             int pageIndex = context.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_INDEX, int.class).orElse(0);
             boolean hasSize = max > 0;
             if (hasSize) {
-                if (sortParam != null) {
-                    pageable = Pageable.from(pageIndex, max, sortParam);
+                if (sort != null) {
+                    pageable = Pageable.from(pageIndex, max, sort);
                 } else {
                     pageable = Pageable.from(pageIndex, max);
                 }
@@ -340,57 +353,46 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * @param <E> The entity type
      * @param <RT> The result type
      */
-    private final class DefaultPreparedQuery<E, RT> implements PreparedQuery<E, RT> {
-        private final @NonNull Class resultType;
-        private final @NonNull Class rootEntity;
-        private final @Nullable Class idType;
+    private class DefaultPreparedQuery<E, RT> implements PreparedQuery<E, RT> {
+        private final @NonNull Class<RT> resultType;
+        private final @NonNull Class<E> rootEntity;
         private final @NonNull String query;
         private final @NonNull Map<String, Object> parameterValues;
         private final Pageable pageable;
-        private final boolean dto;
-        private final AnnotationMetadata annotationMetadata;
-        private final boolean isNative;
+        private final MethodInvocationContext<?, ?> method;
 
         /**
          * The default constructor.
-         * @param annotationMetadata The annotation metadata
+         * @param method The target method
          * @param resultType The result type of the query
          * @param rootEntity The root entity of the query
-         * @param idType The ID type
          * @param query The query itself
          * @param parameterValues The parameter values
          * @param pageable The pageable
-         * @param dto Is the query a DTO query
          */
         DefaultPreparedQuery(
-                @NonNull AnnotationMetadata annotationMetadata,
-                @NonNull Class resultType,
-                @NonNull Class rootEntity,
-                @Nullable Class<?> idType,
+                @NonNull MethodInvocationContext<?, ?> method,
+                @NonNull Class<RT> resultType,
+                @NonNull Class<E> rootEntity,
                 @NonNull String query,
                 @Nullable Map<String, Object> parameterValues,
-                @Nullable Pageable pageable,
-                boolean dto,
-                boolean isNative) {
+                @Nullable Pageable pageable) {
             this.resultType = resultType;
             this.rootEntity = rootEntity;
-            this.idType = idType;
             this.query = query;
             this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
             this.pageable = pageable;
-            this.dto = dto;
-            this.annotationMetadata = annotationMetadata;
-            this.isNative = isNative;
+            this.method = method;
         }
 
         @Override
         public AnnotationMetadata getAnnotationMetadata() {
-            return annotationMetadata;
+            return method.getAnnotationMetadata();
         }
 
         @Override
         public boolean isNative() {
-            return isNative;
+            return method.isTrue(Query.class, "nativeQuery");
         }
 
         /**
@@ -398,7 +400,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
          */
         @Override
         public boolean isDtoProjection() {
-            return dto;
+            return method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
         }
 
         /**
@@ -416,7 +418,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         @Override
         @Nullable
         public Class<?> getEntityIdentifierType() {
-            return idType;
+            return method.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE, Class.class)
+                         .orElse(null);
         }
 
         /**
@@ -453,6 +456,18 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         @NonNull
         public Pageable getPageable() {
             return pageable != null ? pageable : Pageable.unpaged();
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return method.getMethodName();
+        }
+
+        @Override
+        @NonNull
+        public Class<?>[] getArgumentTypes() {
+            return method.getArgumentTypes();
         }
     }
 }

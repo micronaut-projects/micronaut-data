@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
+import io.micronaut.data.model.Sort
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -50,6 +51,16 @@ class PageSpec extends Specification {
         crudRepository.saveAll(people)
     }
 
+    void "test sort"() {
+        when:"Sorted results are returned"
+        def results = personRepository.listTop10(
+                Sort.unsorted().order("name", Sort.Order.Direction.DESC)
+        )
+
+        then:"The results are correct"
+        results.size() == 10
+        results[0].name.startsWith("Z")
+    }
 
     void "test pageable list"() {
         when:"All the people are count"
@@ -79,6 +90,39 @@ class PageSpec extends Specification {
         page.pageNumber == 1
         page.content[0].name.startsWith("K")
     }
+
+    void "test pageable sort"() {
+        when:"All the people are count"
+        def count = crudRepository.count()
+
+        then:"the count is correct"
+        count == 1300
+
+        when:"10 people are paged"
+        Page<Person> page = personRepository.list(
+                Pageable.from(0, 10)
+                        .order("name", Sort.Order.Direction.DESC)
+        )
+
+        then:"The data is correct"
+        page.content.size() == 10
+        page.content.every() { it instanceof Person }
+        page.content[0].name.startsWith("Z")
+        page.content[1].name.startsWith("Z")
+        page.totalSize == 1300
+        page.totalPages == 130
+        page.nextPageable().offset == 10
+        page.nextPageable().size == 10
+
+        when:"The next page is selected"
+        page = crudRepository.findAll(page.nextPageable())
+
+        then:"it is correct"
+        page.offset == 10
+        page.pageNumber == 1
+        page.content[0].name.startsWith("Z")
+    }
+
 
     void "test pageable findBy"() {
         when:"People are searched for"

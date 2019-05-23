@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.query.builder;
 
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -55,6 +57,16 @@ public interface QueryBuilder {
      */
     @NonNull
     QueryResult buildDelete(@NonNull QueryModel query);
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param entity The root entity
+     * @param sort The sort
+     * @return The encoded query
+     */
+    @NonNull
+    QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort);
 
     /**
      * When producing the query this dedicates whether to use the mapped names (such as the column name)

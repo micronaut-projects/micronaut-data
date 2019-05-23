@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Repository
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
+import io.micronaut.data.model.Sort
 
 @Repository
 interface PersonRepository {
@@ -26,6 +27,8 @@ interface PersonRepository {
     Page<Person> findByNameLike(String name, Pageable pageable)
 
     Page<Person> list(Pageable pageable)
+
+    List<Person> listTop10(Sort sort)
 
     Slice<Person> find(Pageable pageable)
 

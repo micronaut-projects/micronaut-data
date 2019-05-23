@@ -334,10 +334,10 @@ public class HibernateJpaDatastore implements Datastore {
     private <T> Query<T> buildCriteriaQuery(Session session, @NonNull Class<T> rootEntity, CriteriaBuilder criteriaBuilder, @NonNull Pageable pageable) {
         CriteriaQuery<T> query = criteriaBuilder.createQuery(rootEntity);
         Root<T> root = query.from(rootEntity);
+        bindCriteriaSort(query, root, criteriaBuilder, pageable);
         Query<T> q = session.createQuery(
                 query
         );
-        bindCriteriaSort(query, root, criteriaBuilder, pageable);
         bindPageable(q, pageable);
         return q;
     }
@@ -374,7 +374,7 @@ public class HibernateJpaDatastore implements Datastore {
 
                 case DESC:
                     criteriaQuery.orderBy(
-                            builder.asc(expression)
+                            builder.desc(expression)
                     );
                     continue;
                 default:

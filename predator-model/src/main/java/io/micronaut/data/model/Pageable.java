@@ -108,6 +108,11 @@ public interface Pageable extends Sort {
         return Pageable.from(getNumber(), getSize(), newSort);
     }
 
+    @Override
+    default boolean isSorted() {
+        return getSort().isSorted();
+    }
+
     @NonNull
     @Override
     default Pageable order(@NonNull Order order) {
