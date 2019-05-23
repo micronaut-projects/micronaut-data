@@ -31,6 +31,10 @@ class QuerySpec extends Specification {
     @Shared
     BookRepository bookRepository
 
+    @Inject
+    @Shared
+    AuthorRepository authorRepository
+
     def setupSpec() {
         bookRepository.save(new Book(title: "Anonymous", pages: 400))
         // blank title
@@ -54,5 +58,12 @@ class QuerySpec extends Specification {
         expect:
         books.size() == 3
         books.every({ it instanceof Book })
+    }
+
+    void "test string comparison methods"() {
+        expect:
+        authorRepository.countByNameContains("e") == 2
+        authorRepository.findByNameStartsWith("S").name == "Stephen King"
+        authorRepository.findByNameEndsWith("w").name == "Don Winslow"
     }
 }

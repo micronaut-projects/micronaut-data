@@ -28,4 +28,10 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     Author findByName(String name);
 
     Author findByBooksTitle(String title);
+
+    long countByNameContains(String text);
+
+    Author findByNameStartsWith(String name);
+
+    Author findByNameEndsWith(String name);
 }
