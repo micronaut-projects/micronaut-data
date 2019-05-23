@@ -71,6 +71,14 @@ The following table summarizes the possible expressions and behaviour:
 |Finds results where the property is not empty or `null`
 |`findByAuthorIsNotEmpty`
 
+|`True`
+|Finds results where the property is true
+|`findByAuthorEnabledTrue`
+
+|`False`
+|Finds results where the property is false
+|`findByAuthorEnabledFalse`
+
 |===
 
 TIP: Any of these criterion expressions can be negated by adding the word `Not` before the expression (for example `NotInList`).

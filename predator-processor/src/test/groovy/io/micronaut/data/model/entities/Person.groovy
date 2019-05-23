@@ -32,4 +32,6 @@ class Person {
 
     @GeneratedValue
     Long someId
+
+    boolean enabled = true
 }

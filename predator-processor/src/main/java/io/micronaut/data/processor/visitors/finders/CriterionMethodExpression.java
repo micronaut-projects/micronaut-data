@@ -320,6 +320,48 @@ public abstract class CriterionMethodExpression {
 
     }
 
+
+    /**
+     * true criterion.
+     */
+    public static class True extends CriterionMethodExpression {
+
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public True(String propertyName) {
+            super(propertyName);
+            argumentsRequired = 0;
+        }
+
+        @Override
+        public Query.Criterion createCriterion() {
+            return Restrictions.isTrue(propertyName);
+        }
+
+    }
+
+    /**
+     * false criterion.
+     */
+    public static class False extends CriterionMethodExpression {
+
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public False(String propertyName) {
+            super(propertyName);
+            argumentsRequired = 0;
+        }
+
+        @Override
+        public Query.Criterion createCriterion() {
+            return Restrictions.isFalse(propertyName);
+        }
+    }
+
     /**
      * Is not null criterion.
      */

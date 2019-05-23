@@ -345,6 +345,26 @@ public class JpaQueryBuilder implements QueryBuilder {
                     .append(" IS NULL ");
         });
 
+        QUERY_HANDLERS.put(Query.IsTrue.class, (queryState, criterion) -> {
+            Query.IsTrue isNull = (Query.IsTrue) criterion;
+            final String name = isNull.getProperty();
+            validateProperty(queryState.entity, name, Query.IsTrue.class);
+            queryState.whereClause.append(queryState.logicalName)
+                    .append(DOT)
+                    .append(name)
+                    .append(" = TRUE ");
+        });
+
+        QUERY_HANDLERS.put(Query.IsFalse.class, (queryState, criterion) -> {
+            Query.IsFalse isNull = (Query.IsFalse) criterion;
+            final String name = isNull.getProperty();
+            validateProperty(queryState.entity, name, Query.IsTrue.class);
+            queryState.whereClause.append(queryState.logicalName)
+                    .append(DOT)
+                    .append(name)
+                    .append(" = FALSE ");
+        });
+
         QUERY_HANDLERS.put(Query.IsNotNull.class, (queryState, criterion) -> {
             Query.IsNotNull isNotNull = (Query.IsNotNull) criterion;
             final String name = isNotNull.getProperty();

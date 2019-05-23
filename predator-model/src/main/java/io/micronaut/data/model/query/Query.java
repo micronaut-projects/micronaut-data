@@ -200,6 +200,32 @@ public interface Query extends Criteria {
     }
 
     /**
+     * Restricts a property to be true.
+     */
+    class IsTrue extends Query.PropertyNameCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         */
+        public IsTrue(String name) {
+            super(name);
+        }
+    }
+
+    /**
+     * Restricts a property to be false.
+     */
+    class IsFalse extends Query.PropertyNameCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         */
+        public IsFalse(String name) {
+            super(name);
+        }
+    }
+
+    /**
      * A Criterion that applies to a property.
      */
     class PropertyNameCriterion implements Criterion {

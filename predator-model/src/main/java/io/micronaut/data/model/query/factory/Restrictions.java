@@ -232,6 +232,26 @@ public class Restrictions {
     }
 
     /**
+     * Used to restrict a value to be true.
+     *
+     * @param property The property name
+     * @return The true instance
+     */
+    public static Query.IsTrue isTrue(String property) {
+        return new Query.IsTrue(property);
+    }
+
+    /**
+     * Used to restrict a value to be false.
+     *
+     * @param property The property name
+     * @return The true instance
+     */
+    public static Query.IsFalse isFalse(String property) {
+        return new Query.IsFalse(property);
+    }
+
+    /**
      * Used to restrict the size of a collection property.
      *
      * @param property The property
