@@ -98,6 +98,39 @@ public class Restrictions {
     }
 
     /**
+     * Restricts the property match to strings starting with the given value.
+     *
+     * @param property The property name
+     * @param expression The expression
+     * @return An instance of Query.StartsWith
+     */
+    public static Query.StartsWith startsWith(String property, QueryParameter expression) {
+        return new Query.StartsWith(property, expression);
+    }
+
+    /**
+     * Restricts the property match to strings containing the given value.
+     *
+     * @param property The property name
+     * @param expression The expression
+     * @return An instance of Query.Constains
+     */
+    public static Query.Contains contains(String property, QueryParameter expression) {
+        return new Query.Contains(property, expression);
+    }
+
+    /**
+     * Restricts the property match to strings ending with the given value.
+     *
+     * @param property The property name
+     * @param expression The expression
+     * @return An instance of Query.EndsWith
+     */
+    public static Query.EndsWith endsWith(String property, QueryParameter expression) {
+        return new Query.EndsWith(property, expression);
+    }
+
+    /**
      * Case insensitive like.
      *
      * @param property The property
@@ -385,4 +418,5 @@ public class Restrictions {
     public static Query.LessThanEqualsProperty leProperty(String propertyName, String otherPropertyName) {
         return new Query.LessThanEqualsProperty(propertyName, otherPropertyName);
     }
+
 }

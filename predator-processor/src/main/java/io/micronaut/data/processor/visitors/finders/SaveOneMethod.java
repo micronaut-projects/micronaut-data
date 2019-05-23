@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Persisted;
@@ -67,7 +68,7 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
 
         Set<String> requiredProps = rootEntity.getPersistentProperties()
                 .stream()
-                .filter(pp -> !pp.isOptional() && !pp.isReadOnly())
+                .filter(pp -> !pp.isOptional() && !pp.isReadOnly() && !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent())
                 .map(PersistentProperty::getName)
                 .collect(Collectors.toSet());
         ParameterElement[] parameterElements = rootEntity.getClassElement().getPrimaryConstructor().map(MethodElement::getParameters).orElse(null);
@@ -80,10 +81,6 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
         for (ParameterElement parameter : parameters) {
             String name = parameter.getName();
             ClassElement type = parameter.getGenericType();
-            if (type == null) {
-                matchContext.fail("Unsupported type for parameter: " + name);
-                return null;
-            }
 
             SourcePersistentProperty prop = rootEntity.getPropertyByName(name);
             ParameterElement constructorArg = constructorArgs.get(name);
@@ -102,10 +99,6 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
                 constructorArgs.remove(name);
             } else {
                 ClassElement argType = constructorArg.getGenericType();
-                if (argType == null) {
-                    matchContext.fail("Unsupported constructor argument type: " + constructorArg.getName());
-                    return null;
-                }
                 String typeName = argType.getName();
                 if (!type.isAssignable(typeName) && !typeName.equals(type.getName())) {
                     matchContext.fail("Type mismatch. Found parameter of type [" + type.getName() + "]. Required constructor argument of: " + typeName);
@@ -123,7 +116,7 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
             Collection<ParameterElement> values = constructorArgs.values();
             Set<String> names = values.stream().filter(pe -> {
                 SourcePersistentProperty prop = rootEntity.getPropertyByName(pe.getName());
-                return prop != null && prop.isRequired();
+                return prop != null && prop.isRequired() && !prop.getType().isPrimitive();
             }).map(ParameterElement::getName).collect(Collectors.toSet());
             if (CollectionUtils.isNotEmpty(names)) {
                 matchContext.fail("Save method missing required constructor arguments: " + names);

@@ -178,6 +178,101 @@ public abstract class CriterionMethodExpression {
     }
 
     /**
+     * Contains with criterion.
+     */
+    public static class Contains extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public Contains(String propertyName) {
+            super(propertyName);
+        }
+
+        @Override
+        public Query.Criterion createCriterion() {
+            return Restrictions.contains(propertyName, new QueryParameter(argumentNames[0]));
+        }
+    }
+
+
+    /**
+     * Contains with criterion.
+     */
+    public static class Containing extends Contains {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public Containing(String propertyName) {
+            super(propertyName);
+        }
+    }
+
+    /**
+     * Starts with criterion.
+     */
+    public static class StartsWith extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public StartsWith(String propertyName) {
+            super(propertyName);
+        }
+
+        @Override
+        public Query.Criterion createCriterion() {
+            return Restrictions.startsWith(propertyName, new QueryParameter(argumentNames[0]));
+        }
+    }
+
+
+    /**
+     * Starts with criterion.
+     */
+    public static class StartingWith extends StartsWith {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public StartingWith(String propertyName) {
+            super(propertyName);
+        }
+    }
+
+    /**
+     * Ends with criterion.
+     */
+    public static class EndsWith extends CriterionMethodExpression {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public EndsWith(String propertyName) {
+            super(propertyName);
+        }
+
+        @Override
+        public Query.Criterion createCriterion() {
+            return Restrictions.endsWith(propertyName, new QueryParameter(argumentNames[0]));
+        }
+    }
+
+    /**
+     * Ends with criterion.
+     */
+    public static class EndingWith extends EndsWith {
+        /**
+         * Default constructor.
+         * @param propertyName The property
+         */
+        public EndingWith(String propertyName) {
+            super(propertyName);
+        }
+    }
+
+    /**
      * Case insensitive like.
      */
     public static class Ilike extends CriterionMethodExpression {

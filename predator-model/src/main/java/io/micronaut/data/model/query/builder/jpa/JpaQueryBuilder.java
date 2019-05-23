@@ -523,6 +523,63 @@ public class JpaQueryBuilder implements QueryBuilder {
             }
         });
 
+        QUERY_HANDLERS.put(Query.StartsWith.class, (queryState, criterion) -> {
+            Query.StartsWith eq = (Query.StartsWith) criterion;
+            final String name = eq.getProperty();
+            PersistentProperty prop = validateProperty(queryState.entity, name, Query.ILike.class);
+            String parameterName = newParameter(queryState.position);
+            queryState.whereClause
+                    .append(queryState.logicalName)
+                    .append(DOT)
+                    .append(prop.getName())
+                    .append(" LIKE CONCAT(")
+                    .append(':')
+                    .append(parameterName)
+                    .append(",'%')");
+            Object value = eq.getValue();
+            if (value instanceof QueryParameter) {
+                queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
+            }
+        });
+
+        QUERY_HANDLERS.put(Query.Contains.class, (queryState, criterion) -> {
+            Query.Contains eq = (Query.Contains) criterion;
+            final String name = eq.getProperty();
+            PersistentProperty prop = validateProperty(queryState.entity, name, Query.ILike.class);
+            String parameterName = newParameter(queryState.position);
+            queryState.whereClause
+                    .append(queryState.logicalName)
+                    .append(DOT)
+                    .append(prop.getName())
+                    .append(" LIKE CONCAT('%',")
+                    .append(':')
+                    .append(parameterName)
+                    .append(",'%')");
+            Object value = eq.getValue();
+            if (value instanceof QueryParameter) {
+                queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
+            }
+        });
+
+        QUERY_HANDLERS.put(Query.EndsWith.class, (queryState, criterion) -> {
+            Query.EndsWith eq = (Query.EndsWith) criterion;
+            final String name = eq.getProperty();
+            PersistentProperty prop = validateProperty(queryState.entity, name, Query.ILike.class);
+            String parameterName = newParameter(queryState.position);
+            queryState.whereClause
+                    .append(queryState.logicalName)
+                    .append(DOT)
+                    .append(prop.getName())
+                    .append(" LIKE CONCAT('%',")
+                    .append(':')
+                    .append(parameterName)
+                    .append(")");
+            Object value = eq.getValue();
+            if (value instanceof QueryParameter) {
+                queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
+            }
+        });
+
         QUERY_HANDLERS.put(Query.In.class, (queryState, criterion) -> {
             Query.In inQuery = (Query.In) criterion;
             final String name = inQuery.getProperty();

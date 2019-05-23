@@ -904,6 +904,48 @@ public interface Query extends Criteria {
     }
 
     /**
+     * Criterion used to restrict the results based on starting with a given value.
+     */
+    class StartsWith extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param expression The parameter
+         */
+        public StartsWith(String name, QueryParameter expression) {
+            super(name, expression);
+        }
+    }
+
+    /**
+     * Criterion used to restrict the results based on a result containing the given value.
+     */
+    class Contains extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param expression The parameter
+         */
+        public Contains(String name, QueryParameter expression) {
+            super(name, expression);
+        }
+    }
+
+    /**
+     * Criterion used to restrict the results based on starting with a given value.
+     */
+    class EndsWith extends PropertyCriterion {
+        /**
+         * Default constructor.
+         * @param name The property name
+         * @param expression The parameter
+         */
+        public EndsWith(String name, QueryParameter expression) {
+            super(name, expression);
+        }
+    }
+
+    /**
      * Criterion used to restrict the results based on a pattern (likeness).
      */
     class ILike extends Like {

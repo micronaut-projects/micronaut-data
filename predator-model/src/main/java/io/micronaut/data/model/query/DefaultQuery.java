@@ -366,6 +366,20 @@ public class DefaultQuery implements Query {
         return this;
     }
 
+    @NonNull
+    @Override
+    public Criteria isTrue(@NonNull String propertyName) {
+        criteria.add(Restrictions.isTrue(propertyName));
+        return this;
+    }
+
+    @NonNull
+    @Override
+    public Criteria isFalse(@NonNull String propertyName) {
+        criteria.add(Restrictions.isFalse(propertyName));
+        return this;
+    }
+
     /**
      * Used to restrict a property to be not null.
      *
@@ -479,6 +493,27 @@ public class DefaultQuery implements Query {
     @Override
     public DefaultQuery like(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.like(propertyName, parameter));
+        return this;
+    }
+
+    @NonNull
+    @Override
+    public Criteria startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+        criteria.add(Restrictions.startsWith(propertyName, parameter));
+        return this;
+    }
+
+    @NonNull
+    @Override
+    public Criteria endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+        criteria.add(Restrictions.endsWith(propertyName, parameter));
+        return this;
+    }
+
+    @NonNull
+    @Override
+    public Criteria contains(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+        criteria.add(Restrictions.contains(propertyName, parameter));
         return this;
     }
 

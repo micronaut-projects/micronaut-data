@@ -60,6 +60,22 @@ public interface Criteria  {
     @NonNull Criteria isNull(@NonNull String propertyName);
 
     /**
+     * Creates a criterion that asserts the given property is true.
+     *
+     * @param propertyName The property name
+     * @return The criteria
+     */
+    @NonNull Criteria isTrue(@NonNull String propertyName);
+
+    /**
+     * Creates a criterion that asserts the given property is false.
+     *
+     * @param propertyName The property name
+     * @return The criteria
+     */
+    @NonNull Criteria isFalse(@NonNull String propertyName);
+
+    /**
      * Creates a criterion that asserts the given property is not null.
      *
      * @param propertyName The property name
@@ -164,6 +180,36 @@ public interface Criteria  {
      * @return The criteria
      */
     @NonNull Criteria like(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    /**
+     * Restricts the property match to strings starting with the given value.
+     *
+     * @param propertyName The property name
+     * @param parameter The parameter that provides the value
+     *
+     * @return The criteria
+     */
+    @NonNull Criteria startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    /**
+     * Restricts the property match to strings ending with the given value.
+     *
+     * @param propertyName The property name
+     * @param parameter The parameter that provides the value
+     *
+     * @return The criteria
+     */
+    @NonNull Criteria endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    /**
+     * Restricts the property match to strings containing with the given value.
+     *
+     * @param propertyName The property name
+     * @param parameter The parameter that provides the value
+     *
+     * @return The criteria
+     */
+    @NonNull Criteria contains(@NonNull String propertyName, @NonNull QueryParameter parameter);
 
     /**
      * Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case insensitive.

@@ -51,5 +51,11 @@ interface MyInterface {
         "name"    | "In"                | ["name": String] | "(person.$property IN (:p1))"
         "name"    | "NotIn"             | ["name": String] | "( NOT(person.$property IN (:p1)))"
         "name"    | "InList"            | ["name": String] | "(person.$property IN (:p1))"
+        "name"    | "StartsWith"        | ["name": String] | "(person.$property LIKE CONCAT(:p1,'%'))"
+        "name"    | "EndsWith"          | ["name": String] | "(person.$property LIKE CONCAT('%',:p1))"
+        "name"    | "StartingWith"      | ["name": String] | "(person.$property LIKE CONCAT(:p1,'%'))"
+        "name"    | "EndingWith"        | ["name": String] | "(person.$property LIKE CONCAT('%',:p1))"
+        "name"    | "Contains"          | ["name": String] | "(person.$property LIKE CONCAT('%',:p1,'%'))"
+        "name"    | "Containing"        | ["name": String] | "(person.$property LIKE CONCAT('%',:p1,'%'))"
     }
 }
