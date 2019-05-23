@@ -46,4 +46,13 @@ class QuerySpec extends Specification {
         bookRepository.countByTitleIsEmpty() == 1
         bookRepository.countByTitleIsNotEmpty() == 7
     }
+
+    void "test native query"() {
+        given:
+        def books = bookRepository.listNativeBooks("The%")
+
+        expect:
+        books.size() == 3
+        books.every({ it instanceof Book })
+    }
 }

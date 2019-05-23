@@ -89,6 +89,12 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     BookDTO findOne(String title);
     // end::dto[]
 
+    // tag::native[]
+    @Query(value = "select * from books b where b.title like :title limit 5",
+           nativeQuery = true)
+    List<Book> findNativeBooks(String title);
+    // end::native[]
+
 // tag::repository[]
 }
 // end::repository[]

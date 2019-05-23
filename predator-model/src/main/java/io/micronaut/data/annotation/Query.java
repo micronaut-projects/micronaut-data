@@ -37,4 +37,9 @@ public @interface Query {
      * @return The count query used for queries that return a {@link io.micronaut.data.model.Page}
      */
     String countQuery() default "";
+
+    /**
+     * @return Whether the query is a native query
+     */
+    boolean nativeQuery() default false;
 }

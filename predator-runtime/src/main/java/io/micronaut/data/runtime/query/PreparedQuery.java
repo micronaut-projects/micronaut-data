@@ -33,6 +33,11 @@ import java.util.Map;
 public interface PreparedQuery<E, R> extends AnnotationMetadataProvider {
 
     /**
+     * @return Whether the query is native.
+     */
+    boolean isNative();
+
+    /**
      * @return Whether the query is a DTO projection query
      */
     boolean isDtoProjection();

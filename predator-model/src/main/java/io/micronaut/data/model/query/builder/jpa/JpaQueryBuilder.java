@@ -810,10 +810,7 @@ public class JpaQueryBuilder implements QueryBuilder {
             Query.Junction criteria,
             final List<Query.Criterion> criterionList) {
         boolean isFirst = true;
-        for (Iterator<Query.Criterion> iterator = criterionList.iterator(); iterator.hasNext();) {
-            Query.Criterion criterion = iterator.next();
-
-
+        for (Query.Criterion criterion : criterionList) {
             final String operator = criteria instanceof Query.Conjunction ? LOGICAL_AND : LOGICAL_OR;
             QueryHandler qh = QUERY_HANDLERS.get(criterion.getClass());
             boolean isAssociationCriteria = criterion instanceof AssociationQuery;

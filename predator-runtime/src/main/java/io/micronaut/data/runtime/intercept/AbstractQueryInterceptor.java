@@ -106,6 +106,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         String query = context.getValue(Query.class, String.class).orElseThrow(() ->
                 new IllegalStateException("No query present in method")
         );
+        boolean isNative = context.getValue(Query.class, "nativeQuery", Boolean.class).orElse(false);
         return new DefaultPreparedQuery(
                 context.getAnnotationMetadata(),
                 resultType,
@@ -114,7 +115,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 query,
                 parameterValues,
                 pageable,
-                context.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO)
+                context.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO),
+                isNative
         );
     }
 
@@ -140,6 +142,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         @SuppressWarnings("ConstantConditions") Map<String, Object> parameterValues = Collections.emptyMap();
 
         AnnotationValue<Query> queryAnn = context.getAnnotation(Query.class);
+        boolean isNative = false;
         if (queryAnn != null) {
             if (queryAnn.contains(PredatorMethod.META_MEMBER_COUNT_PARAMETERS)) {
 
@@ -157,6 +160,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                         rootEntity
                 );
             }
+
+            isNative = queryAnn.get("nativeQuery", Boolean.class).orElse(false);
         }
 
         Pageable pageable = getPageable(context);
@@ -169,7 +174,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 query,
                 parameterValues,
                 pageable,
-                false
+                false,
+                isNative
         );
     }
 
@@ -343,6 +349,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         private final Pageable pageable;
         private final boolean dto;
         private final AnnotationMetadata annotationMetadata;
+        private final boolean isNative;
 
         /**
          * The default constructor.
@@ -363,7 +370,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 @NonNull String query,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable,
-                boolean dto) {
+                boolean dto,
+                boolean isNative) {
             this.resultType = resultType;
             this.rootEntity = rootEntity;
             this.idType = idType;
@@ -372,11 +380,17 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             this.pageable = pageable;
             this.dto = dto;
             this.annotationMetadata = annotationMetadata;
+            this.isNative = isNative;
         }
 
         @Override
         public AnnotationMetadata getAnnotationMetadata() {
             return annotationMetadata;
+        }
+
+        @Override
+        public boolean isNative() {
+            return isNative;
         }
 
         /**

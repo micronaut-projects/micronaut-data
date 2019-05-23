@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
 
@@ -32,6 +33,9 @@ public abstract class BookRepository implements CrudRepository<Book, Long> {
     public BookRepository(AuthorRepository authorRepository) {
         this.authorRepository = authorRepository;
     }
+
+    @Query(value = "select * from book b where b.title like :t limit 5", nativeQuery = true)
+    abstract List<Book> listNativeBooks(String t);
 
     abstract List<Book> findByAuthorIsNull();
     abstract List<Book> findByAuthorIsNotNull();

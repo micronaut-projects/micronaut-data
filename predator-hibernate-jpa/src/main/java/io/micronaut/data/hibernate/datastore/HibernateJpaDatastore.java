@@ -86,9 +86,17 @@ public class HibernateJpaDatastore implements Datastore {
             Class<R> resultType = preparedQuery.getResultType();
             String query = preparedQuery.getQuery();
             Map<String, Object> parameters = preparedQuery.getParameterValues();
+            Session currentSession = getCurrentSession();
             if (preparedQuery.isDtoProjection()) {
-                Query<Tuple> q = getCurrentSession()
-                        .createQuery(query, Tuple.class);
+                Query<Tuple> q;
+                if (preparedQuery.isNative()) {
+                    q = currentSession
+                            .createNativeQuery(query, Tuple.class);
+
+                } else {
+                    q = currentSession
+                            .createQuery(query, Tuple.class);
+                }
                 bindParameters(q, parameters);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional()
@@ -97,8 +105,15 @@ public class HibernateJpaDatastore implements Datastore {
                         .orElse(null);
             } else {
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(resultType);
-                Query<R> q = getCurrentSession()
-                        .createQuery(query, wrapperType);
+                Query<R> q;
+
+                if (preparedQuery.isNative()) {
+                    q = currentSession
+                            .createNativeQuery(query, wrapperType);
+                } else {
+                    q = currentSession
+                            .createQuery(query, wrapperType);
+                }
                 bindParameters(q, parameters);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional().orElse(null);
@@ -143,9 +158,19 @@ public class HibernateJpaDatastore implements Datastore {
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
+            Session currentSession = getCurrentSession();
             if (preparedQuery.isDtoProjection()) {
-                Query<Tuple> q = getCurrentSession()
-                        .createQuery(preparedQuery.getQuery(), Tuple.class);
+                Query<Tuple> q;
+
+                if (preparedQuery.isNative()) {
+                    q = currentSession
+                            .createNativeQuery(preparedQuery.getQuery(), Tuple.class);
+
+                } else {
+                    q = currentSession
+                            .createQuery(preparedQuery.getQuery(), Tuple.class);
+                }
+
                 bindParameters(q, preparedQuery.getParameterValues());
                 bindPageable(q, preparedQuery.getPageable());
                 return q.stream()
@@ -153,10 +178,16 @@ public class HibernateJpaDatastore implements Datastore {
                                 .map(tuple, preparedQuery.getResultType()))
                         .collect(Collectors.toList());
             } else {
-
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                Query<R> q = getCurrentSession()
-                        .createQuery(preparedQuery.getQuery(), wrapperType);
+                Query<R> q;
+                if (preparedQuery.isNative()) {
+                    q = currentSession
+                            .createNativeQuery(preparedQuery.getQuery(), wrapperType);
+
+                } else {
+                    q = currentSession
+                            .createQuery(preparedQuery.getQuery(), wrapperType);
+                }
                 bindParameters(q, preparedQuery.getParameterValues());
                 bindPageable(q, preparedQuery.getPageable());
                 return q.list();
@@ -233,9 +264,17 @@ public class HibernateJpaDatastore implements Datastore {
             String query = preparedQuery.getQuery();
             Map<String, Object> parameterValues = preparedQuery.getParameterValues();
             Pageable pageable = preparedQuery.getPageable();
+            Session currentSession = getCurrentSession();
             if (preparedQuery.isDtoProjection()) {
-                Query<Tuple> q = getCurrentSession()
-                        .createQuery(query, Tuple.class);
+                Query<Tuple> q;
+
+                if (preparedQuery.isNative()) {
+                    q = currentSession
+                            .createNativeQuery(query, Tuple.class);
+                } else {
+                    q = currentSession
+                            .createQuery(query, Tuple.class);
+                }
                 bindParameters(q, parameterValues);
                 bindPageable(q, pageable);
                 return q.stream()
@@ -243,7 +282,14 @@ public class HibernateJpaDatastore implements Datastore {
                                 .map(tuple, preparedQuery.getResultType()));
 
             } else {
-                Query<R> q = getCurrentSession().createQuery(query, ReflectionUtils.getWrapperType(preparedQuery.getResultType()));
+                Query<R> q;
+                @SuppressWarnings("unchecked")
+                Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+                if (preparedQuery.isNative()) {
+                    q = currentSession.createNativeQuery(query, wrapperType);
+                } else {
+                    q = currentSession.createQuery(query, wrapperType);
+                }
                 bindParameters(q, parameterValues);
                 bindPageable(q, pageable);
 
