@@ -24,7 +24,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author graemerocher
  * @since 1.0
  */
-public class AssociationQuery extends DefaultQuery implements Query.Criterion {
+public class AssociationQuery extends DefaultQuery implements QueryModel.Criterion {
 
     private final Association association;
 

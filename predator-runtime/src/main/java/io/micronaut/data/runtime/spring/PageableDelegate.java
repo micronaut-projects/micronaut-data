@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.spring;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.Sort;
 
 /**
  * Supports representing a Spring Pageable as a Micronaut {@link Pageable}.

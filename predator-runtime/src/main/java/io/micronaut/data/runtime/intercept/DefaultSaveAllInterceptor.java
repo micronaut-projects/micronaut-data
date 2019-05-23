@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.SaveAllInterceptor;
-import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.backend.Datastore;
 
 /**
  * Default implementation of {@link SaveAllInterceptor}.

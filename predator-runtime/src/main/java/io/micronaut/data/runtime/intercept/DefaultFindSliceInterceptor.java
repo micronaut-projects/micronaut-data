@@ -24,8 +24,8 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindSliceInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
-import io.micronaut.data.runtime.datastore.Datastore;
-import io.micronaut.data.runtime.query.PreparedQuery;
+import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.model.PreparedQuery;
 
 /**
  * Default implementation of {@link FindSliceInterceptor}.

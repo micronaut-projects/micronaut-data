@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.factory.Restrictions;
 
@@ -43,7 +43,7 @@ public abstract class CriterionMethodExpression {
      * Creates the criterion.
      * @return The criterion
      */
-    public abstract Query.Criterion createCriterion();
+    public abstract QueryModel.Criterion createCriterion();
 
     /**
      * The arguments required to satisfy the criterion.
@@ -74,7 +74,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.gt(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -118,7 +118,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.gte(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -136,7 +136,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.lt(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -154,7 +154,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.lte(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -172,7 +172,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.like(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -190,7 +190,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.contains(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -222,7 +222,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.startsWith(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -254,7 +254,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.endsWith(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -285,7 +285,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.ilike(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -303,7 +303,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.rlike(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -321,8 +321,8 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
-            Query.Negation negation = new Query.Negation();
+        public QueryModel.Criterion createCriterion() {
+            QueryModel.Negation negation = new QueryModel.Negation();
             negation.add(Restrictions.in(propertyName, new QueryParameter(argumentNames[0])));
             return negation;
         }
@@ -342,7 +342,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.in(propertyName, new QueryParameter(argumentNames[0]));
         }
     }
@@ -375,7 +375,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.between(propertyName, new QueryParameter(argumentNames[0]), new QueryParameter(argumentNames[1]));
         }
     }
@@ -409,7 +409,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.isNull(propertyName);
         }
 
@@ -431,7 +431,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.isTrue(propertyName);
         }
 
@@ -452,7 +452,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.isFalse(propertyName);
         }
     }
@@ -472,7 +472,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.isNotNull(propertyName);
         }
 
@@ -493,7 +493,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.isEmpty(propertyName);
         }
 
@@ -514,7 +514,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             return Restrictions.isNotEmpty(propertyName);
         }
     }
@@ -533,7 +533,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             String argument = argumentNames[0];
             if (argument != null) {
                 return Restrictions.eq(propertyName, new QueryParameter(argument));
@@ -558,7 +558,7 @@ public abstract class CriterionMethodExpression {
         }
 
         @Override
-        public Query.Criterion createCriterion() {
+        public QueryModel.Criterion createCriterion() {
             String argument = argumentNames[0];
             if (argument != null) {
                 return Restrictions.ne(propertyName, new QueryParameter(argumentNames[0]));

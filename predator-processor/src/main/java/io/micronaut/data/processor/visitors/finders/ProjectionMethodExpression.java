@@ -20,7 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -139,7 +139,7 @@ public abstract class ProjectionMethodExpression {
      * @param matchContext The match context.
      * @param query The query object.
      */
-    protected abstract void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query);
+    protected abstract void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query);
 
     /**
      * @return The arguments required to satisfy this projection.
@@ -188,7 +188,7 @@ public abstract class ProjectionMethodExpression {
         }
 
         @Override
-        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             if (property == null) {
                 query.projections().distinct();
             } else {
@@ -210,7 +210,7 @@ public abstract class ProjectionMethodExpression {
     @SuppressWarnings("unused")
     public static class Max extends Property {
         @Override
-        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             query.projections().max(getName());
         }
     }
@@ -221,7 +221,7 @@ public abstract class ProjectionMethodExpression {
     @SuppressWarnings("unused")
     public static class Sum extends Property {
         @Override
-        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             query.projections().sum(getName());
         }
 
@@ -242,7 +242,7 @@ public abstract class ProjectionMethodExpression {
     @SuppressWarnings("unused")
     public static class Avg extends Property {
         @Override
-        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             query.projections().avg(getName());
         }
 
@@ -264,7 +264,7 @@ public abstract class ProjectionMethodExpression {
     @SuppressWarnings("unused")
     public static class Min extends Property {
         @Override
-        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             query.projections().min(getName());
         }
 
@@ -318,7 +318,7 @@ public abstract class ProjectionMethodExpression {
         }
 
         @Override
-        public void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             query.projections().property(property);
         }
 
@@ -364,7 +364,7 @@ public abstract class ProjectionMethodExpression {
         }
 
         @Override
-        protected void apply(@NonNull MethodMatchContext matchContext, @NonNull Query query) {
+        protected void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             if (max > -1) {
                 query.max(max);
             }

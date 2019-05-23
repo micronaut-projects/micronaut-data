@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.PredatorInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.inject.ast.TypedElement;
 
 import java.util.*;
@@ -35,7 +35,7 @@ import java.util.*;
 public class MethodMatchInfo {
 
     private final TypedElement resultType;
-    private final Query query;
+    private final QueryModel query;
     private final Class<? extends PredatorInterceptor> interceptor;
     private final OperationType operationType;
     private final String[] updateProperties;
@@ -51,7 +51,7 @@ public class MethodMatchInfo {
      */
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
-            @Nullable Query query,
+            @Nullable QueryModel query,
             @Nullable Class<? extends PredatorInterceptor> interceptor) {
         this(resultType, query, interceptor, OperationType.QUERY);
     }
@@ -65,7 +65,7 @@ public class MethodMatchInfo {
      */
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
-            @Nullable Query query,
+            @Nullable QueryModel query,
             @Nullable Class<? extends PredatorInterceptor> interceptor,
             boolean dto) {
         this(resultType, query, interceptor, OperationType.QUERY);
@@ -82,7 +82,7 @@ public class MethodMatchInfo {
      */
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
-            @Nullable Query query,
+            @Nullable QueryModel query,
             @Nullable Class<? extends PredatorInterceptor> interceptor,
             @NonNull OperationType operationType,
             String... updateProperties) {
@@ -143,7 +143,7 @@ public class MethodMatchInfo {
      * @return The query
      */
     @Nullable
-    public Query getQuery() {
+    public QueryModel getQuery() {
         return query;
     }
 

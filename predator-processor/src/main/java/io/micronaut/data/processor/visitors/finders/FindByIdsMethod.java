@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.FindAllInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -63,7 +63,7 @@ public class FindByIdsMethod extends AbstractPatternBasedMethod {
         SourcePersistentProperty identity = rootEntity.getIdentity();
         if (identity != null) {
 
-            Query query = Query.from(rootEntity);
+            QueryModel query = QueryModel.from(rootEntity);
             query.inList(identity.getName(), new QueryParameter(matchContext.getParameters()[0].getName()));
 
             return new MethodMatchInfo(

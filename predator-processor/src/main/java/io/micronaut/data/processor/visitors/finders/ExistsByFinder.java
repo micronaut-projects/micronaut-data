@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.ExistsByInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -54,7 +54,7 @@ public class ExistsByFinder extends DynamicFinder {
     protected MethodMatchInfo buildInfo(
             @NonNull MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
-            @Nullable Query query) {
+            @Nullable QueryModel query) {
         if (query != null) {
             query.projections().id();
         }

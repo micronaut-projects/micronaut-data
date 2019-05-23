@@ -18,7 +18,6 @@ package io.micronaut.data.model;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.data.model.query.Sort;
 
 import java.util.List;
 

@@ -20,8 +20,8 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.runtime.datastore.Datastore;
-import io.micronaut.data.runtime.query.PreparedQuery;
+import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.model.PreparedQuery;
 
 import java.util.Collections;
 

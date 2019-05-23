@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query.factory;
 
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 
 /**
  * Projections used to customize the results of a query.
@@ -24,14 +24,14 @@ import io.micronaut.data.model.query.Query;
  * @since 1.0
  */
 public class Projections {
-    public static final Query.IdProjection ID_PROJECTION = new Query.IdProjection();
-    public static final Query.CountProjection COUNT_PROJECTION = new Query.CountProjection();
+    public static final QueryModel.IdProjection ID_PROJECTION = new QueryModel.IdProjection();
+    public static final QueryModel.CountProjection COUNT_PROJECTION = new QueryModel.CountProjection();
 
     /**
      * Projection used to obtain the id of an object.
      * @return The IdProjection instance
      */
-    public static Query.IdProjection id() {
+    public static QueryModel.IdProjection id() {
         return ID_PROJECTION;
     }
 
@@ -41,7 +41,7 @@ public class Projections {
      *
      * @return The CountProjection instance
      */
-    public static Query.CountProjection count() {
+    public static QueryModel.CountProjection count() {
         return COUNT_PROJECTION;
     }
 
@@ -50,8 +50,8 @@ public class Projections {
      * @param name The name of the property
      * @return The PropertyProjection instance
      */
-    public static Query.PropertyProjection property(String name) {
-        return new Query.PropertyProjection(name);
+    public static QueryModel.PropertyProjection property(String name) {
+        return new QueryModel.PropertyProjection(name);
     }
 
     /**
@@ -60,8 +60,8 @@ public class Projections {
      * @param name The name of the property
      * @return The PropertyProjection instance
      */
-    public static Query.SumProjection sum(String name) {
-        return new Query.SumProjection(name);
+    public static QueryModel.SumProjection sum(String name) {
+        return new QueryModel.SumProjection(name);
     }
 
     /**
@@ -70,8 +70,8 @@ public class Projections {
      * @param name The name of the property
      * @return The PropertyProjection instance
      */
-    public static Query.MinProjection min(String name) {
-        return new Query.MinProjection(name);
+    public static QueryModel.MinProjection min(String name) {
+        return new QueryModel.MinProjection(name);
     }
 
     /**
@@ -80,8 +80,8 @@ public class Projections {
      * @param name The name of the property
      * @return The PropertyProjection instance
      */
-    public static Query.MaxProjection max(String name) {
-        return new Query.MaxProjection(name);
+    public static QueryModel.MaxProjection max(String name) {
+        return new QueryModel.MaxProjection(name);
     }
 
     /**
@@ -90,8 +90,8 @@ public class Projections {
      * @param name The name of the property
      * @return The PropertyProjection instance
      */
-    public static Query.AvgProjection avg(String name) {
-        return new Query.AvgProjection(name);
+    public static QueryModel.AvgProjection avg(String name) {
+        return new QueryModel.AvgProjection(name);
     }
 
     /**
@@ -99,18 +99,8 @@ public class Projections {
      *
      * @return Distinct projection
      */
-    public static Query.DistinctProjection distinct() {
-        return new Query.DistinctProjection();
-    }
-
-    /**
-     * Projection that signifies to return only distinct results.
-     *
-     * @param property The name of the property
-     * @return Distinct projection
-     */
-    public static Query.DistinctPropertyProjection distinct(String property) {
-        return new Query.DistinctPropertyProjection(property);
+    public static QueryModel.DistinctProjection distinct() {
+        return new QueryModel.DistinctProjection();
     }
 
     /**
@@ -119,8 +109,18 @@ public class Projections {
      * @param property The name of the property
      * @return Distinct projection
      */
-    public static Query.CountDistinctProjection countDistinct(String property) {
-        return new Query.CountDistinctProjection(property);
+    public static QueryModel.DistinctPropertyProjection distinct(String property) {
+        return new QueryModel.DistinctPropertyProjection(property);
+    }
+
+    /**
+     * Projection that signifies to return only distinct results.
+     *
+     * @param property The name of the property
+     * @return Distinct projection
+     */
+    public static QueryModel.CountDistinctProjection countDistinct(String property) {
+        return new QueryModel.CountDistinctProjection(property);
     }
 
     /**
@@ -130,7 +130,7 @@ public class Projections {
      *
      * @return The projection list
      */
-    public static Query.GroupPropertyProjection groupProperty(String property) {
-        return new Query.GroupPropertyProjection(property);
+    public static QueryModel.GroupPropertyProjection groupProperty(String property) {
+        return new QueryModel.GroupPropertyProjection(property);
     }
 }

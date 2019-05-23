@@ -26,9 +26,9 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
-import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
@@ -231,7 +231,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             return null;
         }
 
-        Query query = Query.from(entity);
+        QueryModel query = QueryModel.from(entity);
         ClassElement queryResultType = entity.getClassElement();
 
         List<AnnotationValue<JoinSpec>> joinSpecs = methodElement.getAnnotationValuesByType(JoinSpec.class);
@@ -260,7 +260,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         }
 
         if ("Or".equalsIgnoreCase(operatorInUse)) {
-            Query.Disjunction disjunction = new Query.Disjunction();
+            QueryModel.Disjunction disjunction = new QueryModel.Disjunction();
             for (CriterionMethodExpression expression : expressions) {
                 disjunction.add(expression.createCriterion());
             }
@@ -268,9 +268,9 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             query.add(disjunction);
         } else {
             for (CriterionMethodExpression expression : expressions) {
-                Query.Criterion criterion = expression.createCriterion();
-                if (criterion instanceof Query.Equals) {
-                    Query.Equals equals = (Query.Equals) criterion;
+                QueryModel.Criterion criterion = expression.createCriterion();
+                if (criterion instanceof QueryModel.Equals) {
+                    QueryModel.Equals equals = (QueryModel.Equals) criterion;
                     String property = equals.getProperty();
                     SourcePersistentProperty identity = entity.getIdentity();
                     if (identity != null && identity.getName().equals(property)) {
@@ -373,8 +373,8 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                     CriterionMethodExpression finalSubExpression = subExpression;
                     return new CriterionMethodExpression(finalQuery.getAssociation().getName()) {
                         @Override
-                        public Query.Criterion createCriterion() {
-                            Query.Criterion c = finalSubExpression.createCriterion();
+                        public QueryModel.Criterion createCriterion() {
+                            QueryModel.Criterion c = finalSubExpression.createCriterion();
                             finalQuery.add(c);
                             return finalQuery;
                         }
@@ -416,8 +416,8 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             final CriterionMethodExpression finalMe = me;
             return new CriterionMethodExpression(propertyName) {
                 @Override
-                public Query.Criterion createCriterion() {
-                    return new Query.Negation().add(finalMe.createCriterion());
+                public QueryModel.Criterion createCriterion() {
+                    return new QueryModel.Negation().add(finalMe.createCriterion());
                 }
 
                 @Override

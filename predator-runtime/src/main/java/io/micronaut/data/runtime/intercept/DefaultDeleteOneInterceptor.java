@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
-import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.backend.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;

@@ -1,5 +1,7 @@
 package example
 
+import io.micronaut.context.BeanContext
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
@@ -15,6 +17,22 @@ class BookRepositorySpec extends Specification {
     // tag::inject[]
     @Inject BookRepository bookRepository
     // end::inject[]
+
+    // tag::metadata[]
+    @Inject
+    BeanContext beanContext
+
+    void "test annotation metadata"() {
+        given:"The value of the Query annotation"
+        String query = beanContext.getBeanDefinition(BookRepository.class) // <1>
+                .getRequiredMethod("find", String.class) // <2>
+                .synthesize(Query.class) // <3>
+                .value()
+
+        expect:"The JPA-QL query to be correct" // <4>
+        query == "SELECT book FROM example.Book AS book WHERE (book.title = :p1)"
+    }
+    // end::metadata[]
 
     void "test perform CRUD"() {
         // Create: Save a new book

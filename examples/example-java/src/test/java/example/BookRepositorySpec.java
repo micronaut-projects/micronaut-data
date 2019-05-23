@@ -1,6 +1,8 @@
 package example;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
@@ -25,6 +27,25 @@ class BookRepositorySpec {
     // end::inject[]
 
 	@Inject AbstractBookRepository abstractBookRepository;
+
+	// tag::metadata[]
+	@Inject
+	BeanContext beanContext;
+
+	@Test
+	void testAnnotationMetadata() {
+		String query = beanContext.getBeanDefinition(BookRepository.class) // <1>
+								.getRequiredMethod("find", String.class) // <2>
+								.synthesize(Query.class) // <3>
+								.value();
+
+		assertEquals( // <4>
+				"SELECT book FROM example.Book AS book WHERE (book.title = :p1)",
+				query
+		);
+
+	}
+	// end::metadata[]
 
 	@Test
 	void testCrud() {

@@ -17,9 +17,9 @@ package io.micronaut.data.model.query.builder
 
 import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.model.PersistentEntity
-import io.micronaut.data.model.query.Query
+import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.Sort
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -32,7 +32,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test encode query #statement - order by"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        Query q = Query.from(entity)
+        QueryModel q = QueryModel.from(entity)
         q.sort Sort.of(props.collect() { Sort.Order."$direction"(it)})
 
         QueryBuilder encoder = new JpaQueryBuilder()
@@ -56,7 +56,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test encode query #method - comparison methods"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        Query q = Query.from(entity)
+        QueryModel q = QueryModel.from(entity)
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
@@ -84,7 +84,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test encode query #method - property projections"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        Query q = Query.from(entity)
+        QueryModel q = QueryModel.from(entity)
         q."$method"(property, QueryParameter.of('test'))
         q.projections()."$projection"(property)
         QueryBuilder encoder = new JpaQueryBuilder()
@@ -110,7 +110,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test encode query #method - inList"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        Query q = Query.from(entity)
+        QueryModel q = QueryModel.from(entity)
         q."$method"(property, QueryParameter.of('test'))
 
         QueryBuilder encoder = new JpaQueryBuilder()
@@ -133,7 +133,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test encode query #method - between"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        Query q = Query.from(entity)
+        QueryModel q = QueryModel.from(entity)
         q.between(property, QueryParameter.of("from"), QueryParameter.of("to"))
 
         QueryBuilder encoder = new JpaQueryBuilder()
@@ -155,7 +155,7 @@ class JpaQueryBuilderSpec extends Specification {
     void "test encode query #method - simple"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(type)
-        Query q = Query.from(entity)
+        QueryModel q = QueryModel.from(entity)
         q."$method"(property)
 
         QueryBuilder encoder = new JpaQueryBuilder()

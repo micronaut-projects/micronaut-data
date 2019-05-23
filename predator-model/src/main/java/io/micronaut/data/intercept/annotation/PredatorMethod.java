@@ -96,6 +96,11 @@ public @interface PredatorMethod {
     String META_MEMBER_DTO = "dto";
 
     /**
+     * The query builder to use.
+     */
+    String META_MEMBER_QUERY_BUILDER = "queryBuilder";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends PredatorInterceptor> interceptor();

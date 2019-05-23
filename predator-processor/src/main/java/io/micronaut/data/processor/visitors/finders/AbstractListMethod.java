@@ -23,9 +23,9 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
-import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -58,10 +58,10 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         List<ParameterElement> queryParams = matchContext.getParametersNotInRole();
-        Query query = null;
+        QueryModel query = null;
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         if (CollectionUtils.isNotEmpty(queryParams)) {
-            query = Query.from(rootEntity);
+            query = QueryModel.from(rootEntity);
             for (ParameterElement queryParam : queryParams) {
                 String paramName = queryParam.getName();
                 PersistentProperty prop = ((PersistentEntity) rootEntity).getPropertyByName(paramName);
@@ -92,7 +92,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             querySequence = matchOrder(querySequence, orderBys);
             if (CollectionUtils.isNotEmpty(orderBys)) {
                 if (query == null) {
-                    query = Query.from(rootEntity);
+                    query = QueryModel.from(rootEntity);
                 }
                 if (applyOrderBy(matchContext, query, orderBys)) {
                     return null;
@@ -104,7 +104,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 matchProjections(matchContext, projections, querySequence);
                 if (CollectionUtils.isNotEmpty(projections)) {
                     if (query == null) {
-                        query = Query.from(rootEntity);
+                        query = QueryModel.from(rootEntity);
                     }
 
                     for (ProjectionMethodExpression projection : projections) {
@@ -116,9 +116,9 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                         queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(rootEntity.getClassElement());
                     }
 
-                    for (Query.Projection projection : query.getProjections()) {
-                        if (projection instanceof Query.PropertyProjection) {
-                            Query.PropertyProjection pp = (Query.PropertyProjection) projection;
+                    for (QueryModel.Projection projection : query.getProjections()) {
+                        if (projection instanceof QueryModel.PropertyProjection) {
+                            QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
                             String prop = pp.getPropertyName();
                             Optional<String> path = rootEntity.getPath(prop);
                             if (!path.isPresent()) {
@@ -134,7 +134,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         List<AnnotationValue<JoinSpec>> joinSpecs = matchContext.getAnnotationMetadata().getAnnotationValuesByType(JoinSpec.class);
         if (CollectionUtils.isNotEmpty(joinSpecs)) {
             if (query == null) {
-                query = Query.from(rootEntity);
+                query = QueryModel.from(rootEntity);
             }
             if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
                 return null;

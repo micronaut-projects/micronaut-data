@@ -15,3 +15,16 @@ Predator provides a general API for translating a compile time Query model into 
 Further implementations for other databases is planned in the future.
 
 The following sections will take you through the basics of querying and using Predator, if you wish to understand more detail about how Predator works check out the <<howItWorks, How Predator Works>> section.
+
+At a fundamental level however what Predator does can be summed up in the following snippets. Given the following interface:
+
+snippet::example.BookRepository[project-base="examples/example", source="main", tags="repository"]
+
+Predator computes the query for the `find` method automatically at compilation time making it available at runtime via annotation metadata:
+
+snippet::example.BookRepositorySpec[project-base="examples/example", tags="metadata", indent="0"]
+
+<1> The https://docs.micronaut.io/latest/api/io/micronaut/inject/BeanDefinition.html[BeanDefinition] is retrieved from the https://docs.micronaut.io/latest/api/io/micronaut/context/BeanContext.html[BeanContext]
+<2> The `find` method is retrieved
+<3> The ann:data.annotation.Query[] annotation is retrieved
+<4> The JPQ-QL query for the method is correct

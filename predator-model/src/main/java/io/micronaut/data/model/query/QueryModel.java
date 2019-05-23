@@ -21,6 +21,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.Optional;
  * @author graemerocher
  * @since 1.0
  */
-public interface Query extends Criteria {
+public interface QueryModel extends Criteria {
 
     /**
      * @return The entity the criteria applies to
@@ -44,7 +45,7 @@ public interface Query extends Criteria {
      * @return The criteria for this query
      */
     @NonNull
-    Query.Junction getCriteria();
+    QueryModel.Junction getCriteria();
 
     /**
      * @return The projections that apply to this query.
@@ -57,7 +58,8 @@ public interface Query extends Criteria {
      * @param association The association, never null
      * @return The query
      */
-    @NonNull Query join(@NonNull Association association);
+    @NonNull
+    QueryModel join(@NonNull Association association);
 
     /**
      * Obtain the join type for the given association.
@@ -73,7 +75,8 @@ public interface Query extends Criteria {
      * @param joinType The join type
      * @return The query
      */
-    @NonNull Query join(@NonNull Association association, @NonNull JoinSpec.Type joinType);
+    @NonNull
+    QueryModel join(@NonNull Association association, @NonNull JoinSpec.Type joinType);
 
     /**
      * @return The projection list.
@@ -87,21 +90,22 @@ public interface Query extends Criteria {
      * @param criterion The criterion instance
      * @return This query
      */
-    @NonNull Query add(@NonNull Criterion criterion);
+    @NonNull
+    QueryModel add(@NonNull Criterion criterion);
 
     /**
      * Limits the maximum result.
      * @param max The pageSize
      * @return This query
      */
-    Query max(int max);
+    QueryModel max(int max);
 
     /**
      * Sets the offset.
      * @param offset The offset
      * @return This query
      */
-    Query offset(long offset);
+    QueryModel offset(long offset);
 
     /**
      * The sort to apply.
@@ -116,7 +120,8 @@ public interface Query extends Criteria {
      * @param sort The sort to apply
      * @return This query
      */
-    @NonNull Query sort(@NonNull Sort sort);
+    @NonNull
+    QueryModel sort(@NonNull Sort sort);
 
     /**
      * Creates a query from the given entity.
@@ -124,7 +129,8 @@ public interface Query extends Criteria {
      * @param entity The entity
      * @return The query
      */
-    static @NonNull Query from(@NonNull PersistentEntity entity) {
+    static @NonNull
+    QueryModel from(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         return new DefaultQuery(entity);
     }
@@ -150,7 +156,7 @@ public interface Query extends Criteria {
     /**
      * Restricts a property to be null.
      */
-    class IsNull extends Query.PropertyNameCriterion {
+    class IsNull extends QueryModel.PropertyNameCriterion {
         /**
          * Default constructor.
          * @param name The property name
@@ -163,7 +169,7 @@ public interface Query extends Criteria {
     /**
      * Restricts a property to be empty (such as a blank string).
      */
-    class IsEmpty extends Query.PropertyNameCriterion {
+    class IsEmpty extends QueryModel.PropertyNameCriterion {
         /**
          * Default constructor.
          * @param name The property name
@@ -176,7 +182,7 @@ public interface Query extends Criteria {
     /**
      * Restricts a property to be empty (such as a blank string).
      */
-    class IsNotEmpty extends Query.PropertyNameCriterion {
+    class IsNotEmpty extends QueryModel.PropertyNameCriterion {
         /**
          * Default constructor.
          * @param name The property name
@@ -189,7 +195,7 @@ public interface Query extends Criteria {
     /**
      * Restricts a property to be not null.
      */
-    class IsNotNull extends Query.PropertyNameCriterion {
+    class IsNotNull extends QueryModel.PropertyNameCriterion {
         /**
          * Default constructor.
          * @param name The property name
@@ -202,7 +208,7 @@ public interface Query extends Criteria {
     /**
      * Restricts a property to be true.
      */
-    class IsTrue extends Query.PropertyNameCriterion {
+    class IsTrue extends QueryModel.PropertyNameCriterion {
         /**
          * Default constructor.
          * @param name The property name
@@ -215,7 +221,7 @@ public interface Query extends Criteria {
     /**
      * Restricts a property to be false.
      */
-    class IsFalse extends Query.PropertyNameCriterion {
+    class IsFalse extends QueryModel.PropertyNameCriterion {
         /**
          * Default constructor.
          * @param name The property name
@@ -397,13 +403,13 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public SubqueryCriterion(String name, Query value) {
+        public SubqueryCriterion(String name, QueryModel value) {
             super(name, value);
         }
 
         @Override
-        public Query getValue() {
-            return (Query) super.getValue();
+        public QueryModel getValue() {
+            return (QueryModel) super.getValue();
         }
     }
 
@@ -416,7 +422,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public EqualsAll(String name, Query value) {
+        public EqualsAll(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -430,7 +436,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public NotEqualsAll(String name, Query value) {
+        public NotEqualsAll(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -444,7 +450,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public GreaterThanAll(String name, Query value) {
+        public GreaterThanAll(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -458,7 +464,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public GreaterThanSome(String name, Query value) {
+        public GreaterThanSome(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -472,7 +478,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public GreaterThanEqualsSome(String name, Query value) {
+        public GreaterThanEqualsSome(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -486,7 +492,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public LessThanSome(String name, Query value) {
+        public LessThanSome(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -500,7 +506,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public LessThanEqualsSome(String name, Query value) {
+        public LessThanEqualsSome(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -514,7 +520,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public LessThanAll(String name, Query value) {
+        public LessThanAll(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -528,7 +534,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public GreaterThanEqualsAll(String name, Query value) {
+        public GreaterThanEqualsAll(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -542,7 +548,7 @@ public interface Query extends Criteria {
          * @param name The property name
          * @param value The criterion value
          */
-        public LessThanEqualsAll(String name, Query value) {
+        public LessThanEqualsAll(String name, QueryModel value) {
             super(name, value);
         }
     }
@@ -681,7 +687,7 @@ public interface Query extends Criteria {
      * Criterion used to restrict the results based on a list of values.
      */
     class In extends PropertyCriterion {
-        private Query subquery;
+        private QueryModel subquery;
 
         /**
          * Constructor for an individual parameter.
@@ -697,7 +703,7 @@ public interface Query extends Criteria {
          * @param name The name
          * @param subquery The subquery
          */
-        public In(String name, Query subquery) {
+        public In(String name, QueryModel subquery) {
             super(name, subquery);
             this.subquery = subquery;
         }
@@ -712,7 +718,8 @@ public interface Query extends Criteria {
         /**
          * @return The subquery
          */
-        public @Nullable Query getSubquery() {
+        public @Nullable
+        QueryModel getSubquery() {
             return subquery;
         }
     }
@@ -721,14 +728,14 @@ public interface Query extends Criteria {
      * Criterion used to restrict the results based on a list of values.
      */
     class NotIn extends SubqueryCriterion {
-        private Query subquery;
+        private QueryModel subquery;
 
         /**
          * Constructor for a subquery.
          * @param name The name
          * @param subquery The subquery
          */
-        public NotIn(String name, Query subquery) {
+        public NotIn(String name, QueryModel subquery) {
             super(name, subquery);
             this.subquery = subquery;
         }
@@ -743,7 +750,7 @@ public interface Query extends Criteria {
         /**
          * @return The subquery
          */
-        public Query getSubquery() {
+        public QueryModel getSubquery() {
             return subquery;
         }
     }
@@ -752,20 +759,20 @@ public interface Query extends Criteria {
      * Used for exists subquery.
      */
     class Exists implements Criterion {
-        private Query subquery;
+        private QueryModel subquery;
 
         /**
          * Constructor for a subquery.
          * @param subquery The subquery
          */
-        public Exists(Query subquery) {
+        public Exists(QueryModel subquery) {
             this.subquery = subquery;
         }
 
         /**
          * @return The subquery
          */
-        public Query getSubquery() {
+        public QueryModel getSubquery() {
             return subquery;
         }
     }
@@ -774,20 +781,20 @@ public interface Query extends Criteria {
      * Used for exists subquery.
      */
     class NotExists implements Criterion {
-        private Query subquery;
+        private QueryModel subquery;
 
         /**
          * Constructor for a subquery.
          * @param subquery The subquery
          */
-        public NotExists(Query subquery) {
+        public NotExists(QueryModel subquery) {
             this.subquery = subquery;
         }
 
         /**
          * @return The subquery
          */
-        public Query getSubquery() {
+        public QueryModel getSubquery() {
             return subquery;
         }
     }

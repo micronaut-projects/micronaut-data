@@ -17,11 +17,12 @@ package io.micronaut.data.annotation;
 
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
+import io.micronaut.data.backend.Datastore;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
-import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 
@@ -54,6 +55,11 @@ public @interface Repository {
      * @return The query builder
      */
     Class<? extends QueryBuilder> queryBuilder() default JpaQueryBuilder.class;
+
+    /**
+     * @return The default back end interface to use.
+     */
+    Class<? extends Datastore> backend() default Datastore.class;
 
     /**
      * Configures {@link TypeRole} behaviour for a repository. This member allows for configuration of

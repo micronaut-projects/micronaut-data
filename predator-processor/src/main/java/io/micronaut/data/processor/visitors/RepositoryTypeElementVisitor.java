@@ -30,8 +30,8 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
-import io.micronaut.data.model.query.Query;
-import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
@@ -189,8 +189,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             );
                         }
 
-                        Query queryObject = methodInfo.getQuery();
-                        Query countQuery;
+                        QueryModel queryObject = methodInfo.getQuery();
+                        QueryModel countQuery;
                         Map<String, String> parameterBinding = null;
                         if (queryObject != null) {
                             if (queryObject instanceof RawQuery) {
@@ -237,10 +237,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 parameterBinding = encodedQuery.getParameters();
 
                                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
-                                    countQuery = Query.from(queryObject.getPersistentEntity());
+                                    countQuery = QueryModel.from(queryObject.getPersistentEntity());
                                     countQuery.projections().count();
-                                    Query.Junction junction = queryObject.getCriteria();
-                                    for (Query.Criterion criterion : junction.getCriteria()) {
+                                    QueryModel.Junction junction = queryObject.getCriteria();
+                                    for (QueryModel.Criterion criterion : junction.getCriteria()) {
                                         countQuery.add(criterion);
                                     }
 
@@ -452,7 +452,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private QueryBuilder resolveQueryEncoder(Element element, VisitorContext context) {
         return element.getValue(
                 Repository.class,
-                "queryBuilder",
+                PredatorMethod.META_MEMBER_QUERY_BUILDER,
                 String.class
         ).flatMap(type -> {
             Object o = InstantiationUtils.tryInstantiate(type, RepositoryTypeElementVisitor.class.getClassLoader()).orElse(null);

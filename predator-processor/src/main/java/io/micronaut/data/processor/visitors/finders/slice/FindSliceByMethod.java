@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders.slice;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.FindByFinder;
@@ -43,7 +43,7 @@ public class FindSliceByMethod extends FindByFinder {
 
     @Nullable
     @Override
-    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
         if (!matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             matchContext.fail("Method must accept an argument that is a Pageable");
             return null;

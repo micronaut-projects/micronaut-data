@@ -18,10 +18,10 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
-import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.backend.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.runtime.query.PreparedQuery;
+import io.micronaut.data.model.PreparedQuery;
 
 /**
  * The default implementation of {@link ExistsByInterceptor}.

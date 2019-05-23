@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.DefaultQuery;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Map;
@@ -28,7 +28,7 @@ import java.util.Map;
  * @author graemerocher
  * @since 1.0
  */
-public class RawQuery extends DefaultQuery implements Query {
+public class RawQuery extends DefaultQuery implements QueryModel {
 
     private final Map<String, String> parameterBinding;
 

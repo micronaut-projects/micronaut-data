@@ -20,4 +20,4 @@
  * @author graemerocher
  * @since 1.0.0
  */
-package io.micronaut.data.runtime.datastore;
+package io.micronaut.data.backend;

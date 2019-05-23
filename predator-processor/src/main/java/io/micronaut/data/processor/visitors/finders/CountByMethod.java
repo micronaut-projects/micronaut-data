@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.CountInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -42,7 +42,7 @@ public class CountByMethod extends DynamicFinder {
 
     @Nullable
     @Override
-    protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, ClassElement queryResultType, @Nullable Query query) {
+    protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, ClassElement queryResultType, @Nullable QueryModel query) {
         if (query != null) {
             query.projections().count();
             return new MethodMatchInfo(

@@ -99,7 +99,7 @@ class PageDelegate<T> implements Page<T> {
 
     @Override
     public Sort getSort() {
-        List<io.micronaut.data.model.query.Sort.Order> orderBy = delegate.getSort().getOrderBy();
+        List<io.micronaut.data.model.Sort.Order> orderBy = delegate.getSort().getOrderBy();
         if (CollectionUtils.isEmpty(orderBy)) {
             return Sort.unsorted();
         } else {
@@ -196,9 +196,9 @@ class PageDelegate<T> implements Page<T> {
      */
     private class SortDelegate extends Sort {
 
-        private final io.micronaut.data.model.query.Sort delegate;
+        private final io.micronaut.data.model.Sort delegate;
 
-        SortDelegate(io.micronaut.data.model.query.Sort delegate) {
+        SortDelegate(io.micronaut.data.model.Sort delegate) {
             super(Direction.ASC, "temp"); // not used in reality
             this.delegate = delegate;
         }
@@ -208,7 +208,7 @@ class PageDelegate<T> implements Page<T> {
             for (Order order : sort) {
                 delegate.order(
                         order.getProperty(),
-                        io.micronaut.data.model.query.Sort.Order.Direction.valueOf(
+                        io.micronaut.data.model.Sort.Order.Direction.valueOf(
                                 order.getDirection().name()
                         )
                 );
@@ -226,7 +226,7 @@ class PageDelegate<T> implements Page<T> {
 
         @Override
         public Iterator<Order> iterator() {
-            Iterator<io.micronaut.data.model.query.Sort.Order> i = delegate.getOrderBy().iterator();
+            Iterator<io.micronaut.data.model.Sort.Order> i = delegate.getOrderBy().iterator();
             return new Iterator<Order>() {
                 @Override
                 public boolean hasNext() {
@@ -235,7 +235,7 @@ class PageDelegate<T> implements Page<T> {
 
                 @Override
                 public Order next() {
-                    io.micronaut.data.model.query.Sort.Order next = i.next();
+                    io.micronaut.data.model.Sort.Order next = i.next();
                     return new Order(Direction.valueOf(next.getDirection().name()), next.getProperty());
                 }
             };

@@ -263,7 +263,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria inList(@NonNull String propertyName, @NonNull Query subquery);
+    @NonNull Criteria inList(@NonNull String propertyName, @NonNull QueryModel subquery);
 
     /**
      * Creates an "in" Criterion based on the specified property name and list of values.
@@ -283,7 +283,7 @@ public interface Criteria  {
      *
      * @return The criteria
      */
-    @NonNull Criteria notIn(@NonNull String propertyName, @NonNull Query subquery);
+    @NonNull Criteria notIn(@NonNull String propertyName, @NonNull QueryModel subquery);
 
     /**
      * Creates a Criterion that constrains a collection property by size.

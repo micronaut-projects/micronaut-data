@@ -25,7 +25,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.backend.Datastore;
 
 import java.util.List;
 import java.util.Map;

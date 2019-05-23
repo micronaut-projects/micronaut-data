@@ -1,5 +1,7 @@
 package example
 
+import io.micronaut.context.BeanContext
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
@@ -18,6 +20,24 @@ class BookRepositorySpec {
     @Inject
     lateinit var abstractBookRepository: AbstractBookRepository
 
+    // tag::metadata[]
+    @Inject
+    lateinit var beanContext: BeanContext
+
+    @Test
+    fun testAnnotationMetadata() {
+        val query = beanContext.getBeanDefinition(BookRepository::class.java) // <1>
+                .getRequiredMethod<Any>("find", String::class.java) // <2>
+                .synthesize(Query::class.java)!!.value // <3>
+
+
+        assertEquals( // <4>
+                "SELECT book FROM example.Book AS book WHERE (book.title = :p1)",
+                query
+        )
+
+    }
+    // end::metadata[]
 
     @Test
     fun testCrud() {

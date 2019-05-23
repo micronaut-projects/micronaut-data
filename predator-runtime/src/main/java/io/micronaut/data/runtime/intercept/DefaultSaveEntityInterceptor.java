@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
-import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.backend.Datastore;
 
 /**
  * Default implementation of {@link SaveEntityInterceptor}.

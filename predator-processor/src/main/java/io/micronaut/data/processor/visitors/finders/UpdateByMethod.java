@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.UpdateInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchContext;
@@ -55,7 +55,7 @@ public class UpdateByMethod extends DynamicFinder {
     protected MethodMatchInfo buildInfo(
             MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
-            @Nullable Query query) {
+            @Nullable QueryModel query) {
         if (query == null) {
             matchContext.fail("Cannot implement batch update operation that doesn't perform a query");
             return null;
@@ -64,15 +64,15 @@ public class UpdateByMethod extends DynamicFinder {
             matchContext.fail("Projections are not supported on batch updates");
             return null;
         }
-        List<Query.Criterion> criterionList = query.getCriteria().getCriteria();
+        List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
         if (CollectionUtils.isEmpty(criterionList)) {
             matchContext.fail("Cannot implement batch update operation that doesn't perform a query");
             return null;
         }
         Set<String> queryParameters = new HashSet<>();
-        for (Query.Criterion criterion : criterionList) {
-            if (criterion instanceof Query.PropertyCriterion) {
-                Query.PropertyCriterion pc = (Query.PropertyCriterion) criterion;
+        for (QueryModel.Criterion criterion : criterionList) {
+            if (criterion instanceof QueryModel.PropertyCriterion) {
+                QueryModel.PropertyCriterion pc = (QueryModel.PropertyCriterion) criterion;
                 Object v = pc.getValue();
                 if (v instanceof QueryParameter) {
                     queryParameters.add(((QueryParameter) v).getName());

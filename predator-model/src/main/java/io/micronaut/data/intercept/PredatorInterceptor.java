@@ -16,6 +16,7 @@
 package io.micronaut.data.intercept;
 
 import io.micronaut.aop.MethodInterceptor;
+import io.micronaut.core.annotation.Introspected;
 
 /**
  * Marker interface for all Predator related interceptors.
@@ -26,5 +27,6 @@ import io.micronaut.aop.MethodInterceptor;
  * @author graemerocher
  * @since 1.0
  */
+@Introspected
 public interface PredatorInterceptor<T, R> extends MethodInterceptor<T, R> {
 }

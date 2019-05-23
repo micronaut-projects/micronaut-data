@@ -30,18 +30,18 @@ import java.util.List;
  */
 class DefaultProjectionList implements ProjectionList {
 
-    private List<Query.Projection> projections = new ArrayList(3);
+    private List<QueryModel.Projection> projections = new ArrayList(3);
 
     /**
      * The backing list of projections.
      * @return The list of projections
      */
-    public List<Query.Projection> getProjectionList() {
+    public List<QueryModel.Projection> getProjectionList() {
         return Collections.unmodifiableList(projections);
     }
 
     @Override
-    public ProjectionList add(@NonNull Query.Projection p) {
+    public ProjectionList add(@NonNull QueryModel.Projection p) {
         projections.add(p);
         return this;
     }

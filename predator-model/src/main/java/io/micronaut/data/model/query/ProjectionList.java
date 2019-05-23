@@ -119,5 +119,5 @@ public interface ProjectionList {
      * @param projection The projection to add
      * @return This list
      */
-    ProjectionList add(@NonNull Query.Projection projection);
+    ProjectionList add(@NonNull QueryModel.Projection projection);
 }

@@ -55,7 +55,7 @@ public class SpringDataTypeConverters {
      * @return The sort converter
      */
     @Singleton
-    TypeConverter<Sort, io.micronaut.data.model.query.Sort> sortConverter() {
+    TypeConverter<Sort, io.micronaut.data.model.Sort> sortConverter() {
         return (object, targetType, context) -> Optional.of(new SortDelegate(object));
     }
 }

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query.builder;
 
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.List;
@@ -35,7 +35,7 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildQuery(@NonNull Query query);
+    QueryResult buildQuery(@NonNull QueryModel query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -45,7 +45,7 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildUpdate(@NonNull Query query, List<String> propertiesToUpdate);
+    QueryResult buildUpdate(@NonNull QueryModel query, List<String> propertiesToUpdate);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -54,7 +54,7 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildDelete(@NonNull Query query);
+    QueryResult buildDelete(@NonNull QueryModel query);
 
     /**
      * When producing the query this dedicates whether to use the mapped names (such as the column name)

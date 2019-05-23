@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.intercept.DeleteAllInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -49,7 +49,7 @@ public class DeleteByMethod extends DynamicFinder {
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(
-            MethodMatchContext matchContext, ClassElement queryResultType, @Nullable Query query) {
+            MethodMatchContext matchContext, ClassElement queryResultType, @Nullable QueryModel query) {
         if (query == null) {
             matchContext.fail("Unable to implement delete method with no query arguments");
             return null;

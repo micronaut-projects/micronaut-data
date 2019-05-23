@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.UpdateInterceptor;
-import io.micronaut.data.model.query.Query;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -105,7 +105,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         }
 
 
-        Query query = Query.from(entity);
+        QueryModel query = QueryModel.from(entity);
         query.idEq(new QueryParameter(idParameter.getName()));
         List<String> properiesToUpdate = new ArrayList<>(remainingParameters.size());
         for (ParameterElement parameter : remainingParameters) {

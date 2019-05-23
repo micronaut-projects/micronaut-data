@@ -20,10 +20,10 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.runtime.datastore.Datastore;
+import io.micronaut.data.backend.Datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.runtime.query.PreparedQuery;
+import io.micronaut.data.model.PreparedQuery;
 
 import java.util.Iterator;
 

@@ -31,8 +31,8 @@ import io.micronaut.data.intercept.reactive.FindReactivePublisherInterceptor;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
-import io.micronaut.data.model.query.Query;
-import io.micronaut.data.model.query.Sort;
+import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.factory.Projections;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -134,15 +134,15 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     protected MethodMatchInfo buildInfo(
             @NonNull MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
-            @Nullable Query query) {
+            @Nullable QueryModel query) {
         ClassElement returnType = matchContext.getReturnType();
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (!returnType.getName().equals("void")) {
             if (returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive()) {
                 if (areTypesCompatible(returnType, queryResultType, matchContext)) {
                     if (query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName())) {
-                        List<Query.Criterion> criterionList = query.getCriteria().getCriteria();
-                        if (criterionList.size() == 1 && criterionList.get(0) instanceof Query.IdEquals) {
+                        List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
+                        if (criterionList.size() == 1 && criterionList.get(0) instanceof QueryModel.IdEquals) {
                             return new MethodMatchInfo(
                                     matchContext.getReturnType(),
                                     query,
@@ -207,7 +207,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return null;
     }
 
-    private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull Query query, ClassElement returnType) {
+    private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull QueryModel query, ClassElement returnType) {
         List<PropertyElement> beanProperties = returnType.getBeanProperties();
         SourcePersistentEntity entity = new SourcePersistentEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
@@ -248,7 +248,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
      * @param orderList The list mutate
      * @return True if an error occurred applying the order
      */
-    protected boolean applyOrderBy(@NonNull MethodMatchContext context, @NonNull Query query, @NonNull List<Sort.Order> orderList) {
+    protected boolean applyOrderBy(@NonNull MethodMatchContext context, @NonNull QueryModel query, @NonNull List<Sort.Order> orderList) {
         if (CollectionUtils.isNotEmpty(orderList)) {
             SourcePersistentEntity entity = context.getRootEntity();
             for (Sort.Order order : orderList) {
@@ -273,7 +273,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
      */
     protected boolean applyJoinSpecs(
             @NonNull MethodMatchContext matchContext,
-            @NonNull Query query,
+            @NonNull QueryModel query,
             @Nonnull SourcePersistentEntity rootEntity,
             @NonNull List<AnnotationValue<JoinSpec>> joinSpecs) {
         for (AnnotationValue<JoinSpec> joinSpec : joinSpecs) {

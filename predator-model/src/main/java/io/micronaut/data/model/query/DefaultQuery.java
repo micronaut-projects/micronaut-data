@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.factory.Restrictions;
 import java.util.*;
 
@@ -30,11 +31,11 @@ import java.util.*;
  * @author Graeme Rocher
  * @since 1.0
  */
-public class DefaultQuery implements Query {
+public class DefaultQuery implements QueryModel {
 
     private final PersistentEntity entity;
 
-    private Query.Junction criteria = new Query.Conjunction();
+    private QueryModel.Junction criteria = new QueryModel.Conjunction();
     private DefaultProjectionList projections = new DefaultProjectionList();
     private int max = -1;
     private long offset = 0;
@@ -77,7 +78,7 @@ public class DefaultQuery implements Query {
     /**
      * @return The criteria defined by this query
      */
-    public Query.Junction getCriteria() {
+    public QueryModel.Junction getCriteria() {
         return criteria;
     }
 
@@ -138,9 +139,10 @@ public class DefaultQuery implements Query {
      * @param criterion The criterion instance
      */
     @Override
-    public @NonNull Query add(@NonNull Query.Criterion criterion) {
+    public @NonNull
+    QueryModel add(@NonNull QueryModel.Criterion criterion) {
         ArgumentUtils.requireNonNull("criterion", criterion);
-        Query.Junction currentJunction = criteria;
+        QueryModel.Junction currentJunction = criteria;
         add(currentJunction, criterion);
         return this;
     }
@@ -151,7 +153,7 @@ public class DefaultQuery implements Query {
      * @param currentJunction The junction to add the criterion to
      * @param criterion The criterion instance
      */
-    private void add(Query.Junction currentJunction, Query.Criterion criterion) {
+    private void add(QueryModel.Junction currentJunction, QueryModel.Criterion criterion) {
         addToJunction(currentJunction, criterion);
     }
 
@@ -166,8 +168,8 @@ public class DefaultQuery implements Query {
      * Creates a disjunction (OR) query.
      * @return The Junction instance
      */
-    public Query.Junction disjunction() {
-        Query.Junction currentJunction = criteria;
+    public QueryModel.Junction disjunction() {
+        QueryModel.Junction currentJunction = criteria;
         return disjunction(currentJunction);
     }
 
@@ -175,8 +177,8 @@ public class DefaultQuery implements Query {
      * Creates a conjunction (AND) query.
      * @return The Junction instance
      */
-    public Query.Junction conjunction() {
-        Query.Junction currentJunction = criteria;
+    public QueryModel.Junction conjunction() {
+        QueryModel.Junction currentJunction = criteria;
         return conjunction(currentJunction);
     }
 
@@ -184,13 +186,13 @@ public class DefaultQuery implements Query {
      * Creates a negation of several criterion.
      * @return The negation
      */
-    public Query.Junction negation() {
-        Query.Junction currentJunction = criteria;
+    public QueryModel.Junction negation() {
+        QueryModel.Junction currentJunction = criteria;
         return negation(currentJunction);
     }
 
-    private Query.Junction negation(Query.Junction currentJunction) {
-        Query.Negation dis = new Query.Negation();
+    private QueryModel.Junction negation(QueryModel.Junction currentJunction) {
+        QueryModel.Negation dis = new QueryModel.Negation();
         currentJunction.add(dis);
         return dis;
     }
@@ -234,7 +236,7 @@ public class DefaultQuery implements Query {
 
     @NonNull
     @Override
-    public Query sort(@NonNull Sort sort) {
+    public QueryModel sort(@NonNull Sort sort) {
         ArgumentUtils.requireNonNull("sort", sort);
         this.sort = sort;
         return this;
@@ -262,7 +264,7 @@ public class DefaultQuery implements Query {
      */
     public @NonNull
     DefaultQuery allEq(@NonNull Map<String, QueryParameter> values) {
-        Query.Junction conjunction = conjunction();
+        QueryModel.Junction conjunction = conjunction();
         for (String property : values.keySet()) {
             QueryParameter value = values.get(property);
             conjunction.add(Restrictions.eq(property, value));
@@ -554,7 +556,7 @@ public class DefaultQuery implements Query {
 
     @NonNull
     @Override
-    public DefaultQuery inList(@NonNull String propertyName, @NonNull Query subquery) {
+    public DefaultQuery inList(@NonNull String propertyName, @NonNull QueryModel subquery) {
         criteria.add(Restrictions.in(propertyName, subquery));
         return this;
     }
@@ -574,7 +576,7 @@ public class DefaultQuery implements Query {
 
     @NonNull
     @Override
-    public DefaultQuery notIn(@NonNull String propertyName, @NonNull Query subquery) {
+    public DefaultQuery notIn(@NonNull String propertyName, @NonNull QueryModel subquery) {
         criteria.add(Restrictions.notIn(propertyName, subquery));
         return this;
     }
@@ -684,7 +686,7 @@ public class DefaultQuery implements Query {
      * @param b The right hand side
      * @return This query instance
      */
-    public DefaultQuery and(Query.Criterion a, Query.Criterion b) {
+    public DefaultQuery and(QueryModel.Criterion a, QueryModel.Criterion b) {
         Objects.requireNonNull(a, "Left hand side of AND cannot be null");
         Objects.requireNonNull(b, "Right hand side of AND cannot be null");
         criteria.add(Restrictions.and(a, b));
@@ -698,42 +700,42 @@ public class DefaultQuery implements Query {
      * @param b The right hand side
      * @return This query instance
      */
-    public DefaultQuery or(Query.Criterion a, Query.Criterion b) {
+    public DefaultQuery or(QueryModel.Criterion a, QueryModel.Criterion b) {
         Objects.requireNonNull(a, "Left hand side of AND cannot be null");
         Objects.requireNonNull(b, "Right hand side of AND cannot be null");
         criteria.add(Restrictions.or(a, b));
         return this;
     }
 
-    private Query.Junction disjunction(Query.Junction currentJunction) {
-        Query.Disjunction dis = new Query.Disjunction();
+    private QueryModel.Junction disjunction(QueryModel.Junction currentJunction) {
+        QueryModel.Disjunction dis = new QueryModel.Disjunction();
         currentJunction.add(dis);
         return dis;
     }
 
-    private Query.Junction conjunction(Query.Junction currentJunction) {
-        Query.Conjunction con = new Query.Conjunction();
+    private QueryModel.Junction conjunction(QueryModel.Junction currentJunction) {
+        QueryModel.Conjunction con = new QueryModel.Conjunction();
         currentJunction.add(con);
         return con;
     }
 
-    private void addToJunction(Query.Junction currentJunction, Query.Criterion criterion) {
-        if (criterion instanceof Query.PropertyCriterion) {
-            final Query.PropertyCriterion pc = (Query.PropertyCriterion) criterion;
+    private void addToJunction(QueryModel.Junction currentJunction, QueryModel.Criterion criterion) {
+        if (criterion instanceof QueryModel.PropertyCriterion) {
+            final QueryModel.PropertyCriterion pc = (QueryModel.PropertyCriterion) criterion;
             Object value = pc.getValue();
             pc.setValue(value);
         }
-        if (criterion instanceof Query.Junction) {
-            Query.Junction j = (Query.Junction) criterion;
-            Query.Junction newj;
-            if (j instanceof Query.Disjunction) {
+        if (criterion instanceof QueryModel.Junction) {
+            QueryModel.Junction j = (QueryModel.Junction) criterion;
+            QueryModel.Junction newj;
+            if (j instanceof QueryModel.Disjunction) {
                 newj = disjunction(currentJunction);
-            } else if (j instanceof Query.Negation) {
+            } else if (j instanceof QueryModel.Negation) {
                 newj = negation(currentJunction);
             } else {
                 newj = conjunction(currentJunction);
             }
-            for (Query.Criterion c : j.getCriteria()) {
+            for (QueryModel.Criterion c : j.getCriteria()) {
                 addToJunction(newj, c);
             }
         } else {

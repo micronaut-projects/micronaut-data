@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.datastore;
+package io.micronaut.data.backend;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.runtime.query.PreparedQuery;
+import io.micronaut.data.model.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.Optional;
