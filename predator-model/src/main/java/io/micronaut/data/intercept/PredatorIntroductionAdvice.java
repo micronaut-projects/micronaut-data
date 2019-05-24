@@ -61,18 +61,16 @@ public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Obj
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        String dataSourceName = context.getValue(Repository.class, String.class).orElse(null);
-        Class<?> backendType = context.getValue(Repository.class, "backend", Class.class)
+        String dataSourceName = context.stringValue(Repository.class).orElse(null);
+        Class<?> backendType = context.classValue(Repository.class, "backend")
                                       .orElse(Datastore.class);
         Class<?> interceptorType = context
-                .getValue(PredatorMethod.class, "interceptor", Class.class)
+                .classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_INTERCEPTOR)
                 .orElse(null);
 
         if (interceptorType != null && PredatorInterceptor.class.isAssignableFrom(interceptorType)) {
             PredatorInterceptor<Object, Object> childInterceptor =
                     findInterceptor(dataSourceName, backendType, interceptorType);
-
-
             return childInterceptor.intercept(context);
 
         } else {

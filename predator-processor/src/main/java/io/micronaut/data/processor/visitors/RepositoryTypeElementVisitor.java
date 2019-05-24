@@ -191,7 +191,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                         QueryModel queryObject = methodInfo.getQuery();
                         QueryModel countQuery;
+                        QueryResult preparedCount = null;
                         Map<String, String> parameterBinding = null;
+                        boolean rawCount = false;
                         if (queryObject != null) {
                             if (queryObject instanceof RawQuery) {
                                 RawQuery rawQuery = (RawQuery) queryObject;
@@ -207,6 +209,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         methodMatchContext.fail("Query returns a Page and does not specify a 'countQuery' member.");
                                         this.failing = true;
                                         return;
+                                    } else {
+                                        rawCount = true;
                                     }
                                 }
                             } else {
@@ -244,13 +248,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         countQuery.add(criterion);
                                     }
 
-                                    QueryResult preparedCount = queryEncoder.buildQuery(countQuery);
+                                    preparedCount = queryEncoder.buildQuery(countQuery);
 
+                                    QueryResult finalPreparedCount = preparedCount;
                                     element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
                                                 annotationBuilder.value(encodedQuery.getQuery());
-                                                annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_QUERY, preparedCount.getQuery());
-                                                AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(preparedCount.getParameters());
-                                                annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                                annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_QUERY, finalPreparedCount.getQuery());
                                             }
                                     );
                                 } else {
@@ -265,6 +268,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                         if (runtimeInterceptor != null) {
                             Map<String, String> finalParameterBinding = parameterBinding;
+                            QueryResult finalPreparedCount1 = preparedCount;
+                            boolean finalRawCount = rawCount;
                             element.annotate(PredatorMethod.class, annotationBuilder -> {
                                 annotationBuilder.member(PredatorMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
 
@@ -287,10 +292,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 if (finalParameterBinding != null) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalParameterBinding);
                                     annotationBuilder.member(PredatorMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
+                                    if (finalRawCount) {
+                                        annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                    }
                                 }
+                                if (finalPreparedCount1 != null) {
+                                    AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalPreparedCount1.getParameters());
+                                    annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                }
+
                                 Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
                                     ClassElement t = p.getGenericType();
-                                    return t != null && t.isAssignable(entity.getName());
+                                    return t.isAssignable(entity.getName());
                                 }).findFirst();
                                 entityParam.ifPresent(parameterElement -> annotationBuilder.member(PredatorMethod.META_MEMBER_ENTITY, parameterElement.getName()));
 

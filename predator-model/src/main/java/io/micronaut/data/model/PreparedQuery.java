@@ -16,7 +16,6 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 
@@ -30,41 +29,7 @@ import java.util.Map;
  * @param <E> The entity type
  * @param <R> The result type
  */
-public interface PreparedQuery<E, R> extends AnnotationMetadataProvider, Named {
-
-    /**
-     * @return Whether the query is native.
-     */
-    boolean isNative();
-
-    /**
-     * @return Whether the query is a DTO projection query
-     */
-    boolean isDtoProjection();
-
-    /**
-     * @return The query result type
-     */
-    @NonNull
-    Class<R> getResultType();
-
-    /**
-     * @return The ID type
-     */
-    @Nullable
-    Class<?> getEntityIdentifierType();
-
-    /**
-     * @return The root entity type
-     */
-    @NonNull
-    Class<E> getRootEntity();
-
-    /**
-     * @return The query to execute
-     */
-    @NonNull
-    String getQuery();
+public interface PreparedQuery<E, R> extends StoredQuery<E, R>, AnnotationMetadataProvider, Named {
 
     /**
      * @return The named parameter values
@@ -78,9 +43,4 @@ public interface PreparedQuery<E, R> extends AnnotationMetadataProvider, Named {
     @NonNull
     Pageable getPageable();
 
-    /**
-     * @return The argument types
-     */
-    @NonNull
-    Class<?>[] getArgumentTypes();
 }

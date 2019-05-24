@@ -1,0 +1,36 @@
+plugins {
+	id 'org.springframework.boot' version '2.2.0.M3'
+	id 'java'
+	id "me.champeau.gradle.jmh" version "0.4.8"
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+group = 'example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '1.8'
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/snapshot' }
+	maven { url 'https://repo.spring.io/milestone' }
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+		exclude group: 'junit', module: 'junit'
+	}
+
+	runtimeOnly "com.zaxxer:HikariCP:3.3.1"
+	runtimeOnly "com.h2database:h2"
+
+    jmh "ch.qos.logback:logback-classic:1.2.3"
+    jmh 'org.openjdk.jmh:jmh-core:1.21'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+}
+
+test {
+	useJUnitPlatform()
+}
