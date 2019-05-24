@@ -53,8 +53,8 @@ class ProjectionSpec extends Specification {
 
     void "test project on single property"() {
         expect:
-        bookRepository.findTop3OrderByTitle()[0].title == 'Along Came a Spider'
         bookRepository.findTop3OrderByTitle().size() == 3
+        bookRepository.findTop3OrderByTitle()[0].title == 'Along Came a Spider'
         crudRepository.findAgeByName("Jeff") == 40
         crudRepository.findAgeByName("Ivan") == 30
         crudRepository.findMaxAgeByNameLike("J%") == 40

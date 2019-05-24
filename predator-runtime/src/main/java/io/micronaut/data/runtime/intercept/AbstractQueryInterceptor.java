@@ -316,6 +316,11 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                         pageable = Pageable.from(pageIndex, max);
                     }
                 }
+            } else {
+                int max = context.intValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                if (max > -1) {
+                    return Pageable.from(0, max);
+                }
             }
         }
         return pageable;
