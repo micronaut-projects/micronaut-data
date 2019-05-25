@@ -128,34 +128,6 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         );
     }
 
-    private <RT> Map<String, Object> buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
-        Map<String, String> parameterBinding = storedQuery.getParameterBinding();
-        Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        Map<String, Object> parameterValues = new HashMap<>(parameterBinding.size());
-        for (Map.Entry<String, String> entry : parameterBinding.entrySet()) {
-            String name = entry.getKey();
-            String argument = entry.getValue();
-            String v = storedQuery.getLastUpdatedProperty().orElse(null);
-            if (parameterValueMap.containsKey(argument)) {
-                parameterValues.put(name, parameterValueMap.get(argument));
-            } else if (v != null && v.equals(argument)) {
-                Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
-                if (lastUpdatedType == null) {
-                    throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
-                }
-                Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
-                if (timestamp == null) {
-                    throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                }
-                parameterValues.put(name, timestamp);
-            } else {
-                throw new IllegalArgumentException("Missing query arguments: " + argument);
-            }
-
-        }
-        return parameterValues;
-    }
-
     /**
      * Obtains the configured query builder.
      * @param context The context
@@ -215,52 +187,6 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         };
     }
 
-    @NonNull
-    private Map<String, String> buildParameterBinding(@NonNull MethodInvocationContext<T, R> context) {
-        return buildParameterBinding(context, PredatorMethod.META_MEMBER_PARAMETER_BINDING);
-    }
-
-    /**
-     * Builds the parameter data.
-     * @param context The context
-     * @param parameterBindingMember The parameter member
-     * @return The parameter data
-     */
-    private Map<String, String> buildParameterBinding(
-            @NonNull MethodInvocationContext<T, R> context,
-            String parameterBindingMember) {
-        AnnotationValue<PredatorMethod> annotation = context.getAnnotation(PredatorMethod.class);
-        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
-                Property.class);
-        Map<String, String> parameterValues;
-        if (CollectionUtils.isNotEmpty(parameterData)) {
-            parameterValues = new HashMap<>(parameterData.size());
-            for (AnnotationValue<Property> annotationValue : parameterData) {
-                String name = annotationValue.get("name", String.class).orElse(null);
-                String argument = annotationValue.get("value", String.class).orElse(null);
-                if (name != null && argument != null) {
-                    parameterValues.put(name, argument);
-                }
-            }
-        } else {
-            parameterValues = Collections.emptyMap();
-        }
-        return parameterValues;
-    }
-
-    private Class<?> getLastUpdatedType(Class<?> rootEntity, String property) {
-        Class<?> type = lastUpdatedTypes.get(rootEntity);
-        if (type == null) {
-            type = BeanIntrospector.SHARED
-                    .findIntrospection(rootEntity)
-                    .flatMap(bp -> bp.getProperty(property))
-                    .map(BeanProperty::getType).orElse(null);
-            if (type != null) {
-                lastUpdatedTypes.put(rootEntity, type);
-            }
-        }
-        return type;
-    }
 
     /**
      * Obtains the root entity or throws an exception if it not available.
@@ -354,7 +280,84 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         return o;
     }
 
+    @NonNull
+    private Map<String, String> buildParameterBinding(@NonNull MethodInvocationContext<T, R> context) {
+        return buildParameterBinding(context, PredatorMethod.META_MEMBER_PARAMETER_BINDING);
+    }
 
+    /**
+     * Builds the parameter data.
+     * @param context The context
+     * @param parameterBindingMember The parameter member
+     * @return The parameter data
+     */
+    private Map<String, String> buildParameterBinding(
+            @NonNull MethodInvocationContext<T, R> context,
+            String parameterBindingMember) {
+        AnnotationValue<PredatorMethod> annotation = context.getAnnotation(PredatorMethod.class);
+        if (annotation == null) {
+            return Collections.emptyMap();
+        }
+        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
+                Property.class);
+        Map<String, String> parameterValues;
+        if (CollectionUtils.isNotEmpty(parameterData)) {
+            parameterValues = new HashMap<>(parameterData.size());
+            for (AnnotationValue<Property> annotationValue : parameterData) {
+                String name = annotationValue.stringValue("name").orElse(null);
+                String argument = annotationValue.stringValue("value").orElse(null);
+                if (name != null && argument != null) {
+                    parameterValues.put(name, argument);
+                }
+            }
+        } else {
+            parameterValues = Collections.emptyMap();
+        }
+        return parameterValues;
+    }
+
+    private <RT> Map<String, Object> buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
+        Map<String, String> parameterBinding = storedQuery.getParameterBinding();
+        Map<String, Object> parameterValueMap = context.getParameterValueMap();
+        Map<String, Object> parameterValues = new HashMap<>(parameterBinding.size());
+        for (Map.Entry<String, String> entry : parameterBinding.entrySet()) {
+            String name = entry.getKey();
+            String argument = entry.getValue();
+            String v = storedQuery.getLastUpdatedProperty().orElse(null);
+            if (parameterValueMap.containsKey(argument)) {
+                parameterValues.put(name, parameterValueMap.get(argument));
+            } else if (v != null && v.equals(argument)) {
+                Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
+                if (lastUpdatedType == null) {
+                    throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
+                }
+                Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+                if (timestamp == null) {
+                    throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+                }
+                parameterValues.put(name, timestamp);
+            } else {
+                throw new IllegalArgumentException("Missing query arguments: " + argument);
+            }
+
+        }
+        return parameterValues;
+    }
+
+    private Class<?> getLastUpdatedType(Class<?> rootEntity, String property) {
+        Class<?> type = lastUpdatedTypes.get(rootEntity);
+        if (type == null) {
+            type = BeanIntrospector.SHARED
+                    .findIntrospection(rootEntity)
+                    .flatMap(bp -> bp.getProperty(property))
+                    .map(BeanProperty::getType).orElse(null);
+            if (type != null) {
+                lastUpdatedTypes.put(rootEntity, type);
+            }
+        }
+        return type;
+    }
+    
     /**
      * Represents a prepared query.
      *
@@ -368,6 +371,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         private final @NonNull Map<String, String> parameterBinding;
         private final ExecutableMethod<?, ?> method;
         private final String lastUpdatedProp;
+        private final boolean isDto;
+        private final boolean isNative;
 
         /**
          * The default constructor.
@@ -388,6 +393,8 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
             this.parameterBinding = parameterBinding == null ? Collections.emptyMap() : parameterBinding;
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
+            this.isDto = method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
+            this.isNative = method.isTrue(Query.class, "nativeQuery");
         }
 
         @Override
@@ -397,7 +404,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         @Override
         public boolean isNative() {
-            return method.isTrue(Query.class, "nativeQuery");
+            return isNative;
         }
 
         /**
@@ -405,7 +412,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
          */
         @Override
         public boolean isDtoProjection() {
-            return method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
+            return isDto;
         }
 
         /**
