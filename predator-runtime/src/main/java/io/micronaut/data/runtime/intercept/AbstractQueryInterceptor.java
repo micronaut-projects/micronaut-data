@@ -225,13 +225,24 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         Pageable pageable = null;
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         if (pageableParam != null) {
-            pageable = ConversionService.SHARED
-                    .convert(parameterValueMap.get(pageableParam), Pageable.class).orElse(null);
-
+            Object o = parameterValueMap.get(pageableParam);
+            if (o instanceof Pageable) {
+                pageable = (Pageable) o;
+            } else {
+                pageable = ConversionService.SHARED
+                        .convert(o, Pageable.class).orElse(null);
+            }
         } else {
             String sortParam = context.stringValue(PredatorMethod.class, TypeRole.SORT).orElse(null);
             if (sortParam != null) {
-                Sort sort = ConversionService.SHARED.convert(parameterValueMap.get(sortParam), Sort.class).orElse(null);
+                Object o = parameterValueMap.get(sortParam);
+                Sort sort;
+                if (o instanceof Sort) {
+                    sort = (Sort) o;
+                } else {
+                    sort = ConversionService.SHARED.convert(o, Sort.class).orElse(null);
+                }
+
                 int max = context.intValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
                 int pageIndex = context.intValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_INDEX).orElse(0);
                 boolean hasSize = max > 0;
@@ -357,7 +368,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         }
         return type;
     }
-    
+
     /**
      * Represents a prepared query.
      *
