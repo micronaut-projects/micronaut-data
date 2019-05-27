@@ -23,7 +23,7 @@ import io.micronaut.core.util.CollectionUtils;
 import java.util.List;
 
 /**
- * An interface for objects that can be sorted.
+ * An interface for objects that can be sorted. Sorted instances are immutable and all mutating operations on this interface return a new instance.
  *
  * @author graemerocher
  * @since 1.0

@@ -22,7 +22,7 @@ import io.micronaut.core.naming.Named;
 import java.util.Map;
 
 /**
- * Interface that models a prepared query.
+ * Interface that models a prepared query. A prepared query extends from {@link StoredQuery} and includes the bound parameter values.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -38,7 +38,7 @@ public interface PreparedQuery<E, R> extends StoredQuery<E, R>, AnnotationMetada
     Map<String, Object> getParameterValues();
 
     /**
-     * @return The pageable object
+     * @return The pageable object. Defaults to {@link Pageable#UNPAGED}
      */
     @NonNull
     Pageable getPageable();

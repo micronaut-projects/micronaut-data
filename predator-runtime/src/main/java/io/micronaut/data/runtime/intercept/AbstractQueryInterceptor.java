@@ -178,13 +178,9 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 storedQuery,
                 storedQuery.getQuery(),
                 parameterValues,
-                pageable
-        ) {
-            @Override
-            public boolean isDtoProjection() {
-                return false;
-            }
-        };
+                pageable,
+                false
+        );
     }
 
 
@@ -438,11 +434,11 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
         /**
          * @return The ID type
          */
+        @SuppressWarnings("unchecked")
         @Override
-        @Nullable
-        public Class<?> getEntityIdentifierType() {
-            return method.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE)
-                    .orElse(null);
+        public Optional<Class<?>> getEntityIdentifierType() {
+            Optional o = method.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE);
+            return o;
         }
 
         /**
@@ -511,11 +507,12 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
      * @param <E> The entity type
      * @param <RT> The result type
      */
-    private class DefaultPreparedQuery<E, RT> implements PreparedQuery<E, RT> {
+    private final class DefaultPreparedQuery<E, RT> implements PreparedQuery<E, RT> {
         private final @NonNull Map<String, Object> parameterValues;
         private final Pageable pageable;
         private final StoredQuery<E, RT> storedQuery;
         private final String query;
+        private final boolean dto;
 
         /**
          * The default constructor.
@@ -529,10 +526,28 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
                 String finalQuery,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable) {
+            this(storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
+        }
+
+        /**
+         * The default constructor.
+         * @param storedQuery The stored query
+         * @param finalQuery The final query
+         * @param parameterValues The parameter values
+         * @param pageable The pageable
+         * @param dtoProjection Whether the prepared query is a dto projection
+         */
+        DefaultPreparedQuery(
+                StoredQuery<E, RT> storedQuery,
+                String finalQuery,
+                @Nullable Map<String, Object> parameterValues,
+                @Nullable Pageable pageable,
+                boolean dtoProjection) {
             this.query = finalQuery;
             this.storedQuery = storedQuery;
             this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
+            this.dto = dtoProjection;
         }
 
         @NonNull
@@ -554,7 +569,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         @Override
         public boolean isDtoProjection() {
-            return storedQuery.isDtoProjection();
+            return dto;
         }
 
         @NonNull
@@ -565,7 +580,7 @@ abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, 
 
         @Nullable
         @Override
-        public Class<?> getEntityIdentifierType() {
+        public Optional<Class<?>> getEntityIdentifierType() {
             return storedQuery.getEntityIdentifierType();
         }
 

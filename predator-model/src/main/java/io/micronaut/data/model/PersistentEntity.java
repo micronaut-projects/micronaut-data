@@ -33,8 +33,9 @@ import java.util.stream.Collectors;
 import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
 
 /**
- * Models a persistent entity and provides an API that can be used both within the compiler and at runtime.
+ * Models a persistent entity and provides an API that can be used both within the compiler and at runtime. The {@link io.micronaut.core.annotation.AnnotationMetadata} provided is consistent both at runtime and compilation time.
  *
+ * @see PersistentProperty
  * @author Graeme Rocher
  * @since 1.0
  */
@@ -208,7 +209,8 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
     }
 
     /**
-     * Return a property for a dot separated property path.
+     * Return a property for a dot separated property path such as {@code foo.bar.prop}
+     * .
      * @param path The path
      * @return The property
      */
@@ -236,7 +238,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
 
     /**
      * Creates a new persistent entity representation of the given type. The type
-     * must be annotated with {@link io.micronaut.core.annotation.Introspected}.
+     * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *
      * @param type The type
      * @return The entity
@@ -248,7 +250,7 @@ public interface PersistentEntity extends AnnotationMetadataProvider {
 
     /**
      * Creates a new persistent entity representation of the given type. The type
-     * must be annotated with {@link io.micronaut.core.annotation.Introspected}.
+     * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *
      * @param introspection The introspection
      * @return The entity

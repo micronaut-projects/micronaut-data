@@ -30,7 +30,7 @@ import java.util.List;
  * @author graemerocher
  * @since 1.0
  */
-class DefaultSort implements Sort {
+final class DefaultSort implements Sort {
     private final List<Order> orderBy;
 
     /**

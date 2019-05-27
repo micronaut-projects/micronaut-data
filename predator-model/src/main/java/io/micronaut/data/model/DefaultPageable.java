@@ -29,7 +29,7 @@ import javax.validation.constraints.Min;
  * @since 1.0
  */
 @Introspected
-class DefaultPageable implements Pageable {
+final class DefaultPageable implements Pageable {
 
     private final int max;
     private final int number;

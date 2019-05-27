@@ -16,15 +16,16 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
+import io.micronaut.core.reflect.ReflectionUtils;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
 /**
- * A stored query computed query.
+ * A stored computed query. This interface represents the
  *
  * @author graemerocher
  * @since 1.0.0
@@ -32,54 +33,84 @@ import java.util.Optional;
  * @param <R> The result type
  */
 public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
-    /**
-     * @return Whether the query is native.
-     */
-    boolean isNative();
 
     /**
-     * @return Whether the query is a DTO projection query
-     */
-    boolean isDtoProjection();
-
-    /**
-     * @return The query result type
-     */
-    @NonNull
-    Class<R> getResultType();
-
-    /**
-     * @return The ID type
-     */
-    @Nullable
-    Class<?> getEntityIdentifierType();
-
-    /**
+     * The root entity type.
+     *
      * @return The root entity type
      */
     @NonNull
     Class<E> getRootEntity();
 
     /**
+     * The query to execute.
+     *
      * @return The query to execute
      */
     @NonNull
     String getQuery();
 
     /**
+     * The query result type. This may differ from the root entity type returned by {@link #getRootEntity()}.
+     *
+     * @return The query result type
+     */
+    @NonNull
+    Class<R> getResultType();
+
+    /**
+     * In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).
+     *
+     * @return Whether the query is native.
+     */
+    default boolean isNative() {
+        return false;
+    }
+
+    /**
+     * Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project. Defaults to false.
+     *
+     * @return Whether the query is a DTO projection query
+     */
+    default boolean isDtoProjection() {
+        return false;
+    }
+
+    /**
+     * The type of the ID member of the entity.
+     *
+     * @return The ID type
+     */
+    default Optional<Class<?>> getEntityIdentifierType() {
+        return Optional.empty();
+    }
+
+    /**
+     * The argument types to the method that invokes the query.
+     *
      * @return The argument types
      */
     @NonNull
-    Class<?>[] getArgumentTypes();
+    default Class<?>[] getArgumentTypes() {
+        return ReflectionUtils.EMPTY_CLASS_ARRAY;
+    }
 
     /**
+     * The parameter binding. That is the mapping between named query parameters and parameters of the method.
+     *
      * @return The parameter binding.
      */
     @NonNull
-    Map<String, String> getParameterBinding();
+    default Map<String, String> getParameterBinding() {
+        return Collections.emptyMap();
+    }
 
     /**
+     * The name of the last updated property on the entity if any
+     *
      * @return The last updated property
      */
-    Optional<String> getLastUpdatedProperty();
+    default Optional<String> getLastUpdatedProperty() {
+        return Optional.empty();
+    }
 }
