@@ -20,6 +20,9 @@ At a fundamental level however what Predator does can be summed up in the follow
 
 snippet::example.BookRepository[project-base="examples/example", source="main", tags="repository"]
 
+<1> The `@Repository` annotation designates `BookRepository` as a data repository. Since, it is is an interface, the `@Repository` annotation provides implementations at compilation time.
+<2> Easiest way to get CRUD (Create, Read, Update, Delete) operations implemented at compilation is to extend `CrudRepository`.
+
 Predator computes the query for the `find` method automatically at compilation time making it available at runtime via annotation metadata:
 
 snippet::example.BookRepositorySpec[project-base="examples/example", tags="metadata", indent="0"]
