@@ -9,7 +9,7 @@
         </encoder>
     </appender>
 
-    <root level="info">
+    <root level="error">
         <appender-ref ref="STDOUT" />
     </root>
 <!--    <logger name="io.micronaut.context.condition" level="trace" />-->
