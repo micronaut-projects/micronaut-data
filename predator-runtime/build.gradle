@@ -1,5 +1,6 @@
 dependencies {
 	annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
 	compile project(":predator-model")
+	compile "io.reactivex.rxjava2:rxjava:2.2.6"
 	compileOnly 'org.springframework.data:spring-data-commons:2.1.8.RELEASE'
 }

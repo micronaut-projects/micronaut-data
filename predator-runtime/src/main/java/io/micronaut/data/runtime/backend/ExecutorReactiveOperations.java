@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.backend.reactive;
+package io.micronaut.data.runtime.backend;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.async.ExecutorAsyncOperations;
+import io.micronaut.data.backend.reactive.ReactiveOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PreparedQuery;
