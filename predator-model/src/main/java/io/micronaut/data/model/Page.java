@@ -17,8 +17,11 @@ package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Inspired by the Spring Data's {@code Page} and GORM's {@code PagedResultList}, this models a type that supports
@@ -46,6 +49,19 @@ public interface Page<T> extends Slice<T> {
     default int getTotalPages() {
         int size = getSize();
         return size == 0 ? 1 : (int) Math.ceil((double) getTotalSize() / (double) size);
+    }
+
+    /**
+     * Maps the content with the given function.
+     *
+     * @param function The function to apply to each element in the content.
+     * @param <T2> The type returned by the function
+     * @return A new slice with the mapped content
+     */
+    @Override
+    default @Nonnull <T2> Page<T2> map(Function<T, T2> function) {
+        List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
+        return new DefaultPage<>(content, getPageable(), getTotalSize());
     }
 
     /**
