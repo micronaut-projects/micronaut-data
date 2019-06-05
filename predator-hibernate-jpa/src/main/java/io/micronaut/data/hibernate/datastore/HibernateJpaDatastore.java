@@ -17,15 +17,20 @@ package io.micronaut.data.hibernate.datastore;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.backend.async.AsyncCapableDatastore;
+import io.micronaut.data.backend.async.AsyncOperations;
+import io.micronaut.data.backend.async.ExecutorAsyncOperations;
+import io.micronaut.data.backend.reactive.ExecutorReactiveOperations;
+import io.micronaut.data.backend.reactive.ReactiveCapableDatastore;
+import io.micronaut.data.backend.reactive.ReactiveOperations;
 import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
-import io.micronaut.data.backend.Datastore;
 import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.Sort;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
@@ -40,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -49,26 +55,34 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
-public class HibernateJpaDatastore implements Datastore {
+public class HibernateJpaDatastore implements Datastore, AsyncCapableDatastore, ReactiveCapableDatastore {
 
     private final SessionFactory sessionFactory;
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
-    private final ConversionService<?> conversionService = ConversionService.SHARED;
+    private final ExecutorAsyncOperations asyncOperations;
 
     /**
      * Default constructor.
      *
      * @param sessionFactory The session factory
+     * @param executorService The executor service for I/O tasks to use
      */
-    protected HibernateJpaDatastore(@NonNull SessionFactory sessionFactory) {
+    protected HibernateJpaDatastore(
+            @NonNull SessionFactory sessionFactory,
+            @NonNull ExecutorService executorService) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
+        ArgumentUtils.requireNonNull("executorService", executorService);
         this.sessionFactory = sessionFactory;
         HibernateTransactionManager transactionManager = new HibernateTransactionManager(sessionFactory);
         this.writeTransactionTemplate = new TransactionTemplate(transactionManager);
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         def.setReadOnly(true);
         this.readTransactionTemplate = new TransactionTemplate(transactionManager, def);
+        this.asyncOperations = new ExecutorAsyncOperations(
+                this,
+                executorService
+        );
     }
 
     @Nullable
@@ -384,5 +398,17 @@ public class HibernateJpaDatastore implements Datastore {
                     );
             }
         }
+    }
+
+    @NonNull
+    @Override
+    public AsyncOperations async() {
+        return asyncOperations;
+    }
+
+    @NonNull
+    @Override
+    public ReactiveOperations reactive() {
+        return new ExecutorReactiveOperations(asyncOperations);
     }
 }

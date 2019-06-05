@@ -41,7 +41,7 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
 
     @Override
     public Boolean intercept(MethodInvocationContext<T, Boolean> context) {
-        Class idType = context.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE, Class.class)
+        Class idType = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
         return datastore.findOne(preparedQuery) != null;

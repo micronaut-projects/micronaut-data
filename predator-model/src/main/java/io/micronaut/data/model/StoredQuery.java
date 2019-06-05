@@ -106,7 +106,7 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     }
 
     /**
-     * The name of the last updated property on the entity if any
+     * The name of the last updated property on the entity if any.
      *
      * @return The last updated property
      */

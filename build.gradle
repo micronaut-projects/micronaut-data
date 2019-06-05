@@ -168,6 +168,9 @@ allprojects {
             testOutputDir file('build/classes/groovy/test')
         }
     }
+    if (it.name.contains('doc-examples')) {
+        return
+    }
     apply from: rootProject.file('gradle/license.gradle')
 }
 

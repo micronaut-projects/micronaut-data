@@ -18,7 +18,11 @@ package io.micronaut.data.hibernate.datastore;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.scheduling.TaskExecutors;
 import org.hibernate.SessionFactory;
+
+import javax.inject.Named;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Factory that creates a {@link HibernateJpaDatastore} for each configured {@link SessionFactory}.
@@ -32,10 +36,13 @@ public class HibernateJpaDatastoreFactory {
     /**
      * Creates the {@link HibernateJpaDatastore}.
      * @param sessionFactory The session factory
+     * @param executorService The executor service
      * @return The hibernate datastore
      */
     @EachBean(SessionFactory.class)
-    protected @NonNull HibernateJpaDatastore hibernateJpaDatastore(@NonNull SessionFactory sessionFactory) {
-        return new HibernateJpaDatastore(sessionFactory);
+    protected @NonNull HibernateJpaDatastore hibernateJpaDatastore(
+            @NonNull SessionFactory sessionFactory,
+            @Named(TaskExecutors.IO) ExecutorService executorService) {
+        return new HibernateJpaDatastore(sessionFactory, executorService);
     }
 }
