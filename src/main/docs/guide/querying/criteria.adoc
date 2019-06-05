@@ -4,7 +4,7 @@ This is the simplest type of query supported by Predator, but you can use an opt
 
 For example the following query pattern will execute a query that finds only `Book` instances that have a page count greater than the given value:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="greaterthan", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="greaterthan", indent="0"]
 
 The following table summarizes the possible expressions and behaviour:
 
@@ -85,6 +85,6 @@ TIP: Any of these criterion expressions can be negated by adding the word `Not` 
 
 You can combine multiple criterion by separating them with `And` or `Or` logical operators. For example:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="logical", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="logical", indent="0"]
 
 The above example uses `Or` to express a greater than condition and a like condition.

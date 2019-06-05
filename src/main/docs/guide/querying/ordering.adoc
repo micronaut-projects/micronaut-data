@@ -1,5 +1,5 @@
 You can control ordering of results by appending an `OrderBy*` expression to the end of the method name:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="ordering", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="ordering", indent="0"]
 
 The `OrderBy*` expression refer to the property name to order by and can optionally be appended with either `Asc` or `Desc` to control ascending or descending order.

@@ -26,6 +26,6 @@ The following table summarizes the repository interfaces that come with Predator
 
 Note that in addition to interfaces you can also define repositories as abstract classes:
 
-snippet::example.AbstractBookRepository[project-base="examples/example", source="main"]
+snippet::example.AbstractBookRepository[project-base="doc-examples/example", source="main"]
 
 As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with JPA and repository interface code implemented automatically by Predator.

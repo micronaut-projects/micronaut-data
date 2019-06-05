@@ -12,41 +12,41 @@ And ensure the implementation is configured correctly.
 
 You can then define an `@Entity`:
 
-snippet::example.Book[project-base="examples/example", source="main"]
+snippet::example.Book[project-base="doc-examples/example", source="main"]
 
 Followed by an interface that extends from api:data.repository.CrudRepository[]
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="repository"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="repository"]
 
 <1> The interface is annotated with ann:data.annotation.Repository[]
 <2> The `CrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `Long`)
 
 You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of `example.BookRepository` is created at compilation time. To obtain a reference to it simply inject the bean:
 
-snippet::example.BookRepositorySpec[project-base="examples/example", tags="inject", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="inject", indent="0"]
 
 === Saving an Instance (Create)
 
 To save an instance use the `save` method of the `CrudRepository` interface:
 
-snippet::example.BookRepositorySpec[project-base="examples/example", tags="save", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="save", indent="0"]
 
 === Retrieving an Instance (Read)
 
 To read a book back use `findById`:
 
-snippet::example.BookRepositorySpec[project-base="examples/example", tags="read", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="read", indent="0"]
 
 === Updating an Instance (Update)
 
 To update an instance use `save` again:
 
-snippet::example.BookRepositorySpec[project-base="examples/example", tags="update", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="update", indent="0"]
 
 === Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:
 
-snippet::example.BookRepositorySpec[project-base="examples/example", tags="delete", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="delete", indent="0"]
 
 Congratulations you have implemented your first Predator repository! Read on to find out more.

@@ -4,15 +4,15 @@ In addition methods can return a api:data.model.Page[] object which includes the
 
 The following are some example signatures:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="pageable", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="pageable", indent="0"]
 
 And some test data:
 
-snippet::example.BookRepositorySpec[project-base="examples/example"tags="saveall", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example"tags="saveall", indent="0"]
 
 You can execute queries and return paginated data using the `from` method of api:data.model.Pageable[] and specifying an appropriate return type:
 
-snippet::example.BookRepositorySpec[project-base="examples/example"tags="pageable", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/example"tags="pageable", indent="0"]
 
 The `from` method accepts `index` and `size` arguments which are the page number to begin from and the number of records to return per page.
 

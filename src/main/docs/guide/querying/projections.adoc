@@ -2,7 +2,7 @@ Frequently, rather than retrieving all of the data for a particular entity, you 
 
 The simplest form of projection is to retrieve a property or association. For example:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="simple-projection", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="simple-projection", indent="0"]
 
 In the above example the `findTitleByPagesGreaterThan` method is resolving the `title` property of the `Book` entity and returning the data as a `List` of `String`.
 
@@ -43,6 +43,6 @@ In addition to this, Predator also supports projection expressions. The followin
 
 You can also use `top` or `first` to limit the results returned (as a simple alternative to pagination)
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="top-projection", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="top-projection", indent="0"]
 
 The above query will return the first 3 results for the given query expression.

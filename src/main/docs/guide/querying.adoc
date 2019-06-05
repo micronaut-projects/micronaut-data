@@ -9,7 +9,7 @@ As shown in Figure 1, the most common query stem is `find`, but you can also use
 
 The projection and ordering parts of the query pattern are optional (more on those later). The following snippet demonstrates 3 simple queries that use a different stem but perform the same query:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="simple", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="simple", indent="0"]
 
 The above examples return a single instance of an entity, the supported return types are described in the following table:
 
@@ -71,6 +71,6 @@ TIP: More details about the batch update variants of these methods is covered in
 
 Finally, as an alternative to the `By` syntax you also define simple finders that use the parameter names to match properties to query. This syntax is less flexible, but is more readable in certain circumstances. For example the following can be used as an alternative to `findByTitle`:
 
-snippet::example.BookRepository[project-base="examples/example", source="main", tags="simple-alt", indent="0"]
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="simple-alt", indent="0"]
 
 Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specific more than one parameter to perform a logical `AND`.

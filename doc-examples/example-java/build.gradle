@@ -1,18 +1,14 @@
 plugins {
-    id "io.spring.dependency-management" version "1.0.6.RELEASE"
-    id "com.github.johnrengelman.shadow" version "4.0.2"
+    id "io.spring.dependency-management" 
+    id "com.github.johnrengelman.shadow" 
     id "application"
     id "java"
-    id "net.ltgt.apt-eclipse" version "0.21"
-    id "net.ltgt.apt-idea" version "0.21"
 }
 
 version "0.1"
 group "example"
 
 repositories {
-    mavenLocal()
-    mavenCentral()
     maven { url "https://jcenter.bintray.com" }
 }
 
@@ -27,14 +23,11 @@ configurations {
     developmentOnly 
 }
 
-ext {
-    predatorVersion = "1.0.0.BUILD-SNAPSHOT"
-}
 dependencies {
-    annotationProcessor "io.micronaut.data:micronaut-predator-processor:$predatorVersion"
+    annotationProcessor project(":predator-processor")
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-validation"
-    compile "io.micronaut.data:micronaut-predator-hibernate-jpa:$predatorVersion"
+    compile project(":predator-hibernate-jpa")
     compile "io.micronaut:micronaut-http-client"
     compile "io.micronaut:micronaut-inject"
     compile "io.micronaut:micronaut-validation"

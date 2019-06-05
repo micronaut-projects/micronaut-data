@@ -4,17 +4,17 @@ TIP: If a `LazyInitializationException` occurs this is not a bug in Predator or 
 
 Consider a `Product` entity:
 
-snippet::example.Product[project-base="examples/example", source="main"]
+snippet::example.Product[project-base="doc-examples/example", source="main"]
 
 That has an association to a `Manufacturer` entity:
 
-snippet::example.Manufacturer[project-base="examples/example", source="main"]
+snippet::example.Manufacturer[project-base="doc-examples/example", source="main"]
 
 In this case when you read each `Product` from the database an additional select is required to retrieve the `Manufacturer` for each `Product`. This leads to `N + 1` queries.
 
 To resolve this you can use the ann:data.annotation.JoinSpec[] annotation on your repository interface to specify that a `JOIN FETCH` should be executed to retrieve the associated `Manufacturer`.
 
-snippet::example.ProductRepository[project-base="examples/example", source="main"]
+snippet::example.ProductRepository[project-base="doc-examples/example", source="main"]
 
 
 <1> The ann:data.annotation.JoinSpec[] is used to indicate a `JOIN FETCH` clause should be included.

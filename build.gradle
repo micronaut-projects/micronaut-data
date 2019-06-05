@@ -37,6 +37,9 @@ ext {
 
 
 subprojects { Project subproject ->
+    if (subproject.name.contains('doc-examples')) {
+        return
+    }
 
     version project.projectVersion
     group "io.micronaut.data"
@@ -47,7 +50,6 @@ subprojects { Project subproject ->
 
 
     repositories {
-        mavenLocal()
         maven { url "https://repo.grails.org/grails/core" }
         maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
@@ -155,7 +157,7 @@ subprojects { Project subproject ->
     checkstyleTest.enabled = false
 }
 
-apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/f5a8747c1fdaed70b0aa397ead8cec3cef25ba4c/gradle/docs.gradle"
+apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v1.0.3/gradle/docs.gradle"
 
 allprojects {
     apply plugin: 'idea'
