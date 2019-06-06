@@ -15,14 +15,18 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.SaveAllInterceptor;
+import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.regex.Pattern;
 
 /**
@@ -45,9 +49,13 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = methodElement.getParameters();
-        if (parameters.length == 1) {
+        if (parameters.length == 1 && super.isMethodMatch(methodElement, matchContext)) {
             ParameterElement firstParameter = parameters[0];
-            return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isIterableOfEntity(firstParameter.getGenericType());
+            ClassElement parameterType = firstParameter.getGenericType();
+            if (TypeUtils.isReactiveOrFuture(parameterType)) {
+                parameterType = parameterType.getFirstTypeArgument().orElse(null);
+            }
+            return TypeUtils.isIterableOfEntity(parameterType);
         }
         return false;
     }
@@ -57,11 +65,20 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         // default doesn't build a query and query construction left to runtime
         // this is fine for JPA, for SQL we need to build an insert
+        Class<? extends PredatorInterceptor> interceptor;
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isFutureType(returnType)) {
+            interceptor = SaveAllAsyncInterceptor.class;
+        } else if (TypeUtils.isReactiveType(returnType)) {
+            interceptor = SaveAllReactiveInterceptor.class;
+        } else {
+            interceptor = SaveAllInterceptor.class;
+        }
 
         return new MethodMatchInfo(
                 null,
                 null,
-                SaveAllInterceptor.class
+                interceptor
         );
     }
 }

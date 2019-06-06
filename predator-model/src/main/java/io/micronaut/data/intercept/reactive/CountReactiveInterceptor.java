@@ -18,7 +18,7 @@ package io.micronaut.data.intercept.reactive;
 import io.micronaut.data.intercept.PredatorInterceptor;
 
 /**
- * An interceptor that executes a query reactively and returns a reactive type that emits a single result
+ * An interceptor that executes a count query reactively and returns a reactive type that emits a single result
  * as a RxJava Single or a Reactor Mono.
  *
  * @param <T> The declaring type
@@ -27,5 +27,5 @@ import io.micronaut.data.intercept.PredatorInterceptor;
  * @author graemerocher
  * @since 1.0
  */
-public interface FindReactiveSingleInterceptor<T, R> extends PredatorInterceptor<T, R> {
+public interface CountReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
 }

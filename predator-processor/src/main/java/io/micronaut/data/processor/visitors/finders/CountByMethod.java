@@ -17,6 +17,9 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.CountInterceptor;
+import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.async.CountAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -42,25 +45,54 @@ public class CountByMethod extends DynamicFinder {
 
     @Nullable
     @Override
-    protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, ClassElement queryResultType, @Nullable QueryModel query) {
+    protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
+        return buildCountInfo(matchContext, query);
+    }
+
+    @Override
+    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
+        return super.isMethodMatch(methodElement, matchContext) &&
+                isValidCountReturnType(methodElement, matchContext);
+    }
+
+    /**
+     * Builds count info.
+     * @param matchContext The match context
+     * @param query The query
+     * @return The method info
+     */
+    static MethodMatchInfo buildCountInfo(@NonNull MethodMatchContext matchContext, @Nullable QueryModel query) {
+        Class<? extends PredatorInterceptor> interceptor = CountInterceptor.class;
+        if (TypeUtils.isFutureType(matchContext.getReturnType())) {
+            interceptor = CountAsyncInterceptor.class;
+        } else if (TypeUtils.isReactiveType(matchContext.getReturnType())) {
+            interceptor = CountReactiveInterceptor.class;
+        }
         if (query != null) {
             query.projections().count();
             return new MethodMatchInfo(
                     matchContext.getReturnType(),
                     query,
-                    CountInterceptor.class
+                    interceptor
             );
         } else {
             return new MethodMatchInfo(
                     matchContext.getReturnType(),
                     null,
-                    CountInterceptor.class
+                    interceptor
             );
         }
     }
 
-    @Override
-    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnNumber(methodElement);
+    /**
+     * Checks whether the return type is supported.
+     * @param methodElement The method element
+     * @param matchContext The match context
+     * @return True if it is supported
+     */
+    static boolean isValidCountReturnType(MethodElement methodElement, MatchContext matchContext) {
+        return TypeUtils.doesReturnNumber(methodElement) ||
+                (TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) &&
+                        TypeUtils.isNumber(matchContext.getReturnType().getFirstTypeArgument().orElse(null)));
     }
 }

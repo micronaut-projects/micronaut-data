@@ -16,14 +16,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.intercept.CountInterceptor;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Simple count method.
@@ -48,26 +46,15 @@ public class CountMethod extends AbstractListMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnNumber(methodElement);
+        return super.isMethodMatch(methodElement, matchContext) && CountByMethod.isValidCountReturnType(methodElement, matchContext);
     }
 
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
-        if (query != null) {
-            query.projections().count();
-            return new MethodMatchInfo(
-                    matchContext.getReturnType(),
-                    query,
-                    CountInterceptor.class
-            );
-        } else {
-            return new MethodMatchInfo(
-                    matchContext.getReturnType(),
-                    null,
-                    CountInterceptor.class
-            );
-        }
+        return CountByMethod.buildCountInfo(
+                matchContext, query
+        );
     }
 
 }

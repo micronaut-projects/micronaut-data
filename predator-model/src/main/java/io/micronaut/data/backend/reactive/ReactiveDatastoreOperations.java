@@ -30,7 +30,7 @@ import java.io.Serializable;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface ReactiveOperations {
+public interface ReactiveDatastoreOperations {
 
     /**
      * Find one by ID.

@@ -13,23 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.data.intercept.reactive;
 
-package io.micronaut.data.backend.reactive;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.intercept.PredatorInterceptor;
 
 /**
- * Extends {@link Datastore} and adds the able for a datastore to expose reactive operations if they are supported.
+ * An interceptor that executes an find by id reactively.
  *
+ * @param <T> The declaring type
+ * @param <R> The result type
  * @author graemerocher
  * @since 1.0.0
  */
-public interface ReactiveCapableDatastore extends Datastore {
-
-    /**
-     * @return The reactive operations instance.
-     */
-    @NonNull
-    ReactiveDatastoreOperations reactive();
+public interface FindByIdReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
 }
+

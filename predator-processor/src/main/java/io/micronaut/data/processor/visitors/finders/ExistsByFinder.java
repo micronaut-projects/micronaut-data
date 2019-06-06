@@ -18,6 +18,9 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.ExistsByInterceptor;
+import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -46,7 +49,11 @@ public class ExistsByFinder extends DynamicFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnBoolean(methodElement);
+        return super.isMethodMatch(methodElement, matchContext)
+                && (TypeUtils.doesReturnBoolean(methodElement) ||
+                (TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) && TypeUtils.isBoolean(
+                        matchContext.getReturnType().getFirstTypeArgument().orElse(null)
+                )));
     }
 
     @Nullable
@@ -55,13 +62,20 @@ public class ExistsByFinder extends DynamicFinder {
             @NonNull MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
             @Nullable QueryModel query) {
+        Class<? extends PredatorInterceptor> interceptor = ExistsByInterceptor.class;
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isFutureType(returnType)) {
+            interceptor = ExistsByAsyncInterceptor.class;
+        } else if (TypeUtils.isReactiveType(returnType)) {
+            interceptor = ExistsByReactiveInterceptor.class;
+        }
         if (query != null) {
             query.projections().id();
         }
         return new MethodMatchInfo(
-                matchContext.getReturnType(),
+                returnType,
                 query,
-                ExistsByInterceptor.class
+                interceptor
         );
     }
 

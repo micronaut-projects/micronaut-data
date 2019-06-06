@@ -49,7 +49,8 @@ public class QueryListMethod extends ListMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return methodElement.getValue(Query.class, String.class).map(StringUtils::isNotEmpty).orElse(false) && super.isMethodMatch(methodElement, matchContext);
+        return methodElement.stringValue(Query.class).map(StringUtils::isNotEmpty)
+                .orElse(false) && super.isMethodMatch(methodElement, matchContext);
     }
 
     @Nullable
@@ -78,7 +79,7 @@ public class QueryListMethod extends ListMethod {
 
     private RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext) {
         MethodElement methodElement = matchContext.getMethodElement();
-        String queryString = methodElement.getValue(Query.class, String.class).orElseThrow(() ->
+        String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
             new IllegalStateException("Should only be called if Query has value!")
         );
         Matcher matcher = VARIABLE_PATTERN.matcher(queryString);

@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.data.intercept.reactive;
 
-package io.micronaut.data.backend.reactive;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.intercept.PredatorInterceptor;
 
 /**
- * Extends {@link Datastore} and adds the able for a datastore to expose reactive operations if they are supported.
+ * An interceptor that executes a query reactively and returns a reactive type that emits a single result
+ * as a RxJava Single or a Reactor Mono.
+ *
+ * @param <T> The declaring type
+ * @param <R> The return type
  *
  * @author graemerocher
- * @since 1.0.0
+ * @since 1.0
  */
-public interface ReactiveCapableDatastore extends Datastore {
-
-    /**
-     * @return The reactive operations instance.
-     */
-    @NonNull
-    ReactiveDatastoreOperations reactive();
+public interface FindOneReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
 }

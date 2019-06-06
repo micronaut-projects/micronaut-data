@@ -31,7 +31,7 @@ import java.util.concurrent.CompletionStage;
  * @since 1.0.0
  */
 @NonBlocking
-public interface AsyncOperations {
+public interface AsyncDatastoreOperations {
     /**
      * Find one by ID.
      *

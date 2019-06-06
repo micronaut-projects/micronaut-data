@@ -355,7 +355,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         List<MethodCandidate> finderList = Arrays.asList(
                 new FindByFinder(),
                 new ExistsByFinder(),
-                new SaveMethod(),
+                new SaveEntityMethod(),
                 new SaveOneMethod(),
                 new SaveAllMethod(),
                 new ListMethod(),

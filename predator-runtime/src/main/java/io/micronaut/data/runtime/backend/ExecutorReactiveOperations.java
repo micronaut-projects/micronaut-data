@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.reactive.ReactiveOperations;
+import io.micronaut.data.backend.reactive.ReactiveDatastoreOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PreparedQuery;
@@ -30,16 +30,16 @@ import java.io.Serializable;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of {@link ReactiveOperations} that delegates to a blocking datastore and specified {@link Executor}.
+ * An implementation of {@link ReactiveDatastoreOperations} that delegates to a blocking datastore and specified {@link Executor}.
  * This can be used in absence of true reactive support at the driver level an allows composing blocking operations within reactive flows.
  *
- * <p>If a backing implementation provides a reactive API then the backing implementation should not use this class and instead directly implement the {@link ReactiveOperations} interface.</p>
+ * <p>If a backing implementation provides a reactive API then the backing implementation should not use this class and instead directly implement the {@link ReactiveDatastoreOperations} interface.</p>
  *
- * @see ReactiveOperations
+ * @see ReactiveDatastoreOperations
  * @author graemerocher
  * @since 1.0.0
  */
-public class ExecutorReactiveOperations implements ReactiveOperations {
+public class ExecutorReactiveOperations implements ReactiveDatastoreOperations {
 
     private final ExecutorAsyncOperations asyncOperations;
 

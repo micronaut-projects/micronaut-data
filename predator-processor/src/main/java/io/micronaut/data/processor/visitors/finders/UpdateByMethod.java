@@ -47,7 +47,7 @@ public class UpdateByMethod extends DynamicFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnVoid(methodElement);
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement);
     }
 
     @Nullable
@@ -105,7 +105,7 @@ public class UpdateByMethod extends DynamicFinder {
         return new MethodMatchInfo(
                 queryResultType,
                 query,
-                UpdateInterceptor.class,
+                UpdateMethod.pickUpdateInterceptor(matchContext.getReturnType()),
                 MethodMatchInfo.OperationType.UPDATE,
                 updateProperties
         );

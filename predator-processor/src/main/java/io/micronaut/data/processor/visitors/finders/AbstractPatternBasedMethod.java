@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -27,7 +28,8 @@ import io.micronaut.data.annotation.JoinSpec;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.*;
-import io.micronaut.data.intercept.reactive.FindReactivePublisherInterceptor;
+import io.micronaut.data.intercept.async.*;
+import io.micronaut.data.intercept.reactive.*;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
@@ -46,6 +48,8 @@ import org.reactivestreams.Publisher;
 import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -138,19 +142,14 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         ClassElement returnType = matchContext.getReturnType();
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (!returnType.getName().equals("void")) {
-            if (returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive()) {
+            if (isValidResultType(returnType)) {
                 if (areTypesCompatible(returnType, queryResultType, matchContext)) {
-                    if (query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName())) {
-                        List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
-                        if (criterionList.size() == 1 && criterionList.get(0) instanceof QueryModel.IdEquals) {
-                            return new MethodMatchInfo(
-                                    matchContext.getReturnType(),
-                                    query,
-                                    FindByIdInterceptor.class
-                            );
-                        } else {
-                            return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
-                        }
+                    if (isFindByIdQuery(matchContext, queryResultType, query)) {
+                        return new MethodMatchInfo(
+                                matchContext.getReturnType(),
+                                query,
+                                FindByIdInterceptor.class
+                        );
                     } else {
                         return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
                     }
@@ -168,43 +167,139 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 }
             } else if (typeArgument != null) {
-                boolean dto = false;
-                if (!areTypesCompatible(typeArgument, queryResultType, matchContext)) {
-                    if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
-                        if (attemptProjection(matchContext, queryResultType, query, typeArgument)) {
-                            return null;
-                        }
-                        dto = true;
-                    } else {
-                        matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + typeArgument.getName());
+                boolean isPage = matchContext.isTypeInRole(
+                        typeArgument,
+                        TypeRole.PAGE
+                );
+                boolean isSlice = matchContext.isTypeInRole(
+                        typeArgument,
+                        TypeRole.SLICE
+                );
+                if (returnType.isAssignable(CompletionStage.class) || returnType.isAssignable(Future.class)) {
+                    Class<? extends PredatorInterceptor> interceptorType;
+                    ClassElement futureTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
+                    if (futureTypeArgument == null && TypeUtils.isContainerType(typeArgument)) {
+                        matchContext.fail("Async return type missing type argument");
                         return null;
                     }
-                }
+                    if (isPage) {
+                        interceptorType = FindPageAsyncInterceptor.class;
+                        if (futureTypeArgument == null) {
+                            matchContext.fail("Async return type missing type argument");
+                            return null;
+                        }
+                    } else if (isSlice) {
+                        interceptorType = FindSliceAsyncInterceptor.class;
+                    } else if (typeArgument.isAssignable(Iterable.class)) {
+                        interceptorType = FindAllAsyncInterceptor.class;
+                    } else if (isValidResultType(typeArgument)) {
+                        if (isFindByIdQuery(matchContext, queryResultType, query)) {
+                            interceptorType = FindByIdAsyncInterceptor.class;
+                        } else {
+                            interceptorType = FindOneAsyncInterceptor.class;
+                        }
+                    } else {
+                        matchContext.fail("Unsupported Async return type: " + futureTypeArgument.getName());
+                        return null;
+                    }
+                    boolean dto = resolveDtoIfNecessary(matchContext, queryResultType, query, futureTypeArgument != null ? futureTypeArgument : typeArgument);
+                    if (matchContext.isFailing()) {
+                        return null;
+                    } else {
+                        return new MethodMatchInfo(typeArgument, query, interceptorType, dto);
+                    }
+                } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
+                    boolean dto = false;
+                    if (isPage) {
+                        return new MethodMatchInfo(typeArgument, query, FindPageReactiveInterceptor.class, dto);
+                    } else if (isSlice) {
+                        return new MethodMatchInfo(typeArgument, query, FindSliceReactiveInterceptor.class, dto);
+                    } else {
+                        if (isReactiveSingleResult(returnType)) {
+                            if (isFindByIdQuery(matchContext, queryResultType, query)) {
+                                return new MethodMatchInfo(typeArgument, query, FindByIdReactiveInterceptor.class, dto);
+                            } else {
+                                return new MethodMatchInfo(typeArgument, query, FindOneReactiveInterceptor.class, dto);
+                            }
+                        } else {
+                            return new MethodMatchInfo(typeArgument, query, FindAllReactiveInterceptor.class, dto);
+                        }
+                    }
+                } else {
+                    boolean dto = false;
+                    if (!areTypesCompatible(typeArgument, queryResultType, matchContext)) {
+                        if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+                            if (attemptProjection(matchContext, queryResultType, query, typeArgument)) {
+                                return null;
+                            }
+                            dto = true;
+                        } else {
+                            matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + typeArgument.getName());
+                            return null;
+                        }
+                    }
 
-                if (matchContext.isTypeInRole(
-                        matchContext.getReturnType(),
-                        TypeRole.PAGE
-                )) {
-                    return new MethodMatchInfo(typeArgument, query, FindPageInterceptor.class, dto);
-                } else if (matchContext.isTypeInRole(
-                        matchContext.getReturnType(),
-                        TypeRole.SLICE
-                )) {
-                    return new MethodMatchInfo(typeArgument, query, FindSliceInterceptor.class, dto);
-                } else if (returnType.isAssignable(Iterable.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class, dto);
-                } else if (returnType.isAssignable(Stream.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class, dto);
-                } else if (returnType.isAssignable(Optional.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindOptionalInterceptor.class, dto);
-                } else if (returnType.isAssignable(Publisher.class)) {
-                    return new MethodMatchInfo(typeArgument, query, FindReactivePublisherInterceptor.class, dto);
+                    if (matchContext.isTypeInRole(
+                            matchContext.getReturnType(),
+                            TypeRole.PAGE
+                    )) {
+                        return new MethodMatchInfo(typeArgument, query, FindPageInterceptor.class, dto);
+                    } else if (matchContext.isTypeInRole(
+                            matchContext.getReturnType(),
+                            TypeRole.SLICE
+                    )) {
+                        return new MethodMatchInfo(typeArgument, query, FindSliceInterceptor.class, dto);
+                    } else if (returnType.isAssignable(Iterable.class)) {
+                        return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class, dto);
+                    } else if (returnType.isAssignable(Stream.class)) {
+                        return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class, dto);
+                    } else if (returnType.isAssignable(Optional.class)) {
+                        return new MethodMatchInfo(typeArgument, query, FindOptionalInterceptor.class, dto);
+                    } else if (returnType.isAssignable(Publisher.class)) {
+                        return new MethodMatchInfo(typeArgument, query, FindAllReactiveInterceptor.class, dto);
+                    }
                 }
             }
         }
 
         matchContext.fail("Unsupported Repository method return type");
         return null;
+    }
+
+    private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
+        return query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName()) &&
+                isIdEquals(query);
+    }
+
+    private Boolean isIdEquals(@NonNull QueryModel query) {
+        List<QueryModel.Criterion> criteria = query.getCriteria().getCriteria();
+        return criteria.size() == 1 && criteria.stream().findFirst().map(c -> c instanceof QueryModel.IdEquals).orElse(false);
+    }
+
+    private boolean resolveDtoIfNecessary(
+            @NonNull MethodMatchContext matchContext,
+            @NonNull ClassElement queryResultType,
+            @Nullable QueryModel query,
+            @NonNull ClassElement returnType) {
+        boolean dto = false;
+        if (!areTypesCompatible(returnType, queryResultType, matchContext)) {
+            if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+                if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
+                    dto = true;
+                }
+            } else {
+                matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
+            }
+        }
+        return dto;
+    }
+
+    private boolean isValidResultType(ClassElement returnType) {
+        return returnType.hasStereotype(Introspected.class) || ClassUtils.isJavaBasicType(returnType.getName()) || returnType.isPrimitive();
+    }
+
+    private boolean isReactiveSingleResult(ClassElement returnType) {
+        return returnType.hasStereotype(SingleResult.class) || returnType.isAssignable("io.reactivex.Single") || returnType.isAssignable("reactor.core.publisher.Mono");
     }
 
     private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull QueryModel query, ClassElement returnType) {

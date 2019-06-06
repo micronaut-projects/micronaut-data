@@ -55,7 +55,7 @@ public class FindByFinder extends DynamicFinder {
      */
     protected boolean isCompatibleReturnType(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         ClassElement returnType = methodElement.getGenericReturnType();
-        if (returnType != null && !returnType.getName().equals("void")) {
+        if (!returnType.getName().equals("void")) {
             return returnType.hasStereotype(Introspected.class) ||
                     returnType.isPrimitive() ||
                     ClassUtils.isJavaBasicType(returnType.getName()) ||

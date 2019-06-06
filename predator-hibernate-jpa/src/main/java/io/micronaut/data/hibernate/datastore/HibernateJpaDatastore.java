@@ -21,11 +21,11 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.backend.Datastore;
 import io.micronaut.data.backend.async.AsyncCapableDatastore;
-import io.micronaut.data.backend.async.AsyncOperations;
+import io.micronaut.data.backend.async.AsyncDatastoreOperations;
 import io.micronaut.data.runtime.backend.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.backend.ExecutorReactiveOperations;
 import io.micronaut.data.backend.reactive.ReactiveCapableDatastore;
-import io.micronaut.data.backend.reactive.ReactiveOperations;
+import io.micronaut.data.backend.reactive.ReactiveDatastoreOperations;
 import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -402,13 +402,13 @@ public class HibernateJpaDatastore implements Datastore, AsyncCapableDatastore, 
 
     @NonNull
     @Override
-    public AsyncOperations async() {
+    public AsyncDatastoreOperations async() {
         return asyncOperations;
     }
 
     @NonNull
     @Override
-    public ReactiveOperations reactive() {
+    public ReactiveDatastoreOperations reactive() {
         return new ExecutorReactiveOperations(asyncOperations);
     }
 }

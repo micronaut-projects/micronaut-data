@@ -2,6 +2,7 @@ dependencies {
 	compile project(":predator-model")
 	compile "io.micronaut:micronaut-inject:$micronautVersion"
 
+	testCompile "io.projectreactor:reactor-core:3.2.9.RELEASE"
 	testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
 	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
 	testCompile 'javax.persistence:javax.persistence-api:2.2'

@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.data.intercept.async;
 
-package io.micronaut.data.backend.reactive;
+import io.micronaut.data.intercept.PredatorInterceptor;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.backend.Datastore;
+import java.util.concurrent.CompletionStage;
 
 /**
- * Extends {@link Datastore} and adds the able for a datastore to expose reactive operations if they are supported.
+ * An interceptor that executes a query to check for existence.
  *
+ * @param <T> The declaring type
  * @author graemerocher
- * @since 1.0.0
+ * @since 1.0
  */
-public interface ReactiveCapableDatastore extends Datastore {
-
-    /**
-     * @return The reactive operations instance.
-     */
-    @NonNull
-    ReactiveDatastoreOperations reactive();
+public interface ExistsByAsyncInterceptor<T> extends PredatorInterceptor<T, CompletionStage<Boolean>> {
 }
+

@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.backend;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.async.AsyncOperations;
+import io.micronaut.data.backend.async.AsyncDatastoreOperations;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -29,15 +29,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of {@link AsyncOperations} that delegates to a blocking datastore and specified {@link Executor}.
+ * An implementation of {@link AsyncDatastoreOperations} that delegates to a blocking datastore and specified {@link Executor}.
  * This can be used in absence of true asynchronous support at the driver level.
  *
- * <p>If a backing implementation provides a async API then the backing implementation should not use this class and instead directly implement the {@link AsyncOperations} interface.</p>
+ * <p>If a backing implementation provides a async API then the backing implementation should not use this class and instead directly implement the {@link AsyncDatastoreOperations} interface.</p>
  *
  * @author graemerocher
  * @since 1.0.0
  */
-public class ExecutorAsyncOperations implements AsyncOperations {
+public class ExecutorAsyncOperations implements AsyncDatastoreOperations {
 
     private final Datastore datastore;
     private final Executor executor;

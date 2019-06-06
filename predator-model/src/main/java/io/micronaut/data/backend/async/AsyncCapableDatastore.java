@@ -29,5 +29,5 @@ public interface AsyncCapableDatastore extends Datastore {
      * @return The async datastore operations.
      */
     @NonNull
-    AsyncOperations async();
+    AsyncDatastoreOperations async();
 }

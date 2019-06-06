@@ -27,7 +27,7 @@ import io.micronaut.data.model.PreparedQuery;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements UpdateInterceptor<T> {
+public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boolean> implements UpdateInterceptor<T> {
 
     /**
      * Default constructor.
@@ -38,9 +38,9 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Voi
     }
 
     @Override
-    public Void intercept(MethodInvocationContext<T, Void> context) {
+    public Boolean intercept(MethodInvocationContext<T, Boolean> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
-        datastore.executeUpdate(preparedQuery);
-        return null;
+        Number number = datastore.executeUpdate(preparedQuery).orElse(null);
+        return number == null || number.longValue() < 0;
     }
 }

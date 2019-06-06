@@ -21,7 +21,10 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.SaveOneInterceptor;
+import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -46,14 +49,16 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
      * Default constructor.
      */
     public SaveOneMethod() {
-        super(SaveMethod.METHOD_PATTERN);
+        super(SaveEntityMethod.METHOD_PATTERN);
     }
 
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
+        ParameterElement[] parameters = matchContext.getParameters();
         return super.isMethodMatch(methodElement, matchContext) &&
-                matchContext.getReturnType().hasStereotype(Persisted.class) &&
-                matchContext.getParameters().length > 0;
+                SaveEntityMethod.isValidSaveReturnType(matchContext, true) &&
+                parameters.length > 0 &&
+                !TypeUtils.isIterableOfEntity(parameters[0].getGenericType()) ;
     }
 
     @Nullable
@@ -61,7 +66,11 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-        if (!rootEntity.getName().equals(matchContext.getReturnType().getName())) {
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(null);
+        }
+        if (returnType == null || !rootEntity.getName().equals(returnType.getName())) {
             matchContext.fail("The return type of the save method must be the same as the root entity type: " + rootEntity.getName());
             return null;
         }
@@ -125,9 +134,28 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
         }
 
         return new MethodMatchInfo(
-                matchContext.getReturnType(),
+                returnType,
                 null,
-                SaveOneInterceptor.class
+                pickSaveInterceptor(matchContext.getReturnType())
         );
+    }
+
+
+
+    /**
+     * Pick a runtime interceptor to use based on the return type.
+     * @param returnType The return type
+     * @return The interceptor
+     */
+    private static @NonNull Class<? extends PredatorInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
+        Class<? extends PredatorInterceptor> interceptor;
+        if (TypeUtils.isFutureType(returnType)) {
+            interceptor = SaveOneAsyncInterceptor.class;
+        } else if (TypeUtils.isReactiveOrFuture(returnType)) {
+            interceptor = SaveOneReactiveInterceptor.class;
+        } else {
+            interceptor = SaveOneInterceptor.class;
+        }
+        return interceptor;
     }
 }

@@ -26,6 +26,8 @@ import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
 
 import java.util.Optional;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 /**
@@ -114,8 +116,44 @@ class TypeUtils {
         }
         return type.isAssignable(Iterable.class) ||
                 type.isAssignable(Stream.class) ||
-                type.isAssignable(Publisher.class) ||
-                type.isAssignable(Optional.class);
+                isReactiveType(type) ||
+                type.isAssignable(Optional.class) ||
+                isFutureType(type);
+
+    }
+
+    /**
+     * Is the type a reactive type.
+     * @param type The type
+     * @return True if is
+     */
+    public static boolean isReactiveType(@Nullable ClassElement type) {
+        return type != null && (type.isAssignable(Publisher.class) || type.getPackageName().equals("io.reactivex"));
+    }
+
+    /**
+     * Is the type a future type.
+     * @param type The type
+     * @return True if is
+     */
+    public static boolean isFutureType(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.isAssignable(CompletionStage.class) ||
+                type.isAssignable(Future.class);
+    }
+
+    /**
+     * Is the type a future type.
+     * @param type The type
+     * @return True if is
+     */
+    public static boolean isReactiveOrFuture(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return isReactiveType(type) || isFutureType(type);
     }
 
     /**
@@ -153,5 +191,29 @@ class TypeUtils {
     public static boolean isBoolean(@Nullable ClassElement type) {
         return type != null &&
                 (type.isAssignable(Boolean.class) || (type.isPrimitive() && type.getName().equals("boolean")));
+    }
+
+    /**
+     * Retruns true if no type argument is present, a void argument is present or a boolean argument is present.
+     * @param type The type
+     * @return True if the argument is a void argument
+     */
+    public static boolean isVoidOrBooleanArgument(ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        ClassElement ce = type.getFirstTypeArgument().orElse(null);
+        return ce == null || ce.isAssignable(Void.class) || ce.isAssignable(Boolean.class);
+    }
+
+    /**
+     * Returns true if the return type is considered valid for batch update operations likes deletes and updates.
+     * @param methodElement The method element
+     * @return True if is valid
+     */
+    static boolean isValidBatchUpdateReturnType(MethodElement methodElement) {
+        return doesReturnVoid(methodElement) ||
+                (isReactiveOrFuture(methodElement.getReturnType()) &&
+                        isVoidOrBooleanArgument(methodElement.getReturnType()));
     }
 }

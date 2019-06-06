@@ -16,15 +16,14 @@
 package io.micronaut.data.intercept.reactive;
 
 import io.micronaut.data.intercept.PredatorInterceptor;
-import org.reactivestreams.Publisher;
 
 /**
- * An interceptor that executes a {@link io.micronaut.data.annotation.Query} and a {@link Publisher} that
- * emits the result objects reactively.
+ * An interceptor that saves a updates entity reactively.
  *
  * @param <T> The declaring type
+ * @param <R> The result type
  * @author graemerocher
- * @since 1.0
+ * @since 1.0.0
  */
-public interface FindReactivePublisherInterceptor<T> extends PredatorInterceptor<T, Publisher<Object>> {
+public interface UpdateReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
 }

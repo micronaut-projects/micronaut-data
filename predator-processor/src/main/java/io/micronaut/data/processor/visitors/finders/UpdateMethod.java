@@ -17,7 +17,10 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
+import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -53,19 +56,11 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         return super.isMethodMatch(methodElement, matchContext) &&
                 methodElement.getParameters().length > 1 &&
-                isValidReturnType(methodElement.getReturnType()) &&
+                TypeUtils.isValidBatchUpdateReturnType(methodElement) &&
                 hasIdParameter(methodElement.getParameters());
     }
 
-    private boolean isValidReturnType(ClassElement returnType) {
-        if (returnType != null) {
-            return returnType.getName().equals("void");
-        }
-        return false;
-    }
-
     private boolean hasIdParameter(ParameterElement[] parameters) {
-
         return Arrays.stream(parameters).anyMatch(p ->
                 p.hasAnnotation(Id.class)
         );
@@ -129,10 +124,11 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             properiesToUpdate.add(element.getName());
         }
 
+        ClassElement returnType = matchContext.getReturnType();
         MethodMatchInfo info = new MethodMatchInfo(
-                matchContext.getReturnType(),
+                returnType,
                 query,
-                UpdateInterceptor.class,
+                pickUpdateInterceptor(returnType),
                 MethodMatchInfo.OperationType.UPDATE,
                 properiesToUpdate.toArray(new String[0])
         );
@@ -142,5 +138,22 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                 idParameter.getName()
         );
         return info;
+    }
+
+    /**
+     * Pick the correct delete all interceptor.
+     * @param returnType The return type
+     * @return The interceptor
+     */
+    static Class<? extends PredatorInterceptor> pickUpdateInterceptor(ClassElement returnType) {
+        Class<? extends PredatorInterceptor> interceptor;
+        if (TypeUtils.isFutureType(returnType)) {
+            interceptor = UpdateAsyncInterceptor.class;
+        } else if (TypeUtils.isReactiveType(returnType)) {
+            interceptor = UpdateReactiveInterceptor.class;
+        } else {
+            interceptor = UpdateInterceptor.class;
+        }
+        return interceptor;
     }
 }

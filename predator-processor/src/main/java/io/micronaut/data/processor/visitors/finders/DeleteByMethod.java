@@ -43,7 +43,7 @@ public class DeleteByMethod extends DynamicFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnVoid(methodElement); // void return
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement); // void return
     }
 
     @Nullable
@@ -57,7 +57,7 @@ public class DeleteByMethod extends DynamicFinder {
             return new MethodMatchInfo(
                     null,
                     query,
-                    DeleteAllInterceptor.class,
+                    DeleteMethod.pickDeleteAllInterceptor(matchContext.getReturnType()),
                     MethodMatchInfo.OperationType.DELETE
             );
         }

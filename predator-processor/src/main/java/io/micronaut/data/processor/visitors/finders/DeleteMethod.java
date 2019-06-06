@@ -18,6 +18,11 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
+import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
+import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -49,30 +54,36 @@ public class DeleteMethod extends AbstractListMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.doesReturnVoid(methodElement); // void return
+        return super.isMethodMatch(methodElement, matchContext) &&
+                TypeUtils.isValidBatchUpdateReturnType(methodElement);
     }
 
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
+        Class<? extends PredatorInterceptor> interceptor = null;
         if (parameters.length == 1) {
             ClassElement genericType = parameters[0].getGenericType();
-            if (genericType != null) {
-                if (genericType.isAssignable(matchContext.getRootEntity().getName())) {
-
-                    return new MethodMatchInfo(
-                            null,
-                            null,
-                            DeleteOneInterceptor.class
-                    );
-                } else if (TypeUtils.isIterableOfEntity(genericType)) {
-                    return new MethodMatchInfo(
-                            null,
-                            null,
-                            DeleteAllInterceptor.class
-                    );
+            if (genericType.isAssignable(matchContext.getRootEntity().getName())) {
+                ClassElement returnType = matchContext.getReturnType();
+                if (TypeUtils.isFutureType(returnType)) {
+                    interceptor = DeleteOneAsyncInterceptor.class;
+                } else if (TypeUtils.isReactiveType(returnType)) {
+                    interceptor = DeleteOneReactiveInterceptor.class;
+                } else {
+                    interceptor = DeleteOneInterceptor.class;
                 }
+            } else if (TypeUtils.isIterableOfEntity(genericType)) {
+                interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
+            }
+            if (interceptor != null) {
+                return new MethodMatchInfo(
+                        null,
+                        null,
+                        interceptor,
+                        MethodMatchInfo.OperationType.DELETE
+                );
             }
         }
         return super.buildMatchInfo(matchContext);
@@ -81,19 +92,37 @@ public class DeleteMethod extends AbstractListMethod {
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
+        Class<? extends PredatorInterceptor> interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
         if (query != null) {
             return new MethodMatchInfo(
                     null,
                     query,
-                    DeleteAllInterceptor.class
+                    interceptor
             );
         } else {
             return new MethodMatchInfo(
                     null,
                     null,
-                    DeleteAllInterceptor.class
+                    interceptor
             );
         }
     }
 
- }
+    /**
+     * Pick the correct delete all interceptor.
+     * @param returnType The return type
+     * @return The interceptor
+     */
+    static Class<? extends PredatorInterceptor> pickDeleteAllInterceptor(ClassElement returnType) {
+        Class<? extends PredatorInterceptor> interceptor;
+        if (TypeUtils.isFutureType(returnType)) {
+            interceptor = DeleteAllAsyncInterceptor.class;
+        } else if (TypeUtils.isReactiveType(returnType)) {
+            interceptor = DeleteAllReactiveInterceptor.class;
+        } else {
+            interceptor = DeleteAllInterceptor.class;
+        }
+        return interceptor;
+    }
+
+}
