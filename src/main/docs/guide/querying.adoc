@@ -16,8 +16,8 @@ The above examples return a single instance of an entity, the supported return t
 .Supported Return Types for Finder Methods
 [cols=2*]
 |===
-|Return Type
-|Description
+|*Return Type*
+|*Description*
 
 |`List<Book>`
 |A `java.util.List` or any common `Iterable` type
@@ -45,9 +45,9 @@ The following table summarizes the possible alternative patterns, behaviour and 
 .Method Patterns and Return Types
 [cols=3*]
 |===
-|Method Pattern
-|Expected Return Type
-|Description
+|*Method Pattern*
+|*Expected Return Type*
+|*Description*
 
 |`countBy*`
 |A primitive number of an instance of `java.lang.Number`

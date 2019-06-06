@@ -11,8 +11,8 @@ The following table summarizes the repository interfaces that come with Predator
 .Builtin Repository Interfaces
 [cols=2*]
 |===
-|Interface
-|Description
+|*Interface*
+|*Description*
 
 |api:data.repository.GenericRepository[]
 |A root interface that features no methods but defines the entity type and ID type as generic arguments

@@ -15,9 +15,9 @@ In addition to this, Predator also supports projection expressions. The followin
 .Projection Expressions
 [cols=3*]
 |===
-|Expression
-|Example
-|Description
+|*Expression*
+|*Example*
+|*Description*
 
 |`Distinct*`
 |`findDistinctTitleByPagesGreaterThan`
