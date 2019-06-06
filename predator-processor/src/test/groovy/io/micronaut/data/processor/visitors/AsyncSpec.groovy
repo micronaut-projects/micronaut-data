@@ -13,6 +13,7 @@ import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
+import io.micronaut.data.model.entities.Person
 import spock.lang.Unroll
 
 class AsyncSpec extends AbstractPredatorSpec {
@@ -36,33 +37,35 @@ interface MyInterface extends GenericRepository<Person, Long> {
 """
         )
 
-        expect:
-        repository.findPossibleMethods(method)
+        def ann = repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
                 .synthesize(PredatorMethod)
-                .interceptor() == interceptor
+
+        expect:
+        ann.resultType() == resultType
+        ann.interceptor() == interceptor
 
         where:
-        method         | returnType                       | arguments               | interceptor
-        "list"         | "CompletionStage<Page<Person>>"  | "Pageable pageable"     | FindPageAsyncInterceptor
-        "list"         | "CompletionStage<Slice<Person>>" | "Pageable pageable"     | FindSliceAsyncInterceptor
-        "findByName"   | "CompletionStage<Person>"        | "String name"           | FindOneAsyncInterceptor
-        "findByName"   | "CompletionStage<List<Person>>"  | "String name"           | FindAllAsyncInterceptor
-        "find"         | "CompletionStage<List<Person>>"  | "String name"           | FindAllAsyncInterceptor
-        "find"         | "CompletionStage<Person>"        | "String name"           | FindOneAsyncInterceptor
-        "count"        | "CompletionStage<Long>"          | "String name"           | CountAsyncInterceptor
-        "countByName"  | "CompletionStage<Long>"          | "String name"           | CountAsyncInterceptor
-        "delete"       | "CompletionStage<Boolean>"       | "String name"           | DeleteAllAsyncInterceptor
-        "delete"       | "CompletionStage<Void>"          | "String name"           | DeleteAllAsyncInterceptor
-        "deleteByName" | "CompletionStage<Boolean>"       | "String name"           | DeleteAllAsyncInterceptor
-        "existsByName" | "CompletionStage<Boolean>"       | "String name"           | ExistsByAsyncInterceptor
-        "findById"     | "CompletionStage<Person>"        | "Long id"               | FindByIdAsyncInterceptor
-        "save"         | "CompletionStage<Person>"        | "Person person"         | SaveEntityAsyncInterceptor
-        "save"         | "CompletionStage<Person>"        | "String name"           | SaveOneAsyncInterceptor
-        "save"         | "CompletionStage<List<Person>>"  | "List<Person> entities" | SaveAllAsyncInterceptor
-        "updateByName" | "CompletionStage<Boolean>"       | "String name, int age"  | UpdateAsyncInterceptor
-        "update"       | "CompletionStage<Boolean>"       | "@Id Long id, int age"  | UpdateAsyncInterceptor
+        method         | returnType                       | arguments               | interceptor                  |resultType
+        "list"         | "CompletionStage<Page<Person>>"  | "Pageable pageable"     | FindPageAsyncInterceptor     | Person
+        "list"         | "CompletionStage<Slice<Person>>" | "Pageable pageable"     | FindSliceAsyncInterceptor    | Person
+        "findByName"   | "CompletionStage<Person>"        | "String name"           | FindOneAsyncInterceptor      | Person
+        "findByName"   | "CompletionStage<List<Person>>"  | "String name"           | FindAllAsyncInterceptor      | Person
+        "find"         | "CompletionStage<List<Person>>"  | "String name"           | FindAllAsyncInterceptor      | Person
+        "find"         | "CompletionStage<Person>"        | "String name"           | FindOneAsyncInterceptor      | Person
+        "count"        | "CompletionStage<Long>"          | "String name"           | CountAsyncInterceptor        | Long
+        "countByName"  | "CompletionStage<Long>"          | "String name"           | CountAsyncInterceptor        | Long
+        "delete"       | "CompletionStage<Boolean>"       | "String name"           | DeleteAllAsyncInterceptor    | null
+        "delete"       | "CompletionStage<Void>"          | "String name"           | DeleteAllAsyncInterceptor    | null
+        "deleteByName" | "CompletionStage<Boolean>"       | "String name"           | DeleteAllAsyncInterceptor    | null
+        "existsByName" | "CompletionStage<Boolean>"       | "String name"           | ExistsByAsyncInterceptor     | Boolean
+        "findById"     | "CompletionStage<Person>"        | "Long id"               | FindByIdAsyncInterceptor     | Person
+        "save"         | "CompletionStage<Person>"        | "Person person"         | SaveEntityAsyncInterceptor   | Person
+        "save"         | "CompletionStage<Person>"        | "String name"           | SaveOneAsyncInterceptor      | Person
+        "save"         | "CompletionStage<List<Person>>"  | "List<Person> entities" | SaveAllAsyncInterceptor      | null
+        "updateByName" | "CompletionStage<Boolean>"       | "String name, int age"  | UpdateAsyncInterceptor       | Person
+        "update"       | "CompletionStage<Boolean>"       | "@Id Long id, int age"  | UpdateAsyncInterceptor       | Boolean
     }
 
     @Unroll

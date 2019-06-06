@@ -15,14 +15,12 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.data.intercept.DeleteAllInterceptor;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 /**
  * Dynamic finder for support for delete operations.

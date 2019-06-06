@@ -13,37 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept;
+package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.intercept.SaveOneInterceptor;
+import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 /**
- * Default implementation of {@link SaveOneInterceptor}.
+ * Default implementation of {@link SaveOneAsyncInterceptor}.
  *
  * @param <T> The declaring type
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements SaveOneInterceptor<T> {
-
+public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements SaveOneAsyncInterceptor<T> {
     /**
      * Default constructor.
+     *
      * @param datastore The datastore
      */
-    protected DefaultSaveOneInterceptor(@NonNull Datastore datastore) {
+    protected DefaultSaveOneAsyncInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<T, Object> context) {
+    public CompletionStage<Object> intercept(MethodInvocationContext<T, CompletionStage<Object>> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        Object instance = instantiateEntity(rootEntity, parameterValueMap);
-        return datastore.persist(instance);
+        Executor executor = asyncDatastoreOperations.getExecutor();
+        return CompletableFuture.supplyAsync(() -> instantiateEntity(rootEntity, parameterValueMap), executor)
+                         .thenCompose(asyncDatastoreOperations::persist);
     }
 }

@@ -20,7 +20,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;

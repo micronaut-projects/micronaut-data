@@ -63,21 +63,24 @@ public class CountByMethod extends DynamicFinder {
      */
     static MethodMatchInfo buildCountInfo(@NonNull MethodMatchContext matchContext, @Nullable QueryModel query) {
         Class<? extends PredatorInterceptor> interceptor = CountInterceptor.class;
-        if (TypeUtils.isFutureType(matchContext.getReturnType())) {
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isFutureType(returnType)) {
             interceptor = CountAsyncInterceptor.class;
-        } else if (TypeUtils.isReactiveType(matchContext.getReturnType())) {
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
+        } else if (TypeUtils.isReactiveType(returnType)) {
             interceptor = CountReactiveInterceptor.class;
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
         }
         if (query != null) {
             query.projections().count();
             return new MethodMatchInfo(
-                    matchContext.getReturnType(),
+                    returnType,
                     query,
                     interceptor
             );
         } else {
             return new MethodMatchInfo(
-                    matchContext.getReturnType(),
+                    returnType,
                     null,
                     interceptor
             );

@@ -18,42 +18,30 @@ package io.micronaut.data.runtime.intercept.async;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
+import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
+import io.micronaut.data.model.PreparedQuery;
 
-import java.util.Collections;
 import java.util.concurrent.CompletionStage;
 
 /**
- * The default implementation of {@link DeleteOneAsyncInterceptor}.
+ * Default implementation of {@link UpdateAsyncInterceptor}.
  * @param <T> The declaring type
  * @author graemerocher
  * @since 1.0.0
  */
-@SuppressWarnings("unused")
-public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Boolean>
-        implements DeleteOneAsyncInterceptor<T> {
+public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Boolean> implements UpdateAsyncInterceptor<T> {
     /**
      * Default constructor.
      *
      * @param datastore The datastore
      */
-    protected DefaultDeleteOneAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultUpdateAsyncInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 
     @Override
     public CompletionStage<Boolean> intercept(MethodInvocationContext<T, CompletionStage<Boolean>> context) {
-        Object[] parameterValues = context.getParameterValues();
-        if (parameterValues.length == 1) {
-            Class rootEntity = getRequiredRootEntity(context);
-            Object o = parameterValues[0];
-            if (o != null) {
-                return asyncDatastoreOperations.deleteAll(rootEntity, Collections.singleton(o));
-            } else {
-                throw new IllegalArgumentException("Entity to delete cannot be null");
-            }
-        } else {
-            throw new IllegalStateException("Expected exactly one argument");
-        }
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+        return asyncDatastoreOperations.executeUpdate(preparedQuery);
     }
 }

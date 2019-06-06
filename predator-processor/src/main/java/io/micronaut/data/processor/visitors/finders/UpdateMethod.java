@@ -125,10 +125,14 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         }
 
         ClassElement returnType = matchContext.getReturnType();
+        Class<? extends PredatorInterceptor> interceptor = pickUpdateInterceptor(returnType);
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
+        }
         MethodMatchInfo info = new MethodMatchInfo(
                 returnType,
                 query,
-                pickUpdateInterceptor(returnType),
+                interceptor,
                 MethodMatchInfo.OperationType.UPDATE,
                 properiesToUpdate.toArray(new String[0])
         );

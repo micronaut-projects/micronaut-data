@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2019 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -14,6 +29,13 @@ import java.util.Collections;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
+/**
+ * The default implementation of {@link FindAllAsyncInterceptor}.
+ *
+ * @param <T> The declaring type
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Iterable<Object>> implements FindAllAsyncInterceptor<T> {
     /**
      * Default constructor.
@@ -24,30 +46,32 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         super(datastore);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public CompletionStage<Iterable<Object>> intercept(MethodInvocationContext<T, CompletionStage<Iterable<Object>>> context) {
-//        if (context.hasAnnotation(Query.class)) {
-//            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-//            CompletionStage<? extends Iterable<?>> future = asyncDatastoreOperations.findAll(preparedQuery);
-//            return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
-//                Argument<CompletionStage<Iterable<Object>>> targetType = context.getReturnType().asArgument();
-//                Argument<?> argument = targetType.getFirstTypeVariable().orElse(Argument.listOf(Object.class));
-//                Iterable<Object> result = (Iterable<Object>) ConversionService.SHARED.convert(
-//                        iterable,
-//                        argument
-//                ).orElse(null);
-//                return result == null ? Collections.emptyList() : result;
-//            });
-//        } else {
-//            Class rootEntity = getRequiredRootEntity(context);
-//            Pageable pageable = getPageable(context);
-//
-//            if (pageable != null) {
-//                return datastore.findAll(rootEntity, pageable);
-//            } else {
-//                return datastore.findAll(rootEntity);
-//            }
-//        }
-        return null;
+        CompletionStage<? extends Iterable<?>> future;
+        if (context.hasAnnotation(Query.class)) {
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            future = asyncDatastoreOperations.findAll(preparedQuery);
+
+        } else {
+            Class rootEntity = getRequiredRootEntity(context);
+            Pageable pageable = getPageable(context);
+
+            if (pageable != null) {
+                future = asyncDatastoreOperations.findAll(rootEntity, pageable);
+            } else {
+                future = asyncDatastoreOperations.findAll(rootEntity, Pageable.unpaged());
+            }
+        }
+        return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
+            Argument<CompletionStage<Iterable<Object>>> targetType = context.getReturnType().asArgument();
+            Argument<?> argument = targetType.getFirstTypeVariable().orElse(Argument.listOf(Object.class));
+            Iterable<Object> result = (Iterable<Object>) ConversionService.SHARED.convert(
+                    iterable,
+                    argument
+            ).orElse(null);
+            return result == null ? Collections.emptyList() : result;
+        });
     }
 }

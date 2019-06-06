@@ -23,6 +23,7 @@ import io.micronaut.data.model.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 
 /**
  * Asynchronous operations for reading data from a backing implementations.
@@ -32,6 +33,12 @@ import java.util.concurrent.CompletionStage;
  */
 @NonBlocking
 public interface AsyncDatastoreOperations {
+
+    /**
+     * @return The executor used by this async operations
+     */
+    @NonNull Executor getExecutor();
+
     /**
      * Find one by ID.
      *

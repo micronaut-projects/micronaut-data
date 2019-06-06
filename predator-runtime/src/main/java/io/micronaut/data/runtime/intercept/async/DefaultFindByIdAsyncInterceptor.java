@@ -13,37 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept;
+package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.intercept.SaveOneInterceptor;
+import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
 
-import java.util.Map;
+import java.io.Serializable;
+import java.util.concurrent.CompletionStage;
 
 /**
- * Default implementation of {@link SaveOneInterceptor}.
+ * Default implementation that handles lookup by ID asynchronously.
  *
- * @param <T> The declaring type
- * @author graemerocher
- * @since 1.0.0
+ * @param <T> The declaring type.
  */
-public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements SaveOneInterceptor<T> {
-
+public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements FindByIdAsyncInterceptor<T> {
     /**
      * Default constructor.
+     *
      * @param datastore The datastore
      */
-    protected DefaultSaveOneInterceptor(@NonNull Datastore datastore) {
+    protected DefaultFindByIdAsyncInterceptor(@NonNull Datastore datastore) {
         super(datastore);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Object intercept(MethodInvocationContext<T, Object> context) {
+    public CompletionStage<Object> intercept(MethodInvocationContext<T, CompletionStage<Object>> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
-        Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        Object instance = instantiateEntity(rootEntity, parameterValueMap);
-        return datastore.persist(instance);
+        Object id = context.getParameterValues()[0];
+        if (!(id instanceof Serializable)) {
+            throw new IllegalArgumentException("Entity IDs must be serializable!");
+        }
+        return asyncDatastoreOperations.findOne((Class<Object>) rootEntity, (Serializable) id);
     }
 }

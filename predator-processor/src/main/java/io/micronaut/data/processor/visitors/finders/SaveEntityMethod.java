@@ -66,6 +66,9 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
             if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(Persisted.class))) {
                 ClassElement returnType = matchContext.getReturnType();
                 Class<? extends PredatorInterceptor> interceptor = pickSaveInterceptor(returnType);
+                if (TypeUtils.isReactiveOrFuture(returnType)) {
+                    returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
+                }
                 return new MethodMatchInfo(returnType, null, interceptor);
             }
         }

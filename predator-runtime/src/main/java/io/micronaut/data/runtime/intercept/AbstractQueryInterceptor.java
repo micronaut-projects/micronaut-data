@@ -21,11 +21,15 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
@@ -276,7 +280,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      * @param context The context
      * @return The entity
      */
-    protected @NonNull Object getRequiredEntity(MethodInvocationContext<T, Object> context) {
+    protected @NonNull Object getRequiredEntity(MethodInvocationContext<T, ?> context) {
         String entityParam = context.stringValue(PredatorMethod.class, TypeRole.ENTITY)
                 .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
 
@@ -363,6 +367,56 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             }
         }
         return type;
+    }
+
+    /**
+     * Instantiate the given entity for the given parameter values.
+     *
+     * @param rootEntity The entity
+     * @param parameterValues The parameter values
+     * @return The entity
+     * @throws IllegalArgumentException if the entity cannot be instantiated due to an illegal argument
+     */
+    protected @NonNull Object instantiateEntity(@NonNull Class<?> rootEntity, @NonNull Map<String, Object> parameterValues) {
+        PersistentEntity entity = PersistentEntity.of(rootEntity);
+        BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(rootEntity);
+        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+        Object instance;
+        if (ArrayUtils.isNotEmpty(constructorArguments)) {
+
+            Object[] arguments = new Object[constructorArguments.length];
+            for (int i = 0; i < constructorArguments.length; i++) {
+                Argument<?> argument = constructorArguments[i];
+
+                String argumentName = argument.getName();
+                Object v = parameterValues.get(argumentName);
+                AnnotationMetadata argMetadata = argument.getAnnotationMetadata();
+                if (v == null && !PersistentProperty.isNullableMetadata(argMetadata)) {
+                    PersistentProperty prop = entity.getPropertyByName(argumentName);
+                    if (prop == null || prop.isRequired()) {
+                        throw new IllegalArgumentException("Argument [" + argumentName + "] cannot be null");
+                    }
+                }
+                arguments[i] = v;
+            }
+            instance = introspection.instantiate(arguments);
+        } else {
+            instance = introspection.instantiate();
+        }
+
+        BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
+        List<PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        for (PersistentProperty prop : persistentProperties) {
+            if (!prop.isReadOnly() && !prop.isGenerated()) {
+                String propName = prop.getName();
+                Object v = parameterValues.get(propName);
+                if (v == null && !prop.isOptional()) {
+                    throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
+                }
+                wrapper.setProperty(propName, v);
+            }
+        }
+        return instance;
     }
 
     /**

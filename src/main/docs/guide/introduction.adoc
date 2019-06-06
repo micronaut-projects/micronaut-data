@@ -30,4 +30,4 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="m
 <1> The https://docs.micronaut.io/latest/api/io/micronaut/inject/BeanDefinition.html[BeanDefinition] is retrieved from the https://docs.micronaut.io/latest/api/io/micronaut/context/BeanContext.html[BeanContext]
 <2> The `find` method is retrieved
 <3> The ann:data.annotation.Query[] annotation is retrieved
-<4> The JPQ-QL query for the method is correct
+<4> The JPA-QL query for the method is correct

@@ -54,6 +54,11 @@ public class ExecutorAsyncOperations implements AsyncDatastoreOperations {
         this.executor = executor;
     }
 
+    @Override
+    public Executor getExecutor() {
+        return executor;
+    }
+
     @NonNull
     @Override
     public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
@@ -172,8 +177,8 @@ public class ExecutorAsyncOperations implements AsyncDatastoreOperations {
         CompletableFuture<Boolean> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                datastore.executeUpdate(preparedQuery);
-                future.complete(true);
+                Number n = datastore.executeUpdate(preparedQuery).orElse(null);
+                future.complete(n == null || n.longValue() > 0);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
             }

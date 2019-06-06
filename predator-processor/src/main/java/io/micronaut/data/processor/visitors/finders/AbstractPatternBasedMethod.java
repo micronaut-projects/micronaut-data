@@ -202,11 +202,12 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         matchContext.fail("Unsupported Async return type: " + futureTypeArgument.getName());
                         return null;
                     }
-                    boolean dto = resolveDtoIfNecessary(matchContext, queryResultType, query, futureTypeArgument != null ? futureTypeArgument : typeArgument);
+                    ClassElement finalResultType = futureTypeArgument != null ? futureTypeArgument : matchContext.getRootEntity().getType();
+                    boolean dto = resolveDtoIfNecessary(matchContext, queryResultType, query, finalResultType);
                     if (matchContext.isFailing()) {
                         return null;
                     } else {
-                        return new MethodMatchInfo(typeArgument, query, interceptorType, dto);
+                        return new MethodMatchInfo(finalResultType, query, interceptorType, dto);
                     }
                 } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
                     boolean dto = false;

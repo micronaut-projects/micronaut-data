@@ -66,8 +66,10 @@ public class ExistsByFinder extends DynamicFinder {
         ClassElement returnType = matchContext.getReturnType();
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = ExistsByAsyncInterceptor.class;
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
         } else if (TypeUtils.isReactiveType(returnType)) {
             interceptor = ExistsByReactiveInterceptor.class;
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
         }
         if (query != null) {
             query.projections().id();
