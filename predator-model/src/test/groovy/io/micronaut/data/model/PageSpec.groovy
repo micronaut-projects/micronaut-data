@@ -41,4 +41,16 @@ class PageSpec extends Specification {
         1      | 20     | 20   | 140   | 7
         2      | 40     | 20   | 140   | 7
     }
+
+    void "test mapping a page"() {
+        def page = Page.of([1, 2, 3, 4, 5], Pageable.from(0, 5), 14)
+
+        when:
+        Page newPage = page.map({ i -> i + 1 })
+
+        then:
+        newPage.content == [2,3,4,5,6]
+        newPage.totalSize == 14
+        newPage.size == 5
+    }
 }

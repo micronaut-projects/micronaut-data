@@ -17,8 +17,11 @@ package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+import javax.annotation.Nonnull;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Inspired by the Spring Data's {@code Slice} and GORM's {@code PagedResultList}, this models a type that supports
@@ -102,6 +105,18 @@ public interface Slice<T> extends Iterable<T> {
     @NonNull
     default Iterator<T> iterator() {
         return getContent().iterator();
+    }
+
+    /**
+     * Maps the content with the given function.
+     *
+     * @param function The function to apply to each element in the content.
+     * @param <T2> The type returned by the function
+     * @return A new slice with the mapped content
+     */
+    default @Nonnull <T2> Slice<T2> map(Function<T, T2> function) {
+        List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
+        return new DefaultSlice<>(content, getPageable());
     }
 
     /**
