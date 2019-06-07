@@ -21,6 +21,7 @@ public class SimpleQuery {
     public void prepare() {
         SpringApplication springApplication = new SpringApplication();
         springApplication.addPrimarySources(Collections.singletonList(Application.class));
+        springApplication.setLazyInitialization(true);
         applicationContext = springApplication.run();
         this.bookRepository = applicationContext.getBean(BookRepository.class);
         this.bookRepository.saveAll(Arrays.asList(
