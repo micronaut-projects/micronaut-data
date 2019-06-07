@@ -34,16 +34,16 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
             return asyncDatastoreOperations.executeUpdate(preparedQuery)
-                        .thenApply(number -> convertNumberIfNecessary(number, arg));
+                        .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
         } else {
             Object[] parameterValues = context.getParameterValues();
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
                 return asyncDatastoreOperations.deleteAll(rootEntity, (Iterable<Object>) parameterValues[0])
-                        .thenApply(number -> convertNumberIfNecessary(number, arg));
+                        .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
             } else if (parameterValues.length == 0) {
                 return asyncDatastoreOperations.deleteAll(rootEntity)
-                        .thenApply(number -> convertNumberIfNecessary(number, arg));
+                        .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
             } else {
                 throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
             }

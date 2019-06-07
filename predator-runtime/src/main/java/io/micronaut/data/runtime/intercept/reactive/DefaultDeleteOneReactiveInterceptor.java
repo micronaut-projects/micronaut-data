@@ -13,43 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept.async;
+package io.micronaut.data.runtime.intercept.reactive;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
+import org.reactivestreams.Publisher;
 
 import java.util.Collections;
-import java.util.concurrent.CompletionStage;
 
 /**
- * The default implementation of {@link DeleteOneAsyncInterceptor}.
- * @param <T> The declaring type
+ * Default implementation of {@link DeleteOneReactiveInterceptor}.
  * @author graemerocher
  * @since 1.0.0
  */
-@SuppressWarnings("unused")
-public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Number>
-        implements DeleteOneAsyncInterceptor<T> {
+public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object> implements DeleteOneReactiveInterceptor<Object, Object> {
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param operations The operations
      */
-    protected DefaultDeleteOneAsyncInterceptor(@NonNull RepositoryOperations datastore) {
-        super(datastore);
+    protected DefaultDeleteOneReactiveInterceptor(@NonNull RepositoryOperations operations) {
+        super(operations);
     }
 
     @Override
-    public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
+    public Object intercept(MethodInvocationContext<Object, Object> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             Object o = parameterValues[0];
             if (o != null) {
-                return asyncDatastoreOperations.deleteAll(rootEntity, Collections.singleton(o))
-                        .thenApply(n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument()));
+                Publisher<Number> publisher = Publishers.map(reactiveOperations.deleteAll(rootEntity, Collections.singleton(o)),
+                        n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument())
+                );
+                return Publishers.convertPublisher(
+                        publisher,
+                        context.getReturnType().getType()
+                );
             } else {
                 throw new IllegalArgumentException("Entity to delete cannot be null");
             }

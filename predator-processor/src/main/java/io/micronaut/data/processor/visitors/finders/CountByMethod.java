@@ -20,6 +20,7 @@ import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
+import io.micronaut.data.model.query.ProjectionList;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -72,7 +73,8 @@ public class CountByMethod extends DynamicFinder {
             returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
         }
         if (query != null) {
-            query.projections().count();
+            ProjectionList projections = query.projections();
+            projections.count();
             return new MethodMatchInfo(
                     returnType,
                     query,

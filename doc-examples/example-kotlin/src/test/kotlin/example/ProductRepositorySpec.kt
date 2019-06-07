@@ -51,4 +51,23 @@ internal class ProductRepositorySpec {
         )
         // end::async[]
     }
+
+    @Test
+    @Throws(Exception::class)
+    fun testReactive() {
+        // tag::reactive[]
+        val total = productRepository.queryByNameContains("o")
+                .flatMap { product ->
+                    productRepository.countDistinctByManufacturerName(product.manufacturer.name)
+                            .toMaybe()
+                }
+                .defaultIfEmpty(0L)
+                .blockingGet()
+
+        Assertions.assertEquals(
+                2,
+                total
+        )
+        // end::reactive[]
+    }
 }

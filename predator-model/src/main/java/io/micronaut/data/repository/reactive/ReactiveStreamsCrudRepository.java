@@ -1,38 +1,23 @@
-/*
- * Copyright 2017-2019 original authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package io.micronaut.data.repository.async;
+package io.micronaut.data.repository.reactive;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.core.annotation.NonBlocking;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.repository.GenericRepository;
+import org.reactivestreams.Publisher;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import java.util.concurrent.CompletableFuture;
 
 /**
- * Asynchronous variation of {@link io.micronaut.data.repository.CrudRepository}.
+ * Interface for CRUD using Reactive Streams.
  *
  * @param <E> The entity type
  * @param <ID> The ID type
+ *
  * @author graemerocher
  * @since 1.0.0
  */
-@NonBlocking
-public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
+public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state.
      *
@@ -42,7 +27,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param <S> The generic type
      */
     @NonNull
-    <S extends E> CompletableFuture<S> save(@Valid @NotNull @NonNull S entity);
+    @SingleResult
+    <S extends E> Publisher<S> save(@Valid @NotNull @NonNull S entity);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.
@@ -53,7 +39,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @throws javax.validation.ConstraintViolationException if the entities are {@literal null}.
      */
     @NonNull
-    <S extends E> CompletableFuture<? extends Iterable<S>> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
+    <S extends E> Publisher<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
 
     /**
      * Retrieves an entity by its id.
@@ -63,7 +49,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
      */
     @NonNull
-    CompletableFuture<E> findById(@NotNull @NonNull ID id);
+    @SingleResult
+    Publisher<E> findById(@NotNull @NonNull ID id);
 
     /**
      * Returns whether an entity with the given id exists.
@@ -72,21 +59,23 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
      * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
      */
-    @NonNull CompletableFuture<Boolean> existsById(@NotNull @NonNull ID id);
+    @SingleResult
+    @NonNull Publisher<Boolean> existsById(@NotNull @NonNull ID id);
 
     /**
      * Returns all instances of the type.
      *
      * @return all entities
      */
-    @NonNull CompletableFuture<? extends Iterable<E>> findAll();
+    @NonNull Publisher<E> findAll();
 
     /**
      * Returns the number of entities available.
      *
      * @return the number of entities
      */
-    @NonNull CompletableFuture<Long> count();
+    @SingleResult
+    @NonNull Publisher<Long> count();
 
     /**
      * Deletes the entity with the given id.
@@ -95,7 +84,8 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return A future that executes the delete operation
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    @NonNull CompletableFuture<Void> deleteById(@NonNull @NotNull ID id);
+    @NonNull
+    Publisher<Long> deleteById(@NonNull @NotNull ID id);
 
     /**
      * Deletes a given entity.
@@ -104,7 +94,7 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return A future that executes the delete operation
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    @NonNull CompletableFuture<Void> delete(@NonNull @NotNull E entity);
+    @NonNull Publisher<Long> delete(@NonNull @NotNull E entity);
 
     /**
      * Deletes the given entities.
@@ -113,11 +103,12 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @return A future that executes the delete operation
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
-    @NonNull CompletableFuture<Void> deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
+    @NonNull Publisher<Long> deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
 
     /**
      * Deletes all entities managed by the repository.
      * @return A future that executes the delete operation
      */
-    @NonNull CompletableFuture<Void> deleteAll();
+    @NonNull Publisher<Long> deleteAll();
 }
+

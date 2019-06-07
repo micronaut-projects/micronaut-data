@@ -45,4 +45,17 @@ class ProductRepositorySpec extends Specification {
         total == 2
         // end::async[]
     }
+
+    void "test reactive"(){
+        // tag::reactive[]
+        when:"A result is retrieved with reactive composition"
+        long total = productRepository.queryByNameContains("o")
+                .flatMap { product -> productRepository.countDistinctByManufacturerName(product.manufacturer.name).toMaybe() }
+                .defaultIfEmpty(0L)
+                .blockingGet()
+
+        then:"The result is correct"
+        total == 2
+        // end::reactive[]
+    }
 }

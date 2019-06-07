@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept.reactive;
-
-import io.micronaut.data.intercept.PredatorInterceptor;
 
 /**
- * An interceptor that executes a {@link io.micronaut.data.annotation.Query} and a {@link org.reactivestreams.Publisher} that
- * emits the result objects reactively.
+ * Async repository interfaces.
  *
- * @param <T> The declaring type
- * @param <R> The result type
  * @author graemerocher
- * @since 1.0
+ * @since 1.0.0
  */
-public interface FindAllReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
-}
+package io.micronaut.data.repository.async;

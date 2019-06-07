@@ -13,41 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept.async;
+package io.micronaut.data.runtime.intercept.reactive;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.operations.async.AsyncCapableRepository;
-import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
-import java.util.concurrent.CompletionStage;
-
 /**
- * Abstract asynchronous interceptor implementation.
+ * Abstract reactive repository interceptor.
+ *
  * @param <T> The declaring type
- * @param <R> The result type.
+ * @param <R> The return type
  * @author graemerocher
  * @since 1.0.0
  */
-public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterceptor<T, CompletionStage<R>> {
+public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInterceptor<T, R> {
 
     @NonNull
-    protected final AsyncRepositoryOperations asyncDatastoreOperations;
+    protected final ReactiveRepositoryOperations reactiveOperations;
 
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param operations The operations
      */
-    protected AbstractAsyncInterceptor(@NonNull RepositoryOperations datastore) {
-        super(datastore);
-        if (datastore instanceof AsyncCapableRepository) {
-            this.asyncDatastoreOperations = ((AsyncCapableRepository) datastore).async();
+    protected AbstractReactiveInterceptor(@NonNull RepositoryOperations operations) {
+        super(operations);
+        if (operations instanceof ReactiveCapableRepository) {
+            this.reactiveOperations = ((ReactiveCapableRepository) operations).reactive();
         } else {
-            throw new DataAccessException("Datastore of type [" + datastore.getClass() + "] does not support asynchronous operations");
+            throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
     }
-
 }

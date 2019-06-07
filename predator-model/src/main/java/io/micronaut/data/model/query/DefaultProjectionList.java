@@ -42,7 +42,30 @@ class DefaultProjectionList implements ProjectionList {
 
     @Override
     public ProjectionList add(@NonNull QueryModel.Projection p) {
-        projections.add(p);
+        if (p instanceof QueryModel.CountProjection) {
+            if (projections.size() > 1) {
+                throw new IllegalArgumentException("Cannot count on more than one projection");
+            } else {
+                if (projections.isEmpty()) {
+                    projections.add(p);
+                } else {
+                    QueryModel.Projection existing = projections.iterator().next();
+                    if (existing instanceof QueryModel.CountProjection) {
+                        return this;
+                    } else if (existing instanceof QueryModel.PropertyProjection) {
+                        projections.clear();
+                        QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) existing;
+                        QueryModel.CountDistinctProjection newProjection = new QueryModel.CountDistinctProjection(pp.getPropertyName());
+                        projections.add(newProjection);
+                    } else if (existing instanceof QueryModel.IdProjection || existing instanceof QueryModel.DistinctProjection) {
+                        projections.clear();
+                        projections.add(new QueryModel.CountProjection());
+                    }
+                }
+            }
+        } else {
+            projections.add(p);
+        }
         return this;
     }
 

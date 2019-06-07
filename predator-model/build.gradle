@@ -4,6 +4,7 @@ dependencies {
 	compile "io.micronaut:micronaut-inject:$micronautVersion"
 	compile "io.micronaut:micronaut-validation:$micronautVersion"
 	compile "io.micronaut:micronaut-aop:$micronautVersion"
+	compile "io.reactivex.rxjava2:rxjava:2.2.6"
 	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
 }
 tasks.withType(GroovyCompile) {

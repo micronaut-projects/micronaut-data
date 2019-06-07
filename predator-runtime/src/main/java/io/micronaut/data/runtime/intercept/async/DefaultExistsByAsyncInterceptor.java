@@ -31,8 +31,7 @@ public class DefaultExistsByAsyncInterceptor<T> extends AbstractAsyncInterceptor
         Class idType = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
-        return asyncDatastoreOperations.findOne(preparedQuery)
-                .thenApply(Objects::nonNull)
-                .exceptionally(throwable -> false);
+        return asyncDatastoreOperations.findOptional(preparedQuery)
+                .thenApply(Objects::nonNull);
     }
 }

@@ -1,6 +1,7 @@
 package example;
 
 import io.micronaut.test.annotation.MicronautTest;
+import io.reactivex.Single;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -58,5 +59,21 @@ class ProductRepositorySpec {
                 total
         );
         // end::async[]
+    }
+
+    @Test
+    void testReactive() throws Exception {
+        // tag::reactive[]
+        long total = productRepository.queryByNameContains("o")
+                .flatMap(product -> productRepository.countDistinctByManufacturerName(product.getManufacturer().getName())
+                                        .toMaybe())
+                .defaultIfEmpty(0L)
+                .blockingGet();
+
+        Assertions.assertEquals(
+                2,
+                total
+        );
+        // end::reactive[]
     }
 }

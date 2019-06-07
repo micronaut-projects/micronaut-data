@@ -420,6 +420,29 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
     }
 
     /**
+     * Convert a number argument if necessary.
+     * @param number The number
+     * @param argument The argument
+     * @return The result
+     */
+    protected @Nullable Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
+        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
+        Class<?> type = firstTypeVar.getType();
+        if (type == Object.class || type == Void.class) {
+            return null;
+        }
+        if (number == null) {
+            number = 0;
+        }
+        if (!type.isInstance(number)) {
+            return (Number) ConversionService.SHARED.convert(number, firstTypeVar)
+                    .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
+        } else {
+            return number;
+        }
+    }
+
+    /**
      * Represents a prepared query.
      *
      * @param <E> The entity type

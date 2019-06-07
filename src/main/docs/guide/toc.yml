@@ -15,6 +15,7 @@ querying:
   explicitQueries: Explicit Queries
   nativeQueries: Native Queries
   async: Asynchronous Queries
+  reactive: Reactive Queries
 dataUpdates:
   title: Updating Data
   transactions: Transactions

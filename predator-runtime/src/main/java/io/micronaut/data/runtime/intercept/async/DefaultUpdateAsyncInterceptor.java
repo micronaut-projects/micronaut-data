@@ -43,6 +43,6 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
     public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
         return asyncDatastoreOperations.executeUpdate(preparedQuery)
-                .thenApply(n -> convertNumberIfNecessary(n, context.getReturnType().asArgument()));
+                .thenApply(n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument()));
     }
 }

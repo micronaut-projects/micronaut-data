@@ -26,7 +26,6 @@ import io.micronaut.data.model.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 /**

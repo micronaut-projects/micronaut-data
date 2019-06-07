@@ -4,6 +4,8 @@ package example
 
 import io.micronaut.data.annotation.*
 import io.micronaut.data.repository.CrudRepository
+import io.reactivex.Maybe
+import io.reactivex.Single
 import java.util.concurrent.CompletableFuture
 
 @Repository
@@ -23,6 +25,12 @@ interface ProductRepository : CrudRepository<Product, Long> {
 
     fun countByManufacturerName(name: String): CompletableFuture<Long>
     // end::async[]
+
+    // tag::reactive[]
+    fun queryByNameContains(str: String): Maybe<Product>
+
+    fun countDistinctByManufacturerName(name: String): Single<Long>
+    // end::reactive[]
 // tag::join[]
 // tag::async[]
 }
