@@ -37,7 +37,7 @@ subprojects { Project subproject ->
         mavenCentral()
     }
 
-    if (subproject.name.startsWith('example') || subproject.name.startsWith('benchmark')) {
+    if (subproject.name.contains('example') || subproject.name.startsWith('benchmark')) {
         return
     }
 
@@ -162,7 +162,7 @@ allprojects {
             testOutputDir file('build/classes/groovy/test')
         }
     }
-    if (it.name.startsWith('example') || it.name.startsWith('benchmark')) {
+    if (it.name.contains('example') || it.name.startsWith('benchmark')) {
         return
     }
     apply from: rootProject.file('gradle/license.gradle')
