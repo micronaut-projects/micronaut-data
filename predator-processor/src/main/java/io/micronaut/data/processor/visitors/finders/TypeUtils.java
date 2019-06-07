@@ -216,4 +216,13 @@ class TypeUtils {
                 (isReactiveOrFuture(methodElement.getReturnType()) &&
                         isVoidOrBooleanArgument(methodElement.getReturnType()));
     }
+
+    /**
+     * Whether the given type is Object.
+     * @param type The type
+     * @return True if it is Object
+     */
+    public static boolean isObjectClass(ClassElement type) {
+        return type != null && type.getName().equals(Object.class.getName());
+    }
 }

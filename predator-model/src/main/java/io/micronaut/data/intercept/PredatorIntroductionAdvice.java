@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Object> {
+public final class PredatorIntroductionAdvice implements MethodInterceptor<Object, Object> {
 
     private final BeanLocator beanLocator;
     private final Map<InterceptorKey, PredatorInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
@@ -55,7 +55,7 @@ public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Obj
      * Default constructor.
      * @param beanLocator The bean locator
      */
-    protected PredatorIntroductionAdvice(BeanLocator beanLocator) {
+    PredatorIntroductionAdvice(BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
     }
 

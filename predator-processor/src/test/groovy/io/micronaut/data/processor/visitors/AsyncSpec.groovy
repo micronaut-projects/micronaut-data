@@ -18,6 +18,28 @@ import spock.lang.Unroll
 
 class AsyncSpec extends AbstractPredatorSpec {
 
+    void "test compile async CRUD repository"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+
+import io.micronaut.data.model.entities.Person;
+import java.util.concurrent.CompletionStage;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.*;
+import java.util.*;
+import io.micronaut.data.repository.async.AsyncCrudRepository;
+
+@Repository
+interface MyInterface extends AsyncCrudRepository<Person, Long> {
+
+}
+"""
+        )
+
+        expect:
+        repository != null
+    }
+
     @Unroll
     void "test async method with completion stage #method"() {
         given:

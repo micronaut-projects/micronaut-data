@@ -13,7 +13,7 @@ import javax.inject.Inject
 class AsyncSpec extends Specification {
 
     @Inject
-    AsyncCrudRepository asyncCrudRepository
+    AsyncPersonRepo asyncCrudRepository
 
     void "test async CRUD"() {
         when:"An entity is saved"

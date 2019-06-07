@@ -203,6 +203,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return null;
                     }
                     ClassElement finalResultType = futureTypeArgument != null ? futureTypeArgument : matchContext.getRootEntity().getType();
+                    if (TypeUtils.isObjectClass(finalResultType)) {
+                        finalResultType = matchContext.getRootEntity().getType();
+                    }
                     boolean dto = resolveDtoIfNecessary(matchContext, queryResultType, query, finalResultType);
                     if (matchContext.isFailing()) {
                         return null;
@@ -211,19 +214,28 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
                     boolean dto = false;
+                    ClassElement reactiveTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
+                    ClassElement finalResultType = reactiveTypeArgument != null ? reactiveTypeArgument : matchContext.getRootEntity().getType();
+                    if (TypeUtils.isObjectClass(finalResultType)) {
+                        finalResultType = matchContext.getRootEntity().getType();
+                    }
+                    if (reactiveTypeArgument == null && TypeUtils.isContainerType(typeArgument)) {
+                        matchContext.fail("Reactive return type missing type argument");
+                        return null;
+                    }
                     if (isPage) {
-                        return new MethodMatchInfo(typeArgument, query, FindPageReactiveInterceptor.class, dto);
+                        return new MethodMatchInfo(finalResultType, query, FindPageReactiveInterceptor.class, dto);
                     } else if (isSlice) {
-                        return new MethodMatchInfo(typeArgument, query, FindSliceReactiveInterceptor.class, dto);
+                        return new MethodMatchInfo(finalResultType, query, FindSliceReactiveInterceptor.class, dto);
                     } else {
                         if (isReactiveSingleResult(returnType)) {
                             if (isFindByIdQuery(matchContext, queryResultType, query)) {
-                                return new MethodMatchInfo(typeArgument, query, FindByIdReactiveInterceptor.class, dto);
+                                return new MethodMatchInfo(finalResultType, query, FindByIdReactiveInterceptor.class, dto);
                             } else {
-                                return new MethodMatchInfo(typeArgument, query, FindOneReactiveInterceptor.class, dto);
+                                return new MethodMatchInfo(finalResultType, query, FindOneReactiveInterceptor.class, dto);
                             }
                         } else {
-                            return new MethodMatchInfo(typeArgument, query, FindAllReactiveInterceptor.class, dto);
+                            return new MethodMatchInfo(finalResultType, query, FindAllReactiveInterceptor.class, dto);
                         }
                     }
                 } else {
