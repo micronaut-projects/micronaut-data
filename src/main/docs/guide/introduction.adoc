@@ -1,4 +1,4 @@
-Micronaut Predator (short for **Pre**computed **Dat**a **R**epositories) is a database access tookit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.
+Micronaut Predator (short for **Pre**computed **Dat**a **R**epositories) is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.
 
 Predator is inspired by https://gorm.grails.org[GORM] and https://spring.io/projects/spring-data[Spring Data], however improves on those solutions in the following ways:
 
