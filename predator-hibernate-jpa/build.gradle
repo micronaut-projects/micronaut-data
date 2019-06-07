@@ -1,7 +1,12 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     compile project(":predator-runtime")
-    compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.1.0"
+    compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.1.0", {
+        exclude group:'org.springframework', module:'spring-aop'
+        exclude group:'org.springframework', module:'spring-expression'
+        exclude group:'org.javassist', module:'javassist'
+        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-validator'
+    }
 
     testCompile "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     testCompile "io.micronaut.test:micronaut-test-core:$micronautTestVersion"

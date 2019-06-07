@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.datastore;
+package io.micronaut.data.hibernate.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.EachBean;
@@ -31,7 +31,7 @@ import java.util.concurrent.ExecutorService;
  * @since 1.0.0
  */
 @Factory
-public class HibernateJpaDatastoreFactory {
+public class HibernateJpaOperationsFactory {
 
     /**
      * Creates the {@link HibernateJpaOperations}.

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.datastore.event;
+package io.micronaut.data.hibernate.event;
 
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.beans.BeanIntrospection;

@@ -15,9 +15,9 @@
  */
 
 /**
- * Backend implementation for Hibernate/JPA.
+ * Event integration for Hibernate/JPA.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-package io.micronaut.data.hibernate.datastore;
+package io.micronaut.data.hibernate.event;
