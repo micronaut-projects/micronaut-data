@@ -29,7 +29,7 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Boolean> implements UpdateAsyncInterceptor<T> {
+public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Number> implements UpdateAsyncInterceptor<T> {
     /**
      * Default constructor.
      *
@@ -40,8 +40,9 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
     }
 
     @Override
-    public CompletionStage<Boolean> intercept(MethodInvocationContext<T, CompletionStage<Boolean>> context) {
+    public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
-        return asyncDatastoreOperations.executeUpdate(preparedQuery);
+        return asyncDatastoreOperations.executeUpdate(preparedQuery)
+                .thenApply(n -> convertNumberIfNecessary(n, context.getReturnType().asArgument()));
     }
 }

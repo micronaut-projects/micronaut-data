@@ -246,27 +246,29 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
     }
 
     @Override
-    public <T> void deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
-        writeTransactionTemplate.execute(status -> {
+    public <T> int deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
+        Integer result = writeTransactionTemplate.execute(status -> {
+            int i = 0;
             Session session = getCurrentSession();
             for (T entity : entities) {
                 session.remove(entity);
+                i++;
             }
-            return null;
+            return i;
         });
+        return result;
     }
 
     @Override
-    public <T> void deleteAll(@NonNull Class<T> entityType) {
-        writeTransactionTemplate.execute(status -> {
+    public <T> Optional<Number> deleteAll(@NonNull Class<T> entityType) {
+        return writeTransactionTemplate.execute(status -> {
             Session session = getCurrentSession();
             CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
             criteriaDelete.from(entityType);
             Query query = session.createQuery(
                     criteriaDelete
             );
-            query.executeUpdate();
-            return null;
+            return Optional.of(query.executeUpdate());
         });
     }
 

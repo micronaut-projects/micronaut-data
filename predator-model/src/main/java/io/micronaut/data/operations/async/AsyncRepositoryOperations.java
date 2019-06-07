@@ -118,7 +118,7 @@ public interface AsyncRepositoryOperations {
      * @return A completion that emits a boolean true if successful
      */
     @NonNull
-    CompletionStage<Boolean> executeUpdate(
+    CompletionStage<Number> executeUpdate(
             @NonNull PreparedQuery<?, Number> preparedQuery
     );
 
@@ -129,7 +129,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion that emits a boolean true if successful
      */
-    <T> CompletionStage<Boolean> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
+    <T> CompletionStage<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
 
     /**
      * Deletes all the entities of the given type.
@@ -137,7 +137,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return A completion that emits a boolean true if successful
      */
-    <T> CompletionStage<Boolean> deleteAll(@NonNull Class<T> entityType);
+    <T> CompletionStage<Number> deleteAll(@NonNull Class<T> entityType);
 
     /**
      * Find a page for the given entity and pageable.

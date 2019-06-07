@@ -117,15 +117,17 @@ public interface RepositoryOperations {
      * @param entityType The entity type
      * @param entities The entities
      * @param <T> The generic type
+     * @return The number of entities deleted
      */
-    <T> void deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
+    <T> int deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
 
     /**
      * Deletes all the entities of the given type.
      * @param entityType The entity type
      * @param <T> The generic type
+     * @return The number deleted
      */
-    <T> void deleteAll(@NonNull Class<T> entityType);
+    <T> Optional<Number> deleteAll(@NonNull Class<T> entityType);
 
     /**
      * Finds all results for the given query.

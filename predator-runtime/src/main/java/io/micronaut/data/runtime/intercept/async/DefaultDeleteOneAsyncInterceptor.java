@@ -30,7 +30,7 @@ import java.util.concurrent.CompletionStage;
  * @since 1.0.0
  */
 @SuppressWarnings("unused")
-public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Boolean>
+public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Number>
         implements DeleteOneAsyncInterceptor<T> {
     /**
      * Default constructor.
@@ -42,13 +42,14 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Boolean> intercept(MethodInvocationContext<T, CompletionStage<Boolean>> context) {
+    public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
-            Class rootEntity = getRequiredRootEntity(context);
+            Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             Object o = parameterValues[0];
             if (o != null) {
-                return asyncDatastoreOperations.deleteAll(rootEntity, Collections.singleton(o));
+                return asyncDatastoreOperations.deleteAll(rootEntity, Collections.singleton(o))
+                        .thenApply(n -> convertNumberIfNecessary(n, context.getReturnType().asArgument()));
             } else {
                 throw new IllegalArgumentException("Entity to delete cannot be null");
             }

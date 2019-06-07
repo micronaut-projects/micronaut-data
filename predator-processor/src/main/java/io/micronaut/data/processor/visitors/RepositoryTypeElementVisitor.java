@@ -133,20 +133,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
 
         ClassElement genericReturnType = element.getGenericReturnType();
-        if (genericReturnType != null && queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic() && finders != null) {
+        if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic() && finders != null) {
             ParameterElement[] parameters = element.getParameters();
             Map<String, Element> parametersInRole = new HashMap<>(2);
             for (ParameterElement parameter : parameters) {
                 ClassElement type = parameter.getType();
-                if (type != null) {
-                    this.typeRoles.entrySet().stream().filter(entry -> {
-                                String roleType = entry.getKey();
-                                return type.isAssignable(roleType);
-                            }
-                    ).forEach(entry ->
-                            parametersInRole.put(entry.getValue(), parameter)
-                    );
-                }
+                this.typeRoles.entrySet().stream().filter(entry -> {
+                            String roleType = entry.getKey();
+                            return type.isAssignable(roleType);
+                        }
+                ).forEach(entry ->
+                        parametersInRole.put(entry.getValue(), parameter)
+                );
             }
 
             MatchContext matchContext = new MatchContext(
@@ -240,6 +238,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                 parameterBinding = encodedQuery.getParameters();
 
+                                if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
+                                    genericReturnType = genericReturnType.getFirstTypeArgument().orElse(entity.getType());
+                                }
                                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
                                     countQuery = QueryModel.from(queryObject.getPersistentEntity());
                                     countQuery.projections().count();

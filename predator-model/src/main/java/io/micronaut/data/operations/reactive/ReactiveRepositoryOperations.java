@@ -116,7 +116,7 @@ public interface ReactiveRepositoryOperations {
      */
     @NonNull
     @SingleResult
-    Publisher<Boolean> executeUpdate(
+    Publisher<Number> executeUpdate(
             @NonNull PreparedQuery<?, Number> preparedQuery
     );
 
@@ -128,7 +128,7 @@ public interface ReactiveRepositoryOperations {
      * @return A publisher that emits a boolean true if the update was successful
      */
     @SingleResult
-    <T> Publisher<Boolean> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
+    <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
 
     /**
      * Deletes all the entities of the given type.
@@ -137,7 +137,7 @@ public interface ReactiveRepositoryOperations {
      * @return A publisher that emits a boolean true if the update was successful
      */
     @SingleResult
-    <T> Publisher<Boolean> deleteAll(@NonNull Class<T> entityType);
+    <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType);
 
     /**
      * Find a page for the given entity and pageable.

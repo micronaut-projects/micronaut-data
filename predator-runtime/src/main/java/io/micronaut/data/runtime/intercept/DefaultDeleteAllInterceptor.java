@@ -16,6 +16,8 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -29,7 +31,7 @@ import io.micronaut.data.model.PreparedQuery;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, Void> implements DeleteAllInterceptor<T> {
+public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements DeleteAllInterceptor<T> {
 
     /**
      * Default constructor.
@@ -40,21 +42,32 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
     }
 
     @Override
-    public Void intercept(MethodInvocationContext<T, Void> context) {
+    public Number intercept(MethodInvocationContext<T, Number> context) {
+        Argument<Number> resultType = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
-            datastore.executeUpdate(preparedQuery);
+            Number result = datastore.executeUpdate(preparedQuery).orElse(0);
+            return convertIfNecessary(resultType, result);
         } else {
             Object[] parameterValues = context.getParameterValues();
-            Class rootEntity = getRequiredRootEntity(context);
+            Class<?> rootEntity = getRequiredRootEntity(context);
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
-                datastore.deleteAll(rootEntity, (Iterable) parameterValues[0]);
+                int deleted = datastore.deleteAll(rootEntity, (Iterable) parameterValues[0]);
+                return convertIfNecessary(resultType, deleted);
             } else if (parameterValues.length == 0) {
-                datastore.deleteAll(rootEntity);
+                Number result = datastore.deleteAll(rootEntity).orElse(0);
+                return convertIfNecessary(resultType, result);
             } else {
                 throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
             }
         }
-        return null;
+    }
+
+    private Number convertIfNecessary(Argument<Number> resultType, Number result) {
+        if (!resultType.getType().isInstance(result)) {
+            return ConversionService.SHARED.convert(result, resultType).orElse(0);
+        } else {
+            return result;
+        }
     }
 }

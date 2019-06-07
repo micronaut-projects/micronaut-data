@@ -26,6 +26,6 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0
  */
-public interface DeleteAllAsyncInterceptor<T> extends PredatorInterceptor<T, CompletionStage<Boolean>> {
+public interface DeleteAllAsyncInterceptor<T> extends PredatorInterceptor<T, CompletionStage<Number>> {
 }
 

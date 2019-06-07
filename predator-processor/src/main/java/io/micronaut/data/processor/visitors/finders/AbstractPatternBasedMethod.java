@@ -177,17 +177,19 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 );
                 if (returnType.isAssignable(CompletionStage.class) || returnType.isAssignable(Future.class)) {
                     Class<? extends PredatorInterceptor> interceptorType;
-                    ClassElement futureTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
-                    if (futureTypeArgument == null && TypeUtils.isContainerType(typeArgument)) {
-                        matchContext.fail("Async return type missing type argument");
-                        return null;
-                    }
-                    if (isPage) {
-                        interceptorType = FindPageAsyncInterceptor.class;
+                    ClassElement futureTypeArgument;
+
+                    if (typeArgument.isAssignable(Iterable.class) || isSlice || isPage) {
+                        futureTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
                         if (futureTypeArgument == null) {
                             matchContext.fail("Async return type missing type argument");
                             return null;
                         }
+                    } else {
+                        futureTypeArgument = typeArgument;
+                    }
+                    if (isPage) {
+                        interceptorType = FindPageAsyncInterceptor.class;
                     } else if (isSlice) {
                         interceptorType = FindSliceAsyncInterceptor.class;
                     } else if (typeArgument.isAssignable(Iterable.class)) {
@@ -202,7 +204,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         matchContext.fail("Unsupported Async return type: " + futureTypeArgument.getName());
                         return null;
                     }
-                    ClassElement finalResultType = futureTypeArgument != null ? futureTypeArgument : matchContext.getRootEntity().getType();
+                    ClassElement finalResultType = futureTypeArgument;
                     if (TypeUtils.isObjectClass(finalResultType)) {
                         finalResultType = matchContext.getRootEntity().getType();
                     }
@@ -213,30 +215,32 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return new MethodMatchInfo(finalResultType, query, interceptorType, dto);
                     }
                 } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
-                    boolean dto = false;
-                    ClassElement reactiveTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
-                    ClassElement finalResultType = reactiveTypeArgument != null ? reactiveTypeArgument : matchContext.getRootEntity().getType();
-                    if (TypeUtils.isObjectClass(finalResultType)) {
-                        finalResultType = matchContext.getRootEntity().getType();
-                    }
-                    if (reactiveTypeArgument == null && TypeUtils.isContainerType(typeArgument)) {
-                        matchContext.fail("Reactive return type missing type argument");
-                        return null;
+                    Class<? extends PredatorInterceptor> interceptorType;
+                    ClassElement finalResultType = TypeUtils.isObjectClass(typeArgument) ? matchContext.getRootEntity().getType() : typeArgument;
+                    boolean isContainerType = isSlice || isPage;
+                    if (isContainerType) {
+                        finalResultType = typeArgument.getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
                     }
                     if (isPage) {
-                        return new MethodMatchInfo(finalResultType, query, FindPageReactiveInterceptor.class, dto);
+                        interceptorType = FindPageReactiveInterceptor.class;
                     } else if (isSlice) {
-                        return new MethodMatchInfo(finalResultType, query, FindSliceReactiveInterceptor.class, dto);
+                        interceptorType = FindSliceReactiveInterceptor.class;
                     } else {
                         if (isReactiveSingleResult(returnType)) {
                             if (isFindByIdQuery(matchContext, queryResultType, query)) {
-                                return new MethodMatchInfo(finalResultType, query, FindByIdReactiveInterceptor.class, dto);
+                                interceptorType = FindByIdReactiveInterceptor.class;
                             } else {
-                                return new MethodMatchInfo(finalResultType, query, FindOneReactiveInterceptor.class, dto);
+                                interceptorType = FindOneReactiveInterceptor.class;
                             }
                         } else {
-                            return new MethodMatchInfo(finalResultType, query, FindAllReactiveInterceptor.class, dto);
+                            interceptorType = FindAllReactiveInterceptor.class;
                         }
+                    }
+                    boolean dto = resolveDtoIfNecessary(matchContext, queryResultType, query, finalResultType);
+                    if (matchContext.isFailing()) {
+                        return null;
+                    } else {
+                        return new MethodMatchInfo(finalResultType, query, interceptorType, dto);
                     }
                 } else {
                     boolean dto = false;

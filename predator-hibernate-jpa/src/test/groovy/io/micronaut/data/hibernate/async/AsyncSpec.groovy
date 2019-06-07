@@ -2,6 +2,8 @@ package io.micronaut.data.hibernate.async
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.Person
+import io.micronaut.data.model.Page
+import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 
@@ -39,13 +41,27 @@ class AsyncSpec extends Specification {
 
         def list = asyncCrudRepository.findAll().get()
         def withLetterO = asyncCrudRepository.findAllByNameContains("o").get()
+        def page = asyncCrudRepository.findAllByAgeBetween(19, 25, Pageable.from(0)).get()
+        def dto = asyncCrudRepository.searchByName("Bob").get()
 
         then:"The results are correct"
         asyncCrudRepository.findByName("Bob").get().name == 'Bob'
+        dto.age == 20
+        page.totalSize == 2
+        page.content.size() == 2
+        page.content.find({it.name == 'Bob'})
+        page.content.find({it.name == 'John'})
         john.name == 'John'
         result.size() == 2
         withLetterO.size() == 2
         list.size() == 4
+
+        when:"an entity is updated"
+        def updated = asyncCrudRepository.updateByName("Bob", 50).get()
+
+        then:"The update is executed correctly"
+        updated == 1
+        asyncCrudRepository.findByName("Bob").get().age == 50
 
         when:"An entity is deleted"
         asyncCrudRepository.deleteById(john.id).get()

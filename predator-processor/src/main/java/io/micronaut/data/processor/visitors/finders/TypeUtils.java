@@ -37,7 +37,7 @@ import java.util.stream.Stream;
  * @since 1.0.0
  */
 @Internal
-class TypeUtils {
+public class TypeUtils {
 
     /**
      * Is the element an iterable of an entity.
@@ -198,12 +198,12 @@ class TypeUtils {
      * @param type The type
      * @return True if the argument is a void argument
      */
-    public static boolean isVoidOrBooleanArgument(ClassElement type) {
+    public static boolean isVoidOrNumberArgument(ClassElement type) {
         if (type == null) {
             return false;
         }
         ClassElement ce = type.getFirstTypeArgument().orElse(null);
-        return ce == null || ce.isAssignable(Void.class) || ce.isAssignable(Boolean.class);
+        return ce == null || ce.isAssignable(Void.class) || isNumber(ce);
     }
 
     /**
@@ -214,7 +214,7 @@ class TypeUtils {
     static boolean isValidBatchUpdateReturnType(MethodElement methodElement) {
         return doesReturnVoid(methodElement) ||
                 (isReactiveOrFuture(methodElement.getReturnType()) &&
-                        isVoidOrBooleanArgument(methodElement.getReturnType()));
+                        isVoidOrNumberArgument(methodElement.getReturnType()));
     }
 
     /**

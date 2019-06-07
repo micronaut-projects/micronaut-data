@@ -1,6 +1,9 @@
 package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -32,6 +35,29 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
             this.asyncDatastoreOperations = ((AsyncCapableRepository) datastore).async();
         } else {
             throw new DataAccessException("Datastore of type [" + datastore.getClass() + "] does not support asynchronous operations");
+        }
+    }
+
+    /**
+     * Convert a number argument if necessary.
+     * @param number The number
+     * @param argument The argument
+     * @return The result
+     */
+    protected @Nullable Number convertNumberIfNecessary(Number number, Argument<CompletionStage<Number>> argument) {
+        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
+        Class<?> type = firstTypeVar.getType();
+        if (type == Object.class || type == Void.class) {
+            return null;
+        }
+        if (number == null) {
+            number = 0;
+        }
+        if (!type.isInstance(number)) {
+            return (Number) ConversionService.SHARED.convert(number, firstTypeVar)
+                    .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
+        } else {
+            return number;
         }
     }
 }

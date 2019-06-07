@@ -173,12 +173,12 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public CompletableFuture<Boolean> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
+    public CompletableFuture<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
+        CompletableFuture<Number> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                Number n = datastore.executeUpdate(preparedQuery).orElse(null);
-                future.complete(n == null || n.longValue() > 0);
+                Number n = datastore.executeUpdate(preparedQuery).orElse(0);
+                future.complete(n);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
             }
@@ -187,12 +187,12 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     }
 
     @Override
-    public <T> CompletableFuture<Boolean> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
+    public <T> CompletableFuture<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
+        CompletableFuture<Number> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                datastore.deleteAll(entityType, entities);
-                future.complete(true);
+                int total = datastore.deleteAll(entityType, entities);
+                future.complete(total);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
             }
@@ -201,12 +201,12 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     }
 
     @Override
-    public <T> CompletableFuture<Boolean> deleteAll(@NonNull Class<T> entityType) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
+    public <T> CompletableFuture<Number> deleteAll(@NonNull Class<T> entityType) {
+        CompletableFuture<Number> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                datastore.deleteAll(entityType);
-                future.complete(true);
+                Number number = datastore.deleteAll(entityType).orElse(0);
+                future.complete(number);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
             }

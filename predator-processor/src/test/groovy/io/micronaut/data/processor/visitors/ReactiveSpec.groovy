@@ -44,15 +44,15 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "find"         | "Single<Person>"        | "String name"           | FindOneReactiveInterceptor
         "count"        | "Single<Long>"          | "String name"           | CountReactiveInterceptor
         "countByName"  | "Single<Long>"          | "String name"           | CountReactiveInterceptor
-        "delete"       | "Single<Boolean>"       | "String name"           | DeleteAllReactiveInterceptor
+        "delete"       | "Single<Long>"          | "String name"           | DeleteAllReactiveInterceptor
         "delete"       | "Single<Void>"          | "String name"           | DeleteAllReactiveInterceptor
-        "deleteByName" | "Single<Boolean>"       | "String name"           | DeleteAllReactiveInterceptor
+        "deleteByName" | "Single<Integer>"       | "String name"           | DeleteAllReactiveInterceptor
         "existsByName" | "Single<Boolean>"       | "String name"           | ExistsByReactiveInterceptor
         "findById"     | "Single<Person>"        | "Long id"               | FindByIdReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"         | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "String name"           | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities" | SaveAllReactiveInterceptor
-        "updateByName" | "Single<Boolean>"       | "String name, int age"  | UpdateReactiveInterceptor
-        "update"       | "Single<Boolean>"       | "@Id Long id, int age"  | UpdateReactiveInterceptor
+        "updateByName" | "Single<Number>"       | "String name, int age"  | UpdateReactiveInterceptor
+        "update"       | "Completable"       | "@Id Long id, int age"  | UpdateReactiveInterceptor
     }
 }

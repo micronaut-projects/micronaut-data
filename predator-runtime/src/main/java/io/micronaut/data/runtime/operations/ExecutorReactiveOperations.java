@@ -120,21 +120,21 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public Publisher<Boolean> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
+    public Publisher<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return Publishers.fromCompletableFuture(() ->
                 asyncOperations.executeUpdate(preparedQuery)
         );
     }
 
     @Override
-    public <T> Publisher<Boolean> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
+    public <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
         return Publishers.fromCompletableFuture(() ->
                 asyncOperations.deleteAll(entityType, entities)
         );
     }
 
     @Override
-    public <T> Publisher<Boolean> deleteAll(@NonNull Class<T> entityType) {
+    public <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType) {
         return Publishers.fromCompletableFuture(() ->
                 asyncOperations.deleteAll(entityType)
         );
