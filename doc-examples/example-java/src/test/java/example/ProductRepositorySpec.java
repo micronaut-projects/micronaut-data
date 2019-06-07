@@ -9,6 +9,11 @@ import org.junit.jupiter.api.TestInstance;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 
 @MicronautTest(transactional = false, rollback = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -39,5 +44,19 @@ class ProductRepositorySpec {
                     p.getManufacturer().getName().equals("Apple")
                 )
         );
+    }
+
+    @Test
+    void testAsync() throws Exception {
+        // tag::async[]
+        long total = productRepository.findByNameContains("o")
+                .thenCompose(product -> productRepository.countByManufacturerName(product.getManufacturer().getName()))
+                .get(1000, TimeUnit.SECONDS);
+
+        Assertions.assertEquals(
+                2,
+                total
+        );
+        // end::async[]
     }
 }

@@ -37,7 +37,7 @@ ext {
 
 
 subprojects { Project subproject ->
-    if (subproject.name.contains('doc-examples')) {
+    if (subproject.name.startsWith('example')) {
         return
     }
 
@@ -168,7 +168,7 @@ allprojects {
             testOutputDir file('build/classes/groovy/test')
         }
     }
-    if (it.name.contains('doc-examples')) {
+    if (it.name.startsWith('example')) {
         return
     }
     apply from: rootProject.file('gradle/license.gradle')

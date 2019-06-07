@@ -20,6 +20,9 @@ The following table summarizes the repository interfaces that come with Predator
 |api:data.repository.CrudRepository[]
 |Extends api:data.repository.GenericRepository[] and adds methods to perform CRUD
 
+|api:data.repository.async.AsyncCrudRepository[]
+|Extends api:data.repository.GenericRepository[] and adds methods for asynchronous CRUD execution
+
 |api:data.repository.PageableRepository[]
 |Extends api:data.repository.CrudRepository[] and adds methods for pagination
 |===

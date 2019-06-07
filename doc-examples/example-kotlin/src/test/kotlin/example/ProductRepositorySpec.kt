@@ -3,6 +3,7 @@ package example
 import io.micronaut.test.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.*
+import java.util.concurrent.TimeUnit
 
 import javax.inject.Inject
 
@@ -34,5 +35,20 @@ internal class ProductRepositorySpec {
         assertTrue(
             list.all { it.manufacturer.name == "Apple" }
         )
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun testAsync() {
+        // tag::async[]
+        val total = productRepository.findByNameContains("o")
+                .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer.name) }
+                .get(1000, TimeUnit.SECONDS)
+
+        Assertions.assertEquals(
+                2,
+                total
+        )
+        // end::async[]
     }
 }

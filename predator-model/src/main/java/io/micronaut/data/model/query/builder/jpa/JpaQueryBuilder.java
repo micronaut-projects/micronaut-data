@@ -777,11 +777,11 @@ public class JpaQueryBuilder implements QueryBuilder {
                     joinType = " RIGHT JOIN FETCH ";
                     break;
                 case INNER:
-                    joinType = " JOIN ";
+                    joinType = " JOIN FETCH ";
                     break;
                 case FETCH:
                 default:
-                    joinType = " JOIN FETCH ";
+                    joinType = " JOIN ";
             }
 
 

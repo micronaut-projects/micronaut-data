@@ -14,7 +14,7 @@ In this case when you read each `Product` from the database an additional select
 
 To resolve this you can use the ann:data.annotation.JoinSpec[] annotation on your repository interface to specify that a `JOIN FETCH` should be executed to retrieve the associated `Manufacturer`.
 
-snippet::example.ProductRepository[project-base="doc-examples/example", source="main"]
+snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="join"]
 
 
 <1> The ann:data.annotation.JoinSpec[] is used to indicate a `JOIN FETCH` clause should be included.

@@ -5,6 +5,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
+import java.util.concurrent.TimeUnit
 
 @MicronautTest(transactional = false, rollback = false)
 class ProductRepositorySpec extends Specification {
@@ -31,5 +32,17 @@ class ProductRepositorySpec extends Specification {
         list.every { p ->
             p.manufacturer.name == "Apple"
         }
+    }
+
+    void "test async"() throws Exception {
+        // tag::async[]
+        when:"A result is retrieved using async composition"
+        long total = productRepository.findByNameContains("o")
+                .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer.name) }
+                .get(1000, TimeUnit.SECONDS)
+
+        then:"the result is correct"
+        total == 2
+        // end::async[]
     }
 }
