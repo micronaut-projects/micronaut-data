@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.PreparedQuery;
@@ -35,7 +35,7 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultDeleteAllInterceptor(@NonNull Datastore datastore) {
+    protected DefaultDeleteAllInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

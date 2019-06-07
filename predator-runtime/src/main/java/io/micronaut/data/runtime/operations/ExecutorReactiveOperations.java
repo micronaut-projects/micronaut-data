@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.backend;
+package io.micronaut.data.runtime.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.reactive.ReactiveDatastoreOperations;
+import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PreparedQuery;
@@ -30,16 +30,16 @@ import java.io.Serializable;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of {@link ReactiveDatastoreOperations} that delegates to a blocking datastore and specified {@link Executor}.
+ * An implementation of {@link ReactiveRepositoryOperations} that delegates to a blocking datastore and specified {@link Executor}.
  * This can be used in absence of true reactive support at the driver level an allows composing blocking operations within reactive flows.
  *
- * <p>If a backing implementation provides a reactive API then the backing implementation should not use this class and instead directly implement the {@link ReactiveDatastoreOperations} interface.</p>
+ * <p>If a backing implementation provides a reactive API then the backing implementation should not use this class and instead directly implement the {@link ReactiveRepositoryOperations} interface.</p>
  *
- * @see ReactiveDatastoreOperations
+ * @see ReactiveRepositoryOperations
  * @author graemerocher
  * @since 1.0.0
  */
-public class ExecutorReactiveOperations implements ReactiveDatastoreOperations {
+public class ExecutorReactiveOperations implements ReactiveRepositoryOperations {
 
     private final ExecutorAsyncOperations asyncOperations;
 
@@ -49,7 +49,7 @@ public class ExecutorReactiveOperations implements ReactiveDatastoreOperations {
      * @param datastore The target datastore
      * @param executor  The executor to use.
      */
-    public ExecutorReactiveOperations(@NonNull Datastore datastore, @NonNull Executor executor) {
+    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
         this(new ExecutorAsyncOperations(datastore, executor));
     }
 

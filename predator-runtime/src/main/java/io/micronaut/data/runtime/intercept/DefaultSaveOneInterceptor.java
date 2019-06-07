@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.SaveOneInterceptor;
 
 import java.util.Map;
@@ -35,7 +35,7 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultSaveOneInterceptor(@NonNull Datastore datastore) {
+    protected DefaultSaveOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

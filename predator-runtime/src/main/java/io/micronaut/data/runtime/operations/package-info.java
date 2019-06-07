@@ -14,22 +14,7 @@
  * limitations under the License.
  */
 
-package io.micronaut.data.backend.reactive;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.backend.Datastore;
-
 /**
- * Extends {@link Datastore} and adds the able for a datastore to expose reactive operations if they are supported.
- *
- * @author graemerocher
- * @since 1.0.0
+ * Backend support classes used at runtime.
  */
-public interface ReactiveCapableDatastore extends Datastore {
-
-    /**
-     * @return The reactive operations instance.
-     */
-    @NonNull
-    ReactiveDatastoreOperations reactive();
-}
+package io.micronaut.data.runtime.operations;

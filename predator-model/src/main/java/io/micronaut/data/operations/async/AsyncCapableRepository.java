@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.data.operations.async;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.operations.RepositoryOperations;
 
 /**
- * Backend support classes used at runtime.
+ * A {@link RepositoryOperations} capable of supporting asynchronous access.
+ *
+ * @author graemerocher
+ * @since 1.0.0
  */
-package io.micronaut.data.runtime.backend;
+public interface AsyncCapableRepository extends RepositoryOperations {
+    /**
+     * @return The async operations.
+     */
+    @NonNull
+    AsyncRepositoryOperations async();
+}

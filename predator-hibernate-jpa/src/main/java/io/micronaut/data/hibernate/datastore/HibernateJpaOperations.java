@@ -19,13 +19,13 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.async.AsyncCapableDatastore;
-import io.micronaut.data.backend.async.AsyncDatastoreOperations;
-import io.micronaut.data.runtime.backend.ExecutorAsyncOperations;
-import io.micronaut.data.runtime.backend.ExecutorReactiveOperations;
-import io.micronaut.data.backend.reactive.ReactiveCapableDatastore;
-import io.micronaut.data.backend.reactive.ReactiveDatastoreOperations;
+import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -50,12 +50,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Implementation of the {@link Datastore} interface for Hibernate.
+ * Implementation of the {@link RepositoryOperations} interface for Hibernate.
  *
  * @author graemerocher
  * @since 1.0
  */
-public class HibernateJpaDatastore implements Datastore, AsyncCapableDatastore, ReactiveCapableDatastore {
+public class HibernateJpaOperations implements RepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private final SessionFactory sessionFactory;
     private final TransactionTemplate writeTransactionTemplate;
@@ -68,7 +68,7 @@ public class HibernateJpaDatastore implements Datastore, AsyncCapableDatastore, 
      * @param sessionFactory The session factory
      * @param executorService The executor service for I/O tasks to use
      */
-    protected HibernateJpaDatastore(
+    protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
             @NonNull ExecutorService executorService) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
@@ -402,13 +402,13 @@ public class HibernateJpaDatastore implements Datastore, AsyncCapableDatastore, 
 
     @NonNull
     @Override
-    public AsyncDatastoreOperations async() {
+    public AsyncRepositoryOperations async() {
         return asyncOperations;
     }
 
     @NonNull
     @Override
-    public ReactiveDatastoreOperations reactive() {
+    public ReactiveRepositoryOperations reactive() {
         return new ExecutorReactiveOperations(asyncOperations);
     }
 }

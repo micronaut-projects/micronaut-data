@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
 
 import java.io.Serializable;
@@ -34,7 +34,7 @@ public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor
      *
      * @param datastore The datastore
      */
-    protected DefaultFindByIdAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultFindByIdAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

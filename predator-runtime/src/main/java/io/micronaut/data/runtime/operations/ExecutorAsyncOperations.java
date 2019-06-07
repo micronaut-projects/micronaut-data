@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.backend;
+package io.micronaut.data.runtime.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.async.AsyncDatastoreOperations;
+import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -29,17 +29,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of {@link AsyncDatastoreOperations} that delegates to a blocking datastore and specified {@link Executor}.
+ * An implementation of {@link AsyncRepositoryOperations} that delegates to a blocking datastore and specified {@link Executor}.
  * This can be used in absence of true asynchronous support at the driver level.
  *
- * <p>If a backing implementation provides a async API then the backing implementation should not use this class and instead directly implement the {@link AsyncDatastoreOperations} interface.</p>
+ * <p>If a backing implementation provides a async API then the backing implementation should not use this class and instead directly implement the {@link AsyncRepositoryOperations} interface.</p>
  *
  * @author graemerocher
  * @since 1.0.0
  */
-public class ExecutorAsyncOperations implements AsyncDatastoreOperations {
+public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
-    private final Datastore datastore;
+    private final RepositoryOperations datastore;
     private final Executor executor;
 
     /**
@@ -47,7 +47,7 @@ public class ExecutorAsyncOperations implements AsyncDatastoreOperations {
      * @param datastore The target datastore
      * @param executor The executor to use.
      */
-    public ExecutorAsyncOperations(@NonNull Datastore datastore, @NonNull Executor executor) {
+    public ExecutorAsyncOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
         ArgumentUtils.requireNonNull("datastore", datastore);
         ArgumentUtils.requireNonNull("executor", executor);
         this.datastore = datastore;

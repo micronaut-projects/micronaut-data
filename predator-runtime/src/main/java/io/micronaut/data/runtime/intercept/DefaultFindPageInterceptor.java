@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.PreparedQuery;
 
 import java.util.List;
@@ -42,7 +42,7 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultFindPageInterceptor(@NonNull Datastore datastore) {
+    protected DefaultFindPageInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

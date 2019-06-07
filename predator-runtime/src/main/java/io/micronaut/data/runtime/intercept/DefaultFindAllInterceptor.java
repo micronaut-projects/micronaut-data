@@ -20,7 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.PreparedQuery;
 
 import java.util.Collections;
@@ -39,7 +39,7 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
      * @param datastore The datastore
      */
 
-    protected DefaultFindAllInterceptor(Datastore datastore) {
+    protected DefaultFindAllInterceptor(RepositoryOperations datastore) {
         super(datastore);
     }
 

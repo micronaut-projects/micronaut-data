@@ -24,7 +24,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindSliceInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.PreparedQuery;
 
 /**
@@ -41,7 +41,7 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultFindSliceInterceptor(@NonNull Datastore datastore) {
+    protected DefaultFindSliceInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

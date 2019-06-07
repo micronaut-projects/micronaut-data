@@ -13,21 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.backend.async;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.backend.Datastore;
 
 /**
- * A {@link Datastore} capable of supporting asynchronous access.
+ * Runtime interfaces for implementations to implement.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-public interface AsyncCapableDatastore extends Datastore {
-    /**
-     * @return The async datastore operations.
-     */
-    @NonNull
-    AsyncDatastoreOperations async();
-}
+package io.micronaut.data.operations;

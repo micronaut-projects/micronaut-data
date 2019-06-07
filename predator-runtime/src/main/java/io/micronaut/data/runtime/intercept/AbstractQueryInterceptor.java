@@ -37,7 +37,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.inject.ExecutableMethod;
@@ -56,7 +56,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author graemerocher
  */
 public abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
-    protected final Datastore datastore;
+    protected final RepositoryOperations datastore;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
     private final ConcurrentMap<ExecutableMethod, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
     private final ConcurrentMap<ExecutableMethod, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
@@ -65,7 +65,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      * Default constructor.
      * @param datastore The datastore
      */
-    protected AbstractQueryInterceptor(@NonNull Datastore datastore) {
+    protected AbstractQueryInterceptor(@NonNull RepositoryOperations datastore) {
         ArgumentUtils.requireNonNull("datastore", datastore);
         this.datastore = datastore;
     }

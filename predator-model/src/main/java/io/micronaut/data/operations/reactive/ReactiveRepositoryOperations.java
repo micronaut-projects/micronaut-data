@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.backend.reactive;
+package io.micronaut.data.operations.reactive;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
@@ -30,7 +30,7 @@ import java.io.Serializable;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface ReactiveDatastoreOperations {
+public interface ReactiveRepositoryOperations {
 
     /**
      * Find one by ID.

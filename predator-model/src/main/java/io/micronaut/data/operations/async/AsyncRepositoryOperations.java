@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.backend.async;
+package io.micronaut.data.operations.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
@@ -32,7 +32,7 @@ import java.util.concurrent.Executor;
  * @since 1.0.0
  */
 @NonBlocking
-public interface AsyncDatastoreOperations {
+public interface AsyncRepositoryOperations {
 
     /**
      * @return The executor used by this async operations

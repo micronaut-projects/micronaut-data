@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 
 import java.util.Map;
@@ -38,7 +38,7 @@ public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
      *
      * @param datastore The datastore
      */
-    protected DefaultSaveOneAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultSaveOneAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
 
 import java.util.Collections;
@@ -37,7 +37,7 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
      *
      * @param datastore The datastore
      */
-    protected DefaultDeleteOneAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultDeleteOneAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

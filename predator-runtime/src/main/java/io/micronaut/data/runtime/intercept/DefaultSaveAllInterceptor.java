@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.SaveAllInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 /**
  * Default implementation of {@link SaveAllInterceptor}.
@@ -29,13 +29,13 @@ import io.micronaut.data.backend.Datastore;
  */
 public class DefaultSaveAllInterceptor<T, R> implements SaveAllInterceptor<T, R> {
 
-    private final Datastore datastore;
+    private final RepositoryOperations datastore;
 
     /**
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultSaveAllInterceptor(Datastore datastore) {
+    protected DefaultSaveAllInterceptor(RepositoryOperations datastore) {
         this.datastore = datastore;
     }
 

@@ -20,7 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.PreparedQuery;
@@ -39,7 +39,7 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultCountInterceptor(@NonNull Datastore datastore) {
+    protected DefaultCountInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

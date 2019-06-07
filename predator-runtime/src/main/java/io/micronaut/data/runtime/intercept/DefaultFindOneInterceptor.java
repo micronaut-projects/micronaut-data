@@ -20,7 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.FindOneInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.PreparedQuery;
@@ -36,7 +36,7 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
      * The default constructor.
      * @param datastore The datastore
      */
-    protected DefaultFindOneInterceptor(@NonNull Datastore datastore) {
+    protected DefaultFindOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

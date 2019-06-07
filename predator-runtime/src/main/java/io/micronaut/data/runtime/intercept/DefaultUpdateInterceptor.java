@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.UpdateInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.PreparedQuery;
 
 /**
@@ -33,7 +33,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boo
      * Default constructor.
      * @param datastore The datastore
      */
-    public DefaultUpdateInterceptor(@NonNull Datastore datastore) {
+    public DefaultUpdateInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

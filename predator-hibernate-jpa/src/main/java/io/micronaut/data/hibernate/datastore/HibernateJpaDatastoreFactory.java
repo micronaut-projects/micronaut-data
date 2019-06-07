@@ -25,7 +25,7 @@ import javax.inject.Named;
 import java.util.concurrent.ExecutorService;
 
 /**
- * Factory that creates a {@link HibernateJpaDatastore} for each configured {@link SessionFactory}.
+ * Factory that creates a {@link HibernateJpaOperations} for each configured {@link SessionFactory}.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -34,15 +34,16 @@ import java.util.concurrent.ExecutorService;
 public class HibernateJpaDatastoreFactory {
 
     /**
-     * Creates the {@link HibernateJpaDatastore}.
+     * Creates the {@link HibernateJpaOperations}.
      * @param sessionFactory The session factory
      * @param executorService The executor service
      * @return The hibernate datastore
      */
     @EachBean(SessionFactory.class)
-    protected @NonNull HibernateJpaDatastore hibernateJpaDatastore(
+    protected @NonNull
+    HibernateJpaOperations hibernateJpaDatastore(
             @NonNull SessionFactory sessionFactory,
             @Named(TaskExecutors.IO) ExecutorService executorService) {
-        return new HibernateJpaDatastore(sessionFactory, executorService);
+        return new HibernateJpaOperations(sessionFactory, executorService);
     }
 }

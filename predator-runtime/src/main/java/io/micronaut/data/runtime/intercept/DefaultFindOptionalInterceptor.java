@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.FindOptionalInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.PreparedQuery;
@@ -36,7 +36,7 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
      * Default constructor.
      * @param datastore The datastore
      */
-    public DefaultFindOptionalInterceptor(@NonNull Datastore datastore) {
+    public DefaultFindOptionalInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

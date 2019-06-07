@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.intercept.async;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
 import io.micronaut.data.model.PreparedQuery;
 
@@ -23,7 +23,7 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
      *
      * @param datastore The datastore
      */
-    protected DefaultDeleteAllAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultDeleteAllAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

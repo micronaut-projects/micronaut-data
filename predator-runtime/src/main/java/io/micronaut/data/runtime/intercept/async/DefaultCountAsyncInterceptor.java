@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PreparedQuery;
@@ -38,7 +38,7 @@ public class DefaultCountAsyncInterceptor<T> extends AbstractAsyncInterceptor<T,
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultCountAsyncInterceptor(Datastore datastore) {
+    protected DefaultCountAsyncInterceptor(RepositoryOperations datastore) {
         super(datastore);
     }
 

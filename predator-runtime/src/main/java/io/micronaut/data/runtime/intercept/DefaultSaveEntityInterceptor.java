@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 /**
  * Default implementation of {@link SaveEntityInterceptor}.
@@ -33,7 +33,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T,
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultSaveEntityInterceptor(@NonNull Datastore datastore) {
+    protected DefaultSaveEntityInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

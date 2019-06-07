@@ -14,10 +14,22 @@
  * limitations under the License.
  */
 
+package io.micronaut.data.operations.reactive;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.operations.RepositoryOperations;
+
 /**
- * Runtime interfaces for implementations to implement.
+ * Extends {@link RepositoryOperations} and adds the able for a datastore to expose reactive operations if they are supported.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-package io.micronaut.data.backend;
+public interface ReactiveCapableRepository extends RepositoryOperations {
+
+    /**
+     * @return The reactive operations instance.
+     */
+    @NonNull
+    ReactiveRepositoryOperations reactive();
+}

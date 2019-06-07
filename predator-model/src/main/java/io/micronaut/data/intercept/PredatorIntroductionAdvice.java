@@ -27,7 +27,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -62,15 +62,15 @@ public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Obj
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         String dataSourceName = context.stringValue(Repository.class).orElse(null);
-        Class<?> backendType = context.classValue(Repository.class, "backend")
-                                      .orElse(Datastore.class);
+        Class<?> operationsType = context.classValue(Repository.class, "operations")
+                                      .orElse(RepositoryOperations.class);
         Class<?> interceptorType = context
                 .classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_INTERCEPTOR)
                 .orElse(null);
 
         if (interceptorType != null && PredatorInterceptor.class.isAssignableFrom(interceptorType)) {
             PredatorInterceptor<Object, Object> childInterceptor =
-                    findInterceptor(dataSourceName, backendType, interceptorType);
+                    findInterceptor(dataSourceName, operationsType, interceptorType);
             return childInterceptor.intercept(context);
 
         } else {
@@ -80,22 +80,22 @@ public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Obj
 
     private @NonNull PredatorInterceptor<Object, Object> findInterceptor(
             @Nullable String dataSourceName,
-            @NonNull Class<?> backendType,
+            @NonNull Class<?> operationsType,
             @NonNull Class<?> interceptorType) {
-        InterceptorKey key = new InterceptorKey(dataSourceName, backendType, interceptorType);
+        InterceptorKey key = new InterceptorKey(dataSourceName, operationsType, interceptorType);
         PredatorInterceptor interceptor = interceptorMap.get(key);
         if (interceptor == null) {
-            if (!Datastore.class.isAssignableFrom(backendType)) {
+            if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
                 throw new IllegalArgumentException("Backend type must be an instance of Datastore!");
             }
 
-            Datastore datastore;
+            RepositoryOperations datastore;
             try {
                 if (dataSourceName != null) {
                     Qualifier qualifier = Qualifiers.byName(dataSourceName);
-                    datastore = (Datastore) beanLocator.getBean(backendType, qualifier);
+                    datastore = (RepositoryOperations) beanLocator.getBean(operationsType, qualifier);
                 } else {
-                    datastore = (Datastore) beanLocator.getBean(backendType);
+                    datastore = (RepositoryOperations) beanLocator.getBean(operationsType);
                 }
             } catch (NoSuchBeanException e) {
                 throw new ConfigurationException("No backing datasource configured for repository. Check your configuration and try again", e);
@@ -118,12 +118,12 @@ public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Obj
      */
     private final class InterceptorKey {
         final String dataSource;
-        final Class<?> backendType;
+        final Class<?> operationsType;
         final Class<?> interceptorType;
 
-        InterceptorKey(String dataSource, Class<?> backendType, Class<?> interceptorType) {
+        InterceptorKey(String dataSource, Class<?> operationsType, Class<?> interceptorType) {
             this.dataSource = dataSource;
-            this.backendType = backendType;
+            this.operationsType = operationsType;
             this.interceptorType = interceptorType;
         }
 
@@ -137,13 +137,13 @@ public class PredatorIntroductionAdvice implements MethodInterceptor<Object, Obj
             }
             InterceptorKey that = (InterceptorKey) o;
             return Objects.equals(dataSource, that.dataSource) &&
-                    backendType.equals(that.backendType) &&
+                    operationsType.equals(that.operationsType) &&
                     interceptorType.equals(that.interceptorType);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(dataSource, backendType, interceptorType);
+            return Objects.hash(dataSource, operationsType, interceptorType);
         }
     }
 }

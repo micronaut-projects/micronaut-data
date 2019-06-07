@@ -18,7 +18,7 @@ package io.micronaut.data.annotation;
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.core.annotation.InstantiatedMember;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -61,7 +61,7 @@ public @interface Repository {
     /**
      * @return The default back end interface to use.
      */
-    Class<? extends Datastore> backend() default Datastore.class;
+    Class<? extends RepositoryOperations> operations() default RepositoryOperations.class;
 
     /**
      * Configures {@link TypeRole} behaviour for a repository. This member allows for configuration of

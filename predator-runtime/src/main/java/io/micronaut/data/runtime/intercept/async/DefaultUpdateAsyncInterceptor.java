@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
 import io.micronaut.data.model.PreparedQuery;
 
@@ -35,7 +35,7 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
      *
      * @param datastore The datastore
      */
-    protected DefaultUpdateAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultUpdateAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

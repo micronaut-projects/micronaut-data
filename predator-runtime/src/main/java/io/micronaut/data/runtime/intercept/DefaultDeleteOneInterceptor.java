@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultDeleteOneInterceptor(@NonNull Datastore datastore) {
+    protected DefaultDeleteOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

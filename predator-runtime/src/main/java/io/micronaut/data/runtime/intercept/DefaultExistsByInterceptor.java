@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.PreparedQuery;
@@ -35,7 +35,7 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
      * Default constructor.
      * @param datastore The datastore
      */
-    protected DefaultExistsByInterceptor(@NonNull Datastore datastore) {
+    protected DefaultExistsByInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

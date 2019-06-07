@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.backend;
+package io.micronaut.data.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -31,7 +31,7 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
-public interface Datastore {
+public interface RepositoryOperations {
 
     /**
      * Find one by ID.

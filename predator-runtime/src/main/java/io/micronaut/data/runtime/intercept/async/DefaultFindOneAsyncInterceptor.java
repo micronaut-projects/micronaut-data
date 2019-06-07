@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.model.PreparedQuery;
 
@@ -36,7 +36,7 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
      *
      * @param datastore The datastore
      */
-    protected DefaultFindOneAsyncInterceptor(@NonNull Datastore datastore) {
+    protected DefaultFindOneAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

@@ -1,9 +1,9 @@
 package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.backend.Datastore;
-import io.micronaut.data.backend.async.AsyncCapableDatastore;
-import io.micronaut.data.backend.async.AsyncDatastoreOperations;
+import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
@@ -19,17 +19,17 @@ import java.util.concurrent.CompletionStage;
 public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterceptor<T, CompletionStage<R>> {
 
     @NonNull
-    protected final AsyncDatastoreOperations asyncDatastoreOperations;
+    protected final AsyncRepositoryOperations asyncDatastoreOperations;
 
     /**
      * Default constructor.
      *
      * @param datastore The datastore
      */
-    protected AbstractAsyncInterceptor(@NonNull Datastore datastore) {
+    protected AbstractAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
-        if (datastore instanceof AsyncCapableDatastore) {
-            this.asyncDatastoreOperations = ((AsyncCapableDatastore) datastore).async();
+        if (datastore instanceof AsyncCapableRepository) {
+            this.asyncDatastoreOperations = ((AsyncCapableRepository) datastore).async();
         } else {
             throw new DataAccessException("Datastore of type [" + datastore.getClass() + "] does not support asynchronous operations");
         }

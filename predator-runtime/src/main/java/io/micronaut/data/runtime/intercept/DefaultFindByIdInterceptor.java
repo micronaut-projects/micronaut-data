@@ -18,7 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.FindByIdInterceptor;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.io.Serializable;
 
@@ -33,7 +33,7 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
      * Default constructor.
      * @param datastore The datastore
      */
-    public DefaultFindByIdInterceptor(@NonNull Datastore datastore) {
+    public DefaultFindByIdInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 

@@ -20,7 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindStreamInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.backend.Datastore;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.PreparedQuery;
 
 import java.util.stream.Stream;
@@ -37,7 +37,7 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
      * Default constructor.
      * @param datastore The datastore
      */
-    public DefaultFindStreamInterceptor(@NonNull Datastore datastore) {
+    public DefaultFindStreamInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
     }
 
