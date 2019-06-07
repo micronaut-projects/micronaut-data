@@ -1,7 +1,7 @@
 plugins {
     id "application"
     id "java"
-    id "me.champeau.gradle.jmh" version "0.4.8"
+    id "me.champeau.gradle.jmh" version "0.5.0-rc-1"
 }
 
 version "0.1"
@@ -15,7 +15,10 @@ configurations {
 
 dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testCompile platform("io.micronaut:micronaut-bom:$micronautVersion")
     annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+
     annotationProcessor project(":predator-processor")
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-validation"
