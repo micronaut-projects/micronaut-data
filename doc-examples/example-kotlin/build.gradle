@@ -1,6 +1,4 @@
 plugins {
-    id "io.spring.dependency-management" 
-    id "com.github.johnrengelman.shadow" 
     id "application"
     id "org.jetbrains.kotlin.jvm" version "1.3.21"
     id "org.jetbrains.kotlin.kapt" version "1.3.21"
@@ -8,29 +6,13 @@ plugins {
     id "org.jetbrains.kotlin.plugin.jpa" version "1.3.21"
 }
 
-
-
 version "0.1"
 group "example"
 
-repositories {
-    mavenLocal()
-    maven { url "https://jcenter.bintray.com" }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-}
-
-dependencyManagement {
-    imports {
-        mavenBom 'io.micronaut:micronaut-bom:1.1.3'
-    }
-}
-
-configurations {
-    // for dependencies that are needed for development only
-    developmentOnly 
-}
-
 dependencies {
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
+
     compile "io.micronaut:micronaut-http-client"
     compile project(":predator-hibernate-jpa")
     compile "io.micronaut.configuration:micronaut-jdbc-tomcat"    
@@ -51,15 +33,7 @@ dependencies {
     testCompile "io.micronaut.test:micronaut-test-junit5"
 }
 
-test.classpath += configurations.developmentOnly
-
 mainClassName = "example.Application"
-
-shadowJar {
-    mergeServiceFiles()
-}
-
-run.classpath += configurations.developmentOnly
 run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
 
 test {

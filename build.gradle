@@ -1,10 +1,8 @@
 buildscript {
     repositories {
-        mavenLocal()
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
         classpath "org.grails:grails-docs:$grailsVersion"
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
         classpath 'com.bmuschko:gradle-nexus-plugin:2.3.1'
@@ -19,9 +17,7 @@ plugins {
 }
 
 repositories {
-     mavenLocal()
     mavenCentral()
-    maven { url "https://repo.grails.org/grails/core" }
 }
 
 version project.projectVersion
@@ -37,7 +33,11 @@ ext {
 
 
 subprojects { Project subproject ->
-    if (subproject.name.startsWith('example')) {
+    repositories {
+        mavenCentral()
+    }
+
+    if (subproject.name.startsWith('example') || subproject.name.startsWith('benchmark')) {
         return
     }
 
@@ -49,25 +49,15 @@ subprojects { Project subproject ->
     }
 
 
-    repositories {
-        maven { url "https://repo.grails.org/grails/core" }
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-    }
+
 
     apply plugin:"groovy"
     apply plugin:"java"
-    apply plugin: "io.spring.dependency-management"
-
-    dependencyManagement {
-        imports {
-            mavenBom "io.micronaut:micronaut-bom:$micronautVersion"
-        }
-    }
 
 
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
-    apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-core/01e2b1ef1255b584e9e5c1965d334e1190e2ade5/gradle/publishing.gradle"
+    apply from:"${rootDir}/gradle/publishing.gradle"
 
 
     jar {
@@ -108,23 +98,27 @@ subprojects { Project subproject ->
         }
     }
     dependencies {
+        annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+        implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+
         documentation "org.codehaus.groovy:groovy-templates:$groovyVersion"
         documentation "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
 
-        testCompile "cglib:cglib-nodep:2.2.2"
-        testCompile "org.objenesis:objenesis:1.4"
+        testImplementation "cglib:cglib-nodep:2.2.2"
+        testImplementation "org.objenesis:objenesis:1.4"
 
-        testCompile("org.spockframework:spock-core:${spockVersion}") {
+        testImplementation("org.spockframework:spock-core:${spockVersion}") {
             exclude module:'groovy-all'
         }
 
-        testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
-        testCompile "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
-        testCompile "cglib:cglib-nodep:2.2.2"
-        testCompile "org.objenesis:objenesis:1.4"
+        testImplementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+        testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+        testImplementation "cglib:cglib-nodep:2.2.2"
+        testImplementation "org.objenesis:objenesis:1.4"
 
-        testRuntime "ch.qos.logback:logback-classic:1.2.3"
-        testCompile "org.codehaus.groovy:groovy-test:$groovyVersion"
+        testRuntimeOnly "ch.qos.logback:logback-classic:1.2.3"
+        testImplementation "org.codehaus.groovy:groovy-test:$groovyVersion"
     }
 
     groovydoc {
@@ -168,7 +162,7 @@ allprojects {
             testOutputDir file('build/classes/groovy/test')
         }
     }
-    if (it.name.startsWith('example')) {
+    if (it.name.startsWith('example') || it.name.startsWith('benchmark')) {
         return
     }
     apply from: rootProject.file('gradle/license.gradle')
