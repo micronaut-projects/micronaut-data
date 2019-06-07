@@ -26,6 +26,7 @@ import io.micronaut.data.model.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 /**
@@ -90,6 +91,36 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
                 } else {
                     future.completeExceptionally(new EmptyResultException());
                 }
+            } catch (Throwable e) {
+                future.completeExceptionally(e);
+            }
+        });
+        return future;
+    }
+
+    @NonNull
+    @Override
+    public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+        CompletableFuture<T> future = new CompletableFuture<>();
+        executor.execute(() -> {
+            try {
+                T r = datastore.findOne(type, id);
+                future.complete(r);
+            } catch (Throwable e) {
+                future.completeExceptionally(e);
+            }
+        });
+        return future;
+    }
+
+    @NonNull
+    @Override
+    public <T, R> CompletableFuture<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery) {
+        CompletableFuture<R> future = new CompletableFuture<>();
+        executor.execute(() -> {
+            try {
+                R r = datastore.findOne(preparedQuery);
+                future.complete(r);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
             }

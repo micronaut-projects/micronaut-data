@@ -63,6 +63,27 @@ public interface AsyncRepositoryOperations {
     @NonNull <T, R> CompletionStage<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
+     * Find one by ID.
+     *
+     * @param type The type
+     * @param id The id
+     * @param <T> The generic type
+     * @return A completion stage that emits the result or null if there is no result
+     */
+    @NonNull
+    <T> CompletionStage<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+
+    /**
+     * Find one by Query.
+     *
+     * @param preparedQuery The prepared query
+     * @param <T> The generic resultType
+     * @param <R> The result type
+     * @return A completion stage that emits the result or null if there is no result
+     */
+    @NonNull <T, R> CompletionStage<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
+
+    /**
      * Finds all results for the given query.
      * @param rootEntity The root entity
      * @param pageable The pageable

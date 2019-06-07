@@ -58,6 +58,30 @@ public interface ReactiveRepositoryOperations {
     @NonNull <T, R> Publisher<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
+     * Find one by ID.
+     *
+     * @param type The type
+     * @param id The id
+     * @param <T> The generic type
+     * @return A publisher that emits zero or one result
+     * @throws io.micronaut.data.exceptions.EmptyResultException if the result couldn't be retrieved
+     */
+    @NonNull
+    @SingleResult
+    <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id);
+
+    /**
+     * Find one by Query.
+     *
+     * @param preparedQuery The prepared query
+     * @param <T> The generic resultType
+     * @param <R> The result type
+     * @return A publisher that emits the zero or one result
+     */
+    @SingleResult
+    @NonNull <T, R> Publisher<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery);
+
+    /**
      * Finds all results for the given query.
      * @param rootEntity The root entity
      * @param pageable The pageable

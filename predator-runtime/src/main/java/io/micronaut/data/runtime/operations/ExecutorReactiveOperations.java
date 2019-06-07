@@ -81,6 +81,22 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
+    public <T> Publisher<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
+        return Publishers.fromCompletableFuture(() ->
+                asyncOperations.findOptional(type, id)
+        );
+    }
+
+    @NonNull
+    @Override
+    public <T, R> Publisher<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery) {
+        return Publishers.fromCompletableFuture(() ->
+                asyncOperations.findOptional(preparedQuery)
+        );
+    }
+
+    @NonNull
+    @Override
     public <T> Publisher<T> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
         return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
                 asyncOperations.findAll(rootEntity, pageable)
