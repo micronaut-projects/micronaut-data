@@ -11,9 +11,9 @@ The following table summarizes the possible expressions and behaviour:
 .Property Criterion Expressions
 [cols=3*]
 |===
-|Example Suffix
-|Description
-|Sample
+|*Example Suffix*
+|*Description*
+|*Sample*
 
 |`After`
 |Find results where the property is after the given value
@@ -37,7 +37,7 @@ The following table summarizes the possible expressions and behaviour:
 
 |`LessThanEquals`
 |Find results where the property is less than or equal to the given value
-|`findByPagesGreaterThanEquals`
+|`findByPagesLessThanEquals`
 
 |`Like`
 |Finds string values "like" the given expression
@@ -60,7 +60,7 @@ The following table summarizes the possible expressions and behaviour:
 |`findByAuthorIsNull`
 
 |`IsNotNull`
-|Finds results where the property is `IsNotNull`
+|Finds results where the property is not `null`
 |`findByAuthorIsNotNull`
 
 |`IsEmpty`
