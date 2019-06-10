@@ -34,4 +34,6 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     Author findByNameStartsWith(String name);
 
     Author findByNameEndsWith(String name);
+
+    Author findByNameIgnoreCase(String name);
 }

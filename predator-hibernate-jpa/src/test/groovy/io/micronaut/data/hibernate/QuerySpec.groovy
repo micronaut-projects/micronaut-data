@@ -65,5 +65,6 @@ class QuerySpec extends Specification {
         authorRepository.countByNameContains("e") == 2
         authorRepository.findByNameStartsWith("S").name == "Stephen King"
         authorRepository.findByNameEndsWith("w").name == "Don Winslow"
+        authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
     }
 }

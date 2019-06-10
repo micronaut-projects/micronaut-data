@@ -27,6 +27,8 @@ import io.micronaut.data.model.query.factory.Restrictions;
  */
 public abstract class CriterionMethodExpression {
 
+    private static final String IGNORE_CASE_SUFFIX = "IgnoreCase";
+    protected final boolean ignoreCase;
     protected String propertyName;
     protected String[] argumentNames;
     protected int argumentsRequired = 1;
@@ -36,7 +38,13 @@ public abstract class CriterionMethodExpression {
      * @param propertyName The property name the criterion expression relates to
      */
     protected CriterionMethodExpression(String propertyName) {
-        this.propertyName = propertyName;
+        if (propertyName.endsWith(IGNORE_CASE_SUFFIX)) {
+            this.propertyName = propertyName.substring(0, propertyName.length() - IGNORE_CASE_SUFFIX.length());
+            this.ignoreCase = true;
+        } else {
+            this.propertyName = propertyName;
+            this.ignoreCase = false;
+        }
     }
 
     /**
@@ -223,7 +231,8 @@ public abstract class CriterionMethodExpression {
 
         @Override
         public QueryModel.Criterion createCriterion() {
-            return Restrictions.startsWith(propertyName, new QueryParameter(argumentNames[0]));
+            return Restrictions.startsWith(propertyName, new QueryParameter(argumentNames[0]))
+                    .ignoreCase(ignoreCase);
         }
     }
 
@@ -255,7 +264,8 @@ public abstract class CriterionMethodExpression {
 
         @Override
         public QueryModel.Criterion createCriterion() {
-            return Restrictions.endsWith(propertyName, new QueryParameter(argumentNames[0]));
+            return Restrictions.endsWith(propertyName, new QueryParameter(argumentNames[0]))
+                                .ignoreCase(ignoreCase);
         }
     }
 
@@ -536,7 +546,8 @@ public abstract class CriterionMethodExpression {
         public QueryModel.Criterion createCriterion() {
             String argument = argumentNames[0];
             if (argument != null) {
-                return Restrictions.eq(propertyName, new QueryParameter(argument));
+                return Restrictions.eq(propertyName, new QueryParameter(argument))
+                            .ignoreCase(ignoreCase);
             } else {
                 return Restrictions.isNull(propertyName);
             }
@@ -561,7 +572,8 @@ public abstract class CriterionMethodExpression {
         public QueryModel.Criterion createCriterion() {
             String argument = argumentNames[0];
             if (argument != null) {
-                return Restrictions.ne(propertyName, new QueryParameter(argumentNames[0]));
+                return Restrictions.ne(propertyName, new QueryParameter(argumentNames[0]))
+                        .ignoreCase(ignoreCase);
             } else {
                 return Restrictions.isNotNull(propertyName);
             }

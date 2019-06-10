@@ -296,12 +296,21 @@ public class JpaQueryBuilder implements QueryBuilder {
             QueryModel.Equals eq = (QueryModel.Equals) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, QueryModel.Equals.class);
-            appendCriteriaForOperator(
-                    queryState,
-                    name.indexOf('.') == -1 ? prop.getName() : name,
-                    eq.getValue(),
-                    " = "
-            );
+            if (eq.isIgnoreCase()) {
+                appendCaseInsensitiveCriterion(
+                        queryState,
+                        eq,
+                        prop,
+                        "="
+                );
+            } else {
+                appendCriteriaForOperator(
+                        queryState,
+                        name.indexOf('.') == -1 ? prop.getName() : name,
+                        eq.getValue(),
+                        " = "
+                );
+            }
         });
 
         QUERY_HANDLERS.put(QueryModel.EqualsProperty.class, (queryState, criterion) -> {
@@ -465,9 +474,18 @@ public class JpaQueryBuilder implements QueryBuilder {
             QueryModel.NotEquals eq = (QueryModel.NotEquals) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, QueryModel.NotEquals.class);
-            appendCriteriaForOperator(
-                    queryState, prop.getName(), eq.getValue(), " != "
-            );
+            if (eq.isIgnoreCase()) {
+                appendCaseInsensitiveCriterion(
+                        queryState,
+                        eq,
+                        prop,
+                        "!="
+                );
+            } else {
+                appendCriteriaForOperator(
+                        queryState, prop.getName(), eq.getValue(), " != "
+                );
+            }
         });
 
         QUERY_HANDLERS.put(QueryModel.GreaterThan.class, (queryState, criterion) -> {
@@ -542,20 +560,8 @@ public class JpaQueryBuilder implements QueryBuilder {
             QueryModel.ILike eq = (QueryModel.ILike) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.entity, name, QueryModel.ILike.class);
-            String parameterName = newParameter(queryState.position);
-            queryState.whereClause.append("lower(")
-                    .append(queryState.logicalName)
-                    .append(DOT)
-                    .append(prop.getName())
-                    .append(")")
-                    .append(" like lower(")
-                    .append(':')
-                    .append(parameterName)
-                    .append(")");
-            Object value = eq.getValue();
-            if (value instanceof QueryParameter) {
-                queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
-            }
+            String operator = "like";
+            appendCaseInsensitiveCriterion(queryState, eq, prop, operator);
         });
 
         QUERY_HANDLERS.put(QueryModel.StartsWith.class, (queryState, criterion) -> {
@@ -693,6 +699,24 @@ public class JpaQueryBuilder implements QueryBuilder {
             handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
         });
 
+    }
+
+    private static void appendCaseInsensitiveCriterion(QueryState queryState, QueryModel.PropertyCriterion criterion, PersistentProperty prop, String operator) {
+        String parameterName = newParameter(queryState.position);
+        queryState.whereClause.append("lower(")
+                .append(queryState.logicalName)
+                .append(DOT)
+                .append(prop.getName())
+                .append(") ")
+                .append(operator)
+                .append(" lower(")
+                .append(':')
+                .append(parameterName)
+                .append(")");
+        Object value = criterion.getValue();
+        if (value instanceof QueryParameter) {
+            queryState.parameters.put(parameterName, ((QueryParameter) value).getName());
+        }
     }
 
     private static void handleSubQuery(QueryState queryState, QueryModel.SubqueryCriterion subqueryCriterion, String comparisonExpression) {

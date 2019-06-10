@@ -367,6 +367,7 @@ public interface QueryModel extends Criteria {
     class PropertyCriterion extends PropertyNameCriterion {
 
         protected Object value;
+        private boolean ignoreCase = false;
 
         /**
          * Default constructor.
@@ -391,6 +392,23 @@ public interface QueryModel extends Criteria {
          */
         public void setValue(Object v) {
             this.value = v;
+        }
+
+        /**
+         * @return Whether to ignore case,
+         */
+        public boolean isIgnoreCase() {
+            return ignoreCase;
+        }
+
+        /**
+         * Sets whether to ignore case.
+         * @param ignoreCase True if case should be ignored
+         * @return This criterion
+         */
+        public PropertyCriterion ignoreCase(boolean ignoreCase) {
+            this.ignoreCase = ignoreCase;
+            return this;
         }
     }
 
