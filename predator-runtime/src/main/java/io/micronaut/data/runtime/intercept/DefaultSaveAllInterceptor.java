@@ -15,7 +15,10 @@
  */
 package io.micronaut.data.runtime.intercept;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -27,16 +30,15 @@ import io.micronaut.data.operations.RepositoryOperations;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultSaveAllInterceptor<T, R> implements SaveAllInterceptor<T, R> {
-
-    private final RepositoryOperations datastore;
+public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T, Iterable<R>>
+        implements SaveAllInterceptor<T, R> {
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param operations The operations
      */
-    protected DefaultSaveAllInterceptor(RepositoryOperations datastore) {
-        this.datastore = datastore;
+    public DefaultSaveAllInterceptor(@NonNull RepositoryOperations operations) {
+        super(operations);
     }
 
     @Override
@@ -44,7 +46,14 @@ public class DefaultSaveAllInterceptor<T, R> implements SaveAllInterceptor<T, R>
         Object[] parameterValues = context.getParameterValues();
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked
-            return datastore.persistAll((Iterable<R>) parameterValues[0]);
+            Iterable<R> iterable = (Iterable<R>) parameterValues[0];
+            Iterable<R> rs = datastore.persistAll(getBatchOperation(context, iterable));
+            ReturnType<Iterable<R>> rt = context.getReturnType();
+            if (!rt.getType().isInstance(rs)) {
+                return ConversionService.SHARED.convert(rs, rt.asArgument())
+                            .orElseThrow(() -> new IllegalStateException("Unsupported iterable return type: " + rs.getClass()));
+            }
+            return rs;
         } else {
             throw new IllegalArgumentException("First argument should be an iterable");
         }

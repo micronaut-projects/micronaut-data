@@ -7,8 +7,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -45,9 +44,7 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
                             }));
 
         } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-            return asyncDatastoreOperations.findPage(rootEntity, pageable);
+            return asyncDatastoreOperations.findPage(getPagedQuery(context));
         }
     }
 }

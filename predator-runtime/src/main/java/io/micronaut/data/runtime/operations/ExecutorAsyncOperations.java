@@ -17,12 +17,14 @@ package io.micronaut.data.runtime.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
@@ -44,13 +46,13 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     /**
      * Default constructor.
-     * @param datastore The target datastore
+     * @param operations The target operations
      * @param executor The executor to use.
      */
-    public ExecutorAsyncOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
-        ArgumentUtils.requireNonNull("datastore", datastore);
+    public ExecutorAsyncOperations(@NonNull RepositoryOperations operations, @NonNull Executor executor) {
+        ArgumentUtils.requireNonNull("operations", operations);
         ArgumentUtils.requireNonNull("executor", executor);
-        this.datastore = datastore;
+        this.datastore = operations;
         this.executor = executor;
     }
 
@@ -129,11 +131,11 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<Iterable<T>> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
+    public <T> CompletableFuture<Iterable<T>> findAll(@NonNull PagedQuery<T> pagedQuery) {
         CompletableFuture<Iterable<T>> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                Iterable<T> r = datastore.findAll(rootEntity, pageable);
+                Iterable<T> r = datastore.findAll(pagedQuery);
                 future.complete(r);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
@@ -143,11 +145,11 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     }
 
     @Override
-    public <T> CompletableFuture<Long> count(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
+    public <T> CompletableFuture<Long> count(@NonNull PagedQuery<T> pagedQuery) {
         CompletableFuture<Long> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                long r = datastore.count(rootEntity, pageable);
+                long r = datastore.count(pagedQuery);
                 future.complete(r);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
@@ -173,7 +175,7 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<T> persist(@NonNull T entity) {
+    public <T> CompletableFuture<T> persist(@NonNull InsertOperation<T> entity) {
         CompletableFuture<T> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
@@ -188,11 +190,11 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
-    public <T> CompletableFuture<Iterable<T>> persistAll(@NonNull Iterable<T> entities) {
+    public <T> CompletableFuture<Iterable<T>> persistAll(@NonNull BatchOperation<T> operation) {
         CompletableFuture<Iterable<T>> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                Iterable<T> r = datastore.persistAll(entities);
+                Iterable<T> r = datastore.persistAll(operation);
                 future.complete(r);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
@@ -216,12 +218,13 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
         return future;
     }
 
+    @NonNull
     @Override
-    public <T> CompletableFuture<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
+    public <T> CompletableFuture<Number> deleteAll(@NonNull BatchOperation<T> operation) {
         CompletableFuture<Number> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                int total = datastore.deleteAll(entityType, entities);
+                Number total = datastore.deleteAll(operation).orElse(0);
                 future.complete(total);
             } catch (Throwable e) {
                 future.completeExceptionally(e);
@@ -231,25 +234,11 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     }
 
     @Override
-    public <T> CompletableFuture<Number> deleteAll(@NonNull Class<T> entityType) {
-        CompletableFuture<Number> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Number number = datastore.deleteAll(entityType).orElse(0);
-                future.complete(number);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
-    }
-
-    @Override
-    public <R> CompletableFuture<Page<R>> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable) {
+    public <R> CompletableFuture<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery) {
         CompletableFuture<Page<R>> future = new CompletableFuture<>();
         executor.execute(() -> {
             try {
-                Page<R> r = datastore.findPage(entity, pageable);
+                Page<R> r = datastore.findPage(pagedQuery);
                 future.complete(r);
             } catch (Throwable e) {
                 future.completeExceptionally(e);

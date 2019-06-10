@@ -86,7 +86,7 @@ public final class PredatorIntroductionAdvice implements MethodInterceptor<Objec
         PredatorInterceptor interceptor = interceptorMap.get(key);
         if (interceptor == null) {
             if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
-                throw new IllegalArgumentException("Backend type must be an instance of Datastore!");
+                throw new IllegalArgumentException("Repository type must be an instance of RepositoryOperations!");
             }
 
             RepositoryOperations datastore;
@@ -98,7 +98,7 @@ public final class PredatorIntroductionAdvice implements MethodInterceptor<Objec
                     datastore = (RepositoryOperations) beanLocator.getBean(operationsType);
                 }
             } catch (NoSuchBeanException e) {
-                throw new ConfigurationException("No backing datasource configured for repository. Check your configuration and try again", e);
+                throw new ConfigurationException("No backing RepositoryOperations configured for repository. Check your configuration and try again", e);
             }
             BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref -> interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
                     new DataAccessException("No Predator interceptor found for type: " + interceptorType)

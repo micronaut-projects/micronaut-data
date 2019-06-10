@@ -17,8 +17,14 @@ package io.micronaut.data.hibernate.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -29,7 +35,7 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.Sort;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -38,6 +44,7 @@ import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.persistence.FlushModeType;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
@@ -112,6 +119,7 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
                             .createQuery(query, Tuple.class);
                 }
                 bindParameters(q, parameters);
+                bindQueryHints(q, preparedQuery);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional()
                         .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
@@ -129,6 +137,7 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
                             .createQuery(query, wrapperType);
                 }
                 bindParameters(q, parameters);
+                bindQueryHints(q, preparedQuery);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional().orElse(null);
             }
@@ -137,29 +146,30 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
 
     @NonNull
     @Override
-    public <T> Iterable<T> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
+    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            Query<T> q = buildCriteriaQuery(session, rootEntity, criteriaBuilder, pageable);
+            Query<T> q = buildCriteriaQuery(session, query.getRootEntity(), criteriaBuilder, query.getPageable());
 
             return q.list();
         });
     }
 
     @Override
-    public <T> long count(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
+    public <T> long count(PagedQuery<T> pagedQuery) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
-            Root<T> root = query.from(rootEntity);
+            Root<T> root = query.from(pagedQuery.getRootEntity());
             query = query.select(criteriaBuilder.count(root));
             Query<Long> q = session.createQuery(
                     query
             );
+            Pageable pageable = pagedQuery.getPageable();
             bindCriteriaSort(query, root, criteriaBuilder, pageable);
             bindPageable(q, pageable);
 
@@ -185,8 +195,7 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
                             .createQuery(preparedQuery.getQuery(), Tuple.class);
                 }
 
-                bindParameters(q, preparedQuery.getParameterValues());
-                bindPageable(q, preparedQuery.getPageable());
+                bindPreparedQuery(q, preparedQuery);
                 return q.stream()
                         .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
                                 .map(tuple, preparedQuery.getResultType()))
@@ -202,36 +211,65 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
                     q = currentSession
                             .createQuery(preparedQuery.getQuery(), wrapperType);
                 }
-                bindParameters(q, preparedQuery.getParameterValues());
-                bindPageable(q, preparedQuery.getPageable());
+                bindPreparedQuery(q, preparedQuery);
                 return q.list();
             }
         });
     }
 
+    private <T, R> void bindPreparedQuery(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery) {
+        bindParameters(q, preparedQuery.getParameterValues());
+        bindPageable(q, preparedQuery.getPageable());
+        bindQueryHints(q, preparedQuery);
+    }
+
+    private <T, R> void bindQueryHints(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery) {
+        Map<String, String> queryHints = preparedQuery.getQueryHints();
+        if (CollectionUtils.isNotEmpty(queryHints)) {
+            for (Map.Entry<String, String> entry : queryHints.entrySet()) {
+                q.setHint(entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
     @SuppressWarnings("ConstantConditions")
     @Override
-    public <T> T persist(@NonNull T entity) {
+    public <T> T persist(@NonNull InsertOperation<T> operation) {
         return writeTransactionTemplate.execute(status -> {
-            getCurrentSession().persist(entity);
+            T entity = operation.getEntity();
+            Session session = getCurrentSession();
+            session.persist(entity);
+            flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
     }
 
     @SuppressWarnings("ConstantConditions")
+    @NonNull
     @Override
-    public <T> Iterable<T> persistAll(@NonNull Iterable<T> entities) {
+    public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
         return writeTransactionTemplate.execute(status -> {
-            if (entities != null) {
+            if (operation != null) {
                 Session session = getCurrentSession();
-                for (T entity : entities) {
+                for (T entity : operation) {
                     session.persist(entity);
                 }
-                return entities;
+                AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+                flushIfNecessary(session, annotationMetadata);
+                return operation;
             } else {
                 return Collections.emptyList();
             }
         });
+    }
+
+    private void flushIfNecessary(Session session, AnnotationMetadata annotationMetadata) {
+        if (annotationMetadata.hasAnnotation(QueryHint.class)) {
+            FlushModeType flushModeType = getFlushModeType(annotationMetadata);
+            if (flushModeType == FlushModeType.AUTO) {
+                session.flush();
+            }
+        }
     }
 
     @NonNull
@@ -246,30 +284,30 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
     }
 
     @Override
-    public <T> int deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
-        Integer result = writeTransactionTemplate.execute(status -> {
-            int i = 0;
-            Session session = getCurrentSession();
-            for (T entity : entities) {
-                session.remove(entity);
-                i++;
-            }
-            return i;
-        });
-        return result;
-    }
-
-    @Override
-    public <T> Optional<Number> deleteAll(@NonNull Class<T> entityType) {
-        return writeTransactionTemplate.execute(status -> {
-            Session session = getCurrentSession();
-            CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
-            criteriaDelete.from(entityType);
-            Query query = session.createQuery(
-                    criteriaDelete
-            );
-            return Optional.of(query.executeUpdate());
-        });
+    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
+        if (operation.all()) {
+            return writeTransactionTemplate.execute(status -> {
+                Class<T> entityType = operation.getRootEntity();
+                Session session = getCurrentSession();
+                CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
+                criteriaDelete.from(entityType);
+                Query query = session.createQuery(
+                        criteriaDelete
+                );
+                return Optional.of(query.executeUpdate());
+            });
+        } else {
+            Integer result = writeTransactionTemplate.execute(status -> {
+                int i = 0;
+                Session session = getCurrentSession();
+                for (T entity : operation) {
+                    session.remove(entity);
+                    i++;
+                }
+                return i;
+            });
+            return Optional.ofNullable(result);
+        }
     }
 
     @NonNull
@@ -316,26 +354,29 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
 
     @NonNull
     @Override
-    public <T> Stream<T> findStream(@NonNull Class<T> entity, @NonNull Pageable pageable) {
+    public <T> Stream<T> findStream(@NonNull PagedQuery<T> pagedQuery) {
         Session session = getCurrentSession();
+        Class<T> entity = pagedQuery.getRootEntity();
         CriteriaQuery<T> query = session.getCriteriaBuilder().createQuery(entity);
         query.from(entity);
         Query<T> q = session.createQuery(
                 query
         );
-        bindPageable(q, pageable);
+        bindPageable(q, pagedQuery.getPageable());
 
         return q.stream();
     }
 
     @Override
-    public <T> Page<T> findPage(@NonNull Class<T> entity, @NonNull Pageable pageable) {
+    public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
-            Query<T> q = buildCriteriaQuery(session, entity, criteriaBuilder, pageable);
-            List<T> resultList = q.list();
+            Class<R> entity = query.getRootEntity();
+            Pageable pageable = query.getPageable();
+            Query<R> q = buildCriteriaQuery(session, entity, criteriaBuilder, pageable);
+            List<R> resultList = q.list();
             CriteriaQuery<Long> countQuery = criteriaBuilder.createQuery(Long.class);
             countQuery.select(criteriaBuilder.count(countQuery.from(entity)));
             Long total = session.createQuery(countQuery).getSingleResult();
@@ -345,6 +386,15 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
 
     private Session getCurrentSession() {
         return sessionFactory.getCurrentSession();
+    }
+
+    private FlushModeType getFlushModeType(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.getAnnotationValuesByType(QueryHint.class)
+                .stream()
+                .filter(av -> FlushModeType.class.getName().equals(av.stringValue("name").orElse(null)))
+                .map(av -> av.enumValue("value", FlushModeType.class))
+                .findFirst()
+                .orElse(Optional.empty()).orElse(null);
     }
 
     private <T> Query<T> buildCriteriaQuery(Session session, @NonNull Class<T> rootEntity, CriteriaBuilder criteriaBuilder, @NonNull Pageable pageable) {

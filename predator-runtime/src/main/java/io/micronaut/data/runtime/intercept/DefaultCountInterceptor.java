@@ -15,15 +15,13 @@
  */
 package io.micronaut.data.runtime.intercept;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.CountInterceptor;
-import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.model.PreparedQuery;
 
 import java.util.Iterator;
 
@@ -33,6 +31,7 @@ import java.util.Iterator;
  * @author graemerocher
  * @since 1.0.0
  */
+@SuppressWarnings("unused")
 public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements CountInterceptor<T> {
 
     /**
@@ -52,14 +51,7 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
             Iterator<Long> i = iterable.iterator();
             result = i.hasNext() ? i.next() : 0;
         } else {
-            Class<?> rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-            if (pageable != null) {
-                result = datastore.count(rootEntity, pageable);
-            } else {
-                result = datastore.count(rootEntity);
-            }
+            result = datastore.count(getPagedQuery(context));
         }
 
         return ConversionService.SHARED.convert(

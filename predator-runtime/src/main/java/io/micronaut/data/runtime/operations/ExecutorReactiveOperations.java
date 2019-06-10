@@ -18,11 +18,13 @@ package io.micronaut.data.runtime.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
@@ -97,16 +99,25 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<T> findAll(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
+    public <T> Publisher<T> findAll(PagedQuery<T> pagedQuery) {
         return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
-                asyncOperations.findAll(rootEntity, pageable)
+                asyncOperations.findAll(pagedQuery)
         )).flatMap(Flowable::fromIterable);
     }
 
+    @NonNull
     @Override
-    public <T> Publisher<Long> count(@NonNull Class<T> rootEntity, @NonNull Pageable pageable) {
+    public <T> Publisher<Long> count(PagedQuery<T> pagedQuery) {
         return Publishers.fromCompletableFuture(() ->
-                asyncOperations.count(rootEntity, pageable)
+                asyncOperations.count(pagedQuery)
+        );
+    }
+
+    @NonNull
+    @Override
+    public <R> Publisher<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery) {
+        return Publishers.fromCompletableFuture(() ->
+                asyncOperations.findPage(pagedQuery)
         );
     }
 
@@ -120,7 +131,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<T> persist(@NonNull T entity) {
+    public <T> Publisher<T> persist(@NonNull InsertOperation<T> entity) {
         return Publishers.fromCompletableFuture(() ->
                 asyncOperations.persist(entity)
         );
@@ -128,9 +139,9 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<T> persistAll(@NonNull Iterable<T> entities) {
+    public <T> Publisher<T> persistAll(@NonNull BatchOperation<T> operation) {
         return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
-                asyncOperations.persistAll(entities)
+                asyncOperations.persistAll(operation)
         )).flatMap(Flowable::fromIterable);
     }
 
@@ -142,24 +153,11 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
         );
     }
 
+    @NonNull
     @Override
-    public <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities) {
+    public <T> Publisher<Number> deleteAll(BatchOperation<T> operation) {
         return Publishers.fromCompletableFuture(() ->
-                asyncOperations.deleteAll(entityType, entities)
-        );
-    }
-
-    @Override
-    public <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.deleteAll(entityType)
-        );
-    }
-
-    @Override
-    public <R> Publisher<Page<R>> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable) {
-        return Publishers.fromCompletableFuture(() ->
-                asyncOperations.findPage(entity, pageable)
+                asyncOperations.deleteAll(operation)
         );
     }
 }

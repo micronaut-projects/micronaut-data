@@ -3,6 +3,7 @@ package io.micronaut.data.runtime.intercept.async;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 
@@ -29,7 +30,8 @@ public class DefaultSaveAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         Object[] parameterValues = context.getParameterValues();
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked
-            return asyncDatastoreOperations.persistAll((Iterable<Object>) parameterValues[0]);
+            BatchOperation<Object> batchOperation = getBatchOperation(context, (Iterable<Object>) parameterValues[0]);
+            return asyncDatastoreOperations.persistAll(batchOperation);
         } else {
             throw new IllegalArgumentException("First argument should be an iterable");
         }

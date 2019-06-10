@@ -19,9 +19,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindStreamInterceptor;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.stream.Stream;
 
@@ -31,6 +30,7 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0.0
  */
+@SuppressWarnings("unused")
 public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T, Stream<T>> implements FindStreamInterceptor<T> {
 
     /**
@@ -47,14 +47,7 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
             return (Stream<T>) datastore.findStream(preparedQuery);
         } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-            if (pageable != null) {
-                return datastore.findStream(rootEntity, pageable);
-            } else {
-                return datastore.findStream(rootEntity);
-            }
+            return datastore.findStream(getPagedQuery(context));
         }
     }
 }

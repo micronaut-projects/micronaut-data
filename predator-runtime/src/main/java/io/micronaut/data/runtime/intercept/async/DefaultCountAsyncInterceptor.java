@@ -19,8 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.Iterator;
 import java.util.concurrent.CompletionStage;
@@ -56,17 +55,7 @@ public class DefaultCountAsyncInterceptor<T> extends AbstractAsyncInterceptor<T,
                         return result;
                     });
         } else {
-            Class<?> rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-
-            CompletionStage<Long> result;
-            if (pageable != null) {
-                result = asyncDatastoreOperations.count(rootEntity, pageable);
-            } else {
-                result = asyncDatastoreOperations.count(rootEntity, Pageable.unpaged());
-            }
-            return result;
+            return asyncDatastoreOperations.count(getPagedQuery(context));
         }
     }
 }

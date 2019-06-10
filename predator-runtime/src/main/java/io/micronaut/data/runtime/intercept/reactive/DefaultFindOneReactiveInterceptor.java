@@ -21,7 +21,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 

@@ -21,7 +21,7 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 /**
  * The default implementation of {@link ExistsByInterceptor}.

@@ -44,6 +44,6 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         Object instance = instantiateEntity(rootEntity, parameterValueMap);
-        return datastore.persist(instance);
+        return datastore.persist(getInsertOperation(context, instance));
     }
 }

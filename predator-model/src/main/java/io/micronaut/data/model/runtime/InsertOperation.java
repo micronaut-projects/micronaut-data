@@ -13,34 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model;
+package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 
-import java.util.Map;
-
 /**
- * Interface that models a prepared query. A prepared query extends from {@link StoredQuery} and includes the bound parameter values.
+ * An insert operation that inserts a record.
  *
+ * @param <E> The entity type
  * @author graemerocher
  * @since 1.0.0
- * @param <E> The entity type
- * @param <R> The result type
  */
-public interface PreparedQuery<E, R> extends StoredQuery<E, R>, AnnotationMetadataProvider, Named {
+public interface InsertOperation<E> extends Named, AnnotationMetadataProvider {
 
     /**
-     * @return The named parameter values
+     * The root entity type.
+     *
+     * @return The root entity type
      */
     @NonNull
-    Map<String, Object> getParameterValues();
+    Class<E> getRootEntity();
 
     /**
-     * @return The pageable object. Defaults to {@link Pageable#UNPAGED}
+     * @return The entity to insert.
      */
-    @NonNull
-    Pageable getPageable();
-
+    E getEntity();
 }

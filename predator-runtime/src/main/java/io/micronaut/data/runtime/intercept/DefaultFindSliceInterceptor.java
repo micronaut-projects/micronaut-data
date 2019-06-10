@@ -24,8 +24,9 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindSliceInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 /**
  * Default implementation of {@link FindSliceInterceptor}.
@@ -55,11 +56,9 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
             return convertOrFail(context, slice);
         } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getRequiredPageable(context);
-
-            Iterable iterable = datastore.findAll(rootEntity, pageable);
-            Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
+            PagedQuery<Object> pagedQuery = getPagedQuery(context);
+            Iterable iterable = datastore.findAll(pagedQuery);
+            Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pagedQuery.getPageable());
             return convertOrFail(context, slice);
         }
     }

@@ -31,12 +31,15 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
@@ -260,7 +263,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                 }
             }
         }
-        return pageable;
+        return pageable != null ? pageable : Pageable.UNPAGED;
     }
 
     /**
@@ -443,6 +446,250 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
     }
 
     /**
+     * Get the paged query for the given context.
+     * @param context The contet
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    protected @NonNull <E> PagedQuery<E> getPagedQuery(@NonNull MethodInvocationContext context) {
+        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
+        Pageable pageable = getPageable(context);
+
+        return new DefaultPagedQuery<>(context.getExecutableMethod(), rootEntity, pageable);
+    }
+
+    /**
+     * Get the batch oepration for the given context.
+     * @param context The context
+     * @param iterable The iterable
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    protected @NonNull <E> BatchOperation<E> getBatchOperation(@NonNull MethodInvocationContext context, @NonNull Iterable<E> iterable) {
+        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
+        return getBatchOperation(context, rootEntity, iterable);
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param <E> The entity type
+     * @param context The context
+     * @param rootEntity The root entity
+     * @param iterable The iterable
+     * @return The paged query
+     */
+    protected <E> BatchOperation<E> getBatchOperation(@NonNull MethodInvocationContext context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
+        return new DefaultBatchOperation<>(context.getExecutableMethod(), rootEntity, iterable);
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param context The context
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    protected @NonNull <E> BatchOperation<E> getBatchOperation(@NonNull MethodInvocationContext context) {
+        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
+        return getBatchOperation(context, rootEntity);
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param context The context
+     * @param rootEntity The root entity
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    protected <E> BatchOperation<E> getBatchOperation(@NonNull MethodInvocationContext context, @NonNull Class<E> rootEntity) {
+        return new AllBatchOperation<>(context.getExecutableMethod(), rootEntity);
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param context The context
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    @SuppressWarnings("unchecked")
+    protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext context) {
+        E o = (E) getRequiredEntity(context);
+        return new DefaultInsertOperation<>(context.getExecutableMethod(), o);
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param context The context
+     * @param entity The entity
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext context, E entity) {
+        return new DefaultInsertOperation<>(context.getExecutableMethod(), entity);
+    }
+
+    /**
+     * Default implementation of {@link InsertOperation}.
+     * @param <E> The entity type
+     */
+    private final class DefaultInsertOperation<E> implements InsertOperation<E> {
+        private final ExecutableMethod<?, ?> method;
+        private final E entity;
+
+        DefaultInsertOperation(ExecutableMethod<?, ?> method, E entity) {
+            this.method = method;
+            this.entity = entity;
+        }
+
+        @NonNull
+        @Override
+        public Class<E> getRootEntity() {
+            return (Class<E>) entity.getClass();
+        }
+
+        @Override
+        public E getEntity() {
+            return entity;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return method.getMethodName();
+        }
+
+        @Override
+        public AnnotationMetadata getAnnotationMetadata() {
+            return method.getAnnotationMetadata();
+        }
+    }
+
+    /**
+     * Default implementation of {@link BatchOperation}.
+     * @param <E> The entity type
+     */
+    private final class DefaultBatchOperation<E> implements BatchOperation<E> {
+        private final ExecutableMethod<?, ?> method;
+        private final @NonNull Class<E> rootEntity;
+        private final Iterable<E> iterable;
+
+        public DefaultBatchOperation(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
+            this.method = method;
+            this.rootEntity = rootEntity;
+            this.iterable = iterable;
+        }
+
+        @NonNull
+        @Override
+        public Class<E> getRootEntity() {
+            return rootEntity;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return method.getMethodName();
+        }
+
+        @Override
+        public Iterator<E> iterator() {
+            return iterable.iterator();
+        }
+
+        @Override
+        public AnnotationMetadata getAnnotationMetadata() {
+            return method.getAnnotationMetadata();
+        }
+    }
+
+    /**
+     * Default implementation of {@link BatchOperation}.
+     * @param <E> The entity type
+     */
+    private final class AllBatchOperation<E> implements BatchOperation<E> {
+        private final ExecutableMethod<?, ?> method;
+        private final @NonNull Class<E> rootEntity;
+
+        public AllBatchOperation(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity) {
+            this.method = method;
+            this.rootEntity = rootEntity;
+        }
+
+        @Override
+        public boolean all() {
+            return true;
+        }
+
+        @NonNull
+        @Override
+        public Class<E> getRootEntity() {
+            return rootEntity;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return method.getMethodName();
+        }
+
+        @Override
+        public Iterator<E> iterator() {
+            return Collections.emptyIterator();
+        }
+
+        @Override
+        public AnnotationMetadata getAnnotationMetadata() {
+            return method.getAnnotationMetadata();
+        }
+    }
+
+    /**
+     * Default implementation of {@link PagedQuery}.
+     *
+     * @param <E> The paged query
+     */
+    private final class DefaultPagedQuery<E> implements PagedQuery<E> {
+
+        private final ExecutableMethod<?, ?> method;
+        private final @NonNull Class<E> rootEntity;
+        private final Pageable pageable;
+
+        /**
+         * Default constructor.
+         * @param method The method
+         * @param rootEntity The root entity
+         * @param pageable The pageable
+         */
+        DefaultPagedQuery(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity, Pageable pageable) {
+            this.method = method;
+            this.rootEntity = rootEntity;
+            this.pageable = pageable;
+        }
+
+        @NonNull
+        @Override
+        public Class<E> getRootEntity() {
+            return rootEntity;
+        }
+
+        @NonNull
+        @Override
+        public Pageable getPageable() {
+            return pageable;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return method.getMethodName();
+        }
+
+        @Override
+        public AnnotationMetadata getAnnotationMetadata() {
+            return method.getAnnotationMetadata();
+        }
+    }
+
+    /**
      * Represents a prepared query.
      *
      * @param <E> The entity type
@@ -457,6 +704,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final String lastUpdatedProp;
         private final boolean isDto;
         private final boolean isNative;
+        private HashMap<String, String> queryHints;
 
         /**
          * The default constructor.
@@ -479,6 +727,26 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             this.lastUpdatedProp = method.stringValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
             this.isNative = method.isTrue(Query.class, "nativeQuery");
+            if (method.hasAnnotation(QueryHint.class)) {
+                List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
+                this.queryHints = new HashMap<>();
+                for (AnnotationValue<QueryHint> value : values) {
+                    String n = value.stringValue("name").orElse(null);
+                    String v = value.stringValue("value").orElse(null);
+                    if (StringUtils.isNotEmpty(n) && StringUtils.isNotEmpty(v)) {
+                        queryHints.put(n, v);
+                    }
+                }
+            }
+        }
+
+        @NonNull
+        @Override
+        public Map<String, String> getQueryHints() {
+            if (queryHints != null) {
+                return queryHints;
+            }
+            return Collections.emptyMap();
         }
 
         @Override

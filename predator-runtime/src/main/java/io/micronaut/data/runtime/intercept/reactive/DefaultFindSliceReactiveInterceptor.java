@@ -21,7 +21,8 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.reactivex.Flowable;
@@ -54,11 +55,10 @@ public class DefaultFindSliceReactiveInterceptor extends AbstractReactiveInterce
             return Publishers.convertPublisher(publisher, context.getReturnType().getType());
 
         } else {
-            Class<?> rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-            Single<? extends Slice<?>> result = Flowable.fromPublisher(reactiveOperations.findAll(rootEntity, pageable != null ? pageable : Pageable.unpaged()))
+            PagedQuery<Object> pagedQuery = getPagedQuery(context);
+            Single<? extends Slice<?>> result = Flowable.fromPublisher(reactiveOperations.findAll(pagedQuery))
                     .toList().map(objects ->
-                            Slice.of(objects, pageable)
+                            Slice.of(objects, pagedQuery.getPageable())
                     );
             return Publishers.convertPublisher(result, context.getReturnType().getType());
         }

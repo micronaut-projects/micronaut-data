@@ -18,8 +18,10 @@ package io.micronaut.data.operations.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import org.reactivestreams.Publisher;
 
 import java.io.Serializable;
@@ -83,28 +85,21 @@ public interface ReactiveRepositoryOperations {
 
     /**
      * Finds all results for the given query.
-     * @param rootEntity The root entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <T> The generic type
      * @return A publisher that emits the results
      */
-    @NonNull <T> Publisher<T> findAll(
-            @NonNull Class<T> rootEntity,
-            @NonNull Pageable pageable
-    );
+    @NonNull <T> Publisher<T> findAll(PagedQuery<T> pagedQuery);
 
     /**
      * Counts all results for the given query.
-     * @param rootEntity The root entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <T> The generic type
      * @return A publisher that emits the count as a long
      */
     @SingleResult
-    <T> Publisher<Long> count(
-            @NonNull Class<T> rootEntity,
-            @NonNull Pageable pageable
-    );
+    @NonNull
+    <T> Publisher<Long> count(PagedQuery<T> pagedQuery);
 
     /**
      * Finds all results for the given query.
@@ -117,20 +112,20 @@ public interface ReactiveRepositoryOperations {
 
     /**
      * Persist the entity returning a possibly new entity.
-     * @param entity The entity
+     * @param operation The entity operation
      * @param <T> The generic type
      * @return A publisher that emits the entity
      */
     @SingleResult
-    @NonNull <T> Publisher<T> persist(@NonNull T entity);
+    @NonNull <T> Publisher<T> persist(@NonNull InsertOperation<T> operation);
 
     /**
      * Persist all the given entities.
-     * @param entities The entities
+     * @param operation The batch operation
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> Publisher<T> persistAll(@NonNull Iterable<T> entities);
+    @NonNull <T> Publisher<T> persistAll(@NonNull BatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -146,31 +141,22 @@ public interface ReactiveRepositoryOperations {
 
     /**
      * Deletes all the entities of the given type.
-     * @param entityType The entity type
-     * @param entities The entities
+     * @param operation The batch operation
      * @param <T> The generic type
      * @return A publisher that emits a boolean true if the update was successful
      */
     @SingleResult
-    <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
-
-    /**
-     * Deletes all the entities of the given type.
-     * @param entityType The entity type
-     * @param <T> The generic type
-     * @return A publisher that emits a boolean true if the update was successful
-     */
-    @SingleResult
-    <T> Publisher<Number> deleteAll(@NonNull Class<T> entityType);
+    @NonNull
+    <T> Publisher<Number> deleteAll(BatchOperation<T> operation);
 
     /**
      * Find a page for the given entity and pageable.
-     * @param entity The entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <R> The entity generic type
      * @return The page type
      */
     @SingleResult
-    <R> Publisher<Page<R>> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable);
+    @NonNull
+    <R> Publisher<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
 
 }

@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -46,7 +47,8 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             Object o = parameterValues[0];
             if (o != null) {
-                Publisher<Number> publisher = Publishers.map(reactiveOperations.deleteAll(rootEntity, Collections.singleton(o)),
+                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, Collections.singletonList(o));
+                Publisher<Number> publisher = Publishers.map(reactiveOperations.deleteAll(batchOperation),
                         n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument())
                 );
                 return Publishers.convertPublisher(

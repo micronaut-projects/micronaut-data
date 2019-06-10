@@ -20,8 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -50,16 +49,7 @@ public class DefaultCountReactiveInterceptor extends AbstractReactiveInterceptor
                     context.getReturnType().getType()
             );
         } else {
-            Class<?> rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-
-            Publisher<Long> result;
-            if (pageable != null) {
-                result = reactiveOperations.count(rootEntity, pageable);
-            } else {
-                result = reactiveOperations.count(rootEntity, Pageable.unpaged());
-            }
+            Publisher<Long> result = reactiveOperations.count(getPagedQuery(context));
             return Publishers.convertPublisher(
                     result,
                     context.getReturnType().getType()

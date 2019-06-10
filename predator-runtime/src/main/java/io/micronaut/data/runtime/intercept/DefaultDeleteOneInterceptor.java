@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -42,10 +43,10 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
     public Void intercept(MethodInvocationContext<T, Void> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
-            Class rootEntity = getRequiredRootEntity(context);
             Object o = parameterValues[0];
+            BatchOperation<Object> batchOperation = getBatchOperation(context, Collections.singletonList(o));
             if (o != null) {
-                datastore.deleteAll(rootEntity, Collections.singleton(o));
+                datastore.deleteAll(batchOperation);
             } else {
                 throw new IllegalArgumentException("Entity to delete cannot be null");
             }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model;
+package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
@@ -102,6 +102,16 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     default Map<String, String> getParameterBinding() {
+        return Collections.emptyMap();
+    }
+
+    /**
+     * The parameter binding. That is the mapping between named query parameters and parameters of the method.
+     *
+     * @return The parameter binding.
+     */
+    @NonNull
+    default Map<String, String> getQueryHints() {
         return Collections.emptyMap();
     }
 

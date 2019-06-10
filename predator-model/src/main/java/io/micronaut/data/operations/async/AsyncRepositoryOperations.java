@@ -18,8 +18,10 @@ package io.micronaut.data.operations.async;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
@@ -85,27 +87,19 @@ public interface AsyncRepositoryOperations {
 
     /**
      * Finds all results for the given query.
-     * @param rootEntity The root entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <T> The generic type
      * @return A completion stage that emits the results
      */
-    @NonNull <T> CompletionStage<Iterable<T>> findAll(
-            @NonNull Class<T> rootEntity,
-            @NonNull Pageable pageable
-    );
+    @NonNull <T> CompletionStage<Iterable<T>> findAll(PagedQuery<T> pagedQuery);
 
     /**
      * Counts all results for the given query.
-     * @param rootEntity The root entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <T> The generic type
      * @return A completion stage that emits the count as a long
      */
-    <T> CompletionStage<Long> count(
-            @NonNull Class<T> rootEntity,
-            @NonNull Pageable pageable
-    );
+    @NonNull <T> CompletionStage<Long> count(PagedQuery<T> pagedQuery);
 
     /**
      * Finds all results for the given query.
@@ -118,19 +112,19 @@ public interface AsyncRepositoryOperations {
 
     /**
      * Persist the entity returning a possibly new entity.
-     * @param entity The entity
+     * @param operation The entity operation
      * @param <T> The generic type
      * @return A completion stage that emits the entity
      */
-    @NonNull <T> CompletionStage<T> persist(@NonNull T entity);
+    @NonNull <T> CompletionStage<T> persist(@NonNull InsertOperation<T> operation);
 
     /**
      * Persist all the given entities.
-     * @param entities The entities
+     * @param operation The batch operation
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull Iterable<T> entities);
+    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull BatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -145,28 +139,18 @@ public interface AsyncRepositoryOperations {
 
     /**
      * Deletes all the entities of the given type.
-     * @param entityType The entity type
-     * @param entities The entities
+     * @param operation The batch operation
      * @param <T> The generic type
      * @return A completion that emits a boolean true if successful
      */
-    <T> CompletionStage<Number> deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
-
-    /**
-     * Deletes all the entities of the given type.
-     * @param entityType The entity type
-     * @param <T> The generic type
-     * @return A completion that emits a boolean true if successful
-     */
-    <T> CompletionStage<Number> deleteAll(@NonNull Class<T> entityType);
+    @NonNull <T> CompletionStage<Number> deleteAll(@NonNull BatchOperation<T> operation);
 
     /**
      * Find a page for the given entity and pageable.
-     * @param entity The entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <R> The entity generic type
      * @return The page type
      */
-    <R> CompletionStage<Page<R>> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable);
+    @NonNull <R> CompletionStage<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
 
 }

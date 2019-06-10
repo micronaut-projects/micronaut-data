@@ -22,8 +22,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindAllAsyncInterceptor;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
@@ -55,14 +54,7 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
             future = asyncDatastoreOperations.findAll(preparedQuery);
 
         } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-            if (pageable != null) {
-                future = asyncDatastoreOperations.findAll(rootEntity, pageable);
-            } else {
-                future = asyncDatastoreOperations.findAll(rootEntity, Pageable.unpaged());
-            }
+            future = asyncDatastoreOperations.findAll(getPagedQuery(context));
         }
         return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
             Argument<CompletionStage<Iterable<Object>>> targetType = context.getReturnType().asArgument();

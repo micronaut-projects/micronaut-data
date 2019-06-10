@@ -39,8 +39,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T,
 
     @Override
     public Object intercept(MethodInvocationContext<T, Object> context) {
-        Object o = getRequiredEntity(context);
-        return datastore.persist(o);
+        return datastore.persist(getInsertOperation(context));
     }
 
 }

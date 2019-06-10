@@ -21,7 +21,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.concurrent.CompletionStage;
 

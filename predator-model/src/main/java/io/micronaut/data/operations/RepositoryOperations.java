@@ -18,15 +18,17 @@ package io.micronaut.data.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 /**
- * Common interface for datastore implementations to implement.
+ * Common interface for repository implementations to implement.
  *
  * @author graemerocher
  * @since 1.0
@@ -55,27 +57,21 @@ public interface RepositoryOperations {
 
     /**
      * Finds all results for the given query.
-     * @param rootEntity The root entity
-     * @param pageable The pageable
+     * @param query The root entity
      * @param <T> The generic type
      * @return An iterable result
      */
     @NonNull <T> Iterable<T> findAll(
-            @NonNull Class<T> rootEntity,
-            @NonNull Pageable pageable
+            @NonNull PagedQuery<T> query
     );
 
     /**
      * Counts all results for the given query.
-     * @param rootEntity The root entity
-     * @param pageable The pageable
+     * @param pagedQuery The paged query
      * @param <T> The generic type
      * @return An iterable result
      */
-    <T> long count(
-            @NonNull Class<T> rootEntity,
-            @NonNull Pageable pageable
-    );
+    <T> long count(PagedQuery<T> pagedQuery);
 
     /**
      * Finds all results for the given query.
@@ -86,21 +82,47 @@ public interface RepositoryOperations {
      */
     @NonNull <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery);
 
+
+    /**
+     * Finds all results for the given query.
+     * @param preparedQuery The prepared query
+     * @param <T> The entity type
+     * @param <R> The result type
+     * @return An iterable result
+     */
+    @NonNull <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery);
+
+    /**
+     * Finds a stream for the given arguments.
+     * @param query The query
+     * @param <T> The generic type
+     * @return The stream
+     */
+    @NonNull <T> Stream<T> findStream(@NonNull PagedQuery<T> query);
+
+    /**
+     * Find a page for the given entity and pageable.
+     * @param query The query
+     * @param <R> The entity generic type
+     * @return The page type
+     */
+    <R> Page<R> findPage(@NonNull PagedQuery<R> query);
+
     /**
      * Persist the entity returning a possibly new entity.
      * @param entity The entity
      * @param <T> The generic type
      * @return The entity
      */
-    @NonNull <T> T persist(@NonNull T entity);
+    @NonNull <T> T persist(@NonNull InsertOperation<T> entity);
 
     /**
      * Persist all the given entities.
-     * @param entities The entities
+     * @param operation The operation
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> Iterable<T> persistAll(@NonNull Iterable<T> entities);
+    @NonNull <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -114,87 +136,9 @@ public interface RepositoryOperations {
 
     /**
      * Deletes all the entities of the given type.
-     * @param entityType The entity type
-     * @param entities The entities
+     * @param operation The operation
      * @param <T> The generic type
      * @return The number of entities deleted
      */
-    <T> int deleteAll(@NonNull Class<T> entityType, @NonNull Iterable<? extends T> entities);
-
-    /**
-     * Deletes all the entities of the given type.
-     * @param entityType The entity type
-     * @param <T> The generic type
-     * @return The number deleted
-     */
-    <T> Optional<Number> deleteAll(@NonNull Class<T> entityType);
-
-    /**
-     * Finds all results for the given query.
-     * @param preparedQuery The prepared query
-     * @param <T> The entity type
-     * @param <R> The result type
-     * @return An iterable result
-     */
-    @NonNull <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery);
-
-    /**
-     * Finds a stream for the given arguments.
-     * @param entity The result type
-     * @param pageable The pageable
-     * @param <T> The generic type
-     * @return The stream
-     */
-    @NonNull <T> Stream<T> findStream(
-            @NonNull Class<T> entity,
-            @NonNull Pageable pageable);
-
-    /**
-     * Find a page for the given entity and pageable.
-     * @param entity The entity
-     * @param pageable The pageable
-     * @param <R> The entity generic type
-     * @return The page type
-     */
-    <R> Page<R> findPage(@NonNull Class<R> entity, @NonNull Pageable pageable);
-
-    /**
-     * Finds a stream for the given arguments.
-     * @param entity The result type
-     * @param <T> The generic type
-     * @return The stream
-     */
-    default @NonNull <T> Stream<T> findStream(
-            @NonNull Class<T> entity) {
-        return findStream(entity, Pageable.unpaged());
-    }
-
-    /**
-     * Finds all results for the given query.
-     * @param rootEntity The root entity
-     * @param <T> The generic type
-     * @return An iterable result
-     */
-    default @NonNull <T> Iterable<T> findAll(
-            @NonNull Class<T> rootEntity
-    ) {
-        return findAll(
-                rootEntity,
-                Pageable.unpaged()
-        );
-    }
-
-    /**
-     * Counts all results for the given query.
-     * @param rootEntity The root entity
-     * @param <T> The generic type
-     * @return An iterable result
-     */
-    default <T> long count(@NonNull Class<T> rootEntity) {
-        return count(
-                rootEntity,
-                Pageable.unpaged()
-        );
-    }
-
+    <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation);
 }

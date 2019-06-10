@@ -45,8 +45,10 @@ public class DefaultSaveOneReactiveInterceptor extends AbstractReactiveIntercept
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
 
-        Flowable<Object> publisher = Flowable.fromCallable(() -> instantiateEntity(rootEntity, parameterValueMap))
-                .flatMap(reactiveOperations::persist);
+        Flowable<Object> publisher = Flowable.fromCallable(() -> {
+            Object o = instantiateEntity(rootEntity, parameterValueMap);
+            return getInsertOperation(context, o);
+        }).flatMap(reactiveOperations::persist);
         return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }
 }

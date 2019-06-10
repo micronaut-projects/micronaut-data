@@ -40,8 +40,7 @@ public class HibernateJpaOperationsFactory {
      * @return The hibernate datastore
      */
     @EachBean(SessionFactory.class)
-    protected @NonNull
-    HibernateJpaOperations hibernateJpaDatastore(
+    protected @NonNull HibernateJpaOperations hibernateJpaDatastore(
             @NonNull SessionFactory sessionFactory,
             @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new HibernateJpaOperations(sessionFactory, executorService);

@@ -22,9 +22,8 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.List;
 
@@ -48,6 +47,7 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
 
     @Override
     public R intercept(MethodInvocationContext<T, R> context) {
+        Class<R> returnType = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(context);
@@ -56,18 +56,20 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
             Long result = datastore.findOne(countQuery).longValue();
             Page<R> page = Page.of(resultList, getPageable(context), result);
-            return ConversionService.SHARED.convert(page, context.getReturnType().getType())
-                        .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + context.getReturnType().getType()));
-        } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-            if (pageable != null) {
-                Page page = datastore.findPage(rootEntity, pageable);
-                return ConversionService.SHARED.convert(page, context.getReturnType().getType())
-                        .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + context.getReturnType().getType()));
+            if (returnType.isInstance(page)) {
+                return (R) page;
             } else {
-                throw new IllegalStateException("Pageable argument required but missing");
+                return ConversionService.SHARED.convert(page, returnType)
+                        .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + returnType));
+            }
+        } else {
+
+            Page page = datastore.findPage(getPagedQuery(context));
+            if (returnType.isInstance(page)) {
+                return (R) page;
+            } else {
+                return ConversionService.SHARED.convert(page, returnType)
+                        .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + returnType));
             }
         }
     }

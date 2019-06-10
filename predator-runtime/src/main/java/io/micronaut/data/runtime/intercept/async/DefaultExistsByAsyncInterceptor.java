@@ -5,7 +5,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;

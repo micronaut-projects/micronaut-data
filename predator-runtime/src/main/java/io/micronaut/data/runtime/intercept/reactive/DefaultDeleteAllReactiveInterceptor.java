@@ -21,7 +21,8 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -54,11 +55,13 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
             Object[] parameterValues = context.getParameterValues();
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
-                publisher = Publishers.map(reactiveOperations.deleteAll(rootEntity, (Iterable<Object>) parameterValues[0]),
+                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, (Iterable<Object>) parameterValues[0]);
+                publisher = Publishers.map(reactiveOperations.deleteAll(batchOperation),
                         number -> convertNumberArgumentIfNecessary(number, arg)
                 );
             } else if (parameterValues.length == 0) {
-                publisher = Publishers.map(reactiveOperations.deleteAll(rootEntity),
+                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity);
+                publisher = Publishers.map(reactiveOperations.deleteAll(batchOperation),
                         number -> convertNumberArgumentIfNecessary(number, arg)
                 );
             } else {

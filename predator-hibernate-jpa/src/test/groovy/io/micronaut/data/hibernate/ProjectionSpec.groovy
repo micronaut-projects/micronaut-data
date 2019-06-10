@@ -42,8 +42,8 @@ class ProjectionSpec extends Specification {
     BookRepository bookRepository
 
     def setupSpec() {
+        crudRepository.saveAndFlush(new Person(name: "Jeff", age: 40))
         crudRepository.saveAll([
-                new Person(name: "Jeff", age: 40),
                 new Person(name: "Ivan", age: 30),
                 new Person(name: "James", age: 35)
         ])

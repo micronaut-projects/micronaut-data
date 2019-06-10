@@ -19,9 +19,9 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
-import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.util.Collections;
 
@@ -53,15 +53,8 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
                     context.getReturnType().asArgument()
             ).orElse(Collections.emptyList());
         } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-
-            if (pageable != null) {
-                return datastore.findAll(rootEntity, pageable);
-            } else {
-                return datastore.findAll(rootEntity);
-            }
+            PagedQuery<R> pagedQuery = getPagedQuery(context);
+            return datastore.findAll(pagedQuery);
         }
     }
-
 }

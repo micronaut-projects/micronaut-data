@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jpa.repository.JpaRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
@@ -29,7 +30,7 @@ import java.util.List;
 
 @Repository
 @Transactional
-public interface PersonCrudRepository extends PageableRepository<Person, Long> {
+public interface PersonCrudRepository extends JpaRepository<Person, Long> {
 
     Person save(String name, int age);
 

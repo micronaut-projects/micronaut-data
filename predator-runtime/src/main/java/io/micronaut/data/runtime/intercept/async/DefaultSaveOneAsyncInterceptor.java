@@ -47,7 +47,9 @@ public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         Executor executor = asyncDatastoreOperations.getExecutor();
-        return CompletableFuture.supplyAsync(() -> instantiateEntity(rootEntity, parameterValueMap), executor)
-                         .thenCompose(asyncDatastoreOperations::persist);
+        return CompletableFuture.supplyAsync(() -> {
+            Object o = instantiateEntity(rootEntity, parameterValueMap);
+            return getInsertOperation(context, o);
+        }, executor).thenCompose(asyncDatastoreOperations::persist);
     }
 }

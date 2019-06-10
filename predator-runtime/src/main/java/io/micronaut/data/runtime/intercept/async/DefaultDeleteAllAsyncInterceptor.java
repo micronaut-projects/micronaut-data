@@ -5,7 +5,8 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.concurrent.CompletionStage;
@@ -39,10 +40,12 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
             Object[] parameterValues = context.getParameterValues();
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
-                return asyncDatastoreOperations.deleteAll(rootEntity, (Iterable<Object>) parameterValues[0])
+                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, (Iterable<Object>) parameterValues[0]);
+                return asyncDatastoreOperations.deleteAll(batchOperation)
                         .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
             } else if (parameterValues.length == 0) {
-                return asyncDatastoreOperations.deleteAll(rootEntity)
+                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity);
+                return asyncDatastoreOperations.deleteAll(batchOperation)
                         .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
             } else {
                 throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");

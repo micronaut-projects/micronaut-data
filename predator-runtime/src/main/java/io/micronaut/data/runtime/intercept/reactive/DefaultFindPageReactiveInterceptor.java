@@ -21,8 +21,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
@@ -58,9 +57,7 @@ public class DefaultFindPageReactiveInterceptor extends AbstractReactiveIntercep
                         ).toFlowable();
                     });
         } else {
-            Class rootEntity = getRequiredRootEntity(context);
-            Pageable pageable = getPageable(context);
-            publisher = reactiveOperations.findPage(rootEntity, pageable);
+            publisher = reactiveOperations.findPage(getPagedQuery(context));
         }
         return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }

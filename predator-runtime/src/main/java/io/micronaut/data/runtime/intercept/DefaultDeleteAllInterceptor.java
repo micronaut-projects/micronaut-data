@@ -20,10 +20,11 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
+import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.model.PreparedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 
 /**
  * Default implementation of {@link DeleteAllInterceptor}.
@@ -52,10 +53,13 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
             Object[] parameterValues = context.getParameterValues();
             Class<?> rootEntity = getRequiredRootEntity(context);
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
-                int deleted = datastore.deleteAll(rootEntity, (Iterable) parameterValues[0]);
+                Iterable iterable = (Iterable) parameterValues[0];
+                BatchOperation<?> batchOperation = getBatchOperation(context, rootEntity, iterable);
+                Number deleted = datastore.deleteAll(batchOperation).orElse(0);
                 return convertIfNecessary(resultType, deleted);
             } else if (parameterValues.length == 0) {
-                Number result = datastore.deleteAll(rootEntity).orElse(0);
+                BatchOperation<?> batchOperation = getBatchOperation(context, rootEntity);
+                Number result = datastore.deleteAll(batchOperation).orElse(0);
                 return convertIfNecessary(resultType, result);
             } else {
                 throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
