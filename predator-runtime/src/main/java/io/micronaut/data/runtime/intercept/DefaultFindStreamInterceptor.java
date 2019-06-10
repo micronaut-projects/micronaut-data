@@ -35,7 +35,7 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     public DefaultFindStreamInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -45,9 +45,9 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
     public Stream<T> intercept(MethodInvocationContext<T, Stream<T>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-            return (Stream<T>) datastore.findStream(preparedQuery);
+            return (Stream<T>) operations.findStream(preparedQuery);
         } else {
-            return datastore.findStream(getPagedQuery(context));
+            return operations.findStream(getPagedQuery(context));
         }
     }
 }

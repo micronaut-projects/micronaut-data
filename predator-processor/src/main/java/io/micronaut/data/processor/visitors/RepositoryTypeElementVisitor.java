@@ -147,6 +147,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 );
             }
 
+            if (element.hasDeclaredAnnotation(PredatorMethod.class)) {
+                // explicitly handled
+                return;
+            }
+
             MatchContext matchContext = new MatchContext(
                     context,
                     element,

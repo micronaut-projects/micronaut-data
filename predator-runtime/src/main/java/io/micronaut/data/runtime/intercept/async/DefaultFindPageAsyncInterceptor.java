@@ -23,7 +23,7 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindPageAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

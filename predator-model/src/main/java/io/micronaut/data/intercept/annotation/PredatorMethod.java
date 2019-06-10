@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.PredatorInterceptor;
 
+import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -109,7 +110,7 @@ public @interface PredatorMethod {
      * The root entity this method applies to.
      * @return The root entity
      */
-    Class<?> rootEntity();
+    Class<?> rootEntity() default void.class;
 
     /**
      * The computed result type. This represents the type that is to be read from the database. For example for a {@link java.util.List}
@@ -117,14 +118,14 @@ public @interface PredatorMethod {
      *
      * @return The result type
      */
-    Class<?> resultType();
+    Class<?> resultType() default void.class;
 
     /**
      * The identifier type for the method being executed.
      *
      * @return The ID type
      */
-    Class<?> idType();
+    Class<?> idType() default Serializable.class;
 
     /**
      * The parameter binding defines which method arguments bind to which

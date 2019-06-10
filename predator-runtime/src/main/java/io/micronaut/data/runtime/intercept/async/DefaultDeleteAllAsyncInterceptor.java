@@ -23,7 +23,7 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultDeleteAllAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

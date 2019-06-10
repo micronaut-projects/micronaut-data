@@ -33,7 +33,7 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultSaveOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -44,6 +44,6 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         Object instance = instantiateEntity(rootEntity, parameterValueMap);
-        return datastore.persist(getInsertOperation(context, instance));
+        return operations.persist(getInsertOperation(context, instance));
     }
 }

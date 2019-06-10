@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.repository;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Blocking;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 
 /**
  * A repository that supports pagination.
@@ -31,10 +33,18 @@ import io.micronaut.data.model.Pageable;
 public interface PageableRepository<E, ID> extends CrudRepository<E, ID> {
 
     /**
+     * Find all results for the given sort order.
+     *
+     * @param sort The sort
+     * @return The iterable results
+     */
+    @NonNull Iterable<E> findAll(@NonNull Sort sort);
+
+    /**
      * Finds all records for the given pageable.
      *
      * @param pageable The pageable.
      * @return The results
      */
-    Page<E> findAll(Pageable pageable);
+    @NonNull Page<E> findAll(@NonNull Pageable pageable);
 }

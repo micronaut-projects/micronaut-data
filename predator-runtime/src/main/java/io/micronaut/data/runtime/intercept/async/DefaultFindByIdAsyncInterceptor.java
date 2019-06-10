@@ -32,7 +32,7 @@ public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindByIdAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

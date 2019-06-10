@@ -32,7 +32,7 @@ import java.io.Serializable;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of {@link ReactiveRepositoryOperations} that delegates to a blocking datastore and specified {@link Executor}.
+ * An implementation of {@link ReactiveRepositoryOperations} that delegates to a blocking operations and specified {@link Executor}.
  * This can be used in absence of true reactive support at the driver level an allows composing blocking operations within reactive flows.
  *
  * <p>If a backing implementation provides a reactive API then the backing implementation should not use this class and instead directly implement the {@link ReactiveRepositoryOperations} interface.</p>
@@ -48,7 +48,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     /**
      * Default constructor.
      *
-     * @param datastore The target datastore
+     * @param datastore The target operations
      * @param executor  The executor to use.
      */
     public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {

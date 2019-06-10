@@ -17,6 +17,9 @@ package io.micronaut.data.jpa.repository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.jpa.repository.intercept.FlushInterceptor;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
@@ -41,6 +44,10 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
     @Override
     List<E> findAll();
 
+    @NonNull
+    @Override
+    List<E> findAll(@NonNull Sort sort);
+
     /**
      * Save and perform a flush() of any pending operations.
      * @param entity The entity
@@ -49,4 +56,10 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      */
     @QueryHint(name = "javax.persistence.FlushModeType", value = "AUTO")
     <S extends E> S saveAndFlush(@NonNull @Valid @NotNull S entity);
+
+    /**
+     * Adds a flush method.
+     */
+    @PredatorMethod(interceptor = FlushInterceptor.class)
+    void flush();
 }

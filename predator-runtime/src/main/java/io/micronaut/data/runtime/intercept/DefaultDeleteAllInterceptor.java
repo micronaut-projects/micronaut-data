@@ -36,7 +36,7 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultDeleteAllInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -47,7 +47,7 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
         Argument<Number> resultType = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
-            Number result = datastore.executeUpdate(preparedQuery).orElse(0);
+            Number result = operations.executeUpdate(preparedQuery).orElse(0);
             return convertIfNecessary(resultType, result);
         } else {
             Object[] parameterValues = context.getParameterValues();
@@ -55,11 +55,11 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
                 Iterable iterable = (Iterable) parameterValues[0];
                 BatchOperation<?> batchOperation = getBatchOperation(context, rootEntity, iterable);
-                Number deleted = datastore.deleteAll(batchOperation).orElse(0);
+                Number deleted = operations.deleteAll(batchOperation).orElse(0);
                 return convertIfNecessary(resultType, deleted);
             } else if (parameterValues.length == 0) {
                 BatchOperation<?> batchOperation = getBatchOperation(context, rootEntity);
-                Number result = datastore.deleteAll(batchOperation).orElse(0);
+                Number result = operations.deleteAll(batchOperation).orElse(0);
                 return convertIfNecessary(resultType, result);
             } else {
                 throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");

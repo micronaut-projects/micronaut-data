@@ -18,7 +18,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractAsyncInterceptor<T,
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultSaveEntityInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

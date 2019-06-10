@@ -34,7 +34,7 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindOneAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

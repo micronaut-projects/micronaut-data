@@ -39,7 +39,7 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected AbstractAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

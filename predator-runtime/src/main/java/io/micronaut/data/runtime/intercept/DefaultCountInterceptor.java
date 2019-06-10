@@ -36,7 +36,7 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultCountInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -47,11 +47,11 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
         long result;
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Long> preparedQuery = prepareQuery(context, Long.class);
-            Iterable<Long> iterable = datastore.findAll(preparedQuery);
+            Iterable<Long> iterable = operations.findAll(preparedQuery);
             Iterator<Long> i = iterable.iterator();
             result = i.hasNext() ? i.next() : 0;
         } else {
-            result = datastore.count(getPagedQuery(context));
+            result = operations.count(getPagedQuery(context));
         }
 
         return ConversionService.SHARED.convert(

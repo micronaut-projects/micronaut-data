@@ -39,7 +39,7 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindPageInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -52,9 +52,9 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(context);
 
-            Iterable<?> iterable = datastore.findAll(preparedQuery);
+            Iterable<?> iterable = operations.findAll(preparedQuery);
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
-            Long result = datastore.findOne(countQuery).longValue();
+            Long result = operations.findOne(countQuery).longValue();
             Page<R> page = Page.of(resultList, getPageable(context), result);
             if (returnType.isInstance(page)) {
                 return (R) page;
@@ -64,7 +64,7 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             }
         } else {
 
-            Page page = datastore.findPage(getPagedQuery(context));
+            Page page = operations.findPage(getPagedQuery(context));
             if (returnType.isInstance(page)) {
                 return (R) page;
             } else {

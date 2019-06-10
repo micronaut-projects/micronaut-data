@@ -33,7 +33,7 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultExistsByInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -44,6 +44,6 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
         Class idType = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
-        return datastore.findOne(preparedQuery) != null;
+        return operations.findOne(preparedQuery) != null;
     }
 }

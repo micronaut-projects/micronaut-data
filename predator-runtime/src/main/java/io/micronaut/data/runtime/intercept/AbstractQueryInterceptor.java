@@ -59,18 +59,18 @@ import java.util.concurrent.ConcurrentMap;
  * @author graemerocher
  */
 public abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
-    protected final RepositoryOperations datastore;
+    protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
     private final ConcurrentMap<ExecutableMethod, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
     private final ConcurrentMap<ExecutableMethod, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param operations The operations
      */
-    protected AbstractQueryInterceptor(@NonNull RepositoryOperations datastore) {
-        ArgumentUtils.requireNonNull("datastore", datastore);
-        this.datastore = datastore;
+    protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
+        ArgumentUtils.requireNonNull("operations", operations);
+        this.operations = operations;
     }
 
     /**

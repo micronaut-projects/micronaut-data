@@ -22,10 +22,10 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
@@ -44,6 +44,8 @@ import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
@@ -57,12 +59,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Implementation of the {@link RepositoryOperations} interface for Hibernate.
+ * Implementation of the {@link JpaRepositoryOperations} interface for Hibernate.
  *
  * @author graemerocher
  * @since 1.0
  */
-public class HibernateJpaOperations implements RepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
+public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private final SessionFactory sessionFactory;
     private final TransactionTemplate writeTransactionTemplate;
@@ -72,7 +74,7 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
     /**
      * Default constructor.
      *
-     * @param sessionFactory The session factory
+     * @param sessionFactory  The session factory
      * @param executorService The executor service for I/O tasks to use
      */
     protected HibernateJpaOperations(
@@ -417,7 +419,7 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
     }
 
     private <T> void bindPageable(Query<T> q, @NonNull Pageable pageable) {
-        if (pageable  == Pageable.UNPAGED) {
+        if (pageable == Pageable.UNPAGED) {
             // no pagination
             return;
         }
@@ -462,5 +464,26 @@ public class HibernateJpaOperations implements RepositoryOperations, AsyncCapabl
     @Override
     public ReactiveRepositoryOperations reactive() {
         return new ExecutorReactiveOperations(asyncOperations);
+    }
+
+    @NonNull
+    @Override
+    public EntityManager getCurrentEntityManager() {
+        return sessionFactory.getCurrentSession();
+    }
+
+    @NonNull
+    @Override
+    public EntityManagerFactory getEntityManagerFactory() {
+        return this.sessionFactory;
+    }
+
+    @Override
+    public void flush() {
+        writeTransactionTemplate.execute((status) -> {
+                sessionFactory.getCurrentSession().flush();
+                return null;
+            }
+        );
     }
 }

@@ -35,7 +35,7 @@ public class DefaultCountAsyncInterceptor<T> extends AbstractAsyncInterceptor<T,
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultCountAsyncInterceptor(RepositoryOperations datastore) {
         super(datastore);

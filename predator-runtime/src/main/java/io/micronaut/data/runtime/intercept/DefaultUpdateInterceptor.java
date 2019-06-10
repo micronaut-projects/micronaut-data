@@ -31,7 +31,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boo
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     public DefaultUpdateInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -40,7 +40,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boo
     @Override
     public Boolean intercept(MethodInvocationContext<T, Boolean> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
-        Number number = datastore.executeUpdate(preparedQuery).orElse(null);
+        Number number = operations.executeUpdate(preparedQuery).orElse(null);
         return number == null || number.longValue() < 0;
     }
 }

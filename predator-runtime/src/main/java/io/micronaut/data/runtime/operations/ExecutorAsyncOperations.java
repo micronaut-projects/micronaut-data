@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 /**
- * An implementation of {@link AsyncRepositoryOperations} that delegates to a blocking datastore and specified {@link Executor}.
+ * An implementation of {@link AsyncRepositoryOperations} that delegates to a blocking operations and specified {@link Executor}.
  * This can be used in absence of true asynchronous support at the driver level.
  *
  * <p>If a backing implementation provides a async API then the backing implementation should not use this class and instead directly implement the {@link AsyncRepositoryOperations} interface.</p>

@@ -31,7 +31,7 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     public DefaultFindByIdInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -44,6 +44,6 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
         if (!(id instanceof Serializable)) {
             throw new IllegalArgumentException("Entity IDs must be serializable!");
         }
-        return datastore.findOne(rootEntity, (Serializable) id);
+        return operations.findOne(rootEntity, (Serializable) id);
     }
 }

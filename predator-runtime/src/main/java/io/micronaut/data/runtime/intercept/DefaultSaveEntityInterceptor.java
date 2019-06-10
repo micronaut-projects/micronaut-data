@@ -31,7 +31,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T,
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultSaveEntityInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -39,7 +39,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T,
 
     @Override
     public Object intercept(MethodInvocationContext<T, Object> context) {
-        return datastore.persist(getInsertOperation(context));
+        return operations.persist(getInsertOperation(context));
     }
 
 }

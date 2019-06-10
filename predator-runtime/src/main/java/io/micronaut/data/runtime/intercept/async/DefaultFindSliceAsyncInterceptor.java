@@ -40,7 +40,7 @@ public class DefaultFindSliceAsyncInterceptor<T> extends AbstractAsyncIntercepto
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindSliceAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

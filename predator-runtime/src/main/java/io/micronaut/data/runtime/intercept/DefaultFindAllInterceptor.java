@@ -36,7 +36,7 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
 
     protected DefaultFindAllInterceptor(RepositoryOperations datastore) {
@@ -47,14 +47,14 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     public Iterable<R> intercept(MethodInvocationContext<T, Iterable<R>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-            Iterable<?> iterable = datastore.findAll(preparedQuery);
+            Iterable<?> iterable = operations.findAll(preparedQuery);
             return ConversionService.SHARED.convert(
                     iterable,
                     context.getReturnType().asArgument()
             ).orElse(Collections.emptyList());
         } else {
             PagedQuery<R> pagedQuery = getPagedQuery(context);
-            return datastore.findAll(pagedQuery);
+            return operations.findAll(pagedQuery);
         }
     }
 }

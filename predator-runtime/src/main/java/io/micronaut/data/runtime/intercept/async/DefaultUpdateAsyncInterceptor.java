@@ -33,7 +33,7 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultUpdateAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);

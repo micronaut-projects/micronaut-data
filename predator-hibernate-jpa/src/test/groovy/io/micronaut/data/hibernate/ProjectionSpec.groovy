@@ -48,6 +48,7 @@ class ProjectionSpec extends Specification {
                 new Person(name: "James", age: 35)
         ])
 
+        crudRepository.flush()
         bookRepository.setupData()
     }
 

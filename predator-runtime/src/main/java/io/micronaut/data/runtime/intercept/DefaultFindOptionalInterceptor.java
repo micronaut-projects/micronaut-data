@@ -34,7 +34,7 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     public DefaultFindOptionalInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -43,7 +43,7 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
     @Override
     public Optional<Object> intercept(MethodInvocationContext<T, Optional<Object>> context) {
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-        Object result = datastore.findOne(preparedQuery);
+        Object result = operations.findOne(preparedQuery);
         return Optional.ofNullable(result);
     }
 }

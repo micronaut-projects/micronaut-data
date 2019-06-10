@@ -34,7 +34,7 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
 
     /**
      * The default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -43,7 +43,7 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
     @Override
     public Object intercept(MethodInvocationContext<T, Object> context) {
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-        Object result = datastore.findOne(preparedQuery);
+        Object result = operations.findOne(preparedQuery);
 
         if (result != null) {
             ReturnType<Object> returnType = context.getReturnType();

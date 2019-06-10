@@ -33,7 +33,7 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultDeleteOneInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -46,7 +46,7 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
             Object o = parameterValues[0];
             BatchOperation<Object> batchOperation = getBatchOperation(context, Collections.singletonList(o));
             if (o != null) {
-                datastore.deleteAll(batchOperation);
+                operations.deleteAll(batchOperation);
             } else {
                 throw new IllegalArgumentException("Entity to delete cannot be null");
             }

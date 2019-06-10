@@ -40,7 +40,7 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
 
     /**
      * Default constructor.
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindSliceInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
@@ -52,12 +52,12 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
             Pageable pageable = preparedQuery.getPageable();
-            Iterable<R> iterable = (Iterable<R>) datastore.findAll(preparedQuery);
+            Iterable<R> iterable = (Iterable<R>) operations.findAll(preparedQuery);
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
             return convertOrFail(context, slice);
         } else {
             PagedQuery<Object> pagedQuery = getPagedQuery(context);
-            Iterable iterable = datastore.findAll(pagedQuery);
+            Iterable iterable = operations.findAll(pagedQuery);
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pagedQuery.getPageable());
             return convertOrFail(context, slice);
         }

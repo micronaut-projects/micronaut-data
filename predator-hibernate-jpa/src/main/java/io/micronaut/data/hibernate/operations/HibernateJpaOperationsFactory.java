@@ -37,10 +37,10 @@ public class HibernateJpaOperationsFactory {
      * Creates the {@link HibernateJpaOperations}.
      * @param sessionFactory The session factory
      * @param executorService The executor service
-     * @return The hibernate datastore
+     * @return The hibernate operations
      */
     @EachBean(SessionFactory.class)
-    protected @NonNull HibernateJpaOperations hibernateJpaDatastore(
+    protected @NonNull HibernateJpaOperations hibernateOperations(
             @NonNull SessionFactory sessionFactory,
             @Named(TaskExecutors.IO) ExecutorService executorService) {
         return new HibernateJpaOperations(sessionFactory, executorService);

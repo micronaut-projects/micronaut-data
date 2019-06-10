@@ -39,7 +39,7 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
     /**
      * Default constructor.
      *
-     * @param datastore The datastore
+     * @param datastore The operations
      */
     protected DefaultFindAllAsyncInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
