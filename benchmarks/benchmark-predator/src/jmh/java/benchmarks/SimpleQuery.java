@@ -19,7 +19,7 @@ public class SimpleQuery {
 
     @Setup
     public void prepare() {
-        applicationContext = ApplicationContext.build().packages("example").start();
+        this.applicationContext = ApplicationContext.build().packages("example").start();
         this.bookRepository = applicationContext.getBean(BookRepository.class);
         this.bookRepository.saveAll(Arrays.asList(
                 new Book("The Stand", 1000),

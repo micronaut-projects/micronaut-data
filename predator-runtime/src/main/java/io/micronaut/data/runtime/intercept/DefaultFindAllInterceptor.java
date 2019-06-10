@@ -45,16 +45,29 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
 
     @Override
     public Iterable<R> intercept(MethodInvocationContext<T, Iterable<R>> context) {
+        Class<Iterable<R>> rt = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
             Iterable<?> iterable = operations.findAll(preparedQuery);
-            return ConversionService.SHARED.convert(
-                    iterable,
-                    context.getReturnType().asArgument()
-            ).orElse(Collections.emptyList());
+            if (rt.isInstance(iterable)) {
+                return (Iterable<R>) iterable;
+            } else {
+                return ConversionService.SHARED.convert(
+                        iterable,
+                        context.getReturnType().asArgument()
+                ).orElse(Collections.emptyList());
+            }
         } else {
             PagedQuery<R> pagedQuery = getPagedQuery(context);
-            return operations.findAll(pagedQuery);
+            Iterable<R> iterable = operations.findAll(pagedQuery);
+            if (rt.isInstance(iterable)) {
+                return iterable;
+            } else {
+                return ConversionService.SHARED.convert(
+                        iterable,
+                        context.getReturnType().asArgument()
+                ).orElse(Collections.emptyList());
+            }
         }
     }
 }

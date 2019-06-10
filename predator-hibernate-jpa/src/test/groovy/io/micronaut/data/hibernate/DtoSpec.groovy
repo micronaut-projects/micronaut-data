@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
+import org.hibernate.Hibernate
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -25,6 +26,24 @@ class DtoSpec extends Specification {
         bookRepository.setupData()
     }
 
+    void "test entity graph"() {
+        when:
+        def results = bookRepository.findAllByTitleStartsWith("The")
+
+        then:
+        results.size() == 3
+        results.every({ Book b -> Hibernate.isInitialized(b.author)})
+    }
+
+    void "test no entity graph"() {
+        when:
+        def results = bookRepository.findAllByTitleStartingWith("The")
+        println "GOT RESULTS"
+
+        then:
+        results.every({ Book b -> !Hibernate.isInitialized(b.author)})
+        results.size() == 3
+    }
 
     void "test dto projection"() {
         when:

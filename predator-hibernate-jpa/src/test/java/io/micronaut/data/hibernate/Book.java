@@ -15,10 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 
 @Entity
 public class Book {
@@ -28,7 +25,7 @@ public class Book {
     private String title;
     private int pages;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Author author;
 
     public Author getAuthor() {

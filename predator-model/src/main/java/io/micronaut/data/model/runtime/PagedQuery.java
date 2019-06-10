@@ -20,6 +20,9 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.Pageable;
 
+import java.util.Collections;
+import java.util.Map;
+
 /**
  * Object passed to queries for pagination requests.
  * @param <E> The entity type
@@ -40,4 +43,14 @@ public interface PagedQuery<E> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Pageable getPageable();
+
+    /**
+     * The parameter binding. That is the mapping between named query parameters and parameters of the method.
+     *
+     * @return The parameter binding.
+     */
+    @NonNull
+    default Map<String, Object> getQueryHints() {
+        return Collections.emptyMap();
+    }
 }

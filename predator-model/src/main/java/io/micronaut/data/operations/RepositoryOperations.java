@@ -18,12 +18,10 @@ package io.micronaut.data.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.runtime.PagedQuery;
-import io.micronaut.data.model.runtime.PreparedQuery;
-
+import io.micronaut.data.model.runtime.*;
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -141,4 +139,13 @@ public interface RepositoryOperations {
      * @return The number of entities deleted
      */
     <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation);
+
+    /**
+     * Obtain any custom query hints for this method and repository implementation.
+     * @param storedQuery The stored query
+     * @return THe query hints
+     */
+    default @NonNull Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
+        return Collections.emptyMap();
+    }
 }

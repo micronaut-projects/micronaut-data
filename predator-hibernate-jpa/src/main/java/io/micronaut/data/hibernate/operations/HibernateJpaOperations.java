@@ -20,12 +20,12 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
@@ -35,10 +35,10 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.Sort;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.graph.RootGraph;
 import org.hibernate.query.Query;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -66,6 +66,8 @@ import java.util.stream.Stream;
  */
 public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
+    private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
+    private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
     private final SessionFactory sessionFactory;
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
@@ -92,6 +94,20 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 this,
                 executorService
         );
+    }
+
+    @NonNull
+    @Override
+    public Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
+        AnnotationMetadata annotationMetadata = storedQuery.getAnnotationMetadata();
+        if (annotationMetadata.hasAnnotation(EntityGraph.class)) {
+            String hint = annotationMetadata.stringValue(EntityGraph.class, "hint").orElse(ENTITY_GRAPH_FETCH);
+            String[] paths = annotationMetadata.stringValues(EntityGraph.class, "attributePaths");
+            if (ArrayUtils.isNotEmpty(paths)) {
+                return Collections.singletonMap(hint, paths);
+            }
+        }
+        return Collections.emptyMap();
     }
 
     @Nullable
@@ -121,7 +137,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                             .createQuery(query, Tuple.class);
                 }
                 bindParameters(q, parameters);
-                bindQueryHints(q, preparedQuery);
+                bindQueryHints(q, preparedQuery, currentSession);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional()
                         .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
@@ -139,7 +155,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                             .createQuery(query, wrapperType);
                 }
                 bindParameters(q, parameters);
-                bindQueryHints(q, preparedQuery);
+                bindQueryHints(q, preparedQuery, currentSession);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional().orElse(null);
             }
@@ -154,7 +170,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             Query<T> q = buildCriteriaQuery(session, query.getRootEntity(), criteriaBuilder, query.getPageable());
-
+            bindQueryHints(q, query, session);
             return q.list();
         });
     }
@@ -174,6 +190,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             Pageable pageable = pagedQuery.getPageable();
             bindCriteriaSort(query, root, criteriaBuilder, pageable);
             bindPageable(q, pageable);
+            bindQueryHints(q, pagedQuery, session);
 
             return q.getSingleResult();
         });
@@ -197,7 +214,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                             .createQuery(preparedQuery.getQuery(), Tuple.class);
                 }
 
-                bindPreparedQuery(q, preparedQuery);
+                bindPreparedQuery(q, preparedQuery, currentSession);
                 return q.stream()
                         .map(tuple -> ((IntrospectedDataMapper<Tuple>) Tuple::get)
                                 .map(tuple, preparedQuery.getResultType()))
@@ -213,23 +230,40 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     q = currentSession
                             .createQuery(preparedQuery.getQuery(), wrapperType);
                 }
-                bindPreparedQuery(q, preparedQuery);
+                bindPreparedQuery(q, preparedQuery, currentSession);
                 return q.list();
             }
         });
     }
 
-    private <T, R> void bindPreparedQuery(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery) {
+    private <T, R> void bindPreparedQuery(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, Session currentSession) {
         bindParameters(q, preparedQuery.getParameterValues());
         bindPageable(q, preparedQuery.getPageable());
-        bindQueryHints(q, preparedQuery);
+        bindQueryHints(q, preparedQuery, currentSession);
     }
 
-    private <T, R> void bindQueryHints(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery) {
-        Map<String, String> queryHints = preparedQuery.getQueryHints();
+    private <T> void bindQueryHints(Query<?> q, @NonNull PagedQuery<T> preparedQuery, @NonNull Session session) {
+        Map<String, Object> queryHints = preparedQuery.getQueryHints();
         if (CollectionUtils.isNotEmpty(queryHints)) {
-            for (Map.Entry<String, String> entry : queryHints.entrySet()) {
-                q.setHint(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, Object> entry : queryHints.entrySet()) {
+                String hintName = entry.getKey();
+                Object value = entry.getValue();
+                if (ENTITY_GRAPH_FETCH.equals(hintName) || ENTITY_GRAPH_LOAD.equals(hintName)) {
+                    String graphName = preparedQuery.getAnnotationMetadata().stringValue(EntityGraph.class).orElse(null);
+                    if (graphName != null) {
+                        RootGraph<?> entityGraph = session.getEntityGraph(graphName);
+                        q.setHint(hintName, entityGraph);
+                    } else if (value instanceof String[]) {
+                        String[] paths = (String[]) value;
+                        if (ArrayUtils.isNotEmpty(paths)) {
+                            RootGraph<T> entityGraph = session.createEntityGraph(preparedQuery.getRootEntity());
+                            entityGraph.addAttributeNodes(paths);
+                            q.setHint(hintName, entityGraph);
+                        }
+                    }
+                } else {
+                    q.setHint(hintName, value);
+                }
             }
         }
     }

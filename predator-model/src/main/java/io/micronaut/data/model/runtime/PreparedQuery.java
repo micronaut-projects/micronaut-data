@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -35,4 +36,9 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
     @NonNull
     Map<String, Object> getParameterValues();
 
+    @NonNull
+    @Override
+    default Map<String, Object> getQueryHints() {
+        return Collections.emptyMap();
+    }
 }

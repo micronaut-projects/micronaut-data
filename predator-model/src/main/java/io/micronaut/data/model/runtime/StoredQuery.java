@@ -111,7 +111,7 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @return The parameter binding.
      */
     @NonNull
-    default Map<String, String> getQueryHints() {
+    default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
     }
 

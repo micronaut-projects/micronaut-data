@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
@@ -36,6 +37,16 @@ public abstract class BookRepository implements CrudRepository<Book, Long> {
 
     @Query(value = "select * from book b where b.title like :t limit 5", nativeQuery = true)
     abstract List<Book> listNativeBooks(String t);
+
+    @EntityGraph(
+        attributePaths = {
+                "pages",
+                "author"
+        }
+    )
+    abstract List<Book> findAllByTitleStartsWith(String text);
+
+    abstract List<Book> findAllByTitleStartingWith(String text);
 
     abstract List<Book> findByAuthorIsNull();
     abstract List<Book> findByAuthorIsNotNull();

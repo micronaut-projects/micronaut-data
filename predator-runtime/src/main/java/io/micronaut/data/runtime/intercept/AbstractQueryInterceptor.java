@@ -603,6 +603,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
     /**
      * Default implementation of {@link BatchOperation}.
+     *
      * @param <E> The entity type
      */
     private final class AllBatchOperation<E> implements BatchOperation<E> {
@@ -704,7 +705,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final String lastUpdatedProp;
         private final boolean isDto;
         private final boolean isNative;
-        private HashMap<String, String> queryHints;
+        private Map<String, Object> queryHints;
 
         /**
          * The default constructor.
@@ -729,7 +730,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             this.isNative = method.isTrue(Query.class, "nativeQuery");
             if (method.hasAnnotation(QueryHint.class)) {
                 List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
-                this.queryHints = new HashMap<>();
+                this.queryHints = new HashMap<>(values.size());
                 for (AnnotationValue<QueryHint> value : values) {
                     String n = value.stringValue("name").orElse(null);
                     String v = value.stringValue("value").orElse(null);
@@ -738,11 +739,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     }
                 }
             }
+            Map<String, Object> queryHints = operations.getQueryHints(this);
+            if (queryHints != Collections.EMPTY_MAP) {
+                if (this.queryHints != null) {
+                    this.queryHints.putAll(queryHints);
+                } else {
+                    this.queryHints = queryHints;
+                }
+            }
         }
 
         @NonNull
         @Override
-        public Map<String, String> getQueryHints() {
+        public Map<String, Object> getQueryHints() {
             if (queryHints != null) {
                 return queryHints;
             }
@@ -893,6 +902,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
             this.dto = dtoProjection;
+        }
+
+        @NonNull
+        @Override
+        public Map<String, Object> getQueryHints() {
+            return storedQuery.getQueryHints();
         }
 
         @NonNull
