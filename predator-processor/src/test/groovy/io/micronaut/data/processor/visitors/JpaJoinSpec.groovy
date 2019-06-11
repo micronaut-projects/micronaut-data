@@ -31,16 +31,16 @@ interface MyInterface extends GenericRepository<Book, Long> {
 ''')
         expect:
         repository.getRequiredMethod("list").synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN book.author author"
+                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author"
 
         repository.getRequiredMethod("find", String).synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN book.author author WHERE (book.title = :p1)"
+                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author WHERE (book.title = :p1)"
 
         repository.getRequiredMethod("findByTitle", String).synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN book.author author WHERE (book.title = :p1)"
+                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author WHERE (book.title = :p1)"
 
         repository.getRequiredMethod("getByTitle", String).synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN book.author author JOIN book.publisher publisher WHERE (book.title = :p1)"
+                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author JOIN FETCH book.publisher publisher WHERE (book.title = :p1)"
 
     }
 }

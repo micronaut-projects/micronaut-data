@@ -38,7 +38,7 @@ public @interface Join {
     /**
      * @return The join type. For JPA this is JOIN FETCH.
      */
-    Type type() default Type.DEFAULT;
+    Type type() default Type.FETCH;
 
     /**
      * The type of join.

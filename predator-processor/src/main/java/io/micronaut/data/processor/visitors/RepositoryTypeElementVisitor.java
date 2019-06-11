@@ -40,10 +40,8 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
 import io.micronaut.data.processor.visitors.finders.page.FindPageByMethod;
 import io.micronaut.data.processor.visitors.finders.page.ListPageMethod;
-import io.micronaut.data.processor.visitors.finders.page.QueryPageMethod;
 import io.micronaut.data.processor.visitors.finders.slice.FindSliceByMethod;
 import io.micronaut.data.processor.visitors.finders.slice.ListSliceMethod;
-import io.micronaut.data.processor.visitors.finders.slice.QuerySliceMethod;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -368,18 +366,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new CountMethod(),
                 new DeleteByMethod(),
                 new DeleteMethod(),
-                new QueryListMethod(),
-                new QueryOneMethod(),
                 new CountByMethod(),
                 new UpdateMethod(),
                 new UpdateByMethod(),
                 new ListSliceMethod(),
                 new FindSliceByMethod(),
                 new ListSliceMethod(),
-                new QuerySliceMethod(),
                 new FindPageByMethod(),
                 new ListPageMethod(),
-                new QueryPageMethod(),
                 new FindOneMethod(),
                 new FindByIdsMethod()
         );

@@ -801,9 +801,9 @@ public class JpaQueryBuilder implements QueryBuilder {
                     joinType = " RIGHT JOIN FETCH ";
                     break;
                 case INNER:
-                    joinType = " JOIN FETCH ";
-                    break;
                 case FETCH:
+                    joinType = " JOIN FETCH ";
+                break;
                 default:
                     joinType = " JOIN ";
             }

@@ -22,6 +22,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -112,15 +113,28 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         String methodName = methodElement.getName();
-        return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
+        return methodElement.hasAnnotation(Query.class) || pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
+        MethodElement methodElement = matchContext.getMethodElement();
+
+        if (methodElement.hasAnnotation(Query.class)) {
+            RawQuery rawQuery = buildRawQuery(matchContext);
+            if (rawQuery == null) {
+                return null;
+            }
+            return buildInfo(
+                    matchContext,
+                    matchContext.getRootEntity().getClassElement(),
+                    rawQuery
+            );
+        }
+
         List<CriterionMethodExpression> expressions = new ArrayList<>();
         List<ProjectionMethodExpression> projectionExpressions = new ArrayList<>();
         ParameterElement[] parameters = matchContext.getParameters();
-        MethodElement methodElement = matchContext.getMethodElement();
         String methodName = methodElement.getName();
         SourcePersistentEntity entity = matchContext.getRootEntity();
         VisitorContext visitorContext = matchContext.getVisitorContext();

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -30,6 +31,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
 import java.util.ArrayList;
@@ -59,87 +61,95 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         List<ParameterElement> queryParams = matchContext.getParametersNotInRole();
         QueryModel query = null;
+        MethodElement methodElement = matchContext.getMethodElement();
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-        if (CollectionUtils.isNotEmpty(queryParams)) {
-            query = QueryModel.from(rootEntity);
-            for (ParameterElement queryParam : queryParams) {
-                String paramName = queryParam.getName();
-                PersistentProperty prop = ((PersistentEntity) rootEntity).getPropertyByName(paramName);
-                if (prop == null) {
-                    SourcePersistentProperty identity = rootEntity.getIdentity();
-                    if (identity != null && identity.getName().equals(paramName)) {
-                        query.idEq(new QueryParameter(queryParam.getName()));
-                    } else {
-                        matchContext.getVisitorContext().fail(
-                                "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName,
-                                queryParam
-                        );
-                        return null;
-                    }
-                } else {
-                    query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
-                }
-            }
-
-        }
-        String methodName = matchContext.getMethodElement().getName();
-        Matcher matcher = pattern.matcher(methodName);
         ClassElement queryResultType = rootEntity.getClassElement();
 
-        if (matcher.find()) {
-            String querySequence = matcher.group(3);
-            ArrayList<Sort.Order> orderBys = new ArrayList<>(2);
-            querySequence = matchOrder(querySequence, orderBys);
-            if (CollectionUtils.isNotEmpty(orderBys)) {
-                if (query == null) {
-                    query = QueryModel.from(rootEntity);
+        if (methodElement.hasAnnotation(Query.class)) {
+            query = buildRawQuery(matchContext);
+        } else {
+            if (CollectionUtils.isNotEmpty(queryParams)) {
+                query = QueryModel.from(rootEntity);
+                for (ParameterElement queryParam : queryParams) {
+                    String paramName = queryParam.getName();
+                    PersistentProperty prop = ((PersistentEntity) rootEntity).getPropertyByName(paramName);
+                    if (prop == null) {
+                        SourcePersistentProperty identity = rootEntity.getIdentity();
+                        if (identity != null && identity.getName().equals(paramName)) {
+                            query.idEq(new QueryParameter(queryParam.getName()));
+                        } else {
+                            matchContext.getVisitorContext().fail(
+                                    "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName,
+                                    queryParam
+                            );
+                            return null;
+                        }
+                    } else {
+                        query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
+                    }
                 }
-                if (applyOrderBy(matchContext, query, orderBys)) {
-                    return null;
-                }
+
             }
 
-            if (StringUtils.isNotEmpty(querySequence)) {
-                ArrayList<ProjectionMethodExpression> projections = new ArrayList<>();
-                matchProjections(matchContext, projections, querySequence);
-                if (CollectionUtils.isNotEmpty(projections)) {
+            String methodName = methodElement.getName();
+            Matcher matcher = pattern.matcher(methodName);
+
+            if (matcher.find()) {
+                String querySequence = matcher.group(3);
+                ArrayList<Sort.Order> orderBys = new ArrayList<>(2);
+                querySequence = matchOrder(querySequence, orderBys);
+                if (CollectionUtils.isNotEmpty(orderBys)) {
                     if (query == null) {
                         query = QueryModel.from(rootEntity);
                     }
-
-                    for (ProjectionMethodExpression projection : projections) {
-                        projection.apply(matchContext, query);
-                        queryResultType = projection.getExpectedResultType();
+                    if (applyOrderBy(matchContext, query, orderBys)) {
+                        return null;
                     }
+                }
 
-                    if (projections.size() > 1) {
-                        queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(rootEntity.getClassElement());
-                    }
+                if (StringUtils.isNotEmpty(querySequence)) {
+                    ArrayList<ProjectionMethodExpression> projections = new ArrayList<>();
+                    matchProjections(matchContext, projections, querySequence);
+                    if (CollectionUtils.isNotEmpty(projections)) {
+                        if (query == null) {
+                            query = QueryModel.from(rootEntity);
+                        }
 
-                    for (QueryModel.Projection projection : query.getProjections()) {
-                        if (projection instanceof QueryModel.PropertyProjection) {
-                            QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
-                            String prop = pp.getPropertyName();
-                            Optional<String> path = rootEntity.getPath(prop);
-                            if (!path.isPresent()) {
-                                matchContext.fail("Cannot project on non-existent property: " + prop);
-                                return null;
+                        for (ProjectionMethodExpression projection : projections) {
+                            projection.apply(matchContext, query);
+                            queryResultType = projection.getExpectedResultType();
+                        }
+
+                        if (projections.size() > 1) {
+                            queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(rootEntity.getClassElement());
+                        }
+
+                        for (QueryModel.Projection projection : query.getProjections()) {
+                            if (projection instanceof QueryModel.PropertyProjection) {
+                                QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
+                                String prop = pp.getPropertyName();
+                                Optional<String> path = rootEntity.getPath(prop);
+                                if (!path.isPresent()) {
+                                    matchContext.fail("Cannot project on non-existent property: " + prop);
+                                    return null;
+                                }
                             }
                         }
                     }
                 }
             }
+
+            List<AnnotationValue<Join>> joinSpecs = matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
+            if (CollectionUtils.isNotEmpty(joinSpecs)) {
+                if (query == null) {
+                    query = QueryModel.from(rootEntity);
+                }
+                if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
+                    return null;
+                }
+            }
         }
 
-        List<AnnotationValue<Join>> joinSpecs = matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
-        if (CollectionUtils.isNotEmpty(joinSpecs)) {
-            if (query == null) {
-                query = QueryModel.from(rootEntity);
-            }
-            if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
-                return null;
-            }
-        }
 
         if (query != null) {
             return buildInfo(matchContext, queryResultType, query);

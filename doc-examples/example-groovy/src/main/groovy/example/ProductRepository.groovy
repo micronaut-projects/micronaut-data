@@ -28,11 +28,13 @@ interface ProductRepository extends CrudRepository<Product, Long> {
     // end::entitygraph[]
 
     // tag::async[]
+    @Join("manufacturer")
     CompletableFuture<Product> findByNameContains(String str)
 
     CompletableFuture<Long> countByManufacturerName(String name)
     // end::async[]
     // tag::reactive[]
+    @Join("manufacturer")
     Maybe<Product> queryByNameContains(String str)
 
     Single<Long> countDistinctByManufacturerName(String name)

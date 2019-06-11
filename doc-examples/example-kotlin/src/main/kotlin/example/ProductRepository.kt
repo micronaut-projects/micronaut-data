@@ -27,17 +27,19 @@ interface ProductRepository : CrudRepository<Product, Long> {
     // end::entitygraph[]
 
     // tag::async[]
+    @Join("manufacturer")
     fun findByNameContains(str: String): CompletableFuture<Product>
 
     fun countByManufacturerName(name: String): CompletableFuture<Long>
     // end::async[]
 
     // tag::reactive[]
+    @Join("manufacturer")
     fun queryByNameContains(str: String): Maybe<Product>
 
     fun countDistinctByManufacturerName(name: String): Single<Long>
     // end::reactive[]
-// tag::join[]
+// tag::join[]O
 // tag::async[]
 }
 // end::join[]

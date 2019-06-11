@@ -26,6 +26,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.intercept.async.*;
@@ -42,12 +43,12 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
@@ -62,6 +63,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
+    protected static final Pattern VARIABLE_PATTERN = Pattern.compile(":([a-zA-Z0-9]+)");
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
     protected final Pattern pattern;
 
@@ -389,8 +391,8 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @Nonnull SourcePersistentEntity rootEntity,
             @NonNull List<AnnotationValue<Join>> joinSpecs) {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
-            String path = joinSpec.getValue(String.class).orElse(null);
-            Join.Type type = joinSpec.get("type", Join.Type.class).orElse(Join.Type.DEFAULT);
+            String path = joinSpec.stringValue().orElse(null);
+            Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(Join.Type.FETCH);
             if (path != null) {
                 PersistentProperty prop = rootEntity.getPropertyByPath(path).orElse(null);
                 if (!(prop instanceof Association)) {
@@ -412,5 +414,35 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             }
         }
         return false;
+    }
+
+    /**
+     * Builds a raw query for the given match context. Should be called for methods annotated with {@link Query} explicitly.
+     * @param matchContext The match context
+     * @return The raw query or null if an error occurred
+     */
+    protected RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext) {
+        MethodElement methodElement = matchContext.getMethodElement();
+        String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
+            new IllegalStateException("Should only be called if Query has value!")
+        );
+        Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+        List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
+        Map<String, String> parameterBinding = new LinkedHashMap<>(parameters.size());
+        while (matcher.find()) {
+            String name = matcher.group(1);
+            Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
+            if (element.isPresent()) {
+                parameterBinding.put(name, element.get().getName());
+            } else {
+                matchContext.getVisitorContext().fail(
+                        "No method parameter found for name :" + name,
+                        methodElement
+                );
+                return null;
+            }
+        }
+
+        return new RawQuery(matchContext.getRootEntity(), parameterBinding);
     }
 }
