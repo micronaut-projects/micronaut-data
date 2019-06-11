@@ -1,16 +1,24 @@
 package example;
 
-import io.micronaut.test.annotation.MicronautTest;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import io.micronaut.context.ApplicationContext;
+import org.junit.jupiter.api.*;
 
-import javax.inject.Inject;
-
-@MicronautTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BookRepositoryTest {
 
-    @Inject
-    BookRepository bookRepository;
+    private BookRepository bookRepository;
+    private ApplicationContext context;
+
+    @BeforeAll
+    void setup() {
+        this.context = ApplicationContext.run();
+        this.bookRepository = context.getBean(BookRepository.class);
+    }
+
+    @AfterAll
+    void cleanup() {
+        this.context.close();
+    }
 
     @Test
     void bookCount() {
