@@ -16,10 +16,10 @@ public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> imple
     /**
      * Default constructor.
      *
-     * @param datastore The operations
+     * @param operations The operations
      */
-    protected FlushInterceptor(@NonNull RepositoryOperations datastore) {
-        super(datastore);
+    protected FlushInterceptor(@NonNull RepositoryOperations operations) {
+        super(operations);
     }
 
     @Override
