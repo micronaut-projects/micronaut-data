@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 /**
- * Contains Spring Data Specific integrations.
+ * Classes for SQL query building.
+ *
+ * @author graemerocher
+ * @since 1.0.0
  */
-@Configuration
-@Requires(classes = Repository.class)
-package io.micronaut.data.runtime.spring;
-
-import io.micronaut.context.annotation.Configuration;
-import io.micronaut.context.annotation.Requires;
-import org.springframework.data.repository.Repository;
+package io.micronaut.data.model.query.builder.sql;

@@ -9,6 +9,7 @@ buildscript {
         classpath 'io.github.groovylang.groovydoc:groovydoc-gradle-plugin:1.0.1'
         classpath "io.micronaut.docs:micronaut-docs-asciidoc-extensions:$micronautDocsVersion"
         classpath "io.micronaut.docs:micronaut-docs-gradle-plugins:$micronautDocsVersion"
+        classpath "io.spring.nohttp:nohttp-gradle:0.0.2.RELEASE"
     }
 }
 
@@ -41,6 +42,8 @@ subprojects { Project subproject ->
         return
     }
 
+
+
     version project.projectVersion
     group "io.micronaut.data"
     ext {
@@ -48,12 +51,9 @@ subprojects { Project subproject ->
         isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
     }
 
-
-
-
+    apply plugin: "io.spring.nohttp"
     apply plugin:"groovy"
     apply plugin:"java"
-
 
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
