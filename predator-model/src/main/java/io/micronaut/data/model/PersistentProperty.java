@@ -17,7 +17,6 @@ package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 
@@ -27,7 +26,7 @@ import io.micronaut.data.annotation.GeneratedValue;
  * @author graemerocher
  * @since 1.0
  */
-public interface PersistentProperty extends AnnotationMetadataProvider {
+public interface PersistentProperty extends PersistentElement {
 
     /**
      * The name of the property.

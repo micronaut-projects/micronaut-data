@@ -74,9 +74,9 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "countByName"             | "Long"         | "String name" | CountInterceptor | Long       | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
         "countDistinct"           | "Long"         | "String name" | CountInterceptor | Long       | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
         "countDistinctByName"     | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctName"       | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(DISTINCT person.name) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctNameByName" | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(DISTINCT person.name) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctNameByName" | "Single<Long>" | "String name" | CountReactiveInterceptor | Long | "SELECT COUNT(DISTINCT person.name) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctName" | "CompletionStage<Long>" | "String name" | CountAsyncInterceptor | Long | "SELECT COUNT(DISTINCT person.name) FROM $Person.name AS person WHERE (person.name = :p1)"
+        "countDistinctName"       | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
+        "countDistinctNameByName" | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
+        "countDistinctNameByName" | "Single<Long>" | "String name" | CountReactiveInterceptor | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
+        "countDistinctName" | "CompletionStage<Long>" | "String name" | CountAsyncInterceptor | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
     }
 }

@@ -23,10 +23,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Version;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +35,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0
  */
-public class RuntimePersistentEntity implements PersistentEntity {
+public class RuntimePersistentEntity extends AbstractPersistentEntity implements PersistentEntity {
 
     private final BeanIntrospection<?> introspection;
 
@@ -55,6 +52,7 @@ public class RuntimePersistentEntity implements PersistentEntity {
      * @param introspection The introspection
      */
     public RuntimePersistentEntity(@NonNull BeanIntrospection<?> introspection) {
+        super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
     }

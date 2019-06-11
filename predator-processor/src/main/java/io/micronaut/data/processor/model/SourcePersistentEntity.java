@@ -25,10 +25,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
@@ -43,7 +40,7 @@ import java.util.stream.Collectors;
  * @since 1.0
  */
 @Internal
-public class SourcePersistentEntity implements PersistentEntity, TypedElement {
+public class SourcePersistentEntity extends AbstractPersistentEntity implements PersistentEntity, TypedElement {
 
     private final ClassElement classElement;
     private final Map<String, PropertyElement> beanProperties;
@@ -55,6 +52,7 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
      * @param classElement The class element
      */
     public SourcePersistentEntity(@NonNull ClassElement classElement) {
+        super(classElement);
         this.classElement = classElement;
         final List<PropertyElement> beanProperties = classElement.getBeanProperties();
         this.beanProperties = new LinkedHashMap<>(beanProperties.size());
@@ -75,28 +73,6 @@ public class SourcePersistentEntity implements PersistentEntity, TypedElement {
 
         this.version = version;
         this.id = id.toArray(new SourcePersistentProperty[0]);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SourcePersistentEntity that = (SourcePersistentEntity) o;
-        return classElement.getName().equals(that.getName());
-    }
-
-    @Override
-    public int hashCode() {
-        return classElement.getName().hashCode();
-    }
-
-    @Override
-    public AnnotationMetadata getAnnotationMetadata() {
-        return classElement.getAnnotationMetadata();
     }
 
     @NonNull

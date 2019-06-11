@@ -31,7 +31,7 @@ import io.micronaut.data.model.PersistentProperty;
 @Internal
 class RuntimePersistentProperty implements PersistentProperty {
 
-    private final PersistentEntity owner;
+    private final RuntimePersistentEntity owner;
     private final BeanProperty<?, ?> property;
 
     /**
@@ -39,7 +39,7 @@ class RuntimePersistentProperty implements PersistentProperty {
      * @param owner The owner
      * @param property The property
      */
-    RuntimePersistentProperty(PersistentEntity owner, BeanProperty<?, ?> property) {
+    RuntimePersistentProperty(RuntimePersistentEntity owner, BeanProperty<?, ?> property) {
         this.owner = owner;
         this.property = property;
     }
@@ -82,5 +82,11 @@ class RuntimePersistentProperty implements PersistentProperty {
      */
     public BeanProperty<?, ?> getProperty() {
         return property;
+    }
+
+    @NonNull
+    @Override
+    public String getPersistedName() {
+        return owner.getNamingStrategy().mappedName(this);
     }
 }

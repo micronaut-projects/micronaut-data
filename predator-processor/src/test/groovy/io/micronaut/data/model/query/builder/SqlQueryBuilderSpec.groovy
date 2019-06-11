@@ -1,0 +1,46 @@
+package io.micronaut.data.model.query.builder
+
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.naming.NamingStrategies
+import io.micronaut.data.model.naming.NamingStrategy
+import io.micronaut.data.model.query.QueryModel
+import io.micronaut.data.model.query.QueryParameter
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import spock.lang.Specification
+import spock.lang.Unroll
+
+class SqlQueryBuilderSpec extends Specification {
+
+
+    @Unroll
+    void "test encode query #method - comparison methods"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(type)
+        QueryModel q = QueryModel.from(entity)
+        q."$method"(property, QueryParameter.of('test'))
+
+        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryResult encodedQuery = encoder.buildQuery(q)
+        NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
+        def mappedName = namingStrategy.mappedName(property)
+
+        expect:
+        encodedQuery != null
+        mappedName == 'some_id'
+        encodedQuery.query ==
+                "SELECT person.name,person.age,person.some_id,person.enabled FROM person AS person WHERE (person.${ mappedName} $operator :p1)"
+        encodedQuery.parameters == ['p1': 'test']
+
+        where:
+        type   | method | property | operator
+        Person | 'eq'   | 'someId' | '='
+        Person | 'gt'   | 'someId' | '>'
+        Person | 'lt'   | 'someId' | '<'
+        Person | 'ge'   | 'someId' | '>='
+        Person | 'le'   | 'someId' | '<='
+        Person | 'like' | 'someId' | 'like'
+        Person | 'ne'   | 'someId' | '!='
+    }
+}

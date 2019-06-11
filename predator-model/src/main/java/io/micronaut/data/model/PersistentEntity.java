@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model;
 
-import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -40,7 +39,7 @@ import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
  * @since 1.0
  */
 @SuppressWarnings("rawtypes")
-public interface PersistentEntity extends AnnotationMetadataProvider {
+public interface PersistentEntity extends PersistentElement {
 
     /**
      * The entity name including any package prefix.

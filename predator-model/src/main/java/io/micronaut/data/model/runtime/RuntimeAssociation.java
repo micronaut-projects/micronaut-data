@@ -34,7 +34,7 @@ class RuntimeAssociation extends RuntimePersistentProperty implements Associatio
      * @param owner The owner
      * @param property The property
      */
-    RuntimeAssociation(PersistentEntity owner, BeanProperty<?, ?> property) {
+    RuntimeAssociation(RuntimePersistentEntity owner, BeanProperty<?, ?> property) {
         super(owner, property);
     }
 

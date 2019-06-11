@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model;
+package io.micronaut.data.model.naming;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 
 
 /**
@@ -27,6 +30,7 @@ import io.micronaut.data.annotation.Persisted;
  * @since 1.0
  */
 @FunctionalInterface
+@Introspected
 public interface NamingStrategy {
 
     /**
@@ -44,8 +48,8 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
-        return entity.getAnnotationMetadata().getValue(Persisted.class, String.class)
-                .orElseGet(() -> mappedName(entity.getName()));
+        return entity.getAnnotationMetadata().stringValue(Persisted.class)
+                .orElseGet(() -> mappedName(entity.getSimpleName()));
     }
 
     /**
@@ -55,7 +59,7 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
-        return property.getAnnotationMetadata().getValue(Persisted.class, String.class)
+        return property.getAnnotationMetadata().stringValue(Persisted.class)
                 .orElseGet(() -> mappedName(property.getName()));
     }
 }

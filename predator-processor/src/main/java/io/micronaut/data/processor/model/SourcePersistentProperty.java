@@ -97,9 +97,6 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @Override
     public String getTypeName() {
         final ClassElement type = propertyElement.getType();
-        if (type == null) {
-            return Object.class.getName();
-        }
         return type.getName();
     }
 
@@ -112,7 +109,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @Override
     public boolean isAssignable(@NonNull String type) {
         ClassElement t = getType();
-        return t != null && t.isAssignable(type);
+        return t.isAssignable(type);
     }
 
     /**
@@ -126,5 +123,11 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @Override
     public ClassElement getType() {
         return propertyElement.getType();
+    }
+
+    @NonNull
+    @Override
+    public String getPersistedName() {
+        return owner.getNamingStrategy().mappedName(this);
     }
 }

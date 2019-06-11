@@ -40,6 +40,16 @@ public interface Association extends PersistentProperty {
      * @return The relationship kind
      */
     default @NonNull Relation.Kind getKind() {
-        return getAnnotationMetadata().getValue(Relation.class, Relation.Kind.class).orElse(Relation.Kind.ONE_TO_ONE);
+        return findAnnotation(Relation.class)
+                .flatMap(av -> av.enumValue(Relation.Kind.class))
+                .orElse(Relation.Kind.ONE_TO_ONE);
+    }
+
+    /**
+     * @return Whether the association is a foreign key association
+     */
+    default boolean isForeignKey() {
+        Relation.Kind kind = getKind();
+        return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY;
     }
 }

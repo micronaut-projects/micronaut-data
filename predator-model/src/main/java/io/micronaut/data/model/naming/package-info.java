@@ -13,25 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.runtime;
-
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.data.model.Embedded;
 
 /**
- * A runtime representation of {@link Embedded}.
+ * Naming related classes.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-class RuntimeEmbedded extends RuntimeAssociation implements Embedded {
-
-    /**
-     * Default constructor.
-     * @param owner The owner
-     * @param property The bean property
-     */
-    RuntimeEmbedded(RuntimePersistentEntity owner, BeanProperty<?, ?> property) {
-        super(owner, property);
-    }
-}
+package io.micronaut.data.model.naming;

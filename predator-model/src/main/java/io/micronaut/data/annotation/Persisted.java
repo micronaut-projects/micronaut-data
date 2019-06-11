@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.data.model.naming.NamingStrategies;
+import io.micronaut.data.model.naming.NamingStrategy;
 import java.lang.annotation.*;
 
 /**
@@ -36,4 +38,9 @@ public @interface Persisted {
      * @return The destination
      */
     String value() default "";
+
+    /**
+     * @return The naming strategy to use.
+     */
+    Class<? extends NamingStrategy> namingStrategy() default NamingStrategies.UnderScoreSeparatedLowerCase.class;
 }
