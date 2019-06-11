@@ -26,8 +26,9 @@ class BookRepositorySpec extends Specification {
         given:"The value of the Query annotation"
         String query = beanContext.getBeanDefinition(BookRepository.class) // <1>
                 .getRequiredMethod("find", String.class) // <2>
-                .synthesize(Query.class) // <3>
-                .value()
+                .getAnnotationMetadata()
+                .stringValue(Query.class) // <3>
+                .orElse(null)
 
         expect:"The JPA-QL query to be correct" // <4>
         query == "SELECT book FROM example.Book AS book WHERE (book.title = :p1)"

@@ -19,6 +19,14 @@ In addition to this, Predator also supports projection expressions. The followin
 |*Example*
 |*Description*
 
+|`Count`
+|`countTitleByPagesGreaterThan`
+|Counts the values
+
+|`CountDistinct`
+|`countDistinctTitleByPagesGreaterThan`
+|Counts the distinct values
+
 |`Distinct`
 |`findDistinctTitleByPagesGreaterThan`
 |Finds the distinct property values

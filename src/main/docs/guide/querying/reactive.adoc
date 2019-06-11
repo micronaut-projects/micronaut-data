@@ -2,7 +2,7 @@ Predator supports reactive query execution by defining methods that return eithe
 
 In the case of reactive execution and if the backing implementation is blocking, Predator will use the https://docs.micronaut.io/latest/guide/index.html#reactiveServer[Configured I/O thread pool] to schedule the query execution on a different thread.
 
-The following is an example of a couple of asynchronous methods:
+The following is an example of a couple of reactive methods:
 
 snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="reactive", indent="0"]
 
@@ -10,4 +10,6 @@ The above example defines two methods that use reactive return types from RxJava
 
 snippet::example.ProductRepositorySpec[project-base="doc-examples/example"tags="reactive", indent="0"]
 
-NOTE: In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects. In addition for more complex operations it may be more efficient to write custom code that uses a single session.
+In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects.
+
+In addition for more complex operations it may be more efficient to write custom code that uses a single session.

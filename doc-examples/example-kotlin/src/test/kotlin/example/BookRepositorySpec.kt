@@ -28,7 +28,9 @@ class BookRepositorySpec {
     fun testAnnotationMetadata() {
         val query = beanContext.getBeanDefinition(BookRepository::class.java) // <1>
                 .getRequiredMethod<Any>("find", String::class.java) // <2>
-                .synthesize(Query::class.java)!!.value // <3>
+                .annotationMetadata
+                .stringValue(Query::class.java) // <3>
+                .orElse(null)
 
 
         assertEquals( // <4>

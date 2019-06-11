@@ -23,6 +23,26 @@ The following table summarizes the possible expressions and behaviour:
 |Find results where the property is before the given value
 |`findByDateCreatedBefore`
 
+|`Contains`
+|Find results where the property contains the given value
+|`findByTitleContains`
+
+|`StartsWith` or `StartingWith`
+|Find results where the property starts with the given value
+|`findByTitleStartsWith`
+
+|`EndsWith` or `EndingWith`
+|Find results where the property ends with the given value
+|`findByTitleEndsWith`
+
+|`Equals` or `Equal`
+|Find results equal to the given value
+|`findByTitleEquals`
+
+|`NotEquals` or `NotEqual`
+|Find results not equal to the given value
+|`findByTitleNotEquals`
+
 |`GreaterThan`
 |Find results where the property is greater than the given value
 |`findByPagesGreaterThan`
@@ -88,3 +108,5 @@ You can combine multiple criterion by separating them with `And` or `Or` logical
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="logical", indent="0"]
 
 The above example uses `Or` to express a greater than condition and a like condition.
+
+You can also negate any of the aforementioned expressions by adding `Not` prior the name of the expression (example `NotTrue` or `NotContain`).

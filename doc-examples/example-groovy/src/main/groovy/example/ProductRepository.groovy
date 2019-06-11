@@ -1,5 +1,4 @@
-// tag::join[]
-// tag::async[]
+
 package example
 
 import io.micronaut.data.annotation.*
@@ -9,7 +8,8 @@ import io.reactivex.Maybe
 import io.reactivex.Single
 
 import java.util.concurrent.CompletableFuture
-
+// tag::join[]
+// tag::async[]
 @Repository
 interface ProductRepository extends CrudRepository<Product, Long> {
 // end::join[]

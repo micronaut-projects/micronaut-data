@@ -3,7 +3,7 @@ Micronaut Predator (short for **Pre**computed **Dat**a **R**epositories) is a da
 Predator is inspired by https://gorm.grails.org[GORM] and https://spring.io/projects/spring-data[Spring Data], however improves on those solutions in the following ways:
 
 * *No runtime model* - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models.
-* *No query translation* - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query. No such translation exists in Predator and this work is carried out by the Micronaut compiler.
+* *No query translation* - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Predator and this work is carried out by the Micronaut compiler at compilation time.
 * *No Reflection or Runtime Proxies* - Predator uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).
 * *Type Safety* - Predator will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.
 
@@ -12,7 +12,7 @@ Predator provides a general API for translating a compile time Query model into 
 * JPA (Hibernate)
 * SQL (JDBC)
 
-Further implementations for other databases is planned in the future.
+Further implementations for other databases are planned in the future.
 
 The following sections will take you through the basics of querying and using Predator, if you wish to understand more detail about how Predator works check out the <<howItWorks, How Predator Works>> section.
 
@@ -21,7 +21,7 @@ At a fundamental level however what Predator does can be summed up in the follow
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="repository"]
 
 <1> The `@Repository` annotation designates `BookRepository` as a data repository. Since, it is is an interface, the `@Repository` annotation provides implementations at compilation time.
-<2> Easiest way to get CRUD (Create, Read, Update, Delete) operations implemented at compilation is to extend `CrudRepository`.
+<2> By extending api:data.repository.CrudRepository[] you enable automatic generation of CRUD (Create, Read, Update, Delete) operations.
 
 Predator computes the query for the `find` method automatically at compilation time making it available at runtime via annotation metadata:
 
@@ -29,5 +29,5 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="m
 
 <1> The https://docs.micronaut.io/latest/api/io/micronaut/inject/BeanDefinition.html[BeanDefinition] is retrieved from the https://docs.micronaut.io/latest/api/io/micronaut/context/BeanContext.html[BeanContext]
 <2> The `find` method is retrieved
-<3> The ann:data.annotation.Query[] annotation is retrieved
+<3> The value of the ann:data.annotation.Query[] annotation is retrieved
 <4> The JPA-QL query for the method is correct

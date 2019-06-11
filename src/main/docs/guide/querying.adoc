@@ -37,6 +37,9 @@ The above examples return a single instance of an entity, the supported return t
 |`Future<Book>` or `CompletableFuture<Book>`
 |A `java.util.concurrent.Future` for asynchronous execution
 
+|`Publisher<Book>` (or `Single`, `Maybe`, `Flux`, `Mono` etc.)
+|An Reactive Streams compatible type
+
 |Primitive/Simple Types
 |In the case of projections primitive/basic types can be returned
 |===
@@ -61,11 +64,11 @@ The following table summarizes the possible alternative patterns, behaviour and 
 |Checks whether a record exists
 
 |`deleteBy*`
-|A `void` return type
+|A `void` or `Number` return type
 |Batch delete for the given finder
 
 |`updateBy*`
-|A `void` return type
+|A `void` or `Number` return type
 |Batch update for the given finder
 
 |===
@@ -77,3 +80,4 @@ Finally, as an alternative to the `By` syntax you also define simple finders tha
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="simple-alt", indent="0"]
 
 Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specific more than one parameter to perform a logical `AND`.
+
