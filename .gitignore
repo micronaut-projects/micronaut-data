@@ -4,6 +4,8 @@ out/
 bin/
 .idea/
 *.iml
+.sts4-cache/
+*.iws
 
 # Ignore Gradle GUI config
 gradle-app.setting
