@@ -3,6 +3,7 @@
 package example;
 
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
@@ -17,9 +18,14 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
     // tag::join[]
     Manufacturer saveManufacturer(String name);
 
-    @Join("manufacturer") // <1>
+    @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
     List<Product> list();
     // end::join[]
+
+    // tag::entitygraph[]
+    @EntityGraph(attributePaths = {"manufacturer", "title"}) // <1>
+    List<Product> findAll();
+    // end::entitygraph[]
 
     // tag::async[]
     CompletableFuture<Product> findByNameContains(String str);

@@ -8,6 +8,6 @@ data class Product(
     @GeneratedValue
     var id: Long?,
     var name: String,
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     var manufacturer: Manufacturer
 )

@@ -3,6 +3,7 @@
 package example
 
 import io.micronaut.data.annotation.*
+import io.micronaut.data.jpa.annotation.EntityGraph
 import io.micronaut.data.repository.CrudRepository
 import io.reactivex.Maybe
 import io.reactivex.Single
@@ -16,9 +17,14 @@ interface ProductRepository : CrudRepository<Product, Long> {
     // tag::join[]
     fun save(manufacturer: Manufacturer) : Manufacturer
 
-    @Join("manufacturer") // <1>
+    @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
     fun list(): List<Product>
     // end::join[]
+
+    // tag::entitygraph[]
+    @EntityGraph(attributePaths = ["manufacturer", "title"]) // <1>
+    override fun findAll(): List<Product>
+    // end::entitygraph[]
 
     // tag::async[]
     fun findByNameContains(str: String): CompletableFuture<Product>

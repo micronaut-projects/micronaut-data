@@ -12,11 +12,19 @@ snippet::example.Manufacturer[project-base="doc-examples/example", source="main"
 
 In this case when you read each `Product` from the database an additional select is required to retrieve the `Manufacturer` for each `Product`. This leads to `N + 1` queries.
 
-To resolve this you can use the ann:data.annotation.JoinSpec[] annotation on your repository interface to specify that a `JOIN FETCH` should be executed to retrieve the associated `Manufacturer`.
+To resolve this you can use the ann:data.annotation.Join[] annotation on your repository interface to specify that a `JOIN FETCH` should be executed to retrieve the associated `Manufacturer`.
 
 snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="join"]
 
 
-<1> The ann:data.annotation.JoinSpec[] is used to indicate a `JOIN FETCH` clause should be included.
+<1> The ann:data.annotation.Join[] is used to indicate a `JOIN FETCH` clause should be included.
 
-Note that the ann:data.annotation.JoinSpec[] annotation is repeatable and hence can be specified multiple time for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.
+Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple time for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.
+
+=== JPA 2.1 Entity Graphs
+
+A JPA-specific alternative to specifying the joins to a query is to use JPA 2.1 entity graphs. With entity graphs you defer to the JPA implementation to to pick the appropriate join type to use:
+
+snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="entitygraph", indent="0"]
+
+<1> The `attributePaths` member is used to specify the paths to include in the Entity graph.
