@@ -24,7 +24,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Persisted;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.*;
@@ -387,10 +387,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull MethodMatchContext matchContext,
             @NonNull QueryModel query,
             @Nonnull SourcePersistentEntity rootEntity,
-            @NonNull List<AnnotationValue<JoinSpec>> joinSpecs) {
-        for (AnnotationValue<JoinSpec> joinSpec : joinSpecs) {
+            @NonNull List<AnnotationValue<Join>> joinSpecs) {
+        for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.getValue(String.class).orElse(null);
-            JoinSpec.Type type = joinSpec.get("type", JoinSpec.Type.class).orElse(JoinSpec.Type.DEFAULT);
+            Join.Type type = joinSpec.get("type", Join.Type.class).orElse(Join.Type.DEFAULT);
             if (path != null) {
                 PersistentProperty prop = rootEntity.getPropertyByPath(path).orElse(null);
                 if (!(prop instanceof Association)) {

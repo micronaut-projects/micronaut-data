@@ -20,7 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -131,7 +131,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             }
         }
 
-        List<AnnotationValue<JoinSpec>> joinSpecs = matchContext.getAnnotationMetadata().getAnnotationValuesByType(JoinSpec.class);
+        List<AnnotationValue<Join>> joinSpecs = matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
         if (CollectionUtils.isNotEmpty(joinSpecs)) {
             if (query == null) {
                 query = QueryModel.from(rootEntity);

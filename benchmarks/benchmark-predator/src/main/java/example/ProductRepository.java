@@ -9,6 +9,6 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     Manufacturer saveManufacturer(String name);
 
-    @JoinSpec("manufacturer") // <1>
+    @Join("manufacturer") // <1>
     List<Product> list();
 }

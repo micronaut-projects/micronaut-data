@@ -20,7 +20,7 @@ import io.micronaut.data.annotation.repeatable.JoinSpecifications;
 import java.lang.annotation.*;
 
 /**
- * A JoinSpec defines how a join for a particular association path should be generated.
+ * A @Join defines how a join for a particular association path should be generated.
  *
  * @author graemerocher
  * @since 1.0
@@ -28,7 +28,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Repeatable(JoinSpecifications.class)
-public @interface JoinSpec {
+public @interface Join {
 
     /**
      * @return The path to join.

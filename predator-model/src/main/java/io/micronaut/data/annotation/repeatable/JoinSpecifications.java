@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.annotation.repeatable;
 
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Repeatable annotation for {@link JoinSpec}.
+ * Repeatable annotation for {@link Join}.
  *
  * @author Graeme Rocher
  * @since 1.0.0
@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 public @interface JoinSpecifications {
     /**
-     * @return The {@link JoinSpec} definitions
+     * @return The {@link Join} definitions
      */
-    JoinSpec[] value();
+    Join[] value();
 }

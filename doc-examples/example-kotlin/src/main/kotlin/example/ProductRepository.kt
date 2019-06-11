@@ -16,7 +16,7 @@ interface ProductRepository : CrudRepository<Product, Long> {
     // tag::join[]
     fun save(manufacturer: Manufacturer) : Manufacturer
 
-    @JoinSpec("manufacturer") // <1>
+    @Join("manufacturer") // <1>
     fun list(): List<Product>
     // end::join[]
 

@@ -21,7 +21,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -234,7 +234,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         QueryModel query = QueryModel.from(entity);
         ClassElement queryResultType = entity.getClassElement();
 
-        List<AnnotationValue<JoinSpec>> joinSpecs = methodElement.getAnnotationValuesByType(JoinSpec.class);
+        List<AnnotationValue<Join>> joinSpecs = methodElement.getAnnotationValuesByType(Join.class);
         if (CollectionUtils.isNotEmpty(joinSpecs)) {
             if (applyJoinSpecs(matchContext, query, entity, joinSpecs)) {
                 return null;

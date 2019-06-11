@@ -18,7 +18,7 @@ package io.micronaut.data.model.query;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
@@ -67,7 +67,7 @@ public interface QueryModel extends Criteria {
      *                    The joint type
      * @return The join type for the association.
      */
-    Optional<JoinSpec.Type> getJoinType(Association association);
+    Optional<Join.Type> getJoinType(Association association);
 
     /**
      * Join on the given association.
@@ -76,7 +76,7 @@ public interface QueryModel extends Criteria {
      * @return The query
      */
     @NonNull
-    QueryModel join(@NonNull Association association, @NonNull JoinSpec.Type joinType);
+    QueryModel join(@NonNull Association association, @NonNull Join.Type joinType);
 
     /**
      * @return The projection list.

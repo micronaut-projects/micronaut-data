@@ -18,7 +18,7 @@ package io.micronaut.data.model.query.builder.jpa;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -785,7 +785,7 @@ public class JpaQueryBuilder implements QueryBuilder {
         String associationPath = queryState.logicalName + DOT + associationName;
         if (!queryState.appliedJoinPaths.contains(associationPath)) {
             queryState.appliedJoinPaths.add(associationPath);
-            JoinSpec.Type jt = queryState.queryObject.getJoinType(association).orElse(JoinSpec.Type.DEFAULT);
+            Join.Type jt = queryState.queryObject.getJoinType(association).orElse(Join.Type.DEFAULT);
             String joinType;
             switch (jt) {
                 case LEFT:

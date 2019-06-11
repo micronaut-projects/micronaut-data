@@ -17,7 +17,7 @@ package io.micronaut.data.model.query;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -39,7 +39,7 @@ public class DefaultQuery implements QueryModel {
     private DefaultProjectionList projections = new DefaultProjectionList();
     private int max = -1;
     private long offset = 0;
-    private Map<Association, JoinSpec.Type> joinTypes = new HashMap<>(2);
+    private Map<Association, Join.Type> joinTypes = new HashMap<>(2);
     private Sort sort = Sort.unsorted();
 
     /**
@@ -96,7 +96,7 @@ public class DefaultQuery implements QueryModel {
      */
     @Override
     public DefaultQuery join(@NonNull Association association) {
-        joinTypes.put(association, JoinSpec.Type.DEFAULT);
+        joinTypes.put(association, Join.Type.DEFAULT);
         return this;
     }
 
@@ -106,7 +106,7 @@ public class DefaultQuery implements QueryModel {
      * @return The join type
      */
     @Override
-    public Optional<JoinSpec.Type> getJoinType(Association association) {
+    public Optional<Join.Type> getJoinType(Association association) {
         if (association != null) {
             return Optional.ofNullable(joinTypes.get(association));
         }
@@ -120,8 +120,8 @@ public class DefaultQuery implements QueryModel {
      * @return The query
      */
     @Override
-    public DefaultQuery join(@NonNull Association association, JoinSpec.Type joinType) {
-        joinTypes.put(association, joinType != null ? joinType : JoinSpec.Type.DEFAULT);
+    public DefaultQuery join(@NonNull Association association, Join.Type joinType) {
+        joinTypes.put(association, joinType != null ? joinType : Join.Type.DEFAULT);
         return this;
     }
 

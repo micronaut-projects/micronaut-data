@@ -15,17 +15,17 @@ import io.micronaut.data.model.entities.Book;
 @Repository
 interface MyInterface extends GenericRepository<Book, Long> {
 
-    @JoinSpec("author")
+    @Join("author")
     List<Book> list();
     
-    @JoinSpec("author")
+    @Join("author")
     Book find(String title);
     
-    @JoinSpec("author")
+    @Join("author")
     Book findByTitle(String title);
     
-    @JoinSpec("author")
-    @JoinSpec("publisher")
+    @Join("author")
+    @Join("publisher")
     Book getByTitle(String title);
 }
 ''')

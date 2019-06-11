@@ -65,12 +65,12 @@ import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.entities.Person;
 import java.util.List;
-import io.micronaut.data.annotation.JoinSpec;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
 interface MyInterface extends io.micronaut.data.repository.GenericRepository<Person, Long>{
-    @JoinSpec(value="author", type=JoinSpec.Type.LEFT)
+    @Join(value="author", type=Join.Type.LEFT)
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
 
