@@ -243,9 +243,9 @@ public interface PersistentEntity extends PersistentElement {
      * @param <T> The generic type
      * @return The entity
      */
-    static @NonNull <T> RuntimePersistentEntity of(@NonNull Class<T> type) {
+    static @NonNull <T> RuntimePersistentEntity<T> of(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
-        return new RuntimePersistentEntity(type);
+        return new RuntimePersistentEntity<>(type);
     }
 
     /**

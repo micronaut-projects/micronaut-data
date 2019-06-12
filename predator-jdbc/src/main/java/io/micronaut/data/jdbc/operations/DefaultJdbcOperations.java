@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,6 +51,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
     private final DataSource dataSource;
+    private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
+    private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
 
     /**
      * Default constructor.
@@ -132,30 +135,34 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
-    public <T> T persist(@NonNull InsertOperation<T> entity) {
-        AnnotationMetadata annotationMetadata = entity.getAnnotationMetadata();
-        String insert = annotationMetadata.stringValue(
-                PredatorMethod.class,
-                PredatorMethod.META_MEMBER_INSERT_STMT
-        ).orElse(null);
-        if (insert == null) {
-            throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository");
-        }
+    public <T> T persist(@NonNull InsertOperation<T> operation) {
+        @SuppressWarnings("unchecked") StoredInsert<T> insert = storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
+            AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+            String insert1 = annotationMetadata.stringValue(
+                    PredatorMethod.class,
+                    PredatorMethod.META_MEMBER_INSERT_STMT
+            ).orElse(null);
+            if (insert1 == null) {
+                throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository");
+            }
 
-        T object = entity.getEntity();
-        @SuppressWarnings("unchecked")
-        RuntimePersistentEntity<T> persistentEntity = PersistentEntity.of(object.getClass());
-        Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
-        PersistentProperty identity = persistentEntity.getIdentity();
-        boolean generateId = identity != null && identity.isGenerated();
+            T entity = operation.getEntity();
+            Class<T> type = (Class<T>) entity.getClass();
+            RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(type);
+            Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
+            return new StoredInsert(insert1, persistentEntity, parameterBinding);
+        });
+
 
         return writeTransactionTemplate.execute((status) -> {
             Connection connection = DataSourceUtils.getConnection(dataSource);
             try {
-                PreparedStatement stmt = connection.prepareStatement(insert, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : parameterBinding.entrySet()) {
+                T entity = operation.getEntity();
+                boolean generateId = insert.isGenerateId();
+                PreparedStatement stmt = connection.prepareStatement(insert.getSql(), generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
                     RuntimePersistentProperty<T> prop = entry.getKey();
-                    Object value = prop.getProperty().get(object);
+                    Object value = prop.getProperty().get(entity);
                     stmt.setObject(
                             entry.getValue(),
                             value
@@ -166,15 +173,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         long id = generatedKeys.getLong(1);
-                        BeanWrapper.getWrapper(object).setProperty(
-                                identity.getName(),
+                        BeanWrapper.getWrapper(entity).setProperty(
+                                insert.getIdentity().getName(),
                                 id
                         );
                     } else {
                         throw new DataAccessException("ID failed to generate. No result returned.");
                     }
                 }
-                return object;
+                return entity;
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing INSERT: " + e.getMessage());
             } finally {
@@ -182,6 +189,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
         });
 
+    }
+
+    private <T> RuntimePersistentEntity<T> getPersistentEntity(Class<T> type) {
+        RuntimePersistentEntity<T> entity = entities.get(type);
+        if (entity == null) {
+            entity = PersistentEntity.of(type);
+            entities.put(type, entity);
+        }
+        return entity;
     }
 
     private <T> Map<RuntimePersistentProperty<T>, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata, RuntimePersistentEntity<T> entity) {
@@ -239,5 +255,69 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
         return Optional.empty();
+    }
+
+    /**
+     * A stored insert statement.
+     * @param <T> The entity type
+     */
+    protected class StoredInsert<T> {
+        private final RuntimePersistentEntity<T> persistentEntity;
+        private final Map<RuntimePersistentProperty<T>, Integer> parameterBinding;
+        private final PersistentProperty identity;
+        private final boolean generateId;
+        private final String sql;
+
+        /**
+         * Default constructor.
+         * @param sql The SQL INSERT
+         * @param persistentEntity The entity
+         * @param parameterBinding The parameter binding
+         */
+        StoredInsert(
+                String sql,
+                RuntimePersistentEntity<T> persistentEntity,
+                Map<RuntimePersistentProperty<T>, Integer> parameterBinding) {
+            this.sql = sql;
+            this.persistentEntity = persistentEntity;
+            this.parameterBinding = parameterBinding;
+            this.identity = persistentEntity.getIdentity();
+            this.generateId = identity != null && identity.isGenerated();
+        }
+
+        /**
+         * @return The SQL
+         */
+        public @NonNull String getSql() {
+            return sql;
+        }
+
+        /**
+         * @return The entity
+         */
+        public @NonNull RuntimePersistentEntity<T> getPersistentEntity() {
+            return persistentEntity;
+        }
+
+        /**
+         * @return The parameter binding
+         */
+        public @NonNull Map<RuntimePersistentProperty<T>, Integer> getParameterBinding() {
+            return parameterBinding;
+        }
+
+        /**
+         * @return The identity
+         */
+        public @Nullable PersistentProperty getIdentity() {
+            return identity;
+        }
+
+        /**
+         * @return Is the id generated
+         */
+        public boolean isGenerateId() {
+            return generateId;
+        }
     }
 }

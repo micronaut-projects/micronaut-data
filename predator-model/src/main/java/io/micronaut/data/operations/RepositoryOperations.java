@@ -107,12 +107,12 @@ public interface RepositoryOperations {
     <R> Page<R> findPage(@NonNull PagedQuery<R> query);
 
     /**
-     * Persist the entity returning a possibly new entity.
-     * @param entity The entity
+     * Persist the operation returning a possibly new entity.
+     * @param operation The operation
      * @param <T> The generic type
-     * @return The entity
+     * @return The operation
      */
-    @NonNull <T> T persist(@NonNull InsertOperation<T> entity);
+    @NonNull <T> T persist(@NonNull InsertOperation<T> operation);
 
     /**
      * Persist all the given entities.
