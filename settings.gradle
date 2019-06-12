@@ -6,6 +6,7 @@ include 'predator-runtime'
 
 // implementations
 include 'predator-hibernate-jpa'
+include 'predator-jdbc'
 
 // documentation samples
 include 'doc-examples:example-java'

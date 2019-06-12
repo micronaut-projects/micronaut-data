@@ -15,15 +15,19 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryResult;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +37,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder {
+
     @Override
     protected String selectAllColumns(PersistentEntity entity, String alias) {
         List<PersistentProperty> persistentProperties = entity.getPersistentProperties()
@@ -84,5 +89,78 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append(OPEN_BRACKET)
                 .append('*')
                 .append(CLOSE_BRACKET);
+    }
+
+    @Nullable
+    @Override
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        StringBuilder builder = new StringBuilder("INSERT INTO ");
+        builder.append(getTableName(entity));
+        builder.append(" (");
+
+        List<PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
+        boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
+        int index = 1;
+        if (hasProperties) {
+            Iterator<PersistentProperty> i = persistentProperties.iterator();
+            while (i.hasNext()) {
+                PersistentProperty prop = i.next();
+                if (prop.isGenerated()) {
+                    continue;
+                }
+                builder.append(getColumnName(prop));
+                parameters.put(prop.getName(), String.valueOf(index++));
+                if (i.hasNext()) {
+                    builder.append(COMMA);
+                }
+            }
+        }
+
+        PersistentProperty identity = entity.getIdentity();
+        if (identity != null) {
+
+            boolean assignedOrSequence = false;
+            Optional<AnnotationValue<GeneratedValue>> generated = identity.findAnnotation(GeneratedValue.class);
+            if (generated.isPresent()) {
+                GeneratedValue.Type idGeneratorType = generated
+                        .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
+                        .orElseGet(this::selectAutoStrategy);
+                if (idGeneratorType == GeneratedValue.Type.SEQUENCE) {
+                    assignedOrSequence = true;
+                }
+            } else {
+                assignedOrSequence = true;
+            }
+            if (assignedOrSequence) {
+                if (hasProperties) {
+                    builder.append(COMMA);
+                }
+                builder.append(getColumnName(identity));
+                parameters.put(identity.getName(), String.valueOf(index++));
+            }
+        }
+
+        builder.append(CLOSE_BRACKET);
+        builder.append(" VALUES (");
+        for (int i = 1; i < index; i++) {
+            builder.append('?');
+            if (i < index - 1) {
+                builder.append(COMMA);
+            }
+        }
+        builder.append(CLOSE_BRACKET);
+        return QueryResult.of(
+            builder.toString(),
+            parameters
+        );
+    }
+
+    /**
+     * Selects the default fallback strategy. For a generated value.
+     * @return The generated value
+     */
+    protected GeneratedValue.Type selectAutoStrategy() {
+        return GeneratedValue.Type.AUTO;
     }
 }

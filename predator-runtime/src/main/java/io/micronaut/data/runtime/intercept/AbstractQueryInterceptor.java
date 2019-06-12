@@ -301,14 +301,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
     /**
      * Builds the parameter data.
-     * @param context The context
+     * @param annotationMetadata The annotation metadata
      * @param parameterBindingMember The parameter member
      * @return The parameter data
      */
-    private Map<String, String> buildParameterBinding(
-            @NonNull MethodInvocationContext<T, R> context,
+    public static Map<String, String> buildParameterBinding(
+            AnnotationMetadata annotationMetadata,
             String parameterBindingMember) {
-        AnnotationValue<PredatorMethod> annotation = context.getAnnotation(PredatorMethod.class);
+        AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
         if (annotation == null) {
             return Collections.emptyMap();
         }

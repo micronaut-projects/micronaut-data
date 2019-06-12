@@ -42,6 +42,16 @@ public @interface PredatorMethod {
     String META_MEMBER_COUNT_QUERY = "countQuery";
 
     /**
+     * The member that holds the insert statement.
+     */
+    String META_MEMBER_INSERT_STMT = "insertStatement";
+
+    /**
+     * The member that holds the insert statement.
+     */
+    String META_MEMBER_INSERT_BINDING = "insertBinding";
+
+    /**
      * The member that holds the count parameters.
      */
     String META_MEMBER_COUNT_PARAMETERS = "countParameters";

@@ -15,12 +15,15 @@
  */
 package io.micronaut.data.model.query.builder.jpa;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryResult;
 
 /**
  * Builds JPA 1.0 String-based queries from the Query model.
@@ -106,5 +109,12 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append(OPEN_BRACKET)
                 .append(logicalName)
                 .append(CLOSE_BRACKET);
+    }
+
+    @Nullable
+    @Override
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        // JPA doesn't require an insert statement
+        return null;
     }
 }

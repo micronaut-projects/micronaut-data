@@ -39,5 +39,5 @@ public interface InsertOperation<E> extends Named, AnnotationMetadataProvider {
     /**
      * @return The entity to insert.
      */
-    E getEntity();
+    @NonNull E getEntity();
 }

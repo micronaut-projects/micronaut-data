@@ -240,9 +240,10 @@ public interface PersistentEntity extends PersistentElement {
      * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *
      * @param type The type
+     * @param <T> The generic type
      * @return The entity
      */
-    static @NonNull PersistentEntity of(@NonNull Class<?> type) {
+    static @NonNull <T> RuntimePersistentEntity of(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
         return new RuntimePersistentEntity(type);
     }
@@ -252,10 +253,11 @@ public interface PersistentEntity extends PersistentElement {
      * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *
      * @param introspection The introspection
+     * @param <T> The generic type
      * @return The entity
      */
-    static @NonNull PersistentEntity of(@NonNull BeanIntrospection<?> introspection) {
+    static @NonNull <T> RuntimePersistentEntity<T> of(@NonNull BeanIntrospection<T> introspection) {
         ArgumentUtils.requireNonNull("introspection", introspection);
-        return new RuntimePersistentEntity(introspection);
+        return new RuntimePersistentEntity<T>(introspection);
     }
 }

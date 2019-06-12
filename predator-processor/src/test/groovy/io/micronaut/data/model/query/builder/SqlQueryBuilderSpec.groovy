@@ -1,7 +1,9 @@
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.naming.NamingStrategy
 import io.micronaut.data.model.query.QueryModel
@@ -13,6 +15,27 @@ import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
 
+    void "test encode insert statement"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Person)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+
+        expect:
+        result.query == 'INSERT INTO person (name,age,enabled) VALUES (?,?,?)'
+        result.parameters.equals(name:'1', age:'2', enabled:'3')
+    }
+
+    void "test encode insert statement - assigned id"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(PersonAssignedId)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+
+        expect:
+        result.query == 'INSERT INTO person_assigned_id (name,age,enabled,id) VALUES (?,?,?,?)'
+        result.parameters.equals(name:'1', age:'2', enabled:'3', id:'4')
+    }
 
     @Unroll
     void "test encode query #method - comparison methods"() {

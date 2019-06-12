@@ -23,15 +23,16 @@ import io.micronaut.data.model.Embedded;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @param <T> the owning type
  */
-class RuntimeEmbedded extends RuntimeAssociation implements Embedded {
+class RuntimeEmbedded<T> extends RuntimeAssociation<T> implements Embedded {
 
     /**
      * Default constructor.
      * @param owner The owner
      * @param property The bean property
      */
-    RuntimeEmbedded(RuntimePersistentEntity owner, BeanProperty<?, ?> property) {
+    RuntimeEmbedded(RuntimePersistentEntity owner, BeanProperty<T, ?> property) {
         super(owner, property);
     }
 }

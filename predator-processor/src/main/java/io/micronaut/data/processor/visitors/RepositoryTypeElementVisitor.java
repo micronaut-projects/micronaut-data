@@ -16,9 +16,7 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.context.annotation.Property;
-import io.micronaut.core.annotation.AnnotationClassValue;
-import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.*;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
@@ -94,10 +92,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         this.currentClass = element;
 
         queryEncoder = resolveQueryEncoder(element, context);
-        AnnotationValue[] roleArray = element.getAnnotationMetadata()
+        AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
+        AnnotationValue[] roleArray = annotationMetadata
                 .getValue(Repository.class, "typeRoles", AnnotationValue[].class).orElse(new AnnotationValue[0]);
         for (AnnotationValue<?> parameterRole : roleArray) {
-            String role = parameterRole.get("role", String.class).orElse(null);
+            String role = parameterRole.stringValue("role").orElse(null);
             AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
             if (StringUtils.isNotEmpty(role) && cv != null) {
                 context.getClassElement(cv.getName()).ifPresent(ce ->
@@ -121,6 +120,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
         if (queryEncoder == null) {
             context.fail("QueryEncoder not present on annotation processor path", element);
+            failing = true;
         }
     }
 
@@ -275,6 +275,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             QueryResult finalPreparedCount1 = preparedCount;
                             boolean finalRawCount = rawCount;
                             element.annotate(PredatorMethod.class, annotationBuilder -> {
+
+                                if (runtimeInterceptor.getSimpleName().startsWith("Save")) {
+                                    try {
+                                        QueryResult queryResult = queryEncoder.buildInsert(currentClass.getAnnotationMetadata(), entity);
+                                        if (queryResult != null) {
+
+                                            AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(queryResult.getParameters());
+                                            annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
+                                            annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_BINDING, annotationValues);
+                                        }
+                                    } catch (Exception e) {
+                                        context.fail("Error building insert statement", element);
+                                        failing = true;
+                                    }
+                                }
                                 annotationBuilder.member(PredatorMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
 
                                 // include the roles
@@ -414,18 +429,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         ClassElement returnType = element.getGenericReturnType();
         SourcePersistentEntity entity = resolvePersistentEntity(returnType);
         if (entity == null) {
-            Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(GenericRepository.class);
-            String argName = "E";
-            if (typeArguments.isEmpty()) {
-                argName = "T";
-                typeArguments = currentClass.getTypeArguments(SPRING_REPO);
-            }
-            if (!typeArguments.isEmpty()) {
-                ClassElement ce = typeArguments.get(argName);
-                if (ce != null) {
-                    entity = new SourcePersistentEntity(ce);
-                }
-            }
+            entity = resolveEntityForCurrentClass();
         }
 
         if (entity != null) {
@@ -443,6 +447,23 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             context.fail("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
             return null;
         }
+    }
+
+    private SourcePersistentEntity resolveEntityForCurrentClass() {
+        SourcePersistentEntity entity = null;
+        Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(GenericRepository.class);
+        String argName = "E";
+        if (typeArguments.isEmpty()) {
+            argName = "T";
+            typeArguments = currentClass.getTypeArguments(SPRING_REPO);
+        }
+        if (!typeArguments.isEmpty()) {
+            ClassElement ce = typeArguments.get(argName);
+            if (ce != null) {
+                entity = new SourcePersistentEntity(ce);
+            }
+        }
+        return entity;
     }
 
     private SourcePersistentEntity resolvePersistentEntity(ClassElement returnType) {

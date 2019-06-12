@@ -48,7 +48,6 @@ public interface PersistentProperty extends PersistentElement {
      */
     @NonNull String getTypeName();
 
-
     /**
      * Obtains the owner of this persistent property.
      *
@@ -83,13 +82,6 @@ public interface PersistentProperty extends PersistentElement {
      */
     default boolean isReadOnly() {
         return isGenerated();
-    }
-
-    /**
-     * @return Whether this property is inherited
-     */
-    default boolean isInherited() {
-        return false;
     }
 
     /**

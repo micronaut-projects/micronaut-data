@@ -17,6 +17,8 @@ package io.micronaut.data.processor.mappers.jpa;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -40,8 +42,17 @@ public class GeneratedValueMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
+        AnnotationValueBuilder<GeneratedValue> generatedValueBuilder = AnnotationValue.builder(GeneratedValue.class);
+        annotation.stringValue("strategy").ifPresent(s -> {
+            try {
+                GeneratedValue.Type type = GeneratedValue.Type.valueOf(s);
+                generatedValueBuilder.value(type);
+            } catch (IllegalArgumentException e) {
+                // not a compatible enum
+            }
+        });
         return Arrays.asList(
-                AnnotationValue.builder(io.micronaut.data.annotation.GeneratedValue.class).build(),
+                generatedValueBuilder.build(),
                 // include nullable for generated values, so they are excluded from null checks
                 AnnotationValue.builder("javax.annotation.Nullable").build()
         );

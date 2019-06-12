@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model.query.builder;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
@@ -29,6 +31,15 @@ import java.util.List;
  * @since 1.0
  */
 public interface QueryBuilder {
+
+    /**
+     * Builds an insert statement for the given entity.
+     * @param repositoryMetadata The repository annotation metadata
+     * @param entity The entity
+     * @return The insert statement or null if the implementation doesn't require insert statements
+     */
+    @Nullable
+    QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -67,15 +78,4 @@ public interface QueryBuilder {
      */
     @NonNull
     QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort);
-
-    /**
-     * When producing the query this dedicates whether to use the mapped names (such as the column name)
-     * or the original Java property name. To encode JPA-QL for example you want to use the Java property names,
-     * whilst SQL requires the raw column names.
-     *
-     * @return Whether to use mapped names
-     */
-    default boolean useMappedNames() {
-        return true;
-    }
 }

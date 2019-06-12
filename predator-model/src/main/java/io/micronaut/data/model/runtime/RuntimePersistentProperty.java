@@ -17,7 +17,6 @@ package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -27,19 +26,19 @@ import io.micronaut.data.model.PersistentProperty;
  *
  * @author graemerocher
  * @since 1.0.0
+ * @param <T> The owner type
  */
-@Internal
-class RuntimePersistentProperty implements PersistentProperty {
+public class RuntimePersistentProperty<T> implements PersistentProperty {
 
-    private final RuntimePersistentEntity owner;
-    private final BeanProperty<?, ?> property;
+    private final RuntimePersistentEntity<T> owner;
+    private final BeanProperty<T, ?> property;
 
     /**
      * Default constructor.
      * @param owner The owner
      * @param property The property
      */
-    RuntimePersistentProperty(RuntimePersistentEntity owner, BeanProperty<?, ?> property) {
+    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property) {
         this.owner = owner;
         this.property = property;
     }
@@ -80,7 +79,7 @@ class RuntimePersistentProperty implements PersistentProperty {
     /**
      * @return The backing bean property
      */
-    public BeanProperty<?, ?> getProperty() {
+    public BeanProperty<T, ?> getProperty() {
         return property;
     }
 

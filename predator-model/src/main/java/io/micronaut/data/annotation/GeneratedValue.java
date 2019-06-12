@@ -28,4 +28,28 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Documented
 public @interface GeneratedValue {
+
+    /**
+     * The generation type.
+     * @return The generation type.
+     */
+    Type value() default Type.AUTO;
+
+    /**
+     * The type of generation.
+     */
+    enum Type {
+        /**
+         * Automatic selection.
+         */
+        AUTO,
+        /**
+         * Use a sequence.
+         */
+        SEQUENCE,
+        /**
+         * Use identity generation.
+         */
+        IDENTITY
+    }
 }

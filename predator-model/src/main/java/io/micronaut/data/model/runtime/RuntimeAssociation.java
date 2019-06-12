@@ -26,15 +26,16 @@ import io.micronaut.data.model.PersistentEntity;
  *
  * @author graemerocher
  * @since 1.0
+ * @param <T> the owning type
  */
-class RuntimeAssociation extends RuntimePersistentProperty implements Association {
+class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Association {
 
     /**
      * Default constructor.
      * @param owner The owner
      * @param property The property
      */
-    RuntimeAssociation(RuntimePersistentEntity owner, BeanProperty<?, ?> property) {
+    RuntimeAssociation(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property) {
         super(owner, property);
     }
 

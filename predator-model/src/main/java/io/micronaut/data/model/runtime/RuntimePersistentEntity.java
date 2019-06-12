@@ -34,16 +34,17 @@ import java.util.stream.Collectors;
  *
  * @author graemerocher
  * @since 1.0
+ * @param <T> The type
  */
-public class RuntimePersistentEntity extends AbstractPersistentEntity implements PersistentEntity {
+public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
 
-    private final BeanIntrospection<?> introspection;
+    private final BeanIntrospection<T> introspection;
 
     /**
      * Default constructor.
      * @param type The type
      */
-    public RuntimePersistentEntity(@NonNull Class<?> type) {
+    public RuntimePersistentEntity(@NonNull Class<T> type) {
         this(BeanIntrospection.getIntrospection(type));
     }
 
@@ -51,10 +52,17 @@ public class RuntimePersistentEntity extends AbstractPersistentEntity implements
      * Default constructor.
      * @param introspection The introspection
      */
-    public RuntimePersistentEntity(@NonNull BeanIntrospection<?> introspection) {
+    public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection) {
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
+    }
+
+    /**
+     * @return The underlying introspection.
+     */
+    public BeanIntrospection<T> getIntrospection() {
+        return introspection;
     }
 
     @NonNull
@@ -71,17 +79,17 @@ public class RuntimePersistentEntity extends AbstractPersistentEntity implements
 
     @Nullable
     @Override
-    public PersistentProperty getIdentity() {
+    public RuntimePersistentProperty<T> getIdentity() {
         return introspection.getIndexedProperty(Id.class).map(bp ->
-                new RuntimePersistentProperty(this, bp)
+                new RuntimePersistentProperty<>(this, bp)
         ).orElse(null);
     }
 
     @Nullable
     @Override
-    public PersistentProperty getVersion() {
+    public RuntimePersistentProperty<T> getVersion() {
         return introspection.getIndexedProperty(Version.class).map(bp ->
-                new RuntimePersistentProperty(this, bp)
+                new RuntimePersistentProperty<>(this, bp)
         ).orElse(null);
     }
 
@@ -91,7 +99,7 @@ public class RuntimePersistentEntity extends AbstractPersistentEntity implements
         return introspection.getBeanProperties()
                 .stream()
                 .filter((bp) -> bp.isReadWrite() && !(bp.hasStereotype(Id.class, Version.class)))
-                .map(bp -> new RuntimePersistentProperty(this, bp))
+                .map(bp -> new RuntimePersistentProperty<>(this, bp))
                 .collect(Collectors.toList());
     }
 
@@ -109,22 +117,22 @@ public class RuntimePersistentEntity extends AbstractPersistentEntity implements
     public List<Embedded> getEmbedded() {
         return introspection.getBeanProperties().stream()
                 .filter(this::isEmbedded)
-                .map(propertyElement -> new RuntimeEmbedded(this, propertyElement))
+                .map(propertyElement -> new RuntimeEmbedded<>(this, propertyElement))
                 .collect(Collectors.toList());
     }
 
     @Nullable
     @Override
-    public PersistentProperty getPropertyByName(String name) {
+    public RuntimePersistentProperty<T> getPropertyByName(String name) {
         return introspection.getProperty(name).map(bp -> {
             if (bp.hasStereotype(Relation.class)) {
                 if (isEmbedded(bp)) {
-                    return new RuntimeEmbedded(this, bp);
+                    return new RuntimeEmbedded<>(this, bp);
                 } else {
-                    return new RuntimeAssociation(this, bp);
+                    return new RuntimeAssociation<>(this, bp);
                 }
             } else {
-                return new RuntimePersistentProperty(this, bp);
+                return new RuntimePersistentProperty<>(this, bp);
             }
         }).orElse(null);
     }
