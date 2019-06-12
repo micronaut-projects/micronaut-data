@@ -147,7 +147,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
 
             T entity = operation.getEntity();
-            Class<T> type = (Class<T>) entity.getClass();
+            @SuppressWarnings("unchecked") Class<T> type = (Class<T>) entity.getClass();
             RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(type);
             Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
             return new StoredInsert(insert1, persistentEntity, parameterBinding);
