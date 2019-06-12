@@ -4,11 +4,15 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
+import io.micronaut.data.jdbc.mapper.ResultSetReader;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
@@ -92,13 +96,66 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return null;
+        throw new UnsupportedOperationException("The findOne method by ID is not supported. Execute the SQL query directly");
     }
 
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return null;
+        return withReadConnection(connection -> {
+            String query = preparedQuery.getQuery();
+            PreparedStatement ps = connection.prepareStatement(query);
+            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
+            for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
+                DataType dataType = DataType.OBJECT;
+                preparedStatementWriter.setDynamic(
+                        ps,
+                        Integer.valueOf(entry.getKey()),
+                        dataType,
+                        entry.getValue());
+            }
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                ResultSetReader resultSetReader = new ResultSetReader();
+                Class<T> rootEntity = preparedQuery.getRootEntity();
+                if (preparedQuery.getResultType() == rootEntity) {
+                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(rootEntity);
+                    BeanIntrospection<T> introspection = persistentEntity.getIntrospection();
+                    Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+                    R entity;
+                    if (ArrayUtils.isEmpty(constructorArguments)) {
+                        //noinspection unchecked
+                        entity = (R) introspection.instantiate();
+                    } else {
+                        // TODO: constructor arguments
+                        throw new IllegalStateException("Constructor arguments not yet supported");
+                    }
+                    BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
+                    for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
+                        String persistedName = persistentProperty.getPersistedName();
+                        Object v = resultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
+                        wrapper.setProperty(
+                                persistentProperty.getName(),
+                                v
+                        );
+                    }
+                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                    if (identity != null) {
+                        String persistedName = identity.getPersistedName();
+                        Object v = resultSetReader.readDynamic(rs, persistedName, identity.getDataType());
+                        wrapper.setProperty(
+                                identity.getName(),
+                                v
+                        );
+                    }
+                    return entity;
+                } else {
+                    // TODO: projections
+                    throw new DataAccessException("Projections not yet supported");
+                }
+            }
+            return null;
+        });
     }
 
     @NonNull
@@ -157,44 +214,65 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         });
 
 
-        return writeTransactionTemplate.execute((status) -> {
+        return withWriteConnection((connection) -> {
+            T entity = operation.getEntity();
+            boolean generateId = insert.isGenerateId();
+            PreparedStatement stmt = connection.prepareStatement(insert.getSql(), generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+            for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
+                RuntimePersistentProperty<T> prop = entry.getKey();
+                DataType type = prop.getDataType();
+                Object value = prop.getProperty().get(entity);
+                preparedStatementWriter.setDynamic(
+                        stmt,
+                        entry.getValue(),
+                        type,
+                        value
+                );
+            }
+            int i = stmt.executeUpdate();
+            if (generateId) {
+                ResultSet generatedKeys = stmt.getGeneratedKeys();
+                if (generatedKeys.next()) {
+                    long id = generatedKeys.getLong(1);
+                    BeanWrapper.getWrapper(entity).setProperty(
+                            insert.getIdentity().getName(),
+                            id
+                    );
+                } else {
+                    throw new DataAccessException("ID failed to generate. No result returned.");
+                }
+            }
+            return entity;
+        });
+
+    }
+
+    private <T> T withReadConnection(SqlFunction<T> callback) {
+        //noinspection Duplicates
+        return readTransactionTemplate.execute((status) -> {
             Connection connection = DataSourceUtils.getConnection(dataSource);
             try {
-                T entity = operation.getEntity();
-                boolean generateId = insert.isGenerateId();
-                PreparedStatement stmt = connection.prepareStatement(insert.getSql(), generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
-                    RuntimePersistentProperty<T> prop = entry.getKey();
-                    DataType type = prop.getDataType();
-                    Object value = prop.getProperty().get(entity);
-                    preparedStatementWriter.setDynamic(
-                            stmt,
-                            entry.getValue(),
-                            type,
-                            value
-                    );
-                }
-                int i = stmt.executeUpdate();
-                if (generateId) {
-                    ResultSet generatedKeys = stmt.getGeneratedKeys();
-                    if (generatedKeys.next()) {
-                        long id = generatedKeys.getLong(1);
-                        BeanWrapper.getWrapper(entity).setProperty(
-                                insert.getIdentity().getName(),
-                                id
-                        );
-                    } else {
-                        throw new DataAccessException("ID failed to generate. No result returned.");
-                    }
-                }
-                return entity;
+                return callback.apply(connection);
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing INSERT: " + e.getMessage());
+                throw new DataAccessException("Error executing Read Operation: " + e.getMessage());
             } finally {
                 DataSourceUtils.releaseConnection(connection, dataSource);
             }
         });
+    }
 
+    private <T> T withWriteConnection(SqlFunction<T> callback) {
+        //noinspection Duplicates
+        return writeTransactionTemplate.execute((status) -> {
+            Connection connection = DataSourceUtils.getConnection(dataSource);
+            try {
+                return callback.apply(connection);
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing Write Operation: " + e.getMessage());
+            } finally {
+                DataSourceUtils.releaseConnection(connection, dataSource);
+            }
+        });
     }
 
     private <T> RuntimePersistentEntity<T> getPersistentEntity(Class<T> type) {
@@ -261,6 +339,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
         return Optional.empty();
+    }
+
+    /**
+     * SQL callback interface.
+     * @param <T> The return type
+     */
+    @FunctionalInterface
+    private interface SqlFunction<T> {
+        T apply(Connection connection) throws SQLException;
     }
 
     /**

@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -40,10 +41,12 @@ public class MatchContext implements AnnotationMetadataProvider {
     protected final ClassElement returnType;
     @NonNull
     protected final ParameterElement[] parameters;
+    private final ClassElement repositoryClass;
     private boolean failing = false;
 
     /**
      * Default constructor.
+     * @param repositoryClass The repository class
      * @param visitorContext The visitor context
      * @param methodElement The method element
      * @param typeRoles The type roles
@@ -51,11 +54,13 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param parameters The parameters
      */
     MatchContext(
+            @NonNull ClassElement repositoryClass,
             @NonNull VisitorContext visitorContext,
             @NonNull MethodElement methodElement,
             @NonNull Map<String, String> typeRoles,
             @NonNull ClassElement returnType,
             @NonNull ParameterElement[] parameters) {
+        this.repositoryClass = repositoryClass;
         this.visitorContext = visitorContext;
         this.methodElement = methodElement;
         this.typeRoles = typeRoles;
@@ -131,5 +136,13 @@ public class MatchContext implements AnnotationMetadataProvider {
      */
     public boolean isFailing() {
         return failing;
+    }
+
+    /**
+     * Returns whether the first level cache is supported.
+     * @return True if it is
+     */
+    public boolean supportsFirstLevelCache() {
+        return repositoryClass.booleanValue(Repository.class, "firstLevelCache").orElse(true);
     }
 }

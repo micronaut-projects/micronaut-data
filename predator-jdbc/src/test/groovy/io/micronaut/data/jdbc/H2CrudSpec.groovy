@@ -38,5 +38,13 @@ create table book (id bigint auto_increment, pages integer not null, title varch
 
         then:"The ID is assigned"
         book.id != null
+
+        when:"The book is retrieved again"
+        book = bookRepository.findById(book.id).orElse(null)
+
+        then:"The book is back and valid"
+        book.id != null
+        book.title == "The stand"
+        book.pages == 1000
     }
 }

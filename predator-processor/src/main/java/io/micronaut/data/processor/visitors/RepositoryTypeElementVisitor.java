@@ -151,6 +151,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
 
             MatchContext matchContext = new MatchContext(
+                    currentClass,
                     context,
                     element,
                     typeRoles,
@@ -171,6 +172,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
 
                     MethodMatchContext methodMatchContext = new MethodMatchContext(
+                            currentClass,
                             entity,
                             context,
                             genericReturnType,

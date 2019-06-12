@@ -319,22 +319,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             final String name = between.getProperty();
             PersistentProperty prop = validateProperty(queryState.getEntity(), name, QueryModel.Between.class);
             final String qualifiedName = queryState.getLogicalName() + DOT + name;
-            String fromParam = newParameter(queryState.getParameterPosition());
-            String toParam = newParameter(queryState.getParameterPosition());
+            Placeholder fromParam = queryState.newParameter();
+            Placeholder toParam = queryState.newParameter();
             queryState.getWhereClause().append(OPEN_BRACKET)
                     .append(qualifiedName)
                     .append(" >= ")
-                    .append(':')
-                    .append(fromParam);
+                    .append(fromParam.name);
             queryState.getWhereClause().append(" AND ")
                     .append(qualifiedName)
                     .append(" <= ")
-                    .append(':')
-                    .append(toParam)
+                    .append(toParam.name)
                     .append(CLOSE_BRACKET);
 
-            queryState.getParameters().put(fromParam, between.getFrom().getName());
-            queryState.getParameters().put(toParam, between.getTo().getName());
+            queryState.getParameters().put(fromParam.key, between.getFrom().getName());
+            queryState.getParameters().put(toParam.key, between.getTo().getName());
         });
 
         queryHandlers.put(QueryModel.LessThan.class, (queryState, criterion) -> {
@@ -367,18 +365,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.StartsWith eq = (QueryModel.StartsWith) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.getEntity(), name, QueryModel.ILike.class);
-            String parameterName = newParameter(queryState.getParameterPosition());
+            Placeholder parameterName = queryState.newParameter();
             queryState.getWhereClause()
                     .append(queryState.getLogicalName())
                     .append(DOT)
                     .append(prop.getName())
                     .append(" LIKE CONCAT(")
-                    .append(':')
-                    .append(parameterName)
+                    .append(parameterName.name)
                     .append(",'%')");
             Object value = eq.getValue();
             if (value instanceof QueryParameter) {
-                queryState.getParameters().put(parameterName, ((QueryParameter) value).getName());
+                queryState.getParameters().put(parameterName.key, ((QueryParameter) value).getName());
             }
         });
 
@@ -386,18 +383,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.Contains eq = (QueryModel.Contains) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.getEntity(), name, QueryModel.ILike.class);
-            String parameterName = newParameter(queryState.getParameterPosition());
+            Placeholder parameterName = queryState.newParameter();
             queryState.getWhereClause()
                     .append(queryState.getLogicalName())
                     .append(DOT)
                     .append(prop.getName())
                     .append(" LIKE CONCAT('%',")
-                    .append(':')
-                    .append(parameterName)
+                    .append(parameterName.name)
                     .append(",'%')");
             Object value = eq.getValue();
             if (value instanceof QueryParameter) {
-                queryState.getParameters().put(parameterName, ((QueryParameter) value).getName());
+                queryState.getParameters().put(parameterName.key, ((QueryParameter) value).getName());
             }
         });
 
@@ -405,18 +401,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.EndsWith eq = (QueryModel.EndsWith) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState.getEntity(), name, QueryModel.ILike.class);
-            String parameterName = newParameter(queryState.getParameterPosition());
+            Placeholder placeholder = queryState.newParameter();
             queryState.getWhereClause()
                     .append(queryState.getLogicalName())
                     .append(DOT)
                     .append(prop.getName())
                     .append(" LIKE CONCAT('%',")
-                    .append(':')
-                    .append(parameterName)
+                    .append(placeholder.name)
                     .append(")");
             Object value = eq.getValue();
             if (value instanceof QueryParameter) {
-                queryState.getParameters().put(parameterName, ((QueryParameter) value).getName());
+                queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
             }
         });
 
@@ -432,11 +427,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (subquery != null) {
                 buildSubQuery(queryState, subquery);
             } else {
-                String parameterName = newParameter(queryState.getParameterPosition());
-                queryState.getWhereClause().append(':').append(parameterName);
+                Placeholder placeholder = queryState.newParameter();
+                queryState.getWhereClause().append(placeholder.name);
                 Object value = inQuery.getValue();
                 if (value instanceof QueryParameter) {
-                    queryState.getParameters().put(parameterName, ((QueryParameter) value).getName());
+                    queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
                 }
             }
             queryState.getWhereClause().append(CLOSE_BRACKET);
@@ -783,25 +778,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                            final String path,
                                            Object value,
                                            String operator) {
-        String parameterName = newParameter(queryState.getParameterPosition());
+        Placeholder placeholder = queryState.newParameter();
         queryState.getWhereClause().append(queryState.getLogicalName())
                 .append(DOT)
                 // TODO: properly handle paths
                 .append(path.indexOf('.') == -1 ? getColumnName(property) : path)
                 .append(operator)
-                .append(':')
-                .append(parameterName);
+                .append(placeholder.name);
         if (value instanceof QueryParameter) {
-            queryState.getParameters().put(parameterName, ((QueryParameter) value).getName());
+            queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
         }
     }
 
-    private String newParameter(AtomicInteger position) {
-        return "p" + position.incrementAndGet();
-    }
-
     private void appendCaseInsensitiveCriterion(QueryState queryState, QueryModel.PropertyCriterion criterion, PersistentProperty prop, String operator) {
-        String parameterName = newParameter(queryState.getParameterPosition());
+        Placeholder placeholder = queryState.newParameter();
         queryState.getWhereClause().append("lower(")
                 .append(queryState.getLogicalName())
                 .append(DOT)
@@ -809,12 +799,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .append(") ")
                 .append(operator)
                 .append(" lower(")
-                .append(':')
-                .append(parameterName)
+                .append(placeholder.name)
                 .append(")");
         Object value = criterion.getValue();
         if (value instanceof QueryParameter) {
-            queryState.getParameters().put(parameterName, ((QueryParameter) value).getName());
+            queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
         }
     }
 
@@ -838,26 +827,27 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     private void buildSubQuery(QueryState queryState, QueryModel subquery) {
-        PersistentEntity associatedEntity = subquery.getPersistentEntity();
-        String associatedEntityName = associatedEntity.getName();
-        String associatedEntityLogicalName = associatedEntity.getDecapitalizedName() + queryState.getParameterPosition().incrementAndGet();
-        queryState.getWhereClause().append("SELECT ");
-        buildSelect(queryState, queryState.getWhereClause(), subquery.getProjections(), associatedEntityLogicalName, associatedEntity);
-        queryState.getWhereClause().append(" FROM ")
-                .append(associatedEntityName)
-                .append(' ')
-                .append(associatedEntityLogicalName)
-                .append(" WHERE ");
-        List<QueryModel.Criterion> criteria = subquery.getCriteria().getCriteria();
-        for (QueryModel.Criterion subCriteria : criteria) {
-            QueryHandler queryHandler = queryHandlers.get(subCriteria.getClass());
-            if (queryHandler != null) {
-                queryHandler.handle(
-                        queryState,
-                        subCriteria
-                );
-            }
-        }
+//        TODO: Support subqueries
+//        PersistentEntity associatedEntity = subquery.getPersistentEntity();
+//        String associatedEntityName = associatedEntity.getName();
+//        String associatedEntityLogicalName = associatedEntity.getDecapitalizedName() + queryState.getParameterPosition().incrementAndGet();
+//        queryState.getWhereClause().append("SELECT ");
+//        buildSelect(queryState, queryState.getWhereClause(), subquery.getProjections(), associatedEntityLogicalName, associatedEntity);
+//        queryState.getWhereClause().append(" FROM ")
+//                .append(associatedEntityName)
+//                .append(' ')
+//                .append(associatedEntityLogicalName)
+//                .append(" WHERE ");
+//        List<QueryModel.Criterion> criteria = subquery.getCriteria().getCriteria();
+//        for (QueryModel.Criterion subCriteria : criteria) {
+//            QueryHandler queryHandler = queryHandlers.get(subCriteria.getClass());
+//            if (queryHandler != null) {
+//                queryHandler.handle(
+//                        queryState,
+//                        subCriteria
+//                );
+//            }
+//        }
     }
 
     private void buildUpdateStatement(
@@ -878,9 +868,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
 
             queryString.append(SPACE).append(queryState.getLogicalName()).append(DOT).append(propertyName).append('=');
-            String param = newParameter(queryState.getParameterPosition());
-            queryString.append(':').append(param);
-            parameters.put(param, prop.getName());
+            Placeholder param = queryState.newParameter();
+            queryString.append(param.name);
+            parameters.put(param.key, prop.getName());
             if (iterator.hasNext()) {
                 queryString.append(COMMA);
             }
@@ -991,6 +981,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * Format the parameter at the given index.
+     * @param index The parameter
+     * @return The index
+     */
+    protected abstract Placeholder formatParameter(int index);
+
+    /**
      * A query handler.
      */
     protected interface QueryHandler {
@@ -1065,14 +1062,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * The current parameter position.
-         * @return The parameter position
-         */
-        public AtomicInteger getParameterPosition() {
-            return position;
-        }
-
-        /**
          * @return The constructed parameters
          */
         public Map<String, String> getParameters() {
@@ -1106,5 +1095,38 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         public QueryModel getQueryObject() {
             return queryObject;
         }
+
+        /**
+         * Constructs a new parameter placeholder.
+         * @return The parameter
+         */
+        public Placeholder newParameter() {
+            return formatParameter(position.incrementAndGet());
+        }
+
     }
+
+    /**
+     * Represents a placeholder in query.
+     */
+    protected class Placeholder {
+        private final String name;
+        private final String key;
+
+        /**
+         * Default constructor.
+         * @param name The name of the place holder
+         * @param key The key to set the value of the place holder
+         */
+        public Placeholder(String name, String key) {
+            this.name = name;
+            this.key = key;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
 }

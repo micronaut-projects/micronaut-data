@@ -98,5 +98,6 @@ create table basic_types (
 
         then: "The ID is assigned"
         book.myId != null
+
     }
 }

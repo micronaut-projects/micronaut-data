@@ -53,8 +53,8 @@ class SqlQueryBuilderSpec extends Specification {
         encodedQuery != null
         mappedName == 'some_id'
         encodedQuery.query ==
-                "SELECT person.name,person.age,person.some_id,person.enabled FROM person AS person WHERE (person.${ mappedName} $operator :p1)"
-        encodedQuery.parameters == ['p1': 'test']
+                "SELECT person.id,person.name,person.age,person.some_id,person.enabled FROM person AS person WHERE (person.${ mappedName} $operator ?)"
+        encodedQuery.parameters == ['1': 'test']
 
         where:
         type   | method | property | operator

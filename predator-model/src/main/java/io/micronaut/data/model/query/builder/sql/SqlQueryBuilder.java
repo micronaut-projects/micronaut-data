@@ -54,6 +54,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             StringBuilder builder = new StringBuilder();
             Iterator<PersistentProperty> i = persistentProperties.iterator();
             boolean first = true;
+            PersistentProperty identity = entity.getIdentity();
+            if (identity != null) {
+                builder.append(alias).append(DOT)
+                        .append(identity.getPersistedName())
+                        .append(",");
+            }
             while (i.hasNext()) {
                 PersistentProperty pp = i.next();
 
@@ -89,6 +95,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append(OPEN_BRACKET)
                 .append('*')
                 .append(CLOSE_BRACKET);
+    }
+
+    @Override
+    protected Placeholder formatParameter(int index) {
+        return new Placeholder("?", String.valueOf(index));
     }
 
     @Nullable

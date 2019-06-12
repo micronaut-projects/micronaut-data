@@ -77,4 +77,11 @@ public @interface Repository {
         @TypeRole(role = TypeRole.SLICE, type = Slice.class),
         @TypeRole(role = TypeRole.PAGE, type = Page.class)
     };
+
+    /**
+     * Does the repository support a first level cache and lookup by ID.
+     *
+     * @return True if it does
+     */
+    boolean firstLevelCache() default true;
 }

@@ -111,6 +111,12 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append(CLOSE_BRACKET);
     }
 
+    @Override
+    protected Placeholder formatParameter(int index) {
+        String n = "p" + index;
+        return new Placeholder(":" + n, n);
+    }
+
     @Nullable
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {

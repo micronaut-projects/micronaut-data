@@ -43,6 +43,7 @@ public class MethodMatchContext extends MatchContext {
 
     /**
      * Creates the context.
+     * @param repositoryClass The repository class
      * @param entity The entity
      * @param visitorContext The visitor context
      * @param returnType The return type
@@ -52,6 +53,7 @@ public class MethodMatchContext extends MatchContext {
      * @param parameters The parameters
      */
     MethodMatchContext(
+            @NonNull ClassElement repositoryClass,
             @NonNull SourcePersistentEntity entity,
             @NonNull VisitorContext visitorContext,
             @NonNull ClassElement returnType,
@@ -59,7 +61,7 @@ public class MethodMatchContext extends MatchContext {
             @NonNull Map<String, Element> parametersInRole,
             @NonNull Map<String, String> typeRoles,
             @NonNull ParameterElement[] parameters) {
-        super(visitorContext, methodElement, typeRoles, returnType, parameters);
+        super(repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
     }
