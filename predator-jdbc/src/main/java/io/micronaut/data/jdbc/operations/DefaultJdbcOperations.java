@@ -56,7 +56,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final PreparedStatementWriter preparedStatementWriter = new PreparedStatementWriter();
-    
+
     /**
      * Default constructor.
      * @param dataSource The data source

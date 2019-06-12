@@ -73,8 +73,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             if (type.isPrimitive() || typeName.startsWith("java.lang")) {
                 Class primitiveType = ClassUtils.getPrimitiveType(typeName).orElse(null);
                 if (primitiveType != null) {
-
-                    ReflectionUtils.getWrapperType(primitiveType);
+                    typeName = ReflectionUtils.getWrapperType(primitiveType).getSimpleName();
                     DataType dt = DataType.valueOf(typeName.toUpperCase(Locale.ENGLISH));
                     if (type.isArray()) {
                         if (dt == DataType.BYTE) {
@@ -86,26 +85,39 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                         propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", dt));
                     }
                 } else {
-                    String simpleName = type.getSimpleName();
-                    try {
-                        DataType dt = DataType.valueOf(simpleName.toUpperCase(Locale.ENGLISH));
-                        propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", dt));
-                    } catch (IllegalArgumentException e) {
-                        context.fail("Unknown primitive or basic type: " + typeName, element);
-                    }
+                    handleBasicType(propertyElement, type);
                 }
             } else if (ClassUtils.isJavaBasicType(typeName)) {
-                if (type.isAssignable(CharSequence.class)) {
-                    propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.STRING));
-                } else if (type.isAssignable(BigDecimal.class)) {
-                    propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.BIGDECIMAL));
-                } else if (type.isAssignable(Temporal.class) || type.isAssignable(Date.class)) {
-                    propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.DATE));
-                } else {
-                    propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.STRING));
-                }
+                handleBasicType(propertyElement, type);
             }
         }
+    }
+
+    private void handleBasicType(PropertyElement propertyElement, ClassElement type) {
+        try {
+            if (ClassUtils.isJavaBasicType(type.getName())) {
+                Class pt = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
+                if (pt != null) {
+                    String typeName = ReflectionUtils.getWrapperType(pt).getSimpleName();
+                    DataType dt = DataType.valueOf(typeName.toUpperCase(Locale.ENGLISH));
+                    propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", dt));
+                } else {
+                    DataType dt = DataType.valueOf(type.getSimpleName().toUpperCase(Locale.ENGLISH));
+                    propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", dt));
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            if (type.isAssignable(CharSequence.class)) {
+                propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.STRING));
+            } else if (type.isAssignable(BigDecimal.class)) {
+                propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.BIGDECIMAL));
+            } else if (type.isAssignable(Temporal.class) || type.isAssignable(Date.class)) {
+                propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.DATE));
+            } else {
+                propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", DataType.STRING));
+            }
+        }
+
     }
 
     private NamingStrategy resolveNamingStrategy(ClassElement element) {

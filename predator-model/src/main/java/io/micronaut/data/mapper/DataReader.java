@@ -58,7 +58,7 @@ public interface DataReader<RS, IDX> {
         switch (dataType) {
             case STRING:
                 return readString(resultSet, index);
-            case INT:
+            case INTEGER:
                 return readInt(resultSet, index);
             case BOOLEAN:
                 return readBoolean(resultSet, index);
@@ -68,7 +68,7 @@ public interface DataReader<RS, IDX> {
                 return readDate(resultSet, index);
             case LONG:
                 return readLong(resultSet, index);
-            case CHAR:
+            case CHARACTER:
                 return readChar(resultSet, index);
             case FLOAT:
                 return readFloat(resultSet, index);

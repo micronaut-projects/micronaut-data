@@ -48,7 +48,7 @@ public interface DataWriter<PS, IDX> {
                 } else {
                     return setString(statement, index, convertRequired(value, String.class));
                 }
-            case INT:
+            case INTEGER:
                 if (value instanceof Number) {
                     return setInt(statement, index, ((Number) value).intValue());
                 } else {
@@ -92,7 +92,7 @@ public interface DataWriter<PS, IDX> {
                 } else {
                     return setLong(statement, index, convertRequired(value, Long.class));
                 }
-            case CHAR:
+            case CHARACTER:
                 if (value instanceof Character) {
                     return setChar(statement, index, (Character) value);
                 } else {

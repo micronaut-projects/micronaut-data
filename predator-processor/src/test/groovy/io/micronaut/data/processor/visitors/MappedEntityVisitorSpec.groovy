@@ -14,13 +14,13 @@ package test;
 
 import io.micronaut.core.annotation.Introspected;
 import javax.persistence.*;
-
+import java.util.UUID;
 @Entity
 class TestEntity {
     private String name;
     @Id
-    private Long id;
-    private String someOther;
+    private Integer id;
+    private UUID someOther;
     
     public String getName() {
         return name;
@@ -31,19 +31,19 @@ class TestEntity {
     }
     
 
-    public Long getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
-    public String getSomeOther() {
+    public UUID getSomeOther() {
         return someOther;
     }
 
-    public void setSomeOther(String someOther) {
+    public void setSomeOther(UUID someOther) {
         this.someOther = someOther;
     }
 }
@@ -58,7 +58,7 @@ class TestEntity {
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
         def so = introspection.getProperty("someOther").get()
         so.stringValue(MappedProperty).get() == 'some_other'
-        introspection.getProperty("id").get().getValue(MappedProperty, "type", DataType).get() == DataType.LONG
+        introspection.getProperty("id").get().getValue(MappedProperty, "type", DataType).get() == DataType.INTEGER
         so.getValue(MappedProperty, "type", DataType).orElse(null) == DataType.STRING
     }
 }

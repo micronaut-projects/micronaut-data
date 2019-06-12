@@ -19,8 +19,8 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.core.convert.ConversionService;
 
 import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.chrono.ChronoLocalDate;
 import java.util.Date;
 
 /**
@@ -39,6 +39,15 @@ class PredatorInitializer {
         ConversionService<?> conversionService = ConversionService.SHARED;
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime ->
                 new java.sql.Date(offsetDateTime.toInstant().toEpochMilli())
+        );
+        conversionService.addConverter(Instant.class, Date.class, instant ->
+                new Date(instant.toEpochMilli())
+        );
+        conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime ->
+                new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
+        );
+        conversionService.addConverter(ChronoLocalDate.class, Date.class, localDateTime ->
+                new Date(localDateTime.toEpochDay())
         );
         conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime ->
                 new Date(offsetDateTime.toInstant().toEpochMilli())
