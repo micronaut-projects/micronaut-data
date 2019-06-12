@@ -18,7 +18,8 @@ package io.micronaut.data.processor.mappers
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.beans.BeanIntrospection
 import io.micronaut.core.naming.NameUtils
-import io.micronaut.data.annotation.Persisted
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
 
 class EntityAnnotationMapperSpec extends AbstractTypeElementSpec {
 
@@ -70,14 +71,14 @@ class Test {
 ''')
         expect:
         introspection != null
-        introspection.hasStereotype(Persisted)
+        introspection.hasStereotype(MappedEntity)
         introspection.getPropertyNames()
-        introspection.getValue(Persisted, String).get() == 'test_tb1'
+        introspection.getValue(MappedEntity, String).get() == 'test_tb1'
         !introspection.getProperty("tmp").isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
-        introspection.getIndexedProperty(io.micronaut.data.annotation.Persisted, "test_name").isPresent()
-        introspection.getIndexedProperty(io.micronaut.data.annotation.Persisted, "test_name").get().name == 'name'
+        introspection.getIndexedProperty(MappedProperty, "test_name").isPresent()
+        introspection.getIndexedProperty(MappedProperty, "test_name").get().name == 'name'
     }
 
 

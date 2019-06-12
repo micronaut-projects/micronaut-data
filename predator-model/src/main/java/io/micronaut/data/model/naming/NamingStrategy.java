@@ -18,7 +18,8 @@ package io.micronaut.data.model.naming;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
@@ -48,7 +49,7 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
-        return entity.getAnnotationMetadata().stringValue(Persisted.class)
+        return entity.getAnnotationMetadata().stringValue(MappedEntity.class)
                 .orElseGet(() -> mappedName(entity.getSimpleName()));
     }
 
@@ -59,7 +60,7 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
-        return property.getAnnotationMetadata().stringValue(Persisted.class)
+        return property.getAnnotationMetadata().stringValue(MappedProperty.class)
                 .orElseGet(() -> mappedName(property.getName()));
     }
 }

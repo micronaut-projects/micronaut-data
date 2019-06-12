@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.mappers.spring;
 
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Maps Spring Data's Persisted to {@link Persisted}.
+ * Maps Spring Data's Persisted to {@link MappedEntity}.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -40,6 +40,6 @@ public class SpringPersistentAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        return Collections.singletonList(AnnotationValue.builder(Persisted.class).build());
+        return Collections.singletonList(AnnotationValue.builder(MappedEntity.class).build());
     }
 }

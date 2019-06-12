@@ -56,12 +56,12 @@ public final class EntityAnnotationMapper implements NamedAnnotationMapper {
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
                                 .member("annotation", DateUpdated.class).build(),
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
-                                .member("annotation", Persisted.class)
+                                .member("annotation", MappedProperty.class)
                                 .member("member", "value").build()
                 );
         return Arrays.asList(
                 builder.build(),
-                AnnotationValue.builder(Persisted.class).build()
+                AnnotationValue.builder(MappedEntity.class).build()
         );
     }
 }

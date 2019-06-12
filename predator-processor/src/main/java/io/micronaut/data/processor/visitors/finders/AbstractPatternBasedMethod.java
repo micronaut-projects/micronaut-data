@@ -25,7 +25,7 @@ import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.*;
@@ -156,7 +156,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
                     }
                 } else {
-                    if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+                    if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                         if (attemptProjection(matchContext, queryResultType, query, returnType)) {
                             return null;
                         }
@@ -247,7 +247,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 } else {
                     boolean dto = false;
                     if (!areTypesCompatible(typeArgument, queryResultType, matchContext)) {
-                        if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+                        if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                             if (attemptProjection(matchContext, queryResultType, query, typeArgument)) {
                                 return null;
                             }
@@ -302,7 +302,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull ClassElement returnType) {
         boolean dto = false;
         if (!areTypesCompatible(returnType, queryResultType, matchContext)) {
-            if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(Persisted.class)) {
+            if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                 if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
                     dto = true;
                 }

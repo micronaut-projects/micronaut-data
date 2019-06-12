@@ -18,7 +18,7 @@ package io.micronaut.data.processor.mappers.jpa;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -27,7 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Maps JPA's {@code Table} annotation to {@link Persisted}.
+ * Maps JPA's {@code Table} annotation to {@link MappedEntity}.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -44,7 +44,7 @@ public final class TableAnnotationMapper implements NamedAnnotationMapper {
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         final String name = annotation.get("name", String.class).orElse(null);
         if (name != null) {
-            final AnnotationValueBuilder<Persisted> builder = AnnotationValue.builder(Persisted.class);
+            final AnnotationValueBuilder<MappedEntity> builder = AnnotationValue.builder(MappedEntity.class);
             builder.value(name);
             return Collections.singletonList(builder.build());
         } else {

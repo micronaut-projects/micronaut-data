@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
@@ -63,7 +63,7 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
         VisitorContext visitorContext = matchContext.getVisitorContext();
         ParameterElement[] parameters = matchContext.getParameters();
         if (ArrayUtils.isNotEmpty(parameters)) {
-            if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(Persisted.class))) {
+            if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
                 ClassElement returnType = matchContext.getReturnType();
                 Class<? extends PredatorInterceptor> interceptor = pickSaveInterceptor(returnType);
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
@@ -91,7 +91,7 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
             returnType = returnType.getFirstTypeArgument().orElse(null);
         }
         return returnType != null &&
-                returnType.hasAnnotation(Persisted.class) &&
+                returnType.hasAnnotation(MappedEntity.class) &&
                 (entityArgumentNotRequired || returnType.getName().equals(matchContext.getParameters()[0].getGenericType().getName()));
     }
 

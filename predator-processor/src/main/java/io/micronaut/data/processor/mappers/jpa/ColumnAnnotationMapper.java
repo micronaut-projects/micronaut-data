@@ -18,7 +18,7 @@ package io.micronaut.data.processor.mappers.jpa;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Maps JPA column annotation to {@link Persisted}.
+ * Maps JPA column annotation to {@link MappedProperty}.
  *
  * @author graemerocher
  * @since 1.0.0
@@ -44,10 +44,10 @@ public final class ColumnAnnotationMapper implements NamedAnnotationMapper {
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         final String name = annotation.get("name", String.class).orElse(null);
         final boolean nullable = annotation.get("nullable", boolean.class).orElse(false);
-        AnnotationValue<Persisted> persistedAnnotationValue;
+        AnnotationValue<MappedProperty> persistedAnnotationValue;
         List<AnnotationValue<?>> values = new ArrayList<>(2);
         if (name != null) {
-            persistedAnnotationValue = AnnotationValue.builder(Persisted.class)
+            persistedAnnotationValue = AnnotationValue.builder(MappedProperty.class)
                     .value(name)
                     .build();
 

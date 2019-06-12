@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mapper;
+package io.micronaut.data.model;
 
 /**
- * Enum of basic data types.
+ * Enum of basic data types allowing compile time computation which can then subsequently be used at runtime for fast
+ * switching.
  *
  * @author graemerocher
  * @since 1.0.0
  */
 public enum DataType {
-    BIG_DECIMAL,
+    BIGDECIMAL,
     BOOLEAN,
     BYTE,
     BYTE_ARRAY,
+    CHAR,
+    DATE,
     DOUBLE,
     FLOAT,
     INT,
     LONG,
     SHORT,
-    STRING
+    STRING,
+    OBJECT
 }

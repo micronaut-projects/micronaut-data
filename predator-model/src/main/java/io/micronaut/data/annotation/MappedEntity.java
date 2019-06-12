@@ -29,7 +29,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Documented
-public @interface Persisted {
+public @interface MappedEntity {
 
     /**
      * The destination the type is persisted to. This could be the table name, document name,

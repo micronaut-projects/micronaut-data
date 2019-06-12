@@ -22,7 +22,7 @@ import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.PredatorInterceptor;
@@ -468,7 +468,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private SourcePersistentEntity resolvePersistentEntity(ClassElement returnType) {
         if (returnType != null) {
-            if (returnType.hasAnnotation(Persisted.class)) {
+            if (returnType.hasAnnotation(MappedEntity.class)) {
                 return new SourcePersistentEntity(returnType);
             } else {
                 Collection<ClassElement> typeArguments = returnType.getTypeArguments().values();

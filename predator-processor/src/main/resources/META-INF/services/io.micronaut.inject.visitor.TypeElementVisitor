@@ -1,1 +1,2 @@
 io.micronaut.data.processor.visitors.RepositoryTypeElementVisitor
+io.micronaut.data.processor.visitors.MappedEntityVisitor

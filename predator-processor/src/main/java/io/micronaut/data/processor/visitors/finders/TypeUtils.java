@@ -20,7 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
@@ -60,7 +60,7 @@ public class TypeUtils {
     }
 
     /**
-     * Does the given type have a first argument annotated with {@link Persisted}.
+     * Does the given type have a first argument annotated with {@link MappedEntity}.
      * @param type The type
      * @return True if it does
      */
@@ -68,7 +68,7 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.getFirstTypeArgument().map(t -> t.hasAnnotation(Persisted.class)).orElse(false);
+        return type.getFirstTypeArgument().map(t -> t.hasAnnotation(MappedEntity.class)).orElse(false);
     }
 
     /**

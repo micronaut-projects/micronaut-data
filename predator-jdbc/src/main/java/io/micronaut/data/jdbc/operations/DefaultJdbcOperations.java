@@ -8,6 +8,8 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -53,7 +55,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final DataSource dataSource;
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
-
+    private final PreparedStatementWriter preparedStatementWriter = new PreparedStatementWriter();
+    
     /**
      * Default constructor.
      * @param dataSource The data source
@@ -162,9 +165,12 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 PreparedStatement stmt = connection.prepareStatement(insert.getSql(), generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
                 for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
                     RuntimePersistentProperty<T> prop = entry.getKey();
+                    DataType type = prop.getDataType();
                     Object value = prop.getProperty().get(entity);
-                    stmt.setObject(
+                    preparedStatementWriter.setDynamic(
+                            stmt,
                             entry.getValue(),
+                            type,
                             value
                     );
                 }

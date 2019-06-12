@@ -4,7 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.reflect.InstantiationUtils;
-import io.micronaut.data.annotation.Persisted;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
 
@@ -28,7 +28,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
     protected AbstractPersistentEntity(AnnotationMetadataProvider annotationMetadataProvider) {
         this.annotationMetadataProvider = annotationMetadataProvider;
         this.namingStrategy = annotationMetadataProvider.getAnnotationMetadata()
-                .classValue(Persisted.class, "namingStrategy")
+                .classValue(MappedEntity.class, "namingStrategy")
                 .flatMap(aClass -> {
                     @SuppressWarnings("unchecked")
                     Object o = InstantiationUtils.tryInstantiate(aClass).orElse(null);

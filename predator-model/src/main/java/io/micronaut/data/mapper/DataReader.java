@@ -18,15 +18,18 @@ package io.micronaut.data.mapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * A data reader is a type that is capable of reading data from the given result set type.
  *
  * @param <RS> The result set
+ * @param <IDX> The index type
  */
-public interface DataReader<RS> {
+public interface DataReader<RS, IDX> {
 
     /**
      * Get a value from the given result set for the given name and type.
@@ -37,44 +40,49 @@ public interface DataReader<RS> {
      * @return The value
      * @throws DataAccessException if the value cannot be read
      */
-    <T> T getRequiredValue(RS resultSet, String name, Class<T> type)
+    <T> T getRequiredValue(RS resultSet, IDX name, Class<T> type)
         throws DataAccessException;
 
     /**
      * Read a value dynamically using the result set and the given name and data type.
      * @param resultSet The result set
-     * @param name The name
+     * @param index The name
      * @param dataType The data type
      * @return The value, can be null
      * @throws DataAccessException if the value cannot be read
      */
     default @Nullable Object readDynamic(
             @NonNull RS resultSet,
-            @NonNull String name,
+            @NonNull IDX index,
             @NonNull DataType dataType) {
         switch (dataType) {
             case STRING:
-                return readString(resultSet, name);
+                return readString(resultSet, index);
             case INT:
-                return readInt(resultSet, name);
+                return readInt(resultSet, index);
             case BOOLEAN:
-                return readBoolean(resultSet, name);
+                return readBoolean(resultSet, index);
             case BYTE:
-                return readByte(resultSet, name);
+                return readByte(resultSet, index);
+            case DATE:
+                return readDate(resultSet, index);
             case LONG:
-                return readLong(resultSet, name);
+                return readLong(resultSet, index);
+            case CHAR:
+                return readChar(resultSet, index);
             case FLOAT:
-                return readFloat(resultSet, name);
+                return readFloat(resultSet, index);
             case SHORT:
-                return readShort(resultSet, name);
+                return readShort(resultSet, index);
             case DOUBLE:
-                return readDouble(resultSet, name);
+                return readDouble(resultSet, index);
             case BYTE_ARRAY:
-                return readBytes(resultSet, name);
-            case BIG_DECIMAL:
-                return readBigDecimal(resultSet, name);
+                return readBytes(resultSet, index);
+            case BIGDECIMAL:
+                return readBigDecimal(resultSet, index);
+            case OBJECT:
             default:
-                throw new DataAccessException("Unexpected data type: " + dataType);
+                return getRequiredValue(resultSet, index, Object.class);
         }
     }
 
@@ -84,8 +92,28 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The long value
      */
-    default long readLong(RS resultSet, String name) {
+    default long readLong(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, long.class);
+    }
+
+    /**
+     * Read a char value for the given name.
+     * @param resultSet The result set
+     * @param name The name (such as the column name)
+     * @return The char value
+     */
+    default char readChar(RS resultSet, IDX name) {
+        return getRequiredValue(resultSet, name, char.class);
+    }
+
+    /**
+     * Read a date value for the given name.
+     * @param resultSet The result set
+     * @param name The name (such as the column name)
+     * @return The char value
+     */
+    default Date readDate(RS resultSet, IDX name) {
+        return getRequiredValue(resultSet, name, Date.class);
     }
 
     /**
@@ -94,7 +122,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The string value
      */
-    default @Nullable String readString(RS resultSet, String name) {
+    default @Nullable String readString(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, String.class);
     }
 
@@ -104,7 +132,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The int value
      */
-    default int readInt(RS resultSet, String name) {
+    default int readInt(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, int.class);
     }
 
@@ -114,7 +142,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The boolean value
      */
-    default boolean readBoolean(RS resultSet, String name) {
+    default boolean readBoolean(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, boolean.class);
     }
 
@@ -124,7 +152,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The float value
      */
-    default float readFloat(RS resultSet, String name) {
+    default float readFloat(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, float.class);
     }
 
@@ -134,7 +162,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The byte value
      */
-    default byte readByte(RS resultSet, String name) {
+    default byte readByte(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte.class);
     }
 
@@ -145,7 +173,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The short value
      */
-    default short readShort(RS resultSet, String name) {
+    default short readShort(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, short.class);
     }
 
@@ -155,7 +183,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The double value
      */
-    default double readDouble(RS resultSet, String name) {
+    default double readDouble(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, double.class);
     }
 
@@ -165,7 +193,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The BigDecimal value
      */
-    default BigDecimal readBigDecimal(RS resultSet, String name) {
+    default BigDecimal readBigDecimal(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, BigDecimal.class);
     }
 
@@ -175,7 +203,7 @@ public interface DataReader<RS> {
      * @param name The name (such as the column name)
      * @return The byte[] value
      */
-    default byte[] readBytes(RS resultSet, String name) {
+    default byte[] readBytes(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte[].class);
     }
 }
