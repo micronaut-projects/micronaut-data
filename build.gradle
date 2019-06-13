@@ -51,7 +51,9 @@ subprojects { Project subproject ->
         isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
     }
 
-    apply plugin: "io.spring.nohttp"
+    if (subproject.name != 'predator-tck') {
+        apply plugin: "io.spring.nohttp"
+    }
     apply plugin:"groovy"
     apply plugin:"java"
 
@@ -127,17 +129,20 @@ subprojects { Project subproject ->
 
     task allDeps(type: DependencyReportTask) {}
 
-    apply plugin: 'checkstyle'
+    if (subproject.name != 'predator-tck') {
+        apply plugin: 'checkstyle'
 
-    checkstyle {
-        toolVersion = 8.10
-        configFile = rootProject.file('config/checkstyle/checkstyle.xml')
+        checkstyle {
+            toolVersion = 8.10
+            configFile = rootProject.file('config/checkstyle/checkstyle.xml')
 
-        // Per submodule
-        maxErrors = 1
-        maxWarnings = 10
+            // Per submodule
+            maxErrors = 1
+            maxWarnings = 10
 
-        showViolations = true
+            showViolations = true
+        }
+        checkstyleTest.enabled = false
     }
 
     tasks.withType(GroovyCompile) {
@@ -147,8 +152,6 @@ subprojects { Project subproject ->
         options.encoding = "UTF-8"
         options.compilerArgs.add('-parameters')
     }
-
-    checkstyleTest.enabled = false
 }
 
 apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v1.0.3/gradle/docs.gradle"

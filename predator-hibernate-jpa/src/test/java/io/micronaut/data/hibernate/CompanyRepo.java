@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Company;
 
 
 @Repository

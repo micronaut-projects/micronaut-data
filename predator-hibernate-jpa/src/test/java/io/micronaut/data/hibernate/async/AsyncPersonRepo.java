@@ -16,8 +16,8 @@
 package io.micronaut.data.hibernate.async;
 
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.hibernate.Person;
-import io.micronaut.data.hibernate.PersonDto;
+import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.entities.PersonDto;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.async.AsyncCrudRepository;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate;
+package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;

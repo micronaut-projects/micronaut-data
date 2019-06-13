@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -23,7 +24,7 @@ import spock.lang.Stepwise
 
 import javax.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise

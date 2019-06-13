@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate;
+package io.micronaut.data.tck.entities;
 
-import javax.persistence.*;
+
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 
 @Entity
-public class Book {
+public class Person {
     @Id
     @GeneratedValue
     private Long id;
-    private String title;
-    private int pages;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Author author;
-
-    public Author getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(Author author) {
-        this.author = author;
-    }
+    private String name;
+    private int age;
 
     public Long getId() {
         return id;
@@ -44,19 +37,19 @@ public class Book {
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public String getName() {
+        return name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public int getPages() {
-        return pages;
+    public int getAge() {
+        return age;
     }
 
-    public void setPages(int pages) {
-        this.pages = pages;
+    public void setAge(int age) {
+        this.age = age;
     }
 }

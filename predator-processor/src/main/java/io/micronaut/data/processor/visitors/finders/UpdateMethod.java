@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.PredatorInterceptor;
@@ -91,10 +92,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         } else {
             ClassElement idType = identity.getType();
             ClassElement idParameterType = idParameter.getType();
-            if (idType == null || idParameterType == null) {
-                matchContext.fail("Unsupported ID type");
-                return null;
-            } else if (idType.equals(idParameterType)) {
+            if (idType.equals(idParameterType)) {
                 matchContext.fail("ID type of method [" + idParameterType.getName() + "] does not match ID type of entity: " + idType.getName());
             }
         }
@@ -104,7 +102,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         query.idEq(new QueryParameter(idParameter.getName()));
         List<String> properiesToUpdate = new ArrayList<>(remainingParameters.size());
         for (ParameterElement parameter : remainingParameters) {
-            String name = parameter.getName();
+            String name = parameter.stringValue(Parameter.class).orElse(parameter.getName());
             SourcePersistentProperty prop = entity.getPropertyByName(name);
             if (prop == null) {
                 matchContext.fail("Cannot update non-existent property" + name);

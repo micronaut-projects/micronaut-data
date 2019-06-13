@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.query.QueryModel;
@@ -92,7 +93,7 @@ public class UpdateByMethod extends DynamicFinder {
         String[] updateProperties = new String[updateParameters.size()];
         for (int i = 0; i < updateProperties.length; i++) {
             Element parameter = updateParameters.get(i);
-            String parameterName = parameter.getName();
+            String parameterName = parameter.stringValue(Parameter.class).orElse(parameter.getName());
             Optional<String> path = entity.getPath(parameterName);
             if (path.isPresent()) {
                 updateProperties[i] = path.get();

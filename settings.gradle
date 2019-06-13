@@ -4,6 +4,9 @@ include 'predator-model'
 include 'predator-processor'
 include 'predator-runtime'
 
+// Test Compatibility Kit
+include 'predator-tck'
+
 // implementations
 include 'predator-hibernate-jpa'
 include 'predator-jdbc'

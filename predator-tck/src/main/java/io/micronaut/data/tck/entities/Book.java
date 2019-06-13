@@ -13,15 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.core.annotation.Introspected;
+import javax.persistence.*;
 
-@Introspected
-public class BookDto {
-
+@Entity
+public class Book {
+    @Id
+    @GeneratedValue
+    private Long id;
     private String title;
     private int pages;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Author author;
+
+    public Author getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     public String getTitle() {
         return title;

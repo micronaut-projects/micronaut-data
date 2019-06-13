@@ -17,23 +17,10 @@ package io.micronaut.data.hibernate;
 
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Author;
 
 import javax.transaction.Transactional;
-import java.util.List;
 
 @Repository
 @Transactional
-public interface AuthorRepository extends CrudRepository<Author, Long> {
-
-    Author findByName(String name);
-
-    Author findByBooksTitle(String title);
-
-    long countByNameContains(String text);
-
-    Author findByNameStartsWith(String name);
-
-    Author findByNameEndsWith(String name);
-
-    Author findByNameIgnoreCase(String name);
-}
+public interface AuthorRepository extends io.micronaut.data.tck.repositories.AuthorRepository {}

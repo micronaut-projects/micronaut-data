@@ -16,8 +16,9 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.test.annotation.MicronautTest
 import org.hibernate.Hibernate
 import spock.lang.Shared
@@ -25,7 +26,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class DtoSpec extends Specification {

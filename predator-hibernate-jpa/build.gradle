@@ -8,8 +8,7 @@ dependencies {
         exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-validator'
     }
 
-    testCompile "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
-    testCompile "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
+    testCompile project(":predator-tck")
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     testAnnotationProcessor project(":predator-processor")

@@ -13,37 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate;
+package io.micronaut.data.tck.entities;
 
+import io.micronaut.core.annotation.Introspected;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-
-@Entity
-public class Person {
-    @Id
-    @GeneratedValue
-    private Long id;
-
-    private String name;
+@Introspected
+public class PersonDto {
     private int age;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     public int getAge() {
         return age;

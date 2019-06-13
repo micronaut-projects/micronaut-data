@@ -16,40 +16,24 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
-import spock.lang.Specification
 
 import javax.inject.Inject
 
-@MicronautTest
+@MicronautTest(packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-class QuerySpec extends Specification {
+class QuerySpec extends io.micronaut.data.tck.tests.QuerySpec {
 
-    @Inject
     @Shared
-    BookRepository bookRepository
-
     @Inject
+    BookRepository br
     @Shared
-    AuthorRepository authorRepository
+    @Inject
+    AuthorRepository ar
 
-    def setupSpec() {
-        bookRepository.save(new Book(title: "Anonymous", pages: 400))
-        // blank title
-        bookRepository.save(new Book(title: "", pages: 0))
-        // book without an author
-        bookRepository.setupData()
-    }
-
-    void "test is null or empty"() {
-        expect:
-        bookRepository.findByAuthorIsNull().size() == 2
-        bookRepository.findByAuthorIsNotNull().size() == 6
-        bookRepository.countByTitleIsEmpty() == 1
-        bookRepository.countByTitleIsNotEmpty() == 7
-    }
 
     void "test native query"() {
         given:
@@ -60,11 +44,13 @@ class QuerySpec extends Specification {
         books.every({ it instanceof Book })
     }
 
-    void "test string comparison methods"() {
-        expect:
-        authorRepository.countByNameContains("e") == 2
-        authorRepository.findByNameStartsWith("S").name == "Stephen King"
-        authorRepository.findByNameEndsWith("w").name == "Don Winslow"
-        authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
+    @Override
+    BookRepository getBookRepository() {
+        return br
+    }
+
+    @Override
+    AuthorRepository getAuthorRepository() {
+        return ar
     }
 }

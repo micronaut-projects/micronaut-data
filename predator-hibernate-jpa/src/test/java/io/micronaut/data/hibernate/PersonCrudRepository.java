@@ -15,60 +15,27 @@
  */
 package io.micronaut.data.hibernate;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jpa.repository.JpaRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.repositories.PersonRepository;
 
 import javax.transaction.Transactional;
 import java.util.List;
 
 @Repository
 @Transactional
-public interface PersonCrudRepository extends JpaRepository<Person, Long> {
-
-    Person save(String name, int age);
-
-    Person get(Long id);
-
-    void updatePerson(@Id Long id, String name);
-
-    List<Person> list(Pageable pageable);
-
-    int count(String name);
-
-    @Nullable Person findByName(String name);
-
-    List<Person> findByNameLike(String name);
-
+public interface PersonCrudRepository extends JpaRepository<Person, Long>, PersonRepository {
     @Query("from Person p where p.name = :n")
     List<Person> listPeople(String n);
 
     @Query(value = "from Person p where p.name like :n",
-          countQuery = "select count(p) from Person p where p.name like :n")
+            countQuery = "select count(p) from Person p where p.name like :n")
     Page<Person> findPeople(String n, Pageable pageable);
 
     @Query("from Person p where p.name = :n")
     Person queryByName(String n);
-
-    int findAgeByName(String name);
-
-    int findMaxAgeByNameLike(String name);
-
-    int findMinAgeByNameLike(String name);
-
-    int getSumAgeByNameLike(String name);
-
-    long getAvgAgeByNameLike(String name);
-
-    List<Integer> readAgeByNameLike(String name);
-
-    List<Person> findByNameLikeOrderByAge(String name);
-
-    List<Person> findByNameLikeOrderByAgeDesc(String name);
 }

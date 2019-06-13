@@ -18,6 +18,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
 import org.hibernate.SessionFactory
 import spock.lang.Specification
@@ -25,7 +26,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 import javax.sql.DataSource
 
-@MicronautTest
+@MicronautTest(packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class FindBySpec extends Specification {

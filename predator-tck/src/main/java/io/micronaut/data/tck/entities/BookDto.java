@@ -13,19 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate;
+package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
 
 @Introspected
-public class PersonDto {
-    private int age;
+public class BookDto {
 
-    public int getAge() {
-        return age;
+    private String title;
+    private int pages;
+
+    public String getTitle() {
+        return title;
     }
 
-    public void setAge(int age) {
-        this.age = age;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public int getPages() {
+        return pages;
+    }
+
+    public void setPages(int pages) {
+        this.pages = pages;
     }
 }

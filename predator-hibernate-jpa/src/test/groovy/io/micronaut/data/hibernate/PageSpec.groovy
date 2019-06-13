@@ -20,13 +20,14 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
 
-@MicronautTest(rollback = false)
+@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class PageSpec extends Specification {

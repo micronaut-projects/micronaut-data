@@ -1,7 +1,9 @@
-package io.micronaut.data.jdbc
+package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.jdbc.BasicTypeRepository
+import io.micronaut.data.jdbc.BasicTypesJava
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.test.annotation.MicronautTest

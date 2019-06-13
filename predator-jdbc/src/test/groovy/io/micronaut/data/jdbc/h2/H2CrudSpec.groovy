@@ -1,6 +1,8 @@
-package io.micronaut.data.jdbc
+package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.jdbc.Book
+import io.micronaut.data.jdbc.BookRepository
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification

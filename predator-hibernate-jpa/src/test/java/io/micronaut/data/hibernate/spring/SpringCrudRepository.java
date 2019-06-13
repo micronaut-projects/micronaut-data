@@ -19,7 +19,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.hibernate.Person;
+import io.micronaut.data.tck.entities.Person;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;

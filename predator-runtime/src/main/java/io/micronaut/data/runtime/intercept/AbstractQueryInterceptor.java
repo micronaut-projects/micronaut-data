@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -351,7 +352,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                 }
                 parameterValues.put(name, timestamp);
             } else {
-                throw new IllegalArgumentException("Missing query arguments: " + argument);
+                Optional<Argument> named = Arrays.stream(context.getArguments())
+                        .filter(arg -> {
+                            String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
+                            return n.equals(argument);
+                        })
+                        .findFirst();
+                if (named.isPresent()) {
+                    parameterValues.put(name, parameterValueMap.get(named.get().getName()));
+                } else {
+                    throw new IllegalArgumentException("Missing query arguments: " + argument);
+                }
             }
 
         }
