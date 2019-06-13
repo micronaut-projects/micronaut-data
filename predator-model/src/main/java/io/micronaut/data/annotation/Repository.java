@@ -79,9 +79,9 @@ public @interface Repository {
     };
 
     /**
-     * Does the repository support a first level cache and lookup by ID.
+     * Does the repository allow implicit queries by type and ID etc. or in an explicit query always needed.
      *
      * @return True if it does
      */
-    boolean firstLevelCache() default true;
+    boolean implicitQueries() default true;
 }

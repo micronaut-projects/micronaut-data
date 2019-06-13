@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.data.model.DataType;
 
 import java.util.Collections;
 import java.util.Map;
@@ -57,6 +58,12 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Class<R> getResultType();
+
+    /**
+     * @return The result data type.
+     */
+    @NonNull
+    DataType getResultDataType();
 
     /**
      * In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).

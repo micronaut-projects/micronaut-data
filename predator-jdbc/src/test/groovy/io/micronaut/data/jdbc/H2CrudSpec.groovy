@@ -46,5 +46,13 @@ create table book (id bigint auto_increment, pages integer not null, title varch
         book.id != null
         book.title == "The stand"
         book.pages == 1000
+
+
+        and:"The results are correct"
+        def results = bookRepository.findAll()
+        results.size() == 1
+        results[0].title == book.title
+        results[0].id
+        bookRepository.count() == 1
     }
 }

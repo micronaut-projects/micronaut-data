@@ -154,7 +154,11 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         if (query != null) {
             return buildInfo(matchContext, queryResultType, query);
         } else {
-            return buildInfo(matchContext, queryResultType, null);
+            if (matchContext.supportsImplicitQueries()) {
+                return buildInfo(matchContext, queryResultType, null);
+            } else {
+                return buildInfo(matchContext, queryResultType, QueryModel.from(rootEntity));
+            }
         }
     }
 

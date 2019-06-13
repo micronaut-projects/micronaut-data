@@ -1,6 +1,7 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     compile project(":predator-runtime")
+    compile "io.micronaut:micronaut-runtime:$micronautVersion"
     compile "io.micronaut:micronaut-jdbc:$micronautVersion"
     compile "io.micronaut:micronaut-spring:$micronautVersion", {
         exclude group:'org.springframework', module:'spring-aop'

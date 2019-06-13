@@ -18,6 +18,7 @@ package io.micronaut.data.intercept.annotation;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.model.DataType;
 
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
@@ -60,6 +61,11 @@ public @interface PredatorMethod {
      * The member name that holds the result type.
      */
     String META_MEMBER_RESULT_TYPE = "resultType";
+
+    /**
+     * The member name that holds the result type.
+     */
+    String META_MEMBER_RESULT_DATA_TYPE = "resultDataType";
 
     /**
      * The member name that holds the root entity type.
@@ -129,6 +135,11 @@ public @interface PredatorMethod {
      * @return The result type
      */
     Class<?> resultType() default void.class;
+
+    /**
+     * @return The result data type.
+     */
+    DataType resultDataType() default DataType.OBJECT;
 
     /**
      * The identifier type for the method being executed.

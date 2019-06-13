@@ -83,7 +83,7 @@ public class CountByMethod extends DynamicFinder {
         } else {
             return new MethodMatchInfo(
                     returnType,
-                    null,
+                    matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
                     interceptor
             );
         }

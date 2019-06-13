@@ -16,7 +16,7 @@ import java.util.Date;
  * @author graemerocher
  * @since 1.0.0
  */
-public class ResultSetReader implements DataReader<ResultSet, String> {
+public final class ColumnNameResultSetReader implements DataReader<ResultSet, String> {
 
     @Override
     public long readLong(ResultSet resultSet, String name) {

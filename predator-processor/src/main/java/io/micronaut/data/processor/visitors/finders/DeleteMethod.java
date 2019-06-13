@@ -102,7 +102,7 @@ public class DeleteMethod extends AbstractListMethod {
         } else {
             return new MethodMatchInfo(
                     null,
-                    null,
+                    matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
                     interceptor
             );
         }

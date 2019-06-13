@@ -305,6 +305,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 TypedElement resultType = methodInfo.getResultType();
                                 if (resultType != null) {
                                     annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));
+
+                                    ClassElement type = resultType.getType();
+                                    if (!type.getName().equals("void")) {
+                                        annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type));
+                                    }
                                 }
                                 if (idType != null) {
                                     annotationBuilder.member(PredatorMethod.META_MEMBER_ID_TYPE, idType);

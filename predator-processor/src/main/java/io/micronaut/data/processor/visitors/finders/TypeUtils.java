@@ -21,11 +21,18 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.model.DataType;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
 
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.time.temporal.Temporal;
+import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.stream.Stream;
@@ -38,6 +45,8 @@ import java.util.stream.Stream;
  */
 @Internal
 public class TypeUtils {
+
+    private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
     /**
      * Is the element an iterable of an entity.
@@ -224,5 +233,58 @@ public class TypeUtils {
      */
     public static boolean isObjectClass(ClassElement type) {
         return type != null && type.getName().equals(Object.class.getName());
+    }
+
+    /**
+     * Compute the data type for the given type.
+     * @param type The type
+     * @return The data type
+     */
+    public static @NonNull DataType resolveDataType(@NonNull ClassElement type) {
+        final String typeName = type.isArray() ? type.getName() + "[]" : type.getName();
+
+        return RESOLVED_DATA_TYPES.computeIfAbsent(typeName, s -> {
+            if (type.isPrimitive() || typeName.startsWith("java.lang")) {
+                Class primitiveType = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
+                if (primitiveType != null && primitiveType != void.class) {
+                    String wrapperName = ReflectionUtils.getWrapperType(primitiveType).getSimpleName();
+                    DataType dt = DataType.valueOf(wrapperName.toUpperCase(Locale.ENGLISH));
+                    if (type.isArray()) {
+                        if (dt == DataType.BYTE) {
+                            return DataType.BYTE_ARRAY;
+                        }
+                    } else {
+                        return dt;
+                    }
+                }
+            }
+
+            try {
+                if (ClassUtils.isJavaBasicType(type.getName())) {
+                    Class pt = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
+                    if (pt != null) {
+                        String wrapperName = ReflectionUtils.getWrapperType(pt).getSimpleName();
+                        return DataType.valueOf(wrapperName.toUpperCase(Locale.ENGLISH));
+                    } else {
+                        return DataType.valueOf(type.getSimpleName().toUpperCase(Locale.ENGLISH));
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                // ignore
+            }
+
+            if (type.isAssignable(CharSequence.class)) {
+                return DataType.STRING;
+            } else if (type.isAssignable(BigDecimal.class) || type.isAssignable(BigInteger.class)) {
+                return DataType.BIGDECIMAL;
+            } else if (type.isAssignable(Temporal.class) || type.isAssignable(Date.class)) {
+                return DataType.DATE;
+            } else if (Stream.of(UUID.class, Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
+                return DataType.STRING;
+            }
+
+            return DataType.OBJECT;
+        });
+
     }
 }

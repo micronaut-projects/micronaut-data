@@ -286,7 +286,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     }
 
     private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
-        return matchContext.supportsFirstLevelCache() && query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName()) &&
+        return matchContext.supportsImplicitQueries() && query != null && queryResultType.getName().equals(matchContext.getRootEntity().getName()) &&
                 isIdEquals(query);
     }
 

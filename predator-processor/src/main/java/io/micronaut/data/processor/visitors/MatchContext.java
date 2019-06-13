@@ -139,10 +139,10 @@ public class MatchContext implements AnnotationMetadataProvider {
     }
 
     /**
-     * Returns whether the first level cache is supported.
+     * Whether or not implicit queries such as lookup by id and counting is supported without an explicit query.
      * @return True if it is
      */
-    public boolean supportsFirstLevelCache() {
-        return repositoryClass.booleanValue(Repository.class, "firstLevelCache").orElse(true);
+    public boolean supportsImplicitQueries() {
+        return repositoryClass.booleanValue(Repository.class, "implicitQueries").orElse(true);
     }
 }

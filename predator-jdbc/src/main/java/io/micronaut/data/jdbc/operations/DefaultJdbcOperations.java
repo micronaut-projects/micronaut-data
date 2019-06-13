@@ -9,10 +9,12 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
+import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
-import io.micronaut.data.jdbc.mapper.ResultSetReader;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
@@ -25,6 +27,7 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.scheduling.TaskExecutors;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -32,17 +35,16 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Nonnull;
+import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Implementation of {@link JdbcRepositoryOperations}.
@@ -60,13 +62,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final PreparedStatementWriter preparedStatementWriter = new PreparedStatementWriter();
-
+    private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
+    private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
     /**
      * Default constructor.
      * @param dataSource The data source
      * @param executorService The executor service
      */
-    protected DefaultJdbcOperations(@NonNull DataSource dataSource, @NonNull ExecutorService executorService) {
+    protected DefaultJdbcOperations(@NonNull DataSource dataSource,
+                                    @Named(TaskExecutors.IO) @NonNull ExecutorService executorService) {
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("executorService", executorService);
         PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
@@ -95,63 +99,29 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
     @Nullable
     @Override
-    public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        throw new UnsupportedOperationException("The findOne method by ID is not supported. Execute the SQL query directly");
-    }
-
-    @Nullable
-    @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return withReadConnection(connection -> {
-            String query = preparedQuery.getQuery();
-            PreparedStatement ps = connection.prepareStatement(query);
-            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
-            for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
-                DataType dataType = DataType.OBJECT;
-                preparedStatementWriter.setDynamic(
-                        ps,
-                        Integer.valueOf(entry.getKey()),
-                        dataType,
-                        entry.getValue());
-            }
+            PreparedStatement ps = prepareStatement(connection, preparedQuery);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
-                ResultSetReader resultSetReader = new ResultSetReader();
                 Class<T> rootEntity = preparedQuery.getRootEntity();
-                if (preparedQuery.getResultType() == rootEntity) {
-                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(rootEntity);
-                    BeanIntrospection<T> introspection = persistentEntity.getIntrospection();
-                    Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-                    R entity;
-                    if (ArrayUtils.isEmpty(constructorArguments)) {
-                        //noinspection unchecked
-                        entity = (R) introspection.instantiate();
-                    } else {
-                        // TODO: constructor arguments
-                        throw new IllegalStateException("Constructor arguments not yet supported");
-                    }
-                    BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
-                    for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
-                        String persistedName = persistentProperty.getPersistedName();
-                        Object v = resultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
-                        wrapper.setProperty(
-                                persistentProperty.getName(),
-                                v
-                        );
-                    }
-                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                    if (identity != null) {
-                        String persistedName = identity.getPersistedName();
-                        Object v = resultSetReader.readDynamic(rs, persistedName, identity.getDataType());
-                        wrapper.setProperty(
-                                identity.getName(),
-                                v
-                        );
-                    }
-                    return entity;
+                Class<R> resultType = preparedQuery.getResultType();
+                if (resultType == rootEntity) {
+                    @SuppressWarnings("unchecked")
+                    RuntimePersistentEntity<R> persistentEntity = getPersistentEntity((Class<R>) rootEntity);
+                    return readEntity(rs, persistentEntity);
                 } else {
-                    // TODO: projections
-                    throw new DataAccessException("Projections not yet supported");
+                    if (preparedQuery.isDtoProjection()) {
+                        // TODO: fix DTOs
+                        throw new DataAccessException("DTO projections not yet supported");
+                    } else {
+                        Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                        if (resultType.isInstance(v)) {
+                            return (R) v;
+                        } else {
+                            return columnIndexResultSetReader.convertRequired(v, resultType);
+                        }
+                    }
                 }
             }
             return null;
@@ -160,36 +130,25 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
     @NonNull
     @Override
-    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
-        return null;
-    }
-
-    @Override
-    public <T> long count(PagedQuery<T> pagedQuery) {
-        return 0;
+    public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
+        return StreamSupport.stream(findIterable(preparedQuery).spliterator(), false);
     }
 
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return null;
+        return CollectionUtils.iterableToList(findIterable(preparedQuery));
     }
 
     @NonNull
     @Override
-    public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return null;
-    }
-
-    @NonNull
-    @Override
-    public <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
-        return null;
+    public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
+        return Optional.empty();
     }
 
     @Override
-    public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
-        return null;
+    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
+        return Optional.empty();
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -245,6 +204,153 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             return entity;
         });
 
+    }
+
+    private <T, R> Iterable<R> findIterable(@NonNull PreparedQuery<T, R> preparedQuery) {
+        Class<T> rootEntity = preparedQuery.getRootEntity();
+        Class<R> resultType = preparedQuery.getResultType();
+        boolean isRootResult = resultType == rootEntity;
+
+
+        return withReadConnection(connection -> {
+            PreparedStatement ps = prepareStatement(connection, preparedQuery);
+            ResultSet rs = ps.executeQuery();
+            if (isRootResult) {
+                RuntimePersistentEntity<R> persistentEntity = getPersistentEntity(resultType);
+                return () -> new Iterator<R>() {
+                    boolean nextCalled = false;
+
+                    @Override
+                    public boolean hasNext() {
+                        try {
+                            if (!nextCalled) {
+                                nextCalled = true;
+                                return rs.next();
+                            } else {
+                                return nextCalled;
+                            }
+                        } catch (SQLException e) {
+                            return false;
+                        }
+                    }
+
+                    @Override
+                    public R next() {
+                        nextCalled = false;
+                        return readEntity(rs, persistentEntity);
+                    }
+                };
+            } else {
+                if (preparedQuery.isDtoProjection()) {
+                    // TODO: improve projection on entity properties
+                    throw new DataAccessException("DTO projections not yet supported");
+                } else {
+                    return () -> new Iterator<R>() {
+                        boolean nextCalled = false;
+
+                        @Override
+                        public boolean hasNext() {
+                            try {
+                                if (!nextCalled) {
+                                    nextCalled = true;
+                                    return rs.next();
+                                } else {
+                                    return nextCalled;
+                                }
+                            } catch (SQLException e) {
+                                return false;
+                            }
+                        }
+
+                        @Override
+                        public R next() {
+                            nextCalled = false;
+                            Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                            if (resultType.isInstance(v)) {
+                                return (R) v;
+                            } else {
+                                return columnIndexResultSetReader.convertRequired(v, resultType);
+                            }
+                        }
+                    };
+                }
+            }
+        });
+    }
+
+    private <R> R readEntity(ResultSet rs, RuntimePersistentEntity<R> persistentEntity) {
+        BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
+        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+        R entity;
+        if (ArrayUtils.isEmpty(constructorArguments)) {
+            entity = introspection.instantiate();
+        } else {
+            // TODO: constructor arguments
+            throw new IllegalStateException("Constructor arguments not yet supported");
+        }
+        BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
+        for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
+            String persistedName = persistentProperty.getPersistedName();
+            Object v = columnNameResultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
+            wrapper.setProperty(
+                    persistentProperty.getName(),
+                    v
+            );
+        }
+        RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
+        if (identity != null) {
+            String persistedName = identity.getPersistedName();
+            Object v = columnNameResultSetReader.readDynamic(rs, persistedName, identity.getDataType());
+            wrapper.setProperty(
+                    identity.getName(),
+                    v
+            );
+        }
+        return entity;
+    }
+
+    private <T, R> PreparedStatement prepareStatement(Connection connection, @NonNull PreparedQuery<T, R> preparedQuery) throws SQLException {
+        String query = preparedQuery.getQuery();
+        PreparedStatement ps = connection.prepareStatement(query);
+        Map<String, Object> parameterValues = preparedQuery.getParameterValues();
+        for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
+            // TODO: better parameter type handling
+            DataType dataType = DataType.OBJECT;
+            preparedStatementWriter.setDynamic(
+                    ps,
+                    Integer.valueOf(entry.getKey()),
+                    dataType,
+                    entry.getValue());
+        }
+        return ps;
+    }
+
+    @Nullable
+    @Override
+    public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
+        throw new UnsupportedOperationException("The findOne method by ID is not supported. Execute the SQL query directly");
+    }
+
+    @NonNull
+    @Override
+    public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
+        throw new UnsupportedOperationException("The findAll method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
+    }
+
+    @Override
+    public <T> long count(PagedQuery<T> pagedQuery) {
+        throw new UnsupportedOperationException("The count method without an explicit query is not supported. Use findAll(PreparedQuery) instead");
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> findStream(@NonNull PagedQuery<T> query) {
+        throw new UnsupportedOperationException("The findStream method without an explicit query is not supported. Use findStream(PreparedQuery) instead");
+    }
+
+    @Override
+    public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
+        throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
     }
 
     private <T> T withReadConnection(SqlFunction<T> callback) {
@@ -328,17 +434,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             results.add(o);
         }
         return results;
-    }
-
-    @NonNull
-    @Override
-    public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return Optional.empty();
-    }
-
-    @Override
-    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
-        return Optional.empty();
     }
 
     /**

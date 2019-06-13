@@ -705,6 +705,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final String lastUpdatedProp;
         private final boolean isDto;
         private final boolean isNative;
+        private final AnnotationMetadata annotationMetadata;
         private Map<String, Object> queryHints;
 
         /**
@@ -722,6 +723,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                 @Nullable Map<String, String> parameterBinding) {
             this.resultType = resultType;
             this.rootEntity = rootEntity;
+            this.annotationMetadata = method.getAnnotationMetadata();
             this.query = query;
             this.parameterBinding = parameterBinding == null ? Collections.emptyMap() : parameterBinding;
             this.method = method;
@@ -760,7 +762,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @Override
         public AnnotationMetadata getAnnotationMetadata() {
-            return method.getAnnotationMetadata();
+            return annotationMetadata;
         }
 
         @Override
@@ -785,13 +787,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             return resultType;
         }
 
+        @NonNull
+        @Override
+        public DataType getResultDataType() {
+            return annotationMetadata.findAnnotation(PredatorMethod.class)
+                                     .flatMap(av -> av.enumValue(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class))
+                                     .orElse(DataType.OBJECT);
+        }
+
         /**
          * @return The ID type
          */
         @SuppressWarnings("unchecked")
         @Override
         public Optional<Class<?>> getEntityIdentifierType() {
-            Optional o = method.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE);
+            Optional o = annotationMetadata.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE);
             return o;
         }
 
@@ -936,6 +946,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         public Class<RT> getResultType() {
             return storedQuery.getResultType();
+        }
+
+        @NonNull
+        @Override
+        public DataType getResultDataType() {
+            return storedQuery.getResultDataType();
         }
 
         @Nullable
