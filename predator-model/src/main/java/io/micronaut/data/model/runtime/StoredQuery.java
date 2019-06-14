@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.model.DataType;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +41,12 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Class<E> getRootEntity();
+
+    /**
+     * Does the query contain an in expression.
+     * @return True if it does
+     */
+    boolean hasInExpression();
 
     /**
      * The query to execute.
@@ -73,6 +78,12 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     default boolean isNative() {
         return false;
     }
+
+    /**
+     * Are the placeholders for query set using numeric indices starting from 1.
+     * @return True if they are.
+     */
+    boolean useNumericPlaceholders();
 
     /**
      * Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project. Defaults to false.
@@ -109,6 +120,35 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     default Map<String, String> getParameterBinding() {
+        return Collections.emptyMap();
+    }
+
+    /**
+     * The compute time computed parameter data types.
+     * @return The indexed values
+     */
+    default @NonNull Map<String, DataType> getParameterTypes() {
+        return Collections.emptyMap();
+    }
+
+    /**
+     * The compute time computed parameter data types for the query indices.
+     * @return The indexed values
+     * @see #useNumericPlaceholders()
+     */
+    default @NonNull Map<Integer, DataType> getIndexedParameterTypes() {
+        return Collections.emptyMap();
+    }
+
+
+    /**
+     * The parameter binding. That is the mapping between named query parameters and parameters of the method.
+     *
+     * @return The parameter binding.
+     * @see #useNumericPlaceholders()
+     */
+    @NonNull
+    default Map<Integer, String> getIndexedParameterBinding() {
         return Collections.emptyMap();
     }
 

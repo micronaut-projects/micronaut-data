@@ -83,6 +83,8 @@ public interface DataReader<RS, IDX> {
                 return readBoolean(resultSet, index);
             case BYTE:
                 return readByte(resultSet, index);
+            case TIMESTAMP:
+                return readTimestamp(resultSet, index);
             case DATE:
                 return readDate(resultSet, index);
             case LONG:
@@ -133,6 +135,16 @@ public interface DataReader<RS, IDX> {
      */
     default Date readDate(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, Date.class);
+    }
+
+    /**
+     * Read a timestamp value for the given index.
+     * @param resultSet The result set
+     * @param index The index (such as the column name)
+     * @return The char value
+     */
+    default Date readTimestamp(RS resultSet, IDX index) {
+        return getRequiredValue(resultSet, index, Date.class);
     }
 
     /**

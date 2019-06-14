@@ -2,6 +2,7 @@ package io.micronaut.data.model.query.builder
 
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.naming.NamingStrategies
@@ -9,6 +10,7 @@ import io.micronaut.data.model.naming.NamingStrategy
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Book
@@ -16,6 +18,31 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
+
+
+    @Unroll
+    void "test encode order by #statement"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(type)
+        QueryModel q = QueryModel.from(entity)
+        q.sort Sort.of(props.collect() { Sort.Order."$direction"(it) })
+
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        QueryResult encodedQuery = encoder.buildOrderBy(entity, q.getSort())
+
+
+        expect:
+        encodedQuery != null
+        encodedQuery.query ==
+                " ORDER BY ${statement}"
+
+        where:
+        type   | direction | props              | statement
+        Person | 'asc'     | ["name"]           | 'person_.name ASC'
+        Person | 'asc'     | ["name", "someId"] | 'person_.name ASC,person_.some_id ASC'
+        Person | 'desc'    | ["name"]           | 'person_.name DESC'
+        Person | 'desc'    | ["name", "someId"] | 'person_.name DESC,person_.some_id DESC'
+    }
 
     void "test encode insert statement"() {
         given:
@@ -25,7 +52,7 @@ class SqlQueryBuilderSpec extends Specification {
 
         expect:
         result.query == 'INSERT INTO person (name,age,enabled) VALUES (?,?,?)'
-        result.parameters.equals(name:'1', age:'2', enabled:'3')
+        result.parameters.equals(name: '1', age: '2', enabled: '3')
     }
 
     void "test encode insert statement - assigned id"() {
@@ -36,7 +63,7 @@ class SqlQueryBuilderSpec extends Specification {
 
         expect:
         result.query == 'INSERT INTO person_assigned_id (name,age,enabled,id) VALUES (?,?,?,?)'
-        result.parameters.equals(name:'1', age:'2', enabled:'3', id:'4')
+        result.parameters.equals(name: '1', age: '2', enabled: '3', id: '4')
     }
 
     void "test encode query with join"() {
@@ -46,7 +73,7 @@ class SqlQueryBuilderSpec extends Specification {
         def columns = encoder.selectAllColumns(entity, "book_")
 
         def query = QueryModel.from(entity)
-            .eq("author.nickName", new QueryParameter("test"))
+                .eq("author.nickName", new QueryParameter("test"))
 
         def result = encoder.buildQuery(query)
 
@@ -71,7 +98,7 @@ class SqlQueryBuilderSpec extends Specification {
         encodedQuery != null
         mappedName == 'some_id'
         encodedQuery.query ==
-                "SELECT $columns FROM person AS person_ WHERE (person_.${ mappedName} $operator ?)"
+                "SELECT $columns FROM person AS person_ WHERE (person_.${mappedName} $operator ?)"
         encodedQuery.parameters == ['1': 'test']
 
         where:

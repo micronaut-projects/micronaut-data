@@ -2,28 +2,39 @@ package io.micronaut.data.jdbc.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.TaskExecutors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,10 +48,13 @@ import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -55,6 +69,9 @@ import java.util.stream.StreamSupport;
 public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private static final Logger QUERY_LOG = LoggerFactory.getLogger("io.micronaut.data.query");
+    private static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
+    private static final String NOT_TRUE_EXPRESSION = "1 = 2";
+    private static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
 
     private final ExecutorAsyncOperations asyncOperations;
     private final TransactionTemplate writeTransactionTemplate;
@@ -62,6 +79,9 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final DataSource dataSource;
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
+    private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
+    private final Map<Class, Dialect> dialects = new HashMap<>(10);
+    private final Map<Dialect, QueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
     private final PreparedStatementWriter preparedStatementWriter = new PreparedStatementWriter();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
@@ -69,10 +89,14 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     /**
      * Default constructor.
      * @param dataSource The data source
+     * @param dataSourceName The data source name
      * @param executorService The executor service
+     * @param beanContext The bean context
      */
     protected DefaultJdbcOperations(@NonNull DataSource dataSource,
-                                    @Named(TaskExecutors.IO) @NonNull ExecutorService executorService) {
+                                    @Parameter String dataSourceName,
+                                    @Named(TaskExecutors.IO) @NonNull ExecutorService executorService,
+                                    BeanContext beanContext) {
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("executorService", executorService);
         PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
@@ -85,6 +109,18 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 this,
                 executorService
         );
+        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext.getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
+        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
+            String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
+            if (targetDs.equalsIgnoreCase(dataSourceName)) {
+                Dialect dialect = beanDefinition.findAnnotation(JdbcRepository.class).flatMap(av -> av.enumValue("dialect", Dialect.class)).orElse(Dialect.ANSI);
+                dialects.put(beanDefinition.getBeanType(), dialect);
+                QueryBuilder qb = queryBuilders.get(dialect);
+                if (qb == null) {
+                    queryBuilders.put(dialect, new SqlQueryBuilder(dialect));
+                }
+            }
+        }
     }
 
     @NonNull
@@ -103,7 +139,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery);
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, false);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();
@@ -130,6 +166,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         });
     }
 
+    @Override
+    public <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery) {
+        return withReadConnection(connection -> {
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, false);
+            ResultSet rs = ps.executeQuery();
+            return rs.next();
+        });
+    }
+
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
@@ -145,12 +190,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return Optional.empty();
+        return withWriteConnection((connection -> {
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, true);
+            return Optional.of(ps.executeUpdate());
+        }));
     }
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
-        return Optional.empty();
+        throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -199,6 +247,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                             }
                             value = identity.getProperty().get(value);
                         }
+                        if (QUERY_LOG.isTraceEnabled()) {
+                            QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                        }
+
                         preparedStatementWriter.setDynamic(
                                 stmt,
                                 index,
@@ -208,6 +260,9 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     }
 
                 } else {
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                    }
                     preparedStatementWriter.setDynamic(
                             stmt,
                             index,
@@ -241,7 +296,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
 
         return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery);
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, false);
             ResultSet rs = ps.executeQuery();
             if (isRootResult) {
                 RuntimePersistentEntity<R> persistentEntity = getPersistentEntity(resultType);
@@ -357,28 +412,160 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         return entity;
     }
 
-    private <T, R> PreparedStatement prepareStatement(Connection connection, @NonNull PreparedQuery<T, R> preparedQuery) throws SQLException {
+    private <T, R> PreparedStatement prepareStatement(Connection connection, @NonNull PreparedQuery<T, R> preparedQuery, boolean isUpdate) throws SQLException {
         String query = preparedQuery.getQuery();
+
+        final boolean hasIn = preparedQuery.hasInExpression();
+        Map<Integer, Object> parameterValues = preparedQuery.getIndexedParameterValues();
+        Map<Integer, DataType> parameterTypes = preparedQuery.getIndexedParameterTypes();
+        if (hasIn) {
+            parameterValues = new HashMap<>(parameterValues); // create a copy
+            query = expandInExpressions(query, parameterValues);
+        }
+
+        if (!isUpdate) {
+            Pageable pageable = preparedQuery.getPageable();
+            if (pageable != Pageable.UNPAGED) {
+                Sort sort = pageable.getSort();
+                Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+                if (sort.isSorted()) {
+                    query += queryBuilder.buildOrderBy(getPersistentEntity(preparedQuery.getRootEntity()), sort);
+                }
+
+                query += queryBuilder.buildPagination(pageable).getQuery();
+            }
+        }
+
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Query: {}", query);
         }
-        PreparedStatement ps = connection.prepareStatement(query);
-        Map<String, Object> parameterValues = preparedQuery.getParameterValues();
-        for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
-            // TODO: better parameter type handling
-            int index = Integer.valueOf(entry.getKey());
+        final PreparedStatement ps = connection.prepareStatement(query);
+
+        for (Map.Entry<Integer, Object> entry : parameterValues.entrySet()) {
+            int index = entry.getKey();
             Object value = entry.getValue();
             if (QUERY_LOG.isTraceEnabled()) {
                 QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
             }
-            DataType dataType = DataType.OBJECT;
-            preparedStatementWriter.setDynamic(
-                    ps,
-                    index,
-                    dataType,
-                    value);
+            DataType dataType = parameterTypes.get(index);
+            if (dataType == null) {
+                dataType = DataType.OBJECT;
+            }
+            if (value == null) {
+                preparedStatementWriter.setDynamic(
+                        ps,
+                        index,
+                        dataType,
+                        null);
+            } else {
+                if (value instanceof Iterable) {
+                    Iterable i = (Iterable) value;
+                    for (Object o : i) {
+                        setStatementParameter(ps, index, dataType, o);
+                        index++;
+                    }
+                } else if (value.getClass().isArray()) {
+                    int len = Array.getLength(value);
+                    for (int i = 0; i < len; i++) {
+                        Object o = Array.get(value, i);
+                        setStatementParameter(ps, index, dataType, o);
+                        index++;
+                    }
+                } else {
+                    setStatementParameter(ps, index, dataType, value);
+                }
+            }
         }
         return ps;
+    }
+
+    private void setStatementParameter(PreparedStatement ps, int index, DataType dataType, Object o) {
+        if (o != null) {
+            if (dataType == DataType.ENTITY) {
+                RuntimePersistentProperty<Object> idReader = getIdReader(o);
+                Object id = idReader.getProperty().get(o);
+                if (id == null) {
+                    throw new DataAccessException("Supplied entity is a transient instance: " + o);
+                }
+                o = id;
+                preparedStatementWriter.setDynamic(
+                        ps,
+                        index,
+                        idReader.getDataType(),
+                        o);
+            } else {
+
+                preparedStatementWriter.setDynamic(
+                        ps,
+                        index,
+                        dataType,
+                        o);
+            }
+        }
+    }
+
+    private RuntimePersistentProperty<Object> getIdReader(Object o) {
+        Class<Object> type = (Class<Object>) o.getClass();
+        RuntimePersistentProperty beanProperty = idReaders.get(type);
+        if (beanProperty == null) {
+
+            RuntimePersistentEntity<Object> entity = getPersistentEntity(type);
+            RuntimePersistentProperty<Object> identity = entity.getIdentity();
+            if (identity == null) {
+                throw new DataAccessException("Entity has no ID: " + entity.getName());
+            }
+            beanProperty = identity;
+            idReaders.put(type, beanProperty);
+        }
+        return beanProperty;
+    }
+
+    private String expandInExpressions(String query, Map<Integer, Object> parameterValues) {
+        Set<Integer> indexes = parameterValues.keySet();
+        Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
+        while (matcher.find()) {
+            int inIndex = Integer.valueOf(matcher.group(1));
+            Object value = parameterValues.get(inIndex);
+            if (value == null) {
+                query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
+                parameterValues.remove(inIndex);
+            } else {
+                int size = sizeOf(value);
+                if (size == 0) {
+                    parameterValues.remove(inIndex);
+                    query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
+                } else {
+                    String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
+                    query = matcher.replaceFirst(replacement);
+                    for (Integer index : indexes) {
+                        if (index > inIndex) {
+                            Object v = parameterValues.remove(index);
+                            parameterValues.put(index + size, v);
+                        }
+                    }
+                }
+            }
+
+            matcher = IN_EXPRESSION_PATTERN.matcher(query);
+
+        }
+        return query;
+    }
+
+    private int sizeOf(Object value) {
+        if (value instanceof Collection) {
+            return ((Collection) value).size();
+        } else if (value instanceof Iterable) {
+            int i = 0;
+            for (Object ignored : ((Iterable) value)) {
+                i++;
+            }
+            return i;
+        } else if (value.getClass().isArray()) {
+            return Array.getLength(value);
+        }
+        return 1;
     }
 
     @Nullable
@@ -447,7 +634,26 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     }
 
     private <T> Map<RuntimePersistentProperty<T>, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata, RuntimePersistentEntity<T> entity) {
-        return AbstractQueryInterceptor.buildParameterBinding(annotationMetadata, PredatorMethod.META_MEMBER_INSERT_BINDING)
+        AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
+        if (annotation == null) {
+            return Collections.emptyMap();
+        }
+        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(PredatorMethod.META_MEMBER_INSERT_BINDING,
+                Property.class);
+        Map<String, String> parameterValues;
+        if (CollectionUtils.isNotEmpty(parameterData)) {
+            parameterValues = new HashMap<>(parameterData.size());
+            for (AnnotationValue<Property> annotationValue : parameterData) {
+                String name = annotationValue.stringValue("name").orElse(null);
+                String argument = annotationValue.stringValue("value").orElse(null);
+                if (name != null && argument != null) {
+                    parameterValues.put(name, argument);
+                }
+            }
+        } else {
+            parameterValues = Collections.emptyMap();
+        }
+        return parameterValues
                 .entrySet().stream()
                 .collect(Collectors.toMap(
                         entry -> {

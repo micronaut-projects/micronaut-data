@@ -163,6 +163,11 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         });
     }
 
+    @Override
+    public <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery) {
+        return findOne(preparedQuery) != null;
+    }
+
     @NonNull
     @Override
     public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {

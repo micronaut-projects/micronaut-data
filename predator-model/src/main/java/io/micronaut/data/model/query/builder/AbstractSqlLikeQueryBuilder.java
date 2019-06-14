@@ -376,11 +376,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.StartsWith eq = (QueryModel.StartsWith) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState, name, QueryModel.ILike.class);
+            final String qualifiedName = queryState.getCurrentAlias() + DOT + (isApplyManualJoins() ? getColumnName(prop) : name);
             Placeholder parameterName = queryState.newParameter();
             queryState.getWhereClause()
-                    .append(queryState.getCurrentAlias())
-                    .append(DOT)
-                    .append(prop.getName())
+                    .append(qualifiedName)
                     .append(" LIKE CONCAT(")
                     .append(parameterName.name)
                     .append(",'%')");
@@ -394,11 +393,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.Contains eq = (QueryModel.Contains) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState, name, QueryModel.ILike.class);
+            final String qualifiedName = queryState.getCurrentAlias() + DOT + (isApplyManualJoins() ? getColumnName(prop) : name);
             Placeholder parameterName = queryState.newParameter();
             queryState.getWhereClause()
-                    .append(queryState.getCurrentAlias())
-                    .append(DOT)
-                    .append(prop.getName())
+                    .append(qualifiedName)
                     .append(" LIKE CONCAT('%',")
                     .append(parameterName.name)
                     .append(",'%')");
@@ -412,11 +410,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.EndsWith eq = (QueryModel.EndsWith) criterion;
             final String name = eq.getProperty();
             PersistentProperty prop = validateProperty(queryState, name, QueryModel.ILike.class);
+            final String qualifiedName = queryState.getCurrentAlias() + DOT + (isApplyManualJoins() ? getColumnName(prop) : name);
             Placeholder placeholder = queryState.newParameter();
             queryState.getWhereClause()
-                    .append(queryState.getCurrentAlias())
-                    .append(DOT)
-                    .append(prop.getName())
+                    .append(qualifiedName)
                     .append(" LIKE CONCAT('%',")
                     .append(placeholder.name)
                     .append(")");
@@ -430,22 +427,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.In inQuery = (QueryModel.In) criterion;
             final String name = inQuery.getProperty();
             PersistentProperty prop = validateProperty(queryState, name, QueryModel.In.class);
-            queryState.getWhereClause().append(queryState.getCurrentAlias())
-                    .append(DOT)
-                    .append(name)
-                    .append(" IN (");
-            QueryModel subquery = inQuery.getSubquery();
-            if (subquery != null) {
-                buildSubQuery(queryState, subquery);
-            } else {
+            Object value = inQuery.getValue();
+            if (value instanceof QueryParameter) {
+                QueryParameter queryParameter = (QueryParameter) value;
+                final String qualifiedName = queryState.getCurrentAlias() + DOT + (isApplyManualJoins() ? getColumnName(prop) : name);
                 Placeholder placeholder = queryState.newParameter();
-                queryState.getWhereClause().append(placeholder.name);
-                Object value = inQuery.getValue();
-                if (value instanceof QueryParameter) {
-                    queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
-                }
+                queryState.getParameters().put(placeholder.key, queryParameter.getName());
+                StringBuilder whereClause = queryState.getWhereClause();
+                whereClause
+                        .append(qualifiedName);
+                encodeInExpression(whereClause, placeholder);
             }
-            queryState.getWhereClause().append(CLOSE_BRACKET);
 
         });
 
@@ -453,6 +445,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String comparisonExpression = " NOT IN (";
             handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
         });
+    }
+
+    /**
+     * Placeholders for IN queries in SQL require special treatment. This is handled at runtime by some wrapper implementations like JPAQL.
+     * But for raw queries the placeholder needs to be expanded to factor in the size of the list or array.
+     * @param whereClause The where clause
+     * @param placeholder The placeholder
+     */
+    protected void encodeInExpression(StringBuilder whereClause, Placeholder placeholder) {
+        whereClause
+            .append(" IN (")
+            .append(placeholder.name)
+            .append(CLOSE_BRACKET);
     }
 
     @NonNull
@@ -505,7 +510,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param association The association
      * @param joinType The join type
      * @param stringBuilder The target builder
-     * @return
+     * @return The join string
      */
     protected abstract String buildJoin(String alias, Association association, String joinType, StringBuilder stringBuilder);
 
@@ -981,22 +986,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (CollectionUtils.isEmpty(orders)) {
             throw new IllegalArgumentException("Sort is empty");
         }
+        Map<PersistentProperty, Sort.Order.Direction> orderMap = new LinkedHashMap<>();
         for (Sort.Order order : orders) {
             String property = order.getProperty();
-            if (!entity.getPropertyByPath(property).isPresent()) {
+            Optional<PersistentProperty> prop = entity.getPropertyByPath(property);
+            if (!prop.isPresent()) {
                 throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
+            } else {
+                orderMap.put(prop.get(), order.getDirection());
             }
         }
 
         StringBuilder buff = new StringBuilder(ORDER_BY_CLAUSE);
-        Iterator<Sort.Order> i = orders.iterator();
+        Iterator<Map.Entry<PersistentProperty, Sort.Order.Direction>> i = orderMap.entrySet().iterator();
         while (i.hasNext()) {
-            Sort.Order order = i.next();
-            buff.append(getAliasName(entity))
+            Map.Entry<PersistentProperty, Sort.Order.Direction> entry = i.next();
+            PersistentProperty key = entry.getKey();
+
+            String aliasName;
+            if (key instanceof Association) {
+                aliasName = getAliasName((Association) key);
+            } else {
+                aliasName = getAliasName(entity);
+            }
+            buff.append(aliasName)
                     .append(DOT)
-                    .append(order.getProperty())
+                    .append(getColumnName(key))
                     .append(SPACE)
-                    .append(order.getDirection().toString());
+                    .append(entry.getValue());
             if (i.hasNext()) {
                 buff.append(",");
             }
@@ -1173,6 +1190,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         @Override
         public String toString() {
             return name;
+        }
+
+        /**
+         * @return The place holder name
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * This the precomputed key to set the place holder. In SQL this would be the index.
+         * @return The key used to set the placeholder.
+         */
+        public String getKey() {
+            return key;
         }
     }
 

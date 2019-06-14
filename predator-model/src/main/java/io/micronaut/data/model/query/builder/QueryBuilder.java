@@ -18,11 +18,19 @@ package io.micronaut.data.model.query.builder;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.reflect.exception.InstantiationException;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+
 import java.util.List;
 
 /**
@@ -80,4 +88,42 @@ public interface QueryBuilder {
      */
     @NonNull
     QueryResult buildOrderBy(@NonNull PersistentEntity entity, @NonNull Sort sort);
+
+    /**
+     * Encode the pageable.
+     *
+     * @param pageable The pageable
+     * @return The encoded query
+     */
+    @NonNull
+    QueryResult buildPagination(@NonNull Pageable pageable);
+
+    /**
+     * Build a query build from the configured annotation metadata.
+     * @param annotationMetadata The annotation metadata.
+     * @return The query builder
+     */
+    static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
+        if (annotationMetadata == null) {
+            return new JpaQueryBuilder();
+        }
+        return annotationMetadata.stringValue(
+                Repository.class,
+                PredatorMethod.META_MEMBER_QUERY_BUILDER
+        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.getBeanType().getName().equals(type))
+                .stream().findFirst()
+                .map(introspection -> {
+                    try {
+                        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+                        if (constructorArguments.length == 0) {
+                            return (QueryBuilder) introspection.instantiate();
+                        } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
+                            return (QueryBuilder) introspection.instantiate(annotationMetadata);
+                        }
+                    } catch (InstantiationException e) {
+                        return new JpaQueryBuilder();
+                    }
+                    return new JpaQueryBuilder();
+                })).orElse(new JpaQueryBuilder());
+    }
 }

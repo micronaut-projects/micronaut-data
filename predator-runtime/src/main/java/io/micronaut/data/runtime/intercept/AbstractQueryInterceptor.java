@@ -33,13 +33,11 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -62,8 +60,8 @@ import java.util.concurrent.ConcurrentMap;
 public abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
     protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
-    private final ConcurrentMap<ExecutableMethod, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
-    private final ConcurrentMap<ExecutableMethod, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
+    private final ConcurrentMap<MethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
+    private final ConcurrentMap<MethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
 
     /**
      * Default constructor.
@@ -93,7 +91,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
     protected final <RT> PreparedQuery<?, RT> prepareQuery(MethodInvocationContext<T, R> context, Class<RT> resultType) {
 
         ExecutableMethod<T, R> executableMethod = context.getExecutableMethod();
-        StoredQuery<?, RT> storedQuery = findQueries.get(executableMethod);
+        Class<?> repositoryType = context.getTarget().getClass();
+        MethodKey key = newMethodKey(repositoryType, executableMethod);
+        StoredQuery<?, RT> storedQuery = findQueries.get(key);
         if (storedQuery == null) {
             Class<?> rootEntity = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ROOT_ENTITY)
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
@@ -104,15 +104,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             String query = context.stringValue(Query.class).orElseThrow(() ->
                     new IllegalStateException("No query present in method")
             );
-            Map<String, String> parameterValues = buildParameterBinding(context);
             storedQuery = new DefaultStoredQuery<>(
                     executableMethod,
                     resultType,
                     rootEntity,
                     query,
-                    parameterValues
+                    PredatorMethod.META_MEMBER_PARAMETER_BINDING
             );
-            findQueries.put(executableMethod, storedQuery);
+            findQueries.put(key, storedQuery);
         }
 
 
@@ -129,11 +128,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             }
         }
         return new DefaultPreparedQuery<>(
+                repositoryType,
                 storedQuery,
                 query,
                 parameterValues,
                 pageable
         );
+    }
+
+    @NonNull
+    private MethodKey newMethodKey(Class<?> type, ExecutableMethod<T, R> executableMethod) {
+        return new MethodKey(type, executableMethod.getMethodName(), executableMethod.getArgumentTypes());
     }
 
     /**
@@ -153,7 +158,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      */
     protected final PreparedQuery<?, Number> prepareCountQuery(@NonNull MethodInvocationContext<T, R> context) {
         ExecutableMethod<T, R> executableMethod = context.getExecutableMethod();
-        StoredQuery<?, Long> storedQuery = countQueries.get(executableMethod);
+        Class<?> repositoryType = context.getTarget().getClass();
+        MethodKey key = newMethodKey(repositoryType, executableMethod);
+        StoredQuery<?, Long> storedQuery = countQueries.get(key);
         if (storedQuery == null) {
 
             String query = context.stringValue(Query.class, PredatorMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
@@ -161,28 +168,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             );
             Class rootEntity = getRequiredRootEntity(context);
 
-            Map<String, String> parameterBinding = Collections.emptyMap();
-
-            if (context.isPresent(PredatorMethod.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS)) {
-                parameterBinding = buildParameterBinding(
-                        context,
-                        PredatorMethod.META_MEMBER_COUNT_PARAMETERS
-                );
-            }
             storedQuery = new DefaultStoredQuery<Object, Long>(
                     executableMethod,
                     Long.class,
                     rootEntity,
                     query,
-                    parameterBinding
+                    context.isPresent(PredatorMethod.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS) ? PredatorMethod.META_MEMBER_COUNT_PARAMETERS : null
             );
-            countQueries.put(executableMethod, storedQuery);
+            countQueries.put(key, storedQuery);
         }
 
         Pageable pageable = getPageable(context);
         Map<String, Object> parameterValues = buildParameterValues(context, storedQuery, storedQuery.getRootEntity());
         //noinspection unchecked
         return new DefaultPreparedQuery(
+                repositoryType,
                 storedQuery,
                 storedQuery.getQuery(),
                 parameterValues,
@@ -295,49 +295,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         return o;
     }
 
-    @NonNull
-    private Map<String, String> buildParameterBinding(@NonNull MethodInvocationContext<T, R> context) {
-        return buildParameterBinding(context, PredatorMethod.META_MEMBER_PARAMETER_BINDING);
-    }
-
-    /**
-     * Builds the parameter data.
-     * @param annotationMetadata The annotation metadata
-     * @param parameterBindingMember The parameter member
-     * @return The parameter data
-     */
-    public static Map<String, String> buildParameterBinding(
-            AnnotationMetadata annotationMetadata,
-            String parameterBindingMember) {
-        AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
-        if (annotation == null) {
-            return Collections.emptyMap();
-        }
-        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
-                Property.class);
-        Map<String, String> parameterValues;
-        if (CollectionUtils.isNotEmpty(parameterData)) {
-            parameterValues = new HashMap<>(parameterData.size());
-            for (AnnotationValue<Property> annotationValue : parameterData) {
-                String name = annotationValue.stringValue("name").orElse(null);
-                String argument = annotationValue.stringValue("value").orElse(null);
-                if (name != null && argument != null) {
-                    parameterValues.put(name, argument);
-                }
-            }
-        } else {
-            parameterValues = Collections.emptyMap();
-        }
-        return parameterValues;
-    }
-
-    private <RT> Map<String, Object> buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
-        Map<String, String> parameterBinding = storedQuery.getParameterBinding();
+    @SuppressWarnings("unchecked")
+    private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
+        Map<?, ?> parameterBinding = storedQuery.useNumericPlaceholders() ? storedQuery.getIndexedParameterBinding() : storedQuery.getParameterBinding();
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        Map<String, Object> parameterValues = new HashMap<>(parameterBinding.size());
-        for (Map.Entry<String, String> entry : parameterBinding.entrySet()) {
-            String name = entry.getKey();
-            String argument = entry.getValue();
+        Map parameterValues = new HashMap<>(parameterBinding.size());
+        for (Map.Entry entry : parameterBinding.entrySet()) {
+            Object name = entry.getKey();
+            String argument = (String) entry.getValue();
             String v = storedQuery.getLastUpdatedProperty().orElse(null);
             if (parameterValueMap.containsKey(argument)) {
                 parameterValues.put(name, parameterValueMap.get(argument));
@@ -711,12 +676,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final @NonNull Class<RT> resultType;
         private final @NonNull Class<E> rootEntity;
         private final @NonNull String query;
-        private final @NonNull Map<String, String> parameterBinding;
+        private final @Nullable Map<String, String> parameterBinding;
+        private final @Nullable Map<Integer, String> indexedParameterBinding;
         private final ExecutableMethod<?, ?> method;
         private final String lastUpdatedProp;
         private final boolean isDto;
         private final boolean isNative;
+        private final boolean isNumericPlaceHolder;
         private final AnnotationMetadata annotationMetadata;
+        private final boolean hasIn;
+        private final Map<String, DataType> dataTypes;
+        private final Map<Integer, DataType> indexedDataTypes;
         private Map<String, Object> queryHints;
 
         /**
@@ -731,16 +701,60 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                 @NonNull Class<RT> resultType,
                 @NonNull Class<E> rootEntity,
                 @NonNull String query,
-                @Nullable Map<String, String> parameterBinding) {
+                @Nullable String parameterBindingMember) {
             this.resultType = resultType;
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
             this.query = query;
-            this.parameterBinding = parameterBinding == null ? Collections.emptyMap() : parameterBinding;
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
-            this.isNative = method.isTrue(Query.class, "nativeQuery");
+            this.isNumericPlaceHolder = method.classValue(Repository.class, "queryBuilder").map(c -> c == SqlQueryBuilder.class).orElse(false);
+            this.isNative = method.isTrue(Query.class, "nativeQuery") || isNumericPlaceHolder;
+            this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
+
+            AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
+            if (parameterBindingMember != null && annotation != null) {
+
+                    List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
+                            Property.class);
+                    if (CollectionUtils.isNotEmpty(parameterData)) {
+                        Map parameterValues = new HashMap(parameterData.size());
+                        for (AnnotationValue<Property> annotationValue : parameterData) {
+                            Object placeHolderName;
+                            if (isNumericPlaceHolder) {
+                                int i = annotationValue.intValue("name").orElse(-1);
+                                if (i == -1) {
+                                    continue;
+                                }
+                                placeHolderName = i;
+                            } else {
+                                placeHolderName = annotationValue.stringValue("name").orElse(null);
+                            }
+                            String argument = annotationValue.stringValue("value").orElse(null);
+                            if (placeHolderName != null && argument != null) {
+                                if (isNumericPlaceHolder) {
+                                    parameterValues.put(placeHolderName, argument);
+                                } else {
+                                    parameterValues.put(placeHolderName, argument);
+                                }
+                            }
+                        }
+                        if (isNumericPlaceHolder) {
+                            this.indexedParameterBinding = parameterValues;
+                            this.parameterBinding = null;
+                        } else {
+                            this.parameterBinding = parameterValues;
+                            this.indexedParameterBinding = null;
+                        }
+                    } else {
+                        this.parameterBinding = null;
+                        this.indexedParameterBinding = null;
+                    }
+            } else {
+                this.indexedParameterBinding = null;
+                this.parameterBinding = null;
+            }
             if (method.hasAnnotation(QueryHint.class)) {
                 List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
                 this.queryHints = new HashMap<>(values.size());
@@ -760,6 +774,45 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     this.queryHints = queryHints;
                 }
             }
+
+            List<AnnotationValue<TypeDef>> typeDefs = annotation != null ? annotation.getAnnotations("typeDefs", TypeDef.class) : null;
+            if (CollectionUtils.isNotEmpty(typeDefs)) {
+                this.dataTypes = isNumericPlaceHolder ? null : new HashMap<>(typeDefs.size());
+                this.indexedDataTypes = isNumericPlaceHolder ? new HashMap<>(typeDefs.size()) : null;
+                for (AnnotationValue<TypeDef> typeDef : typeDefs) {
+                    typeDef.enumValue("type", DataType.class).ifPresent(dataType -> {
+                        String[] values = typeDef.stringValues("names");
+                        for (String value : values) {
+                            if (isNumericPlaceHolder) {
+                                indexedDataTypes.put(Integer.valueOf(value), dataType);
+                            } else {
+                                dataTypes.put(value, dataType);
+                            }
+                        }
+                    });
+                }
+            } else {
+                this.indexedDataTypes = null;
+                this.dataTypes = null;
+            }
+        }
+
+        @NonNull
+        @Override
+        public Map<String, DataType> getParameterTypes() {
+            if (dataTypes == null) {
+                return Collections.emptyMap();
+            }
+            return this.dataTypes;
+        }
+
+        @NonNull
+        @Override
+        public Map<Integer, DataType> getIndexedParameterTypes() {
+            if (indexedDataTypes == null) {
+                return Collections.emptyMap();
+            }
+            return this.indexedDataTypes;
         }
 
         @NonNull
@@ -779,6 +832,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         public boolean isNative() {
             return isNative;
+        }
+
+        /**
+         * Is this a raw SQL query.
+         * @return The raw sql query.
+         */
+        @Override
+        public boolean useNumericPlaceholders() {
+            return isNumericPlaceHolder;
         }
 
         /**
@@ -826,6 +888,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         }
 
         /**
+         * Does the query contain an in expression.
+         * @return True if it does
+         */
+        @Override
+        public boolean hasInExpression() {
+            return hasIn;
+        }
+
+        /**
          * @return The query to execute
          */
         @Override
@@ -849,7 +920,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @NonNull
         @Override
         public Map<String, String> getParameterBinding() {
+            if (parameterBinding == null) {
+                return Collections.emptyMap();
+            }
             return parameterBinding;
+        }
+
+        @NonNull
+        @Override
+        public Map<Integer, String> getIndexedParameterBinding() {
+            if (indexedParameterBinding == null) {
+                return Collections.emptyMap();
+            }
+            return indexedParameterBinding;
         }
 
         @Override
@@ -888,24 +971,29 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final StoredQuery<E, RT> storedQuery;
         private final String query;
         private final boolean dto;
+        private final @NonNull Map<Integer, Object> indexedValues;
+        private final Class<?> repositoryType;
 
         /**
          * The default constructor.
+         * @param repositoryType The repository type
          * @param storedQuery The stored query
          * @param finalQuery The final query
          * @param parameterValues The parameter values
          * @param pageable The pageable
          */
         DefaultPreparedQuery(
+                Class<?> repositoryType,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable) {
-            this(storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
+            this(repositoryType, storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
         }
 
         /**
          * The default constructor.
+         * @param repositoryType The repository type
          * @param storedQuery The stored query
          * @param finalQuery The final query
          * @param parameterValues The parameter values
@@ -913,16 +1001,52 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
          * @param dtoProjection Whether the prepared query is a dto projection
          */
         DefaultPreparedQuery(
+                Class<?> repositoryType,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
-                @Nullable Map<String, Object> parameterValues,
+                @Nullable Map parameterValues,
                 @Nullable Pageable pageable,
                 boolean dtoProjection) {
+            this.repositoryType = repositoryType;
             this.query = finalQuery;
             this.storedQuery = storedQuery;
-            this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
+            if (storedQuery.useNumericPlaceholders()) {
+                if (parameterValues != null) {
+                    indexedValues = parameterValues;
+                } else {
+                    indexedValues = Collections.emptyMap();
+                }
+                this.parameterValues = Collections.emptyMap();
+            } else {
+                this.indexedValues = Collections.emptyMap();
+                this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
+            }
+
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
             this.dto = dtoProjection;
+        }
+
+        @NonNull
+        @Override
+        public Map<Integer, DataType> getIndexedParameterTypes() {
+            return storedQuery.getIndexedParameterTypes();
+        }
+
+        @NonNull
+        @Override
+        public Map<Integer, String> getIndexedParameterBinding() {
+            return storedQuery.getIndexedParameterBinding();
+        }
+
+        @NonNull
+        @Override
+        public Map<String, DataType> getParameterTypes() {
+            return storedQuery.getParameterTypes();
+        }
+
+        @Override
+        public AnnotationMetadata getAnnotationMetadata() {
+            return storedQuery.getAnnotationMetadata();
         }
 
         @NonNull
@@ -931,10 +1055,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             return storedQuery.getQueryHints();
         }
 
+        @Override
+        public Class<?> getRepositoryType() {
+            return repositoryType;
+        }
+
         @NonNull
         @Override
         public Map<String, Object> getParameterValues() {
             return parameterValues;
+        }
+
+        @Override
+        @NonNull
+        public Map<Integer, Object> getIndexedParameterValues() {
+            return indexedValues;
         }
 
         @NonNull
@@ -946,6 +1081,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         public boolean isNative() {
             return storedQuery.isNative();
+        }
+
+        @Override
+        public boolean useNumericPlaceholders() {
+            return storedQuery.useNumericPlaceholders();
         }
 
         @Override
@@ -975,6 +1115,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         public Class<E> getRootEntity() {
             return storedQuery.getRootEntity();
+        }
+
+        @Override
+        public boolean hasInExpression() {
+            return storedQuery.hasInExpression();
         }
 
         @NonNull
@@ -1007,5 +1152,39 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         }
     }
 
+    /**
+     * Class used as a method key.
+     */
+    private final class MethodKey {
+        final Class declaringType;
+        final String name;
+        final Class[] argumentTypes;
 
+        MethodKey(Class declaringType, String name, Class[] argumentTypes) {
+            this.declaringType = declaringType;
+            this.name = name;
+            this.argumentTypes = argumentTypes;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            MethodKey methodKey = (MethodKey) o;
+            return declaringType.equals(methodKey.declaringType) &&
+                    name.equals(methodKey.name) &&
+                    Arrays.equals(argumentTypes, methodKey.argumentTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(declaringType, name);
+            result = 31 * result + Arrays.hashCode(argumentTypes);
+            return result;
+        }
+    }
 }

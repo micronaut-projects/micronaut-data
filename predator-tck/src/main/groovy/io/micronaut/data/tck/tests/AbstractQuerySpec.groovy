@@ -5,7 +5,7 @@ import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import spock.lang.Specification
 
-abstract class QuerySpec extends Specification {
+abstract class AbstractQuerySpec extends Specification {
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
 

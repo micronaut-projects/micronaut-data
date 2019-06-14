@@ -17,15 +17,13 @@ package io.micronaut.data.processor.visitors;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.*;
-import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
-import io.micronaut.core.reflect.exception.InstantiationException;
-import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
@@ -34,7 +32,6 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryBuilder;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
@@ -70,6 +67,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private List<MethodCandidate> finders;
     private boolean failing = false;
     private Set<String> visitedRepositories = new HashSet<>();
+    private Map<String, DataType> dataTypes = Collections.emptyMap();
 
     /**
      * Default constructor.
@@ -105,7 +103,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (element.hasDeclaredStereotype(Repository.class)) {
             visitedRepositories.add(interfaceName);
             currentRepository = element;
-            queryEncoder = resolveQueryEncoder(element);
+            queryEncoder = QueryBuilder.newQueryBuilder(element.getAnnotationMetadata());
+            this.dataTypes = MappedEntityVisitor.getConfiguredDataTypes(currentRepository);
             AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
             AnnotationValue[] roleArray = annotationMetadata
                     .getValue(Repository.class, "typeRoles", AnnotationValue[].class).orElse(new AnnotationValue[0]);
@@ -298,7 +297,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     try {
                                         QueryResult queryResult = queryEncoder.buildInsert(currentRepository.getAnnotationMetadata(), entity);
                                         if (queryResult != null) {
-                                            AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(queryResult.getParameters());
+                                            Map<String, String> qp = queryResult.getParameters();
+                                            addParameterTypeDefinitions(matchContext, qp, parameters, annotationBuilder);
+                                            AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(qp);
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_BINDING, annotationValues);
                                         }
@@ -323,7 +324,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                     ClassElement type = resultType.getType();
                                     if (!type.getName().equals("void")) {
-                                        annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type));
+                                        annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type, dataTypes));
                                     }
                                 }
                                 if (idType != null) {
@@ -336,6 +337,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     if (finalRawCount) {
                                         annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
                                     }
+                                    addParameterTypeDefinitions(matchContext, finalParameterBinding, parameters, annotationBuilder);
                                 }
                                 if (finalPreparedCount1 != null) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalPreparedCount1.getParameters());
@@ -377,6 +379,33 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             this.failing = true;
             context.fail("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
+        }
+    }
+
+    private void addParameterTypeDefinitions(MatchContext matchContext, Map<String, String> parameterBinding, ParameterElement[] parameters, AnnotationValueBuilder<PredatorMethod> annotationBuilder) {
+        if (!matchContext.supportsImplicitQueries()) {
+            List<AnnotationValue<?>> annotationValues = new ArrayList<>(parameterBinding.size());
+            Map<String, String> reverseMap = parameterBinding.entrySet().stream().collect(Collectors.toMap(
+                    Map.Entry::getValue,
+                    Map.Entry::getKey
+            ));
+            for (ParameterElement parameter : parameters) {
+                String name = parameter.getName();
+                String index = reverseMap.get(name);
+                if (index != null) {
+                    ClassElement genericType = parameter.getGenericType();
+                    if (TypeUtils.isContainerType(genericType)) {
+                        genericType = genericType.getFirstTypeArgument().orElse(genericType);
+                    }
+                    DataType dt = TypeUtils.resolveDataType(genericType, dataTypes);
+                    AnnotationValue<TypeDef> typeDef = AnnotationValue.builder(TypeDef.class)
+                            .member("type", dt)
+                            .member("names", index).build();
+                    annotationValues.add(typeDef);
+                }
+            }
+            AnnotationValue[] typeDefValues = annotationValues.toArray(new AnnotationValue[0]);
+            annotationBuilder.member("typeDefs", typeDefValues);
         }
     }
 
@@ -505,25 +534,4 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private QueryBuilder resolveQueryEncoder(Element element) {
-        return element.getValue(
-                Repository.class,
-                PredatorMethod.META_MEMBER_QUERY_BUILDER,
-                String.class
-        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.getBeanType().getName().equals(type))
-                               .stream().findFirst()
-                               .map(introspection -> {
-                                   try {
-                                       Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-                                       if (constructorArguments.length == 0) {
-                                           return (QueryBuilder) introspection.instantiate();
-                                       } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
-                                           return (QueryBuilder) introspection.instantiate(element.getAnnotationMetadata());
-                                       }
-                                   } catch (InstantiationException e) {
-                                       return new JpaQueryBuilder();
-                                   }
-                                   return new JpaQueryBuilder();
-                               })).orElse(new JpaQueryBuilder());
-    }
 }

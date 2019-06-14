@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.model.query.builder.jpa;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -172,5 +174,11 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         // JPA doesn't require an insert statement
         return null;
+    }
+
+    @NonNull
+    @Override
+    public QueryResult buildPagination(@NonNull Pageable pageable) {
+        throw new UnsupportedOperationException("JPA-QL does not support pagination in query definitions");
     }
 }

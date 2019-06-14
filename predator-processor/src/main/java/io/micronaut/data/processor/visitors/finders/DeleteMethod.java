@@ -24,6 +24,9 @@ import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.QueryParameter;
+import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -65,7 +68,8 @@ public class DeleteMethod extends AbstractListMethod {
         Class<? extends PredatorInterceptor> interceptor = null;
         if (parameters.length == 1) {
             ClassElement genericType = parameters[0].getGenericType();
-            if (genericType.isAssignable(matchContext.getRootEntity().getName())) {
+            SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+            if (genericType.isAssignable(rootEntity.getName())) {
                 ClassElement returnType = matchContext.getReturnType();
                 if (TypeUtils.isFutureType(returnType)) {
                     interceptor = DeleteOneAsyncInterceptor.class;
@@ -78,12 +82,33 @@ public class DeleteMethod extends AbstractListMethod {
                 interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
             }
             if (interceptor != null) {
-                return new MethodMatchInfo(
-                        null,
-                        null,
-                        interceptor,
-                        MethodMatchInfo.OperationType.DELETE
-                );
+                if (matchContext.supportsImplicitQueries()) {
+                    return new MethodMatchInfo(
+                            null,
+                            null,
+                            interceptor,
+                            MethodMatchInfo.OperationType.DELETE
+                    );
+                } else {
+                    QueryModel queryModel = QueryModel.from(rootEntity);
+                    SourcePersistentProperty identity = rootEntity.getIdentity();
+                    if (identity == null) {
+                        matchContext.fail("Delete all not supported for entities with no ID");
+                        return null;
+                    }
+                    QueryParameter queryParameter = new QueryParameter(parameters[0].getName());
+                    if (interceptor.getSimpleName().startsWith("DeleteAll")) {
+                        queryModel.inList(identity.getName(), queryParameter);
+                    } else {
+                        queryModel.idEq(queryParameter);
+                    }
+                    return new MethodMatchInfo(
+                            null,
+                            queryModel,
+                            interceptor,
+                            MethodMatchInfo.OperationType.DELETE
+                    );
+                }
             }
         }
         return super.buildMatchInfo(matchContext);
@@ -97,13 +122,15 @@ public class DeleteMethod extends AbstractListMethod {
             return new MethodMatchInfo(
                     null,
                     query,
-                    interceptor
+                    interceptor,
+                    MethodMatchInfo.OperationType.DELETE
             );
         } else {
             return new MethodMatchInfo(
                     null,
                     matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
-                    interceptor
+                    interceptor,
+                    MethodMatchInfo.OperationType.DELETE
             );
         }
     }

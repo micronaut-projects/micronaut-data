@@ -17,7 +17,7 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.tests.QuerySpec
+import io.micronaut.data.tck.tests.AbstractQuerySpec
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 
@@ -26,7 +26,7 @@ import javax.inject.Inject
 @MicronautTest(packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
-class HibernateQuerySpec extends QuerySpec {
+class HibernateQuerySpec extends AbstractQuerySpec {
 
     @Shared
     @Inject

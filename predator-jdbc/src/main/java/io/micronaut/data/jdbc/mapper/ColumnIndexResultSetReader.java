@@ -8,6 +8,7 @@ import io.micronaut.data.mapper.DataReader;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -17,6 +18,16 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnIndexResultSetReader implements DataReader<ResultSet, Integer> {
+
+    @Override
+    public Timestamp readTimestamp(ResultSet resultSet, Integer index) {
+        try {
+            return resultSet.getTimestamp(index);
+        } catch (SQLException e) {
+            throw exceptionForColumn(index, e);
+        }
+    }
+
     @Override
     public long readLong(ResultSet resultSet, Integer index) {
         try {

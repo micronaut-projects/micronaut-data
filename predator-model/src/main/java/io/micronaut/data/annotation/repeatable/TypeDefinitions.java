@@ -13,19 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.repository;
+package io.micronaut.data.annotation.repeatable;
 
-import io.micronaut.core.annotation.Indexed;
+import io.micronaut.data.annotation.TypeDef;
+
+import java.lang.annotation.*;
 
 /**
- * Parent repository interface for all repositories.
+ * Repeatable wrapper for {@link TypeDef}.
  *
  * @author graemerocher
- * @since 1.0
- *
- * @param <E> The entity type
- * @param <ID> The ID type
+ * @since 1.0.0
  */
-@Indexed(GenericRepository.class)
-public interface GenericRepository<E, ID> {
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Documented
+public @interface TypeDefinitions {
+
+    /**
+     * @return The type definitions.
+     */
+    TypeDef[] value();
 }

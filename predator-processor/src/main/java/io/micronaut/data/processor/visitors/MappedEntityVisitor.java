@@ -1,9 +1,12 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.reflect.InstantiationUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategies;
@@ -16,8 +19,7 @@ import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -40,17 +42,39 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 builder.value(mappedName);
             });
         }
+        Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         List<PersistentProperty> properties = entity.getPersistentProperties();
         for (PersistentProperty property : properties) {
-            computeMappingDefaults(namingStrategy, property);
+            computeMappingDefaults(namingStrategy, property, dataTypes);
         }
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
-            computeMappingDefaults(namingStrategy, identity);
+            computeMappingDefaults(namingStrategy, identity, dataTypes);
         }
     }
 
-    private void computeMappingDefaults(NamingStrategy namingStrategy, PersistentProperty property) {
+    /**
+     * Resolves the configured data types.
+     * @param element The element
+     * @return The data types
+     */
+    static Map<String, DataType> getConfiguredDataTypes(ClassElement element) {
+        List<AnnotationValue<TypeDef>> typeDefinitions = element.getAnnotationValuesByType(TypeDef.class);
+        Map<String, DataType> dataTypes = new HashMap<>(typeDefinitions.size());
+        for (AnnotationValue<TypeDef> typeDefinition : typeDefinitions) {
+            typeDefinition.enumValue("type", DataType.class).ifPresent(dataType -> {
+                String[] values = typeDefinition.stringValues("classes");
+                String[] names = typeDefinition.stringValues("names");
+                String[] concated = ArrayUtils.concat(values, names);
+                for (String s : concated) {
+                    dataTypes.put(s, dataType);
+                }
+            });
+        }
+        return dataTypes;
+    }
+
+    private void computeMappingDefaults(NamingStrategy namingStrategy, PersistentProperty property, Map<String, DataType> dataTypes) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
         PropertyElement propertyElement = spp.getPropertyElement();
@@ -64,7 +88,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         if (dataType == null) {
             ClassElement type = propertyElement.getType();
-            dataType = TypeUtils.resolveDataType(type);
+            dataType = TypeUtils.resolveDataType(type, dataTypes);
         }
 
         DataType finalDataType = dataType;

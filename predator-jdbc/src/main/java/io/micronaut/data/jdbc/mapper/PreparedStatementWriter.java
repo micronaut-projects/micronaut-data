@@ -7,6 +7,7 @@ import io.micronaut.data.mapper.DataWriter;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Date;
 
 /**
@@ -16,6 +17,22 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class PreparedStatementWriter implements DataWriter<PreparedStatement, Integer> {
+
+    @NonNull
+    @Override
+    public DataWriter<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Date date) {
+        try {
+            if (date instanceof Timestamp) {
+                statement.setTimestamp(name, (Timestamp) date);
+            } else {
+                statement.setTimestamp(name, new Timestamp(date.getTime()));
+            }
+        } catch (SQLException e) {
+            throw newDataAccessException(e);
+        }
+        return this;
+    }
+
     @Override
     public DataWriter<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer name, Object value) throws DataAccessException {
         try {

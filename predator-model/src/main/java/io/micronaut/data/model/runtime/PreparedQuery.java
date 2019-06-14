@@ -31,10 +31,23 @@ import java.util.Map;
 public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
 
     /**
+     * @return The repository type.
+     */
+    Class<?> getRepositoryType();
+
+    /**
      * @return The named parameter values
      */
     @NonNull
     Map<String, Object> getParameterValues();
+
+    /**
+     * The indexed parameter values if this is native query SQL query. Returns empty if {@link #isNative()} is false.
+     * @return The indexed values
+     */
+    default @NonNull Map<Integer, Object> getIndexedParameterValues() {
+        return Collections.emptyMap();
+    }
 
     @NonNull
     @Override

@@ -16,8 +16,10 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -44,11 +46,18 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Object o = parameterValues[0];
-            BatchOperation<Object> batchOperation = getBatchOperation(context, Collections.singletonList(o));
-            if (o != null) {
-                operations.deleteAll(batchOperation);
+            if (context.hasAnnotation(Query.class)) {
+                PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+                operations.executeUpdate(preparedQuery).orElse(0);
+                return null;
             } else {
-                throw new IllegalArgumentException("Entity to delete cannot be null");
+
+                BatchOperation<Object> batchOperation = getBatchOperation(context, Collections.singletonList(o));
+                if (o != null) {
+                    operations.deleteAll(batchOperation);
+                } else {
+                    throw new IllegalArgumentException("Entity to delete cannot be null");
+                }
             }
         } else {
             throw new IllegalStateException("Expected exactly one argument");

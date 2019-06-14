@@ -17,6 +17,14 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnNameResultSetReader implements DataReader<ResultSet, String> {
+    @Override
+    public Date readTimestamp(ResultSet resultSet, String index) {
+        try {
+            return resultSet.getTimestamp(index);
+        } catch (SQLException e) {
+            throw exceptionForColumn(index, e);
+        }
+    }
 
     @Override
     public long readLong(ResultSet resultSet, String name) {

@@ -66,6 +66,12 @@ public interface DataWriter<PS, IDX> {
                 } else {
                     return setDate(statement, index, convertRequired(value, Date.class));
                 }
+            case TIMESTAMP:
+                if (value instanceof Date) {
+                    return setTimestamp(statement, index, ((Date) value));
+                } else {
+                    return setTimestamp(statement, index, convertRequired(value, Date.class));
+                }
             case DOUBLE:
                 if (value instanceof Number) {
                     return setDouble(statement, index, ((Number) value).doubleValue());
@@ -173,6 +179,18 @@ public interface DataWriter<PS, IDX> {
      * @return This writer
      */
     default @NonNull DataWriter<PS, IDX> setDate(PS statement, IDX name, Date date) {
+        return setValue(statement, name, date);
+    }
+
+
+    /**
+     * Write a date value for the given name.
+     * @param statement The statement
+     * @param name The name (such as the column name)
+     * @param date The date
+     * @return This writer
+     */
+    default @NonNull DataWriter<PS, IDX> setTimestamp(PS statement, IDX name, Date date) {
         return setValue(statement, name, date);
     }
 

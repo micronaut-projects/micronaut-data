@@ -54,6 +54,16 @@ public interface RepositoryOperations {
     @Nullable <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery);
 
     /**
+     * Execute a query that checks for existence.
+     *
+     * @param preparedQuery The prepared query
+     * @param <T> The generic resultType
+     * @param <R> The result type
+     * @return A result or null
+     */
+    <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery);
+
+    /**
      * Finds all results for the given query.
      * @param query The root entity
      * @param <T> The generic type

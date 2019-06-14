@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -44,6 +45,11 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder {
+
+    /**
+     * The start of an IN expression.
+     */
+    public static final String IN_EXPRESSION_START = " ?$IN(";
 
     private Dialect dialect = Dialect.ANSI;
 
@@ -70,17 +76,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @param dialect The dialect
      */
     public SqlQueryBuilder(Dialect dialect) {
+        ArgumentUtils.requireNonNull("dialect", dialect);
         this.dialect = dialect;
-    }
-
-    /**
-     * Sets the dialect to use.
-     * @param dialect The dialect to use.
-     */
-    public void setDialect(Dialect dialect) {
-        if (dialect != null) {
-            this.dialect = dialect;
-        }
     }
 
     /**
@@ -137,57 +134,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return builder.toString();
     }
 
-    private String addTypeToColumn(PersistentProperty prop, boolean isAssociation, String column) {
-        switch (prop.getDataType()) {
-            case STRING:
-                column += " VARCHAR(255)";
-            break;
-            case BYTE:
-            case BOOLEAN:
-                column += " BIT";
-            break;
-            case DATE:
-                column += " TIMESTAMP";
-            break;
-            case LONG:
-                column += " BIGINT";
-            break;
-            case CHARACTER:
-            case INTEGER:
-                column += " INT";
-            break;
-            case BIGDECIMAL:
-                column += " DECIMAL";
-            break;
-            case FLOAT:
-                column += " FLOAT";
-            break;
-            case BYTE_ARRAY:
-                column += " BINARY";
-            break;
-            case DOUBLE:
-                column += " DOUBLE";
-            break;
-            case SHORT:
-                column += " TINYINT";
-            break;
-            default:
-                if (isAssociation) {
-                    Association association = (Association) prop;
-                    PersistentEntity associatedEntity = association.getAssociatedEntity();
-                    if (associatedEntity != null) {
-
-                        PersistentProperty identity = associatedEntity.getIdentity();
-                        if (identity != null) {
-                            return addTypeToColumn(identity, false, column);
-                        }
-                    }
-                }
-                column += " OBJECT";
-        }
-        return column;
-    }
-
     @Override
     public String selectAllColumns(PersistentEntity entity, String alias) {
         List<PersistentProperty> persistentProperties = entity.getPersistentProperties()
@@ -213,6 +159,153 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             return "*";
         }
+    }
+
+    @Override
+    public String resolveJoinType(Join.Type jt) {
+        String joinType;
+        switch (jt) {
+            case LEFT:
+            case LEFT_FETCH:
+                joinType = " LEFT JOIN ";
+                break;
+            case RIGHT:
+            case RIGHT_FETCH:
+                joinType = " RIGHT JOIN ";
+                break;
+            default:
+                joinType = " INNER JOIN ";
+        }
+        return joinType;
+    }
+
+    @Nullable
+    @Override
+    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
+        StringBuilder builder = new StringBuilder("INSERT INTO ");
+        builder.append(getTableName(entity));
+        builder.append(" (");
+
+        List<PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
+        boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
+        int index = 1;
+        if (hasProperties) {
+            List<String> columnNames = new ArrayList<>(persistentProperties.size());
+            for (PersistentProperty prop : persistentProperties) {
+                if (!prop.isGenerated()) {
+                    if (prop instanceof Association) {
+                        Association association = (Association) prop;
+                        Relation.Kind kind = association.getKind();
+                        switch (kind) {
+                            case MANY_TO_ONE:
+                            case ONE_TO_ONE:
+                                parameters.put(prop.getName(), String.valueOf(index++));
+                                columnNames.add(getColumnName(prop));
+                                continue;
+                            case EMBEDDED:
+                                // TODO: handle embedded
+                            default:
+                                // skip, for foreign key
+
+                        }
+                    } else {
+                        parameters.put(prop.getName(), String.valueOf(index++));
+                        columnNames.add(getColumnName(prop));
+                    }
+                }
+            }
+            builder.append(String.join(",", columnNames));
+        }
+
+        PersistentProperty identity = entity.getIdentity();
+        if (identity != null) {
+
+            boolean assignedOrSequence = false;
+            Optional<AnnotationValue<GeneratedValue>> generated = identity.findAnnotation(GeneratedValue.class);
+            if (generated.isPresent()) {
+                GeneratedValue.Type idGeneratorType = generated
+                        .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
+                        .orElseGet(this::selectAutoStrategy);
+                if (idGeneratorType == GeneratedValue.Type.SEQUENCE) {
+                    assignedOrSequence = true;
+                }
+            } else {
+                assignedOrSequence = true;
+            }
+            if (assignedOrSequence) {
+                if (hasProperties) {
+                    builder.append(COMMA);
+                }
+                builder.append(getColumnName(identity));
+                parameters.put(identity.getName(), String.valueOf(index++));
+            }
+        }
+
+        builder.append(CLOSE_BRACKET);
+        builder.append(" VALUES (");
+        for (int i = 1; i < index; i++) {
+            builder.append('?');
+            if (i < index - 1) {
+                builder.append(COMMA);
+            }
+        }
+        builder.append(CLOSE_BRACKET);
+        return QueryResult.of(
+                builder.toString(),
+                parameters
+        );
+    }
+
+    @NonNull
+    @Override
+    public QueryResult buildPagination(@NonNull Pageable pageable) {
+        StringBuilder builder = new StringBuilder(" ");
+        int size = pageable.getSize();
+        long from = pageable.getOffset();
+        long to = from + size;
+        if (to < 0) {
+            // handle overflow
+            from = 0;
+            to = size;
+        }
+        switch (dialect) {
+            case H2:
+            case MYSQL:
+                if (from == 0) {
+                    builder.append("LIMIT ").append(to);
+                } else {
+                    builder.append("LIMIT ").append(from).append(',').append(to);
+                }
+            break;
+            case POSTGRES:
+                builder.append("LIMIT ").append(to).append(" ");
+                if (from != 0) {
+                    builder.append("OFFSET ").append(to);
+                }
+            break;
+            case ANSI:
+            case SQL_SERVER:
+            case ORACLE:
+            default:
+                if (from != 0) {
+                    builder.append("OFFSET ").append(to).append(" ROWS ");
+                }
+                builder.append("FETCH NEXT ").append(to).append(" ROWS ONLY ");
+            break;
+        }
+        return QueryResult.of(
+                builder.toString(),
+                Collections.emptyMap()
+        );
+    }
+
+    @Override
+    protected void encodeInExpression(StringBuilder whereClause, Placeholder placeholder) {
+        whereClause
+                .append(IN_EXPRESSION_START)
+                .append(placeholder.getKey())
+                .append(CLOSE_BRACKET);
     }
 
     @Override
@@ -287,107 +380,62 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return new Placeholder("?", String.valueOf(index));
     }
 
-    @Override
-    public String resolveJoinType(Join.Type jt) {
-        String joinType;
-        switch (jt) {
-            case LEFT:
-            case LEFT_FETCH:
-                joinType = " LEFT JOIN ";
-            break;
-            case RIGHT:
-            case RIGHT_FETCH:
-                joinType = " RIGHT JOIN ";
-                break;
-            default:
-                joinType = " INNER JOIN ";
-        }
-        return joinType;
-    }
-
-    @Nullable
-    @Override
-    public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
-        StringBuilder builder = new StringBuilder("INSERT INTO ");
-        builder.append(getTableName(entity));
-        builder.append(" (");
-
-        List<PersistentProperty> persistentProperties = entity.getPersistentProperties();
-        Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
-        boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
-        int index = 1;
-        if (hasProperties) {
-            List<String> columnNames = new ArrayList<>(persistentProperties.size());
-            for (PersistentProperty prop : persistentProperties) {
-                if (!prop.isGenerated()) {
-                    if (prop instanceof Association) {
-                        Association association = (Association) prop;
-                        Relation.Kind kind = association.getKind();
-                        switch (kind) {
-                            case MANY_TO_ONE:
-                            case ONE_TO_ONE:
-                                parameters.put(prop.getName(), String.valueOf(index++));
-                                columnNames.add(getColumnName(prop));
-                            continue;
-                            case EMBEDDED:
-                                // TODO: handle embedded
-                            default:
-                                // skip, for foreign key
-
-                        }
-                    } else {
-                        parameters.put(prop.getName(), String.valueOf(index++));
-                        columnNames.add(getColumnName(prop));
-                    }
-                }
-            }
-            builder.append(String.join(",", columnNames));
-        }
-
-        PersistentProperty identity = entity.getIdentity();
-        if (identity != null) {
-
-            boolean assignedOrSequence = false;
-            Optional<AnnotationValue<GeneratedValue>> generated = identity.findAnnotation(GeneratedValue.class);
-            if (generated.isPresent()) {
-                GeneratedValue.Type idGeneratorType = generated
-                        .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
-                        .orElseGet(this::selectAutoStrategy);
-                if (idGeneratorType == GeneratedValue.Type.SEQUENCE) {
-                    assignedOrSequence = true;
-                }
-            } else {
-                assignedOrSequence = true;
-            }
-            if (assignedOrSequence) {
-                if (hasProperties) {
-                    builder.append(COMMA);
-                }
-                builder.append(getColumnName(identity));
-                parameters.put(identity.getName(), String.valueOf(index++));
-            }
-        }
-
-        builder.append(CLOSE_BRACKET);
-        builder.append(" VALUES (");
-        for (int i = 1; i < index; i++) {
-            builder.append('?');
-            if (i < index - 1) {
-                builder.append(COMMA);
-            }
-        }
-        builder.append(CLOSE_BRACKET);
-        return QueryResult.of(
-            builder.toString(),
-            parameters
-        );
-    }
-
     /**
      * Selects the default fallback strategy. For a generated value.
      * @return The generated value
      */
     protected GeneratedValue.Type selectAutoStrategy() {
         return GeneratedValue.Type.AUTO;
+    }
+
+    private String addTypeToColumn(PersistentProperty prop, boolean isAssociation, String column) {
+        switch (prop.getDataType()) {
+            case STRING:
+                column += " VARCHAR(255)";
+                break;
+            case BYTE:
+            case BOOLEAN:
+                column += " BIT";
+                break;
+            case DATE:
+                column += " TIMESTAMP";
+                break;
+            case LONG:
+                column += " BIGINT";
+                break;
+            case CHARACTER:
+            case INTEGER:
+                column += " INT";
+                break;
+            case BIGDECIMAL:
+                column += " DECIMAL";
+                break;
+            case FLOAT:
+                column += " FLOAT";
+                break;
+            case BYTE_ARRAY:
+                column += " BINARY";
+                break;
+            case DOUBLE:
+                column += " DOUBLE";
+                break;
+            case SHORT:
+                column += " TINYINT";
+                break;
+            default:
+                if (isAssociation) {
+                    Association association = (Association) prop;
+                    PersistentEntity associatedEntity = association.getAssociatedEntity();
+                    if (associatedEntity != null) {
+
+                        PersistentProperty identity = associatedEntity.getIdentity();
+                        if (identity != null) {
+                            return addTypeToColumn(identity, false, column);
+                        }
+                    }
+                }
+                column += " OBJECT";
+        }
+        return column;
     }
 }

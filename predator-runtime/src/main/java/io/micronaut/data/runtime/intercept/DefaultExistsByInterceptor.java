@@ -44,6 +44,6 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
         Class idType = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
-        return operations.findOne(preparedQuery) != null;
+        return operations.exists(preparedQuery);
     }
 }

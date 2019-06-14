@@ -238,9 +238,10 @@ public class TypeUtils {
     /**
      * Compute the data type for the given type.
      * @param type The type
+     * @param dataTypes Configured data types
      * @return The data type
      */
-    public static @NonNull DataType resolveDataType(@NonNull ClassElement type) {
+    public static @NonNull DataType resolveDataType(@NonNull ClassElement type, Map<String, DataType> dataTypes) {
         final String typeName = type.isArray() ? type.getName() + "[]" : type.getName();
 
         return RESOLVED_DATA_TYPES.computeIfAbsent(typeName, s -> {
@@ -257,6 +258,10 @@ public class TypeUtils {
                         return dt;
                     }
                 }
+            }
+
+            if (type.hasStereotype(MappedEntity.class)) {
+                return DataType.ENTITY;
             }
 
             try {
@@ -283,6 +288,13 @@ public class TypeUtils {
                 return DataType.STRING;
             }
 
+            String configured = dataTypes.keySet()
+                    .stream()
+                    .filter(type::isAssignable)
+                    .findFirst().orElse(null);
+            if (configured != null) {
+                return dataTypes.get(configured);
+            }
             return DataType.OBJECT;
         });
 
