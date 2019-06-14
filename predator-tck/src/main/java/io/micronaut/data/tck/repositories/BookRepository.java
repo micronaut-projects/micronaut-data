@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 public abstract class BookRepository implements CrudRepository<Book, Long> {
 
-    private final AuthorRepository authorRepository;
+    protected final AuthorRepository authorRepository;
 
     public BookRepository(AuthorRepository authorRepository) {
         this.authorRepository = authorRepository;
@@ -48,13 +48,13 @@ public abstract class BookRepository implements CrudRepository<Book, Long> {
         ));
     }
 
-    private Author newAuthor(String name) {
+    protected Author newAuthor(String name) {
         Author author = new Author();
         author.setName(name);
         return author;
     }
 
-    private Book newBook(Author author, String title, int pages) {
+    protected Book newBook(Author author, String title, int pages) {
         Book book = new Book();
         author.getBooks().add(book);
         book.setAuthor(author);

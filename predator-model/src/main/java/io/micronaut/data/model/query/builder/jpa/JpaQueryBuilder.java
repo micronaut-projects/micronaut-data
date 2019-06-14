@@ -18,6 +18,8 @@ package io.micronaut.data.model.query.builder.jpa;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -89,6 +91,23 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    public String getAliasName(PersistentEntity entity) {
+        return entity.getDecapitalizedName() + "_";
+    }
+
+    @Override
+    protected String buildJoin(String alias, Association association, String joinType, StringBuilder target) {
+        String joinAlias = getAliasName(association);
+        target.append(joinType)
+                .append(alias)
+                .append(DOT)
+                .append(association.getName())
+                .append(SPACE)
+                .append(joinAlias);
+        return joinAlias;
+    }
+
+    @Override
     protected String getTableName(PersistentEntity entity) {
         return entity.getName();
     }
@@ -112,9 +131,40 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected final boolean isApplyManualJoins() {
+        return false;
+    }
+
+    @Override
     protected Placeholder formatParameter(int index) {
         String n = "p" + index;
         return new Placeholder(":" + n, n);
+    }
+
+    @Override
+    public String resolveJoinType(Join.Type jt) {
+        String joinType;
+        switch (jt) {
+            case LEFT:
+                joinType = " LEFT JOIN ";
+                break;
+            case LEFT_FETCH:
+                joinType = " LEFT JOIN FETCH ";
+                break;
+            case RIGHT:
+                joinType = " RIGHT JOIN ";
+                break;
+            case RIGHT_FETCH:
+                joinType = " RIGHT JOIN FETCH ";
+                break;
+            case INNER:
+            case FETCH:
+                joinType = " JOIN FETCH ";
+                break;
+            default:
+                joinType = " JOIN ";
+        }
+        return joinType;
     }
 
     @Nullable

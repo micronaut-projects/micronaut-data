@@ -20,8 +20,11 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+
+import java.util.function.Supplier;
 
 
 /**
@@ -60,7 +63,30 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
-        return property.getAnnotationMetadata().stringValue(MappedProperty.class)
-                .orElseGet(() -> mappedName(property.getName()));
+        Supplier<String> defaultNameSupplier = () -> mappedName(property.getName());
+        if (property instanceof Association) {
+            Association association = (Association) property;
+            // TODO: handle embedded
+            switch (association.getKind()) {
+                case ONE_TO_ONE:
+                case MANY_TO_ONE:
+                    return property.getAnnotationMetadata().stringValue(MappedProperty.class)
+                        .orElseGet(() -> mappedName(property.getName() + getForeignKeySuffix()));
+                default:
+                    return property.getAnnotationMetadata().stringValue(MappedProperty.class)
+                            .orElseGet(defaultNameSupplier);
+            }
+        } else {
+            return property.getAnnotationMetadata().stringValue(MappedProperty.class)
+                    .orElseGet(defaultNameSupplier);
+        }
+    }
+
+    /**
+     * The default foreign key suffix for property names.
+     * @return The suffix
+     */
+    default @NonNull String getForeignKeySuffix() {
+        return "Id";
     }
 }

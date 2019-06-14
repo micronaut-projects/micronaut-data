@@ -1,7 +1,9 @@
 package io.micronaut.data.jdbc.annotation;
 
+import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 import java.lang.annotation.*;
@@ -25,31 +27,13 @@ public @interface JdbcRepository {
     /**
      * @return The dialect to use.
      */
-    Dialect dialect() default Dialect.H2;
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
 
     /**
-     * The SQL dialect to use.
+     * @return The dialect to use.
      */
-    enum Dialect {
-        /**
-         * H2 database.
-         */
-        H2,
-        /**
-         * MySQL 5.5 or above.
-         */
-        MYSQL,
-        /**
-         * Postgres 9.5 or later.
-         */
-        POSTGRES,
-        /**
-         * SQL server 2012 or above.
-         */
-        SQL_SERVER,
-        /**
-         * Oracle 12c or above.
-         */
-        ORACLE
-    }
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    @AliasFor(annotation = JdbcRepository.class, member = "dialect")
+    String dialectName() default "ANSI";
 }

@@ -66,17 +66,17 @@ interface MyInterface extends GenericRepository<Person, Long> {
         expect:
         ann.resultType() == resultType
         ann.interceptor() == interceptor
-        query == expectedQuery
+        query.startsWith(expectedQuery)
 
         where:
-        method                    | returnType     | arguments     | interceptor      | resultType | expectedQuery
-        "count"                   | "Long"         | "String name" | CountInterceptor | Long       | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countByName"             | "Long"         | "String name" | CountInterceptor | Long       | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinct"           | "Long"         | "String name" | CountInterceptor | Long       | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctByName"     | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(person) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctName"       | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctNameByName" | "Long"         | "String name" | CountInterceptor         | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctNameByName" | "Single<Long>" | "String name" | CountReactiveInterceptor | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
-        "countDistinctName" | "CompletionStage<Long>" | "String name" | CountAsyncInterceptor | Long | "SELECT COUNT(DISTINCT(person.name)) FROM $Person.name AS person WHERE (person.name = :p1)"
+        method                    | returnType              | arguments     | interceptor              | resultType | expectedQuery
+        "count"                   | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(person_)"
+        "countByName"             | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(person_)"
+        "countDistinct"           | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(person_)"
+        "countDistinctByName"     | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(person_)"
+        "countDistinctName"       | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.name))"
+        "countDistinctNameByName" | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.name))"
+        "countDistinctNameByName" | "Single<Long>"          | "String name" | CountReactiveInterceptor | Long       | "SELECT COUNT(DISTINCT(person_.name))"
+        "countDistinctName"       | "CompletionStage<Long>" | "String name" | CountAsyncInterceptor    | Long       | "SELECT COUNT(DISTINCT(person_.name))"
     }
 }

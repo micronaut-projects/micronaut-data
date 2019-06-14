@@ -26,6 +26,9 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.FindPageInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -56,6 +59,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     Iterable<Person> findByIds(Iterable<Long> ids);
 }
 """)
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when: "the list method is retrieved"
 
@@ -74,7 +78,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         findAnn3.interceptor() == FindByIdInterceptor
         findAnn2.interceptor() == FindOneInterceptor
         findByIdsAnn.interceptor() == FindAllInterceptor
-        findByIds.synthesize(Query).value() == 'SELECT person FROM io.micronaut.data.model.entities.Person AS person WHERE (person.id IN (:p1))'
+        findByIds.synthesize(Query).value() == "SELECT $alias FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.id IN (:p1))"
     }
 
     @Override

@@ -46,10 +46,10 @@ class JpaQueryBuilderSpec extends Specification {
 
         where:
         type   | direction | props           | statement
-        Person | 'asc'     | ["name"]        | 'person.name ASC'
-        Person | 'asc'     | ["name", "age"] | 'person.name ASC,person.age ASC'
-        Person | 'desc'    | ["name"]        | 'person.name DESC'
-        Person | 'desc'    | ["name", "age"] | 'person.name DESC,person.age DESC'
+        Person | 'asc'     | ["name"]        | 'person_.name ASC'
+        Person | 'asc'     | ["name", "age"] | 'person_.name ASC,person_.age ASC'
+        Person | 'desc'    | ["name"]        | 'person_.name DESC'
+        Person | 'desc'    | ["name", "age"] | 'person_.name DESC,person_.age DESC'
     }
 
     @Unroll
@@ -66,14 +66,14 @@ class JpaQueryBuilderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT $entity.decapitalizedName FROM $entity.name AS ${entity.decapitalizedName} ORDER BY ${statement}"
+                "SELECT ${entity.decapitalizedName}_ FROM $entity.name AS ${entity.decapitalizedName}_ ORDER BY ${statement}"
 
         where:
         type   | direction | props           | statement
-        Person | 'asc'     | ["name"]        | 'person.name ASC'
-        Person | 'asc'     | ["name", "age"] | 'person.name ASC,person.age ASC'
-        Person | 'desc'    | ["name"]        | 'person.name DESC'
-        Person | 'desc'    | ["name", "age"] | 'person.name DESC,person.age DESC'
+        Person | 'asc'     | ["name"]        | 'person_.name ASC'
+        Person | 'asc'     | ["name", "age"] | 'person_.name ASC,person_.age ASC'
+        Person | 'desc'    | ["name"]        | 'person_.name DESC'
+        Person | 'desc'    | ["name", "age"] | 'person_.name DESC,person_.age DESC'
     }
 
     @Unroll
@@ -85,12 +85,12 @@ class JpaQueryBuilderSpec extends Specification {
 
         QueryBuilder encoder = new JpaQueryBuilder()
         QueryResult encodedQuery = encoder.buildQuery(q)
-
+        def alias = encoder.getAliasName(entity)
 
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator :p1)"
+                "SELECT ${alias} FROM $entity.name AS ${alias} WHERE ($alias.$property $operator :p1)"
         encodedQuery.parameters == ['p1': 'test']
 
         where:
@@ -113,12 +113,12 @@ class JpaQueryBuilderSpec extends Specification {
         q.projections()."$projection"(property)
         QueryBuilder encoder = new JpaQueryBuilder()
         QueryResult encodedQuery = encoder.buildQuery(q)
-
+        def alias = encoder.getAliasName(entity)
 
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT ${projection.toUpperCase()}(${entity.decapitalizedName}.$property) FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator :p1)"
+                "SELECT ${projection.toUpperCase()}(${alias}.$property) FROM $entity.name AS $alias WHERE ($alias.$property $operator :p1)"
         encodedQuery.parameters == ['p1': 'test']
 
         where:
@@ -139,12 +139,12 @@ class JpaQueryBuilderSpec extends Specification {
 
         QueryBuilder encoder = new JpaQueryBuilder()
         QueryResult encodedQuery = encoder.buildQuery(q)
-
+        def alias = encoder.getAliasName(entity)
 
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property IN (:p1))"
+                "SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property IN (:p1))"
         encodedQuery.parameters == ['p1': 'test']
 
         where:
@@ -162,12 +162,12 @@ class JpaQueryBuilderSpec extends Specification {
 
         QueryBuilder encoder = new JpaQueryBuilder()
         QueryResult encodedQuery = encoder.buildQuery(q)
-
+        def alias = encoder.getAliasName(entity)
 
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE (($entity.decapitalizedName.$property >= :p1 AND $entity.decapitalizedName.$property <= :p2))"
+                "SELECT $alias FROM $entity.name AS $alias WHERE (($alias.$property >= :p1 AND $alias.$property <= :p2))"
         encodedQuery.parameters == ['p1': 'from', 'p2': 'to']
 
         where:
@@ -184,19 +184,19 @@ class JpaQueryBuilderSpec extends Specification {
 
         QueryBuilder encoder = new JpaQueryBuilder()
         QueryResult encodedQuery = encoder.buildQuery(q)
-
+        def alias = encoder.getAliasName(entity)
 
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT $entity.decapitalizedName FROM $entity.name AS $entity.decapitalizedName WHERE ($entity.decapitalizedName.$property $operator )"
+                "SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property $operator )"
         encodedQuery.parameters.isEmpty()
 
         where:
         type   | method       | property | operator
         Person | 'isNull'     | 'name'   | 'IS NULL'
         Person | 'isNotNull'  | 'name'   | 'IS NOT NULL'
-        Person | 'isEmpty'    | 'name'   | "IS NULL OR ${NameUtils.decapitalize(Person.simpleName)}.$property = \'\'"
-        Person | 'isNotEmpty' | 'name'   | "IS NOT NULL AND ${NameUtils.decapitalize(Person.simpleName)}.$property <> \'\'"
+        Person | 'isEmpty'    | 'name'   | "IS NULL OR person_.$property = \'\'"
+        Person | 'isNotEmpty' | 'name'   | "IS NOT NULL AND person_.$property <> \'\'"
     }
 }

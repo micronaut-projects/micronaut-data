@@ -130,4 +130,9 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     public String getPersistedName() {
         return owner.getNamingStrategy().mappedName(this);
     }
+
+    @Override
+    public String toString() {
+        return getOwner().getName() + "(" + getTypeName() + " " + getName() + ")";
+    }
 }

@@ -17,8 +17,9 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
-
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import spock.lang.Unroll
 
@@ -43,34 +44,38 @@ interface MyInterface {
         String query = method.synthesize(Query)value()
 
         expect: "The query is valid"
-        query == "SELECT person FROM $Person.name AS person WHERE " + expectedQuery
+        query == "SELECT $alias FROM $Person.name AS $alias WHERE " + expectedQuery
 
         where: "The criterion is"
-        property  | criterion           | signature        | expectedQuery
-        "enabled" | "True"              | [:]              | "(person.$property = TRUE )"
-        "enabled" | "False"             | [:]              | "(person.$property = FALSE )"
-        "name"    | "IsNull"            | [:]              | "(person.$property IS NULL )"
-        "name"    | "IsNotNull"         | [:]              | "(person.$property IS NOT NULL )"
-        "name"    | "IsEmpty"           | [:]              | "(person.name IS NULL OR person.name = '' )"
-        "name"    | "IsNotEmpty"        | [:]              | "(person.name IS NOT NULL AND person.name <> '' )"
-        "age"     | "NotEqual"          | ["age": Integer] | "(person.$property != :p1)"
-        "age"     | "GreaterThan"       | ["age": Integer] | "(person.$property > :p1)"
-        "age"     | "NotGreaterThan"    | ["age": Integer] | "( NOT(person.$property > :p1))"
-        "age"     | "After"             | ["age": Integer] | "(person.$property > :p1)"
-        "age"     | "GreaterThanEquals" | ["age": Integer] | "(person.$property >= :p1)"
-        "age"     | "LessThan"          | ["age": Integer] | "(person.$property < :p1)"
-        "age"     | "Before"            | ["age": Integer] | "(person.$property < :p1)"
-        "age"     | "LessThanEquals"    | ["age": Integer] | "(person.$property <= :p1)"
-        "name"    | "Like"              | ["name": String] | "(person.$property like :p1)"
-        "name"    | "Ilike"             | ["name": String] | "(lower(person.$property) like lower(:p1))"
-        "name"    | "In"                | ["name": String] | "(person.$property IN (:p1))"
-        "name"    | "NotIn"             | ["name": String] | "( NOT(person.$property IN (:p1)))"
-        "name"    | "InList"            | ["name": String] | "(person.$property IN (:p1))"
-        "name"    | "StartsWith"        | ["name": String] | "(person.$property LIKE CONCAT(:p1,'%'))"
-        "name"    | "EndsWith"          | ["name": String] | "(person.$property LIKE CONCAT('%',:p1))"
-        "name"    | "StartingWith"      | ["name": String] | "(person.$property LIKE CONCAT(:p1,'%'))"
-        "name"    | "EndingWith"        | ["name": String] | "(person.$property LIKE CONCAT('%',:p1))"
-        "name"    | "Contains"          | ["name": String] | "(person.$property LIKE CONCAT('%',:p1,'%'))"
-        "name"    | "Containing"        | ["name": String] | "(person.$property LIKE CONCAT('%',:p1,'%'))"
+        alias   |property  | criterion           | signature        | expectedQuery
+        alias() |"enabled" | "True"              | [:]              | "(${alias}.$property = TRUE )"
+        alias() |"enabled" | "False"             | [:]              | "(${alias}.$property = FALSE )"
+        alias() |"name"    | "IsNull"            | [:]              | "(${alias}.$property IS NULL )"
+        alias() |"name"    | "IsNotNull"         | [:]              | "(${alias}.$property IS NOT NULL )"
+        alias() |"name"    | "IsEmpty"           | [:]              | "(${alias}.name IS NULL OR ${alias}.name = '' )"
+        alias() |"name"    | "IsNotEmpty"        | [:]              | "(${alias}.name IS NOT NULL AND ${alias}.name <> '' )"
+        alias() |"age"     | "NotEqual"          | ["age": Integer] | "(${alias}.$property != :p1)"
+        alias() |"age"     | "GreaterThan"       | ["age": Integer] | "(${alias}.$property > :p1)"
+        alias() |"age"     | "NotGreaterThan"    | ["age": Integer] | "( NOT(${alias}.$property > :p1))"
+        alias() |"age"     | "After"             | ["age": Integer] | "(${alias}.$property > :p1)"
+        alias() |"age"     | "GreaterThanEquals" | ["age": Integer] | "(${alias}.$property >= :p1)"
+        alias() |"age"     | "LessThan"          | ["age": Integer] | "(${alias}.$property < :p1)"
+        alias() |"age"     | "Before"            | ["age": Integer] | "(${alias}.$property < :p1)"
+        alias() |"age"     | "LessThanEquals"    | ["age": Integer] | "(${alias}.$property <= :p1)"
+        alias() |"name"    | "Like"              | ["name": String] | "(${alias}.$property like :p1)"
+        alias() |"name"    | "Ilike"             | ["name": String] | "(lower(${alias}.$property) like lower(:p1))"
+        alias() |"name"    | "In"                | ["name": String] | "(${alias}.$property IN (:p1))"
+        alias() |"name"    | "NotIn"             | ["name": String] | "( NOT(${alias}.$property IN (:p1)))"
+        alias() |"name"    | "InList"            | ["name": String] | "(${alias}.$property IN (:p1))"
+        alias() |"name"    | "StartsWith"        | ["name": String] | "(${alias}.$property LIKE CONCAT(:p1,'%'))"
+        alias() |"name"    | "EndsWith"          | ["name": String] | "(${alias}.$property LIKE CONCAT('%',:p1))"
+        alias() |"name"    | "StartingWith"      | ["name": String] | "(${alias}.$property LIKE CONCAT(:p1,'%'))"
+        alias() |"name"    | "EndingWith"        | ["name": String] | "(${alias}.$property LIKE CONCAT('%',:p1))"
+        alias() |"name"    | "Contains"          | ["name": String] | "(${alias}.$property LIKE CONCAT('%',:p1,'%'))"
+        alias() |"name"    | "Containing"        | ["name": String] | "(${alias}.$property LIKE CONCAT('%',:p1,'%'))"
+    }
+
+    private String alias() {
+        new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
     }
 }

@@ -59,7 +59,7 @@ public interface DataReader<RS, IDX> {
      * @return The value
      * @throws DataAccessException if the value cannot be read
      */
-    <T> T getRequiredValue(RS resultSet, IDX name, Class<T> type)
+    @Nullable <T> T getRequiredValue(RS resultSet, IDX name, Class<T> type)
         throws DataAccessException;
 
     /**

@@ -31,7 +31,7 @@ class BookRepositorySpec extends Specification {
                 .orElse(null)
 
         expect:"The JPA-QL query to be correct" // <4>
-        query == "SELECT book FROM example.Book AS book WHERE (book.title = :p1)"
+        query == "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)"
     }
     // end::metadata[]
 

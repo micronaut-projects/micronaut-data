@@ -18,7 +18,9 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import spock.lang.Unroll
 
 class EqualsSpec extends AbstractPredatorMethodSpec {
@@ -36,12 +38,16 @@ class EqualsSpec extends AbstractPredatorMethodSpec {
         query == expectedQuery
 
         where:
-        method                 | returnType | arguments     | interceptor        | expectedQuery
-        "findByNameIgnoreCase" | "Person"   | "String name" | FindOneInterceptor | "SELECT person FROM $Person.name AS person WHERE (lower(person.name) = lower(:p1))"
-        "findByName"           | "Person"   | "String name" | FindOneInterceptor | "SELECT person FROM $Person.name AS person WHERE (person.name = :p1)"
-        "findByNameEqual"      | "Person"   | "String name" | FindOneInterceptor | "SELECT person FROM $Person.name AS person WHERE (person.name = :p1)"
-        "findByNameEquals"     | "Person"   | "String name" | FindOneInterceptor | "SELECT person FROM $Person.name AS person WHERE (person.name = :p1)"
-        "findByNameNotEquals"  | "Person"   | "String name" | FindOneInterceptor | "SELECT person FROM $Person.name AS person WHERE (person.name != :p1)"
-        "findByNameNotEqual"   | "Person"   | "String name" | FindOneInterceptor | "SELECT person FROM $Person.name AS person WHERE (person.name != :p1)"
+        alias   | method                 | returnType | arguments     | interceptor        | expectedQuery
+        alias() | "findByNameIgnoreCase" | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (lower(${alias}.name) = lower(:p1))"
+        alias() | "findByName"           | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
+        alias() | "findByNameEqual"      | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
+        alias() | "findByNameEquals"     | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
+        alias() | "findByNameNotEquals"  | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name != :p1)"
+        alias() | "findByNameNotEqual"   | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name != :p1)"
+    }
+
+    private String alias() {
+        new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
     }
 }

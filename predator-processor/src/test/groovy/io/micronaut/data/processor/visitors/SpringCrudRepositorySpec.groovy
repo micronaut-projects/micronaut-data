@@ -26,7 +26,9 @@ import io.micronaut.data.intercept.ExistsByInterceptor
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.SaveAllInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -54,6 +56,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
     int count(String name);
 }
 """)
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when:"the save method is retrieved"
         def saveMethod = beanDefinition.getRequiredMethod("save", Person.class)
@@ -131,7 +134,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteById.getReturnType().type == void .class
         deleteById.synthesize(PredatorMethod).rootEntity() == Person
         deleteById.synthesize(PredatorMethod).idType() == Long
-        deleteById.synthesize(Query).value() == "DELETE $Person.name person WHERE (person.id = :p1)"
+        deleteById.synthesize(Query).value() == "DELETE $Person.name ${alias} WHERE (${alias}.id = :p1)"
         deleteById.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
 
         when:"the deleteAll method is retrieved"

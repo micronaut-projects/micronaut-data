@@ -15,10 +15,7 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -28,6 +25,8 @@ import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.scheduling.TaskExecutors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -55,6 +54,8 @@ import java.util.stream.StreamSupport;
 @EachBean(DataSource.class)
 public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
+    private static final Logger QUERY_LOG = LoggerFactory.getLogger("io.micronaut.data.query");
+
     private final ExecutorAsyncOperations asyncOperations;
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
@@ -64,6 +65,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final PreparedStatementWriter preparedStatementWriter = new PreparedStatementWriter();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
+
     /**
      * Default constructor.
      * @param dataSource The data source
@@ -176,17 +178,43 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         return withWriteConnection((connection) -> {
             T entity = operation.getEntity();
             boolean generateId = insert.isGenerateId();
-            PreparedStatement stmt = connection.prepareStatement(insert.getSql(), generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+            String insertSql = insert.getSql();
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
+            }
+            PreparedStatement stmt = connection.prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
             for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
                 RuntimePersistentProperty<T> prop = entry.getKey();
                 DataType type = prop.getDataType();
                 Object value = prop.getProperty().get(entity);
-                preparedStatementWriter.setDynamic(
-                        stmt,
-                        entry.getValue(),
-                        type,
-                        value
-                );
+                int index = entry.getValue();
+                if (prop instanceof Association) {
+                    Association association = (Association) prop;
+                    if (!association.isForeignKey()) {
+                        if (value != null) {
+                            RuntimePersistentEntity<Object> associatedEntity = getPersistentEntity((Class<Object>) value.getClass());
+                            RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
+                            if (identity == null) {
+                                throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
+                            }
+                            value = identity.getProperty().get(value);
+                        }
+                        preparedStatementWriter.setDynamic(
+                                stmt,
+                                index,
+                                type,
+                                value
+                        );
+                    }
+
+                } else {
+                    preparedStatementWriter.setDynamic(
+                            stmt,
+                            index,
+                            type,
+                            value
+                    );
+                }
             }
             int i = stmt.executeUpdate();
             if (generateId) {
@@ -291,11 +319,31 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
         for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
             String persistedName = persistentProperty.getPersistedName();
-            Object v = columnNameResultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
-            wrapper.setProperty(
-                    persistentProperty.getName(),
-                    v
-            );
+            if (persistentProperty instanceof Association) {
+                Association association = (Association) persistentProperty;
+                if (!association.isForeignKey()) {
+                    RuntimePersistentEntity associatedEntity = getPersistentEntity(((RuntimePersistentProperty) association).getProperty().getType());
+                    Object referenced = associatedEntity.getIntrospection().instantiate();
+                    RuntimePersistentProperty identity = associatedEntity.getIdentity();
+                    if (identity != null) {
+                        Object v = columnNameResultSetReader.readDynamic(rs, persistedName, identity.getDataType());
+                        BeanWrapper.getWrapper(referenced).setProperty(
+                                identity.getName(),
+                                v
+                        );
+                    }
+                    wrapper.setProperty(
+                            persistentProperty.getName(),
+                            referenced
+                    );
+                }
+            } else {
+                Object v = columnNameResultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
+                wrapper.setProperty(
+                        persistentProperty.getName(),
+                        v
+                );
+            }
         }
         RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
         if (identity != null) {
@@ -311,16 +359,24 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
     private <T, R> PreparedStatement prepareStatement(Connection connection, @NonNull PreparedQuery<T, R> preparedQuery) throws SQLException {
         String query = preparedQuery.getQuery();
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Query: {}", query);
+        }
         PreparedStatement ps = connection.prepareStatement(query);
         Map<String, Object> parameterValues = preparedQuery.getParameterValues();
         for (Map.Entry<String, Object> entry : parameterValues.entrySet()) {
             // TODO: better parameter type handling
+            int index = Integer.valueOf(entry.getKey());
+            Object value = entry.getValue();
+            if (QUERY_LOG.isTraceEnabled()) {
+                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+            }
             DataType dataType = DataType.OBJECT;
             preparedStatementWriter.setDynamic(
                     ps,
-                    Integer.valueOf(entry.getKey()),
+                    index,
                     dataType,
-                    entry.getValue());
+                    value);
         }
         return ps;
     }
@@ -429,6 +485,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 @Override
                 public String getName() {
                     return operation.getName();
+                }
+
+                @Override
+                public AnnotationMetadata getAnnotationMetadata() {
+                    return operation.getAnnotationMetadata();
                 }
             });
             results.add(o);

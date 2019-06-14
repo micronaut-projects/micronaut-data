@@ -9,7 +9,11 @@ abstract class QuerySpec extends Specification {
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
 
+    void init() {
+    }
+
     def setupSpec() {
+        init()
         bookRepository.save(new Book(title: "Anonymous", pages: 400))
         // blank title
         bookRepository.save(new Book(title: "", pages: 0))
@@ -19,6 +23,7 @@ abstract class QuerySpec extends Specification {
 
     void "test is null or empty"() {
         expect:
+        bookRepository.count() == 8
         bookRepository.findByAuthorIsNull().size() == 2
         bookRepository.findByAuthorIsNotNull().size() == 6
         bookRepository.countByTitleIsEmpty() == 1

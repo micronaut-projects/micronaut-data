@@ -8,8 +8,10 @@ import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.naming.NamingStrategy
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.tck.entities.Book
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -37,6 +39,21 @@ class SqlQueryBuilderSpec extends Specification {
         result.parameters.equals(name:'1', age:'2', enabled:'3', id:'4')
     }
 
+    void "test encode query with join"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Book)
+        SqlQueryBuilder encoder = new SqlQueryBuilder()
+        def columns = encoder.selectAllColumns(entity, "book_")
+
+        def query = QueryModel.from(entity)
+            .eq("author.nickName", new QueryParameter("test"))
+
+        def result = encoder.buildQuery(query)
+
+        expect:
+        result.query == "SELECT $columns FROM book AS book_ INNER JOIN author book_author_id_ ON book_.author_id=book_author_id_.id WHERE (book_author_id_.nick_name = ?)"
+    }
+
     @Unroll
     void "test encode query #method - comparison methods"() {
         given:
@@ -44,7 +61,8 @@ class SqlQueryBuilderSpec extends Specification {
         QueryModel q = QueryModel.from(entity)
         q."$method"(property, QueryParameter.of('test'))
 
-        QueryBuilder encoder = new SqlQueryBuilder()
+        SqlQueryBuilder encoder = new SqlQueryBuilder()
+        def columns = encoder.selectAllColumns(entity, "person_")
         QueryResult encodedQuery = encoder.buildQuery(q)
         NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
         def mappedName = namingStrategy.mappedName(property)
@@ -53,7 +71,7 @@ class SqlQueryBuilderSpec extends Specification {
         encodedQuery != null
         mappedName == 'some_id'
         encodedQuery.query ==
-                "SELECT person.id,person.name,person.age,person.some_id,person.enabled FROM person AS person WHERE (person.${ mappedName} $operator ?)"
+                "SELECT $columns FROM person AS person_ WHERE (person_.${ mappedName} $operator ?)"
         encodedQuery.parameters == ['1': 'test']
 
         where:
@@ -65,5 +83,31 @@ class SqlQueryBuilderSpec extends Specification {
         Person | 'le'   | 'someId' | '<='
         Person | 'like' | 'someId' | 'like'
         Person | 'ne'   | 'someId' | '!='
+    }
+
+    @Unroll
+    void "test encode query #method - property projections"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(type)
+        QueryModel q = QueryModel.from(entity)
+        q."$method"(property, QueryParameter.of('test'))
+        q.projections()."$projection"(property)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        QueryResult encodedQuery = encoder.buildQuery(q)
+        def aliasName = encoder.getAliasName(entity)
+
+        expect:
+        encodedQuery != null
+        encodedQuery.query ==
+                "SELECT ${projection.toUpperCase()}($aliasName.$property) FROM person AS $aliasName WHERE ($aliasName.$property $operator ?)"
+        encodedQuery.parameters == ['1': 'test']
+
+        where:
+        type   | method | property | operator | projection
+        Person | 'eq'   | 'name'   | '='      | 'max'
+        Person | 'gt'   | 'name'   | '>'      | 'min'
+        Person | 'lt'   | 'name'   | '<'      | 'sum'
+        Person | 'ge'   | 'name'   | '>='     | 'avg'
+        Person | 'le'   | 'name'   | '<='     | 'distinct'
     }
 }

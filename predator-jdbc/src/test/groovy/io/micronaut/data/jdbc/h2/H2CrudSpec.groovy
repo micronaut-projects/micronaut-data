@@ -1,8 +1,8 @@
 package io.micronaut.data.jdbc.h2
 
+
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.jdbc.Book
-import io.micronaut.data.jdbc.BookRepository
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -22,15 +22,9 @@ class H2CrudSpec extends Specification {
     @Shared
     DataSource dataSource
 
+
     void setupSpec() {
-        def conn = dataSource.getConnection()
-        try {
-            conn.prepareStatement('''
-create table book (id bigint auto_increment, pages integer not null, title varchar(255), primary key (id))
-''').execute()
-        } finally {
-            conn.close()
-        }
+        H2Util.createTables(dataSource, Book)
     }
 
 

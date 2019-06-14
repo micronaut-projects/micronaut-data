@@ -131,6 +131,9 @@ public interface DataWriter<PS, IDX> {
      * @throws DataAccessException if the value cannot be converted
      */
     default <T> T convertRequired(Object value, Class<T> type) {
+        if (value == null) {
+            return null;
+        }
         return ConversionService.SHARED.convert(
                 value,
                 type

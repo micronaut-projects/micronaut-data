@@ -25,18 +25,22 @@ import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.SaveEntityInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import spock.lang.Shared
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
 
 class RepositoryTypeElementVisitorSpec extends AbstractTypeElementSpec {
+    @Shared String personAlias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
     @Unroll
     void "test JPA find one by dynamic finder #method"() {
@@ -67,9 +71,9 @@ interface MyInterface {
 
         where:
         returnType | method                  | arguments        | query                                                                     | interceptor
-        Person     | 'findByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindOneInterceptor.class
-        Person     | 'getByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindOneInterceptor.class
-        Person     | 'retrieveByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindOneInterceptor.class
+        Person     | 'findByName'            | [name: String]   | "SELECT ${personAlias} FROM $returnType.name AS ${personAlias} WHERE (${personAlias}.name = :p1)" | FindOneInterceptor.class
+        Person     | 'getByAgeGreaterThan'   | [age: int.class] | "SELECT ${personAlias} FROM $returnType.name AS ${personAlias} WHERE (${personAlias}.age > :p1)"  | FindOneInterceptor.class
+        Person     | 'retrieveByAgeLessThan' | [age: int.class] | "SELECT ${personAlias} FROM $returnType.name AS ${personAlias} WHERE (${personAlias}.age < :p1)"  | FindOneInterceptor.class
         Person     | 'savePerson'            | [person: Person] | null                                                                      | SaveEntityInterceptor.class
     }
 
@@ -106,9 +110,9 @@ interface MyInterface {
 
         where:
         returnType | method                     | arguments        | query                                                                              | interceptor
-        Person     | 'findAllByName'            | [name: String]   | "SELECT person FROM $returnType.name AS person WHERE (person.name = :p1)" | FindAllInterceptor.class
-        Person     | 'getAllByAgeGreaterThan'   | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age > :p1)"  | FindAllInterceptor.class
-        Person     | 'retrieveAllByAgeLessThan' | [age: int.class] | "SELECT person FROM $returnType.name AS person WHERE (person.age < :p1)"  | FindAllInterceptor.class
+        Person     | 'findAllByName'            | [name: String]   | "SELECT ${personAlias} FROM $returnType.name AS ${personAlias} WHERE (${personAlias}.name = :p1)" | FindAllInterceptor.class
+        Person     | 'getAllByAgeGreaterThan'   | [age: int.class] | "SELECT ${personAlias} FROM $returnType.name AS ${personAlias} WHERE (${personAlias}.age > :p1)"  | FindAllInterceptor.class
+        Person     | 'retrieveAllByAgeLessThan' | [age: int.class] | "SELECT ${personAlias} FROM $returnType.name AS ${personAlias} WHERE (${personAlias}.age < :p1)"  | FindAllInterceptor.class
     }
 
     boolean validateParameterBinding(String query, ExecutableMethod method, Map<String, Class<? extends Object>> argumentTypes) {

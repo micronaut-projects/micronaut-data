@@ -17,10 +17,12 @@ package io.micronaut.data.processor.visitors;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.*;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
-import io.micronaut.core.reflect.InstantiationUtils;
+import io.micronaut.core.reflect.exception.InstantiationException;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
@@ -62,10 +64,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     public static final String SPRING_REPO = "org.springframework.data.repository.Repository";
 
     private ClassElement currentClass;
+    private ClassElement currentRepository;
     private QueryBuilder queryEncoder;
     private Map<String, String> typeRoles = new HashMap<>();
     private List<MethodCandidate> finders;
     private boolean failing = false;
+    private Set<String> visitedRepositories = new HashSet<>();
 
     /**
      * Default constructor.
@@ -86,47 +90,59 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
+        String interfaceName = element.getName();
         if (failing) {
+            return;
+        }
+        if (visitedRepositories.contains(interfaceName)) {
+            // prevent duplicate visits
+            currentRepository = null;
+            currentClass = null;
             return;
         }
         this.currentClass = element;
 
-        queryEncoder = resolveQueryEncoder(element, context);
-        AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
-        AnnotationValue[] roleArray = annotationMetadata
-                .getValue(Repository.class, "typeRoles", AnnotationValue[].class).orElse(new AnnotationValue[0]);
-        for (AnnotationValue<?> parameterRole : roleArray) {
-            String role = parameterRole.stringValue("role").orElse(null);
-            AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
-            if (StringUtils.isNotEmpty(role) && cv != null) {
-                context.getClassElement(cv.getName()).ifPresent(ce ->
-                        typeRoles.put(ce.getName(), role)
+        if (element.hasDeclaredStereotype(Repository.class)) {
+            visitedRepositories.add(interfaceName);
+            currentRepository = element;
+            queryEncoder = resolveQueryEncoder(element);
+            AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
+            AnnotationValue[] roleArray = annotationMetadata
+                    .getValue(Repository.class, "typeRoles", AnnotationValue[].class).orElse(new AnnotationValue[0]);
+            for (AnnotationValue<?> parameterRole : roleArray) {
+                String role = parameterRole.stringValue("role").orElse(null);
+                AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
+                if (StringUtils.isNotEmpty(role) && cv != null) {
+                    context.getClassElement(cv.getName()).ifPresent(ce ->
+                            typeRoles.put(ce.getName(), role)
+                    );
+                }
+            }
+            if (element.isAssignable(SPRING_REPO)) {
+                context.getClassElement("org.springframework.data.domain.Pageable").ifPresent(ce ->
+                        typeRoles.put(ce.getName(), TypeRole.PAGEABLE)
+                );
+                context.getClassElement("org.springframework.data.domain.Page").ifPresent(ce ->
+                        typeRoles.put(ce.getName(), TypeRole.PAGE)
+                );
+                context.getClassElement("org.springframework.data.domain.Slice").ifPresent(ce ->
+                        typeRoles.put(ce.getName(), TypeRole.SLICE)
+                );
+                context.getClassElement("org.springframework.data.domain.Sort").ifPresent(ce ->
+                        typeRoles.put(ce.getName(), TypeRole.SORT)
                 );
             }
+            if (queryEncoder == null) {
+                context.fail("QueryEncoder not present on annotation processor path", element);
+                failing = true;
+            }
         }
-        if (element.isAssignable(SPRING_REPO)) {
-            context.getClassElement("org.springframework.data.domain.Pageable").ifPresent(ce ->
-                typeRoles.put(ce.getName(), TypeRole.PAGEABLE)
-            );
-            context.getClassElement("org.springframework.data.domain.Page").ifPresent(ce ->
-                    typeRoles.put(ce.getName(), TypeRole.PAGE)
-            );
-            context.getClassElement("org.springframework.data.domain.Slice").ifPresent(ce ->
-                    typeRoles.put(ce.getName(), TypeRole.SLICE)
-            );
-            context.getClassElement("org.springframework.data.domain.Sort").ifPresent(ce ->
-                    typeRoles.put(ce.getName(), TypeRole.SORT)
-            );
-        }
-        if (queryEncoder == null) {
-            context.fail("QueryEncoder not present on annotation processor path", element);
-            failing = true;
-        }
+
     }
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (currentClass == null || failing) {
+        if (currentRepository == null || failing) {
             return;
         }
 
@@ -151,7 +167,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
 
             MatchContext matchContext = new MatchContext(
-                    currentClass,
+                    currentRepository,
                     context,
                     element,
                     typeRoles,
@@ -172,7 +188,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
 
                     MethodMatchContext methodMatchContext = new MethodMatchContext(
-                            currentClass,
+                            currentRepository,
                             entity,
                             context,
                             genericReturnType,
@@ -280,9 +296,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                 if (runtimeInterceptor.getSimpleName().startsWith("Save")) {
                                     try {
-                                        QueryResult queryResult = queryEncoder.buildInsert(currentClass.getAnnotationMetadata(), entity);
+                                        QueryResult queryResult = queryEncoder.buildInsert(currentRepository.getAnnotationMetadata(), entity);
                                         if (queryResult != null) {
-
                                             AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(queryResult.getParameters());
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_BINDING, annotationValues);
@@ -349,7 +364,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             });
                             return;
                         } else {
-                            methodMatchContext.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.");
+                            methodMatchContext.fail("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible runtime implementations found.");
                             this.failing = true;
                             return;
                         }
@@ -361,7 +376,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
 
             this.failing = true;
-            context.fail("Unable to implement Repository method: " + currentClass.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
+            context.fail("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
         }
     }
 
@@ -414,10 +429,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private @Nullable String resolveIdType(PersistentEntity entity) {
-        Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(GenericRepository.class);
+        Map<String, ClassElement> typeArguments = currentRepository.getTypeArguments(GenericRepository.class);
         String varName = "ID";
         if (typeArguments.isEmpty()) {
-            typeArguments = currentClass.getTypeArguments(SPRING_REPO);
+            typeArguments = currentRepository.getTypeArguments(SPRING_REPO);
         }
         if (!typeArguments.isEmpty()) {
             ClassElement ce = typeArguments.get(varName);
@@ -458,11 +473,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private SourcePersistentEntity resolveEntityForCurrentClass() {
         SourcePersistentEntity entity = null;
-        Map<String, ClassElement> typeArguments = currentClass.getTypeArguments(GenericRepository.class);
+        Map<String, ClassElement> typeArguments = currentRepository.getTypeArguments(GenericRepository.class);
         String argName = "E";
         if (typeArguments.isEmpty()) {
             argName = "T";
-            typeArguments = currentClass.getTypeArguments(SPRING_REPO);
+            typeArguments = currentRepository.getTypeArguments(SPRING_REPO);
         }
         if (!typeArguments.isEmpty()) {
             ClassElement ce = typeArguments.get(argName);
@@ -490,19 +505,25 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         return null;
     }
 
-    private QueryBuilder resolveQueryEncoder(Element element, VisitorContext context) {
+    private QueryBuilder resolveQueryEncoder(Element element) {
         return element.getValue(
                 Repository.class,
                 PredatorMethod.META_MEMBER_QUERY_BUILDER,
                 String.class
-        ).flatMap(type -> {
-            Object o = InstantiationUtils.tryInstantiate(type, RepositoryTypeElementVisitor.class.getClassLoader()).orElse(null);
-            if (o instanceof QueryBuilder) {
-                return Optional.of((QueryBuilder) o);
-            } else {
-                context.fail("QueryEncoder of type [" + type + "] not present on annotation processor path", element);
-                return Optional.empty();
-            }
-        }).orElse(new JpaQueryBuilder());
+        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.getBeanType().getName().equals(type))
+                               .stream().findFirst()
+                               .map(introspection -> {
+                                   try {
+                                       Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+                                       if (constructorArguments.length == 0) {
+                                           return (QueryBuilder) introspection.instantiate();
+                                       } else if (constructorArguments.length == 1 && constructorArguments[0].getType() == AnnotationMetadata.class) {
+                                           return (QueryBuilder) introspection.instantiate(element.getAnnotationMetadata());
+                                       }
+                                   } catch (InstantiationException e) {
+                                       return new JpaQueryBuilder();
+                                   }
+                                   return new JpaQueryBuilder();
+                               })).orElse(new JpaQueryBuilder());
     }
 }

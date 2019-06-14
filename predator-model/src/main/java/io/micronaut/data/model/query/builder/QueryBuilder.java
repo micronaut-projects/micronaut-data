@@ -17,6 +17,7 @@ package io.micronaut.data.model.query.builder;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
@@ -30,6 +31,7 @@ import java.util.List;
  * @author graemerocher
  * @since 1.0
  */
+@Introspected
 public interface QueryBuilder {
 
     /**

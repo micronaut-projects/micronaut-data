@@ -22,8 +22,10 @@ import io.micronaut.data.annotation.TypeRole
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Company
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -54,6 +56,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     void updateByName(String nameToUpdate, String name);
 }
 """)
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
@@ -65,7 +68,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         then: "It was correctly compiled"
         updateAnn.interceptor() == UpdateInterceptor
-        updateQuery.value() == "UPDATE $Person.name person SET person.name=:p1 WHERE (person.id = :p2)"
+        updateQuery.value() == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.id = :p2)"
         updateAnn.id() == 'myId'
         updateAnn.parameterBinding()[0].name() =='p1'
         updateAnn.parameterBinding()[0].value() =='name'
@@ -73,7 +76,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         updateAnn.parameterBinding()[1].value() =='myId'
 
         updateByAnn.interceptor() == UpdateInterceptor
-        updateByQuery.value() == "UPDATE $Person.name person SET person.name=:p1 WHERE (person.name = :p2)"
+        updateByQuery.value() == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.name = :p2)"
         updateByAnn.parameterBinding()[0].name() =='p1'
         updateByAnn.parameterBinding()[0].value() =='name'
         updateByAnn.parameterBinding()[1].name() =='p2'
@@ -103,6 +106,8 @@ interface MyInterface extends GenericRepository<Company, Long> {
 }
 """)
 
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Company))
+
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
         def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
@@ -114,7 +119,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
         then: "It was correctly compiled"
         updateByMethod.getValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
         updateAnn.interceptor() == UpdateInterceptor
-        updateQuery.value() == "UPDATE $Company.name company SET company.name=:p1, company.lastUpdated=:p2 WHERE (company.myId = :p3)"
+        updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1, ${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
         updateAnn.id() == 'myId'
         updateAnn.parameterBinding()[0].name() =='p1'
         updateAnn.parameterBinding()[0].value() =='name'
@@ -122,7 +127,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
         updateAnn.parameterBinding()[1].value() =='lastUpdated'
 
         updateByAnn.interceptor() == UpdateInterceptor
-        updateByQuery.value() == "UPDATE $Company.name company SET company.name=:p1, company.lastUpdated=:p2 WHERE (company.name = :p3)"
+        updateByQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1, ${alias}.lastUpdated=:p2 WHERE (${alias}.name = :p3)"
         updateByAnn.parameterBinding()[0].name() =='p1'
         updateByAnn.parameterBinding()[0].value() =='name'
         updateByAnn.parameterBinding()[1].name() =='p2'

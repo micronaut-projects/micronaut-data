@@ -34,7 +34,7 @@ class BookRepositorySpec {
 
 
         assertEquals( // <4>
-                "SELECT book FROM example.Book AS book WHERE (book.title = :p1)",
+                "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)",
                 query
         )
 

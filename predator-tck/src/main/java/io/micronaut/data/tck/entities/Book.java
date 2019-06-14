@@ -28,6 +28,9 @@ public class Book {
     @ManyToOne(fetch = FetchType.LAZY)
     private Author author;
 
+    @ManyToOne(optional = true)
+    private Publisher publisher;
+
     public Author getAuthor() {
         return author;
     }
@@ -59,4 +62,13 @@ public class Book {
     public void setPages(int pages) {
         this.pages = pages;
     }
+
+    public Publisher getPublisher() {
+        return publisher;
+    }
+
+    public void setPublisher(Publisher publisher) {
+        this.publisher = publisher;
+    }
+
 }

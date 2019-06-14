@@ -23,11 +23,14 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import spock.lang.Shared
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
@@ -35,6 +38,7 @@ import javax.persistence.Entity
 
 class JpaProjectionsSpec extends AbstractTypeElementSpec {
 
+    @Shared String alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
     @Unroll
     void "test JPA single result projection finder for method #method"() {
@@ -55,10 +59,10 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
         executableMethod.getValue(Query, String).orElse(null) == query
 
         where:
-        rootEntity | returnType | method                   | arguments      | query                                                                                    | interceptor
-        Person     | Person     | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(person) FROM $rootEntity.name AS person WHERE (person.name = :p1)"      | FindOneInterceptor
-        Person     | int.class  | 'findAgeByName'          | [name: String] | "SELECT person.age FROM $rootEntity.name AS person WHERE (person.name = :p1)"            | FindOneInterceptor
-        Person     | String     | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(person.name) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindOneInterceptor.class
+        rootEntity | returnType | method                   | arguments      | query                                                                                          | interceptor
+        Person     | Person     | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(${alias}) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"      | FindOneInterceptor
+        Person     | int.class  | 'findAgeByName'          | [name: String] | "SELECT ${alias}.age FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"            | FindOneInterceptor
+        Person     | String     | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(${alias}.name) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindOneInterceptor.class
     }
 
     @Unroll
@@ -80,10 +84,14 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
         executableMethod.getValue(Query, String).orElse(null) == query
 
         where:
-        rootEntity | resultType    | method                   | arguments      | query                                                                                    | interceptor
-        Person     | Person        | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(person) FROM $rootEntity.name AS person WHERE (person.name = :p1)"      | FindAllInterceptor
-        Person     | Integer.class | 'findAgeByName'          | [name: String] | "SELECT person.age FROM $rootEntity.name AS person WHERE (person.name = :p1)"            | FindAllInterceptor
-        Person     | String        | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(person.name) FROM $rootEntity.name AS person WHERE (person.name = :p1)" | FindAllInterceptor.class
+        rootEntity | resultType    | method                   | arguments      | query                                                                                          | interceptor
+        Person     | Person        | 'findDistinctByName'     | [name: String] | "SELECT DISTINCT(${alias}) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"      | FindAllInterceptor
+        Person     | Integer.class | 'findAgeByName'          | [name: String] | "SELECT ${alias}.age FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)"            | FindAllInterceptor
+        Person     | String        | 'findDistinctNameByName' | [name: String] | "SELECT DISTINCT(${alias}.name) FROM $rootEntity.name AS ${alias} WHERE (${alias}.name = :p1)" | FindAllInterceptor.class
+    }
+
+    private String alias() {
+        new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
     }
 
     @Unroll

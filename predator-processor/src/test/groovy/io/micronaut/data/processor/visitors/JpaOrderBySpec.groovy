@@ -21,7 +21,9 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -39,7 +41,7 @@ class JpaOrderBySpec extends AbstractTypeElementSpec {
 package test;
 
 import io.micronaut.data.model.entities.Person;
-import io.micronaut.data.model.entities.Book;
+import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Query;
@@ -60,6 +62,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     List<Book> findTop3OrderByTitle();
 }
 """)
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
 
         when: "the query method is retrieved"
         def findOne = beanDefinition.getRequiredMethod("queryByNameOrderByName", String.class)
@@ -68,12 +71,12 @@ interface MyInterface extends GenericRepository<Person, Long> {
         def listTop3 = beanDefinition.getRequiredMethod("listTop3OrderByName")
 
         then: "It was correctly compiled"
-        findOne.synthesize(Query).value() == "SELECT person FROM $Person.name AS person WHERE (person.name = :p1) ORDER BY person.name ASC"
-        list.synthesize(Query).value() == "SELECT person FROM $Person.name AS person ORDER BY person.name ASC"
+        findOne.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} WHERE (${alias}.name = :p1) ORDER BY ${alias}.name ASC"
+        list.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
         list.synthesize(PredatorMethod).resultType() == Person
-        listName.synthesize(Query).value() == "SELECT person.name FROM $Person.name AS person ORDER BY person.name ASC"
+        listName.synthesize(Query).value() == "SELECT ${alias}.name FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
         listName.synthesize(PredatorMethod).resultType() == String
-        listTop3.synthesize(Query).value() == "SELECT person FROM $Person.name AS person ORDER BY person.name ASC"
+        listTop3.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
         listTop3.synthesize(PredatorMethod).pageSize() == 3
     }
 

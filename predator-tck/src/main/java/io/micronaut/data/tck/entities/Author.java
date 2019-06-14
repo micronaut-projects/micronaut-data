@@ -27,7 +27,8 @@ public class Author {
     private Long id;
 
     private String name;
-
+    @Column(nullable = true)
+    private String nickName;
 
     @OneToMany(cascade = CascadeType.ALL)
     private Set<Book> books = new HashSet<>();
@@ -54,5 +55,13 @@ public class Author {
 
     public void setBooks(Set<Book> books) {
         this.books = books;
+    }
+
+    public String getNickName() {
+        return nickName;
+    }
+
+    public void setNickName(String nickName) {
+        this.nickName = nickName;
     }
 }

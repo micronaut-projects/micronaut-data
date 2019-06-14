@@ -131,6 +131,9 @@ public final class ColumnNameResultSetReader implements DataReader<ResultSet, St
     public <T> T getRequiredValue(ResultSet resultSet, String name, Class<T> type) throws DataAccessException {
         try {
             Object o = resultSet.getObject(name);
+            if (o == null) {
+                return null;
+            }
             return ConversionService.SHARED.convert(o, type)
                     .orElseThrow(() -> new DataAccessException("Cannot convert type [" + o.getClass() + "] to target type: " + type + ". Considering defining a TypeConverter bean to handle this case."));
         } catch (SQLException e) {

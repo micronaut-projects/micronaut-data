@@ -17,6 +17,7 @@ package io.micronaut.data.processor.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
@@ -124,9 +125,19 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     @NonNull
     @Override
     public List<PersistentProperty> getPersistentProperties() {
-        return beanProperties.values().stream().map(propertyElement ->
-                new SourcePersistentProperty(this, propertyElement)
-        )
+        return beanProperties.values().stream().map(propertyElement -> {
+            Optional<AnnotationValue<Relation>> relation = propertyElement.findAnnotation(Relation.class);
+            if (relation.isPresent()) {
+                Relation.Kind kind = relation.flatMap(av -> av.enumValue(Relation.Kind.class)).orElse(null);
+                if (kind == Relation.Kind.EMBEDDED) {
+                    return new SourceEmbedded(this, propertyElement);
+                } else {
+                    return new SourceAssociation(this, propertyElement);
+                }
+            } else {
+                return new SourcePersistentProperty(this, propertyElement);
+            }
+        })
         .collect(Collectors.toList());
     }
 

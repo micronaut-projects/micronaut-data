@@ -16,7 +16,9 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.model.entities.Book
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.tck.entities.Book
 
 
 class JpaJoinSpec extends AbstractPredatorSpec {
@@ -25,7 +27,7 @@ class JpaJoinSpec extends AbstractPredatorSpec {
     void "test join spec - list"() {
         given:
         def repository = buildRepository("test.MyInterface", '''
-import io.micronaut.data.model.entities.Book;
+import io.micronaut.data.tck.entities.Book;
 
 @Repository
 interface MyInterface extends GenericRepository<Book, Long> {
@@ -44,18 +46,24 @@ interface MyInterface extends GenericRepository<Book, Long> {
     Book getByTitle(String title);
 }
 ''')
+        def builder = new JpaQueryBuilder()
+        def entity = PersistentEntity.of(Book)
+        def alias = builder.getAliasName(entity)
+        def authorAlias = builder.getAliasName(entity.getPropertyByName("author"))
+        def publisherAlias = builder.getAliasName(entity.getPropertyByName("publisher"))
+
         expect:
         repository.getRequiredMethod("list").synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author"
+                "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.author $authorAlias"
 
         repository.getRequiredMethod("find", String).synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author WHERE (book.title = :p1)"
+                "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.author $authorAlias WHERE (${alias}.title = :p1)"
 
         repository.getRequiredMethod("findByTitle", String).synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author WHERE (book.title = :p1)"
+                "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.author $authorAlias WHERE (${alias}.title = :p1)"
 
         repository.getRequiredMethod("getByTitle", String).synthesize(Query).value() ==
-                "SELECT book FROM $Book.name AS book JOIN FETCH book.author author JOIN FETCH book.publisher publisher WHERE (book.title = :p1)"
+                "SELECT ${alias} FROM $Book.name AS ${alias} JOIN FETCH ${alias}.author $authorAlias JOIN FETCH ${alias}.publisher $publisherAlias WHERE (${alias}.title = :p1)"
 
     }
 }

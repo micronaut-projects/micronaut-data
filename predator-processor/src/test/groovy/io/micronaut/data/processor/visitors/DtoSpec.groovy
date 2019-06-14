@@ -18,7 +18,9 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 
@@ -90,13 +92,15 @@ class PersonDto {
     
 }
 """)
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+
         then:
         repository != null
         def method = repository.getRequiredMethod("list", String)
         def ann = method.synthesize(PredatorMethod)
         ann.resultType().name.contains("PersonDto")
         ann.rootEntity() == Person
-        method.synthesize(Query).value() == "SELECT person.name AS name FROM $Person.name AS person WHERE (person.name = :p1)"
+        method.synthesize(Query).value() == "SELECT ${alias}.name AS name FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
         method.isTrue(PredatorMethod, PredatorMethod.META_MEMBER_DTO)
 
         and:

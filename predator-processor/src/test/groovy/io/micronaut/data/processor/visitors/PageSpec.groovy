@@ -23,6 +23,9 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindPageInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -47,6 +50,8 @@ interface MyInterface extends GenericRepository<Person, Long> {
 }
 """)
 
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+
         when: "the list method is retrieved"
         def listMethod = beanDefinition.getRequiredMethod("list", Pageable)
         def listAnn = listMethod.synthesize(PredatorMethod)
@@ -57,7 +62,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         then:"it is configured correctly"
         listAnn.interceptor() == FindPageInterceptor
         findAnn.interceptor() == FindPageInterceptor
-        findMethod.getValue(Query.class, "countQuery", String).get() == 'SELECT COUNT(person) FROM io.micronaut.data.model.entities.Person AS person WHERE (person.name = :p1)'
+        findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT($alias) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
         findMethod.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
                   .get()[0]
 

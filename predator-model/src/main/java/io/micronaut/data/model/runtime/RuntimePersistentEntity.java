@@ -99,7 +99,17 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return introspection.getBeanProperties()
                 .stream()
                 .filter((bp) -> bp.isReadWrite() && !(bp.hasStereotype(Id.class, Version.class)))
-                .map(bp -> new RuntimePersistentProperty<>(this, bp))
+                .map(bp -> {
+                    if (bp.hasAnnotation(Relation.class)) {
+                        if (isEmbedded(bp)) {
+                            return new RuntimeEmbedded<>(this, bp);
+                        } else {
+                            return new RuntimeAssociation<>(this, bp);
+                        }
+                    } else {
+                        return new RuntimePersistentProperty<>(this, bp);
+                    }
+                })
                 .collect(Collectors.toList());
     }
 
@@ -108,7 +118,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     public List<Association> getAssociations() {
         return introspection.getBeanProperties().stream()
                 .filter(bp -> bp.hasStereotype(Relation.class))
-                .map(propertyElement -> new RuntimeAssociation(this, propertyElement))
+                .map(propertyElement -> new RuntimeAssociation<>(this, propertyElement))
                 .collect(Collectors.toList());
     }
 
