@@ -138,6 +138,11 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected boolean isAliasForBatch() {
+        return true;
+    }
+
+    @Override
     protected Placeholder formatParameter(int index) {
         String n = "p" + index;
         return new Placeholder(":" + n, n);
@@ -174,6 +179,12 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         // JPA doesn't require an insert statement
         return null;
+    }
+
+    @NonNull
+    @Override
+    protected StringBuilder appendDeleteClause(StringBuilder queryString) {
+        return queryString.append(DELETE_CLAUSE);
     }
 
     @NonNull

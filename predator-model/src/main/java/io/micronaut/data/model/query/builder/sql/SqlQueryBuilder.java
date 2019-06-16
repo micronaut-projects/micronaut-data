@@ -126,6 +126,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (prop.isGenerated()) {
                 // TODO: handle dialects
                 column += " AUTO_INCREMENT";
+                if (prop == identity) {
+                    column += " PRIMARY KEY";
+                }
             }
             columns.add(column);
         }
@@ -373,6 +376,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     protected final boolean isApplyManualJoins() {
         return true;
+    }
+
+    @Override
+    protected boolean isAliasForBatch() {
+        return false;
     }
 
     @Override

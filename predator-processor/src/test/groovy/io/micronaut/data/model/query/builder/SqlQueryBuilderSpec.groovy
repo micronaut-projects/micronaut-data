@@ -19,6 +19,20 @@ import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
 
+    void "test encode delete"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(io.micronaut.data.tck.entities.Person)
+        QueryModel q = QueryModel.from(entity)
+        q.idEq(new QueryParameter("test"))
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        QueryResult encodedQuery = encoder.buildDelete(q)
+
+
+        expect:
+        encodedQuery != null
+        encodedQuery.query == "DELETE  FROM person  WHERE (id = ?)"
+
+    }
 
     @Unroll
     void "test encode order by #statement"() {

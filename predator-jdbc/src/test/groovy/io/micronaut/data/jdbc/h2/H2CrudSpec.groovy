@@ -3,7 +3,6 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractCrudSpec
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -17,14 +16,14 @@ class H2CrudSpec extends AbstractCrudSpec {
 
     @Inject
     @Shared
-    PersonRepository personRepository
+    H2PersonRepository personRepository
 
     @Inject
     @Shared
     DataSource dataSource
 
     @Override
-    PersonRepository getCrudRepository() {
+    H2PersonRepository getCrudRepository() {
         return personRepository
     }
 

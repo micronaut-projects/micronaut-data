@@ -137,7 +137,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         deleteById.getReturnType().type == void .class
         deleteById.synthesize(PredatorMethod).rootEntity() == Person
         deleteById.synthesize(PredatorMethod).idType() == Long
-        deleteById.synthesize(Query).value() == "DELETE $Person.name ${alias} WHERE (${alias}.id = :p1)"
+        deleteById.synthesize(Query).value() == "DELETE $Person.name  AS ${alias} WHERE (${alias}.id = :p1)"
         deleteById.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
 
         when:"the deleteAll method is retrieved"

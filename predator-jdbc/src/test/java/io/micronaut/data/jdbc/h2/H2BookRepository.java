@@ -8,8 +8,8 @@ import io.micronaut.data.tck.repositories.AuthorRepository;
 import java.util.Arrays;
 
 @JdbcRepository(dialect = Dialect.H2)
-public abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
-    public BookRepository(AuthorRepository authorRepository) {
+public abstract class H2BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
+    public H2BookRepository(AuthorRepository authorRepository) {
         super(authorRepository);
     }
 

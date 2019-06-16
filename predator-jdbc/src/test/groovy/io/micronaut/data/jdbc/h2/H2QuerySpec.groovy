@@ -16,10 +16,10 @@ import javax.sql.DataSource
 class H2QuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
-    BookRepository br
+    H2BookRepository br
     @Shared
     @Inject
-    AuthorRepository ar
+    H2AuthorRepository ar
 
     @Inject
     @Shared
@@ -31,12 +31,12 @@ class H2QuerySpec extends AbstractQuerySpec {
     }
 
     @Override
-    BookRepository getBookRepository() {
+    H2BookRepository getBookRepository() {
         return br
     }
 
     @Override
-    AuthorRepository getAuthorRepository() {
+    H2AuthorRepository getAuthorRepository() {
         return ar
     }
 }

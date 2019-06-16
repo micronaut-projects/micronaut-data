@@ -119,7 +119,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
         then: "It was correctly compiled"
         updateByMethod.getValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
         updateAnn.interceptor() == UpdateInterceptor
-        updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1, ${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
+        updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
         updateAnn.id() == 'myId'
         updateAnn.parameterBinding()[0].name() =='p1'
         updateAnn.parameterBinding()[0].value() =='name'
@@ -127,7 +127,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
         updateAnn.parameterBinding()[1].value() =='lastUpdated'
 
         updateByAnn.interceptor() == UpdateInterceptor
-        updateByQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1, ${alias}.lastUpdated=:p2 WHERE (${alias}.name = :p3)"
+        updateByQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.name = :p3)"
         updateByAnn.parameterBinding()[0].name() =='p1'
         updateByAnn.parameterBinding()[0].value() =='name'
         updateByAnn.parameterBinding()[1].name() =='p2'

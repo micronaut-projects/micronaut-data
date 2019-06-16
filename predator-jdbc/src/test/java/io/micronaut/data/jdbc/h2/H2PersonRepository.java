@@ -4,5 +4,5 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect = Dialect.H2)
-public interface PersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+public interface H2PersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
 }
