@@ -15,10 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.core.annotation.AnnotationMetadataProvider;
-import io.micronaut.core.naming.Named;
-
 /**
  * A batch operation is an operation performed on one or more entities of the same type.
  *
@@ -26,14 +22,7 @@ import io.micronaut.core.naming.Named;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface BatchOperation<E> extends Named, AnnotationMetadataProvider, Iterable<E> {
-    /**
-     * The root entity type.
-     *
-     * @return The root entity type
-     */
-    @NonNull
-    Class<E> getRootEntity();
+public interface BatchOperation<E> extends EntityOperation<E>, Iterable<E> {
 
     /**
      * @return Whether the operation applies to all and not use the iterable values.

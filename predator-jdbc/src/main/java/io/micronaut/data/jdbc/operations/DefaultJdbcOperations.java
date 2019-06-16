@@ -205,24 +205,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
-        @SuppressWarnings("unchecked") StoredInsert<T> insert = storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
-            AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            String insert1 = annotationMetadata.stringValue(
-                    PredatorMethod.class,
-                    PredatorMethod.META_MEMBER_INSERT_STMT
-            ).orElse(null);
-            if (insert1 == null) {
-                throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository");
-            }
-
-            T entity = operation.getEntity();
-            @SuppressWarnings("unchecked") Class<T> type = (Class<T>) entity.getClass();
-            RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(type);
-            Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
-            return new StoredInsert(insert1, persistentEntity, parameterBinding);
-        });
-
-
+        @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
         return withWriteConnection((connection) -> {
             T entity = operation.getEntity();
             boolean generateId = insert.isGenerateId();
@@ -230,47 +213,9 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
             }
-            PreparedStatement stmt = connection.prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-            for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
-                RuntimePersistentProperty<T> prop = entry.getKey();
-                DataType type = prop.getDataType();
-                Object value = prop.getProperty().get(entity);
-                int index = entry.getValue();
-                if (prop instanceof Association) {
-                    Association association = (Association) prop;
-                    if (!association.isForeignKey()) {
-                        if (value != null) {
-                            RuntimePersistentEntity<Object> associatedEntity = getPersistentEntity((Class<Object>) value.getClass());
-                            RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
-                            if (identity == null) {
-                                throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
-                            }
-                            value = identity.getProperty().get(value);
-                        }
-                        if (QUERY_LOG.isTraceEnabled()) {
-                            QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                        }
-
-                        preparedStatementWriter.setDynamic(
-                                stmt,
-                                index,
-                                type,
-                                value
-                        );
-                    }
-
-                } else {
-                    if (QUERY_LOG.isTraceEnabled()) {
-                        QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                    }
-                    preparedStatementWriter.setDynamic(
-                            stmt,
-                            index,
-                            type,
-                            value
-                    );
-                }
-            }
+            PreparedStatement stmt = connection
+                    .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+            setInsertParameters(insert, entity, stmt);
             int i = stmt.executeUpdate();
             if (generateId) {
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
@@ -287,6 +232,67 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             return entity;
         });
 
+    }
+
+    private <T> void setInsertParameters(StoredInsert<T> insert, T entity, PreparedStatement stmt) {
+        for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
+            RuntimePersistentProperty<T> prop = entry.getKey();
+            DataType type = prop.getDataType();
+            Object value = prop.getProperty().get(entity);
+            int index = entry.getValue();
+            if (prop instanceof Association) {
+                Association association = (Association) prop;
+                if (!association.isForeignKey()) {
+                    if (value != null) {
+                        RuntimePersistentEntity<Object> associatedEntity = getPersistentEntity((Class<Object>) value.getClass());
+                        RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
+                        if (identity == null) {
+                            throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
+                        }
+                        value = identity.getProperty().get(value);
+                    }
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                    }
+
+                    preparedStatementWriter.setDynamic(
+                            stmt,
+                            index,
+                            type,
+                            value
+                    );
+                }
+
+            } else {
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                }
+                preparedStatementWriter.setDynamic(
+                        stmt,
+                        index,
+                        type,
+                        value
+                );
+            }
+        }
+    }
+
+    @NonNull
+    private <T> StoredInsert resolveInsert(@NonNull EntityOperation<T> operation) {
+        return storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
+            AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+            String insertStatement = annotationMetadata.stringValue(
+                    PredatorMethod.class,
+                    PredatorMethod.META_MEMBER_INSERT_STMT
+            ).orElse(null);
+            if (insertStatement == null) {
+                throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository");
+            }
+
+            RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(operation.getRootEntity());
+            Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
+            return new StoredInsert(insertStatement, persistentEntity, parameterBinding);
+        });
     }
 
     private <T, R> Iterable<R> findIterable(@NonNull PreparedQuery<T, R> preparedQuery) {
@@ -671,36 +677,42 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
-        List<T> results = new ArrayList<>();
-        for (T t : operation) {
+        @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
+        return withWriteConnection((connection) -> {
+            List<T> results = new ArrayList<>();
+            boolean generateId = insert.isGenerateId();
+            String insertSql = insert.getSql();
 
-            T o = persist(new InsertOperation<T>() {
-                @NonNull
-                @Override
-                public Class<T> getRootEntity() {
-                    return operation.getRootEntity();
+            PreparedStatement stmt = connection
+                    .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
+            }
+            for (T entity : operation) {
+                setInsertParameters(insert, entity, stmt);
+                stmt.addBatch();
+                results.add(entity);
+            }
+            stmt.executeBatch();
+            PersistentProperty identity = insert.getIdentity();
+            if (generateId && identity != null) {
+                Iterator<T> resultIterator = results.iterator();
+                ResultSet generatedKeys = stmt.getGeneratedKeys();
+                while (resultIterator.hasNext()) {
+                    T entity = resultIterator.next();
+                    if (!generatedKeys.next()) {
+                        throw new DataAccessException("Failed to generate ID for entity: " + entity);
+                    } else {
+                        long id = generatedKeys.getLong(1);
+                        BeanWrapper.getWrapper(entity).setProperty(
+                                identity.getName(),
+                                id
+                        );
+                    }
                 }
-
-                @NonNull
-                @Override
-                public T getEntity() {
-                    return t;
-                }
-
-                @Nonnull
-                @Override
-                public String getName() {
-                    return operation.getName();
-                }
-
-                @Override
-                public AnnotationMetadata getAnnotationMetadata() {
-                    return operation.getAnnotationMetadata();
-                }
-            });
-            results.add(o);
-        }
-        return results;
+            }
+            return results;
+        });
     }
 
     /**

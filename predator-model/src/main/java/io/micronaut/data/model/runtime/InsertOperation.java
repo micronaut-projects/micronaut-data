@@ -16,8 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.core.annotation.AnnotationMetadataProvider;
-import io.micronaut.core.naming.Named;
 
 /**
  * An insert operation that inserts a record.
@@ -26,15 +24,7 @@ import io.micronaut.core.naming.Named;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface InsertOperation<E> extends Named, AnnotationMetadataProvider {
-
-    /**
-     * The root entity type.
-     *
-     * @return The root entity type
-     */
-    @NonNull
-    Class<E> getRootEntity();
+public interface InsertOperation<E> extends EntityOperation<E> {
 
     /**
      * @return The entity to insert.
