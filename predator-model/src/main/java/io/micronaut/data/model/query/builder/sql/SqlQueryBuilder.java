@@ -81,7 +81,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     /**
-     * Builds the create table statement. Designed for testing and not production usage.
+     * Builds the create table statement. Designed for testing and not production usage. For production a
+     *  SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entities the entities
      * @return The table
@@ -93,7 +94,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     /**
-     * Builds the create table statement. Designed for testing and not production usage.
+     * Builds the create table statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entity The entity
      * @return The table
@@ -124,10 +126,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             column = addTypeToColumn(prop, isAssociation, column);
             if (prop.isGenerated()) {
-                // TODO: handle dialects
-                column += " AUTO_INCREMENT";
-                if (prop == identity) {
-                    column += " PRIMARY KEY";
+                switch (dialect) {
+                    case POSTGRES:
+                        column += " GENERATED ALWAYS AS IDENTITY";
+                    break;
+                    default:
+                        // TODO: handle more dialects
+                        column += " AUTO_INCREMENT";
+                        if (prop == identity) {
+                            column += " PRIMARY KEY";
+                        }
                 }
             }
             columns.add(column);

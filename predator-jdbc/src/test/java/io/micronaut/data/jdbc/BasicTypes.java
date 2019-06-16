@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "basic_types")
-public class BasicTypesJava {
+public class BasicTypes {
     @Id
     @GeneratedValue
     private Long myId;
@@ -53,7 +53,7 @@ public class BasicTypesJava {
     private TimeZone timeZone = TimeZone.getTimeZone("GMT");
     private Charset charset = StandardCharsets.UTF_8;
 
-    public BasicTypesJava() throws MalformedURLException {
+    public BasicTypes() throws MalformedURLException {
     }
 
     public Long getMyId() {

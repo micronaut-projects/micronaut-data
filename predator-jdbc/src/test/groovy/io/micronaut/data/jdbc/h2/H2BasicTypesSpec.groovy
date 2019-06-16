@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.jdbc.BasicTypeRepository
-import io.micronaut.data.jdbc.BasicTypesJava
+import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.test.annotation.MicronautTest
@@ -71,7 +71,7 @@ create table basic_types (
     @Unroll
     void 'test basic type mapping for property #property'() {
         given:
-        PersistentEntity entity = PersistentEntity.of(BasicTypesJava)
+        PersistentEntity entity = PersistentEntity.of(BasicTypes)
         def prop = entity.getPropertyByName(property)
 
         expect:
@@ -96,7 +96,7 @@ create table basic_types (
 
     void "test save and retrieve basic types"() {
         when: "we save a new book"
-        def book = repository.save(new BasicTypesJava())
+        def book = repository.save(new BasicTypes())
 
         then: "The ID is assigned"
         book.myId != null
