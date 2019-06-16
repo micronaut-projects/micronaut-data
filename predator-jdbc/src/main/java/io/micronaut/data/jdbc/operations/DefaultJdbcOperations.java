@@ -9,6 +9,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
@@ -44,7 +45,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.annotation.Nonnull;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -217,14 +217,17 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
             setInsertParameters(insert, entity, stmt);
             int i = stmt.executeUpdate();
-            if (generateId) {
+            RuntimePersistentProperty identity = insert.getIdentity();
+            if (generateId && identity != null) {
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     long id = generatedKeys.getLong(1);
-                    BeanWrapper.getWrapper(entity).setProperty(
-                            insert.getIdentity().getName(),
-                            id
-                    );
+                    BeanProperty property = identity.getProperty();
+                    if (property.getType().isInstance(id)) {
+                        property.set(entity, id);
+                    } else {
+                        property.convertAndSet(entity, id);
+                    }
                 } else {
                     throw new DataAccessException("ID failed to generate. No result returned.");
                 }
@@ -694,8 +697,9 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 results.add(entity);
             }
             stmt.executeBatch();
-            PersistentProperty identity = insert.getIdentity();
+            RuntimePersistentProperty identity = insert.getIdentity();
             if (generateId && identity != null) {
+                BeanProperty idProperty = identity.getProperty();
                 Iterator<T> resultIterator = results.iterator();
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
                 while (resultIterator.hasNext()) {
@@ -704,10 +708,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                         throw new DataAccessException("Failed to generate ID for entity: " + entity);
                     } else {
                         long id = generatedKeys.getLong(1);
-                        BeanWrapper.getWrapper(entity).setProperty(
-                                identity.getName(),
-                                id
-                        );
+                        if (idProperty.getType().isInstance(id)) {
+                            idProperty.set(entity, id);
+                        } else {
+                            idProperty.convertAndSet(entity, id);
+                        }
                     }
                 }
             }
@@ -731,7 +736,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     protected class StoredInsert<T> {
         private final RuntimePersistentEntity<T> persistentEntity;
         private final Map<RuntimePersistentProperty<T>, Integer> parameterBinding;
-        private final PersistentProperty identity;
+        private final RuntimePersistentProperty identity;
         private final boolean generateId;
         private final String sql;
 
@@ -776,7 +781,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         /**
          * @return The identity
          */
-        public @Nullable PersistentProperty getIdentity() {
+        public @Nullable RuntimePersistentProperty getIdentity() {
             return identity;
         }
 
