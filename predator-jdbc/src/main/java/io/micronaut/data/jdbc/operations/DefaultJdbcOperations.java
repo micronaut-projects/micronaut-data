@@ -294,7 +294,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
             RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(operation.getRootEntity());
             Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
-            return new StoredInsert(insertStatement, persistentEntity, parameterBinding);
+            // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245
+            boolean supportsBatch = annotationMetadata.findAnnotation(Repository.class)
+                    .flatMap(av -> av.enumValue("dialect", Dialect.class)
+                    .map(dialect -> dialect != Dialect.SQL_SERVER)).orElse(true);
+            return new StoredInsert(insertStatement, persistentEntity, parameterBinding, supportsBatch);
         });
     }
 
@@ -439,7 +443,16 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
-                    query += queryBuilder.buildOrderBy(getPersistentEntity(preparedQuery.getRootEntity()), sort);
+                    query += queryBuilder.buildOrderBy(getPersistentEntity(preparedQuery.getRootEntity()), sort).getQuery();
+                } else if (dialect == Dialect.SQL_SERVER) {
+                    // SQL server requires order by
+                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
+                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                    if (identity == null) {
+                        throw new DataAccessException("Pagination requires an entity ID on SQL Server");
+                    }
+                    sort = Sort.unsorted().order(Sort.Order.asc(identity.getName()));
+                    query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                 }
 
                 query += queryBuilder.buildPagination(pageable).getQuery();
@@ -681,43 +694,73 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
         @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
-        return withWriteConnection((connection) -> {
+        if (!insert.supportsBatch) {
             List<T> results = new ArrayList<>();
-            boolean generateId = insert.isGenerateId();
-            String insertSql = insert.getSql();
-
-            PreparedStatement stmt = connection
-                    .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-            if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
-            }
             for (T entity : operation) {
-                setInsertParameters(insert, entity, stmt);
-                stmt.addBatch();
-                results.add(entity);
+                results.add(persist(new InsertOperation<T>() {
+                    @NonNull
+                    @Override
+                    public T getEntity() {
+                        return entity;
+                    }
+
+                    @NonNull
+                    @Override
+                    public Class<T> getRootEntity() {
+                        return operation.getRootEntity();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return operation.getName();
+                    }
+
+                    @Override
+                    public AnnotationMetadata getAnnotationMetadata() {
+                        return operation.getAnnotationMetadata();
+                    }
+                }));
             }
-            stmt.executeBatch();
-            RuntimePersistentProperty identity = insert.getIdentity();
-            if (generateId && identity != null) {
-                BeanProperty idProperty = identity.getProperty();
-                Iterator<T> resultIterator = results.iterator();
-                ResultSet generatedKeys = stmt.getGeneratedKeys();
-                while (resultIterator.hasNext()) {
-                    T entity = resultIterator.next();
-                    if (!generatedKeys.next()) {
-                        throw new DataAccessException("Failed to generate ID for entity: " + entity);
-                    } else {
-                        long id = generatedKeys.getLong(1);
-                        if (idProperty.getType().isInstance(id)) {
-                            idProperty.set(entity, id);
+            return results;
+        } else {
+            return withWriteConnection((connection) -> {
+                List<T> results = new ArrayList<>();
+                boolean generateId = insert.isGenerateId();
+                String insertSql = insert.getSql();
+
+                PreparedStatement stmt = connection
+                        .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                if (QUERY_LOG.isDebugEnabled()) {
+                    QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
+                }
+                for (T entity : operation) {
+                    setInsertParameters(insert, entity, stmt);
+                    stmt.addBatch();
+                    results.add(entity);
+                }
+                stmt.executeBatch();
+                RuntimePersistentProperty identity = insert.getIdentity();
+                if (generateId && identity != null) {
+                    BeanProperty idProperty = identity.getProperty();
+                    Iterator<T> resultIterator = results.iterator();
+                    ResultSet generatedKeys = stmt.getGeneratedKeys();
+                    while (resultIterator.hasNext()) {
+                        T entity = resultIterator.next();
+                        if (!generatedKeys.next()) {
+                            throw new DataAccessException("Failed to generate ID for entity: " + entity);
                         } else {
-                            idProperty.convertAndSet(entity, id);
+                            long id = generatedKeys.getLong(1);
+                            if (idProperty.getType().isInstance(id)) {
+                                idProperty.set(entity, id);
+                            } else {
+                                idProperty.convertAndSet(entity, id);
+                            }
                         }
                     }
                 }
-            }
-            return results;
-        });
+                return results;
+            });
+        }
     }
 
     /**
@@ -739,22 +782,26 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         private final RuntimePersistentProperty identity;
         private final boolean generateId;
         private final String sql;
+        private final boolean supportsBatch;
 
         /**
          * Default constructor.
          * @param sql The SQL INSERT
          * @param persistentEntity The entity
          * @param parameterBinding The parameter binding
+         * @param supportsBatch Whether batch insert is supported
          */
         StoredInsert(
                 String sql,
                 RuntimePersistentEntity<T> persistentEntity,
-                Map<RuntimePersistentProperty<T>, Integer> parameterBinding) {
+                Map<RuntimePersistentProperty<T>, Integer> parameterBinding,
+                boolean supportsBatch) {
             this.sql = sql;
             this.persistentEntity = persistentEntity;
             this.parameterBinding = parameterBinding;
             this.identity = persistentEntity.getIdentity();
             this.generateId = identity != null && identity.isGenerated();
+            this.supportsBatch = supportsBatch;
         }
 
         /**
@@ -765,10 +812,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         }
 
         /**
-         * @return The entity
+         * Are batch inserts supported.
+         * @return True if the are
          */
-        public @NonNull RuntimePersistentEntity<T> getPersistentEntity() {
-            return persistentEntity;
+        public boolean supportsBatchInsert() {
+            return supportsBatch || identity == null || !identity.isGenerated();
         }
 
         /**

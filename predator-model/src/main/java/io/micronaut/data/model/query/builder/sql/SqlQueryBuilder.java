@@ -130,6 +130,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     case POSTGRES:
                         column += " GENERATED ALWAYS AS IDENTITY";
                     break;
+                    case SQL_SERVER:
+                        if (prop == identity) {
+                            column += " PRIMARY KEY";
+                        }
+                        column += " IDENTITY(1,1) NOT NULL";
+                    break;
                     default:
                         // TODO: handle more dialects
                         column += " AUTO_INCREMENT";
@@ -295,8 +301,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     builder.append("OFFSET ").append(to);
                 }
             break;
-            case ANSI:
+
             case SQL_SERVER:
+                // SQL server requires OFFSET always
+                if (from == 0) {
+                    builder.append("OFFSET ").append(0).append(" ROWS ");
+                }
+                // intentional fall through
+            case ANSI:
             case ORACLE:
             default:
                 if (from != 0) {
