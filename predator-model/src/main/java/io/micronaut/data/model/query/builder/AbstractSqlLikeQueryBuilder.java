@@ -24,10 +24,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 1.0.0
  */
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
+    public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
     protected static final String AS_CLAUSE = " AS ";
     protected static final String FROM_CLAUSE = " FROM ";
-    protected static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String WHERE_CLAUSE = " WHERE ";
     protected static final char COMMA = ',';
     protected static final char CLOSE_BRACKET = ')';

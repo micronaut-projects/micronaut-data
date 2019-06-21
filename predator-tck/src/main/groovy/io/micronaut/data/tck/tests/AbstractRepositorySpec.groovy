@@ -148,4 +148,43 @@ abstract class AbstractRepositorySpec extends Specification {
         authorRepository.findByNameEndsWith("w").name == "Don Winslow"
         authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
     }
+
+    void "test project on single property"() {
+        given:
+        // cleanup invalid titles
+        bookRepository.deleteByTitleIsEmptyOrTitleIsNull()
+
+        personRepository.save(new Person(name: "Jeff", age: 40))
+        personRepository.saveAll([
+                new Person(name: "Ivan", age: 30),
+                new Person(name: "James", age: 35)
+        ])
+
+        expect:
+        bookRepository.findTop3OrderByTitle().size() == 3
+        bookRepository.findTop3OrderByTitle()[0].title == 'Along Came a Spider'
+        personRepository.findAgeByName("Jeff") == 40
+        personRepository.findAgeByName("Ivan") == 30
+        personRepository.findMaxAgeByNameLike("J%") == 40
+        personRepository.findMinAgeByNameLike("J%") == 35
+        personRepository.getSumAgeByNameLike("J%") == 75
+        personRepository.getAvgAgeByNameLike("J%") == 37
+        personRepository.readAgeByNameLike("J%").sort() == [35,40]
+        personRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
+        personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
+    }
+
+    void "test project on single ended association"() {
+        expect:
+        bookRepository.count() == 7
+        bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                .findFirst().get().title == "Pet Cemetery"
+        bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                .count() == 2
+//      TODO: Support inverse association queries?
+//        authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
+//        authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
+        bookRepository.findByAuthorName("Stephen King").size() == 2
+    }
+
 }

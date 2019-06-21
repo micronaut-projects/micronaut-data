@@ -23,6 +23,7 @@ import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -447,7 +448,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
                     query += queryBuilder.buildOrderBy(getPersistentEntity(preparedQuery.getRootEntity()), sort).getQuery();
-                } else if (dialect == Dialect.SQL_SERVER) {
+                } else if (dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE)) {
                     // SQL server requires order by
                     RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
