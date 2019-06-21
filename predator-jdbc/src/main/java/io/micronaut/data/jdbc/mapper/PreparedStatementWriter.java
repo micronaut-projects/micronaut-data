@@ -3,6 +3,7 @@ package io.micronaut.data.jdbc.mapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.mapper.DataWriter;
+import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
@@ -18,6 +19,66 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class PreparedStatementWriter implements DataWriter<PreparedStatement, Integer> {
+
+    @Override
+    public DataWriter<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
+        if (value == null) {
+            try {
+                switch (dataType) {
+                    case ENTITY:
+                    case LONG:
+                        statement.setNull(index, Types.BIGINT);
+                        return this;
+                    case STRING:
+                        statement.setNull(index, Types.VARCHAR);
+                        return this;
+                    case DATE:
+                        statement.setNull(index, Types.DATE);
+                        return this;
+                    case BOOLEAN:
+                        statement.setNull(index, Types.BOOLEAN);
+                        return this;
+                    case INTEGER:
+                        statement.setNull(index, Types.INTEGER);
+                        return this;
+                    case TIMESTAMP:
+                        statement.setNull(index, Types.TIMESTAMP);
+                        return this;
+                    case OBJECT:
+                        statement.setNull(index, Types.OTHER);
+                        return this;
+                    case CHARACTER:
+                        statement.setNull(index, Types.CHAR);
+                        return this;
+                    case DOUBLE:
+                        statement.setNull(index, Types.DOUBLE);
+                        return this;
+                    case BYTE_ARRAY:
+                        statement.setNull(index, Types.BINARY);
+                        return this;
+                    case FLOAT:
+                        statement.setNull(index, Types.FLOAT);
+                        return this;
+                    case BIGDECIMAL:
+                        statement.setNull(index, Types.DECIMAL);
+                        return this;
+                    case BYTE:
+                        statement.setNull(index, Types.BIT);
+                        return this;
+                    case SHORT:
+                        statement.setNull(index, Types.TINYINT);
+                        return this;
+
+                    default:
+                        throw new DataAccessException("Unknown data type: " + dataType);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);
+            }
+        } else {
+            return DataWriter.super.setDynamic(statement, index, dataType, value);
+        }
+    }
 
     @NonNull
     @Override

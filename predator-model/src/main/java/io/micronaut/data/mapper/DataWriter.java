@@ -1,6 +1,7 @@
 package io.micronaut.data.mapper;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
@@ -52,13 +53,23 @@ public interface DataWriter<PS, IDX> {
                 if (value instanceof Number) {
                     return setInt(statement, index, ((Number) value).intValue());
                 } else {
-                    return setInt(statement, index, convertRequired(value, Integer.class));
+                    Integer integer = convertRequired(value, Integer.class);
+                    if (integer != null) {
+                        return setInt(statement, index, integer);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case BOOLEAN:
                 if (value instanceof Boolean) {
                     return setBoolean(statement, index, ((Boolean) value));
                 } else {
-                    return setBoolean(statement, index, convertRequired(value, Boolean.class));
+                    Boolean b = convertRequired(value, Boolean.class);
+                    if (b != null) {
+                        return setBoolean(statement, index, b);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case DATE:
                 if (value instanceof Date) {
@@ -76,7 +87,12 @@ public interface DataWriter<PS, IDX> {
                 if (value instanceof Number) {
                     return setDouble(statement, index, ((Number) value).doubleValue());
                 } else {
-                    return setDouble(statement, index, convertRequired(value, Double.class));
+                    Double d = convertRequired(value, Double.class);
+                    if (d != null) {
+                        return setDouble(statement, index, d);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case BYTE_ARRAY:
                 if (value instanceof byte[]) {
@@ -96,31 +112,56 @@ public interface DataWriter<PS, IDX> {
                 if (value instanceof Number) {
                     return setLong(statement, index, ((Number) value).longValue());
                 } else {
-                    return setLong(statement, index, convertRequired(value, Long.class));
+                    Long l = convertRequired(value, Long.class);
+                    if (l != null) {
+                        return setLong(statement, index, l);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case CHARACTER:
                 if (value instanceof Character) {
                     return setChar(statement, index, (Character) value);
                 } else {
-                    return setChar(statement, index, convertRequired(value, Character.class));
+                    Character c = convertRequired(value, Character.class);
+                    if (c != null) {
+                        return setChar(statement, index, c);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case FLOAT:
                 if (value instanceof Number) {
                     return setFloat(statement, index, ((Number) value).floatValue());
                 } else {
-                    return setFloat(statement, index, convertRequired(value, Float.class));
+                    Float f = convertRequired(value, Float.class);
+                    if (f != null) {
+                        return setFloat(statement, index, f);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case SHORT:
                 if (value instanceof Number) {
                     return setShort(statement, index, ((Number) value).shortValue());
                 } else {
-                    return setShort(statement, index, convertRequired(value, Short.class));
+                    Short s = convertRequired(value, Short.class);
+                    if (s != null) {
+                        return setShort(statement, index, s);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case BYTE:
                 if (value instanceof Number) {
                     return setByte(statement, index, ((Number) value).byteValue());
                 } else {
-                    return setByte(statement, index, convertRequired(value, Byte.class));
+                    Byte n = convertRequired(value, Byte.class);
+                    if (n != null) {
+                        return setByte(statement, index, n);
+                    } else {
+                        throw new DataAccessException("Cannot set null value");
+                    }
                 }
             case OBJECT:
             default:
@@ -136,9 +177,9 @@ public interface DataWriter<PS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default <T> T convertRequired(Object value, Class<T> type) {
+    default @Nullable <T> T convertRequired(@Nullable Object value, Class<T> type) {
         if (value == null) {
-            throw new DataAccessException("Cannot convert null value to target type: " + type);
+            return null;
         }
         return ConversionService.SHARED.convert(
                 value,
