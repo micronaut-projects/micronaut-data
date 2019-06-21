@@ -26,6 +26,8 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -70,6 +72,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     private static final TupleMapper TUPLE_MAPPER = new TupleMapper();
     private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
     private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
+    private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private final SessionFactory sessionFactory;
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
@@ -126,6 +129,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         return readTransactionTemplate.execute(status -> {
             Class<R> resultType = preparedQuery.getResultType();
             String query = preparedQuery.getQuery();
+
             Map<String, Object> parameters = preparedQuery.getParameterValues();
             Session currentSession = getCurrentSession();
             if (preparedQuery.isDtoProjection()) {
@@ -208,16 +212,24 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         //noinspection ConstantConditions
         return readTransactionTemplate.execute(status -> {
             Session currentSession = getCurrentSession();
+            String queryStr = preparedQuery.getQuery();
+            Pageable pageable = preparedQuery.getPageable();
+            if (pageable != Pageable.UNPAGED) {
+                Sort sort = pageable.getSort();
+                if (sort.isSorted()) {
+                    queryStr += QUERY_BUILDER.buildOrderBy(PersistentEntity.of(preparedQuery.getRootEntity()), sort).getQuery();
+                }
+            }
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
 
                 if (preparedQuery.isNative()) {
                     q = currentSession
-                            .createNativeQuery(preparedQuery.getQuery(), Tuple.class);
+                            .createNativeQuery(queryStr, Tuple.class);
 
                 } else {
                     q = currentSession
-                            .createQuery(preparedQuery.getQuery(), Tuple.class);
+                            .createQuery(queryStr, Tuple.class);
                 }
 
                 bindPreparedQuery(q, preparedQuery, currentSession);
@@ -229,11 +241,11 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Query<R> q;
                 if (preparedQuery.isNative()) {
                     q = currentSession
-                            .createNativeQuery(preparedQuery.getQuery(), wrapperType);
+                            .createNativeQuery(queryStr, wrapperType);
 
                 } else {
                     q = currentSession
-                            .createQuery(preparedQuery.getQuery(), wrapperType);
+                            .createQuery(queryStr, wrapperType);
                 }
                 bindPreparedQuery(q, preparedQuery, currentSession);
                 return q.list();

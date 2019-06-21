@@ -118,6 +118,11 @@ public @interface PredatorMethod {
     String META_MEMBER_QUERY_BUILDER = "queryBuilder";
 
     /**
+     * Whether the user is a raw user specified query.
+     */
+    String META_MEMBER_RAW_QUERY = "rawQuery";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends PredatorInterceptor> interceptor();

@@ -14,7 +14,7 @@ public enum Dialect {
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL,
+    MYSQL(false),
     /**
      * Postgres 9.5 or later.
      */
@@ -22,7 +22,7 @@ public enum Dialect {
     /**
      * SQL server 2012 or above.
      */
-    SQL_SERVER,
+    SQL_SERVER(false),
     /**
      * Oracle 12c or above.
      */
@@ -30,5 +30,30 @@ public enum Dialect {
     /**
      * Ansi compliant SQL.
      */
-    ANSI
+    ANSI;
+
+    private final boolean supportsBatch;
+
+    /**
+     * Default constructor.
+     */
+    Dialect() {
+        this(true);
+    }
+
+    /**
+     * Allows customization of batch support.
+     * @param supportsBatch If batch is supported
+     */
+    Dialect(boolean supportsBatch) {
+        this.supportsBatch = supportsBatch;
+    }
+
+    /**
+     * Some drivers and dialects do not support JDBC batching. This allows customization.
+     * @return True if batch is supported.
+     */
+    public boolean allowBatch() {
+        return supportsBatch;
+    }
 }

@@ -24,10 +24,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.*;
 import io.micronaut.data.intercept.async.*;
 import io.micronaut.data.intercept.reactive.*;
@@ -63,7 +60,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
-    protected static final Pattern VARIABLE_PATTERN = Pattern.compile(":([a-zA-Z0-9]+)");
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("(:([a-zA-Z0-9]+))");
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
     protected final Pattern pattern;
 
@@ -426,23 +423,41 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
             new IllegalStateException("Should only be called if Query has value!")
         );
-        Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         Map<String, String> parameterBinding = new LinkedHashMap<>(parameters.size());
-        while (matcher.find()) {
-            String name = matcher.group(1);
-            Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
-            if (element.isPresent()) {
-                parameterBinding.put(name, element.get().getName());
-            } else {
-                matchContext.getVisitorContext().fail(
-                        "No method parameter found for name :" + name,
-                        methodElement
-                );
-                return null;
+        boolean namedParameters = matchContext.getRepositoryClass().booleanValue(Repository.class, "namedParameters").orElse(true);
+        if (namedParameters) {
+            Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+
+            while (matcher.find()) {
+                String name = matcher.group(2);
+                Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
+                if (element.isPresent()) {
+                    parameterBinding.put(name, element.get().getName());
+                } else {
+                    matchContext.fail(
+                            "No method parameter found for named Query parameter : " + name
+                    );
+                    return null;
+                }
+            }
+        } else {
+            Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+
+            int index = 1;
+            while (matcher.find()) {
+                String name = matcher.group(2);
+                Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
+                if (element.isPresent()) {
+                    parameterBinding.put(String.valueOf(index++), element.get().getName());
+                } else {
+                    matchContext.fail(
+                            "No method parameter found for named Query parameter : " + name
+                    );
+                    return null;
+                }
             }
         }
-
         return new RawQuery(matchContext.getRootEntity(), parameterBinding);
     }
 }

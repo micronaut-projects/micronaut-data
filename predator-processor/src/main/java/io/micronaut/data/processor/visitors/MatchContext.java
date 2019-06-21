@@ -145,4 +145,11 @@ public class MatchContext implements AnnotationMetadataProvider {
     public boolean supportsImplicitQueries() {
         return repositoryClass.booleanValue(Repository.class, "implicitQueries").orElse(true);
     }
+
+    /**
+     * @return The repository class.
+     */
+    public @NonNull ClassElement getRepositoryClass() {
+        return repositoryClass;
+    }
 }

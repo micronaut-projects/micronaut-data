@@ -49,6 +49,8 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
@@ -58,6 +60,7 @@ import java.util.concurrent.ConcurrentMap;
  * @author graemerocher
  */
 public abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
+    private static final Pattern VARIABLE_PATTERN = Pattern.compile("(:[a-zA-Z0-9]+)");
     protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
     private final ConcurrentMap<MethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
@@ -120,13 +123,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         Pageable pageable = getPageable(context);
         String query = storedQuery.getQuery();
-        if (pageable != null) {
-            Sort sort = pageable.getSort();
-            if (sort.isSorted()) {
-                QueryBuilder queryBuilder = getRequiredQueryBuilder(context);
-                query += queryBuilder.buildOrderBy(PersistentEntity.of(rootEntity), sort).getQuery();
-            }
-        }
         return new DefaultPreparedQuery<>(
                 repositoryType,
                 storedQuery,
@@ -685,6 +681,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final boolean isNumericPlaceHolder;
         private final AnnotationMetadata annotationMetadata;
         private final boolean hasIn;
+        private final boolean isCount;
         private final Map<String, DataType> dataTypes;
         private final Map<Integer, DataType> indexedDataTypes;
         private Map<String, Object> queryHints;
@@ -705,14 +702,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             this.resultType = resultType;
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
-            this.query = query;
+            this.isNative = method.isTrue(Query.class, "nativeQuery");
+            this.isNumericPlaceHolder = method.classValue(Repository.class, "queryBuilder").map(c -> c == SqlQueryBuilder.class).orElse(false);
+            this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
+
+            if (isNumericPlaceHolder && method.isTrue(Query.class, PredatorMethod.META_MEMBER_RAW_QUERY)) {
+                Matcher matcher = VARIABLE_PATTERN.matcher(query);
+                this.query = matcher.replaceAll("?");
+            } else {
+                this.query = query;
+            }
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
-            this.isNumericPlaceHolder = method.classValue(Repository.class, "queryBuilder").map(c -> c == SqlQueryBuilder.class).orElse(false);
-            this.isNative = method.isTrue(Query.class, "nativeQuery") || isNumericPlaceHolder;
-            this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
 
+            this.isCount = parameterBindingMember != null && parameterBindingMember.startsWith("count");
             AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
             if (parameterBindingMember != null && annotation != null) {
 
@@ -795,6 +799,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                 this.indexedDataTypes = null;
                 this.dataTypes = null;
             }
+        }
+
+        @Override
+        public boolean isCount() {
+            return isCount;
         }
 
         @NonNull
@@ -1075,7 +1084,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @NonNull
         @Override
         public Pageable getPageable() {
-            return pageable;
+            if (storedQuery.isCount()) {
+                return Pageable.UNPAGED;
+            } else {
+                return pageable;
+            }
         }
 
         @Override
@@ -1138,6 +1151,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         public Map<String, String> getParameterBinding() {
             return storedQuery.getParameterBinding();
+        }
+
+        @Override
+        public boolean isCount() {
+            return storedQuery.isCount();
         }
 
         @Override

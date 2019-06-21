@@ -20,7 +20,9 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
+import io.micronaut.data.intercept.FindPageInterceptor
 import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Person
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
@@ -30,6 +32,51 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 import javax.annotation.processing.SupportedAnnotationTypes
 
 class QueryAnnotationSpec extends AbstractTypeElementSpec {
+    void "test build CRUD repository with no named parameter support"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Query;
+import java.util.List;
+
+@Repository(namedParameters = false, implicitQueries = false)
+interface MyInterface {
+
+    @Query("from Person p where p.name = :n")
+    List<Person> listPeople(String n);   
+    
+    @Query(value = "select * from person p where p.name like :n",
+            countQuery = "select count(*) from person p where p.name like :n")
+    io.micronaut.data.model.Page<Person> queryByName(String n, io.micronaut.data.model.Pageable p);
+}
+""")
+
+        when: "the list method is retrieved"
+        def listMethod = beanDefinition.getRequiredMethod("listPeople", String.class)
+
+        then: "It was correctly compiled"
+        def ann = listMethod.synthesize(PredatorMethod)
+        ann.rootEntity() == Person
+        ann.interceptor() == FindAllInterceptor
+        ann.parameterBinding()[0].name() == '1'
+        ann.parameterBinding()[0].value() == 'n'
+        listMethod.getReturnType().type == List
+
+        when: "the findOne method is retrieved"
+        def findOne = beanDefinition.getRequiredMethod("queryByName", String.class, Pageable.class)
+
+        then: "It was correctly compiled"
+        def ann2 = findOne.synthesize(PredatorMethod)
+        ann2.rootEntity() == Person
+        ann2.interceptor() == FindPageInterceptor
+        ann2.parameterBinding()[0].name() == '1'
+        ann2.parameterBinding()[0].value() == 'n'
+    }
+
     void "test build CRUD repository"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """

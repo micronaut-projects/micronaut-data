@@ -74,14 +74,19 @@ public class SchemaGenerator {
                     try {
                         try (Connection connection = dataSource.getConnection()) {
                             SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
-                            switch (schemaGenerate) {
-                                case CREATE_DROP:
-                                    for (PersistentEntity entity : entities) {
-                                        try {
+                            if (dialect.allowBatch()) {
+                                switch (schemaGenerate) {
+                                    case CREATE_DROP:
+                                        StringBuilder statements = new StringBuilder();
+                                        for (PersistentEntity entity : entities) {
                                             String tableName = builder.getTableName(entity);
                                             String sql = "DROP TABLE " + tableName;
+                                            statements.append(sql).append(';');
+                                        }
+                                        try {
+                                            String sql = statements.toString();
                                             if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                PredatorSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                                                PredatorSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                                             }
                                             PreparedStatement ps = connection.prepareStatement(sql);
                                             ps.executeUpdate();
@@ -90,22 +95,51 @@ public class SchemaGenerator {
                                                 PredatorSettings.QUERY_LOG.debug("Drop Failed: " + e.getMessage());
                                             }
                                         }
-                                    }
-                                case CREATE:
-                                    for (PersistentEntity entity : entities) {
-
-                                        String sql = builder.buildCreateTable(entity);
+                                    case CREATE:
+                                        String sql = builder.buildCreateTables(entities);
                                         if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                            PredatorSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
+                                            PredatorSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                                         }
                                         PreparedStatement ps = connection.prepareStatement(sql);
                                         ps.executeUpdate();
-                                    }
+                                        break;
+                                    default:
+                                        // do nothing
+                                }
+                            } else {
+                                switch (schemaGenerate) {
+                                    case CREATE_DROP:
+                                        for (PersistentEntity entity : entities) {
+                                            try {
+                                                String tableName = builder.getTableName(entity);
+                                                String sql = "DROP TABLE " + tableName;
+                                                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                                                    PredatorSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                                                }
+                                                PreparedStatement ps = connection.prepareStatement(sql);
+                                                ps.executeUpdate();
+                                            } catch (SQLException e) {
+                                                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                                                    PredatorSettings.QUERY_LOG.debug("Drop Failed: " + e.getMessage());
+                                                }
+                                            }
+                                        }
+                                    case CREATE:
+                                        for (PersistentEntity entity : entities) {
+
+                                            String sql = builder.buildCreateTable(entity);
+                                            if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                                                PredatorSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
+                                            }
+                                            PreparedStatement ps = connection.prepareStatement(sql);
+                                            ps.executeUpdate();
+                                        }
 
 
-                                    break;
-                                default:
-                                    // do nothing
+                                        break;
+                                    default:
+                                        // do nothing
+                                }
                             }
                         } catch (SQLException e) {
                             throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);

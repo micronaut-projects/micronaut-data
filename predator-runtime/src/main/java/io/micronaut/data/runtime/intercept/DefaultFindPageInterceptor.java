@@ -54,7 +54,8 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
 
             Iterable<?> iterable = operations.findAll(preparedQuery);
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);
-            Long result = operations.findOne(countQuery).longValue();
+            Number n = operations.findOne(countQuery);
+            Long result = n != null ? n.longValue() : 0;
             Page<R> page = Page.of(resultList, getPageable(context), result);
             if (returnType.isInstance(page)) {
                 return (R) page;

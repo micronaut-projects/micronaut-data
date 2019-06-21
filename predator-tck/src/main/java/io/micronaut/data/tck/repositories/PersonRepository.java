@@ -6,11 +6,14 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Person;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PersonRepository extends CrudRepository<Person, Long>, PageableRepository<Person, Long> {
 
@@ -27,6 +30,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     @Nullable
     Person findByName(String name);
+
+    Person getByName(String name);
 
     List<Person> findByNameLike(String name);
 
@@ -45,4 +50,22 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     List<Person> findByNameLikeOrderByAge(String name);
 
     List<Person> findByNameLikeOrderByAgeDesc(String name);
+
+    Page<Person> findByNameLike(String name, Pageable pageable);
+
+    List<Person> listTop10(Sort sort);
+
+    Slice<Person> find(Pageable pageable);
+
+    Slice<Person> queryByNameLike(String name, Pageable pageable);
+
+    Optional<Person> findOptionalByName(String name);
+
+    List<Person> findAllByName(String name);
+
+    List<Person> findAllByNameLike(String name, Pageable pageable);
+
+    @Query(value = "select * from person p where p.name like :n",
+            countQuery = "select count(*) from person p where p.name like :n")
+    Page<Person> findPeople(String n, Pageable pageable);
 }

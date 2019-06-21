@@ -20,11 +20,10 @@ import io.micronaut.core.annotation.*;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
+import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.TypeDef;
-import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
@@ -220,7 +219,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 // the computed parameter names
                                 parameterBinding = rawQuery.getParameterBinding();
                                 if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
-                                    String cq = matchContext.getAnnotationMetadata().getValue(io.micronaut.data.annotation.Query.class, "countQuery", String.class)
+                                    String cq = matchContext.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Query.class, "countQuery")
                                             .orElse(null);
 
                                     if (StringUtils.isEmpty(cq)) {
@@ -331,11 +330,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     annotationBuilder.member(PredatorMethod.META_MEMBER_ID_TYPE, idType);
                                 }
                                 annotationBuilder.member(PredatorMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
-                                if (finalParameterBinding != null) {
+                                if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalParameterBinding);
-                                    annotationBuilder.member(PredatorMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
-                                    if (finalRawCount) {
-                                        annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                    if (ArrayUtils.isNotEmpty(annotationParameters)) {
+                                        annotationBuilder.member(PredatorMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
+                                        if (finalRawCount) {
+                                            annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                        }
                                     }
                                     addParameterTypeDefinitions(matchContext, finalParameterBinding, parameters, annotationBuilder);
                                 }
@@ -354,6 +355,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     annotationBuilder.member(entry.getKey(), entry.getValue());
                                 }
                                 if (queryObject != null) {
+                                    if (queryObject instanceof RawQuery) {
+                                        element.annotate(Query.class, (builder) -> builder.member(PredatorMethod.META_MEMBER_RAW_QUERY, true));
+                                    }
                                     int max = queryObject.getMax();
                                     if (max > -1) {
                                         annotationBuilder.member(PredatorMethod.META_MEMBER_PAGE_SIZE, max);
@@ -405,7 +409,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             }
             AnnotationValue[] typeDefValues = annotationValues.toArray(new AnnotationValue[0]);
-            annotationBuilder.member("typeDefs", typeDefValues);
+            if (ArrayUtils.isNotEmpty(typeDefValues)) {
+                annotationBuilder.member("typeDefs", typeDefValues);
+            }
         }
     }
 

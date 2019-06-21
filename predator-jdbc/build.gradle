@@ -26,3 +26,6 @@ dependencies {
     testCompile 'org.postgresql:postgresql:42.2.5'
     testCompile 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
 }
+
+//compileTestJava.options.fork = true
+//compileTestJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']

@@ -18,7 +18,8 @@ import java.lang.annotation.*;
 @Repository(
     queryBuilder = SqlQueryBuilder.class,
     operations = JdbcRepositoryOperations.class,
-    implicitQueries = false
+    implicitQueries = false,
+    namedParameters = false
 )
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})

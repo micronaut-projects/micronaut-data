@@ -816,14 +816,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         }
 
         /**
-         * Are batch inserts supported.
-         * @return True if the are
-         */
-        public boolean supportsBatchInsert() {
-            return supportsBatch || identity == null || !identity.isGenerated();
-        }
-
-        /**
          * @return The parameter binding
          */
         public @NonNull Map<RuntimePersistentProperty<T>, Integer> getParameterBinding() {

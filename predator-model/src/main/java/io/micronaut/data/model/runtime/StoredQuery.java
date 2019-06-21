@@ -124,6 +124,11 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     }
 
     /**
+     * @return Is this a count query.
+     */
+    boolean isCount();
+
+    /**
      * The compute time computed parameter data types.
      * @return The indexed values
      */

@@ -55,7 +55,6 @@ public @interface Repository {
      *
      * @return The query builder
      */
-    @InstantiatedMember
     Class<? extends QueryBuilder> queryBuilder() default JpaQueryBuilder.class;
 
     /**
@@ -84,4 +83,10 @@ public @interface Repository {
      * @return True if it does
      */
     boolean implicitQueries() default true;
+
+    /**
+     * Whether named parameters starting with colon are supported in the query syntax.
+     * @return True if named parameters are supported
+     */
+    boolean namedParameters() default true;
 }
