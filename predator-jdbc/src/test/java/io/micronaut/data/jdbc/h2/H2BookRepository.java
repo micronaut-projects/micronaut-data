@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 @JdbcRepository(dialect = Dialect.H2)
 public abstract class H2BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
-    public H2BookRepository(AuthorRepository authorRepository) {
+    public H2BookRepository(H2AuthorRepository authorRepository) {
         super(authorRepository);
     }
 

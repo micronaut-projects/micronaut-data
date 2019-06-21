@@ -3,19 +3,31 @@ package io.micronaut.data.jdbc.mysql
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractCrudSpec
+import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import org.testcontainers.containers.MySQLContainer
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-class MySqlCrudSpec extends AbstractCrudSpec {
+class MySqlRepositorySpec extends AbstractRepositorySpec {
     @Shared @AutoCleanup MySQLContainer mysql = new MySQLContainer<>()
     @Shared @AutoCleanup ApplicationContext context
 
     @Override
-    PersonRepository getCrudRepository() {
+    PersonRepository getPersonRepository() {
         return context.getBean(MySqlPersonRepository)
+    }
+
+    @Override
+    BookRepository getBookRepository() {
+        return context.getBean(MySqlBookRepository)
+    }
+
+    @Override
+    AuthorRepository getAuthorRepository() {
+        return context.getBean(MySqlAuthorRepository)
     }
 
     @Override

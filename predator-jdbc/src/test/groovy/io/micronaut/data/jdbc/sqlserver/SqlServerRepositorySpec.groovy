@@ -4,19 +4,31 @@ package io.micronaut.data.jdbc.sqlserver
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractCrudSpec
+import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import org.testcontainers.containers.MSSQLServerContainer
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-class SqlServerCrudSpec extends AbstractCrudSpec {
+class SqlServerRepositorySpec extends AbstractRepositorySpec {
     @Shared @AutoCleanup MSSQLServerContainer sqlServer = new MSSQLServerContainer<>()
     @Shared @AutoCleanup ApplicationContext context
 
     @Override
-    PersonRepository getCrudRepository() {
+    PersonRepository getPersonRepository() {
         return context.getBean(MSSQLPersonRepository)
+    }
+
+    @Override
+    BookRepository getBookRepository() {
+        return context.getBean(MSBookRepository)
+    }
+
+    @Override
+    AuthorRepository getAuthorRepository() {
+        return context.getBean(MSAuthorRepository)
     }
 
     @Override
