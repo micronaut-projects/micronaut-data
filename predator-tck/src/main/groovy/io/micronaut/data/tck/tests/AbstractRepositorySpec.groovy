@@ -171,6 +171,8 @@ abstract class AbstractRepositorySpec extends Specification {
         expect:
         bookRepository.findTop3OrderByTitle().size() == 3
         bookRepository.findTop3OrderByTitle()[0].title == 'Along Came a Spider'
+        personRepository.countByAgeGreaterThan(33) == 2
+        personRepository.countByAgeLessThan(33) == 1
         personRepository.findAgeByName("Jeff") == 40
         personRepository.findAgeByName("Ivan") == 30
         personRepository.findMaxAgeByNameLike("J%") == 40
@@ -180,6 +182,15 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.readAgeByNameLike("J%").sort() == [35,40]
         personRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
         personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
+    }
+
+    void "test null argument handling" () {
+        when:
+        personRepository.countByAgeGreaterThan(null) == 2
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'Argument [wrapper] value is null and the method parameter is not declared as nullable'
     }
 
     void "test project on single ended association"() {

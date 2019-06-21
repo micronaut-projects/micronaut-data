@@ -59,4 +59,5 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
                 context.getReturnType().asArgument()
         ).orElseThrow(() -> new IllegalStateException("Unsupported number type: " + context.getReturnType().getType()));
     }
+
 }

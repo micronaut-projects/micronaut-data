@@ -29,6 +29,7 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -93,7 +94,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      * @param <RT> The result generic type
      */
     protected final <RT> PreparedQuery<?, RT> prepareQuery(MethodInvocationContext<T, R> context, Class<RT> resultType) {
-
+        validateNullArguments(context);
         ExecutableMethod<T, R> executableMethod = context.getExecutableMethod();
         Class<?> repositoryType = context.getTarget().getClass();
         MethodKey key = newMethodKey(repositoryType, executableMethod);
@@ -498,6 +499,22 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      */
     protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext context, E entity) {
         return new DefaultInsertOperation<>(context.getExecutableMethod(), entity);
+    }
+
+    /**
+     * Validates null arguments ensuring no argument is null unless declared so.
+     * @param context The context
+     */
+    protected void validateNullArguments(MethodInvocationContext<T, R> context) {
+        Collection<MutableArgumentValue<?>> values =
+                context.getParameters().values();
+
+        for (MutableArgumentValue<?> value : values) {
+            Object o = value.getValue();
+            if (o == null && !value.getAnnotationMetadata().hasAnnotation("javax.annotation.Nullable")) {
+                throw new IllegalArgumentException("Argument [" + value.getName() + "] value is null and the method parameter is not declared as nullable");
+            }
+        }
     }
 
     /**

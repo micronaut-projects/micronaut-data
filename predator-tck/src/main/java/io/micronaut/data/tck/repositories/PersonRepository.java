@@ -17,6 +17,9 @@ import java.util.Optional;
 
 public interface PersonRepository extends CrudRepository<Person, Long>, PageableRepository<Person, Long> {
 
+    int countByAgeGreaterThan(Integer wrapper);
+
+    int countByAgeLessThan(int wrapper);
 
     Person save(String name, int age);
 

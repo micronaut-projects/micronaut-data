@@ -138,7 +138,7 @@ public interface DataWriter<PS, IDX> {
      */
     default <T> T convertRequired(Object value, Class<T> type) {
         if (value == null) {
-            return null;
+            throw new DataAccessException("Cannot convert null value to target type: " + type);
         }
         return ConversionService.SHARED.convert(
                 value,
