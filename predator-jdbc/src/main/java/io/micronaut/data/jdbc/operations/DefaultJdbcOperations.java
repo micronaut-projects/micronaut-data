@@ -15,6 +15,9 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
@@ -51,6 +54,7 @@ import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
@@ -216,16 +220,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
             setInsertParameters(insert, entity, stmt);
             int i = stmt.executeUpdate();
-            RuntimePersistentProperty identity = insert.getIdentity();
+            BeanProperty<T, Object> identity = insert.getIdentity();
             if (generateId && identity != null) {
                 ResultSet generatedKeys = stmt.getGeneratedKeys();
                 if (generatedKeys.next()) {
                     long id = generatedKeys.getLong(1);
-                    BeanProperty property = identity.getProperty();
-                    if (property.getType().isInstance(id)) {
-                        property.set(entity, id);
+                    if (identity.getType().isInstance(id)) {
+                        identity.set(entity, id);
                     } else {
-                        property.convertAndSet(entity, id);
+                        identity.convertAndSet(entity, id);
                     }
                 } else {
                     throw new DataAccessException("ID failed to generate. No result returned.");
@@ -237,10 +240,12 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     }
 
     private <T> void setInsertParameters(StoredInsert<T> insert, T entity, PreparedStatement stmt) {
+        Date now = null;
         for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
             RuntimePersistentProperty<T> prop = entry.getKey();
             DataType type = prop.getDataType();
-            Object value = prop.getProperty().get(entity);
+            BeanProperty<T, ?> beanProperty = prop.getProperty();
+            Object value = beanProperty.get(entity);
             int index = entry.getValue();
             if (prop instanceof Association) {
                 Association association = (Association) prop;
@@ -265,16 +270,46 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     );
                 }
 
-            } else {
-                if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                    PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+            } else if (!prop.isGenerated()) {
+                if (beanProperty.hasStereotype(AutoPopulated.class)) {
+                    if (beanProperty.hasAnnotation(DateCreated.class)) {
+                        now = now != null ? now : new Date();
+                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                        }
+                        preparedStatementWriter.setDynamic(
+                                stmt,
+                                index,
+                                type,
+                                now
+                        );
+                        beanProperty.convertAndSet(entity, now);
+                    } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
+                        now = now != null ? now : new Date();
+                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                        }
+                        preparedStatementWriter.setDynamic(
+                                stmt,
+                                index,
+                                type,
+                                now
+                        );
+                        beanProperty.convertAndSet(entity, now);
+                    } else {
+                        throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
+                    }
+                } else {
+                    if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                        PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                    }
+                    preparedStatementWriter.setDynamic(
+                            stmt,
+                            index,
+                            type,
+                            value
+                    );
                 }
-                preparedStatementWriter.setDynamic(
-                        stmt,
-                        index,
-                        type,
-                        value
-                );
             }
         }
     }
@@ -380,8 +415,27 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         if (ArrayUtils.isEmpty(constructorArguments)) {
             entity = introspection.instantiate();
         } else {
-            // TODO: constructor arguments
-            throw new IllegalStateException("Constructor arguments not yet supported");
+            Object[] args = new Object[constructorArguments.length];
+            for (int i = 0; i < constructorArguments.length; i++) {
+                Argument<?> argument = constructorArguments[i];
+                String n = argument.getName();
+                RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
+                if (prop != null) {
+                    Object v = columnNameResultSetReader.readDynamic(rs, prop.getPersistedName(), prop.getDataType());
+                    if (v == null && !prop.isOptional()) {
+                        throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
+                    }
+                    Class<?> t = argument.getType();
+                    if (!t.isInstance(v)) {
+                        args[i] = columnIndexResultSetReader.convertRequired(v, t);
+                    } else {
+                        args[i] = v;
+                    }
+                } else {
+                    throw new DataAccessException("Constructor [" + argument.getName() + "] must have a getter fortype: " + persistentEntity.getName());
+                }
+            }
+            entity = introspection.instantiate(args);
         }
         BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
         for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
@@ -743,9 +797,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     results.add(entity);
                 }
                 stmt.executeBatch();
-                RuntimePersistentProperty identity = insert.getIdentity();
+                BeanProperty<T, Object> identity = insert.getIdentity();
                 if (generateId && identity != null) {
-                    BeanProperty idProperty = identity.getProperty();
                     Iterator<T> resultIterator = results.iterator();
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     while (resultIterator.hasNext()) {
@@ -754,10 +807,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                             throw new DataAccessException("Failed to generate ID for entity: " + entity);
                         } else {
                             long id = generatedKeys.getLong(1);
-                            if (idProperty.getType().isInstance(id)) {
-                                idProperty.set(entity, id);
+                            if (identity.getType().isInstance(id)) {
+                                identity.set(entity, id);
                             } else {
-                                idProperty.convertAndSet(entity, id);
+                                identity.convertAndSet(entity, id);
                             }
                         }
                     }
@@ -781,7 +834,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
      * @param <T> The entity type
      */
     protected class StoredInsert<T> {
-        private final RuntimePersistentEntity<T> persistentEntity;
         private final Map<RuntimePersistentProperty<T>, Integer> parameterBinding;
         private final RuntimePersistentProperty identity;
         private final boolean generateId;
@@ -801,7 +853,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 Map<RuntimePersistentProperty<T>, Integer> parameterBinding,
                 boolean supportsBatch) {
             this.sql = sql;
-            this.persistentEntity = persistentEntity;
             this.parameterBinding = parameterBinding;
             this.identity = persistentEntity.getIdentity();
             this.generateId = identity != null && identity.isGenerated();
@@ -825,8 +876,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         /**
          * @return The identity
          */
-        public @Nullable RuntimePersistentProperty getIdentity() {
-            return identity;
+        public @Nullable BeanProperty<T, Object> getIdentity() {
+            if (identity != null) {
+                return identity.getProperty();
+            }
+            return null;
         }
 
         /**

@@ -3,17 +3,24 @@ package io.micronaut.data.tck.tests
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import spock.lang.Specification
+
+import java.time.LocalDate
+import java.time.Year
+import java.time.YearMonth
 
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
+    abstract CompanyRepository getCompanyRepository()
 
     abstract void init()
 
@@ -220,5 +227,39 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         results.size() == 2
 
+    }
+
+
+    void "test date created and last updated"() {
+        when:
+        def company = new Company("Apple", new URL("http://apple.com"))
+        companyRepository.save(company)
+        def dateCreated = company.dateCreated
+
+        GregorianCalendar calendar = getYearMonthDay(dateCreated)
+        def retrieved = companyRepository.findById(company.myId).get()
+
+        then:
+        company.myId != null
+        dateCreated != null
+        company.lastUpdated.toEpochMilli().toString().startsWith(company.dateCreated.getTime().toString())
+        retrieved.dateCreated == calendar.time
+
+        when:
+        companyRepository.update(company.myId, "Changed")
+        def company2 = companyRepository.findById(company.myId).orElse(null)
+
+        then:
+        company.dateCreated.time == dateCreated.time
+        retrieved.dateCreated.time == company2.dateCreated.time
+        company2.name == 'Changed'
+        company2.lastUpdated.toEpochMilli() > company2.dateCreated.time
+    }
+
+    private GregorianCalendar getYearMonthDay(Date dateCreated) {
+        def cal = dateCreated.toCalendar()
+        def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH))
+        GregorianCalendar calendar = new GregorianCalendar(localDate.year, localDate.month.value, localDate.dayOfMonth)
+        calendar
     }
 }

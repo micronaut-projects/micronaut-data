@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.*;
 import io.micronaut.core.io.service.ServiceDefinition;
@@ -297,7 +298,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         QueryResult queryResult = queryEncoder.buildInsert(currentRepository.getAnnotationMetadata(), entity);
                                         if (queryResult != null) {
                                             Map<String, String> qp = queryResult.getParameters();
-                                            addParameterTypeDefinitions(matchContext, qp, parameters, annotationBuilder);
+                                            addParameterTypeDefinitions(methodMatchContext, qp, parameters, annotationBuilder);
                                             AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(qp);
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_BINDING, annotationValues);
@@ -338,7 +339,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
                                         }
                                     }
-                                    addParameterTypeDefinitions(matchContext, finalParameterBinding, parameters, annotationBuilder);
+                                    addParameterTypeDefinitions(methodMatchContext, finalParameterBinding, parameters, annotationBuilder);
                                 }
                                 if (finalPreparedCount1 != null) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalPreparedCount1.getParameters());
@@ -386,7 +387,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private void addParameterTypeDefinitions(MatchContext matchContext, Map<String, String> parameterBinding, ParameterElement[] parameters, AnnotationValueBuilder<PredatorMethod> annotationBuilder) {
+    private void addParameterTypeDefinitions(MethodMatchContext matchContext, Map<String, String> parameterBinding, ParameterElement[] parameters, AnnotationValueBuilder<PredatorMethod> annotationBuilder) {
         if (!matchContext.supportsImplicitQueries()) {
             List<AnnotationValue<?>> annotationValues = new ArrayList<>(parameterBinding.size());
             Map<String, String> reverseMap = parameterBinding.entrySet().stream().collect(Collectors.toMap(
@@ -394,18 +395,33 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     Map.Entry::getKey
             ));
             for (ParameterElement parameter : parameters) {
-                String name = parameter.getName();
-                String index = reverseMap.get(name);
+                String name = parameter.stringValue(Parameter.class).orElse(parameter.getName());
+                String index = reverseMap.remove(name);
                 if (index != null) {
                     ClassElement genericType = parameter.getGenericType();
                     if (TypeUtils.isContainerType(genericType)) {
                         genericType = genericType.getFirstTypeArgument().orElse(genericType);
                     }
-                    DataType dt = TypeUtils.resolveDataType(genericType, dataTypes);
+                    ClassElement finalGenericType = genericType;
+                    DataType dt = parameter.findAnnotation(TypeDef.class).flatMap(av -> av.enumValue("type", DataType.class))
+                                            .orElseGet(() -> TypeUtils.resolveDataType(finalGenericType, dataTypes));
                     AnnotationValue<TypeDef> typeDef = AnnotationValue.builder(TypeDef.class)
                             .member("type", dt)
                             .member("names", index).build();
                     annotationValues.add(typeDef);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(reverseMap)) {
+                Set<String> names = reverseMap.keySet();
+                SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                for (String name : names) {
+                    SourcePersistentProperty p = rootEntity.getPropertyByName(name);
+                    if (p != null) {
+                        AnnotationValue<TypeDef> typeDef = AnnotationValue.builder(TypeDef.class)
+                                .member("type", p.getDataType())
+                                .member("names", reverseMap.get(name)).build();
+                        annotationValues.add(typeDef);
+                    }
                 }
             }
             AnnotationValue[] typeDefValues = annotationValues.toArray(new AnnotationValue[0]);

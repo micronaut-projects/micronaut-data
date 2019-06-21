@@ -4,6 +4,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -31,6 +32,10 @@ class H2RepositorySpec extends AbstractRepositorySpec {
 
     @Inject
     @Shared
+    H2CompanyRepository cr
+
+    @Inject
+    @Shared
     DataSource dataSource
 
     @Override
@@ -46,6 +51,11 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     @Override
     AuthorRepository getAuthorRepository() {
         return ar
+    }
+
+    @Override
+    CompanyRepository getCompanyRepository() {
+        return cr
     }
 
     void init() {

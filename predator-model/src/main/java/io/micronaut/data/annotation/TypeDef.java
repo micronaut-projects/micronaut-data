@@ -29,7 +29,7 @@ import java.lang.annotation.*;
  * @since 1.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
+@Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.PARAMETER})
 @Documented
 @Repeatable(TypeDefinitions.class)
 public @interface TypeDef {

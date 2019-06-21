@@ -6,6 +6,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import org.testcontainers.containers.MSSQLServerContainer
@@ -29,6 +30,11 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec {
     @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MSAuthorRepository)
+    }
+
+    @Override
+    CompanyRepository getCompanyRepository() {
+        return context.getBean(MSCompanyRepository)
     }
 
     @Override

@@ -27,7 +27,7 @@ import java.time.OffsetDateTime;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Documented
-@GeneratedValue
 @TypeRole(role = TypeRole.LAST_UPDATED_PROPERTY, type = OffsetDateTime.class)
+@AutoPopulated
 public @interface DateUpdated {
 }

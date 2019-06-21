@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 
@@ -40,6 +41,7 @@ public class Company {
     private String name;
     private URL url;
 
+    @Creator
     public Company(String name, URL url) {
         this.name = name;
         this.url = url;

@@ -15,14 +15,9 @@
  */
 package io.micronaut.data.hibernate;
 
-import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.entities.Company;
+import io.micronaut.data.tck.repositories.CompanyRepository;
 
 
 @Repository
-public interface CompanyRepo extends CrudRepository<Company, Long> {
-
-    void update(@Id Long id, String name);
-}
+public interface CompanyRepo extends CompanyRepository {}

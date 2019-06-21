@@ -18,12 +18,16 @@ package io.micronaut.data.processor.model;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -47,6 +51,15 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     SourcePersistentProperty(SourcePersistentEntity owner, PropertyElement propertyElement) {
         this.owner = owner;
         this.propertyElement = propertyElement;
+    }
+
+    @Override
+    public DataType getDataType() {
+        return findAnnotation(MappedProperty.class)
+                .flatMap(av -> av.enumValue("type", DataType.class)).orElseGet(() -> TypeUtils.resolveDataType(
+                        getType(),
+                        Collections.emptyMap()
+                ));
     }
 
     @Override

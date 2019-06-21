@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.Date;
 
 /**
@@ -22,7 +23,9 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
     @Override
     public DataWriter<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Date date) {
         try {
-            if (date instanceof Timestamp) {
+            if (date == null) {
+                statement.setNull(name, Types.TIMESTAMP);
+            } else if (date instanceof Timestamp) {
                 statement.setTimestamp(name, (Timestamp) date);
             } else {
                 statement.setTimestamp(name, new Timestamp(date.getTime()));
@@ -69,7 +72,11 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
     @Override
     public DataWriter<PreparedStatement, Integer> setDate(PreparedStatement statement, Integer name, Date date) {
         try {
-            statement.setDate(name, new java.sql.Date(date.getTime()));
+            if (date == null) {
+                statement.setNull(name, Types.DATE);
+            } else {
+                statement.setDate(name, new java.sql.Date(date.getTime()));
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -79,7 +86,11 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
     @Override
     public DataWriter<PreparedStatement, Integer> setString(PreparedStatement statement, Integer name, String string) {
         try {
-            statement.setString(name, string);
+            if (string == null) {
+                statement.setNull(name, Types.VARCHAR);
+            } else {
+                statement.setString(name, string);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }

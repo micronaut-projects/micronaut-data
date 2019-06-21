@@ -884,11 +884,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 continue;
             }
 
+            if (prop instanceof Association) {
+                if (((Association) prop).isForeignKey()) {
+                    throw new IllegalArgumentException("Foreign key associations cannot be updated as part of a batch update statement");
+                }
+            }
+
             String currentAlias = queryState.getCurrentAlias();
             if (currentAlias != null) {
                 queryString.append(currentAlias).append(DOT);
             }
-            queryString.append(propertyName).append('=');
+            queryString.append(getColumnName(prop)).append('=');
             Placeholder param = queryState.newParameter();
             queryString.append(param.name);
             parameters.put(param.key, prop.getName());
