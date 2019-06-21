@@ -18,6 +18,7 @@ package io.micronaut.data.model.runtime;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
@@ -32,6 +33,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
 
     private final RuntimePersistentEntity<T> owner;
     private final BeanProperty<T, ?> property;
+    private final Class<?> type;
 
     /**
      * Default constructor.
@@ -41,6 +43,14 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property) {
         this.owner = owner;
         this.property = property;
+        this.type = ReflectionUtils.getWrapperType(property.getType());
+    }
+
+    /**
+     * @return The property type, unwrapped if primitive
+     */
+    public @NonNull Class<?> getType() {
+        return type;
     }
 
     @NonNull

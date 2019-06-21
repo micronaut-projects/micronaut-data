@@ -31,6 +31,11 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.Year;
+import java.time.YearMonth;
+import java.time.chrono.ChronoLocalDate;
 import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
@@ -282,8 +287,18 @@ public class TypeUtils {
                 return DataType.STRING;
             } else if (type.isAssignable(BigDecimal.class) || type.isAssignable(BigInteger.class)) {
                 return DataType.BIGDECIMAL;
-            } else if (type.isAssignable(Temporal.class) || type.isAssignable(Date.class)) {
-                return DataType.DATE;
+            } else if (type.isAssignable(Temporal.class)) {
+                if (type.isAssignable(ChronoLocalDate.class) || type.isAssignable(Year.class) || type.isAssignable(YearMonth.class)) {
+                    return DataType.DATE;
+                } else {
+                    return DataType.TIMESTAMP;
+                }
+            } else if (type.isAssignable(Date.class)) {
+                if (type.isAssignable(Timestamp.class)) {
+                    return DataType.TIMESTAMP;
+                } else {
+                    return DataType.DATE;
+                }
             } else if (Stream.of(UUID.class, Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
                 return DataType.STRING;
             }

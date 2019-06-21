@@ -46,6 +46,12 @@ class PredatorInitializer {
         conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime ->
                 new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
         );
+        conversionService.addConverter(Date.class, LocalDateTime.class, date ->
+                LocalDateTime.ofEpochSecond(date.getTime(), 0, ZoneOffset.UTC)
+        );
+        conversionService.addConverter(Date.class, Instant.class, date ->
+                Instant.ofEpochSecond(date.getTime())
+        );
         conversionService.addConverter(ChronoLocalDate.class, Date.class, localDateTime ->
                 new Date(localDateTime.toEpochDay())
         );

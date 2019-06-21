@@ -332,7 +332,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String getTableName(PersistentEntity entity) {
+    public String getTableName(PersistentEntity entity) {
         return entity.getPersistedName();
     }
 
@@ -425,30 +425,63 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case BOOLEAN:
                 column += " BIT";
                 break;
+            case TIMESTAMP:
+                if (dialect == Dialect.SQL_SERVER) {
+                    // sql server timestamp is an internal type, use datetime instead
+                    column += " DATETIME";
+                } else if (dialect == Dialect.MYSQL) {
+                    // mysql doesn't allow timestamp without default
+                    column += " TIMESTAMP DEFAULT NOW()";
+                } else {
+                    column += " TIMESTAMP";
+                }
+                break;
             case DATE:
-                column += " TIMESTAMP";
+                column += " DATE";
                 break;
             case LONG:
                 column += " BIGINT";
                 break;
             case CHARACTER:
             case INTEGER:
-                column += " INT";
+                if (dialect == Dialect.POSTGRES) {
+                    column += " INTEGER";
+                } else {
+                    column += " INT";
+                }
+
                 break;
             case BIGDECIMAL:
                 column += " DECIMAL";
                 break;
             case FLOAT:
-                column += " FLOAT";
+                if (dialect == Dialect.POSTGRES || dialect == Dialect.SQL_SERVER) {
+                    column += " REAL";
+                } else {
+                    column += " FLOAT";
+                }
                 break;
             case BYTE_ARRAY:
-                column += " BINARY";
+                if (dialect == Dialect.POSTGRES) {
+                    column += " BYTEA";
+                } else {
+                    column += " BINARY";
+                }
                 break;
             case DOUBLE:
-                column += " DOUBLE";
+                if (dialect == Dialect.POSTGRES || dialect == Dialect.SQL_SERVER) {
+                    column += " REAL";
+                } else {
+                    column += " DOUBLE";
+                }
                 break;
             case SHORT:
-                column += " TINYINT";
+                if (dialect == Dialect.POSTGRES) {
+                    column += " SMALLINT";
+                } else {
+                    column += " TINYINT";
+                }
+
                 break;
             default:
                 if (isAssociation) {

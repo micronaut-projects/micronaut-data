@@ -32,13 +32,12 @@ import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.runtime.config.PredatorSettings;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.scheduling.TaskExecutors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -68,7 +67,6 @@ import java.util.stream.StreamSupport;
 @EachBean(DataSource.class)
 public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
-    private static final Logger QUERY_LOG = LoggerFactory.getLogger("io.micronaut.data.query");
     private static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
     private static final String NOT_TRUE_EXPRESSION = "1 = 2";
     private static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
@@ -210,8 +208,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             T entity = operation.getEntity();
             boolean generateId = insert.isGenerateId();
             String insertSql = insert.getSql();
-            if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
+            if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                PredatorSettings.QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
             }
             PreparedStatement stmt = connection
                     .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
@@ -254,8 +252,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                         }
                         value = identity.getProperty().get(value);
                     }
-                    if (QUERY_LOG.isTraceEnabled()) {
-                        QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                    if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                        PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                     }
 
                     preparedStatementWriter.setDynamic(
@@ -267,8 +265,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 }
 
             } else {
-                if (QUERY_LOG.isTraceEnabled()) {
-                    QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                    PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                 }
                 preparedStatementWriter.setDynamic(
                         stmt,
@@ -386,6 +384,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         }
         BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
         for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
+            RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
             String persistedName = persistentProperty.getPersistedName();
             if (persistentProperty instanceof Association) {
                 Association association = (Association) persistentProperty;
@@ -407,10 +406,14 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 }
             } else {
                 Object v = columnNameResultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
-                wrapper.setProperty(
-                        persistentProperty.getName(),
-                        v
-                );
+                if (rpp.getType().isInstance(v)) {
+                    rpp.getProperty().set(entity, v);
+                } else {
+                    wrapper.setProperty(
+                            persistentProperty.getName(),
+                            v
+                    );
+                }
             }
         }
         RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
@@ -459,16 +462,16 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
         }
 
-        if (QUERY_LOG.isDebugEnabled()) {
-            QUERY_LOG.debug("Executing Query: {}", query);
+        if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+            PredatorSettings.QUERY_LOG.debug("Executing Query: {}", query);
         }
         final PreparedStatement ps = connection.prepareStatement(query);
 
         for (Map.Entry<Integer, Object> entry : parameterValues.entrySet()) {
             int index = entry.getKey();
             Object value = entry.getValue();
-            if (QUERY_LOG.isTraceEnabled()) {
-                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                PredatorSettings.QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
             }
             DataType dataType = parameterTypes.get(index);
             if (dataType == null) {
@@ -730,8 +733,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
                 PreparedStatement stmt = connection
                         .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                if (QUERY_LOG.isDebugEnabled()) {
-                    QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
+                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                    PredatorSettings.QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
                 }
                 for (T entity : operation) {
                     setInsertParameters(insert, entity, stmt);

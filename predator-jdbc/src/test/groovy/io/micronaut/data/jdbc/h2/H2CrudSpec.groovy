@@ -12,6 +12,8 @@ import javax.sql.DataSource
 
 @MicronautTest(rollback = false)
 @Property(name = "datasources.default.name", value = "mydb")
+@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
+@Property(name = "datasources.default.dialect", value = "H2")
 class H2CrudSpec extends AbstractCrudSpec {
 
     @Inject
@@ -28,7 +30,6 @@ class H2CrudSpec extends AbstractCrudSpec {
     }
 
     void init() {
-        H2Util.createTables(dataSource, Person)
     }
 
 }
