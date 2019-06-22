@@ -39,6 +39,8 @@ import java.util.stream.Collectors;
 public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
 
     private final BeanIntrospection<T> introspection;
+    private final RuntimePersistentProperty<T> identity;
+    private RuntimePersistentProperty<T> version;
 
     /**
      * Default constructor.
@@ -56,6 +58,12 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
+        identity = introspection.getIndexedProperty(Id.class).map(bp ->
+                new RuntimePersistentProperty<>(this, bp)
+        ).orElse(null);
+        version = introspection.getIndexedProperty(Version.class).map(bp ->
+                new RuntimePersistentProperty<>(this, bp)
+        ).orElse(null);
     }
 
     /**
@@ -80,17 +88,13 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getIdentity() {
-        return introspection.getIndexedProperty(Id.class).map(bp ->
-                new RuntimePersistentProperty<>(this, bp)
-        ).orElse(null);
+        return identity;
     }
 
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getVersion() {
-        return introspection.getIndexedProperty(Version.class).map(bp ->
-                new RuntimePersistentProperty<>(this, bp)
-        ).orElse(null);
+        return version;
     }
 
     @NonNull

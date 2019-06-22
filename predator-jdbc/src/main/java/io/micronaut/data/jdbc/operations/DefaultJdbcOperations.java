@@ -488,7 +488,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
         final boolean hasIn = preparedQuery.hasInExpression();
         Map<Integer, Object> parameterValues = preparedQuery.getIndexedParameterValues();
-        Map<Integer, DataType> parameterTypes = preparedQuery.getIndexedParameterTypes();
+        DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
         if (hasIn) {
             parameterValues = new HashMap<>(parameterValues); // create a copy
             query = expandInExpressions(query, parameterValues);
@@ -521,14 +521,14 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             PredatorSettings.QUERY_LOG.debug("Executing Query: {}", query);
         }
         final PreparedStatement ps = connection.prepareStatement(query);
-
+        int paramTypeLen = parameterTypes.length;
         for (Map.Entry<Integer, Object> entry : parameterValues.entrySet()) {
             int index = entry.getKey();
             Object value = entry.getValue();
             if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
                 PredatorSettings.QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
             }
-            DataType dataType = parameterTypes.get(index);
+            DataType dataType = paramTypeLen >= index ? parameterTypes[index - 1] : null;
             if (dataType == null) {
                 dataType = DataType.OBJECT;
             }
@@ -585,7 +585,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         }
     }
 
-    private RuntimePersistentProperty<Object> getIdReader(Object o) {
+    private @NonNull RuntimePersistentProperty<Object> getIdReader(Object o) {
         Class<Object> type = (Class<Object>) o.getClass();
         RuntimePersistentProperty beanProperty = idReaders.get(type);
         if (beanProperty == null) {

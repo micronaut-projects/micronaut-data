@@ -50,7 +50,6 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -295,41 +294,55 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
     @SuppressWarnings("unchecked")
     private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
-        Map<?, ?> parameterBinding = storedQuery.useNumericPlaceholders() ? storedQuery.getIndexedParameterBinding() : storedQuery.getParameterBinding();
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        Map parameterValues = new HashMap<>(parameterBinding.size());
-        for (Map.Entry entry : parameterBinding.entrySet()) {
-            Object name = entry.getKey();
-            String argument = (String) entry.getValue();
-            String v = storedQuery.getLastUpdatedProperty().orElse(null);
-            if (parameterValueMap.containsKey(argument)) {
-                parameterValues.put(name, parameterValueMap.get(argument));
-            } else if (v != null && v.equals(argument)) {
-                Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
-                if (lastUpdatedType == null) {
-                    throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
-                }
-                Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
-                if (timestamp == null) {
-                    throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                }
-                parameterValues.put(name, timestamp);
-            } else {
-                Optional<Argument> named = Arrays.stream(context.getArguments())
-                        .filter(arg -> {
-                            String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
-                            return n.equals(argument);
-                        })
-                        .findFirst();
-                if (named.isPresent()) {
-                    parameterValues.put(name, parameterValueMap.get(named.get().getName()));
-                } else {
-                    throw new IllegalArgumentException("Missing query arguments: " + argument);
-                }
+        if (storedQuery.useNumericPlaceholders()) {
+            String[] indexedParameterBinding = storedQuery.getIndexedParameterBinding();
+            Map parameterValues = new HashMap<>(indexedParameterBinding.length);
+            for (int index = 0; index < indexedParameterBinding.length; index++) {
+                String argument = indexedParameterBinding[index];
+                storeInParameterValues(context, storedQuery, rootEntity, parameterValueMap, index + 1, argument, parameterValues);
             }
+            return parameterValues;
+        } else {
+            Map<?, ?> parameterBinding = storedQuery.getParameterBinding();
+            Map parameterValues = new HashMap<>(parameterBinding.size());
+            for (Map.Entry entry : parameterBinding.entrySet()) {
+                Object name = entry.getKey();
+                String argument = (String) entry.getValue();
+                storeInParameterValues(context, storedQuery, rootEntity, parameterValueMap, name, argument, parameterValues);
 
+            }
+            return parameterValues;
         }
-        return parameterValues;
+    }
+
+    private <RT> void storeInParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity, Map<String, Object> namedValues, Object index, String argument, Map parameterValues) {
+        String v = storedQuery.getLastUpdatedProperty().orElse(null);
+        if (namedValues.containsKey(argument)) {
+            parameterValues.put(index, namedValues.get(argument));
+        } else if (v != null && v.equals(argument)) {
+            Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
+            if (lastUpdatedType == null) {
+                throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
+            }
+            Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+            if (timestamp == null) {
+                throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+            }
+            parameterValues.put(index, timestamp);
+        } else {
+            Optional<Argument> named = Arrays.stream(context.getArguments())
+                    .filter(arg -> {
+                        String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
+                        return n.equals(argument);
+                    })
+                    .findFirst();
+            if (named.isPresent()) {
+                parameterValues.put(index, namedValues.get(named.get().getName()));
+            } else {
+                throw new IllegalArgumentException("Missing query arguments: " + argument);
+            }
+        }
     }
 
     private Class<?> getLastUpdatedType(Class<?> rootEntity, String property) {
@@ -691,7 +704,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final @NonNull Class<E> rootEntity;
         private final @NonNull String query;
         private final @Nullable Map<String, String> parameterBinding;
-        private final @Nullable Map<Integer, String> indexedParameterBinding;
+        private final @Nullable String[] indexedParameterBinding;
         private final ExecutableMethod<?, ?> method;
         private final String lastUpdatedProp;
         private final boolean isDto;
@@ -701,7 +714,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final boolean hasIn;
         private final boolean isCount;
         private final Map<String, DataType> dataTypes;
-        private final Map<Integer, DataType> indexedDataTypes;
+        private final DataType[] indexedDataTypes;
         private Map<String, Object> queryHints;
 
         /**
@@ -741,34 +754,29 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
                             Property.class);
                     if (CollectionUtils.isNotEmpty(parameterData)) {
-                        Map parameterValues = new HashMap(parameterData.size());
-                        for (AnnotationValue<Property> annotationValue : parameterData) {
-                            Object placeHolderName;
-                            if (isNumericPlaceHolder) {
-                                int i = annotationValue.intValue("name").orElse(-1);
-                                if (i == -1) {
-                                    continue;
-                                }
-                                placeHolderName = i;
-                            } else {
-                                placeHolderName = annotationValue.stringValue("name").orElse(null);
-                            }
-                            String argument = annotationValue.stringValue("value").orElse(null);
-                            if (placeHolderName != null && argument != null) {
-                                if (isNumericPlaceHolder) {
-                                    parameterValues.put(placeHolderName, argument);
-                                } else {
-                                    parameterValues.put(placeHolderName, argument);
-                                }
-                            }
-                        }
+
                         if (isNumericPlaceHolder) {
-                            this.indexedParameterBinding = parameterValues;
+                            this.indexedParameterBinding = new String[parameterData.size()];
                             this.parameterBinding = null;
+                            for (AnnotationValue<Property> annotationValue : parameterData) {
+                                String argument = annotationValue.stringValue("value").orElse(null);
+                                int i = annotationValue.intValue("name").orElse(1);
+                                indexedParameterBinding[i - 1] = argument;
+                            }
                         } else {
+                            Map parameterValues = new HashMap(parameterData.size());
+                            for (AnnotationValue<Property> annotationValue : parameterData) {
+                                Object placeHolderName;
+                                placeHolderName = annotationValue.stringValue("name").orElse(null);
+                                String argument = annotationValue.stringValue("value").orElse(null);
+                                if (placeHolderName != null && argument != null) {
+                                    parameterValues.put(placeHolderName, argument);
+                                }
+                            }
                             this.parameterBinding = parameterValues;
                             this.indexedParameterBinding = null;
                         }
+
                     } else {
                         this.parameterBinding = null;
                         this.indexedParameterBinding = null;
@@ -799,20 +807,31 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
             List<AnnotationValue<TypeDef>> typeDefs = annotation != null ? annotation.getAnnotations("typeDefs", TypeDef.class) : null;
             if (CollectionUtils.isNotEmpty(typeDefs)) {
-                this.dataTypes = isNumericPlaceHolder ? null : new HashMap<>(typeDefs.size());
-                this.indexedDataTypes = isNumericPlaceHolder ? new HashMap<>(typeDefs.size()) : null;
-                for (AnnotationValue<TypeDef> typeDef : typeDefs) {
-                    typeDef.enumValue("type", DataType.class).ifPresent(dataType -> {
-                        String[] values = typeDef.stringValues("names");
-                        for (String value : values) {
-                            if (isNumericPlaceHolder) {
-                                indexedDataTypes.put(Integer.valueOf(value), dataType);
-                            } else {
+                if (isNumericPlaceHolder) {
+                    this.dataTypes = null;
+                    this.indexedDataTypes = new DataType[typeDefs.size()];
+                    for (AnnotationValue<TypeDef> typeDef : typeDefs) {
+                        typeDef.enumValue("type", DataType.class).ifPresent(dataType -> {
+                            String[] values = typeDef.stringValues("names");
+                            for (String value : values) {
+                                indexedDataTypes[Integer.valueOf(value) - 1] = dataType;
+                            }
+                        });
+                    }
+                } else {
+                    this.dataTypes = new HashMap<>(typeDefs.size());
+                    this.indexedDataTypes = null;
+                    for (AnnotationValue<TypeDef> typeDef : typeDefs) {
+                        typeDef.enumValue("type", DataType.class).ifPresent(dataType -> {
+                            String[] values = typeDef.stringValues("names");
+                            for (String value : values) {
                                 dataTypes.put(value, dataType);
                             }
-                        }
-                    });
+                        });
+                    }
                 }
+
+
             } else {
                 this.indexedDataTypes = null;
                 this.dataTypes = null;
@@ -835,9 +854,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @NonNull
         @Override
-        public Map<Integer, DataType> getIndexedParameterTypes() {
+        public DataType[] getIndexedParameterTypes() {
             if (indexedDataTypes == null) {
-                return Collections.emptyMap();
+                return new DataType[0];
             }
             return this.indexedDataTypes;
         }
@@ -955,9 +974,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @NonNull
         @Override
-        public Map<Integer, String> getIndexedParameterBinding() {
+        public String[] getIndexedParameterBinding() {
             if (indexedParameterBinding == null) {
-                return Collections.emptyMap();
+                return StringUtils.EMPTY_STRING_ARRAY;
             }
             return indexedParameterBinding;
         }
@@ -1055,13 +1074,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @NonNull
         @Override
-        public Map<Integer, DataType> getIndexedParameterTypes() {
+        public DataType[] getIndexedParameterTypes() {
             return storedQuery.getIndexedParameterTypes();
         }
 
         @NonNull
         @Override
-        public Map<Integer, String> getIndexedParameterBinding() {
+        public String[] getIndexedParameterBinding() {
             return storedQuery.getIndexedParameterBinding();
         }
 

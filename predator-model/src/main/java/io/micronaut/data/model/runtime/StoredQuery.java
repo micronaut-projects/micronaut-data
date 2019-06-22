@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.DataType;
 import java.util.Collections;
 import java.util.Map;
@@ -141,8 +142,8 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @return The indexed values
      * @see #useNumericPlaceholders()
      */
-    default @NonNull Map<Integer, DataType> getIndexedParameterTypes() {
-        return Collections.emptyMap();
+    default @NonNull DataType[] getIndexedParameterTypes() {
+        return new DataType[0];
     }
 
 
@@ -153,8 +154,8 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @see #useNumericPlaceholders()
      */
     @NonNull
-    default Map<Integer, String> getIndexedParameterBinding() {
-        return Collections.emptyMap();
+    default String[] getIndexedParameterBinding() {
+        return StringUtils.EMPTY_STRING_ARRAY;
     }
 
     /**
