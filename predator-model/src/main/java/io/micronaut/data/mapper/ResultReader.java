@@ -25,12 +25,12 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * A data reader is a type that is capable of reading data from the given result set type.
+ * A result reader is a type that is capable of reading data from the given result set type.
  *
  * @param <RS> The result set
  * @param <IDX> The index type
  */
-public interface DataReader<RS, IDX> {
+public interface ResultReader<RS, IDX> {
 
 
     /**

@@ -11,7 +11,6 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -25,7 +24,7 @@ import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
-import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
+import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -87,7 +86,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
     private final Map<Class, Dialect> dialects = new HashMap<>(10);
     private final Map<Dialect, QueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
-    private final PreparedStatementWriter preparedStatementWriter = new PreparedStatementWriter();
+    private final JdbcQueryStatement preparedStatementWriter = new JdbcQueryStatement();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
 
@@ -144,7 +143,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, false);
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();
@@ -175,7 +174,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery) {
         return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, false);
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
             ResultSet rs = ps.executeQuery();
             return rs.next();
         });
@@ -197,7 +196,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         return withWriteConnection((connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, true);
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false);
             return Optional.of(ps.executeUpdate());
         }));
     }
@@ -346,7 +345,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
 
         return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, false);
+            PreparedStatement ps = prepareStatement(connection, preparedQuery, false, false);
             ResultSet rs = ps.executeQuery();
             if (isRootResult) {
                 RuntimePersistentEntity<R> persistentEntity = getPersistentEntity(resultType);
@@ -479,10 +478,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
             entity = introspection.instantiate(args);
         }
-        BeanWrapper<R> wrapper = BeanWrapper.getWrapper(entity);
         for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
             RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
             String persistedName = persistentProperty.getPersistedName();
+            BeanProperty property = rpp.getProperty();
             if (persistentProperty instanceof Association) {
                 Association association = (Association) persistentProperty;
                 if (!association.isForeignKey()) {
@@ -496,20 +495,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                                 v
                         );
                     }
-                    wrapper.setProperty(
-                            persistentProperty.getName(),
-                            referenced
-                    );
+                    property.set(entity, referenced);
                 }
             } else {
                 Object v = columnNameResultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
+
                 if (rpp.getType().isInstance(v)) {
-                    rpp.getProperty().set(entity, v);
+                    property.set(entity, v);
                 } else {
-                    wrapper.setProperty(
-                            persistentProperty.getName(),
-                            v
-                    );
+                    property.convertAndSet(entity, v);
                 }
             }
         }
@@ -517,15 +511,27 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         if (identity != null) {
             String persistedName = identity.getPersistedName();
             Object v = columnNameResultSetReader.readDynamic(rs, persistedName, identity.getDataType());
-            wrapper.setProperty(
-                    identity.getName(),
-                    v
-            );
+            BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
+            if (v == null) {
+                throw new DataAccessException("Table contains null ID for entity: " + entity);
+            }
+            if (property.getType().isInstance(v)) {
+                property.set(
+                        entity,
+                        v
+                );
+            } else {
+                property.convertAndSet(entity, v);
+            }
         }
         return entity;
     }
 
-    private <T, R> PreparedStatement prepareStatement(Connection connection, @NonNull PreparedQuery<T, R> preparedQuery, boolean isUpdate) throws SQLException {
+    private <T, R> PreparedStatement prepareStatement(
+            Connection connection,
+            @NonNull PreparedQuery<T, R> preparedQuery,
+            boolean isUpdate,
+            boolean isSingleResult) throws SQLException {
         String query = preparedQuery.getQuery();
 
         final boolean hasIn = preparedQuery.hasInExpression();
@@ -554,8 +560,14 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     sort = Sort.unsorted().order(Sort.Order.asc(identity.getName()));
                     query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                 }
-
+                if (isSingleResult && pageable.getOffset() > 0) {
+                    pageable = Pageable.from(pageable.getNumber(), 1);
+                }
                 query += queryBuilder.buildPagination(pageable).getQuery();
+            } else if (isSingleResult) {
+                Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+                query += queryBuilder.buildPagination(Pageable.from(0, 1)).getQuery();
             }
         }
 

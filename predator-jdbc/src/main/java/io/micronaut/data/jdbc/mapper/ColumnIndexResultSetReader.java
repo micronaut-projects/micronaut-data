@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.mapper;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.mapper.DataReader;
+import io.micronaut.data.mapper.ResultReader;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -17,7 +17,7 @@ import java.util.Date;
  * @author graemerocher
  * @since 1.0.0
  */
-public final class ColumnIndexResultSetReader implements DataReader<ResultSet, Integer> {
+public final class ColumnIndexResultSetReader implements ResultReader<ResultSet, Integer> {
 
     @Override
     public Timestamp readTimestamp(ResultSet resultSet, Integer index) {

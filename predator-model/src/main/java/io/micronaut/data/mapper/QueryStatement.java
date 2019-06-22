@@ -10,34 +10,34 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * A data writer is a type that is capable of writing data to a given type, such as to a prepared statement or so on.
+ * An abstract interface over prepared statements.
  *
  * @param <PS> The statement type
  * @param <IDX> The index type
  */
-public interface DataWriter<PS, IDX> {
+public interface QueryStatement<PS, IDX> {
 
     /**
      * Sets the give given object value.
      * @param statement The statement
-     * @param name The name
+     * @param index The index
      * @param value The value
      * @return this writer
      * @throws DataAccessException if the value cannot be read
      */
-    DataWriter<PS, IDX> setValue(PS statement, IDX name, Object value)
+    QueryStatement<PS, IDX> setValue(PS statement, IDX index, Object value)
             throws DataAccessException;
 
     /**
      * Write a value dynamically using the result set and the given name and data type.
      * @param statement The statement
-     * @param index The name
+     * @param index The index
      * @param dataType The data type
      * @param value the value                 
      * @throws DataAccessException if the value cannot be read
      * @return The writer
      */
-    default DataWriter<PS, IDX> setDynamic(
+    default QueryStatement<PS, IDX> setDynamic(
             @NonNull PS statement,
             @NonNull IDX index,
             @NonNull DataType dataType,
@@ -196,7 +196,8 @@ public interface DataWriter<PS, IDX> {
      * @param value The value             
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setLong(PS statement, IDX name, long value) {
+    default @NonNull
+    QueryStatement<PS, IDX> setLong(PS statement, IDX name, long value) {
         setValue(statement, name, value);
         return this;
     }
@@ -208,7 +209,8 @@ public interface DataWriter<PS, IDX> {
      * @param value The char value
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setChar(PS statement, IDX name, char value) {
+    default @NonNull
+    QueryStatement<PS, IDX> setChar(PS statement, IDX name, char value) {
         return setValue(statement, name, value);
     }
 
@@ -219,7 +221,8 @@ public interface DataWriter<PS, IDX> {
      * @param date The date
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setDate(PS statement, IDX name, Date date) {
+    default @NonNull
+    QueryStatement<PS, IDX> setDate(PS statement, IDX name, Date date) {
         return setValue(statement, name, date);
     }
 
@@ -231,7 +234,8 @@ public interface DataWriter<PS, IDX> {
      * @param date The date
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setTimestamp(PS statement, IDX name, Date date) {
+    default @NonNull
+    QueryStatement<PS, IDX> setTimestamp(PS statement, IDX name, Date date) {
         return setValue(statement, name, date);
     }
 
@@ -242,7 +246,7 @@ public interface DataWriter<PS, IDX> {
      * @param string The string
      * @return This writer
      */
-    default DataWriter<PS, IDX> setString(PS statement, IDX name, String string) {
+    default QueryStatement<PS, IDX> setString(PS statement, IDX name, String string) {
         return setValue(statement, name, string);
     }
 
@@ -253,7 +257,8 @@ public interface DataWriter<PS, IDX> {
      * @param integer The integer
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setInt(PS statement, IDX name, int integer) {
+    default @NonNull
+    QueryStatement<PS, IDX> setInt(PS statement, IDX name, int integer) {
         return setValue(statement, name, integer);
     }
 
@@ -264,7 +269,8 @@ public interface DataWriter<PS, IDX> {
      * @param bool The boolean
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setBoolean(PS statement, IDX name, boolean bool) {
+    default @NonNull
+    QueryStatement<PS, IDX> setBoolean(PS statement, IDX name, boolean bool) {
         return setValue(statement, name, bool);
     }
 
@@ -275,7 +281,8 @@ public interface DataWriter<PS, IDX> {
      * @param f The float
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setFloat(PS statement, IDX name, float f) {
+    default @NonNull
+    QueryStatement<PS, IDX> setFloat(PS statement, IDX name, float f) {
         return setValue(statement, name, f);
     }
 
@@ -286,7 +293,8 @@ public interface DataWriter<PS, IDX> {
      * @param b The byte
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setByte(PS statement, IDX name, byte b) {
+    default @NonNull
+    QueryStatement<PS, IDX> setByte(PS statement, IDX name, byte b) {
         return setValue(statement, name, b);
     }
 
@@ -298,7 +306,8 @@ public interface DataWriter<PS, IDX> {
      * @param s The short
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setShort(PS statement, IDX name, short s) {
+    default @NonNull
+    QueryStatement<PS, IDX> setShort(PS statement, IDX name, short s) {
         return setValue(statement, name, s);
     }
 
@@ -309,7 +318,8 @@ public interface DataWriter<PS, IDX> {
      * @param d The double
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setDouble(PS statement, IDX name, double d) {
+    default @NonNull
+    QueryStatement<PS, IDX> setDouble(PS statement, IDX name, double d) {
         return setValue(statement, name, d);
     }
 
@@ -320,7 +330,8 @@ public interface DataWriter<PS, IDX> {
      * @param bd The big decimal
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setBigDecimal(PS statement, IDX name, BigDecimal bd) {
+    default @NonNull
+    QueryStatement<PS, IDX> setBigDecimal(PS statement, IDX name, BigDecimal bd) {
         return setValue(statement, name, bd);
     }
 
@@ -331,7 +342,8 @@ public interface DataWriter<PS, IDX> {
      * @param bytes the bytes
      * @return This writer
      */
-    default @NonNull DataWriter<PS, IDX> setBytes(PS statement, IDX name, byte[] bytes) {
+    default @NonNull
+    QueryStatement<PS, IDX> setBytes(PS statement, IDX name, byte[] bytes) {
         return setValue(statement, name, bytes);
     }
 }

@@ -2,7 +2,7 @@ package io.micronaut.data.jdbc.mapper;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.mapper.DataWriter;
+import io.micronaut.data.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
@@ -13,15 +13,15 @@ import java.sql.Types;
 import java.util.Date;
 
 /**
- * A {@link DataWriter} for a prepared statement.
+ * A {@link QueryStatement} for a SQL {@link PreparedStatement}.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-public class PreparedStatementWriter implements DataWriter<PreparedStatement, Integer> {
+public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
 
     @Override
-    public DataWriter<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
+    public QueryStatement<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
         if (value == null) {
             try {
                 switch (dataType) {
@@ -76,13 +76,13 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
                 throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);
             }
         } else {
-            return DataWriter.super.setDynamic(statement, index, dataType, value);
+            return QueryStatement.super.setDynamic(statement, index, dataType, value);
         }
     }
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Date date) {
+    public QueryStatement<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Date date) {
         try {
             if (date == null) {
                 statement.setNull(name, Types.TIMESTAMP);
@@ -98,9 +98,9 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
     }
 
     @Override
-    public DataWriter<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer name, Object value) throws DataAccessException {
+    public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, Object value) throws DataAccessException {
         try {
-            statement.setObject(name, value);
+            statement.setObject(index, value);
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
@@ -109,7 +109,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setLong(PreparedStatement statement, Integer name, long value) {
+    public QueryStatement<PreparedStatement, Integer> setLong(PreparedStatement statement, Integer name, long value) {
         try {
             statement.setLong(name, value);
         } catch (SQLException e) {
@@ -120,7 +120,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, char value) {
+    public QueryStatement<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, char value) {
         try {
             statement.setInt(name, value);
         } catch (SQLException e) {
@@ -131,7 +131,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setDate(PreparedStatement statement, Integer name, Date date) {
+    public QueryStatement<PreparedStatement, Integer> setDate(PreparedStatement statement, Integer name, Date date) {
         try {
             if (date == null) {
                 statement.setNull(name, Types.DATE);
@@ -145,7 +145,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
     }
 
     @Override
-    public DataWriter<PreparedStatement, Integer> setString(PreparedStatement statement, Integer name, String string) {
+    public QueryStatement<PreparedStatement, Integer> setString(PreparedStatement statement, Integer name, String string) {
         try {
             if (string == null) {
                 statement.setNull(name, Types.VARCHAR);
@@ -160,7 +160,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setInt(PreparedStatement statement, Integer name, int integer) {
+    public QueryStatement<PreparedStatement, Integer> setInt(PreparedStatement statement, Integer name, int integer) {
         try {
             statement.setInt(name, integer);
         } catch (SQLException e) {
@@ -171,7 +171,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setBoolean(PreparedStatement statement, Integer name, boolean bool) {
+    public QueryStatement<PreparedStatement, Integer> setBoolean(PreparedStatement statement, Integer name, boolean bool) {
         try {
             statement.setBoolean(name, bool);
         } catch (SQLException e) {
@@ -182,7 +182,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setFloat(PreparedStatement statement, Integer name, float f) {
+    public QueryStatement<PreparedStatement, Integer> setFloat(PreparedStatement statement, Integer name, float f) {
         try {
             statement.setFloat(name, f);
         } catch (SQLException e) {
@@ -193,7 +193,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setByte(PreparedStatement statement, Integer name, byte b) {
+    public QueryStatement<PreparedStatement, Integer> setByte(PreparedStatement statement, Integer name, byte b) {
         try {
             statement.setByte(name, b);
         } catch (SQLException e) {
@@ -204,7 +204,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setShort(PreparedStatement statement, Integer name, short s) {
+    public QueryStatement<PreparedStatement, Integer> setShort(PreparedStatement statement, Integer name, short s) {
         try {
             statement.setShort(name, s);
         } catch (SQLException e) {
@@ -215,7 +215,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setDouble(PreparedStatement statement, Integer name, double d) {
+    public QueryStatement<PreparedStatement, Integer> setDouble(PreparedStatement statement, Integer name, double d) {
         try {
             statement.setDouble(name, d);
         } catch (SQLException e) {
@@ -226,7 +226,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setBigDecimal(PreparedStatement statement, Integer name, BigDecimal bd) {
+    public QueryStatement<PreparedStatement, Integer> setBigDecimal(PreparedStatement statement, Integer name, BigDecimal bd) {
         try {
             statement.setBigDecimal(name, bd);
         } catch (SQLException e) {
@@ -237,7 +237,7 @@ public class PreparedStatementWriter implements DataWriter<PreparedStatement, In
 
     @NonNull
     @Override
-    public DataWriter<PreparedStatement, Integer> setBytes(PreparedStatement statement, Integer name, byte[] bytes) {
+    public QueryStatement<PreparedStatement, Integer> setBytes(PreparedStatement statement, Integer name, byte[] bytes) {
         try {
             statement.setBytes(name, bytes);
         } catch (SQLException e) {

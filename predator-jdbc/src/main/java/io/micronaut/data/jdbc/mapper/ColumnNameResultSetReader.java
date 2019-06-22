@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.mapper;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.mapper.DataReader;
+import io.micronaut.data.mapper.ResultReader;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
@@ -11,12 +11,24 @@ import java.sql.SQLException;
 import java.util.Date;
 
 /**
- * A {@link DataReader} for JDBC.
+ * A {@link ResultReader} for JDBC that uses the column name.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-public final class ColumnNameResultSetReader implements DataReader<ResultSet, String> {
+public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
+    private final ConversionService<?> conversionService = ConversionService.SHARED;
+
+    @Override
+    public <T> T convertRequired(Object value, Class<T> type) {
+        return conversionService.convert(
+                value,
+                type
+        ).orElseThrow(() ->
+                new DataAccessException("Cannot convert type [" + value.getClass() + "] with value [" + value + "] to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.")
+        );
+    }
+
     @Override
     public Date readTimestamp(ResultSet resultSet, String index) {
         try {
