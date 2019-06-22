@@ -11,6 +11,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -25,6 +26,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.PreparedStatementWriter;
+import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -153,8 +155,9 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     return readEntity(rs, persistentEntity);
                 } else {
                     if (preparedQuery.isDtoProjection()) {
-                        // TODO: fix DTOs
-                        throw new DataAccessException("DTO projections not yet supported");
+                        RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
+                        IntrospectedDataMapper<ResultSet> introspectedDataMapper = newResultSetMapper(persistentEntity);
+                        return introspectedDataMapper.map(rs, resultType);
                     } else {
                         Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
                         if (resultType.isInstance(v)) {
@@ -372,8 +375,31 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 };
             } else {
                 if (preparedQuery.isDtoProjection()) {
-                    // TODO: improve projection on entity properties
-                    throw new DataAccessException("DTO projections not yet supported");
+                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
+                    IntrospectedDataMapper<ResultSet> introspectedDataMapper = newResultSetMapper(persistentEntity);
+                    return () -> new Iterator<R>() {
+                        boolean nextCalled = false;
+
+                        @Override
+                        public boolean hasNext() {
+                            try {
+                                if (!nextCalled) {
+                                    nextCalled = true;
+                                    return rs.next();
+                                } else {
+                                    return nextCalled;
+                                }
+                            } catch (SQLException e) {
+                                return false;
+                            }
+                        }
+
+                        @Override
+                        public R next() {
+                            nextCalled = false;
+                            return introspectedDataMapper.map(rs, resultType);
+                        }
+                    };
                 } else {
                     return () -> new Iterator<R>() {
                         boolean nextCalled = false;
@@ -406,6 +432,22 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 }
             }
         });
+    }
+
+    @NonNull
+    private <T> IntrospectedDataMapper<ResultSet> newResultSetMapper(RuntimePersistentEntity<T> persistentEntity) {
+        return (resultSet, name) -> {
+            RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(name);
+            if (pp == null) {
+                throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + persistentEntity.getName());
+            } else {
+                return columnNameResultSetReader.readDynamic(
+                        resultSet,
+                        pp.getPersistedName(),
+                        pp.getDataType()
+                );
+            }
+        };
     }
 
     private <R> R readEntity(ResultSet rs, RuntimePersistentEntity<R> persistentEntity) {

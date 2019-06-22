@@ -3,9 +3,11 @@ package io.micronaut.data.tck.tests
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.PersonRepository
@@ -21,7 +23,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
     abstract CompanyRepository getCompanyRepository()
-
+    abstract BookDtoRepository getBookDtoRepository()
     abstract void init()
 
     def setupSpec() {
@@ -182,6 +184,33 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.readAgeByNameLike("J%").sort() == [35,40]
         personRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
         personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
+    }
+
+    void "test dto projection"() {
+        when:
+        def results = bookDtoRepository.findByTitleLike("The%")
+
+        then:
+        results.size() == 3
+        results.every { it instanceof BookDto }
+        results.every { it.title.startsWith("The")}
+        bookDtoRepository.findOneByTitle("The Stand").title == "The Stand"
+
+        when:"paged result check"
+        def result = bookDtoRepository.searchByTitleLike("The%", Pageable.from(0))
+
+        then:"the result is correct"
+        result.totalSize == 3
+        result.size == 10
+        result.content.every { it instanceof BookDto }
+        result.content.every { it.title.startsWith("The")}
+
+        when:"Stream is used"
+        def dto = bookDtoRepository.findStream("The Stand").findFirst().get()
+
+        then:"The result is correct"
+        dto instanceof BookDto
+        dto.title == "The Stand"
     }
 
     void "test null argument handling" () {

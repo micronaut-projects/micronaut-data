@@ -5,6 +5,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.PersonRepository
@@ -38,6 +39,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
     @Override
     CompanyRepository getCompanyRepository() {
         return context.getBean(PostgresCompanyRepository)
+    }
+
+    @Override
+    BookDtoRepository getBookDtoRepository() {
+        return context.getBean(PostgresBookDtoRepository)
     }
 
     @Override
