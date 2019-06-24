@@ -102,7 +102,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     public List<PersistentProperty> getPersistentProperties() {
         return introspection.getBeanProperties()
                 .stream()
-                .filter((bp) -> bp.isReadWrite() && !(bp.hasStereotype(Id.class, Version.class)))
+                .filter((bp) -> !bp.hasStereotype(Id.class, Version.class))
                 .map(bp -> {
                     if (bp.hasAnnotation(Relation.class)) {
                         if (isEmbedded(bp)) {

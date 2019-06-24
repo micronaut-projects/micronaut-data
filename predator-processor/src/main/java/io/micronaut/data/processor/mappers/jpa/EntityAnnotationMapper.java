@@ -17,9 +17,8 @@ package io.micronaut.data.processor.mappers.jpa;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.AnnotationValueBuilder;
-import io.micronaut.core.annotation.Introspected;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.processor.mappers.MappedEntityMapper;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -42,25 +41,9 @@ public final class EntityAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        final AnnotationValueBuilder<Introspected> builder = AnnotationValue.builder(Introspected.class)
-                // don't bother with transients properties
-                .member("excludedAnnotations", Transient.class)
-                // following are indexed for fast lookups
-                .member("indexed",
-                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
-                                .member("annotation", Id.class).build(),
-                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
-                                .member("annotation", Version.class).build(),
-                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
-                                .member("annotation", DateCreated.class).build(),
-                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
-                                .member("annotation", DateUpdated.class).build(),
-                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
-                                .member("annotation", MappedProperty.class)
-                                .member("member", "value").build()
-                );
+
         return Arrays.asList(
-                builder.build(),
+                MappedEntityMapper.buildIntrospectionConfiguration(),
                 AnnotationValue.builder(MappedEntity.class).build()
         );
     }

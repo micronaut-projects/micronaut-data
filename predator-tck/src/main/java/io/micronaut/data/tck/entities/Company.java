@@ -47,6 +47,7 @@ public class Company {
         this.url = url;
     }
 
+    // only needed for hibernate
     public Company() {
     }
 
