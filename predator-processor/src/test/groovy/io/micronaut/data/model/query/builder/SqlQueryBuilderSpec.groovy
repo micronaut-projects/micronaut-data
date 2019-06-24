@@ -1,6 +1,8 @@
 package io.micronaut.data.model.query.builder
 
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Join
+import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Person
@@ -9,7 +11,6 @@ import io.micronaut.data.model.naming.NamingStrategies
 import io.micronaut.data.model.naming.NamingStrategy
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -18,6 +19,20 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
+
+    void "test encode to-one join - single level"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+        QueryModel q = QueryModel.from(entity)
+        q.idEq(new QueryParameter("test"))
+        q.join(entity.getPropertyByName("author") as Association, Join.Type.FETCH)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        def encoded = encoder.buildQuery(q)
+
+        expect:
+        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.pages,book_.publisher_id,book_author_id_.id AS _author_id_id,book_author_id_.name AS _author_id_name,book_author_id_.nick_name AS _author_id_nick_name FROM book AS book_ INNER JOIN author book_author_id_ ON book_.author_id=book_author_id_.id WHERE (book_.id = ?)'
+
+    }
 
     void "test encode delete"() {
         given:

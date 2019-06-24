@@ -839,6 +839,18 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         }
 
         @Override
+        public boolean isJoinFetchPath(String path) {
+            return method.getAnnotationValuesByType(Join.class).stream().anyMatch(
+                    av -> path.equals(av.stringValue().orElse(null)) && isJoinFetch(av)
+            );
+        }
+
+        private boolean isJoinFetch(AnnotationValue<Join> av) {
+            Optional<String> type = av.stringValue("type");
+            return !type.isPresent() || type.get().contains("FETCH");
+        }
+
+        @Override
         public boolean isCount() {
             return isCount;
         }
@@ -1070,6 +1082,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
             this.dto = dtoProjection;
+        }
+
+        @Override
+        public boolean isJoinFetchPath(String path) {
+            return storedQuery.isJoinFetchPath(path);
         }
 
         @NonNull

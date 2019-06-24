@@ -120,8 +120,8 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String selectAllColumns(PersistentEntity entity, String alias) {
-        return alias;
+    protected void selectAllColumns(QueryState queryState) {
+        queryState.getQuery().append(queryState.getCurrentAlias());
     }
 
     @Override

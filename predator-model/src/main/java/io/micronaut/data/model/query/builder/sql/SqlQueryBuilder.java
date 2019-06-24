@@ -27,10 +27,9 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -152,8 +151,89 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    public String selectAllColumns(PersistentEntity entity, String alias) {
-        List<PersistentProperty> persistentProperties = entity.getPersistentProperties()
+    protected void selectAllColumns(QueryState queryState) {
+        PersistentEntity entity = queryState.getEntity();
+        String alias = queryState.getCurrentAlias();
+        StringBuilder queryBuffer = queryState.getQuery();
+        String columns = selectAllColumns(entity, alias);
+        queryBuffer.append(columns);
+
+        QueryModel queryModel = queryState.getQueryModel();
+
+        Collection<JoinPath> allPaths = queryModel.getJoinPaths();
+        if (CollectionUtils.isNotEmpty(allPaths)) {
+
+            Collection<JoinPath> joinPaths = allPaths.stream().filter(jp -> {
+                Join.Type jt = jp.getJoinType();
+                return jt.name().contains("FETCH");
+            }).collect(Collectors.toList());
+
+            if (CollectionUtils.isNotEmpty(joinPaths)) {
+                for (JoinPath joinPath : joinPaths) {
+                    Association association = joinPath.getAssociation();
+                    if (association.isForeignKey()) {
+                        throw new IllegalArgumentException("Join fetching is not currently supported with foreign key association. Specify a manual query");
+                    }
+                    if (association instanceof Embedded) {
+                        // joins on embedded don't make sense
+                        continue;
+                    }
+                    PersistentEntity associatedEntity = association.getAssociatedEntity();
+                    if (associatedEntity == null) {
+                        throw new IllegalArgumentException("Join path specified with associated entity that doesn't exist");
+                    }
+                    List<PersistentProperty> associatedProperties = getPropertiesThatAreColumns(associatedEntity);
+                    PersistentProperty identity = associatedEntity.getIdentity();
+                    if (identity != null) {
+                        associatedProperties.add(0, identity);
+                    }
+                    if (CollectionUtils.isNotEmpty(associatedProperties)) {
+                        queryBuffer.append(COMMA);
+
+                        String aliasName = getAliasName(association);
+                        String columnNames = associatedProperties.stream()
+                                .map(p -> {
+                                    String columnName = getColumnName(p);
+                                    return aliasName + DOT + columnName + AS_CLAUSE + '_' + getColumnName(association) + '_' + columnName;
+                                })
+                                .collect(Collectors.joining(","));
+                        queryBuffer.append(columnNames);
+                    }
+
+                }
+            }
+        }
+    }
+
+    /**
+     * Selects all columns for the given entity and alias.
+     * @param entity The entity
+     * @param alias The alias
+     * @return The column selection string
+     */
+    protected String selectAllColumns(PersistentEntity entity, String alias) {
+        String columns;
+        List<PersistentProperty> persistentProperties = getPropertiesThatAreColumns(entity);
+        if (CollectionUtils.isNotEmpty(persistentProperties)) {
+            PersistentProperty identity = entity.getIdentity();
+            if (identity != null) {
+                persistentProperties.add(0, identity);
+            }
+
+            String columnNames = persistentProperties.stream()
+                    .map(p -> alias + DOT + getColumnName(p))
+                    .collect(Collectors.joining(","));
+
+            columns = columnNames;
+        } else {
+            columns = "*";
+        }
+        return columns;
+    }
+
+    @NonNull
+    private List<PersistentProperty> getPropertiesThatAreColumns(PersistentEntity entity) {
+        return entity.getPersistentProperties()
                 .stream()
                 .filter(pp -> {
                     if (pp instanceof Association) {
@@ -163,19 +243,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     return true;
                 })
                 .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(persistentProperties)) {
-            PersistentProperty identity = entity.getIdentity();
-            if (identity != null) {
-                persistentProperties.add(0, identity);
-            }
-
-            return persistentProperties.stream()
-                    .map(p -> alias + DOT + getColumnName(p))
-                    .collect(Collectors.joining(","));
-
-        } else {
-            return "*";
-        }
     }
 
     @Override
@@ -381,7 +448,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String getColumnName(PersistentProperty persistentProperty) {
+    public String getColumnName(PersistentProperty persistentProperty) {
         return persistentProperty.getPersistedName();
     }
 

@@ -24,6 +24,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +35,11 @@ import java.util.Optional;
  * @since 1.0
  */
 public interface QueryModel extends Criteria {
+
+    /**
+     * @return The join paths.
+     */
+    Collection<JoinPath> getJoinPaths();
 
     /**
      * @return The entity the criteria applies to
@@ -54,20 +60,21 @@ public interface QueryModel extends Criteria {
     List<Projection> getProjections();
 
     /**
+     * Obtain the join type for the given association.
+     * @param path The path
+     * @return The join type for the association.
+     */
+    Optional<JoinPath> getJoinPath(String path);
+
+    /**
      * Join on the given association.
+     * @param path The join path
      * @param association The association, never null
+     * @param joinType The join type
      * @return The query
      */
     @NonNull
-    QueryModel join(@NonNull Association association);
-
-    /**
-     * Obtain the join type for the given association.
-     * @param association The association
-     *                    The joint type
-     * @return The join type for the association.
-     */
-    Optional<Join.Type> getJoinType(Association association);
+    JoinPath join(String path, @NonNull Association association, @NonNull Join.Type joinType);
 
     /**
      * Join on the given association.
@@ -76,7 +83,19 @@ public interface QueryModel extends Criteria {
      * @return The query
      */
     @NonNull
-    QueryModel join(@NonNull Association association, @NonNull Join.Type joinType);
+    default JoinPath join(@NonNull Association association, @NonNull Join.Type joinType) {
+        return join(association.getName(), association, joinType);
+    }
+
+    /**
+     * Join on the given association.
+     * @param association The association, never null
+     * @return The query
+     */
+    @NonNull
+    default JoinPath join(@NonNull Association association) {
+        return join(association.getName(), association, Join.Type.DEFAULT);
+    }
 
     /**
      * @return The projection list.

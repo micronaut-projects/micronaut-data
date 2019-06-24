@@ -85,7 +85,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
     private final Map<Class, Dialect> dialects = new HashMap<>(10);
-    private final Map<Dialect, QueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
+    private final Map<Dialect, SqlQueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
     private final JdbcQueryStatement preparedStatementWriter = new JdbcQueryStatement();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
@@ -151,7 +151,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 if (resultType == rootEntity) {
                     @SuppressWarnings("unchecked")
                     RuntimePersistentEntity<R> persistentEntity = getPersistentEntity((Class<R>) rootEntity);
-                    return readEntity(rs, persistentEntity);
+                    return readEntity("", rs, persistentEntity, preparedQuery);
                 } else {
                     if (preparedQuery.isDtoProjection()) {
                         RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
@@ -206,7 +206,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
     }
 
-    @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
@@ -253,6 +252,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 Association association = (Association) prop;
                 if (!association.isForeignKey()) {
                     if (value != null) {
+                        @SuppressWarnings("unchecked")
                         RuntimePersistentEntity<Object> associatedEntity = getPersistentEntity((Class<Object>) value.getClass());
                         RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
                         if (identity == null) {
@@ -330,11 +330,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
             RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(operation.getRootEntity());
             Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
-            // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245
+            // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
             boolean supportsBatch = annotationMetadata.findAnnotation(Repository.class)
                     .flatMap(av -> av.enumValue("dialect", Dialect.class)
                     .map(dialect -> dialect != Dialect.SQL_SERVER)).orElse(true);
-            return new StoredInsert(insertStatement, persistentEntity, parameterBinding, supportsBatch);
+            return new StoredInsert<>(insertStatement, persistentEntity, parameterBinding, supportsBatch);
         });
     }
 
@@ -369,7 +369,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     @Override
                     public R next() {
                         nextCalled = false;
-                        return readEntity(rs, persistentEntity);
+                        return readEntity("", rs, persistentEntity, preparedQuery);
                     }
                 };
             } else {
@@ -422,6 +422,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                             nextCalled = false;
                             Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
                             if (resultType.isInstance(v)) {
+                                //noinspection unchecked
                                 return (R) v;
                             } else {
                                 return columnIndexResultSetReader.convertRequired(v, resultType);
@@ -449,7 +450,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         };
     }
 
-    private <R> R readEntity(ResultSet rs, RuntimePersistentEntity<R> persistentEntity) {
+    private <R> R readEntity(String prefix, ResultSet rs, RuntimePersistentEntity<R> persistentEntity, PreparedQuery<?, R> preparedQuery) {
         BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         R entity;
@@ -462,7 +463,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 String n = argument.getName();
                 RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
                 if (prop != null) {
-                    Object v = columnNameResultSetReader.readDynamic(rs, prop.getPersistedName(), prop.getDataType());
+                    Object v = columnNameResultSetReader.readDynamic(rs, prefix + prop.getPersistedName(), prop.getDataType());
                     if (v == null && !prop.isOptional()) {
                         throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
                     }
@@ -486,19 +487,30 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 Association association = (Association) persistentProperty;
                 if (!association.isForeignKey()) {
                     RuntimePersistentEntity associatedEntity = getPersistentEntity(((RuntimePersistentProperty) association).getProperty().getType());
-                    Object referenced = associatedEntity.getIntrospection().instantiate();
-                    RuntimePersistentProperty identity = associatedEntity.getIdentity();
-                    if (identity != null) {
-                        Object v = columnNameResultSetReader.readDynamic(rs, persistedName, identity.getDataType());
-                        BeanWrapper.getWrapper(referenced).setProperty(
-                                identity.getName(),
-                                v
-                        );
+                    if (preparedQuery.isJoinFetchPath(association.getName())) {
+
+                        Object associated = readEntity("_" + persistedName + "_", rs, associatedEntity, preparedQuery);
+                        property.set(entity, associated);
+                    } else {
+
+                        BeanIntrospection associatedIntrospection = associatedEntity.getIntrospection();
+                        if (associatedIntrospection.getConstructorArguments().length == 0) {
+
+                            Object referenced = associatedIntrospection.instantiate();
+                            RuntimePersistentProperty identity = associatedEntity.getIdentity();
+                            if (identity != null) {
+                                Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
+                                BeanWrapper.getWrapper(referenced).setProperty(
+                                        identity.getName(),
+                                        v
+                                );
+                            }
+                            property.set(entity, referenced);
+                        }
                     }
-                    property.set(entity, referenced);
                 }
             } else {
-                Object v = columnNameResultSetReader.readDynamic(rs, persistedName, persistentProperty.getDataType());
+                Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, persistentProperty.getDataType());
 
                 if (rpp.getType().isInstance(v)) {
                     property.set(entity, v);
@@ -510,7 +522,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
         if (identity != null) {
             String persistedName = identity.getPersistedName();
-            Object v = columnNameResultSetReader.readDynamic(rs, persistedName, identity.getDataType());
+            Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
             BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
             if (v == null) {
                 throw new DataAccessException("Table contains null ID for entity: " + entity);

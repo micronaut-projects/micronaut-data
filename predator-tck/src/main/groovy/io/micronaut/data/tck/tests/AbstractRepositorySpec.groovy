@@ -235,6 +235,18 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.findByAuthorName("Stephen King").size() == 2
     }
 
+    void "test join on single ended association"() {
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+
+        then:
+        book != null
+        book.title == "Pet Cemetery"
+        book.author != null
+        book.author.id != null
+        book.author.name == "Stephen King"
+    }
+
     void "test find by name"() {
         when:
         Person p = personRepository.getByName("Fred")

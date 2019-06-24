@@ -11,6 +11,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.AssociationQuery;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 
@@ -56,7 +57,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             List<QueryModel.Criterion> associationCriteriaList = associationCriteria.getCriteria();
 
             handleAssociationCriteria(
-                    queryState, association, associationCriteria, associationCriteriaList
+                    aq, queryState, association, associationCriteria, associationCriteriaList
             );
         });
 
@@ -446,6 +447,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         buildSelectClause(query, queryState);
         QueryModel.Junction criteria = query.getCriteria();
 
+        Collection<JoinPath> joinPaths = query.getJoinPaths();
+        for (JoinPath joinPath : joinPaths) {
+            queryState.applyJoin(joinPath);
+        }
         Map<String, String> parameters = null;
         if (!criteria.isEmpty()) {
             parameters = buildWhereClause(criteria, queryState);
@@ -479,7 +484,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param association The association
      * @return The alias
      */
-    protected String getAliasName(Association association) {
+    public String getAliasName(Association association) {
         return getAliasName(association.getOwner()) + getColumnName(association) + "_";
     }
 
@@ -505,11 +510,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Obtain the string that selects all columns from the entity.
      *
-     * @param entity The entity
-     * @param alias  The alias to use
-     * @return The columns
+     * @param queryState The query state
      */
-    protected abstract String selectAllColumns(PersistentEntity entity, String alias);
+    protected abstract void selectAllColumns(QueryState queryState);
 
     /**
      * Begins the query state.
@@ -542,7 +545,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private void buildSelect(QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String logicalName, PersistentEntity entity) {
         if (projectionList.isEmpty()) {
-            queryString.append(selectAllColumns(queryState.getEntity(), queryState.getCurrentAlias()));
+            selectAllColumns(queryState);
         } else {
             for (Iterator i = projectionList.iterator(); i.hasNext(); ) {
                 QueryModel.Projection projection = (QueryModel.Projection) i.next();
@@ -622,6 +625,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected abstract void appendProjectionRowCount(StringBuilder queryString, String logicalName);
 
     private void handleAssociationCriteria(
+            AssociationQuery associationQuery,
             QueryState queryState,
             Association association,
             QueryModel.Junction associationCriteria,
@@ -650,7 +654,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
 
-            String alias = queryState.applyJoin(association);
+            QueryModel queryModel = queryState.getQueryModel();
+            String path = associationQuery.getPath();
+            JoinPath joinPath = queryModel.getJoinPath(path).orElse(null);
+            if (joinPath == null) {
+                joinPath = queryModel.join(path, association, Join.Type.DEFAULT);
+            }
+
+            String alias = queryState.applyJoin(joinPath);
 
             try {
                 queryState.setEntity(associatedEntity);
@@ -751,6 +762,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     Association association = ac.getAssociation();
                     QueryModel.Junction junction = ac.getCriteria();
                     handleAssociationCriteria(
+                            ac,
                             queryState,
                             association,
                             junction,
@@ -953,8 +965,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String first = tokenizer.nextToken();
             PersistentProperty p = queryState.getEntity().getPropertyByName(first);
             if (p instanceof Association) {
+                QueryModel queryModel = queryState.getQueryModel();
+                JoinPath joinPath = queryModel.getJoinPath(name).orElse(null);
+                if (joinPath == null) {
+                    joinPath = queryModel.join(name, (Association) p, Join.Type.DEFAULT);
+                }
                 if (queryState.isAllowJoins()) {
-                    String alias = queryState.applyJoin((Association) p);
+                    String alias = queryState.applyJoin(joinPath);
                     queryState.setCurrentAlias(alias);
                 } else {
                     throw new IllegalArgumentException("Joins are not allowed for batch update queries");
@@ -1195,7 +1212,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The query model object
          */
-        public QueryModel getQueryObject() {
+        public QueryModel getQueryModel() {
             return queryObject;
         }
 
@@ -1211,20 +1228,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * Applies a join for the given association.
          *
-         * @param association The association
+         * @param joinPath The join path
          * @return The alias
          */
-        public String applyJoin(Association association) {
+        public String applyJoin(@NonNull JoinPath joinPath) {
             String alias = getCurrentAlias();
-            String associationName = association.getName();
+            // TODO: handled nested associations
+            String associationName = joinPath.getAssociation().getName();
             String associationPath = alias + DOT + associationName;
             if (!appliedJoinPaths.containsKey(associationPath)) {
                 StringBuilder stringBuilder = getQuery();
-                Join.Type jt = getQueryObject().getJoinType(association).orElse(Join.Type.DEFAULT);
+                Join.Type jt = joinPath.getJoinType();
                 String joinType = resolveJoinType(jt);
 
 
-                String associationAlias = buildJoin(alias, association, joinType, stringBuilder);
+                String associationAlias = buildJoin(alias, joinPath.getAssociation(), joinType, stringBuilder);
                 appliedJoinPaths.put(associationPath, associationAlias);
                 return associationAlias;
             } else {

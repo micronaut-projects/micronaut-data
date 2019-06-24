@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
@@ -30,6 +31,9 @@ public abstract class BookRepository implements CrudRepository<Book, Long> {
     public abstract Stream<Book> findTop3ByAuthorNameOrderByTitle(String name);
 
     public abstract void deleteByTitleIsEmptyOrTitleIsNull();
+
+    @Join("author")
+    public abstract Book findByTitle(String title);
 
     public void setupData() {
         Author king = newAuthor("Stephen King");

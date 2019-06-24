@@ -366,7 +366,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                         if (startingEntity == null) {
                             return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
                         } else {
-                            AssociationQuery newSubQuery = new AssociationQuery(association);
+                            AssociationQuery newSubQuery = new AssociationQuery(propertyPath.get(), association);
                             if (associationQuery != null) {
                                 associationQuery.add(newSubQuery);
                             } else {

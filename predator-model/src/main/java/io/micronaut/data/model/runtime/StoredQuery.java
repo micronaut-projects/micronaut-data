@@ -96,6 +96,15 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     }
 
     /**
+     * True if the given association path is a join fetch path.
+     * @param path The path
+     * @return True if it is
+     */
+    default boolean isJoinFetchPath(String path) {
+        return false;
+    }
+
+    /**
      * The type of the ID member of the entity.
      *
      * @return The ID type

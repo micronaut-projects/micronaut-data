@@ -393,7 +393,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             if (path != null) {
                 PersistentProperty prop = rootEntity.getPropertyByPath(path).orElse(null);
                 if (!(prop instanceof Association)) {
-                    matchContext.fail("Invalid join spec: " + path);
+                    matchContext.fail("Invalid join spec [" + path + "]. Property is not an association!");
                     return true;
                 } else {
                     boolean hasExisting = query.getCriteria().getCriteria().stream().anyMatch(c -> {
@@ -404,9 +404,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return false;
                     });
                     if (!hasExisting) {
-                        query.add(new AssociationQuery((Association) prop));
+                        query.add(new AssociationQuery(path, (Association) prop));
                     }
-                    query.join((Association) prop, type);
+                    query.join(path, (Association) prop, type);
                 }
             }
         }

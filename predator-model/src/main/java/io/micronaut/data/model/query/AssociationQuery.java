@@ -27,14 +27,24 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 public class AssociationQuery extends DefaultQuery implements QueryModel.Criterion {
 
     private final Association association;
+    private final String path;
 
     /**
      * Default constructor.
+     * @param path The association path
      * @param association The association.
      */
-    public AssociationQuery(@NonNull Association association) {
+    public AssociationQuery(String path, @NonNull Association association) {
         super(association.getAssociatedEntity());
+        this.path = path;
         this.association = association;
+    }
+
+    /**
+     * @return The path
+     */
+    public String getPath() {
+        return path;
     }
 
     /**

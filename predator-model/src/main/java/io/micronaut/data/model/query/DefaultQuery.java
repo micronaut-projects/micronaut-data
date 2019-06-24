@@ -39,7 +39,7 @@ public class DefaultQuery implements QueryModel {
     private DefaultProjectionList projections = new DefaultProjectionList();
     private int max = -1;
     private long offset = 0;
-    private Map<Association, Join.Type> joinTypes = new HashMap<>(2);
+    private Map<String, JoinPath> joinPaths = new HashMap<>(2);
     private Sort sort = Sort.unsorted();
 
     /**
@@ -52,13 +52,21 @@ public class DefaultQuery implements QueryModel {
     }
 
     /**
+     * @return The join paths.
+     */
+    @Override
+    public Collection<JoinPath> getJoinPaths() {
+        return Collections.unmodifiableCollection(joinPaths.values());
+    }
+
+    /**
      * Creates an association query.
      *
      * @param associationName The assocation name
      * @return The Query instance
      */
     public AssociationQuery createQuery(String associationName) {
-        final PersistentProperty property = entity.getPropertyByName(associationName);
+        final PersistentProperty property = entity.getPropertyByPath(associationName).orElse(null);
         if (!(property instanceof Association)) {
             throw new IllegalArgumentException("Cannot query association [" +
                     associationName + "] of class [" + entity +
@@ -66,7 +74,7 @@ public class DefaultQuery implements QueryModel {
         }
 
         Association association = (Association) property;
-        return new AssociationQuery(association);
+        return new AssociationQuery(associationName, association);
     }
 
     @NonNull
@@ -88,27 +96,16 @@ public class DefaultQuery implements QueryModel {
         return projections.getProjectionList();
     }
 
-    /**
-     * Specifies whether a join query should be used (if join queries are supported by the underlying datastore).
-     *
-     * @param association The association
-     * @return The query
-     */
-    @Override
-    public DefaultQuery join(@NonNull Association association) {
-        joinTypes.put(association, Join.Type.DEFAULT);
-        return this;
-    }
 
     /**
      * Obtain the joint for for a given association.
-     * @param association The join type
+     * @param path The path to the association
      * @return The join type
      */
     @Override
-    public Optional<Join.Type> getJoinType(Association association) {
-        if (association != null) {
-            return Optional.ofNullable(joinTypes.get(association));
+    public Optional<JoinPath> getJoinPath(String path) {
+        if (path != null) {
+            return Optional.ofNullable(joinPaths.get(path));
         }
         return Optional.empty();
     }
@@ -120,9 +117,10 @@ public class DefaultQuery implements QueryModel {
      * @return The query
      */
     @Override
-    public DefaultQuery join(@NonNull Association association, Join.Type joinType) {
-        joinTypes.put(association, joinType != null ? joinType : Join.Type.DEFAULT);
-        return this;
+    public JoinPath join(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType) {
+        JoinPath jp = new JoinPath(path, association, joinType);
+        joinPaths.put(path, jp);
+        return jp;
     }
 
     /**
