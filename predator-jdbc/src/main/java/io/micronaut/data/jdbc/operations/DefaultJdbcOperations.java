@@ -189,7 +189,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return CollectionUtils.iterableToList(findIterable(preparedQuery));
+        return findIterable(preparedQuery);
     }
 
     @NonNull
@@ -544,30 +544,36 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
         if (!isUpdate) {
             Pageable pageable = preparedQuery.getPageable();
+            Class<T> rootEntity = preparedQuery.getRootEntity();
             if (pageable != Pageable.UNPAGED) {
                 Sort sort = pageable.getSort();
                 Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
-                    query += queryBuilder.buildOrderBy(getPersistentEntity(preparedQuery.getRootEntity()), sort).getQuery();
-                } else if (dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE)) {
+                    query += queryBuilder.buildOrderBy(getPersistentEntity(rootEntity), sort).getQuery();
+                } else if (isSqlServerWithoutOrderBy(query, dialect)) {
                     // SQL server requires order by
-                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
-                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-                    if (identity == null) {
-                        throw new DataAccessException("Pagination requires an entity ID on SQL Server");
-                    }
-                    sort = Sort.unsorted().order(Sort.Order.asc(identity.getName()));
+                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(rootEntity);
+                    sort = sortById(persistentEntity);
                     query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                 }
                 if (isSingleResult && pageable.getOffset() > 0) {
                     pageable = Pageable.from(pageable.getNumber(), 1);
                 }
                 query += queryBuilder.buildPagination(pageable).getQuery();
-            } else if (isSingleResult) {
+            } else if (isSingleResult && !preparedQuery.isCount()) {
                 Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
-                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
-                query += queryBuilder.buildPagination(Pageable.from(0, 1)).getQuery();
+                boolean isSqlServer = isSqlServerWithoutOrderBy(query, dialect);
+                if (!isSqlServer || rootEntity == preparedQuery.getResultType()) {
+
+                    QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+                    if (isSqlServer) {
+                        RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(rootEntity);
+                        Sort sort = sortById(persistentEntity);
+                        query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
+                    }
+                    query += queryBuilder.buildPagination(Pageable.from(0, 1)).getQuery();
+                }
             }
         }
 
@@ -612,6 +618,21 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
         }
         return ps;
+    }
+
+    @NonNull
+    private <T> Sort sortById(RuntimePersistentEntity<T> persistentEntity) {
+        Sort sort;
+        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+        if (identity == null) {
+            throw new DataAccessException("Pagination requires an entity ID on SQL Server");
+        }
+        sort = Sort.unsorted().order(Sort.Order.asc(identity.getName()));
+        return sort;
+    }
+
+    private boolean isSqlServerWithoutOrderBy(String query, Dialect dialect) {
+        return dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE);
     }
 
     private void setStatementParameter(PreparedStatement ps, int index, DataType dataType, Object o) {
