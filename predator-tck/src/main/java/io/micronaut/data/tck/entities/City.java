@@ -13,11 +13,11 @@ public class City {
     private String name;
 
     @Relation(Relation.Kind.MANY_TO_ONE)
-    private RegionOrCounty region;
+    private CountryRegion countryRegion;
 
-    public City(String name, RegionOrCounty region) {
+    public City(String name, CountryRegion countryRegion) {
         this.name = name;
-        this.region = region;
+        this.countryRegion = countryRegion;
     }
 
     public Long getId() {
@@ -32,7 +32,7 @@ public class City {
         return name;
     }
 
-    public RegionOrCounty getRegion() {
-        return region;
+    public CountryRegion getCountryRegion() {
+        return countryRegion;
     }
 }

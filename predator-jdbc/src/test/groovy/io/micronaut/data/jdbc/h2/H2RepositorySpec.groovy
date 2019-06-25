@@ -5,7 +5,10 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -43,6 +46,18 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     @Shared
     DataSource dataSource
 
+    @Inject
+    @Shared
+    H2CountryRepository countryr
+
+    @Inject
+    @Shared
+    H2CityRepository cityr
+
+    @Inject
+    @Shared
+    H2RegionRepository regr
+
     @Override
     H2PersonRepository getPersonRepository() {
         return pr
@@ -66,6 +81,21 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     @Override
     BookDtoRepository getBookDtoRepository() {
         return dto
+    }
+
+    @Override
+    CountryRepository getCountryRepository() {
+        return countryr
+    }
+
+    @Override
+    CityRepository getCityRepository() {
+        return cityr
+    }
+
+    @Override
+    RegionRepository getRegionRepository() {
+        return regr
     }
 
     void init() {

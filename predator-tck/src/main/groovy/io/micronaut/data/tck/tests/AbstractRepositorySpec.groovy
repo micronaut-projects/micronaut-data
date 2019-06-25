@@ -4,19 +4,27 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
+import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.Company
+import io.micronaut.data.tck.entities.Country
+import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.PersonRepository
+import io.micronaut.data.tck.repositories.RegionRepository
 import spock.lang.Specification
+import spock.lang.Stepwise
 
 import java.time.LocalDate
 import java.time.Year
 import java.time.YearMonth
 
+@Stepwise
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
@@ -24,6 +32,10 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract AuthorRepository getAuthorRepository()
     abstract CompanyRepository getCompanyRepository()
     abstract BookDtoRepository getBookDtoRepository()
+    abstract CountryRepository getCountryRepository()
+    abstract CityRepository getCityRepository()
+    abstract RegionRepository getRegionRepository()
+
     abstract void init()
 
     def setupSpec() {
@@ -306,6 +318,51 @@ abstract class AbstractRepositorySpec extends Specification {
         retrieved.dateCreated.time == company2.dateCreated.time
         company2.name == 'Changed'
         company2.lastUpdated.toEpochMilli() > company2.dateCreated.time
+    }
+
+    void "test query across multiple associations"() {
+
+        when:
+        def spain = new Country("Spain")
+        def france = new Country("France")
+        countryRepository.save(spain)
+        countryRepository.save(france)
+        def madrid = new CountryRegion("Madrid", spain)
+        def pv = new CountryRegion("Pais Vasco", spain)
+        regionRepository.save(madrid)
+        regionRepository.save(pv)
+        def b = new CountryRegion("Bordeaux", france)
+        regionRepository.save(b)
+        cityRepository.save(new City("Bordeaux", b))
+        cityRepository.save(new City("Bilbao", pv))
+        cityRepository.save(new City("Madrid", madrid))
+
+        then:"The counts are correct"
+        cityRepository.countByCountryRegionCountryName("Spain") == 2
+        cityRepository.countByCountryRegionCountryName("France") == 1
+
+        when:"A single level join is executed"
+        def results = cityRepository.findByCountryRegionCountryName("Spain")
+
+        then:"The results include the joined table"
+        results.size() == 2
+        results[0].name
+        results[0].id
+        results[0].countryRegion
+        results[0].countryRegion.name
+        results[0].countryRegion.country == null
+
+        when:"A multiple level join is executed"
+        results = cityRepository.getByCountryRegionCountryName("Spain")
+
+        then:"The results include the joined table"
+        results.size() == 2
+        results[0].name
+        results[0].id
+        results[0].countryRegion
+        results[0].countryRegion.name
+        results[0].countryRegion.country.uuid == spain.uuid
+        results[0].countryRegion.country.name == "Spain"
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

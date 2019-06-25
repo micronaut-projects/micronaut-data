@@ -15,6 +15,8 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.City
+import io.micronaut.data.tck.entities.CountryRegion
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -30,7 +32,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.pages,book_.publisher_id,book_author_id_.id AS _author_id_id,book_author_id_.name AS _author_id_name,book_author_id_.nick_name AS _author_id_nick_name FROM book AS book_ INNER JOIN author book_author_id_ ON book_.author_id=book_author_id_.id WHERE (book_.id = ?)'
+        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.pages,book_.publisher_id,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM book AS book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.id = ?)'
 
     }
 
@@ -84,6 +86,28 @@ class SqlQueryBuilderSpec extends Specification {
         result.parameters.equals(name: '1', age: '2', enabled: '3')
     }
 
+
+    void "test encode insert statement - custom mapping strategy"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(CountryRegion)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+
+        expect:
+        result.query == 'INSERT INTO CountryRegion (name,countryId) VALUES (?,?)'
+    }
+
+    void "test encode insert statement - custom mapping"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(City)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+
+        expect:
+        result.query == 'INSERT INTO T_CITY (C_NAME,country_region_id) VALUES (?,?)'
+    }
+
+
     void "test encode insert statement - assigned id"() {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(PersonAssignedId)
@@ -107,7 +131,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildQuery(query)
 
         expect:
-        result.query == "SELECT $columns FROM book AS book_ INNER JOIN author book_author_id_ ON book_.author_id=book_author_id_.id WHERE (book_author_id_.nick_name = ?)"
+        result.query == "SELECT $columns FROM book AS book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_author_.nick_name = ?)"
     }
 
     @Unroll

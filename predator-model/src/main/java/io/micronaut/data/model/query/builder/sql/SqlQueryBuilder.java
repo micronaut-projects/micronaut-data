@@ -22,6 +22,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Join;
@@ -190,11 +191,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     if (CollectionUtils.isNotEmpty(associatedProperties)) {
                         queryBuffer.append(COMMA);
 
-                        String aliasName = getAliasName(association);
+                        String aliasName = getAliasName(joinPath);
+                        String joinPathAlias = getPathOnlyAliasName(joinPath);
                         String columnNames = associatedProperties.stream()
                                 .map(p -> {
                                     String columnName = getColumnName(p);
-                                    return aliasName + DOT + columnName + AS_CLAUSE + '_' + getColumnName(association) + '_' + columnName;
+                                    return aliasName + DOT + columnName + AS_CLAUSE + '_' + joinPathAlias + columnName;
                                 })
                                 .collect(Collectors.joining(","));
                         queryBuffer.append(columnNames);
@@ -211,7 +213,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @param alias The alias
      * @return The column selection string
      */
-    protected String selectAllColumns(PersistentEntity entity, String alias) {
+    public String selectAllColumns(PersistentEntity entity, String alias) {
         String columns;
         List<PersistentProperty> persistentProperties = getPropertiesThatAreColumns(entity);
         if (CollectionUtils.isNotEmpty(persistentProperties)) {
@@ -257,6 +259,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case RIGHT_FETCH:
                 joinType = " RIGHT JOIN ";
                 break;
+            case OUTER:
+                joinType = " FULL OUTER JOIN ";
+                break;
             default:
                 joinType = " INNER JOIN ";
         }
@@ -270,7 +275,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         builder.append(getTableName(entity));
         builder.append(" (");
 
-        List<PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        List<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
         boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
         int index = 1;
@@ -404,30 +409,49 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String buildJoin(String alias, Association association, String joinType, StringBuilder target) {
-        PersistentEntity associatedEntity = association.getAssociatedEntity();
-        if (associatedEntity == null) {
-            throw new IllegalArgumentException("Associated entity not found for association: " + association.getName());
+    protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder target, Map<String, String> appliedJoinPaths) {
+        Association[] associationPath = joinPath.getAssociationPath();
+        String[] joinAliases;
+        if (ArrayUtils.isEmpty(associationPath)) {
+            throw new IllegalArgumentException("Invalid association path [" + joinPath.getPath() + "]");
         }
-        String joinAlias = getAliasName(association);
-        PersistentProperty identity = associatedEntity.getIdentity();
-        if (identity == null) {
-            throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
+        joinAliases = new String[associationPath.length];
+        StringBuilder pathSoFar = new StringBuilder();
+        for (int i = 0; i < associationPath.length; i++) {
+            Association association = associationPath[i];
+            String associationName = association.getName();
+            pathSoFar.append(associationName);
+            String existingAlias = appliedJoinPaths.get(alias + DOT + associationName);
+            if (existingAlias != null) {
+                joinAliases[i] = existingAlias;
+                alias = existingAlias;
+            } else {
+                PersistentEntity associatedEntity = association.getAssociatedEntity();
+                if (associatedEntity == null) {
+                    throw new IllegalArgumentException("Associated entity not found for association: " + associationName);
+                }
+                joinAliases[i] = getAliasName(new JoinPath(pathSoFar.toString(), Arrays.copyOfRange(associationPath, 0, i + 1), joinPath.getJoinType()));
+                PersistentProperty identity = associatedEntity.getIdentity();
+                if (identity == null) {
+                    throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
+                }
+                target.append(joinType)
+                        .append(getTableName(associatedEntity))
+                        .append(SPACE)
+                        .append(joinAliases[i])
+                        .append(" ON ")
+                        .append(alias)
+                        .append(DOT)
+                        .append(getColumnName(association))
+                        .append('=')
+                        .append(joinAliases[i])
+                        .append(DOT)
+                        .append(getColumnName(identity));
+                alias = joinAliases[i];
+            }
+            pathSoFar.append(DOT);
         }
-        target.append(joinType)
-              .append(getTableName(associatedEntity))
-              .append(SPACE)
-              .append(joinAlias)
-              .append(" ON ")
-              .append(alias)
-              .append(DOT)
-              .append(getColumnName(association))
-              .append('=')
-              .append(joinAlias)
-              .append(DOT)
-              .append(getColumnName(identity));
-
-        return joinAlias;
+        return joinAliases;
     }
 
     /**

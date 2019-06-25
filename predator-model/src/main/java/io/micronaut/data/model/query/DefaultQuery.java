@@ -118,7 +118,25 @@ public class DefaultQuery implements QueryModel {
      */
     @Override
     public JoinPath join(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType) {
-        JoinPath jp = new JoinPath(path, association, joinType);
+        PersistentEntity entity = getEntity();
+        String[] elements = path.split("\\.");
+        Association[] associations = new Association[elements.length];
+        for (int i = 0; i < elements.length; i++) {
+            PersistentProperty property = entity.getPropertyByName(elements[i]);
+            if (property instanceof Association) {
+                Association a = (Association) property;
+                entity = a.getAssociatedEntity();
+                if (entity == null) {
+                    throw new IllegalArgumentException("Invalid association path. Element [" + elements[i] + "] references an associated entity that doesn't exist.");
+                }
+                associations[i] = a;
+            } else {
+                throw new IllegalArgumentException("Invalid association path. Element [" + elements[i] + "] is not an association.");
+            }
+
+        }
+
+        JoinPath jp = new JoinPath(path, associations, joinType);
         joinPaths.put(path, jp);
         return jp;
     }

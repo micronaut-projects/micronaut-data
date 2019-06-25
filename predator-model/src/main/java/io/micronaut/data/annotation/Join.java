@@ -50,6 +50,7 @@ public @interface Join {
         RIGHT,
         RIGHT_FETCH,
         FETCH,
-        INNER
+        INNER,
+        OUTER
     }
 }

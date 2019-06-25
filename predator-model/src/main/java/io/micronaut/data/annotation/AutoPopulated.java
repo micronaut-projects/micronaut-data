@@ -11,7 +11,7 @@ import java.lang.annotation.*;
  * @since 1.0.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.ANNOTATION_TYPE)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.FIELD})
 @Documented
 public @interface AutoPopulated {
 }

@@ -15,11 +15,15 @@
  */
 package io.micronaut.data.processor.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
+
+import java.util.function.Function;
 
 /**
  * Source code level implementation of {@link Association}.
@@ -30,30 +34,39 @@ import io.micronaut.inject.ast.PropertyElement;
 @Internal
 class SourceAssociation extends SourcePersistentProperty implements Association {
 
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver;
+    private final Relation.Kind kind;
+
     /**
      * Default constructor.
      * @param owner The owner
      * @param propertyElement The property element
+     * @param entityResolver The entity resolver
      */
-    SourceAssociation(SourcePersistentEntity owner, PropertyElement propertyElement) {
+    SourceAssociation(SourcePersistentEntity owner, PropertyElement propertyElement, @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(owner, propertyElement);
+        this.entityResolver = entityResolver;
+        this.kind = Association.super.getKind();
+    }
+
+    @NonNull
+    @Override
+    public Relation.Kind getKind() {
+        return kind;
     }
 
     @Override
     public PersistentEntity getAssociatedEntity() {
         ClassElement type = getType();
-        if (type == null) {
-            return null;
-        }
         switch (getKind()) {
             case ONE_TO_MANY:
             case MANY_TO_MANY:
                 ClassElement classElement = type.getFirstTypeArgument().orElse(null);
                 if (classElement  != null) {
-                    return new SourcePersistentEntity(classElement);
+                    return entityResolver.apply(classElement);
                 }
             default:
-                return new SourcePersistentEntity(type);
+                return entityResolver.apply(type);
         }
     }
 

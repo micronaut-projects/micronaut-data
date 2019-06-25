@@ -52,6 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
@@ -202,25 +203,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
     }
 
     /**
-     * Retrieves a pageable from the context.
-     * @param context The pageable
-     * @return The pageable
-     */
-    protected @NonNull Pageable getRequiredPageable(MethodInvocationContext context) {
-        Pageable pageable = getPageable(context);
-        if (pageable == null) {
-            throw new IllegalStateException("Pageable argument missing");
-        }
-
-        return pageable;
-    }
-
-    /**
      * Resolves the {@link Pageable} for the given context.
      * @param context The pageable
      * @return The pageable or null
      */
-    @Nullable
+    @NonNull
     protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
         String pageableParam = context.stringValue(PredatorMethod.class, TypeRole.PAGEABLE).orElse(null);
         Pageable pageable = null;
@@ -395,7 +382,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         }
 
         BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
-        List<PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        List<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         for (PersistentProperty prop : persistentProperties) {
             if (!prop.isReadOnly() && !prop.isGenerated()) {
                 String propName = prop.getName();
@@ -716,6 +703,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final Map<String, DataType> dataTypes;
         private final DataType[] indexedDataTypes;
         private Map<String, Object> queryHints;
+        private Set<String> joinFetchPaths = null;
 
         /**
          * The default constructor.
@@ -840,12 +828,20 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @Override
         public boolean isJoinFetchPath(String path) {
-            return method.getAnnotationValuesByType(Join.class).stream().anyMatch(
-                    av -> path.equals(av.stringValue().orElse(null)) && isJoinFetch(av)
-            );
+            if (joinFetchPaths == null) {
+                Set<String> set = method.getAnnotationValuesByType(Join.class).stream().filter(
+                        this::isJoinFetch
+                ).map(av -> av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition")))
+                        .collect(Collectors.toSet());
+                joinFetchPaths = set.isEmpty() ? Collections.emptySet() : set;
+            }
+            return joinFetchPaths.contains(path);
         }
 
         private boolean isJoinFetch(AnnotationValue<Join> av) {
+            if (!av.stringValue().isPresent()) {
+                return false;
+            }
             Optional<String> type = av.stringValue("type");
             return !type.isPresent() || type.get().contains("FETCH");
         }

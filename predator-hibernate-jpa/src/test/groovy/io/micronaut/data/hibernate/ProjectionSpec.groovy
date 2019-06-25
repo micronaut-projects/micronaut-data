@@ -17,6 +17,9 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.repositories.CityRepository
+import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification

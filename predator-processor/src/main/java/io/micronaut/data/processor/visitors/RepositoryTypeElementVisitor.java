@@ -46,6 +46,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -68,6 +69,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private boolean failing = false;
     private Set<String> visitedRepositories = new HashSet<>();
     private Map<String, DataType> dataTypes = Collections.emptyMap();
+    private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+        @Override
+        public SourcePersistentEntity apply(ClassElement classElement) {
+            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
+        }
+    };
 
     /**
      * Default constructor.
@@ -186,6 +194,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     String idType = resolveIdType(entity);
 
 
+
                     MethodMatchContext methodMatchContext = new MethodMatchContext(
                             currentRepository,
                             entity,
@@ -194,7 +203,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             element,
                             parametersInRole,
                             typeRoles,
-                            parameters
+                            parameters,
+                            entityResolver
                     );
                     MethodMatchInfo methodInfo = finder.buildMatchInfo(methodMatchContext);
                     if (methodInfo != null) {
@@ -533,7 +543,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (!typeArguments.isEmpty()) {
             ClassElement ce = typeArguments.get(argName);
             if (ce != null) {
-                entity = new SourcePersistentEntity(ce);
+                return entityResolver.apply(ce);
             }
         }
         return entity;
@@ -542,7 +552,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private SourcePersistentEntity resolvePersistentEntity(ClassElement returnType) {
         if (returnType != null) {
             if (returnType.hasAnnotation(MappedEntity.class)) {
-                return new SourcePersistentEntity(returnType);
+                return entityResolver.apply(returnType);
             } else {
                 Collection<ClassElement> typeArguments = returnType.getTypeArguments().values();
                 for (ClassElement typeArgument : typeArguments) {

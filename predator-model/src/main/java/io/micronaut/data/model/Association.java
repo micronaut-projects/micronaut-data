@@ -19,6 +19,7 @@ package io.micronaut.data.model;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.model.naming.NamingStrategy;
 
 
 /**
@@ -28,6 +29,13 @@ import io.micronaut.data.annotation.Relation;
  * @since 1.0
  */
 public interface Association extends PersistentProperty {
+
+    /**
+     * @return The alias name representation.
+     */
+    default String getAliasName() {
+        return NamingStrategy.DEFAULT.mappedName(getName()) + "_";
+    }
 
     /**
      * The associated entity if any.

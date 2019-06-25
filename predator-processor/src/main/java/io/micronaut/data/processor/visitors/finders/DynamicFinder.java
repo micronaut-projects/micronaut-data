@@ -24,7 +24,6 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.QueryModel;
@@ -350,65 +349,43 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         if (prop == null) {
             Optional<String> propertyPath = entity.getPath(propertyName);
             if (propertyPath.isPresent()) {
-                String[] pathArray = propertyPath.get().split("\\.");
-                PersistentEntity startingEntity = entity;
-                PersistentProperty startingProp;
-                AssociationQuery associationQuery = null;
-                AssociationQuery firstAssociationQuery = null;
-                CriterionMethodExpression subExpression = null;
-                for (String token : pathArray) {
-                    startingProp = startingEntity.getPropertyByName(token);
-                    if (startingProp == null) {
-                        return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
-                    } else if (startingProp instanceof Association) {
-                        Association association = (Association) startingProp;
-                        startingEntity = association.getAssociatedEntity();
-                        if (startingEntity == null) {
-                            return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
-                        } else {
-                            AssociationQuery newSubQuery = new AssociationQuery(propertyPath.get(), association);
-                            if (associationQuery != null) {
-                                associationQuery.add(newSubQuery);
-                            } else {
-                                firstAssociationQuery = newSubQuery;
-                            }
-                            associationQuery = newSubQuery;
+                String path = propertyPath.get();
+                PersistentProperty persistentProperty = entity.getPropertyByPath(path).orElse(null);
+                if (persistentProperty != null) {
+                    int i = path.lastIndexOf('.');
+                    if (i > -1) {
+                        String associationPath = path.substring(0, i);
+                        SourcePersistentProperty pp = (SourcePersistentProperty) entity.getPropertyByPath(associationPath).orElse(null);
+                        if (pp instanceof Association) {
+                            AssociationQuery finalQuery = new AssociationQuery(associationPath, (Association) pp);
+                            CriterionMethodExpression finalSubExpression = buildCriterionExpression(
+                                    methodExpressionConstructor,
+                                    persistentProperty.getName(),
+                                    negation
+                            );
+                            return new CriterionMethodExpression(path) {
+                                @Override
+                                public QueryModel.Criterion createCriterion() {
+                                    QueryModel.Criterion c = finalSubExpression.createCriterion();
+                                    finalQuery.add(c);
+                                    return finalQuery;
+                                }
+
+                                @Override
+                                public int getArgumentsRequired() {
+                                    return finalSubExpression.getArgumentsRequired();
+                                }
+
+                                @Override
+                                public void setArgumentNames(String[] argumentNames) {
+                                    finalSubExpression.setArgumentNames(argumentNames);
+                                }
+                            };
                         }
-                    } else if (associationQuery != null) {
-                        subExpression = buildCriterionExpression(
-                                methodExpressionConstructor,
-                                startingProp.getName(),
-                                negation
-                        );
                     }
                 }
-                if (firstAssociationQuery != null && subExpression != null) {
-                    AssociationQuery finalQuery = firstAssociationQuery;
-                    CriterionMethodExpression finalSubExpression = subExpression;
-                    return new CriterionMethodExpression(finalQuery.getAssociation().getName()) {
-                        @Override
-                        public QueryModel.Criterion createCriterion() {
-                            QueryModel.Criterion c = finalSubExpression.createCriterion();
-                            finalQuery.add(c);
-                            return finalQuery;
-                        }
-
-                        @Override
-                        public int getArgumentsRequired() {
-                            return finalSubExpression.getArgumentsRequired();
-                        }
-
-                        @Override
-                        public void setArgumentNames(String[] argumentNames) {
-                            finalSubExpression.setArgumentNames(argumentNames);
-                        }
-                    };
-                } else {
-                    return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
-                }
-            } else {
-                return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
             }
+            return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
         } else {
             return buildCriterionExpression(methodExpressionConstructor, propertyName, negation);
         }

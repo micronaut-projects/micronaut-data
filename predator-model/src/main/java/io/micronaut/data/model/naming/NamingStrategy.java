@@ -38,6 +38,11 @@ import java.util.function.Supplier;
 public interface NamingStrategy {
 
     /**
+     * Constant for the default under score separated lower case strategy.
+     */
+    NamingStrategy DEFAULT = new NamingStrategies.UnderScoreSeparatedLowerCase();
+
+    /**
      * Return the mapped name for the given name.
      * @param name The name
      * @return The mapped name

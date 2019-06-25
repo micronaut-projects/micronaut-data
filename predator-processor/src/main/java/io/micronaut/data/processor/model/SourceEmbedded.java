@@ -15,9 +15,13 @@
  */
 package io.micronaut.data.processor.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
+
+import java.util.function.Function;
 
 /**
  * Source code level implementation of {@link Embedded}.
@@ -31,8 +35,9 @@ class SourceEmbedded extends SourceAssociation implements Embedded {
      * Default constructor.
      * @param owner The owner
      * @param propertyElement The property element
+     * @param entityResolver The entity resolver
      */
-    SourceEmbedded(SourcePersistentEntity owner, PropertyElement propertyElement) {
-        super(owner, propertyElement);
+    SourceEmbedded(SourcePersistentEntity owner, PropertyElement propertyElement, @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        super(owner, propertyElement, entityResolver);
     }
 }

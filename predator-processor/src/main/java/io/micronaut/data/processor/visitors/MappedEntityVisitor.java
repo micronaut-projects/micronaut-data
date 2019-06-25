@@ -29,12 +29,19 @@ import java.util.function.Function;
  * @since 1.0.0
  */
 public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Object> {
+    private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+        @Override
+        public SourcePersistentEntity apply(ClassElement classElement) {
+            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
+        }
+    };
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         NamingStrategy namingStrategy = resolveNamingStrategy(element);
         Optional<String> targetName = element.stringValue(MappedEntity.class);
-        SourcePersistentEntity entity = new SourcePersistentEntity(element);
+        SourcePersistentEntity entity = entityResolver.apply(element);
         if (!targetName.isPresent()) {
             element.annotate(MappedEntity.class, builder -> {
 

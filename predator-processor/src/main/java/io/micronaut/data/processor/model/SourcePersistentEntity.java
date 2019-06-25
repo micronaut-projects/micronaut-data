@@ -31,6 +31,7 @@ import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.ast.TypedElement;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -46,13 +47,16 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     private final Map<String, PropertyElement> beanProperties;
     private final SourcePersistentProperty[] id;
     private final SourcePersistentProperty version;
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     /**
      * Default constructor.
      * @param classElement The class element
+     * @param entityResolver The entity resolver to resolve any additional entities such as associations
      */
-    public SourcePersistentEntity(@NonNull ClassElement classElement) {
+    public SourcePersistentEntity(@NonNull ClassElement classElement, @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(classElement);
+        this.entityResolver = entityResolver;
         this.classElement = classElement;
         final List<PropertyElement> beanProperties = classElement.getBeanProperties();
         this.beanProperties = new LinkedHashMap<>(beanProperties.size());
@@ -130,9 +134,9 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
             if (relation.isPresent()) {
                 Relation.Kind kind = relation.flatMap(av -> av.enumValue(Relation.Kind.class)).orElse(null);
                 if (kind == Relation.Kind.EMBEDDED) {
-                    return new SourceEmbedded(this, propertyElement);
+                    return new SourceEmbedded(this, propertyElement, entityResolver);
                 } else {
-                    return new SourceAssociation(this, propertyElement);
+                    return new SourceAssociation(this, propertyElement, entityResolver);
                 }
             } else {
                 return new SourcePersistentProperty(this, propertyElement);
@@ -146,7 +150,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     public List<Association> getAssociations() {
         return beanProperties.values().stream()
                 .filter(bp -> bp.hasStereotype(Relation.class))
-                .map(propertyElement -> new SourceAssociation(this, propertyElement))
+                .map(propertyElement -> new SourceAssociation(this, propertyElement, entityResolver))
                 .collect(Collectors.toList());
     }
 
@@ -155,7 +159,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     public List<Embedded> getEmbedded() {
         return beanProperties.values().stream()
                 .filter(this::isEmbedded)
-                .map(propertyElement -> new SourceEmbedded(this, propertyElement))
+                .map(propertyElement -> new SourceEmbedded(this, propertyElement, entityResolver))
                 .collect(Collectors.toList());
     }
 
@@ -167,9 +171,9 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
             if (prop != null) {
                 if (prop.hasStereotype(Relation.class)) {
                     if (isEmbedded(prop)) {
-                        return new SourceEmbedded(this, prop);
+                        return new SourceEmbedded(this, prop, entityResolver);
                     } else {
-                        return new SourceAssociation(this, prop);
+                        return new SourceAssociation(this, prop, entityResolver);
                     }
                 } else {
                     return new SourcePersistentProperty(this, prop);
@@ -211,5 +215,10 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     private boolean isEmbedded(PropertyElement bp) {
         return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 }

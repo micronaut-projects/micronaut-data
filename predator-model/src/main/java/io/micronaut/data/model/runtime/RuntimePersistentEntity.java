@@ -26,6 +26,7 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.model.*;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,6 +41,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     private final BeanIntrospection<T> introspection;
     private final RuntimePersistentProperty<T> identity;
+    private final List<RuntimePersistentProperty<T>> persistentProperties;
     private RuntimePersistentProperty<T> version;
 
     /**
@@ -64,7 +66,23 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         version = introspection.getIndexedProperty(Version.class).map(bp ->
                 new RuntimePersistentProperty<>(this, bp)
         ).orElse(null);
+        this.persistentProperties = Collections.unmodifiableList(introspection.getBeanProperties()
+                .stream()
+                .filter((bp) -> !bp.hasStereotype(Id.class, Version.class))
+                .map(bp -> {
+                    if (bp.hasAnnotation(Relation.class)) {
+                        if (isEmbedded(bp)) {
+                            return new RuntimeEmbedded<>(this, bp);
+                        } else {
+                            return new RuntimeAssociation<>(this, bp);
+                        }
+                    } else {
+                        return new RuntimePersistentProperty<>(this, bp);
+                    }
+                })
+                .collect(Collectors.toList()));
     }
+
 
     /**
      * @return The underlying introspection.
@@ -99,30 +117,17 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     @NonNull
     @Override
-    public List<PersistentProperty> getPersistentProperties() {
-        return introspection.getBeanProperties()
-                .stream()
-                .filter((bp) -> !bp.hasStereotype(Id.class, Version.class))
-                .map(bp -> {
-                    if (bp.hasAnnotation(Relation.class)) {
-                        if (isEmbedded(bp)) {
-                            return new RuntimeEmbedded<>(this, bp);
-                        } else {
-                            return new RuntimeAssociation<>(this, bp);
-                        }
-                    } else {
-                        return new RuntimePersistentProperty<>(this, bp);
-                    }
-                })
-                .collect(Collectors.toList());
+    public List<RuntimePersistentProperty<T>> getPersistentProperties() {
+        return persistentProperties;
     }
 
     @NonNull
     @Override
     public List<Association> getAssociations() {
-        return introspection.getBeanProperties().stream()
-                .filter(bp -> bp.hasStereotype(Relation.class))
-                .map(propertyElement -> new RuntimeAssociation<>(this, propertyElement))
+        return persistentProperties
+                .stream()
+                .filter(bp -> bp.getAnnotationMetadata().hasStereotype(Relation.class))
+                .map(p -> (Association) p)
                 .collect(Collectors.toList());
     }
 

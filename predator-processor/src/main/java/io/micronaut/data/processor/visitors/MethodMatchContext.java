@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +41,7 @@ public class MethodMatchContext extends MatchContext {
     @NonNull
     private final SourcePersistentEntity entity;
     private final Map<String, Element> parametersInRole;
+    private final Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     /**
      * Creates the context.
@@ -51,6 +53,7 @@ public class MethodMatchContext extends MatchContext {
      * @param parametersInRole Parameters that fulfill a query execution role
      * @param typeRoles The type roles
      * @param parameters The parameters
+     * @param entityResolver function used to resolve entities
      */
     MethodMatchContext(
             @NonNull ClassElement repositoryClass,
@@ -60,10 +63,12 @@ public class MethodMatchContext extends MatchContext {
             @NonNull MethodElement methodElement,
             @NonNull Map<String, Element> parametersInRole,
             @NonNull Map<String, String> typeRoles,
-            @NonNull ParameterElement[] parameters) {
+            @NonNull ParameterElement[] parameters,
+            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
+        this.entityResolver = entityResolver;
     }
 
     /**
@@ -101,5 +106,14 @@ public class MethodMatchContext extends MatchContext {
         return Arrays.stream(getParameters()).filter(p ->
             !this.parametersInRole.containsValue(p)
         ).collect(Collectors.toList());
+    }
+
+    /**
+     * Resolves an entity.
+     * @param element The element
+     * @return The entity
+     */
+    public @NonNull SourcePersistentEntity getEntity(@NonNull ClassElement element) {
+        return entityResolver.apply(element);
     }
 }

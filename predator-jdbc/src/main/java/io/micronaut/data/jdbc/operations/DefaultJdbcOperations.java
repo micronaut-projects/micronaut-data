@@ -11,6 +11,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -151,7 +152,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 if (resultType == rootEntity) {
                     @SuppressWarnings("unchecked")
                     RuntimePersistentEntity<R> persistentEntity = getPersistentEntity((Class<R>) rootEntity);
-                    return readEntity("", rs, persistentEntity, preparedQuery);
+                    return readEntity("", "", rs, persistentEntity, preparedQuery);
                 } else {
                     if (preparedQuery.isDtoProjection()) {
                         RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
@@ -245,7 +246,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
             RuntimePersistentProperty<T> prop = entry.getKey();
             DataType type = prop.getDataType();
-            BeanProperty<T, ?> beanProperty = prop.getProperty();
+            BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
             Object value = beanProperty.get(entity);
             int index = entry.getValue();
             if (prop instanceof Association) {
@@ -298,6 +299,18 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                                 now
                         );
                         beanProperty.convertAndSet(entity, now);
+                    } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
+                        UUID uuid = UUID.randomUUID();
+                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
+                        }
+                        preparedStatementWriter.setDynamic(
+                                stmt,
+                                index,
+                                type,
+                                uuid
+                        );
+                        beanProperty.set(entity, uuid);
                     } else {
                         throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                     }
@@ -369,7 +382,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     @Override
                     public R next() {
                         nextCalled = false;
-                        return readEntity("", rs, persistentEntity, preparedQuery);
+                        return readEntity("", "", rs, persistentEntity, preparedQuery);
                     }
                 };
             } else {
@@ -450,93 +463,124 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         };
     }
 
-    private <R> R readEntity(String prefix, ResultSet rs, RuntimePersistentEntity<R> persistentEntity, PreparedQuery<?, R> preparedQuery) {
+    private <R> R readEntity(String prefix, String path, ResultSet rs, RuntimePersistentEntity<R> persistentEntity, PreparedQuery<?, R> preparedQuery) {
         BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-        R entity;
-        if (ArrayUtils.isEmpty(constructorArguments)) {
-            entity = introspection.instantiate();
-        } else {
-            Object[] args = new Object[constructorArguments.length];
-            for (int i = 0; i < constructorArguments.length; i++) {
-                Argument<?> argument = constructorArguments[i];
-                String n = argument.getName();
-                RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
-                if (prop != null) {
-                    Object v = columnNameResultSetReader.readDynamic(rs, prefix + prop.getPersistedName(), prop.getDataType());
-                    if (v == null && !prop.isOptional()) {
-                        throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
-                    }
-                    Class<?> t = argument.getType();
-                    if (!t.isInstance(v)) {
-                        args[i] = columnIndexResultSetReader.convertRequired(v, t);
-                    } else {
-                        args[i] = v;
-                    }
-                } else {
-                    throw new DataAccessException("Constructor [" + argument.getName() + "] must have a getter fortype: " + persistentEntity.getName());
-                }
-            }
-            entity = introspection.instantiate(args);
-        }
-        for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
-            RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
-            String persistedName = persistentProperty.getPersistedName();
-            BeanProperty property = rpp.getProperty();
-            if (persistentProperty instanceof Association) {
-                Association association = (Association) persistentProperty;
-                if (!association.isForeignKey()) {
-                    RuntimePersistentEntity associatedEntity = getPersistentEntity(((RuntimePersistentProperty) association).getProperty().getType());
-                    if (preparedQuery.isJoinFetchPath(association.getName())) {
+        try {
+            R entity;
+            if (ArrayUtils.isEmpty(constructorArguments)) {
+                entity = introspection.instantiate();
+            } else {
+                Object[] args = new Object[constructorArguments.length];
+                for (int i = 0; i < constructorArguments.length; i++) {
+                    Argument<?> argument = constructorArguments[i];
+                    String n = argument.getName();
+                    RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
+                    if (prop != null) {
+                        if (prop instanceof Association) {
+                            Object associated = readAssociation(prefix, path, rs, preparedQuery, (Association) prop);
+                            args[i] = associated;
+                        } else {
 
-                        Object associated = readEntity("_" + persistedName + "_", rs, associatedEntity, preparedQuery);
-                        property.set(entity, associated);
-                    } else {
-
-                        BeanIntrospection associatedIntrospection = associatedEntity.getIntrospection();
-                        if (associatedIntrospection.getConstructorArguments().length == 0) {
-
-                            Object referenced = associatedIntrospection.instantiate();
-                            RuntimePersistentProperty identity = associatedEntity.getIdentity();
-                            if (identity != null) {
-                                Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
-                                BeanWrapper.getWrapper(referenced).setProperty(
-                                        identity.getName(),
-                                        v
-                                );
+                            Object v = columnNameResultSetReader.readDynamic(rs, prefix + prop.getPersistedName(), prop.getDataType());
+                            if (v == null && !prop.isOptional()) {
+                                throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
                             }
-                            property.set(entity, referenced);
+                            Class<?> t = argument.getType();
+                            if (!t.isInstance(v)) {
+                                args[i] = columnIndexResultSetReader.convertRequired(v, t);
+                            } else {
+                                args[i] = v;
+                            }
+                        }
+                    } else {
+                        throw new DataAccessException("Constructor [" + argument.getName() + "] must have a getter for type: " + persistentEntity.getName());
+                    }
+                }
+                entity = introspection.instantiate(args);
+            }
+            for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
+                RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
+                if (persistentProperty.isReadOnly()) {
+                    continue;
+                }
+                BeanProperty property = rpp.getProperty();
+                if (persistentProperty instanceof Association) {
+                    Association association = (Association) persistentProperty;
+                    if (!association.isForeignKey()) {
+                        Object associated = readAssociation(prefix, path, rs, preparedQuery, association);
+                        if (associated != null) {
+                            property.set(entity, associated);
                         }
                     }
-                }
-            } else {
-                Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, persistentProperty.getDataType());
+                } else {
+                    String persistedName = persistentProperty.getPersistedName();
+                    Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, persistentProperty.getDataType());
 
-                if (rpp.getType().isInstance(v)) {
-                    property.set(entity, v);
+                    if (rpp.getType().isInstance(v)) {
+                        property.set(entity, v);
+                    } else {
+                        property.convertAndSet(entity, v);
+                    }
+                }
+            }
+            RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
+            if (identity != null) {
+                String persistedName = identity.getPersistedName();
+                Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
+                BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
+                if (v == null) {
+                    throw new DataAccessException("Table contains null ID for entity: " + entity);
+                }
+                if (property.getType().isInstance(v)) {
+                    property.set(
+                            entity,
+                            v
+                    );
                 } else {
                     property.convertAndSet(entity, v);
                 }
             }
+            return entity;
+        } catch (InstantiationException e) {
+            throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
         }
-        RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
-        if (identity != null) {
-            String persistedName = identity.getPersistedName();
-            Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
-            BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
-            if (v == null) {
-                throw new DataAccessException("Table contains null ID for entity: " + entity);
-            }
-            if (property.getType().isInstance(v)) {
-                property.set(
-                        entity,
-                        v
-                );
+    }
+
+    @Nullable
+    private <R> Object readAssociation(String prefix, String path, ResultSet resultSet, PreparedQuery<?, R> preparedQuery, Association association) {
+        Object associated = null;
+        String persistedName = association.getPersistedName();
+        RuntimePersistentEntity associatedEntity = getPersistentEntity(((RuntimePersistentProperty) association).getProperty().getType());
+        RuntimePersistentProperty identity = associatedEntity.getIdentity();
+        String associationName = association.getName();
+        if (preparedQuery.isJoinFetchPath(path + associationName)) {
+            String newPrefix = prefix.length() == 0 ? "_" + association.getAliasName() : prefix + association.getAliasName();
+            associated = readEntity(newPrefix, path + associationName + '.', resultSet, associatedEntity, preparedQuery);
+        } else {
+
+            BeanIntrospection associatedIntrospection = associatedEntity.getIntrospection();
+            Argument[] constructorArgs = associatedIntrospection.getConstructorArguments();
+            if (constructorArgs.length == 0) {
+                associated = associatedIntrospection.instantiate();
+                if (identity != null) {
+                    Object v = columnNameResultSetReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
+                    BeanWrapper.getWrapper(associated).setProperty(
+                            identity.getName(),
+                            v
+                    );
+                }
             } else {
-                property.convertAndSet(entity, v);
+                if (constructorArgs.length == 1 && identity != null) {
+                    Argument arg = constructorArgs[0];
+                    if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
+                        Object v = columnNameResultSetReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
+                        associated = associatedIntrospection.instantiate(columnNameResultSetReader.convertRequired(v, identity.getType()));
+                    }
+                }
             }
         }
-        return entity;
+        return associated;
     }
 
     private <T, R> PreparedStatement prepareStatement(

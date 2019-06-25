@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
@@ -34,6 +35,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final RuntimePersistentEntity<T> owner;
     private final BeanProperty<T, ?> property;
     private final Class<?> type;
+    private final DataType dataType;
 
     /**
      * Default constructor.
@@ -44,6 +46,17 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.owner = owner;
         this.property = property;
         this.type = ReflectionUtils.getWrapperType(property.getType());
+        this.dataType = PersistentProperty.super.getDataType();
+    }
+
+    @Override
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return property.isReadOnly() || isGenerated();
     }
 
     /**

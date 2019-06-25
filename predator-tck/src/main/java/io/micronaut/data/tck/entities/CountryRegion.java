@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.entities;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -7,7 +8,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategies;
 
 @MappedEntity(namingStrategy = NamingStrategies.Raw.class)
-public class RegionOrCounty {
+public class CountryRegion {
 
     @GeneratedValue
     @Id
@@ -17,7 +18,7 @@ public class RegionOrCounty {
     @Relation(Relation.Kind.MANY_TO_ONE)
     private Country country;
 
-    public RegionOrCounty(String name, Country country) {
+    public CountryRegion(String name, @Nullable Country country) {
         this.name = name;
         this.country = country;
     }

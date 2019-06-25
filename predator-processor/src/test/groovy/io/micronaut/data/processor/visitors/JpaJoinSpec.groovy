@@ -17,12 +17,44 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.query.JoinPath
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.City
+import spock.lang.Unroll
 
 
 class JpaJoinSpec extends AbstractPredatorSpec {
 
+
+    @Unroll
+    void "test JPA projection across nested property path for #method"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+
+@Repository
+interface MyInterface extends GenericRepository<Author, Long> {
+
+    $returnType $method($arguments);
+}
+"""
+        )
+
+        def execMethod = repository.findPossibleMethods(method)
+                .findFirst()
+                .get()
+        def ann = execMethod
+                .synthesize(Query)
+
+        expect:
+        ann.value().endsWith(suffix)
+
+        where:
+        method             | returnType | arguments      | suffix
+        "findByBooksTitle" | "Author"   | "String title" | "JOIN author_.books author_books_ WHERE (author_books_.title = :p1)"
+    }
 
     void "test join spec - list"() {
         given:
@@ -49,8 +81,8 @@ interface MyInterface extends GenericRepository<Book, Long> {
         def builder = new JpaQueryBuilder()
         def entity = PersistentEntity.of(Book)
         def alias = builder.getAliasName(entity)
-        def authorAlias = builder.getAliasName(entity.getPropertyByName("author"))
-        def publisherAlias = builder.getAliasName(entity.getPropertyByName("publisher"))
+        def authorAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("author")))
+        def publisherAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("publisher")))
 
         expect:
         repository.getRequiredMethod("list").synthesize(Query).value() ==

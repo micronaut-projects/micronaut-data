@@ -1,10 +1,14 @@
 package io.micronaut.data.model.query;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentProperty;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * A join path represents a path, association and join type for performing a join with a query.
@@ -16,27 +20,39 @@ import java.util.Objects;
 public class JoinPath {
 
     private final String path;
-    private final Association association;
+    private final Association[] associationPath;
     private final Join.Type joinType;
 
 
     /**
      * Default constructor.
      * @param path The path
-     * @param association The association
+     * @param associationPath The association
      * @param joinType The join type
      */
-    JoinPath(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType) {
+    public JoinPath(@NonNull String path, @NonNull Association[] associationPath, @NonNull Join.Type joinType) {
         this.path = path;
-        this.association = association;
+        this.associationPath = associationPath;
         this.joinType = joinType;
+    }
+
+    @Override
+    public String toString() {
+        return path;
     }
 
     /**
      * @return The association
      */
     public @NonNull Association getAssociation() {
-        return association;
+        return associationPath[associationPath.length - 1];
+    }
+
+    /**
+     * @return The association path.
+     */
+    public Association[] getAssociationPath() {
+        return associationPath;
     }
 
     /**
@@ -68,5 +84,21 @@ public class JoinPath {
     @Override
     public int hashCode() {
         return Objects.hash(path);
+    }
+
+    /**
+     * Create a join path from the association path.
+     * @param associationPath The association path
+     * @return The join path
+     */
+    public static JoinPath of(Association... associationPath) {
+        if (ArrayUtils.isEmpty(associationPath)) {
+            throw new IllegalArgumentException("Association path cannot be empty");
+        }
+
+        String path = Arrays.stream(associationPath)
+                .map(PersistentProperty::getName)
+                .collect(Collectors.joining("."));
+        return new JoinPath(path, associationPath, Join.Type.DEFAULT);
     }
 }

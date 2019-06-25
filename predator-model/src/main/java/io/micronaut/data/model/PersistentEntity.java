@@ -19,6 +19,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -82,7 +83,7 @@ public interface PersistentEntity extends PersistentElement {
      * A list of properties to be persisted.
      * @return A list of PersistentProperty instances
      */
-    @NonNull List<PersistentProperty> getPersistentProperties();
+    @NonNull List<? extends PersistentProperty> getPersistentProperties();
 
     /**
      * A list of the associations for this entity. This is typically
@@ -173,6 +174,9 @@ public interface PersistentEntity extends PersistentElement {
                     name = name + NameUtils.capitalize(i.next());
                     sp = currentEntity.getPropertyByName(name);
                     if (sp != null) {
+                        if (sp instanceof Association) {
+                            currentEntity = ((Association) sp).getAssociatedEntity();
+                        }
                         b.append(name);
                         if (i.hasNext()) {
                             b.append(".");
@@ -234,6 +238,13 @@ public interface PersistentEntity extends PersistentElement {
             return Optional.ofNullable(prop);
         }
     }
+
+    /**
+     * Obtain the naming strategy for the entity.
+     * @return The naming strategy
+     */
+    @NonNull
+    NamingStrategy getNamingStrategy();
 
     /**
      * Creates a new persistent entity representation of the given type. The type

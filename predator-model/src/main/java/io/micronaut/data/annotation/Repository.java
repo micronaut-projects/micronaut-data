@@ -17,7 +17,6 @@ package io.micronaut.data.annotation;
 
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
-import io.micronaut.core.annotation.InstantiatedMember;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.PredatorIntroductionAdvice;
 import io.micronaut.data.model.Page;
@@ -78,7 +77,7 @@ public @interface Repository {
     };
 
     /**
-     * Does the repository allow implicit queries by type and ID etc. or in an explicit query always needed.
+     * Does the repository allow implicit queries by type and ID etc. or are explicit query always needed.
      *
      * @return True if it does
      */

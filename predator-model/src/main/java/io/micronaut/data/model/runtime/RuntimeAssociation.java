@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.model.runtime;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 
@@ -30,6 +32,9 @@ import io.micronaut.data.model.PersistentEntity;
  */
 class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Association {
 
+    private final Relation.Kind kind;
+    private final String aliasName;
+
     /**
      * Default constructor.
      * @param owner The owner
@@ -37,6 +42,19 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
      */
     RuntimeAssociation(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property) {
         super(owner, property);
+        this.kind = Association.super.getKind();
+        this.aliasName = Association.super.getAliasName();
+    }
+
+    @Override
+    public String getAliasName() {
+        return aliasName;
+    }
+
+    @NonNull
+    @Override
+    public Relation.Kind getKind() {
+        return kind;
     }
 
     @Nullable

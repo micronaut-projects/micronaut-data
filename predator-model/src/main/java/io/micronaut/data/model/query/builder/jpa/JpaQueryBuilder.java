@@ -24,10 +24,13 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+
+import java.util.Map;
 
 /**
  * Builds JPA 1.0 String-based queries from the Query model.
@@ -98,15 +101,16 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String buildJoin(String alias, Association association, String joinType, StringBuilder target) {
-        String joinAlias = getAliasName(association);
+    protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder target, Map<String, String> appliedJoinPaths) {
+        Association association = joinPath.getAssociation();
+        String joinAlias = getAliasName(joinPath);
         target.append(joinType)
                 .append(alias)
                 .append(DOT)
                 .append(association.getName())
                 .append(SPACE)
                 .append(joinAlias);
-        return joinAlias;
+        return new String[] { joinAlias };
     }
 
     @Override

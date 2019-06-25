@@ -320,7 +320,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull QueryModel query, ClassElement returnType) {
         List<PropertyElement> beanProperties = returnType.getBeanProperties();
-        SourcePersistentEntity entity = new SourcePersistentEntity(queryResultType);
+        SourcePersistentEntity entity = matchContext.getEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
             String propertyName = beanProperty.getName();
             SourcePersistentProperty pp = entity.getPropertyByName(propertyName);

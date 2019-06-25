@@ -41,7 +41,7 @@ public class AssociationQuery extends DefaultQuery implements QueryModel.Criteri
     }
 
     /**
-     * @return The path
+     * @return The path to the association
      */
     public String getPath() {
         return path;
