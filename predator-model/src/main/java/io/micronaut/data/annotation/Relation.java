@@ -34,6 +34,11 @@ public @interface Relation {
     Kind value();
 
     /**
+     * @return The inverse property that this relation is mapped by
+     */
+    String mappedBy() default "";
+
+    /**
      * The relation kind.
      */
     enum Kind {

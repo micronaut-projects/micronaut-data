@@ -58,6 +58,6 @@ public interface Association extends PersistentProperty {
      */
     default boolean isForeignKey() {
         Relation.Kind kind = getKind();
-        return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY;
+        return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY || (kind == Relation.Kind.ONE_TO_ONE && getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent());
     }
 }

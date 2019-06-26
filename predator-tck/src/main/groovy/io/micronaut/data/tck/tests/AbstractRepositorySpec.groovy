@@ -242,9 +242,8 @@ abstract class AbstractRepositorySpec extends Specification {
                 .findFirst().get().title == "Pet Cemetery"
         bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
                 .count() == 2
-//      TODO: Support inverse association queries?
-//        authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
-//        authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
+        authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
+        authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
         bookRepository.findByAuthorName("Stephen King").size() == 2
     }
 

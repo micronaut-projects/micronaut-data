@@ -96,7 +96,7 @@ public class SchemaGenerator {
                                             }
                                         }
                                     case CREATE:
-                                        String sql = builder.buildCreateTables(entities);
+                                        String sql = builder.buildBatchCreateTableStatement(entities);
                                         if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
                                             PredatorSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                                         }
@@ -127,12 +127,15 @@ public class SchemaGenerator {
                                     case CREATE:
                                         for (PersistentEntity entity : entities) {
 
-                                            String sql = builder.buildCreateTable(entity);
-                                            if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                PredatorSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
+                                            String[] sql = builder.buildCreateTableStatements(entity);
+                                            for (String stmt : sql) {
+                                                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                                                    PredatorSettings.QUERY_LOG.debug("Creating Table: \n{}", stmt);
+                                                }
+                                                PreparedStatement ps = connection.prepareStatement(stmt);
+                                                ps.executeUpdate();
                                             }
-                                            PreparedStatement ps = connection.prepareStatement(sql);
-                                            ps.executeUpdate();
+
                                         }
 
 

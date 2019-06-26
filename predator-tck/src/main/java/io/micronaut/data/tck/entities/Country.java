@@ -16,7 +16,7 @@ public class Country {
     private UUID uuid;
     private String name;
 
-    @Relation(Relation.Kind.ONE_TO_MANY)
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "country")
     private Set<CountryRegion> regions;
 
     public Country(String name) {

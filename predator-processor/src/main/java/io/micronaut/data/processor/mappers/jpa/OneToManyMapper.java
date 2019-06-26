@@ -17,6 +17,7 @@ package io.micronaut.data.processor.mappers.jpa;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -40,7 +41,9 @@ public final class OneToManyMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        AnnotationValue<Relation> ann = AnnotationValue.builder(Relation.class).value(Relation.Kind.ONE_TO_MANY).build();
+        AnnotationValueBuilder<Relation> builder = AnnotationValue.builder(Relation.class).value(Relation.Kind.ONE_TO_MANY);
+        annotation.stringValue("mappedBy").ifPresent(s -> builder.member("mappedBy", s));
+        AnnotationValue<Relation> ann = builder.build();
         return Collections.singletonList(ann);
     }
 }

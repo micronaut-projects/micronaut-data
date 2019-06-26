@@ -34,6 +34,7 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
 
     private final Relation.Kind kind;
     private final String aliasName;
+    private final boolean isForeignKey;
 
     /**
      * Default constructor.
@@ -44,6 +45,12 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
         super(owner, property);
         this.kind = Association.super.getKind();
         this.aliasName = Association.super.getAliasName();
+        this.isForeignKey = Association.super.isForeignKey();
+    }
+
+    @Override
+    public boolean isForeignKey() {
+        return isForeignKey;
     }
 
     @Override
@@ -57,7 +64,7 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
         return kind;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public RuntimePersistentEntity<?> getAssociatedEntity() {
         switch (getKind()) {

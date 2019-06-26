@@ -39,6 +39,34 @@ interface MyInterface extends GenericRepository<City, Long> {
 
 
     @Unroll
+    void "test SQL projection across nested property path for #method"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+
+@Repository(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+interface MyInterface extends GenericRepository<Author, Long> {
+
+    $returnType $method($arguments);
+}
+"""
+        )
+
+        def execMethod = repository.findPossibleMethods(method)
+                .findFirst()
+                .get()
+        def ann = execMethod
+                .synthesize(Query)
+
+        expect:
+        ann.value().endsWith(suffix)
+
+        where:
+        method             | returnType | arguments      | suffix
+        "findByBooksTitle" | "Author"   | "String title" | "JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_books_.title = ?)"
+    }
+
+    @Unroll
     void "test SQL join WHERE statement for association projection #method"() {
         given:
         String joinAnn = ""

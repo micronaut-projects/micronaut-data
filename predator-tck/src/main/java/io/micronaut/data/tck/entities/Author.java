@@ -30,7 +30,7 @@ public class Author {
     @Column(nullable = true)
     private String nickName;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "author")
     private Set<Book> books = new HashSet<>();
 
     public Long getId() {

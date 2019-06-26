@@ -71,15 +71,20 @@ public interface NamingStrategy {
         Supplier<String> defaultNameSupplier = () -> mappedName(property.getName());
         if (property instanceof Association) {
             Association association = (Association) property;
-            // TODO: handle embedded
-            switch (association.getKind()) {
-                case ONE_TO_ONE:
-                case MANY_TO_ONE:
-                    return property.getAnnotationMetadata().stringValue(MappedProperty.class)
-                        .orElseGet(() -> mappedName(property.getName() + getForeignKeySuffix()));
-                default:
-                    return property.getAnnotationMetadata().stringValue(MappedProperty.class)
-                            .orElseGet(defaultNameSupplier);
+            if (association.isForeignKey()) {
+                return mappedName(association.getOwner().getDecapitalizedName() +
+                                    association.getAssociatedEntity().getSimpleName());
+            } else {
+                // TODO: handle embedded
+                switch (association.getKind()) {
+                    case ONE_TO_ONE:
+                    case MANY_TO_ONE:
+                        return property.getAnnotationMetadata().stringValue(MappedProperty.class)
+                                .orElseGet(() -> mappedName(property.getName() + getForeignKeySuffix()));
+                    default:
+                        return property.getAnnotationMetadata().stringValue(MappedProperty.class)
+                                .orElseGet(defaultNameSupplier);
+                }
             }
         } else {
             return property.getAnnotationMetadata().stringValue(MappedProperty.class)
