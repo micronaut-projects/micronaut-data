@@ -15,41 +15,42 @@
  */
 package io.micronaut.data.mapper;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.convert.exceptions.ConversionErrorException;
-import io.micronaut.core.reflect.exception.InstantiationException;
+import io.micronaut.data.exceptions.DataAccessException;
 
 /**
  * A context object to facilitate and ease mapping objects programmatically.
- * @param <D> The result set type.
+ *
+ * @param <D> The source type.
+ * @param <R> The result type
  * @author graemerocher
  * @since 1.0.0
  */
-public interface DataMapper<D> {
+public interface TypeMapper<D, R> {
 
     /**
      * Map the given result set to the given object.
-     * @param resultSet The result set
+     * @param object The object to map
      * @param type The type
-     * @param <R> The result generic type
      * @return The mapped object
-     * @throws InstantiationException If the object cannot be mapped.
+     * @throws DataAccessException If the object cannot be mapped.
      */
-    <R> R map(D resultSet, Class<R> type) throws InstantiationException;
+    @NonNull R map(@NonNull D object, @NonNull Class<R> type) throws DataAccessException;
 
     /**
-     * Read and convert a value for the given name from the given result type.
-     * @param resultSet The result type
+     * Read a value for the given name from the given object.
+     * @param object The object to read from
      * @param name The name
-     * @return The mapped object
-     * @throws ConversionErrorException If the value could not be converted
+     * @return The value
      */
-    Object read(D resultSet, String name) throws ConversionErrorException;
+    @Nullable Object read(@NonNull D object, @NonNull String name);
 
     /**
      * @return The conversion service to use.
      */
-    default ConversionService<?> getConversionService() {
+    default @NonNull ConversionService<?> getConversionService() {
         return ConversionService.SHARED;
     }
 }

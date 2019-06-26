@@ -1,14 +1,12 @@
 package io.micronaut.data.jdbc.mapper;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.mapper.ResultReader;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.util.Date;
 
 /**
@@ -140,15 +138,30 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
     @Override
     public <T> T getRequiredValue(ResultSet resultSet, Integer index, Class<T> type) throws DataAccessException {
         try {
-            Object o = resultSet.getObject(index);
-            return ConversionService.SHARED.convert(o, type)
-                    .orElseThrow(() -> new DataAccessException("Cannot convert type [" + o.getClass() + "] to target type: " + type + ". Considering defining a TypeConverter bean to handle this case."));
-        } catch (SQLException e) {
+            Object o;
+            if (Blob.class.isAssignableFrom(type)) {
+                o = resultSet.getBlob(index);
+            } else if (Clob.class.isAssignableFrom(type)) {
+                o = resultSet.getClob(index);
+            } else {
+                o = resultSet.getObject(index);
+            }
+            if (o == null) {
+                return null;
+            }
+
+            if (type.isInstance(o)) {
+                //noinspection unchecked
+                return (T) o;
+            } else {
+                return convertRequired(o, type);
+            }
+        } catch (SQLException | ConversionErrorException e) {
             throw exceptionForColumn(index, e);
         }
     }
 
-    private DataAccessException exceptionForColumn(Integer index, SQLException e) {
+    private DataAccessException exceptionForColumn(Integer index, Exception e) {
         return new DataAccessException("Error reading object for index [" + index + "] from result set: " + e.getMessage(), e);
     }
 }

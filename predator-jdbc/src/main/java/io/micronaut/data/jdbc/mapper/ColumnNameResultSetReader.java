@@ -2,12 +2,12 @@ package io.micronaut.data.jdbc.mapper;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.mapper.ResultReader;
 
 import java.math.BigDecimal;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Date;
 
 /**
@@ -150,18 +150,30 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     @Override
     public <T> T getRequiredValue(ResultSet resultSet, String name, Class<T> type) throws DataAccessException {
         try {
-            Object o = resultSet.getObject(name);
+            Object o;
+            if (Blob.class.isAssignableFrom(type)) {
+                o = resultSet.getBlob(name);
+            } else if (Clob.class.isAssignableFrom(type)) {
+                o = resultSet.getClob(name);
+            } else {
+                o = resultSet.getObject(name);
+            }
             if (o == null) {
                 return null;
             }
-            return ConversionService.SHARED.convert(o, type)
-                    .orElseThrow(() -> new DataAccessException("Cannot convert type [" + o.getClass() + "] to target type: " + type + ". Considering defining a TypeConverter bean to handle this case."));
-        } catch (SQLException e) {
+
+            if (type.isInstance(o)) {
+                //noinspection unchecked
+                return (T) o;
+            } else {
+                return convertRequired(o, type);
+            }
+        } catch (SQLException | ConversionErrorException e) {
             throw exceptionForColumn(name, e);
         }
     }
 
-    private DataAccessException exceptionForColumn(String name, SQLException e) {
+    private DataAccessException exceptionForColumn(String name, Exception e) {
         return new DataAccessException("Error reading object for name [" + name + "] from result set: " + e.getMessage(), e);
     }
 }

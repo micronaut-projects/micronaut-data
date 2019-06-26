@@ -18,7 +18,6 @@ package io.micronaut.data.hibernate.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -26,6 +25,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
+import io.micronaut.data.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.*;
@@ -35,7 +35,6 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.micronaut.data.mapper.IntrospectedDataMapper;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -69,7 +68,6 @@ import java.util.stream.Stream;
  */
 public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
-    private static final TupleMapper TUPLE_MAPPER = new TupleMapper();
     private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
     private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
@@ -146,7 +144,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 bindQueryHints(q, preparedQuery, currentSession);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional()
-                        .map(tuple -> TUPLE_MAPPER.map(tuple, resultType))
+                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType))
                         .orElse(null);
             } else {
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(resultType);
@@ -234,7 +232,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
                 bindPreparedQuery(q, preparedQuery, currentSession);
                 return q.stream()
-                        .map(tuple -> TUPLE_MAPPER.map(tuple, preparedQuery.getResultType()))
+                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()))
                         .collect(Collectors.toList());
             } else {
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
@@ -385,7 +383,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 bindParameters(q, parameterValues);
                 bindPageable(q, pageable);
                 return q.stream()
-                        .map(tuple -> TUPLE_MAPPER.map(tuple, preparedQuery.getResultType()));
+                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()));
 
             } else {
                 Query<R> q;
@@ -537,13 +535,4 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         );
     }
 
-    /**
-     * A {@link IntrospectedDataMapper} for tuples.
-     */
-    private static final class TupleMapper implements IntrospectedDataMapper<Tuple> {
-        @Override
-        public Object read(Tuple resultSet, String name) throws ConversionErrorException {
-            return resultSet.get(name);
-        }
-    }
 }

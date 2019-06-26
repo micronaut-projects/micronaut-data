@@ -6,10 +6,7 @@ import io.micronaut.data.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Date;
 
 /**
@@ -100,7 +97,13 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, Object value) throws DataAccessException {
         try {
-            statement.setObject(index, value);
+            if (value instanceof Clob) {
+                statement.setClob(index, (Clob) value);
+            } else if (value instanceof Blob) {
+                statement.setBlob(index, (Blob) value);
+            } else {
+                statement.setObject(index, value);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }

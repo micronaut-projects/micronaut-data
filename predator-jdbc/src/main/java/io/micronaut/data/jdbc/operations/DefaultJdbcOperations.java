@@ -26,7 +26,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
-import io.micronaut.data.mapper.IntrospectedDataMapper;
+import io.micronaut.data.mapper.DTOMapper;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -156,7 +156,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 } else {
                     if (preparedQuery.isDtoProjection()) {
                         RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
-                        IntrospectedDataMapper<ResultSet> introspectedDataMapper = newResultSetMapper(persistentEntity);
+                        DTOMapper<T, ResultSet, R> introspectedDataMapper = new DTOMapper<>(
+                                persistentEntity,
+                                columnNameResultSetReader
+                        );
                         return introspectedDataMapper.map(rs, resultType);
                     } else {
                         Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
@@ -388,7 +391,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             } else {
                 if (preparedQuery.isDtoProjection()) {
                     RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
-                    IntrospectedDataMapper<ResultSet> introspectedDataMapper = newResultSetMapper(persistentEntity);
+                    DTOMapper<T, ResultSet, R> introspectedDataMapper = new DTOMapper<>(
+                            persistentEntity,
+                            columnNameResultSetReader
+                    );
                     return () -> new Iterator<R>() {
                         boolean nextCalled = false;
 
@@ -445,22 +451,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 }
             }
         });
-    }
-
-    @NonNull
-    private <T> IntrospectedDataMapper<ResultSet> newResultSetMapper(RuntimePersistentEntity<T> persistentEntity) {
-        return (resultSet, name) -> {
-            RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(name);
-            if (pp == null) {
-                throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + persistentEntity.getName());
-            } else {
-                return columnNameResultSetReader.readDynamic(
-                        resultSet,
-                        pp.getPersistedName(),
-                        pp.getDataType()
-                );
-            }
-        };
     }
 
     private <R> R readEntity(String prefix, String path, ResultSet rs, RuntimePersistentEntity<R> persistentEntity, PreparedQuery<?, R> preparedQuery) {
