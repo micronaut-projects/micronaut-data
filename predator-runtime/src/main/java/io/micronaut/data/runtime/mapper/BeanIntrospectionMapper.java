@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.mapper;
+package io.micronaut.data.runtime.mapper;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.beans.BeanIntrospection;

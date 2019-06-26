@@ -26,7 +26,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
-import io.micronaut.data.mapper.DTOMapper;
+import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;

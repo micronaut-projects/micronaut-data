@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.mapper;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.math.BigDecimal;
 import java.sql.*;

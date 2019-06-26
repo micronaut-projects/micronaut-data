@@ -1,4 +1,4 @@
-package io.micronaut.data.mapper;
+package io.micronaut.data.runtime.mapper;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;

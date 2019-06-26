@@ -2,7 +2,7 @@ package io.micronaut.data.jdbc.mapper;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.mapper.QueryStatement;
+import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;

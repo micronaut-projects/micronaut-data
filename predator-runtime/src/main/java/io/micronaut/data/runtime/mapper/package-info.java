@@ -19,4 +19,4 @@
  * @author graemerocher
  * @since 1.0.0
  */
-package io.micronaut.data.mapper;
+package io.micronaut.data.runtime.mapper;
