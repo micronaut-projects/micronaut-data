@@ -24,10 +24,8 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
@@ -35,6 +33,8 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 
+import java.sql.Blob;
+import java.sql.Clob;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -508,6 +508,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private String addTypeToColumn(PersistentProperty prop, boolean isAssociation, String column) {
+        String definition = prop.getAnnotationMetadata().stringValue(MappedProperty.class, "definition").orElse(null);
+        if (definition != null) {
+            return " " + definition;
+        }
         switch (prop.getDataType()) {
             case STRING:
                 column += " VARCHAR(255)";
@@ -578,15 +582,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (isAssociation) {
                     Association association = (Association) prop;
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
-                    if (associatedEntity != null) {
 
-                        PersistentProperty identity = associatedEntity.getIdentity();
-                        if (identity != null) {
-                            return addTypeToColumn(identity, false, column);
+                    PersistentProperty identity = associatedEntity.getIdentity();
+                    if (identity != null) {
+                        return addTypeToColumn(identity, false, column);
+                    }
+                } else {
+                    if (prop.isAssignable(Clob.class)) {
+                        if (dialect == Dialect.POSTGRES) {
+                            column += " TEXT";
+                        } else {
+                            column += " CLOB";
                         }
+                        break;
+                    } else if (prop.isAssignable(Blob.class)) {
+                        if (dialect == Dialect.POSTGRES) {
+                            column += " BYTEA";
+                        } else {
+                            column += " BLOB";
+                        }
+                        break;
+                    } else {
+                        throw new MappingException("Unable to create table property [" + prop.getName() + "] of entity [" + prop.getOwner().getName() + "] with unknown data type: " + prop.getDataType());
                     }
                 }
-                column += " OBJECT";
         }
         return column;
     }

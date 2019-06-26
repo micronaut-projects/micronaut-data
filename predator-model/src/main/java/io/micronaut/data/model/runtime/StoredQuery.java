@@ -24,6 +24,7 @@ import io.micronaut.data.model.DataType;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * A stored computed query. This interface represents the
@@ -92,15 +93,6 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @return Whether the query is a DTO projection query
      */
     default boolean isDtoProjection() {
-        return false;
-    }
-
-    /**
-     * True if the given association path is a join fetch path.
-     * @param path The path
-     * @return True if it is
-     */
-    default boolean isJoinFetchPath(String path) {
         return false;
     }
 
@@ -184,5 +176,12 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      */
     default Optional<String> getLastUpdatedProperty() {
         return Optional.empty();
+    }
+
+    /**
+     * @return The join paths that require a fetch
+     */
+    default @NonNull Set<String> getJoinFetchPaths() {
+        return Collections.emptySet();
     }
 }

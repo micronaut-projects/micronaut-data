@@ -16,8 +16,8 @@
 package io.micronaut.data.processor.mappers.jpa;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -42,20 +42,26 @@ public final class ColumnAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        final String name = annotation.get("name", String.class).orElse(null);
-        final boolean nullable = annotation.get("nullable", boolean.class).orElse(false);
+        final String name = annotation.stringValue("name").orElse(null);
+        final boolean nullable = annotation.booleanValue("nullable").orElse(false);
         AnnotationValue<MappedProperty> persistedAnnotationValue;
         List<AnnotationValue<?>> values = new ArrayList<>(2);
         if (name != null) {
-            persistedAnnotationValue = AnnotationValue.builder(MappedProperty.class)
-                    .value(name)
+            AnnotationValueBuilder<MappedProperty> builder = AnnotationValue.builder(MappedProperty.class)
+                                                                            .value(name);
+            annotation.stringValue("columnDefinition").ifPresent(s -> builder.member("definition", s));
+            persistedAnnotationValue = builder
                     .build();
 
             values.add(persistedAnnotationValue);
+        } else {
+            annotation.stringValue("columnDefinition").ifPresent(s ->
+                    values.add(AnnotationValue.builder(MappedProperty.class)
+                                              .member("definition", s).build()));
         }
 
         if (nullable) {
-            values.add(AnnotationValue.builder(Nullable.class).build());
+            values.add(AnnotationValue.builder("javax.annotation.Nullable").build());
         }
 
         return values;

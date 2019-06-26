@@ -27,4 +27,11 @@ public @interface MappedProperty {
      * @return The data type of the property.
      */
     DataType type() default DataType.OBJECT;
+
+    /**
+     * Used to define the mapping. For example in the case of SQL this would be the column definition. Example: BLOB NOT NULL.
+     *
+     * @return A string-based definition of the property type.
+     */
+    String definition() default "";
 }

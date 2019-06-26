@@ -18,6 +18,7 @@ package io.micronaut.data.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.*;
 import java.io.Serializable;
 import java.util.Collections;
@@ -32,6 +33,17 @@ import java.util.stream.Stream;
  * @since 1.0
  */
 public interface RepositoryOperations {
+
+    /**
+     * Retrieves the entity for the given type.
+     * @param type The type
+     * @param <T> The generic Type
+     * @return The entity
+     * @throws io.micronaut.core.beans.exceptions.IntrospectionException if no entity exists of the given type
+     */
+    default @NonNull <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+        return PersistentEntity.of(type);
+    }
 
     /**
      * Find one by ID.

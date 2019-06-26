@@ -18,6 +18,7 @@ package io.micronaut.data.processor.model;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
@@ -56,6 +57,7 @@ class SourceAssociation extends SourcePersistentProperty implements Association 
     }
 
     @Override
+    @NonNull
     public PersistentEntity getAssociatedEntity() {
         ClassElement type = getType();
         switch (getKind()) {
@@ -64,6 +66,8 @@ class SourceAssociation extends SourcePersistentProperty implements Association 
                 ClassElement classElement = type.getFirstTypeArgument().orElse(null);
                 if (classElement  != null) {
                     return entityResolver.apply(classElement);
+                } else {
+                    throw new MappingException("Collection association [" + getName() + "] of entity [" + getOwner().getName() + "] does not specify a generic type argument");
                 }
             default:
                 return entityResolver.apply(type);

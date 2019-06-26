@@ -215,7 +215,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             if (pageable != Pageable.UNPAGED) {
                 Sort sort = pageable.getSort();
                 if (sort.isSorted()) {
-                    queryStr += QUERY_BUILDER.buildOrderBy(PersistentEntity.of(preparedQuery.getRootEntity()), sort).getQuery();
+                    queryStr += QUERY_BUILDER.buildOrderBy(getEntity(preparedQuery.getRootEntity()), sort).getQuery();
                 }
             }
             if (preparedQuery.isDtoProjection()) {

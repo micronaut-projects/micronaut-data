@@ -20,8 +20,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntity;
 
 /**
  * A runtime representation of {@link Association}.
@@ -59,16 +59,20 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
 
     @Nullable
     @Override
-    public PersistentEntity getAssociatedEntity() {
+    public RuntimePersistentEntity<?> getAssociatedEntity() {
         switch (getKind()) {
             case ONE_TO_MANY:
             case MANY_TO_MANY:
                 Argument<?> typeArg = getProperty().asArgument().getFirstTypeVariable().orElse(null);
                 if (typeArg  != null) {
-                    return PersistentEntity.of(typeArg.getType());
+                    //noinspection unchecked
+                    return getOwner().getEntity((Class<T>) typeArg.getType());
+                } else {
+                    throw new MappingException("Collection association [" + getName() + "] of entity [" + getOwner().getName() + "] does not specify a generic type argument");
                 }
             default:
-                return PersistentEntity.of(getProperty().getType());
+                //noinspection unchecked
+                return getOwner().getEntity((Class<T>) getProperty().getType());
         }
     }
 }

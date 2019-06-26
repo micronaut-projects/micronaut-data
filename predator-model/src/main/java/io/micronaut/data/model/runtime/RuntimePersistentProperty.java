@@ -80,7 +80,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
 
     @NonNull
     @Override
-    public PersistentEntity getOwner() {
+    public RuntimePersistentEntity<T> getOwner() {
         return owner;
     }
 

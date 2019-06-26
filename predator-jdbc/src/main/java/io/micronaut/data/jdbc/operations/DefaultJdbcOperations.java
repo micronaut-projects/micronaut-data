@@ -8,13 +8,8 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.reflect.exception.InstantiationException;
-import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DateCreated;
@@ -26,7 +21,6 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
-import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -39,6 +33,9 @@ import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.PredatorSettings;
+import io.micronaut.data.runtime.mapper.DTOMapper;
+import io.micronaut.data.runtime.mapper.TypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.inject.BeanDefinition;
@@ -55,8 +52,8 @@ import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.sql.*;
-import java.util.*;
 import java.util.Date;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.regex.Matcher;
@@ -151,12 +148,17 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 Class<R> resultType = preparedQuery.getResultType();
                 if (resultType == rootEntity) {
                     @SuppressWarnings("unchecked")
-                    RuntimePersistentEntity<R> persistentEntity = getPersistentEntity((Class<R>) rootEntity);
-                    return readEntity("", "", rs, persistentEntity, preparedQuery);
+                    RuntimePersistentEntity<R> persistentEntity = getEntity((Class<R>) rootEntity);
+                    TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
+                            persistentEntity,
+                            columnNameResultSetReader,
+                            preparedQuery.getJoinFetchPaths()
+                    );
+                    return mapper.map(rs, resultType);
                 } else {
                     if (preparedQuery.isDtoProjection()) {
-                        RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
-                        DTOMapper<T, ResultSet, R> introspectedDataMapper = new DTOMapper<>(
+                        RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
+                        TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
                                 persistentEntity,
                                 columnNameResultSetReader
                         );
@@ -257,7 +259,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 if (!association.isForeignKey()) {
                     if (value != null) {
                         @SuppressWarnings("unchecked")
-                        RuntimePersistentEntity<Object> associatedEntity = getPersistentEntity((Class<Object>) value.getClass());
+                        RuntimePersistentEntity<Object> associatedEntity = getEntity((Class<Object>) value.getClass());
                         RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
                         if (identity == null) {
                             throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
@@ -344,7 +346,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository");
             }
 
-            RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(operation.getRootEntity());
+            RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
             // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
             boolean supportsBatch = annotationMetadata.findAnnotation(Repository.class)
@@ -363,8 +365,21 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         return withReadConnection(connection -> {
             PreparedStatement ps = prepareStatement(connection, preparedQuery, false, false);
             ResultSet rs = ps.executeQuery();
-            if (isRootResult) {
-                RuntimePersistentEntity<R> persistentEntity = getPersistentEntity(resultType);
+            boolean dtoProjection = preparedQuery.isDtoProjection();
+            if (isRootResult || dtoProjection) {
+                TypeMapper<ResultSet, R> mapper;
+                if (dtoProjection) {
+                    mapper = new DTOMapper<>(
+                            getEntity(preparedQuery.getRootEntity()),
+                            columnNameResultSetReader
+                    );
+                } else {
+                    mapper = new SqlResultEntityTypeMapper<>(
+                            getEntity(resultType),
+                            columnNameResultSetReader,
+                            preparedQuery.getJoinFetchPaths()
+                    );
+                }
                 return () -> new Iterator<R>() {
                     boolean nextCalled = false;
 
@@ -385,192 +400,41 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     @Override
                     public R next() {
                         nextCalled = false;
-                        return readEntity("", "", rs, persistentEntity, preparedQuery);
+                        return mapper.map(rs, resultType);
                     }
                 };
             } else {
-                if (preparedQuery.isDtoProjection()) {
-                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(preparedQuery.getRootEntity());
-                    DTOMapper<T, ResultSet, R> introspectedDataMapper = new DTOMapper<>(
-                            persistentEntity,
-                            columnNameResultSetReader
-                    );
-                    return () -> new Iterator<R>() {
-                        boolean nextCalled = false;
+                return () -> new Iterator<R>() {
+                    boolean nextCalled = false;
 
-                        @Override
-                        public boolean hasNext() {
-                            try {
-                                if (!nextCalled) {
-                                    nextCalled = true;
-                                    return rs.next();
-                                } else {
-                                    return nextCalled;
-                                }
-                            } catch (SQLException e) {
-                                return false;
-                            }
-                        }
-
-                        @Override
-                        public R next() {
-                            nextCalled = false;
-                            return introspectedDataMapper.map(rs, resultType);
-                        }
-                    };
-                } else {
-                    return () -> new Iterator<R>() {
-                        boolean nextCalled = false;
-
-                        @Override
-                        public boolean hasNext() {
-                            try {
-                                if (!nextCalled) {
-                                    nextCalled = true;
-                                    return rs.next();
-                                } else {
-                                    return nextCalled;
-                                }
-                            } catch (SQLException e) {
-                                return false;
-                            }
-                        }
-
-                        @Override
-                        public R next() {
-                            nextCalled = false;
-                            Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
-                            if (resultType.isInstance(v)) {
-                                //noinspection unchecked
-                                return (R) v;
+                    @Override
+                    public boolean hasNext() {
+                        try {
+                            if (!nextCalled) {
+                                nextCalled = true;
+                                return rs.next();
                             } else {
-                                return columnIndexResultSetReader.convertRequired(v, resultType);
+                                return nextCalled;
                             }
+                        } catch (SQLException e) {
+                            return false;
                         }
-                    };
-                }
+                    }
+
+                    @Override
+                    public R next() {
+                        nextCalled = false;
+                        Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                        if (resultType.isInstance(v)) {
+                            //noinspection unchecked
+                            return (R) v;
+                        } else {
+                            return columnIndexResultSetReader.convertRequired(v, resultType);
+                        }
+                    }
+                };
             }
         });
-    }
-
-    private <R> R readEntity(String prefix, String path, ResultSet rs, RuntimePersistentEntity<R> persistentEntity, PreparedQuery<?, R> preparedQuery) {
-        BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
-        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-        try {
-            R entity;
-            if (ArrayUtils.isEmpty(constructorArguments)) {
-                entity = introspection.instantiate();
-            } else {
-                Object[] args = new Object[constructorArguments.length];
-                for (int i = 0; i < constructorArguments.length; i++) {
-                    Argument<?> argument = constructorArguments[i];
-                    String n = argument.getName();
-                    RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
-                    if (prop != null) {
-                        if (prop instanceof Association) {
-                            Object associated = readAssociation(prefix, path, rs, preparedQuery, (Association) prop);
-                            args[i] = associated;
-                        } else {
-
-                            Object v = columnNameResultSetReader.readDynamic(rs, prefix + prop.getPersistedName(), prop.getDataType());
-                            if (v == null && !prop.isOptional()) {
-                                throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
-                            }
-                            Class<?> t = argument.getType();
-                            if (!t.isInstance(v)) {
-                                args[i] = columnIndexResultSetReader.convertRequired(v, t);
-                            } else {
-                                args[i] = v;
-                            }
-                        }
-                    } else {
-                        throw new DataAccessException("Constructor [" + argument.getName() + "] must have a getter for type: " + persistentEntity.getName());
-                    }
-                }
-                entity = introspection.instantiate(args);
-            }
-            for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
-                RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
-                if (persistentProperty.isReadOnly()) {
-                    continue;
-                }
-                BeanProperty property = rpp.getProperty();
-                if (persistentProperty instanceof Association) {
-                    Association association = (Association) persistentProperty;
-                    if (!association.isForeignKey()) {
-                        Object associated = readAssociation(prefix, path, rs, preparedQuery, association);
-                        if (associated != null) {
-                            property.set(entity, associated);
-                        }
-                    }
-                } else {
-                    String persistedName = persistentProperty.getPersistedName();
-                    Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, persistentProperty.getDataType());
-
-                    if (rpp.getType().isInstance(v)) {
-                        property.set(entity, v);
-                    } else {
-                        property.convertAndSet(entity, v);
-                    }
-                }
-            }
-            RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
-            if (identity != null) {
-                String persistedName = identity.getPersistedName();
-                Object v = columnNameResultSetReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
-                BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
-                if (v == null) {
-                    throw new DataAccessException("Table contains null ID for entity: " + entity);
-                }
-                if (property.getType().isInstance(v)) {
-                    property.set(
-                            entity,
-                            v
-                    );
-                } else {
-                    property.convertAndSet(entity, v);
-                }
-            }
-            return entity;
-        } catch (InstantiationException e) {
-            throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
-        }
-    }
-
-    @Nullable
-    private <R> Object readAssociation(String prefix, String path, ResultSet resultSet, PreparedQuery<?, R> preparedQuery, Association association) {
-        Object associated = null;
-        String persistedName = association.getPersistedName();
-        RuntimePersistentEntity associatedEntity = getPersistentEntity(((RuntimePersistentProperty) association).getProperty().getType());
-        RuntimePersistentProperty identity = associatedEntity.getIdentity();
-        String associationName = association.getName();
-        if (preparedQuery.isJoinFetchPath(path + associationName)) {
-            String newPrefix = prefix.length() == 0 ? "_" + association.getAliasName() : prefix + association.getAliasName();
-            associated = readEntity(newPrefix, path + associationName + '.', resultSet, associatedEntity, preparedQuery);
-        } else {
-
-            BeanIntrospection associatedIntrospection = associatedEntity.getIntrospection();
-            Argument[] constructorArgs = associatedIntrospection.getConstructorArguments();
-            if (constructorArgs.length == 0) {
-                associated = associatedIntrospection.instantiate();
-                if (identity != null) {
-                    Object v = columnNameResultSetReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
-                    BeanWrapper.getWrapper(associated).setProperty(
-                            identity.getName(),
-                            v
-                    );
-                }
-            } else {
-                if (constructorArgs.length == 1 && identity != null) {
-                    Argument arg = constructorArgs[0];
-                    if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
-                        Object v = columnNameResultSetReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
-                        associated = associatedIntrospection.instantiate(columnNameResultSetReader.convertRequired(v, identity.getType()));
-                    }
-                }
-            }
-        }
-        return associated;
     }
 
     private <T, R> PreparedStatement prepareStatement(
@@ -596,10 +460,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
-                    query += queryBuilder.buildOrderBy(getPersistentEntity(rootEntity), sort).getQuery();
+                    query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
                 } else if (isSqlServerWithoutOrderBy(query, dialect)) {
                     // SQL server requires order by
-                    RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(rootEntity);
+                    RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
                     sort = sortById(persistentEntity);
                     query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                 }
@@ -614,7 +478,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
                     QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                     if (isSqlServer) {
-                        RuntimePersistentEntity<T> persistentEntity = getPersistentEntity(rootEntity);
+                        RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
                         Sort sort = sortById(persistentEntity);
                         query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                     }
@@ -711,7 +575,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         RuntimePersistentProperty beanProperty = idReaders.get(type);
         if (beanProperty == null) {
 
-            RuntimePersistentEntity<Object> entity = getPersistentEntity(type);
+            RuntimePersistentEntity<Object> entity = getEntity(type);
             RuntimePersistentProperty<Object> identity = entity.getIdentity();
             if (identity == null) {
                 throw new DataAccessException("Entity has no ID: " + entity.getName());
@@ -825,10 +689,18 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         });
     }
 
-    private <T> RuntimePersistentEntity<T> getPersistentEntity(Class<T> type) {
+    @NonNull
+    @Override
+    public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+        ArgumentUtils.requireNonNull("type", type);
         RuntimePersistentEntity<T> entity = entities.get(type);
         if (entity == null) {
-            entity = PersistentEntity.of(type);
+            entity = new RuntimePersistentEntity<T>(type) {
+                @Override
+                protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
+                    return DefaultJdbcOperations.this.getEntity(type);
+                }
+            };
             entities.put(type, entity);
         }
         return entity;

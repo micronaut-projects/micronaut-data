@@ -176,4 +176,14 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private boolean isEmbedded(BeanProperty bp) {
         return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
     }
+
+    /**
+     * Obtain an entity for the given type.
+     * @param type The type
+     * @return The entity
+     * @throws io.micronaut.core.beans.exceptions.IntrospectionException if the entity doesn't exist
+     */
+    protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
+        return PersistentEntity.of(type);
+    }
 }

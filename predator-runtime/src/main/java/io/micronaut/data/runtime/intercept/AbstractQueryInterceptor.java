@@ -355,7 +355,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      * @throws IllegalArgumentException if the entity cannot be instantiated due to an illegal argument
      */
     protected @NonNull Object instantiateEntity(@NonNull Class<?> rootEntity, @NonNull Map<String, Object> parameterValues) {
-        PersistentEntity entity = PersistentEntity.of(rootEntity);
+        PersistentEntity entity = operations.getEntity(rootEntity);
         BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(rootEntity);
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         Object instance;
@@ -826,16 +826,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             }
         }
 
+        @NonNull
         @Override
-        public boolean isJoinFetchPath(String path) {
+        public Set<String> getJoinFetchPaths() {
             if (joinFetchPaths == null) {
                 Set<String> set = method.getAnnotationValuesByType(Join.class).stream().filter(
                         this::isJoinFetch
                 ).map(av -> av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition")))
                         .collect(Collectors.toSet());
-                joinFetchPaths = set.isEmpty() ? Collections.emptySet() : set;
+                joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
             }
-            return joinFetchPaths.contains(path);
+            return joinFetchPaths;
         }
 
         private boolean isJoinFetch(AnnotationValue<Join> av) {
@@ -1080,9 +1081,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             this.dto = dtoProjection;
         }
 
+        @NonNull
         @Override
-        public boolean isJoinFetchPath(String path) {
-            return storedQuery.isJoinFetchPath(path);
+        public Set<String> getJoinFetchPaths() {
+            return storedQuery.getJoinFetchPaths();
         }
 
         @NonNull
