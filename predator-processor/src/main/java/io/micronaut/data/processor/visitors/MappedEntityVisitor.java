@@ -6,6 +6,7 @@ import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
@@ -85,10 +86,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
         PropertyElement propertyElement = spp.getPropertyElement();
-        Optional<String> mapping = annotationMetadata.stringValue(MappedProperty.class);
-        if (!mapping.isPresent()) {
-            propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)));
-        }
+
         DataType dataType = annotationMetadata.findAnnotation(MappedProperty.class)
                 .flatMap(av -> av.enumValue("type", DataType.class))
                 .orElse(null);
@@ -98,6 +96,16 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             dataType = TypeUtils.resolveDataType(type, dataTypes);
         }
 
+        if (dataType == DataType.ENTITY && !propertyElement.hasStereotype(Relation.class)) {
+            propertyElement = (PropertyElement) propertyElement.annotate(Relation.class, builder ->
+                builder.value(Relation.Kind.MANY_TO_ONE)
+            );
+        }
+
+        Optional<String> mapping = annotationMetadata.stringValue(MappedProperty.class);
+        if (!mapping.isPresent()) {
+            propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)));
+        }
         DataType finalDataType = dataType;
         propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", finalDataType));
     }

@@ -7,6 +7,8 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategies;
 
+import java.util.Set;
+
 @MappedEntity(namingStrategy = NamingStrategies.Raw.class)
 public class CountryRegion {
 
@@ -17,6 +19,9 @@ public class CountryRegion {
 
     @Relation(Relation.Kind.MANY_TO_ONE)
     private Country country;
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
+    private Set<City> cities;
 
     public CountryRegion(String name, @Nullable Country country) {
         this.name = name;
@@ -37,5 +42,13 @@ public class CountryRegion {
 
     public Country getCountry() {
         return country;
+    }
+
+    public Set<City> getCities() {
+        return cities;
+    }
+
+    public void setCities(Set<City> cities) {
+        this.cities = cities;
     }
 }

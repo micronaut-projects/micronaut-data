@@ -26,7 +26,6 @@ import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;

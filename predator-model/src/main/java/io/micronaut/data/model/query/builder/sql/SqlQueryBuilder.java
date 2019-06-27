@@ -97,6 +97,48 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     /**
+     * Builds a batch drop tables statement. Designed for testing and not production usage. For production a
+     *  SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param entities the entities
+     * @return The table
+     */
+    @Experimental
+    public @NonNull String buildBatchDropTableStatement (@NonNull PersistentEntity... entities) {
+        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
+                .collect(Collectors.joining("\n"));
+    }
+
+
+    /**
+     * Builds the drop table statement. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param entity The entity
+     * @return The tables for the give entity
+     */
+    @Experimental
+    public @NonNull String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
+        String tableName = getTableName(entity);
+        String sql = "DROP TABLE " + tableName + ";";
+        List<Association> foreignKeyAssociations = getJoinTableAssociations(entity.getPersistentProperties());
+        List<String> dropStatements = new ArrayList<>();
+        for (Association association : foreignKeyAssociations) {
+            AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
+            NamingStrategy namingStrategy = entity.getNamingStrategy();
+            String joinTableName = associationMetadata
+                    .stringValue(JoinTable.class, "name")
+                    .orElseGet(() ->
+                            namingStrategy.mappedName(association)
+                    );
+            dropStatements.add("DROP TABLE " + joinTableName + ";");
+        }
+
+        dropStatements.add(sql);
+        return dropStatements.toArray(new String[0]);
+    }
+
+    /**
      * Builds the create table statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
@@ -117,58 +159,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         List<String> createStatements = new ArrayList<>();
 
-        List<Association> foreignKeyAssociations = props.stream().filter(p -> {
-            if (p instanceof Association) {
-                Association a = (Association) p;
-                return a.isForeignKey() && !a.getAnnotationMetadata().stringValue("mappedBy").isPresent();
-            }
-            return false;
-        }).map(p -> (Association) p).collect(Collectors.toList());
+        List<Association> foreignKeyAssociations = getJoinTableAssociations(props);
 
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
                 StringBuilder joinTableBuilder = new StringBuilder("CREATE TABLE ");
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
                 NamingStrategy namingStrategy = entity.getNamingStrategy();
-                String joinTableName = associationMetadata
+                String joinTableName = association.getAnnotationMetadata()
                         .stringValue(JoinTable.class, "name")
                         .orElseGet(() ->
                                 namingStrategy.mappedName(association)
                         );
                 joinTableBuilder.append(joinTableName).append(" (");
-                List<AnnotationValue<MappedProperty>> joinColumns = associationMetadata.findAnnotation(JoinTable.class)
-                        .map(av -> av.getAnnotations("joinColumns", MappedProperty.class)).orElse(Collections.emptyList());
                 PersistentProperty associatedId = associatedEntity.getIdentity();
-                if (identity == null) {
-                    throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
-                }
-                if (associatedId == null) {
-                    throw new MappingException("Cannot have a foreign key association without an ID on entity: " + associatedEntity.getName());
-                }
-                if (CollectionUtils.isEmpty(joinColumns)) {
-
-                    String thisName = namingStrategy.mappedName(entity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix());
-                    String thatName = namingStrategy.mappedName(associatedEntity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix());
-                    joinTableBuilder.append(addTypeToColumn(identity, false, thisName)).append(" NOT NULL")
-                                    .append(',')
-                                    .append(addTypeToColumn(associatedId, false, thatName)).append(" NOT NULL");
-
-                } else {
-                    if (joinColumns.size() != 2) {
-                        throw new MappingException("Expected exactly 2 join columns for association [" + association.getName() + "] of entity: " + entity.getName());
-                    } else {
-                        String thisName = joinColumns.get(0).stringValue().orElseGet(() ->
-                                namingStrategy.mappedName(entity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix())
-                        );
-                        String thatName = joinColumns.get(1).stringValue().orElseGet(() ->
-                                namingStrategy.mappedName(associatedEntity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix())
-                        );
-                        joinTableBuilder.append(addTypeToColumn(identity, false, thisName)).append(" NOT NULL")
-                                .append(',')
-                                .append(addTypeToColumn(associatedId, false, thatName)).append(" NOT NULL");
-                    }
-                }
+                String[] joinColumnNames = resolveJoinTableColumns(entity, associatedEntity, association, identity, associatedId, namingStrategy);
+                //noinspection ConstantConditions
+                joinTableBuilder.append(addTypeToColumn(identity, false, joinColumnNames[0])).append(" NOT NULL")
+                        .append(',')
+                        .append(addTypeToColumn(associatedId, false, joinColumnNames[1])).append(" NOT NULL");
                 joinTableBuilder.append(");");
 
                 createStatements.add(joinTableBuilder.toString());
@@ -214,6 +223,50 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         builder.append(");");
         createStatements.add(builder.toString());
         return createStatements.toArray(new String[0]);
+    }
+
+    @NonNull
+    private String[] resolveJoinTableColumns(@NonNull PersistentEntity entity, PersistentEntity associatedEntity, Association association, PersistentProperty identity, PersistentProperty associatedId, NamingStrategy namingStrategy) {
+        List<AnnotationValue<MappedProperty>> joinColumns = association.getAnnotationMetadata().findAnnotation(JoinTable.class)
+                .map(av -> av.getAnnotations("joinColumns", MappedProperty.class)).orElse(Collections.emptyList());
+        if (identity == null) {
+            throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
+        }
+        if (associatedId == null) {
+            throw new MappingException("Cannot have a foreign key association without an ID on entity: " + associatedEntity.getName());
+        }
+        String[] joinColumnDefinitions;
+        if (CollectionUtils.isEmpty(joinColumns)) {
+
+            String thisName = namingStrategy.mappedName(entity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix());
+            String thatName = namingStrategy.mappedName(associatedEntity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix());
+            joinColumnDefinitions = new String[] { thisName, thatName };
+
+        } else {
+            if (joinColumns.size() != 2) {
+                throw new MappingException("Expected exactly 2 join columns for association [" + association.getName() + "] of entity: " + entity.getName());
+            } else {
+                String thisName = joinColumns.get(0).stringValue().orElseGet(() ->
+                        namingStrategy.mappedName(entity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix())
+                );
+                String thatName = joinColumns.get(1).stringValue().orElseGet(() ->
+                        namingStrategy.mappedName(associatedEntity.getDecapitalizedName() + namingStrategy.getForeignKeySuffix())
+                );
+                joinColumnDefinitions = new String[] { thisName, thatName };
+            }
+        }
+        return joinColumnDefinitions;
+    }
+
+    @NonNull
+    private List<Association> getJoinTableAssociations(List<? extends PersistentProperty> props) {
+        return props.stream().filter(p -> {
+                if (p instanceof Association) {
+                    Association a = (Association) p;
+                    return a.isForeignKey() && !a.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent();
+                }
+                return false;
+            }).map(p -> (Association) p).collect(Collectors.toList());
     }
 
     @Override
@@ -515,7 +568,42 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(getColumnName(mappedProp));
                         alias = joinAliases[i];
                     } else {
-                        throw new MappingException("Foreign key associations without mappedBy are not yet supported for association [" + associationName + "] of entity: " + association.getOwner().getName());
+                        target.append(joinType);
+
+                        PersistentEntity entity = association.getOwner();
+                        NamingStrategy namingStrategy = entity.getNamingStrategy();
+                        String joinTableName = association.getAnnotationMetadata()
+                                .stringValue(JoinTable.class, "name")
+                                .orElseGet(() ->
+                                        namingStrategy.mappedName(association)
+                                );
+                        String[] joinColumnNames = resolveJoinTableColumns(entity, associatedEntity, association, identity, associatedEntity.getIdentity(), namingStrategy);
+                        String joinTableAlias = joinAliases[i] + joinTableName + "_";
+                        String associatedTableName = getTableName(associatedEntity);
+                        target.append(joinTableName)
+                              .append(SPACE)
+                              .append(joinTableAlias)
+                              .append(" ON ")
+                              .append(alias)
+                              .append(DOT)
+                              .append(getColumnName(identity))
+                              .append('=')
+                              .append(joinTableAlias)
+                              .append(DOT)
+                              .append(joinColumnNames[0])
+                              .append(SPACE)
+                              .append(joinType)
+                              .append(associatedTableName)
+                              .append(SPACE)
+                              .append(joinAliases[i])
+                              .append(" ON ")
+                              .append(joinTableAlias)
+                              .append(DOT)
+                              .append(joinColumnNames[1])
+                              .append('=')
+                              .append(joinAliases[i])
+                              .append(DOT)
+                              .append(getColumnName(associatedEntity.getIdentity()));
                     }
                 } else {
                     target.append(joinType)

@@ -158,7 +158,7 @@ public interface PersistentEntity extends PersistentElement {
             Iterator<String> i = path.iterator();
             StringBuilder b = new StringBuilder();
             PersistentEntity currentEntity = this;
-            while (i.hasNext() && currentEntity != null) {
+            while (i.hasNext()) {
 
                 String name = i.next();
                 PersistentProperty sp = currentEntity.getPropertyByName(name);
@@ -230,9 +230,6 @@ public interface PersistentEntity extends PersistentElement {
                     return Optional.empty();
                 } else if (prop instanceof Association) {
                     startingEntity = ((Association) prop).getAssociatedEntity();
-                    if (startingEntity == null) {
-                        return Optional.empty();
-                    }
                 }
             }
             return Optional.ofNullable(prop);

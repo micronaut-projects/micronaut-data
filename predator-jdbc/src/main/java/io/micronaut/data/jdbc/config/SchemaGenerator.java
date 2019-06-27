@@ -1,9 +1,10 @@
 package io.micronaut.data.jdbc.config;
 
-import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
@@ -20,7 +21,6 @@ import io.micronaut.data.runtime.config.PredatorSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
-import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,9 +35,9 @@ import java.util.List;
 @Context
 @Internal
 @Requires(env = Environment.TEST)
-public class SchemaGenerator {
+public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
 
-    private List<PredatorJdbcConfiguration> configurations;
+    private final List<PredatorJdbcConfiguration> configurations;
 
     /**
      * Constructors a schema generator for the given configurations.
@@ -51,10 +51,10 @@ public class SchemaGenerator {
     /**
      * Initialize the schema for the configuration.
      *
-     * @param beanContext the bean context
+     * @param event The startup event
      */
-    @PostConstruct
-    void init(BeanContext beanContext) {
+    @Override
+    public void onApplicationEvent(StartupEvent event) {
         for (PredatorJdbcConfiguration configuration : configurations) {
             Dialect dialect = configuration.getDialect();
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
@@ -70,21 +70,15 @@ public class SchemaGenerator {
                 }
                 PersistentEntity[] entities = introspections.stream().map(PersistentEntity::of).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    DataSource dataSource = beanContext.getBean(DataSource.class, Qualifiers.byName(name));
+                    DataSource dataSource = event.getSource().getBean(DataSource.class, Qualifiers.byName(name));
                     try {
                         try (Connection connection = dataSource.getConnection()) {
                             SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
-                            if (dialect.allowBatch()) {
+                            if (dialect.allowBatch() && configuration.isBatchGenerate()) {
                                 switch (schemaGenerate) {
                                     case CREATE_DROP:
-                                        StringBuilder statements = new StringBuilder();
-                                        for (PersistentEntity entity : entities) {
-                                            String tableName = builder.getTableName(entity);
-                                            String sql = "DROP TABLE " + tableName;
-                                            statements.append(sql).append(';');
-                                        }
                                         try {
-                                            String sql = statements.toString();
+                                            String sql = builder.buildBatchDropTableStatement(entities);
                                             if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
                                                 PredatorSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                                             }
@@ -111,13 +105,14 @@ public class SchemaGenerator {
                                     case CREATE_DROP:
                                         for (PersistentEntity entity : entities) {
                                             try {
-                                                String tableName = builder.getTableName(entity);
-                                                String sql = "DROP TABLE " + tableName;
-                                                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                    PredatorSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                                                String[] statements = builder.buildDropTableStatements(entity);
+                                                for (String sql : statements) {
+                                                    if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                                                        PredatorSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                                                    }
+                                                    PreparedStatement ps = connection.prepareStatement(sql);
+                                                    ps.executeUpdate();
                                                 }
-                                                PreparedStatement ps = connection.prepareStatement(sql);
-                                                ps.executeUpdate();
                                             } catch (SQLException e) {
                                                 if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
                                                     PredatorSettings.QUERY_LOG.debug("Drop Failed: " + e.getMessage());
@@ -132,8 +127,14 @@ public class SchemaGenerator {
                                                 if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
                                                     PredatorSettings.QUERY_LOG.debug("Creating Table: \n{}", stmt);
                                                 }
-                                                PreparedStatement ps = connection.prepareStatement(stmt);
-                                                ps.executeUpdate();
+                                                try {
+                                                    PreparedStatement ps = connection.prepareStatement(stmt);
+                                                    ps.executeUpdate();
+                                                } catch (SQLException e) {
+                                                    if (PredatorSettings.QUERY_LOG.isWarnEnabled()) {
+                                                        PredatorSettings.QUERY_LOG.warn("Create Table Failed: " + e.getMessage());
+                                                    }
+                                                }
                                             }
 
                                         }
@@ -154,4 +155,5 @@ public class SchemaGenerator {
             }
         }
     }
+
 }

@@ -20,7 +20,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
 /**

@@ -62,7 +62,7 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec {
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(MSRegionRepository)
     }
 
     @Override

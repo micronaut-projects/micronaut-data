@@ -8,6 +8,7 @@ import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Country
 import io.micronaut.data.tck.entities.CountryRegion
+import io.micronaut.data.tck.entities.CountryRegionCity
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -336,13 +337,34 @@ abstract class AbstractRepositorySpec extends Specification {
         regionRepository.save(pv)
         def b = new CountryRegion("Bordeaux", france)
         regionRepository.save(b)
-        cityRepository.save(new City("Bordeaux", b))
-        cityRepository.save(new City("Bilbao", pv))
-        cityRepository.save(new City("Madrid", madrid))
+        def bdx = new City("Bordeaux", b)
+        def bilbao = new City("Bilbao", pv)
+        def mad = new City("Madrid", madrid)
+        cityRepository.save(bdx)
+        cityRepository.save(bilbao)
+        cityRepository.save(mad)
+        regionRepository.save(new CountryRegionCity(
+                b,
+                bdx
+        ))
+        regionRepository.save(new CountryRegionCity(
+                pv,
+                bilbao
+        ))
+        regionRepository.save(new CountryRegionCity(
+                madrid,
+                mad
+        ))
 
         then:"The counts are correct"
         cityRepository.countByCountryRegionCountryName("Spain") == 2
         cityRepository.countByCountryRegionCountryName("France") == 1
+
+        when:"A join that uses a join table is executed"
+        def region = regionRepository.findByCitiesName("Bilbao")
+
+        then:"The result is correct"
+        region.name == 'Pais Vasco'
 
         when:"A single level join is executed"
         def results = cityRepository.findByCountryRegionCountryName("Spain")

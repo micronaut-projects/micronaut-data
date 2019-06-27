@@ -24,6 +24,7 @@ public class PredatorJdbcConfiguration implements Named {
     public static final String PREFIX = "datasources";
 
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
+    private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
     private List<String> packages = new ArrayList<>(3);
     private final String name;
@@ -51,6 +52,20 @@ public class PredatorJdbcConfiguration implements Named {
         if (schemaGenerate != null) {
             this.schemaGenerate = schemaGenerate;
         }
+    }
+
+    /**
+     * @return Whether to generate tables in batch.
+     */
+    public boolean isBatchGenerate() {
+        return batchGenerate;
+    }
+
+    /**
+     * @param batchGenerate Whether to generate tables in batch.
+     */
+    public void setBatchGenerate(boolean batchGenerate) {
+        this.batchGenerate = batchGenerate;
     }
 
     /**

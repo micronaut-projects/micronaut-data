@@ -39,7 +39,7 @@ interface MyInterface extends GenericRepository<City, Long> {
 
 
     @Unroll
-    void "test SQL projection across nested property path for #method"() {
+    void "test SQL projection across one-to-many with mappedBy #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
@@ -64,6 +64,35 @@ interface MyInterface extends GenericRepository<Author, Long> {
         where:
         method             | returnType | arguments      | suffix
         "findByBooksTitle" | "Author"   | "String title" | "JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_books_.title = ?)"
+    }
+
+
+    @Unroll
+    void "test SQL projection across one-to-many with join table #method"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+
+@Repository(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+interface MyInterface extends GenericRepository<CountryRegion, Long> {
+
+    $returnType $method($arguments);
+}
+"""
+        )
+
+        def execMethod = repository.findPossibleMethods(method)
+                .findFirst()
+                .get()
+        def ann = execMethod
+                .synthesize(Query)
+
+        expect:
+        ann.value().contains(joinTableExpression)
+
+        where:
+        method             | returnType      | arguments     | joinTableExpression
+        "findByCitiesName" | "CountryRegion" | "String name" | "INNER JOIN countryRegionCity CountryRegion_cities_countryRegionCity_ ON CountryRegion_.id=CountryRegion_cities_countryRegionCity_.countryRegionId  INNER JOIN T_CITY CountryRegion_cities_ ON CountryRegion_cities_countryRegionCity_.cityId=CountryRegion_cities_.id"
     }
 
     @Unroll
