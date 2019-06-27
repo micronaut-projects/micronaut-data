@@ -27,7 +27,7 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
         ));
 
         saveAll(Arrays.asList(
-            newBook(king, "The Stand", 100),
+            newBook(king, "The Stand", 1000),
             newBook(king, "Pet Cemetery", 400),
             newBook(jp, "Along Came a Spider", 300),
             newBook(jp, "Double Cross", 300),

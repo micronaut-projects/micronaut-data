@@ -41,8 +41,6 @@ import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.model.query.builder.QueryBuilder;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.inject.ExecutableMethod;
 
 import javax.annotation.Nonnull;
@@ -50,6 +48,7 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -63,6 +62,7 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("(:[a-zA-Z0-9]+)");
+    private static final String PREDATOR_ANN_NAME = PredatorMethod.class.getName();
     protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
     private final ConcurrentMap<MethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
@@ -100,11 +100,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         MethodKey key = newMethodKey(repositoryType, executableMethod);
         StoredQuery<?, RT> storedQuery = findQueries.get(key);
         if (storedQuery == null) {
-            Class<?> rootEntity = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ROOT_ENTITY)
+            Class<?> rootEntity = context.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_ROOT_ENTITY)
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
             if (resultType == null) {
                 //noinspection unchecked
-                resultType = (Class<RT>) context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_RESULT_TYPE).orElse(rootEntity);
+                resultType = (Class<RT>) context.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_RESULT_TYPE).orElse(rootEntity);
             }
             String query = context.stringValue(Query.class).orElseThrow(() ->
                     new IllegalStateException("No query present in method")
@@ -126,6 +126,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         Pageable pageable = getPageable(context);
         String query = storedQuery.getQuery();
         return new DefaultPreparedQuery<>(
+                context,
                 repositoryType,
                 storedQuery,
                 query,
@@ -161,7 +162,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     Long.class,
                     rootEntity,
                     query,
-                    context.isPresent(PredatorMethod.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS) ? PredatorMethod.META_MEMBER_COUNT_PARAMETERS : null
+                    context.isPresent(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_COUNT_PARAMETERS) ? PredatorMethod.META_MEMBER_COUNT_PARAMETERS : null
             );
             countQueries.put(key, storedQuery);
         }
@@ -170,6 +171,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         Map<String, Object> parameterValues = buildParameterValues(context, storedQuery, storedQuery.getRootEntity());
         //noinspection unchecked
         return new DefaultPreparedQuery(
+                context,
                 repositoryType,
                 storedQuery,
                 storedQuery.getQuery(),
@@ -188,8 +190,37 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      */
     @NonNull
     protected Class<?> getRequiredRootEntity(MethodInvocationContext context) {
-        return context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ROOT_ENTITY)
+        return context.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_ROOT_ENTITY)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
+    }
+
+    /**
+     * Retrieve a parameter in the given role for the given type.
+     * @param context The context
+     * @param role The role
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An optional result
+     */
+    private <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+        return context.stringValue(PREDATOR_ANN_NAME, role).flatMap(name -> {
+            RT parameterValue = null;
+            Map<String, MutableArgumentValue<?>> params = context.getParameters();
+            MutableArgumentValue<?> arg = params.get(name);
+            if (arg != null) {
+                Object o = arg.getValue();
+                if (o != null) {
+                    if (type.isInstance(o)) {
+                        //noinspection unchecked
+                        parameterValue = (RT) o;
+                    } else {
+                        parameterValue = ConversionService.SHARED
+                                .convert(o, type).orElse(null);
+                    }
+                }
+            }
+            return Optional.ofNullable(parameterValue);
+        });
     }
 
     /**
@@ -199,40 +230,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      */
     @NonNull
     protected Pageable getPageable(MethodInvocationContext<?, ?> context) {
-        String pageableParam = context.stringValue(PredatorMethod.class, TypeRole.PAGEABLE).orElse(null);
-        Pageable pageable = null;
-        Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        if (pageableParam != null) {
-            Object o = parameterValueMap.get(pageableParam);
-            if (o instanceof Pageable) {
-                pageable = (Pageable) o;
-            } else {
-                pageable = ConversionService.SHARED
-                        .convert(o, Pageable.class).orElse(null);
-            }
-        } else {
-            String sortParam = context.stringValue(PredatorMethod.class, TypeRole.SORT).orElse(null);
-            if (sortParam != null) {
-                Object o = parameterValueMap.get(sortParam);
-                Sort sort;
-                if (o instanceof Sort) {
-                    sort = (Sort) o;
-                } else {
-                    sort = ConversionService.SHARED.convert(o, Sort.class).orElse(null);
-                }
-
-                int max = context.intValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
-                int pageIndex = context.intValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_INDEX).orElse(0);
-                boolean hasSize = max > 0;
-                if (hasSize) {
-                    if (sort != null) {
-                        pageable = Pageable.from(pageIndex, max, sort);
-                    } else {
-                        pageable = Pageable.from(pageIndex, max);
-                    }
+        Pageable pageable = getParameterInRole(context, TypeRole.PAGEABLE, Pageable.class).orElse(null);
+        if (pageable == null) {
+            Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
+            if (sort != null) {
+                int max = context.intValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                int pageIndex = context.intValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_PAGE_INDEX).orElse(0);
+                if (max > 0) {
+                    pageable = Pageable.from(pageIndex, max, sort);
                 }
             } else {
-                int max = context.intValue(PredatorMethod.class, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                int max = context.intValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
                 if (max > -1) {
                     return Pageable.from(0, max);
                 }
@@ -259,7 +267,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      * @return The entity
      */
     protected @NonNull Object getRequiredEntity(MethodInvocationContext<T, ?> context) {
-        String entityParam = context.stringValue(PredatorMethod.class, TypeRole.ENTITY)
+        String entityParam = context.stringValue(PREDATOR_ANN_NAME, TypeRole.ENTITY)
                 .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
 
         Object o = context.getParameterValueMap().get(entityParam);
@@ -269,7 +277,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         return o;
     }
 
-    @SuppressWarnings("unchecked")
     private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         if (storedQuery.useNumericPlaceholders()) {
@@ -724,8 +731,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                 this.query = query;
             }
             this.method = method;
-            this.lastUpdatedProp = method.stringValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
-            this.isDto = method.isTrue(PredatorMethod.class, PredatorMethod.META_MEMBER_DTO);
+            this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
+            this.isDto = method.isTrue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_DTO);
 
             this.isCount = parameterBindingMember != null && parameterBindingMember.startsWith("count");
             AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
@@ -910,7 +917,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @NonNull
         @Override
         public DataType getResultDataType() {
-            return annotationMetadata.findAnnotation(PredatorMethod.class)
+            return annotationMetadata.findAnnotation(PREDATOR_ANN_NAME)
                                      .flatMap(av -> av.enumValue(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class))
                                      .orElse(DataType.OBJECT);
         }
@@ -921,7 +928,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @SuppressWarnings("unchecked")
         @Override
         public Optional<Class<?>> getEntityIdentifierType() {
-            Optional o = annotationMetadata.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE);
+            Optional o = annotationMetadata.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_ID_TYPE);
             return o;
         }
 
@@ -1020,9 +1027,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final boolean dto;
         private final @NonNull Map<Integer, Object> indexedValues;
         private final Class<?> repositoryType;
+        private final MethodInvocationContext<T, R> context;
 
         /**
          * The default constructor.
+         * @param context The execution context
          * @param repositoryType The repository type
          * @param storedQuery The stored query
          * @param finalQuery The final query
@@ -1030,16 +1039,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
          * @param pageable The pageable
          */
         DefaultPreparedQuery(
+                MethodInvocationContext<T, R> context,
                 Class<?> repositoryType,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable) {
-            this(repositoryType, storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
+            this(context, repositoryType, storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
         }
 
         /**
          * The default constructor.
+         *
+         * @param context The execution context
          * @param repositoryType The repository type
          * @param storedQuery The stored query
          * @param finalQuery The final query
@@ -1048,12 +1060,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
          * @param dtoProjection Whether the prepared query is a dto projection
          */
         DefaultPreparedQuery(
+                MethodInvocationContext<T, R> context,
                 Class<?> repositoryType,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
                 @Nullable Map parameterValues,
                 @Nullable Pageable pageable,
                 boolean dtoProjection) {
+            this.context = context;
             this.repositoryType = repositoryType;
             this.query = finalQuery;
             this.storedQuery = storedQuery;
@@ -1071,6 +1085,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
             this.dto = dtoProjection;
+        }
+
+        @Override
+        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
+            return AbstractQueryInterceptor.this.getParameterInRole(context, role, type);
         }
 
         @NonNull

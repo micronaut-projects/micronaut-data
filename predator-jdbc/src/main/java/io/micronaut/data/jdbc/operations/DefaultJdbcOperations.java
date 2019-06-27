@@ -21,6 +21,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
+import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -34,6 +35,8 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.PredatorSettings;
 import io.micronaut.data.runtime.mapper.DTOMapper;
+import io.micronaut.data.runtime.mapper.ResultConsumer;
+import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
@@ -154,7 +157,10 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                             columnNameResultSetReader,
                             preparedQuery.getJoinFetchPaths()
                     );
-                    return mapper.map(rs, resultType);
+                    R result = mapper.map(rs, resultType);
+                    preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                            .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                    return result;
                 } else {
                     if (preparedQuery.isDtoProjection()) {
                         RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
@@ -162,6 +168,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                                 persistentEntity,
                                 columnNameResultSetReader
                         );
+
                         return introspectedDataMapper.map(rs, resultType);
                     } else {
                         Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
@@ -175,6 +182,44 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
             return null;
         });
+    }
+
+    @NonNull
+    private ResultConsumer.Context<ResultSet> newMappingContext(ResultSet rs) {
+        return new ResultConsumer.Context<ResultSet>() {
+            @Override
+            public ResultSet getResultSet() {
+                return rs;
+            }
+
+            @Override
+            public ResultReader<ResultSet, String> getResultReader() {
+                return columnNameResultSetReader;
+            }
+
+            @NonNull
+            @Override
+            public <E> E readEntity(String prefix, Class<E> type) throws DataAccessException {
+                RuntimePersistentEntity<E> entity = getEntity(type);
+                TypeMapper<ResultSet, E> mapper = new SqlResultEntityTypeMapper<>(
+                        prefix,
+                        entity,
+                        columnNameResultSetReader
+                );
+                return mapper.map(rs, type);
+            }
+
+            @NonNull
+            @Override
+            public <E, D> D readDTO(@NonNull String prefix, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException {
+                RuntimePersistentEntity<E> entity = getEntity(rootEntity);
+                TypeMapper<ResultSet, D> introspectedDataMapper = new DTOMapper<>(
+                        entity,
+                        columnNameResultSetReader
+                );
+                return introspectedDataMapper.map(rs, dtoType);
+            }
+        };
     }
 
     @Override
@@ -367,6 +412,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             ResultSet rs = ps.executeQuery();
             boolean dtoProjection = preparedQuery.isDtoProjection();
             if (isRootResult || dtoProjection) {
+                SqlResultConsumer sqlMappingConsumer = preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null);
                 TypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
                     mapper = new DTOMapper<>(
@@ -400,7 +446,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     @Override
                     public R next() {
                         nextCalled = false;
-                        return mapper.map(rs, resultType);
+                        R o = mapper.map(rs, resultType);
+                        if (sqlMappingConsumer != null) {
+                            sqlMappingConsumer.accept(rs, o);
+                        }
+                        return o;
                     }
                 };
             } else {

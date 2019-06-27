@@ -110,4 +110,9 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     public String getPersistedName() {
         return owner.getNamingStrategy().mappedName(this);
     }
+
+    @Override
+    public String toString() {
+        return getOwner().getSimpleName() + "." + getName();
+    }
 }

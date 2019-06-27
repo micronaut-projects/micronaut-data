@@ -400,7 +400,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private void addParameterTypeDefinitions(MethodMatchContext matchContext, Map<String, String> parameterBinding, ParameterElement[] parameters, AnnotationValueBuilder<PredatorMethod> annotationBuilder) {
+    private void addParameterTypeDefinitions(
+            MethodMatchContext matchContext, Map<String, String> parameterBinding,
+            ParameterElement[] parameters,
+            AnnotationValueBuilder<PredatorMethod> annotationBuilder) {
         if (!matchContext.supportsImplicitQueries()) {
             List<AnnotationValue<?>> annotationValues = new ArrayList<>(parameterBinding.size());
             Map<String, String> reverseMap = parameterBinding.entrySet().stream().collect(Collectors.toMap(

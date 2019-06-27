@@ -101,4 +101,27 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     void init() {
     }
 
+    void "test SQL mapping function"() {
+        when:"using a function that maps a single value"
+        def book = ar.testReadSingleProperty("The Stand", 700)
+
+        then:"The result is correct"
+        book != null
+        book.author.name == 'Stephen King'
+
+        when:"using a function that maps an associated entity value"
+        book = ar.testReadAssociatedEntity("The Stand", 700)
+
+        then:"The result is correct"
+        book != null
+        book.author.name == 'Stephen King'
+        book.author.id
+
+        when:"using a function that maps a DTO"
+        book = ar.testReadDTO("The Stand", 700)
+
+        then:"The result is correct"
+        book != null
+        book.author.name == 'Stephen King'
+    }
 }

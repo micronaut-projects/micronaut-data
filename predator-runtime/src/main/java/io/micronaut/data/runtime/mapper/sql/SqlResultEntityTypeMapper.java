@@ -32,6 +32,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
     private final RuntimePersistentEntity<R> entity;
     private final ResultReader<RS, String> resultReader;
     private final Set<String> joinPaths;
+    private final String startingPrefix;
 
     /**
      * Default constructor.
@@ -45,6 +46,19 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
     }
 
     /**
+     * Default constructor.
+     * @param prefix The prefix to startup from.
+     * @param entity The entity
+     * @param resultReader The result reader
+     */
+    public SqlResultEntityTypeMapper(
+            String prefix,
+            @NonNull RuntimePersistentEntity<R> entity,
+            @NonNull ResultReader<RS, String> resultReader) {
+        this(entity, resultReader, Collections.emptySet(), prefix);
+    }
+
+    /**
      * Constructor used to customize the join paths.
      * @param entity The entity
      * @param resultReader The result reader
@@ -54,11 +68,26 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<String> joinPaths) {
+        this(entity, resultReader, joinPaths, "");
+    }
+
+    /**
+     * Constructor used to customize the join paths.
+     * @param entity The entity
+     * @param resultReader The result reader
+     * @param joinPaths The join paths
+     */
+    private SqlResultEntityTypeMapper(
+            @NonNull RuntimePersistentEntity<R> entity,
+            @NonNull ResultReader<RS, String> resultReader,
+            @Nullable Set<String> joinPaths,
+            String startingPrefix) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
         this.resultReader = resultReader;
         this.joinPaths = joinPaths != null ? joinPaths : Collections.emptySet();
+        this.startingPrefix = startingPrefix != null ? startingPrefix : "";
     }
 
     /**
@@ -78,7 +107,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
     @NonNull
     @Override
     public R map(@NonNull RS object, @NonNull Class<R> type) throws DataAccessException {
-        return readEntity("", "", object, entity);
+        return readEntity(startingPrefix, "", object, entity);
     }
 
     @Nullable
