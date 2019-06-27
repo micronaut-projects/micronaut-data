@@ -14,11 +14,12 @@ class BuildInsertSpec extends AbstractPredatorSpec {
 package test;
 
 import io.micronaut.data.model.entities.Person;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
-@Repository(queryBuilder=SqlQueryBuilder.class)
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
 interface MyInterface extends CrudRepository<Person, Long> {
 }
 """)

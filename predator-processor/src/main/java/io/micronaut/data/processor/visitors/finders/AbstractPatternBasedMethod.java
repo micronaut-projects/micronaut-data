@@ -425,7 +425,8 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         );
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         Map<String, String> parameterBinding = new LinkedHashMap<>(parameters.size());
-        boolean namedParameters = matchContext.getRepositoryClass().booleanValue(Repository.class, "namedParameters").orElse(true);
+        boolean namedParameters = matchContext.getRepositoryClass()
+                .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
         if (namedParameters) {
             Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
 

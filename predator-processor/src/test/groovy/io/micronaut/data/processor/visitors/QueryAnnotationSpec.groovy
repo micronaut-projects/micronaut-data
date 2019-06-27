@@ -39,11 +39,11 @@ package test;
 
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.*;
 import java.util.List;
 
-@Repository(namedParameters = false, implicitQueries = false)
+@Repository
+@RepositoryConfiguration(namedParameters = false, implicitQueries = false)
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")

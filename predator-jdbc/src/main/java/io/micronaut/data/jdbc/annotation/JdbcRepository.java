@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.annotation;
 
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -15,7 +16,7 @@ import java.lang.annotation.*;
  * @author graemerocher
  * @since 1.0.0
  */
-@Repository(
+@RepositoryConfiguration(
     queryBuilder = SqlQueryBuilder.class,
     operations = JdbcRepositoryOperations.class,
     implicitQueries = false,
@@ -24,6 +25,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
+@Repository
 public @interface JdbcRepository {
     /**
      * @return The dialect to use.

@@ -45,6 +45,7 @@ import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -114,9 +115,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             queryEncoder = QueryBuilder.newQueryBuilder(element.getAnnotationMetadata());
             this.dataTypes = MappedEntityVisitor.getConfiguredDataTypes(currentRepository);
             AnnotationMetadata annotationMetadata = element.getAnnotationMetadata();
-            AnnotationValue[] roleArray = annotationMetadata
-                    .getValue(Repository.class, "typeRoles", AnnotationValue[].class).orElse(new AnnotationValue[0]);
-            for (AnnotationValue<?> parameterRole : roleArray) {
+            List<AnnotationValue<TypeRole>> roleArray = annotationMetadata
+                    .findAnnotation(RepositoryConfiguration.class)
+                    .map(av -> av.getAnnotations("typeRoles", TypeRole.class))
+                    .orElse(Collections.emptyList());
+            for (AnnotationValue<TypeRole> parameterRole : roleArray) {
                 String role = parameterRole.stringValue("role").orElse(null);
                 AnnotationClassValue cv = parameterRole.get("type", AnnotationClassValue.class).orElse(null);
                 if (StringUtils.isNotEmpty(role) && cv != null) {

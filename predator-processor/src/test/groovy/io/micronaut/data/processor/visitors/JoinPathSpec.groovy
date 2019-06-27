@@ -44,7 +44,8 @@ interface MyInterface extends GenericRepository<City, Long> {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 
-@Repository(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
 interface MyInterface extends GenericRepository<Author, Long> {
 
     $returnType $method($arguments);
@@ -73,7 +74,8 @@ interface MyInterface extends GenericRepository<Author, Long> {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 
-@Repository(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
 interface MyInterface extends GenericRepository<CountryRegion, Long> {
 
     $returnType $method($arguments);
@@ -109,7 +111,8 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-@Repository(queryBuilder = SqlQueryBuilder.class)
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -153,8 +156,8 @@ interface MyInterface extends GenericRepository<City, Long> {
         }
         def repository = buildRepository('test.MyInterface', """
 import io.micronaut.data.tck.entities.*;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-@Repository(queryBuilder = SqlQueryBuilder.class)
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn

@@ -140,16 +140,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
     }
 
     /**
-     * Obtains the configured query builder.
-     * @param context The context
-     * @return The query builder
-     */
-    protected @NonNull QueryBuilder getRequiredQueryBuilder(@NonNull MethodInvocationContext<T, R> context) {
-        return context.getValue(Repository.class, PredatorMethod.META_MEMBER_QUERY_BUILDER, QueryBuilder.class)
-                .orElse(new JpaQueryBuilder());
-    }
-
-    /**
      * Prepares a query for the given context.
      * @param context The context
      * @return The query
@@ -722,7 +712,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
             this.isNative = method.isTrue(Query.class, "nativeQuery");
-            this.isNumericPlaceHolder = method.classValue(Repository.class, "queryBuilder").map(c -> c == SqlQueryBuilder.class).orElse(false);
+            this.isNumericPlaceHolder = method
+                    .classValue(RepositoryConfiguration.class, "queryBuilder")
+                    .map(c -> c == SqlQueryBuilder.class).orElse(false);
             this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
 
             if (isNumericPlaceHolder && method.isTrue(Query.class, PredatorMethod.META_MEMBER_RAW_QUERY)) {

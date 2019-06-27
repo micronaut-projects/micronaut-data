@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -143,7 +144,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @return True if it is
      */
     public boolean supportsImplicitQueries() {
-        return repositoryClass.booleanValue(Repository.class, "implicitQueries").orElse(true);
+        return repositoryClass.booleanValue(RepositoryConfiguration.class, "implicitQueries").orElse(true);
     }
 
     /**

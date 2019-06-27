@@ -27,6 +27,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
@@ -62,8 +63,8 @@ public final class PredatorIntroductionAdvice implements MethodInterceptor<Objec
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         String dataSourceName = context.stringValue(Repository.class).orElse(null);
-        Class<?> operationsType = context.classValue(Repository.class, "operations")
-                                      .orElse(RepositoryOperations.class);
+        Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
+                                         .orElse(RepositoryOperations.class);
         Class<?> interceptorType = context
                 .classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_INTERCEPTOR)
                 .orElse(null);
