@@ -2,6 +2,7 @@ package io.micronaut.data.runtime.mapper.sql;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
@@ -27,6 +28,7 @@ import java.util.Set;
  * @param <RS> The result set type
  * @param <R> The result type
  */
+@Internal
 public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
 
     private final RuntimePersistentEntity<R> entity;

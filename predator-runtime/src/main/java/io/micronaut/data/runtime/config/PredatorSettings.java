@@ -10,10 +10,6 @@ import org.slf4j.LoggerFactory;
  * @since 1.0.0
  */
 public interface PredatorSettings {
-    /**
-     * The prefix to use for settings.
-     */
-    String PREFIX = "predator";
 
     /**
      * The logger that should be used to log queries.

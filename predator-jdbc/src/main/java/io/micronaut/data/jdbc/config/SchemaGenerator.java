@@ -1,8 +1,6 @@
 package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.annotation.Context;
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.env.Environment;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.exceptions.ConfigurationException;
@@ -34,7 +32,6 @@ import java.util.List;
  */
 @Context
 @Internal
-@Requires(env = Environment.TEST)
 public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
 
     private final List<PredatorJdbcConfiguration> configurations;

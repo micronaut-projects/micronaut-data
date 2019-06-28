@@ -18,4 +18,5 @@ include 'doc-examples:example-kotlin'
 
 // benchmarks
 include 'benchmarks:benchmark-predator'
+include 'benchmarks:benchmark-predator-jdbc'
 include 'benchmarks:benchmark-spring-data'
