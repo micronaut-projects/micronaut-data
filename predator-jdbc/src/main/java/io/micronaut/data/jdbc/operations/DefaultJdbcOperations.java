@@ -29,7 +29,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
-import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
@@ -43,13 +42,13 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.scheduling.TaskExecutors;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -59,6 +58,7 @@ import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -72,13 +72,12 @@ import java.util.stream.StreamSupport;
  * @since 1.0.0
  */
 @EachBean(DataSource.class)
-public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
+public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository, AutoCloseable {
 
     private static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
     private static final String NOT_TRUE_EXPRESSION = "1 = 2";
     private static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
 
-    private final ExecutorAsyncOperations asyncOperations;
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
     private final DataSource dataSource;
@@ -90,6 +89,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final JdbcQueryStatement preparedStatementWriter = new JdbcQueryStatement();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
+    private ExecutorAsyncOperations asyncOperations;
+    private ExecutorService executorService;
 
     /**
      * Default constructor.
@@ -100,20 +101,16 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
      */
     protected DefaultJdbcOperations(@NonNull DataSource dataSource,
                                     @Parameter String dataSourceName,
-                                    @Named(TaskExecutors.IO) @NonNull ExecutorService executorService,
+                                    @Named("io") @Nullable ExecutorService executorService,
                                     BeanContext beanContext) {
         ArgumentUtils.requireNonNull("dataSource", dataSource);
-        ArgumentUtils.requireNonNull("executorService", executorService);
         PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
         this.dataSource = dataSource;
         this.writeTransactionTemplate = new TransactionTemplate(transactionManager);
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setReadOnly(true);
-        this.readTransactionTemplate = new TransactionTemplate(transactionManager, def);
-        this.asyncOperations = new ExecutorAsyncOperations(
-                this,
-                executorService
-        );
+        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
+        transactionDefinition.setReadOnly(true);
+        this.readTransactionTemplate = new TransactionTemplate(transactionManager, transactionDefinition);
+        this.executorService = executorService;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext.getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
             String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
@@ -129,15 +126,34 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     }
 
     @NonNull
+    private ExecutorService newLocalThreadPool() {
+        this.executorService = Executors.newCachedThreadPool();
+        return executorService;
+    }
+
+    @NonNull
     @Override
-    public AsyncRepositoryOperations async() {
+    public ExecutorAsyncOperations async() {
+        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
+        if (asyncOperations == null) {
+            synchronized (this) { // double check
+                asyncOperations = this.asyncOperations;
+                if (asyncOperations == null) {
+                    asyncOperations = new ExecutorAsyncOperations(
+                            this,
+                            executorService != null ? executorService : newLocalThreadPool()
+                    );
+                    this.asyncOperations = asyncOperations;
+                }
+            }
+        }
         return asyncOperations;
     }
 
     @NonNull
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(asyncOperations);
+        return new ExecutorReactiveOperations(async());
     }
 
     @Nullable
@@ -860,6 +876,14 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                 }
                 return results;
             });
+        }
+    }
+
+    @Override
+    @PreDestroy
+    public void close() throws Exception {
+        if (executorService != null) {
+            executorService.shutdown();
         }
     }
 
