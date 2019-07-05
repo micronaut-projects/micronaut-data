@@ -250,13 +250,15 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return StreamSupport.stream(findIterable(preparedQuery).spliterator(), false);
+        return StreamSupport.stream(findIterable(preparedQuery, false).spliterator(), false);
     }
 
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return findIterable(preparedQuery);
+        return CollectionUtils.iterableToList(
+                findIterable(preparedQuery, true)
+        );
     }
 
     @NonNull
@@ -417,7 +419,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         });
     }
 
-    private <T, R> Iterable<R> findIterable(@NonNull PreparedQuery<T, R> preparedQuery) {
+    private <T, R> Iterable<R> findIterable(@NonNull PreparedQuery<T, R> preparedQuery, boolean consume) {
         Class<T> rootEntity = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
         boolean isRootResult = resultType == rootEntity;
@@ -427,6 +429,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             PreparedStatement ps = prepareStatement(connection, preparedQuery, false, false);
             ResultSet rs = ps.executeQuery();
             boolean dtoProjection = preparedQuery.isDtoProjection();
+            Iterable<R> iterable;
             if (isRootResult || dtoProjection) {
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null);
                 TypeMapper<ResultSet, R> mapper;
@@ -442,7 +445,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                             preparedQuery.getJoinFetchPaths()
                     );
                 }
-                return () -> new Iterator<R>() {
+                iterable = () -> new Iterator<R>() {
                     boolean nextCalled = false;
 
                     @Override
@@ -455,7 +458,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                                 return nextCalled;
                             }
                         } catch (SQLException e) {
-                            return false;
+                            throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
                         }
                     }
 
@@ -470,7 +473,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     }
                 };
             } else {
-                return () -> new Iterator<R>() {
+                iterable = () -> new Iterator<R>() {
                     boolean nextCalled = false;
 
                     @Override
@@ -500,6 +503,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     }
                 };
             }
+            return consume ? CollectionUtils.iterableToList(iterable) : iterable;
         });
     }
 

@@ -54,6 +54,11 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     }
 
     @Override
+    public boolean isEnum() {
+        return propertyElement.getType().isEnum();
+    }
+
+    @Override
     public DataType getDataType() {
         return findAnnotation(MappedProperty.class)
                 .flatMap(av -> av.enumValue("type", DataType.class)).orElseGet(() -> TypeUtils.resolveDataType(

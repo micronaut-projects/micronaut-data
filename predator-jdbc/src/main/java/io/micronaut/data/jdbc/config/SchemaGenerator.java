@@ -1,8 +1,7 @@
 package io.micronaut.data.jdbc.config;
 
+import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
-import io.micronaut.context.event.ApplicationEventListener;
-import io.micronaut.context.event.StartupEvent;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
@@ -19,6 +18,7 @@ import io.micronaut.data.runtime.config.PredatorSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
+import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -32,7 +32,7 @@ import java.util.List;
  */
 @Context
 @Internal
-public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
+public class SchemaGenerator {
 
     private final List<PredatorJdbcConfiguration> configurations;
 
@@ -47,11 +47,11 @@ public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
 
     /**
      * Initialize the schema for the configuration.
+     * @param beanLocator The bean locator
      *
-     * @param event The startup event
      */
-    @Override
-    public void onApplicationEvent(StartupEvent event) {
+    @PostConstruct
+    public void createSchema(BeanLocator beanLocator) {
         for (PredatorJdbcConfiguration configuration : configurations) {
             Dialect dialect = configuration.getDialect();
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
@@ -67,7 +67,7 @@ public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
                 }
                 PersistentEntity[] entities = introspections.stream().map(PersistentEntity::of).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    DataSource dataSource = event.getSource().getBean(DataSource.class, Qualifiers.byName(name));
+                    DataSource dataSource = beanLocator.getBean(DataSource.class, Qualifiers.byName(name));
                     try {
                         try (Connection connection = dataSource.getConnection()) {
                             SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
@@ -82,8 +82,8 @@ public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
                                             PreparedStatement ps = connection.prepareStatement(sql);
                                             ps.executeUpdate();
                                         } catch (SQLException e) {
-                                            if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                PredatorSettings.QUERY_LOG.debug("Drop Failed: " + e.getMessage());
+                                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                                                PredatorSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
                                             }
                                         }
                                     case CREATE:
@@ -111,8 +111,8 @@ public class SchemaGenerator implements ApplicationEventListener<StartupEvent> {
                                                     ps.executeUpdate();
                                                 }
                                             } catch (SQLException e) {
-                                                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                    PredatorSettings.QUERY_LOG.debug("Drop Failed: " + e.getMessage());
+                                                if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                                                    PredatorSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
                                                 }
                                             }
                                         }

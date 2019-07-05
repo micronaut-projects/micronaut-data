@@ -21,6 +21,7 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedProperty;
 
+
 /**
  * Models a persistent property. That is a property that is saved and retrieved from the database.
  *
@@ -114,8 +115,22 @@ public interface PersistentProperty extends PersistentElement {
      * @return The data type
      */
     default DataType getDataType() {
+
         return findAnnotation(MappedProperty.class)
-                .flatMap(av -> av.enumValue("type", DataType.class)).orElse(DataType.OBJECT);
+                .flatMap(av -> av.enumValue("type", DataType.class)).orElseGet(() -> {
+                    if (isEnum()) {
+                        return DataType.STRING;
+                    } else {
+                        return DataType.OBJECT;
+                    }
+                });
+    }
+
+    /**
+     * @return Returns whether the property is an enum.
+     */
+    default boolean isEnum() {
+        return false;
     }
 
     /**

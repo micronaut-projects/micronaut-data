@@ -762,7 +762,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         return addTypeToColumn(identity, false, column);
                     }
                 } else {
-                    if (prop.isAssignable(Clob.class)) {
+                    if (prop.isEnum()) {
+                        column += " VARCHAR(255)";
+                        break;
+                    } else if (prop.isAssignable(Clob.class)) {
                         if (dialect == Dialect.POSTGRES) {
                             column += " TEXT";
                         } else {
@@ -777,7 +780,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                         break;
                     } else {
-                        throw new MappingException("Unable to create table property [" + prop.getName() + "] of entity [" + prop.getOwner().getName() + "] with unknown data type: " + dataType);
+                        throw new MappingException("Unable to create table column for property [" + prop.getName() + "] of entity [" + prop.getOwner().getName() + "] with unknown data type: " + dataType);
                     }
                 }
         }

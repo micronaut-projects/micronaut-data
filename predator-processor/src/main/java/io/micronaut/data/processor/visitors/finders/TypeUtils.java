@@ -264,6 +264,10 @@ public class TypeUtils {
                 }
             }
 
+            if (type.isEnum()) {
+                return DataType.STRING;
+            }
+
             if (type.hasStereotype(MappedEntity.class)) {
                 return DataType.ENTITY;
             }
