@@ -31,8 +31,11 @@ dependencies {
     testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
         
     annotationProcessor "io.micronaut:micronaut-inject-java"
+    annotationProcessor "io.micronaut:micronaut-graal"
     annotationProcessor "io.micronaut:micronaut-validation"
     annotationProcessor "io.micronaut.data:micronaut-predator-processor:$predatorVersion"
+
+    compileOnly "com.oracle.substratevm:svm"
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-runtime"
@@ -42,7 +45,7 @@ dependencies {
     implementation "io.micronaut.data:micronaut-predator-jdbc:$predatorVersion"
     runtime "ch.qos.logback:logback-classic:1.2.3"
     runtime "com.h2database:h2"
-    runtime "io.micronaut.configuration:micronaut-jdbc-hikari"
+    runtime "io.micronaut.configuration:micronaut-jdbc-tomcat"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testCompile "org.junit.jupiter:junit-jupiter-api"

@@ -15,4 +15,5 @@
 
     <logger name="io.micronaut.data.query" level="debug" />
 <!--    <logger name="io.micronaut.http.client" level="debug" />-->
+<!--    <logger name="com.zaxxer.hikari" level="trace" />-->
 </configuration>

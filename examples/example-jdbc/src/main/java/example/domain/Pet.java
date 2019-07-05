@@ -1,14 +1,13 @@
 package example.domain;
 
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.data.annotation.AutoPopulated;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.micronaut.data.annotation.AutoPopulated;
+import java.util.UUID;
 
 @Entity
 public class Pet {
