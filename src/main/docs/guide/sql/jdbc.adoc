@@ -1,0 +1,13 @@
+Predator JDBC is an implementation that pre-computes native SQL queries (given a particular database dialect) and provides a repository implementation that is a simple data mapper between a JDBC `ResultSet` and an object.
+
+Predator JDBC is not a Object Relational Mapping (ORM) implementation and does not and will not include any of the following concepts:
+
+* Lazy Loading
+* Dirty Checking
+* Persistence Contexts / Sessions
+* Entity Proxies
+* Optimistic Locking
+
+Predator JDBC is designed for users who prefer a lower-level experience and working directly with SQL.
+
+NOTE: Predator JDBC is useful for implementing the majority of the simple SQL queries that exist in a typical application and does not include any runtime query building DSLs. For more complex queries Predator JDBC can be paired with one of the many great existing Java SQL DSLs out there like https://www.jooq.org[JOOQ], http://www.querydsl.com[QueryDSL] or https://github.com/requery/requery[Requery].

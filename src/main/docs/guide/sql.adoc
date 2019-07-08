@@ -1,1 +1,1 @@
-TODO
+In addition to JPA, Predator supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC is the only supported implementation for executing SQL queries, however this may change in the future.

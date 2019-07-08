@@ -1,5 +1,6 @@
 package io.micronaut.data.jdbc.operations;
 
+import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 
 /**
@@ -8,5 +9,5 @@ import io.micronaut.data.operations.RepositoryOperations;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface JdbcRepositoryOperations extends RepositoryOperations {
+public interface JdbcRepositoryOperations extends RepositoryOperations, JdbcOperations {
 }

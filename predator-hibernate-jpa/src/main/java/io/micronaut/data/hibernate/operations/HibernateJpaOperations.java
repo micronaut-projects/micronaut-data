@@ -17,6 +17,8 @@ package io.micronaut.data.hibernate.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -25,26 +27,24 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
-import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
-import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
-import io.micronaut.data.model.runtime.*;
-import io.micronaut.data.operations.async.AsyncCapableRepository;
-import io.micronaut.data.operations.async.AsyncRepositoryOperations;
-import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
-import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
-import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
-import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
+import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.data.transaction.TransactionOperations;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.query.Query;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
@@ -56,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,37 +66,32 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
+@EachBean(SessionFactory.class)
 public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";
     private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private final SessionFactory sessionFactory;
-    private final TransactionTemplate writeTransactionTemplate;
-    private final TransactionTemplate readTransactionTemplate;
-    private final ExecutorAsyncOperations asyncOperations;
+    private final TransactionOperations<EntityManager> transactionOperations;
+    private ExecutorAsyncOperations asyncOperations;
+    private ExecutorService executorService;
 
     /**
      * Default constructor.
      *
-     * @param sessionFactory  The session factory
-     * @param executorService The executor service for I/O tasks to use
+     * @param sessionFactory        The session factory
+     * @param transactionOperations The transaction operations
+     * @param executorService       The executor service for I/O tasks to use
      */
     protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
-            @NonNull ExecutorService executorService) {
+            @NonNull @Parameter TransactionOperations<EntityManager> transactionOperations,
+            @Named("io") @Nullable ExecutorService executorService) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
-        ArgumentUtils.requireNonNull("executorService", executorService);
         this.sessionFactory = sessionFactory;
-        HibernateTransactionManager transactionManager = new HibernateTransactionManager(sessionFactory);
-        this.writeTransactionTemplate = new TransactionTemplate(transactionManager);
-        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
-        def.setReadOnly(true);
-        this.readTransactionTemplate = new TransactionTemplate(transactionManager, def);
-        this.asyncOperations = new ExecutorAsyncOperations(
-                this,
-                executorService
-        );
+        this.transactionOperations = transactionOperations;
+        this.executorService = executorService;
     }
 
     @NonNull
@@ -115,7 +111,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return readTransactionTemplate.execute(status ->
+        return transactionOperations.executeRead(status ->
                 getCurrentSession().byId(type).load(id)
         );
     }
@@ -123,7 +119,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return readTransactionTemplate.execute(status -> {
+        return transactionOperations.executeRead(status -> {
             Class<R> resultType = preparedQuery.getResultType();
             String query = preparedQuery.getQuery();
 
@@ -173,7 +169,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <T> Iterable<T> findAll(@NonNull PagedQuery<T> query) {
         //noinspection ConstantConditions
-        return readTransactionTemplate.execute(status -> {
+        return transactionOperations.executeRead(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             Query<T> q = buildCriteriaQuery(session, query.getRootEntity(), criteriaBuilder, query.getPageable());
@@ -185,7 +181,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <T> long count(PagedQuery<T> pagedQuery) {
         //noinspection ConstantConditions
-        return readTransactionTemplate.execute(status -> {
+        return transactionOperations.executeRead(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
@@ -207,7 +203,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
-        return readTransactionTemplate.execute(status -> {
+        return transactionOperations.executeRead(status -> {
             Session currentSession = getCurrentSession();
             String queryStr = preparedQuery.getQuery();
             Pageable pageable = preparedQuery.getPageable();
@@ -285,7 +281,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @SuppressWarnings("ConstantConditions")
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
-        return writeTransactionTemplate.execute(status -> {
+        return transactionOperations.executeWrite(status -> {
             T entity = operation.getEntity();
             Session session = getCurrentSession();
             session.persist(entity);
@@ -298,7 +294,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
-        return writeTransactionTemplate.execute(status -> {
+        return transactionOperations.executeWrite(status -> {
             if (operation != null) {
                 Session session = getCurrentSession();
                 for (T entity : operation) {
@@ -326,7 +322,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         //noinspection ConstantConditions
-        return writeTransactionTemplate.execute(status -> {
+        return transactionOperations.executeWrite(status -> {
             Query<?> q = getCurrentSession().createQuery(preparedQuery.getQuery());
             bindParameters(q, preparedQuery.getParameterValues());
             return Optional.of(q.executeUpdate());
@@ -336,7 +332,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
         if (operation.all()) {
-            return writeTransactionTemplate.execute(status -> {
+            return transactionOperations.executeWrite(status -> {
                 Class<T> entityType = operation.getRootEntity();
                 Session session = getCurrentSession();
                 CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
@@ -347,7 +343,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 return Optional.of(query.executeUpdate());
             });
         } else {
-            Integer result = writeTransactionTemplate.execute(status -> {
+            Integer result = transactionOperations.executeWrite(status -> {
                 int i = 0;
                 Session session = getCurrentSession();
                 for (T entity : operation) {
@@ -364,7 +360,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
-        return readTransactionTemplate.execute(status -> {
+        return transactionOperations.executeRead(status -> {
             String query = preparedQuery.getQuery();
             Map<String, Object> parameterValues = preparedQuery.getParameterValues();
             Pageable pageable = preparedQuery.getPageable();
@@ -419,7 +415,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <R> Page<R> findPage(@NonNull PagedQuery<R> query) {
         //noinspection ConstantConditions
-        return readTransactionTemplate.execute(status -> {
+        return transactionOperations.executeRead(status -> {
             Session session = getCurrentSession();
             CriteriaBuilder criteriaBuilder = session.getCriteriaBuilder();
             Class<R> entity = query.getRootEntity();
@@ -502,15 +498,34 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     @NonNull
+    private ExecutorService newLocalThreadPool() {
+        this.executorService = Executors.newCachedThreadPool();
+        return executorService;
+    }
+
+    @NonNull
     @Override
-    public AsyncRepositoryOperations async() {
+    public ExecutorAsyncOperations async() {
+        ExecutorAsyncOperations asyncOperations = this.asyncOperations;
+        if (asyncOperations == null) {
+            synchronized (this) { // double check
+                asyncOperations = this.asyncOperations;
+                if (asyncOperations == null) {
+                    asyncOperations = new ExecutorAsyncOperations(
+                            this,
+                            executorService != null ? executorService : newLocalThreadPool()
+                    );
+                    this.asyncOperations = asyncOperations;
+                }
+            }
+        }
         return asyncOperations;
     }
 
     @NonNull
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(asyncOperations);
+        return new ExecutorReactiveOperations(async());
     }
 
     @NonNull
@@ -527,10 +542,10 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @Override
     public void flush() {
-        writeTransactionTemplate.execute((status) -> {
-                sessionFactory.getCurrentSession().flush();
-                return null;
-            }
+        transactionOperations.executeWrite((status) -> {
+                    sessionFactory.getCurrentSession().flush();
+                    return null;
+                }
         );
     }
 

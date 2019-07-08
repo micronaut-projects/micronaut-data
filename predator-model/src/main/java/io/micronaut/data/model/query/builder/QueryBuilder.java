@@ -111,7 +111,7 @@ public interface QueryBuilder {
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
                 PredatorMethod.META_MEMBER_QUERY_BUILDER
-        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.getBeanType().getName().equals(type))
+        ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.isPresent() && ref.getBeanType().getName().equals(type))
                 .stream().findFirst()
                 .map(introspection -> {
                     try {

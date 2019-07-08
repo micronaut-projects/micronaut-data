@@ -4,8 +4,6 @@ plugins {
     id "application"
 }
 
-
-
 version "0.1"
 group "example.jdbc"
 
@@ -13,7 +11,6 @@ repositories {
     mavenLocal()
     maven { url "https://jcenter.bintray.com" }
 }
-
 
 configurations {
     // for dependencies that are needed for development only

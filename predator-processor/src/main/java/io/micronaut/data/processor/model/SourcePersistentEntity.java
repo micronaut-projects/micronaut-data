@@ -63,6 +63,9 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         List<SourcePersistentProperty> id = new ArrayList<>(2);
         SourcePersistentProperty version = null;
         for (PropertyElement beanProperty : beanProperties) {
+            if (beanProperty.getName().equals("metaClass")) {
+                continue;
+            }
             if (beanProperty.hasStereotype(Transient.class)) {
                 continue;
             }

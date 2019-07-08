@@ -22,6 +22,7 @@ import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
+import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -40,13 +41,9 @@ import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.data.transaction.TransactionOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Named;
@@ -72,15 +69,16 @@ import java.util.stream.StreamSupport;
  * @since 1.0.0
  */
 @EachBean(DataSource.class)
-public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository, AutoCloseable {
+public class DefaultJdbcRepositoryOperations implements
+        JdbcRepositoryOperations,
+        AsyncCapableRepository,
+        ReactiveCapableRepository,
+        AutoCloseable {
 
     private static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
     private static final String NOT_TRUE_EXPRESSION = "1 = 2";
     private static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
 
-    private final TransactionTemplate writeTransactionTemplate;
-    private final TransactionTemplate readTransactionTemplate;
-    private final DataSource dataSource;
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
@@ -89,27 +87,29 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private final JdbcQueryStatement preparedStatementWriter = new JdbcQueryStatement();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
+    private final TransactionOperations<Connection> jdbcOperations;
+    private final DataSource dataSource;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
 
     /**
      * Default constructor.
-     * @param dataSource The data source
-     * @param dataSourceName The data source name
-     * @param executorService The executor service
-     * @param beanContext The bean context
+     *
+     * @param dataSourceName        The data source name
+     * @param dataSource            The datasource
+     * @param transactionOperations The JDBC operations for the data source
+     * @param executorService       The executor service
+     * @param beanContext           The bean context
      */
-    protected DefaultJdbcOperations(@NonNull DataSource dataSource,
-                                    @Parameter String dataSourceName,
-                                    @Named("io") @Nullable ExecutorService executorService,
-                                    BeanContext beanContext) {
+    protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
+                                              DataSource dataSource,
+                                              @Parameter TransactionOperations<Connection> transactionOperations,
+                                              @Named("io") @Nullable ExecutorService executorService,
+                                              BeanContext beanContext) {
         ArgumentUtils.requireNonNull("dataSource", dataSource);
-        PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
+        ArgumentUtils.requireNonNull("jdbcOperations", transactionOperations);
         this.dataSource = dataSource;
-        this.writeTransactionTemplate = new TransactionTemplate(transactionManager);
-        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
-        transactionDefinition.setReadOnly(true);
-        this.readTransactionTemplate = new TransactionTemplate(transactionManager, transactionDefinition);
+        this.jdbcOperations = transactionOperations;
         this.executorService = executorService;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext.getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -159,42 +159,47 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                Class<T> rootEntity = preparedQuery.getRootEntity();
-                Class<R> resultType = preparedQuery.getResultType();
-                if (resultType == rootEntity) {
-                    @SuppressWarnings("unchecked")
-                    RuntimePersistentEntity<R> persistentEntity = getEntity((Class<R>) rootEntity);
-                    TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
-                            persistentEntity,
-                            columnNameResultSetReader,
-                            preparedQuery.getJoinFetchPaths()
-                    );
-                    R result = mapper.map(rs, resultType);
-                    preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                            .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
-                    return result;
-                } else {
-                    if (preparedQuery.isDtoProjection()) {
-                        RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
-                        TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
+        return jdbcOperations.executeRead(status -> {
+            Connection connection = status.getResource();
+            try {
+                PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    Class<T> rootEntity = preparedQuery.getRootEntity();
+                    Class<R> resultType = preparedQuery.getResultType();
+                    if (resultType == rootEntity) {
+                        @SuppressWarnings("unchecked")
+                        RuntimePersistentEntity<R> persistentEntity = getEntity((Class<R>) rootEntity);
+                        TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                 persistentEntity,
-                                columnNameResultSetReader
+                                columnNameResultSetReader,
+                                preparedQuery.getJoinFetchPaths()
                         );
-
-                        return introspectedDataMapper.map(rs, resultType);
+                        R result = mapper.map(rs, resultType);
+                        preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                                .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                        return result;
                     } else {
-                        Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
-                        if (resultType.isInstance(v)) {
-                            return (R) v;
+                        if (preparedQuery.isDtoProjection()) {
+                            RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
+                            TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
+                                    persistentEntity,
+                                    columnNameResultSetReader
+                            );
+
+                            return introspectedDataMapper.map(rs, resultType);
                         } else {
-                            return columnIndexResultSetReader.convertRequired(v, resultType);
+                            Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                            if (resultType.isInstance(v)) {
+                                return (R) v;
+                            } else {
+                                return columnIndexResultSetReader.convertRequired(v, resultType);
+                            }
                         }
                     }
                 }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
             }
             return null;
         });
@@ -240,10 +245,16 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
     @Override
     public <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
-            ResultSet rs = ps.executeQuery();
-            return rs.next();
+        //noinspection ConstantConditions
+        return jdbcOperations.executeRead(status -> {
+            try {
+                Connection connection = status.getResource();
+                PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
+                ResultSet rs = ps.executeQuery();
+                return rs.next();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL query: " + e.getMessage(), e);
+            }
         });
     }
 
@@ -264,10 +275,16 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return withWriteConnection((connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false);
-            return Optional.of(ps.executeUpdate());
-        }));
+        //noinspection ConstantConditions
+        return jdbcOperations.executeWrite(status -> {
+            try {
+                Connection connection = status.getResource();
+                PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false);
+                return Optional.of(ps.executeUpdate());
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+            }
+        });
     }
 
     @Override
@@ -279,32 +296,38 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
-        return withWriteConnection((connection) -> {
-            T entity = operation.getEntity();
-            boolean generateId = insert.isGenerateId();
-            String insertSql = insert.getSql();
-            if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                PredatorSettings.QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
-            }
-            PreparedStatement stmt = connection
-                    .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-            setInsertParameters(insert, entity, stmt);
-            int i = stmt.executeUpdate();
-            BeanProperty<T, Object> identity = insert.getIdentity();
-            if (generateId && identity != null) {
-                ResultSet generatedKeys = stmt.getGeneratedKeys();
-                if (generatedKeys.next()) {
-                    long id = generatedKeys.getLong(1);
-                    if (identity.getType().isInstance(id)) {
-                        identity.set(entity, id);
-                    } else {
-                        identity.convertAndSet(entity, id);
-                    }
-                } else {
-                    throw new DataAccessException("ID failed to generate. No result returned.");
+        //noinspection ConstantConditions
+        return jdbcOperations.executeWrite((status) -> {
+            try {
+                Connection connection = status.getResource();
+                T entity = operation.getEntity();
+                boolean generateId = insert.isGenerateId();
+                String insertSql = insert.getSql();
+                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                    PredatorSettings.QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
                 }
+                PreparedStatement stmt = connection
+                        .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                setInsertParameters(insert, entity, stmt);
+                int i = stmt.executeUpdate();
+                BeanProperty<T, Object> identity = insert.getIdentity();
+                if (generateId && identity != null) {
+                    ResultSet generatedKeys = stmt.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        long id = generatedKeys.getLong(1);
+                        if (identity.getType().isInstance(id)) {
+                            identity.set(entity, id);
+                        } else {
+                            identity.convertAndSet(entity, id);
+                        }
+                    } else {
+                        throw new DataAccessException("ID failed to generate. No result returned.");
+                    }
+                }
+                return entity;
+            } catch (SQLException e) {
+                throw new DataAccessException("SQL Error: " + e.getMessage(), e);
             }
-            return entity;
         });
 
     }
@@ -406,7 +429,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
                     PredatorMethod.META_MEMBER_INSERT_STMT
             ).orElse(null);
             if (insertStatement == null) {
-                throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository");
+                throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository and is annotated with @JdbcRepository");
             }
 
             RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
@@ -414,7 +437,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
             boolean supportsBatch = annotationMetadata.findAnnotation(Repository.class)
                     .flatMap(av -> av.enumValue("dialect", Dialect.class)
-                    .map(dialect -> dialect != Dialect.SQL_SERVER)).orElse(true);
+                            .map(dialect -> dialect != Dialect.SQL_SERVER)).orElse(true);
             return new StoredInsert<>(insertStatement, persistentEntity, parameterBinding, supportsBatch);
         });
     }
@@ -422,20 +445,33 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
     private <T, R> Iterable<R> findIterable(@NonNull PreparedQuery<T, R> preparedQuery, boolean consume) {
         Class<T> rootEntity = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
-        boolean isRootResult = resultType == rootEntity;
 
 
-        return withReadConnection(connection -> {
-            PreparedStatement ps = prepareStatement(connection, preparedQuery, false, false);
-            ResultSet rs = ps.executeQuery();
+        return jdbcOperations.executeRead(status -> {
+            Connection connection = status.getResource();
+
+            PreparedStatement ps;
+            try {
+                ps = prepareStatement(connection, preparedQuery, false, false);
+            } catch (SQLException e) {
+                throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
+            }
+
+            ResultSet rs;
+            try {
+                rs = ps.executeQuery();
+            } catch (SQLException e) {
+                throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
+            }
             boolean dtoProjection = preparedQuery.isDtoProjection();
+            boolean isRootResult = resultType == rootEntity;
             Iterable<R> iterable;
             if (isRootResult || dtoProjection) {
                 SqlResultConsumer sqlMappingConsumer = preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null);
                 TypeMapper<ResultSet, R> mapper;
                 if (dtoProjection) {
                     mapper = new DTOMapper<>(
-                            getEntity(preparedQuery.getRootEntity()),
+                            getEntity(rootEntity),
                             columnNameResultSetReader
                     );
                 } else {
@@ -640,7 +676,8 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         }
     }
 
-    private @NonNull RuntimePersistentProperty<Object> getIdReader(Object o) {
+    private @NonNull
+    RuntimePersistentProperty<Object> getIdReader(Object o) {
         Class<Object> type = (Class<Object>) o.getClass();
         RuntimePersistentProperty beanProperty = idReaders.get(type);
         if (beanProperty == null) {
@@ -731,34 +768,6 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         throw new UnsupportedOperationException("The findPage method without an explicit query is not supported. Use findPage(PreparedQuery) instead");
     }
 
-    private <T> T withReadConnection(SqlFunction<T> callback) {
-        //noinspection Duplicates
-        return readTransactionTemplate.execute((status) -> {
-            Connection connection = DataSourceUtils.getConnection(dataSource);
-            try {
-                return callback.apply(connection);
-            } catch (SQLException e) {
-                throw new DataAccessException("Error executing Read Operation: " + e.getMessage());
-            } finally {
-                DataSourceUtils.releaseConnection(connection, dataSource);
-            }
-        });
-    }
-
-    private <T> T withWriteConnection(SqlFunction<T> callback) {
-        //noinspection Duplicates
-        return writeTransactionTemplate.execute((status) -> {
-            Connection connection = DataSourceUtils.getConnection(dataSource);
-            try {
-                return callback.apply(connection);
-            } catch (SQLException e) {
-                throw new DataAccessException("Error executing Write Operation: " + e.getMessage());
-            } finally {
-                DataSourceUtils.releaseConnection(connection, dataSource);
-            }
-        });
-    }
-
     @NonNull
     @Override
     public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
@@ -768,7 +777,7 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             entity = new RuntimePersistentEntity<T>(type) {
                 @Override
                 protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                    return DefaultJdbcOperations.this.getEntity(type);
+                    return DefaultJdbcRepositoryOperations.this.getEntity(type);
                 }
             };
             entities.put(type, entity);
@@ -844,41 +853,47 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
             }
             return results;
         } else {
-            return withWriteConnection((connection) -> {
+            //noinspection ConstantConditions
+            return jdbcOperations.executeWrite((status) -> {
+                Connection connection = status.getResource();
                 List<T> results = new ArrayList<>();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
 
-                PreparedStatement stmt = connection
-                        .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                    PredatorSettings.QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
-                }
-                for (T entity : operation) {
-                    setInsertParameters(insert, entity, stmt);
-                    stmt.addBatch();
-                    results.add(entity);
-                }
-                stmt.executeBatch();
-                BeanProperty<T, Object> identity = insert.getIdentity();
-                if (generateId && identity != null) {
-                    Iterator<T> resultIterator = results.iterator();
-                    ResultSet generatedKeys = stmt.getGeneratedKeys();
-                    while (resultIterator.hasNext()) {
-                        T entity = resultIterator.next();
-                        if (!generatedKeys.next()) {
-                            throw new DataAccessException("Failed to generate ID for entity: " + entity);
-                        } else {
-                            long id = generatedKeys.getLong(1);
-                            if (identity.getType().isInstance(id)) {
-                                identity.set(entity, id);
+                try {
+                    PreparedStatement stmt = connection
+                            .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+                        PredatorSettings.QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
+                    }
+                    for (T entity : operation) {
+                        setInsertParameters(insert, entity, stmt);
+                        stmt.addBatch();
+                        results.add(entity);
+                    }
+                    stmt.executeBatch();
+                    BeanProperty<T, Object> identity = insert.getIdentity();
+                    if (generateId && identity != null) {
+                        Iterator<T> resultIterator = results.iterator();
+                        ResultSet generatedKeys = stmt.getGeneratedKeys();
+                        while (resultIterator.hasNext()) {
+                            T entity = resultIterator.next();
+                            if (!generatedKeys.next()) {
+                                throw new DataAccessException("Failed to generate ID for entity: " + entity);
                             } else {
-                                identity.convertAndSet(entity, id);
+                                long id = generatedKeys.getLong(1);
+                                if (identity.getType().isInstance(id)) {
+                                    identity.set(entity, id);
+                                } else {
+                                    identity.convertAndSet(entity, id);
+                                }
                             }
                         }
                     }
+                    return results;
+                } catch (SQLException e) {
+                    throw new DataAccessException("SQL error executing INSERT: " + e.getMessage(), e);
                 }
-                return results;
             });
         }
     }
@@ -891,17 +906,62 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         }
     }
 
-    /**
-     * SQL callback interface.
-     * @param <T> The return type
-     */
-    @FunctionalInterface
-    private interface SqlFunction<T> {
-        T apply(Connection connection) throws SQLException;
+    @NonNull
+    @Override
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    @NonNull
+    @Override
+    public <R> R execute(@NonNull ConnectionCallback<R> callback) {
+        try {
+            return callback.call(jdbcOperations.getConnection());
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL Callback: " + e.getMessage(), e);
+        }
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> resultStream(@NonNull ResultSet resultSet, @NonNull Class<T> rootEntity) {
+        return resultStream(resultSet, null, rootEntity);
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> resultStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
+        ArgumentUtils.requireNonNull("resultSet", resultSet);
+        ArgumentUtils.requireNonNull("rootEntity", rootEntity);
+        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader);
+        Iterable<T> iterable = () -> new Iterator<T>() {
+            boolean nextCalled = false;
+            @Override
+            public boolean hasNext() {
+                try {
+                    if (!nextCalled) {
+                        nextCalled = true;
+                        return resultSet.next();
+                    } else {
+                        return nextCalled;
+                    }
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
+                }
+            }
+
+            @Override
+            public T next() {
+                nextCalled = false;
+                return mapper.map(resultSet, rootEntity);
+            }
+        };
+        return StreamSupport.stream(iterable.spliterator(), false);
     }
 
     /**
      * A stored insert statement.
+     *
      * @param <T> The entity type
      */
     protected class StoredInsert<T> {
@@ -913,10 +973,11 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
 
         /**
          * Default constructor.
-         * @param sql The SQL INSERT
+         *
+         * @param sql              The SQL INSERT
          * @param persistentEntity The entity
          * @param parameterBinding The parameter binding
-         * @param supportsBatch Whether batch insert is supported
+         * @param supportsBatch    Whether batch insert is supported
          */
         StoredInsert(
                 String sql,
@@ -933,14 +994,16 @@ public class DefaultJdbcOperations implements JdbcRepositoryOperations, AsyncCap
         /**
          * @return The SQL
          */
-        public @NonNull String getSql() {
+        public @NonNull
+        String getSql() {
             return sql;
         }
 
         /**
          * @return The parameter binding
          */
-        public @NonNull Map<RuntimePersistentProperty<T>, Integer> getParameterBinding() {
+        public @NonNull
+        Map<RuntimePersistentProperty<T>, Integer> getParameterBinding() {
             return parameterBinding;
         }
 
