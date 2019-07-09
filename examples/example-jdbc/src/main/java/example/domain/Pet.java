@@ -1,7 +1,6 @@
 package example.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.AutoPopulated;
 
 import javax.persistence.Entity;
@@ -20,8 +19,8 @@ public class Pet {
     private Owner owner;
     private PetType type = PetType.DOG;
 
-    @JsonCreator
-    public Pet(@JsonProperty("name") String name, @JsonProperty("owner") Owner owner) {
+    @Creator
+    public Pet(String name, Owner owner) {
         this.name = name;
         this.owner = owner;
     }

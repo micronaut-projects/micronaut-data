@@ -1,6 +1,8 @@
 micronaut:
   application:
     name: example-jdbc
+jackson:
+  bean-introspection-module: true
 ---
 datasources:
   default:

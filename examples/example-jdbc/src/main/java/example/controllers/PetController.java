@@ -3,8 +3,6 @@ package example.controllers;
 import java.util.List;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import example.domain.NameDTO;
 import example.domain.Pet;
 import example.repositories.PetRepository;
@@ -21,13 +19,9 @@ class PetController {
         this.petRepository = petRepository;
     }
 
-    @Get("/{?number,size}")
-    List<NameDTO> all(@Nullable Integer number, @Nullable Integer size) {
-        if (number != null && size != null) {
-            return petRepository.list(Pageable.from(number, Math.min(size, 100)));
-        } else {
-            return petRepository.list(Pageable.from(0, 10));
-        }        
+    @Get("/")
+    List<NameDTO> all(Pageable pageable) {
+        return petRepository.list(pageable);
     }
 
     @Get("/{name}")

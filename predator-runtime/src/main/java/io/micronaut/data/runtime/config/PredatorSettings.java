@@ -12,6 +12,11 @@ import org.slf4j.LoggerFactory;
 public interface PredatorSettings {
 
     /**
+     * Prefix for data related config.
+     */
+    String PREFIX = "micronaut.data";
+
+    /**
      * The logger that should be used to log queries.
      */
     Logger QUERY_LOG = LoggerFactory.getLogger("io.micronaut.data.query");

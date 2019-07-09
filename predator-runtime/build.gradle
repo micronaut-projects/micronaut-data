@@ -2,9 +2,11 @@ dependencies {
 	annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
 	compile project(":predator-model")
 	compileOnly 'org.springframework.data:spring-data-commons:2.1.8.RELEASE'
+	compileOnly 'io.micronaut:micronaut-http'
 	testCompile 'javax.persistence:javax.persistence-api:2.2'
 	testCompile project(":predator-processor")
 	testCompile "io.micronaut:micronaut-inject-groovy"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 	testAnnotationProcessor project(":predator-processor")
+	testCompile 'io.micronaut:micronaut-http'
 }

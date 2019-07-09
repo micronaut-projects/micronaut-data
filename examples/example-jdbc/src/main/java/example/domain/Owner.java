@@ -1,7 +1,6 @@
 package example.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Creator;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -16,8 +15,8 @@ public class Owner {
     private String name;
     private int age;
 
-    @JsonCreator
-    public Owner(@JsonProperty("name") String name) {
+    @Creator
+    public Owner(String name) {
         this.name = name;
     }
 
