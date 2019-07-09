@@ -19,7 +19,7 @@ configurations {
 
 ext {
     predatorVersion = "1.0.0.BUILD-SNAPSHOT"
-    micronautVersion = "1.2.0.RC1"
+    micronautVersion = "1.2.0.RC2"
 }
 
 dependencies {
