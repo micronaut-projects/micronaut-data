@@ -23,6 +23,7 @@ import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
+import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -900,7 +901,7 @@ public class DefaultJdbcRepositoryOperations implements
 
     @Override
     @PreDestroy
-    public void close() throws Exception {
+    public void close() {
         if (executorService != null) {
             executorService.shutdown();
         }
@@ -924,13 +925,25 @@ public class DefaultJdbcRepositoryOperations implements
 
     @NonNull
     @Override
-    public <T> Stream<T> resultStream(@NonNull ResultSet resultSet, @NonNull Class<T> rootEntity) {
-        return resultStream(resultSet, null, rootEntity);
+    public <R> R prepareStatement(@NonNull String sql, @NonNull PreparedStatementCallback<R> callback) {
+        ArgumentUtils.requireNonNull("sql", sql);
+        ArgumentUtils.requireNonNull("callback", callback);
+        try {
+            return callback.call(jdbcOperations.getConnection().prepareStatement(sql));
+        } catch (SQLException e) {
+            throw new DataAccessException("Error preparing SQL statement: " + e.getMessage(), e);
+        }
     }
 
     @NonNull
     @Override
-    public <T> Stream<T> resultStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
+    public <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @NonNull Class<T> rootEntity) {
+        return entityStream(resultSet, null, rootEntity);
+    }
+
+    @NonNull
+    @Override
+    public <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
         ArgumentUtils.requireNonNull("resultSet", resultSet);
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
         TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader);
@@ -964,7 +977,7 @@ public class DefaultJdbcRepositoryOperations implements
      *
      * @param <T> The entity type
      */
-    protected class StoredInsert<T> {
+    protected final class StoredInsert<T> {
         private final Map<RuntimePersistentProperty<T>, Integer> parameterBinding;
         private final RuntimePersistentProperty identity;
         private final boolean generateId;

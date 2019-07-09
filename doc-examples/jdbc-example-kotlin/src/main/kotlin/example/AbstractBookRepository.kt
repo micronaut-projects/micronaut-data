@@ -3,6 +3,7 @@ package example
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.repository.CrudRepository
+import java.util.stream.Collectors
 
 import javax.transaction.Transactional
 import kotlin.streams.toList
@@ -12,14 +13,11 @@ abstract class AbstractBookRepository(private val jdbcOperations: JdbcOperations
 
     @Transactional
     fun findByTitle(title: String): List<Book> {
-        return jdbcOperations.execute { connection ->
-            val preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM Book AS book WHERE book.title = ?"
-            )
-            preparedStatement.setString(1, title)
-            val resultSet = preparedStatement.executeQuery()
-
-            jdbcOperations.resultStream(resultSet, Book::class.java)
+        val sql = "SELECT * FROM Book AS book WHERE book.title = ?"
+        return jdbcOperations.prepareStatement(sql) { statement ->
+            statement.setString(1, title)
+            val resultSet = statement.executeQuery()
+            jdbcOperations.entityStream(resultSet, Book::class.java)
                     .toList()
         }
     }

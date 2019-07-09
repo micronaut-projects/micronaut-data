@@ -9,8 +9,10 @@ import io.micronaut.data.model.naming.NamingStrategies;
 
 import java.util.Set;
 
+// tag::namingStrategy[]
 @MappedEntity(namingStrategy = NamingStrategies.Raw.class)
 public class CountryRegion {
+// end::namingStrategy[]
 
     @GeneratedValue
     @Id

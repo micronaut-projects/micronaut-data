@@ -16,6 +16,7 @@ include 'doc-examples:example-java'
 include 'doc-examples:example-groovy'
 include 'doc-examples:example-kotlin'
 include 'doc-examples:jdbc-example-java'
+include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 
 // benchmarks

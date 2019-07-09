@@ -1,0 +1,22 @@
+Predator JDBC doesn't support associations in the traditional ORM sense. There is no lazy loading or support for proxies.
+
+Consider a `Product` entity:
+
+snippet::example.Product[project-base="doc-examples/jdbc-example", source="main"]
+
+That has an association to a `Manufacturer` entity:
+
+snippet::example.Manufacturer[project-base="doc-examples/jdbc-example", source="main"]
+
+Say you query for `Product` instances, what happens is that by default Predator JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Predator will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).
+
+If you need to fetch the association too then you can use the ann:data.annotation.Join[] annotation on your repository interface to specify that a `INNER JOIN` should be executed to retrieve the associated `Manufacturer`.
+
+snippet::example.ProductRepository[project-base="doc-examples/jdbc-example", source="main",tags="join"]
+
+
+<1> The ann:data.annotation.Join[] is used to indicate a `INNER JOIN` clause should be included.
+
+Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple time for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.
+
+If you need to do anything more complex than the join options Predator has to offer then you may need a native query.

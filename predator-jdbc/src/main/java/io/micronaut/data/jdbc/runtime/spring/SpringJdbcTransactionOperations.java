@@ -5,9 +5,11 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.transaction.TransactionCallback;
 import io.micronaut.data.transaction.TransactionOperations;
 import io.micronaut.data.transaction.TransactionStatus;
+import io.micronaut.data.transaction.exceptions.NoTransactionException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -15,6 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * Default implementation of {@link TransactionOperations} that uses Spring managed transactions.
@@ -48,14 +51,7 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
     @Override
     public <R> R executeWrite(@NonNull TransactionCallback<Connection, R> callback) {
         //noinspection Duplicates
-        return writeTransactionTemplate.execute((status) -> {
-            Connection connection = DataSourceUtils.getConnection(dataSource);
-            try {
-                return callback.apply(new JdbcTransactionStatus(connection, status));
-            } finally {
-                DataSourceUtils.releaseConnection(connection, dataSource);
-            }
-        });
+        return writeTransactionTemplate.execute((status) -> callback.apply(new JdbcTransactionStatus(status)));
     }
 
     @Nullable
@@ -64,7 +60,7 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
         return readTransactionTemplate.execute((status) -> {
             Connection connection = DataSourceUtils.getConnection(dataSource);
             try {
-                return callback.apply(new JdbcTransactionStatus(connection, status));
+                return callback.apply(new JdbcTransactionStatus(status));
             } finally {
                 DataSourceUtils.releaseConnection(connection, dataSource);
             }
@@ -74,7 +70,17 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
     @NonNull
     @Override
     public Connection getConnection() {
-        return DataSourceUtils.getConnection(dataSource);
+        try {
+            Connection connection = DataSourceUtils.doGetConnection(dataSource);
+            if (DataSourceUtils.isConnectionTransactional(connection, dataSource)) {
+                return connection;
+            } else {
+                connection.close();
+                throw new NoTransactionException("No transaction declared. Define @Transactional on the surrounding method prior to calling getConnection()");
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error retrieving JDBC connection: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -82,18 +88,16 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
      */
     private final class JdbcTransactionStatus implements TransactionStatus<Connection> {
 
-        private final Connection connection;
         private final org.springframework.transaction.TransactionStatus springStatus;
 
-        JdbcTransactionStatus(Connection connection, org.springframework.transaction.TransactionStatus springStatus) {
-            this.connection = connection;
+        JdbcTransactionStatus(org.springframework.transaction.TransactionStatus springStatus) {
             this.springStatus = springStatus;
         }
 
         @NonNull
         @Override
         public Connection getResource() {
-            return connection;
+            return getConnection();
         }
 
         @Override

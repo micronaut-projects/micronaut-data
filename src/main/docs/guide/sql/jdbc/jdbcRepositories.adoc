@@ -1,0 +1,44 @@
+As seen in the <<jdbcQuickStart, Quick Start>> JDBC repositories in Predator are defined as interfaces that are annotated with the ann:data.jdbc.annotation.JdbcRepository[] annotation.
+
+The ann:data.jdbc.annotation.JdbcRepository[] annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Predator will look for the default datasource.
+
+The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
+
+If no root entity can be established then a compilation error will occur.
+
+The same interfaces supported by the JPA implementation are supported by JDBC.
+
+Note that because queries are computed at compilation time the dialect you use must be specified on the repository. Possibly dialects are:
+
+.Supported JDBC Dialects
+[cols=2*]
+|===
+|*Dialect*
+|*Description*
+
+|api:data.model.query.builder.sql.Dialect#H2[]
+|The H2 database (typically used for in-memory testing)
+
+|api:data.model.query.builder.sql.Dialect#MYSQL[]
+|MySQL 5.5 or above
+
+|api:data.model.query.builder.sql.Dialect#POSTGRES[]
+|Postgres 9.5 or above
+
+|api:data.model.query.builder.sql.Dialect#SQL_SERVER[]
+|SQL Server 2012 or above
+
+|api:data.model.query.builder.sql.Dialect#ORACLE[]
+|Oracle 12c or above
+
+|===
+
+TIP: It is recommended you test against your target dialect. The https://www.testcontainers.org[Test Containers] project is a great solution for this. If you must test against another dialect (like H2) then you can define a subinterface that `@Replaces` the repository with a different dialect for the scope of testing.
+
+Note that in addition to interfaces you can also define repositories as abstract classes:
+
+snippet::example.AbstractBookRepository[project-base="doc-examples/jdbc-example", source="main"]
+
+As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that performs your own SQL queries.
+
+The example above uses the api:data.jdbc.runtime.JdbcOperations[] interface which simplifies executing JDBC queries within the context of transactions.

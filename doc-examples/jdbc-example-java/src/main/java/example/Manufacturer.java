@@ -1,5 +1,7 @@
 package example;
 
+import io.micronaut.core.annotation.Creator;
+
 import javax.persistence.*;
 
 @Entity
@@ -8,6 +10,11 @@ public class Manufacturer {
     @GeneratedValue
     private Long id;
     private String name;
+
+    @Creator
+    public Manufacturer(String name) {
+        this.name = name;
+    }
 
     public Long getId() {
         return id;
@@ -21,7 +28,4 @@ public class Manufacturer {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 }

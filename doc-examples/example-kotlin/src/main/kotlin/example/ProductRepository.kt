@@ -39,7 +39,7 @@ interface ProductRepository : CrudRepository<Product, Long> {
 
     fun countDistinctByManufacturerName(name: String): Single<Long>
     // end::reactive[]
-// tag::join[]O
+// tag::join[]
 // tag::async[]
 }
 // end::join[]

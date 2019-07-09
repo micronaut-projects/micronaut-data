@@ -95,8 +95,8 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     // end::dto[]
 
     // tag::native[]
-    @Query(value = "select * from book b where b.title like :title limit 5")
-    fun findNativeBooks(title: String): List<Book>
+    @Query("select * from book b where b.title like :title limit 5")
+    fun findBooks(title: String): List<Book>
     // end::native[]
 
 // tag::repository[]

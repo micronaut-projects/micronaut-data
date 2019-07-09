@@ -1,0 +1,7 @@
+When using Predator with JDBC you can execute native SQL queries using the ann:data.annotation.Query[] annotation:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main", tags="native", indent="0"]
+
+The above example will execute the raw SQL against the database.
+
+NOTE: For <<pagination, Pagination>> queries that return a api:data.model.Page[] you also need to specify a native `countQuery`.

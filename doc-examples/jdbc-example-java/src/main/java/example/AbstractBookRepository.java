@@ -6,7 +6,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,14 +21,11 @@ public abstract class AbstractBookRepository implements CrudRepository<Book, Lon
 
     @Transactional
     public List<Book> findByTitle(String title) {
-        return jdbcOperations.execute(connection -> {
-            PreparedStatement preparedStatement = connection.prepareStatement(
-                    "SELECT * FROM Book AS book WHERE book.title = ?"
-            );
-            preparedStatement.setString(1, title);
-            ResultSet resultSet = preparedStatement.executeQuery();
-
-            return jdbcOperations.resultStream(resultSet, Book.class).collect(Collectors.toList());
+        String sql = "SELECT * FROM Book AS book WHERE book.title = ?";
+        return jdbcOperations.prepareStatement(sql, statement -> {
+            statement.setString(1, title);
+            ResultSet resultSet = statement.executeQuery();
+            return jdbcOperations.entityStream(resultSet, Book.class).collect(Collectors.toList());
         });
     }
 }
