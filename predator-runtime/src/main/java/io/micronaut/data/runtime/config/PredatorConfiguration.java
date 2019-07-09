@@ -2,8 +2,6 @@ package io.micronaut.data.runtime.config;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.util.StringUtils;
-
-import javax.validation.constraints.Min;
 import java.util.regex.Pattern;
 
 /**

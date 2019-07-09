@@ -3,7 +3,6 @@ package io.micronaut.data.runtime.http;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.runtime.config.PredatorConfiguration;
@@ -16,7 +15,6 @@ import javax.inject.Singleton;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.StringTokenizer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
