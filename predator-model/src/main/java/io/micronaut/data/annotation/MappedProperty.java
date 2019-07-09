@@ -1,5 +1,6 @@
 package io.micronaut.data.annotation;
 
+import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.model.DataType;
 
 import java.lang.annotation.*;
@@ -26,6 +27,7 @@ public @interface MappedProperty {
     /**
      * @return The data type of the property.
      */
+    @AliasFor(annotation = TypeDef.class, member = "type")
     DataType type() default DataType.OBJECT;
 
     /**

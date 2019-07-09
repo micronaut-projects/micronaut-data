@@ -419,7 +419,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         genericType = genericType.getFirstTypeArgument().orElse(genericType);
                     }
                     ClassElement finalGenericType = genericType;
-                    DataType dt = parameter.findAnnotation(TypeDef.class).flatMap(av -> av.enumValue("type", DataType.class))
+                    DataType dt = parameter.enumValue(TypeDef.class, "type", DataType.class)
                                             .orElseGet(() -> TypeUtils.resolveDataType(finalGenericType, dataTypes));
                     AnnotationValue<TypeDef> typeDef = AnnotationValue.builder(TypeDef.class)
                             .member("type", dt)

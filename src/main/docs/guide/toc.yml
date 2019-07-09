@@ -31,8 +31,10 @@ sql:
   jdbc:
     title: Predator JDBC
     jdbcQuickStart: JDBC Quick Start
+    jdbcConfiguration: JDBC Configuration
     jdbcRepositories: JDBC Repositories
     sqlMapping: Mapping Entities
     jdbcJoinQueries: JDBC Join Queries
+    jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
 

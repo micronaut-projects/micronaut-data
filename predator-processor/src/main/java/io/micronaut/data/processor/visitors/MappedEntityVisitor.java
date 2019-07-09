@@ -87,8 +87,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
         PropertyElement propertyElement = spp.getPropertyElement();
 
-        DataType dataType = annotationMetadata.findAnnotation(MappedProperty.class)
-                .flatMap(av -> av.enumValue("type", DataType.class))
+        DataType dataType = annotationMetadata.getValue(TypeDef.class, "type", DataType.class)
                 .orElse(null);
 
         if (dataType == null) {

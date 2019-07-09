@@ -22,6 +22,8 @@ interface ProductRepository : CrudRepository<Product, Long> {
     fun list(): List<Product>
     // end::join[]
 
+    fun saveManufacturer(name: String) : Manufacturer
+
     // tag::async[]
     @Join("manufacturer")
     fun findByNameContains(str: String): CompletableFuture<Product>

@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -60,8 +61,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
 
     @Override
     public DataType getDataType() {
-        return findAnnotation(MappedProperty.class)
-                .flatMap(av -> av.enumValue("type", DataType.class)).orElseGet(() -> TypeUtils.resolveDataType(
+        return enumValue(MappedProperty.class, "type", DataType.class).orElseGet(() -> TypeUtils.resolveDataType(
                         getType(),
                         Collections.emptyMap()
                 ));

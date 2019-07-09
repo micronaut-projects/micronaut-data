@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -264,6 +265,11 @@ public class TypeUtils {
                 }
             }
 
+            Optional<DataType> explicitType = type.getValue(TypeDef.class, "type", DataType.class);
+            if (explicitType.isPresent()) {
+                return explicitType.get();
+            }
+
             if (type.isEnum()) {
                 return DataType.STRING;
             }
@@ -313,7 +319,11 @@ public class TypeUtils {
             if (configured != null) {
                 return dataTypes.get(configured);
             }
-            return DataType.OBJECT;
+            if (ClassUtils.isJavaBasicType(type.getName())) {
+                return DataType.STRING;
+            } else {
+                return DataType.OBJECT;
+            }
         });
 
     }
