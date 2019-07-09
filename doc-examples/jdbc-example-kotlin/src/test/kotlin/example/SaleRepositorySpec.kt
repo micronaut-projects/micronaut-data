@@ -8,13 +8,9 @@ import org.junit.jupiter.api.TestInstance
 import javax.inject.Inject
 
 @MicronautTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class SaleRepositorySpec {
-
-    @Inject
-    lateinit var productRepository: ProductRepository
-    @Inject
-    lateinit var saleRepository: SaleRepository
+class SaleRepositorySpec(
+        private val productRepository: ProductRepository,
+        private val saleRepository: SaleRepository) {
 
     @Test
     fun testReadWriteCustomType() {

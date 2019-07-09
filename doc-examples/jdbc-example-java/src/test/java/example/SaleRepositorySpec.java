@@ -2,16 +2,18 @@ package example;
 
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import static org.junit.jupiter.api.Assertions.*;
-import javax.inject.Inject;
 
 @MicronautTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SaleRepositorySpec {
 
-    @Inject ProductRepository productRepository;
-    @Inject SaleRepository saleRepository;
+    private final ProductRepository productRepository;
+    private final SaleRepository saleRepository;
+
+    public SaleRepositorySpec(ProductRepository productRepository, SaleRepository saleRepository) {
+        this.productRepository = productRepository;
+        this.saleRepository = saleRepository;
+    }
 
     @Test
     void testReadWriteCustomType() {
