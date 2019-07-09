@@ -6,7 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 /**
- * SQL PreparedStatement callback interface.
+ * SQL PreparedStatement callback interface that helps with dealing with SQLException.
  *
  * @param <R> The return type
  *

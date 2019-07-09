@@ -88,7 +88,7 @@ public class DefaultJdbcRepositoryOperations implements
     private final JdbcQueryStatement preparedStatementWriter = new JdbcQueryStatement();
     private final ColumnNameResultSetReader columnNameResultSetReader = new ColumnNameResultSetReader();
     private final ColumnIndexResultSetReader columnIndexResultSetReader = new ColumnIndexResultSetReader();
-    private final TransactionOperations<Connection> jdbcOperations;
+    private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
@@ -108,9 +108,9 @@ public class DefaultJdbcRepositoryOperations implements
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext) {
         ArgumentUtils.requireNonNull("dataSource", dataSource);
-        ArgumentUtils.requireNonNull("jdbcOperations", transactionOperations);
+        ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
-        this.jdbcOperations = transactionOperations;
+        this.transactionOperations = transactionOperations;
         this.executorService = executorService;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext.getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -160,7 +160,7 @@ public class DefaultJdbcRepositoryOperations implements
     @Nullable
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return jdbcOperations.executeRead(status -> {
+        return transactionOperations.executeRead(status -> {
             Connection connection = status.getResource();
             try {
                 PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
@@ -247,7 +247,7 @@ public class DefaultJdbcRepositoryOperations implements
     @Override
     public <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
-        return jdbcOperations.executeRead(status -> {
+        return transactionOperations.executeRead(status -> {
             try {
                 Connection connection = status.getResource();
                 PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
@@ -277,7 +277,7 @@ public class DefaultJdbcRepositoryOperations implements
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         //noinspection ConstantConditions
-        return jdbcOperations.executeWrite(status -> {
+        return transactionOperations.executeWrite(status -> {
             try {
                 Connection connection = status.getResource();
                 PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false);
@@ -298,7 +298,7 @@ public class DefaultJdbcRepositoryOperations implements
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
         //noinspection ConstantConditions
-        return jdbcOperations.executeWrite((status) -> {
+        return transactionOperations.executeWrite((status) -> {
             try {
                 Connection connection = status.getResource();
                 T entity = operation.getEntity();
@@ -448,7 +448,7 @@ public class DefaultJdbcRepositoryOperations implements
         Class<R> resultType = preparedQuery.getResultType();
 
 
-        return jdbcOperations.executeRead(status -> {
+        return transactionOperations.executeRead(status -> {
             Connection connection = status.getResource();
 
             PreparedStatement ps;
@@ -855,7 +855,7 @@ public class DefaultJdbcRepositoryOperations implements
             return results;
         } else {
             //noinspection ConstantConditions
-            return jdbcOperations.executeWrite((status) -> {
+            return transactionOperations.executeWrite((status) -> {
                 Connection connection = status.getResource();
                 List<T> results = new ArrayList<>();
                 boolean generateId = insert.isGenerateId();
@@ -915,9 +915,15 @@ public class DefaultJdbcRepositoryOperations implements
 
     @NonNull
     @Override
+    public Connection getConnection() {
+        return transactionOperations.getConnection();
+    }
+
+    @NonNull
+    @Override
     public <R> R execute(@NonNull ConnectionCallback<R> callback) {
         try {
-            return callback.call(jdbcOperations.getConnection());
+            return callback.call(transactionOperations.getConnection());
         } catch (SQLException e) {
             throw new DataAccessException("Error executing SQL Callback: " + e.getMessage(), e);
         }
@@ -929,7 +935,7 @@ public class DefaultJdbcRepositoryOperations implements
         ArgumentUtils.requireNonNull("sql", sql);
         ArgumentUtils.requireNonNull("callback", callback);
         try {
-            return callback.call(jdbcOperations.getConnection().prepareStatement(sql));
+            return callback.call(transactionOperations.getConnection().prepareStatement(sql));
         } catch (SQLException e) {
             throw new DataAccessException("Error preparing SQL statement: " + e.getMessage(), e);
         }

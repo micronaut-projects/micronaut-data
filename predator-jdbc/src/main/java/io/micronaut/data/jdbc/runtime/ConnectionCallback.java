@@ -5,7 +5,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * SQL callback interface.
+ * SQL callback interface that helps with handling SQLException.
+ *
  * @param <R> The return type
  *
  * @author graemerocher

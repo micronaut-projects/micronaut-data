@@ -26,7 +26,7 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 
 NOTE: The `schema-generate` setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Predator with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
-To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more later). If you wish to use JPA annotation include the following `compileOnly` scoped dependency:
+To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotation include the following `compileOnly` scoped dependency:
 
 dependency:jakarta.persistence:jakarta.persistence-api[version="2.2.2", scope="compileOnly"]
 

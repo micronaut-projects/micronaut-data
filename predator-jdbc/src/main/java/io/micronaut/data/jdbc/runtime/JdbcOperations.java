@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 
 import javax.sql.DataSource;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.util.stream.Stream;
 
@@ -20,6 +21,15 @@ public interface JdbcOperations {
      */
     @NonNull
     DataSource getDataSource();
+
+    /**
+     * This method will return the currently active connection for the current transaction or throw an exception
+     * if no transaction is present.
+     *
+     * @return The current connection for the active transaction.
+     * @throws io.micronaut.data.transaction.exceptions.NoTransactionException if no transaction is present.
+     */
+    @NonNull Connection getConnection();
 
     /**
      * Execute the given operation with the given callback.
