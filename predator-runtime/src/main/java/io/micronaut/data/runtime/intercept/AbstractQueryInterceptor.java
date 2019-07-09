@@ -1141,6 +1141,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         @NonNull
         public Map<Integer, Object> getIndexedParameterValues() {
+            if (hasInExpression()) {
+                // IN expansion requires a copy
+                return new HashMap<>(indexedValues);
+            }
             return indexedValues;
         }
 
