@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.util.StringUtils;
 
 import javax.validation.constraints.Min;
+import java.util.regex.Pattern;
 
 /**
  * General predator configuration.
@@ -25,9 +26,41 @@ public class PredatorConfiguration implements PredatorSettings {
         public static final String DEFAULT_PAGE_PARAMETER = "page";
         public static final String PREFIX = "pageable";
         private int maxPageSize = 100;
+        private boolean sortIgnoreCase = false;
         private String sortParameterName = DEFAULT_SORT_PARAMETER;
         private String sizeParameterName = DEFAULT_SIZE_PARAMETER;
         private String pageParameterName = DEFAULT_PAGE_PARAMETER;
+        private Pattern sortDelimiter = Pattern.compile(",");
+
+        /**
+         * @return Whether sort ignores case.
+         */
+        public boolean isSortIgnoreCase() {
+            return sortIgnoreCase;
+        }
+
+        /**
+         * @param sortIgnoreCase Whether sort ignores case
+         */
+        public void setSortIgnoreCase(boolean sortIgnoreCase) {
+            this.sortIgnoreCase = sortIgnoreCase;
+        }
+
+        /**
+         * @return The delimiter to use to calculate sort order. Defaults to {@code ,}.
+         */
+        public Pattern getSortDelimiterPattern() {
+            return sortDelimiter;
+        }
+
+        /**
+         * @param sortDelimiter The delimiter to use to calculate sort order. Defaults to {@code ,}.
+         */
+        public void setSortDelimiter(String sortDelimiter) {
+            if (StringUtils.isNotEmpty(sortDelimiter)) {
+                this.sortDelimiter = Pattern.compile(Pattern.quote(sortDelimiter));
+            }
+        }
 
         /**
          * @return The maximum page size when binding {@link io.micronaut.data.model.Pageable} objects.

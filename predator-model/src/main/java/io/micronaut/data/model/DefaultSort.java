@@ -23,6 +23,7 @@ import io.micronaut.core.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Default implementation of the sort interface.
@@ -86,5 +87,22 @@ final class DefaultSort implements Sort {
     @Override
     public DefaultSort order(@NonNull String propertyName, @NonNull Order.Direction direction) {
         return order(new Order(propertyName, direction, false));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DefaultSort that = (DefaultSort) o;
+        return orderBy.equals(that.orderBy);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(orderBy);
     }
 }

@@ -21,6 +21,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * An interface for objects that can be sorted. Sorted instances are immutable and all mutating operations on this interface return a new instance.
@@ -197,6 +198,25 @@ public interface Sort {
          */
         public enum Direction {
             ASC, DESC
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Order order = (Order) o;
+            return ignoreCase == order.ignoreCase &&
+                    property.equals(order.property) &&
+                    direction == order.direction;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(property, direction, ignoreCase);
         }
     }
 }
