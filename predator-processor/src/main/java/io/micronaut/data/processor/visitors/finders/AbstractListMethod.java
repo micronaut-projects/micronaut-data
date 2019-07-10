@@ -78,10 +78,8 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                         if (identity != null && identity.getName().equals(paramName)) {
                             query.idEq(new QueryParameter(queryParam.getName()));
                         } else {
-                            matchContext.getVisitorContext().fail(
-                                    "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName,
-                                    queryParam
-                            );
+                            matchContext.fail(
+                                    "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName);
                             return null;
                         }
                     } else {

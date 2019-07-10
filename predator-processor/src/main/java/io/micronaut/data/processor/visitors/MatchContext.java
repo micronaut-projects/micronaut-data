@@ -24,7 +24,9 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * A match context when matching methods.
@@ -126,7 +128,7 @@ public class MatchContext implements AnnotationMetadataProvider {
      */
     public void fail(@NonNull String message) {
         this.failing = true;
-        getVisitorContext().fail(message, getMethodElement());
+        getVisitorContext().fail(getUnableToImplementMessage() + message, getMethodElement());
     }
 
     /**
@@ -151,5 +153,12 @@ public class MatchContext implements AnnotationMetadataProvider {
      */
     public @NonNull ClassElement getRepositoryClass() {
         return repositoryClass;
+    }
+
+    /**
+     * @return The message to print in the case of no possible implementations.
+     */
+    public String getUnableToImplementMessage() {
+        return "Unable to implement Repository method: " + repositoryClass.getSimpleName() + "." + methodElement.getName() + "(" + Arrays.stream(methodElement.getParameters()).map(p -> p.getType().getSimpleName() + " " + p.getName()).collect(Collectors.joining(",")) + "). ";
     }
 }

@@ -396,7 +396,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
 
             this.failing = true;
-            context.fail("Unable to implement Repository method: " + currentRepository.getSimpleName() + "." + element.getName() + "(..). No possible implementations found.", element);
+
+            String messageStart = matchContext.getUnableToImplementMessage();
+            context.fail( messageStart + "No possible implementations found.", element);
         }
     }
 
