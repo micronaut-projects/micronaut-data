@@ -37,13 +37,22 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
         }
     };
+    private final boolean mappedEntity;
+
+    public MappedEntityVisitor() {
+        mappedEntity = true;
+    }
+
+    public MappedEntityVisitor(boolean mappedEntity) {
+        this.mappedEntity = mappedEntity;
+    }
 
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         NamingStrategy namingStrategy = resolveNamingStrategy(element);
         Optional<String> targetName = element.stringValue(MappedEntity.class);
         SourcePersistentEntity entity = entityResolver.apply(element);
-        if (!targetName.isPresent()) {
+        if (isMappedEntity() && !targetName.isPresent()) {
             element.annotate(MappedEntity.class, builder -> {
 
                 String mappedName = namingStrategy.mappedName(entity);
@@ -59,6 +68,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (identity != null) {
             computeMappingDefaults(namingStrategy, identity, dataTypes);
         }
+    }
+
+    private boolean isMappedEntity() {
+        return mappedEntity;
     }
 
     /**
@@ -102,7 +115,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
 
         Optional<String> mapping = annotationMetadata.stringValue(MappedProperty.class);
-        if (!mapping.isPresent()) {
+        if (mappedEntity && !mapping.isPresent()) {
             propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)));
         }
         DataType finalDataType = dataType;

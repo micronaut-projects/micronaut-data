@@ -1,12 +1,55 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
+import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
+
+    void "test mapping Embeddable"() {
+        given:
+        def introspection = buildBeanIntrospection('test.TestEntity', '''
+package test;
+
+import io.micronaut.core.annotation.Introspected;
+import javax.persistence.*;
+import java.util.UUID;
+
+@Embeddable
+class TestEntity {
+    private String name;
+    private UUID someOther;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+
+    public UUID getSomeOther() {
+        return someOther;
+    }
+
+    public void setSomeOther(UUID someOther) {
+        this.someOther = someOther;
+    }
+}
+
+''')
+        expect:
+        introspection != null
+        introspection.hasStereotype(Embeddable)
+        introspection.getPropertyNames()
+        def so = introspection.getProperty("someOther").get()
+        so.stringValue(MappedProperty).get() == 'some_other'
+        so.getValue(MappedProperty, "type", DataType).orElse(null) == DataType.STRING
+    }
 
     void "test mapping javax.persistent entity"() {
         given:

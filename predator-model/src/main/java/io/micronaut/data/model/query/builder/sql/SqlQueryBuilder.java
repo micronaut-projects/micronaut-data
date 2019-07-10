@@ -195,34 +195,58 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     continue;
                 }
             }
-            String column = getColumnName(prop);
 
-            column = addTypeToColumn(prop, isAssociation, column);
-            if (prop.isGenerated()) {
-                switch (dialect) {
-                    case POSTGRES:
-                        column += " GENERATED ALWAYS AS IDENTITY";
-                    break;
-                    case SQL_SERVER:
-                        if (prop == identity) {
-                            column += " PRIMARY KEY";
-                        }
-                        column += " IDENTITY(1,1) NOT NULL";
-                    break;
-                    default:
-                        // TODO: handle more dialects
-                        column += " AUTO_INCREMENT";
-                        if (prop == identity) {
-                            column += " PRIMARY KEY";
-                        }
+            if (prop instanceof Embedded) {
+                Embedded embedded = (Embedded) prop;
+                PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
+                List<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
+                for (PersistentProperty embeddedProperty : embeddedProperties) {
+                    String explicitColumn = embeddedProperty.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                    String column = explicitColumn != null ? explicitColumn : entity.getNamingStrategy().mappedName(
+                            prop.getName() + embeddedProperty.getCapitilizedName()
+                    );
+
+                    column = addTypeToColumn(embeddedProperty, embeddedProperty instanceof Association, column);
+                    column = addGeneratedStatementToColumn(identity, prop, column);
+                    columns.add(column);
                 }
+
+            } else {
+                String column = getColumnName(prop);
+
+                column = addTypeToColumn(prop, isAssociation, column);
+                column = addGeneratedStatementToColumn(identity, prop, column);
+                columns.add(column);
             }
-            columns.add(column);
+
         }
         builder.append(String.join(",", columns));
         builder.append(");");
         createStatements.add(builder.toString());
         return createStatements.toArray(new String[0]);
+    }
+
+    private String addGeneratedStatementToColumn(PersistentProperty identity, PersistentProperty prop, String column) {
+        if (prop.isGenerated()) {
+            switch (dialect) {
+                case POSTGRES:
+                    column += " GENERATED ALWAYS AS IDENTITY";
+                    break;
+                case SQL_SERVER:
+                    if (prop == identity) {
+                        column += " PRIMARY KEY";
+                    }
+                    column += " IDENTITY(1,1) NOT NULL";
+                    break;
+                default:
+                    // TODO: handle more dialects
+                    column += " AUTO_INCREMENT";
+                    if (prop == identity) {
+                        column += " PRIMARY KEY";
+                    }
+            }
+        }
+        return column;
     }
 
     @NonNull
@@ -398,7 +422,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (!prop.isGenerated()) {
                     if (prop instanceof Association) {
                         Association association = (Association) prop;
-                        if (!association.isForeignKey()) {
+                        if (association instanceof Embedded) {
+                            PersistentEntity embeddedEntity = association.getAssociatedEntity();
+                            List<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
+                            for (PersistentProperty embeddedProp : embeddedProps) {
+                                String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                                parameters.put(prop.getName() + "." + embeddedProp.getName(), String.valueOf(index++));
+                                if (explicitColumn != null) {
+                                    columnNames.add(explicitColumn);
+                                } else {
+                                    NamingStrategy namingStrategy = entity.getNamingStrategy();
+                                    columnNames.add(namingStrategy.mappedName(prop.getName() + embeddedProp.getCapitilizedName()));
+                                }
+                            }
+                        } else if (!association.isForeignKey()) {
                             parameters.put(prop.getName(), String.valueOf(index++));
                             columnNames.add(getColumnName(prop));
                         }

@@ -174,7 +174,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     }
 
     private boolean isEmbedded(BeanProperty bp) {
-        return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
+        return bp.enumValue(Relation.class, Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
     }
 
     /**

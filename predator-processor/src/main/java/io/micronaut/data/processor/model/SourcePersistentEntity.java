@@ -21,10 +21,8 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.Transient;
-import io.micronaut.data.annotation.Version;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.PropertyElement;
@@ -88,6 +86,9 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
             if (relation.isPresent()) {
                 Relation.Kind kind = relation.flatMap(av -> av.enumValue(Relation.Kind.class)).orElse(null);
                 if (kind == Relation.Kind.EMBEDDED) {
+                    if (!propertyElement.getType().hasStereotype(Embeddable.class)) {
+                        throw new MappingException("Type [" + propertyElement.getType().getName()  + "] of property [" + propertyElement.getName() + "] of entity [" + getName() + "] is missing @Embeddable annotation. @Embedded fields can only be applied to types annotated with @Embeddable");
+                    }
                     return new SourceEmbedded(this, propertyElement, entityResolver);
                 } else {
                     return new SourceAssociation(this, propertyElement, entityResolver);
@@ -221,7 +222,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     }
 
     private boolean isEmbedded(PropertyElement bp) {
-        return bp.hasStereotype(Relation.class) && bp.getValue(Relation.class, "kind", Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
+        return bp.enumValue(Relation.class, Relation.Kind.class).orElse(null) == Relation.Kind.EMBEDDED;
     }
 
     @Override

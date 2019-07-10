@@ -17,6 +17,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
+import io.micronaut.data.tck.entities.Restaurant
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -86,6 +87,26 @@ class SqlQueryBuilderSpec extends Specification {
         result.parameters.equals(name: '1', age: '2', enabled: '3')
     }
 
+    void "test encode insert statement for embedded"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+
+        expect:
+        result.query == 'INSERT INTO restaurant (name,address_street,address_zip_code) VALUES (?,?,?)'
+        result.parameters.equals(name: '1', 'address.street': '2', 'address.zipCode': '3')
+    }
+
+    void "test encode create statement for embedded"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Restaurant)
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def result = encoder.buildBatchCreateTableStatement(entity)
+
+        expect:
+        result == 'CREATE TABLE restaurant (name VARCHAR(255),address_street VARCHAR(255),address_zip_code VARCHAR(255));'
+    }
 
     void "test encode insert statement - custom mapping strategy"() {
         given:

@@ -75,7 +75,6 @@ public interface NamingStrategy {
                 return mappedName(association.getOwner().getDecapitalizedName() +
                                     association.getAssociatedEntity().getSimpleName());
             } else {
-                // TODO: handle embedded
                 switch (association.getKind()) {
                     case ONE_TO_ONE:
                     case MANY_TO_ONE:
