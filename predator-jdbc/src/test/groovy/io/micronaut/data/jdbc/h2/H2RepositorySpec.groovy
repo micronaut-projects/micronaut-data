@@ -8,6 +8,8 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
@@ -57,6 +59,24 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     @Inject
     @Shared
     H2RegionRepository regr
+
+    @Inject
+    @Shared
+    H2FaceRepository fr
+
+    @Inject
+    @Shared
+    H2NoseRepository nr
+
+    @Override
+    NoseRepository getNoseRepository() {
+        return nr
+    }
+
+    @Override
+    FaceRepository getFaceRepository() {
+        return fr
+    }
 
     @Override
     H2PersonRepository getPersonRepository() {

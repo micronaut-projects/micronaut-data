@@ -10,6 +10,7 @@ import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
@@ -176,6 +177,13 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                         if (associated != null) {
                             property.set(entity, associated);
                         }
+                    } else {
+                        if (association.getKind() == Relation.Kind.ONE_TO_ONE && association.isForeignKey() && joinPaths.contains(path + association.getName())) {
+                            Object associated = readAssociation(prefix, path, rs, association);
+                            if (associated != null) {
+                                property.set(entity, associated);
+                            }
+                        }
                     }
                 } else {
                     String persistedName = persistentProperty.getPersistedName();
@@ -216,9 +224,6 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
         Object associated = null;
         String persistedName = association.getPersistedName();
         RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
-        if (associatedEntity == null) {
-            throw new DataAccessException("Associated entity not present for association [" + association.getName() + "] of entity: " + association.getOwner().getName());
-        }
         RuntimePersistentProperty identity = associatedEntity.getIdentity();
         String associationName = association.getName();
         if (joinPaths.contains(path + associationName)) {

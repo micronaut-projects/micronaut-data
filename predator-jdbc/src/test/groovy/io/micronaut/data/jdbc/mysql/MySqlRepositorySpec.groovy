@@ -12,6 +12,8 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
@@ -61,6 +63,16 @@ class MySqlRepositorySpec extends AbstractRepositorySpec {
     @Override
     RegionRepository getRegionRepository() {
         return context.getBean(H2RegionRepository)
+    }
+
+    @Override
+    NoseRepository getNoseRepository() {
+        return context.getBean(MySqlNoseRepository)
+    }
+
+    @Override
+    FaceRepository getFaceRepository() {
+        return context.getBean(MySqlFaceRepository)
     }
 
     @Override

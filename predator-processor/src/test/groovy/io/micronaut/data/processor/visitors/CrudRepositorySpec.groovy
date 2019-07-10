@@ -41,6 +41,31 @@ import javax.annotation.processing.SupportedAnnotationTypes
 
 class CrudRepositorySpec extends AbstractTypeElementSpec {
 
+//    void "profile compilation"() {
+//        given:
+//        100.times {
+//            buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+//package test;
+//
+//import io.micronaut.data.model.entities.Person;
+//import io.micronaut.data.repository.CrudRepository;
+//import io.micronaut.data.annotation.Repository;
+//import java.util.List;
+//
+//@Repository
+//interface MyInterface extends CrudRepository<Person, Long> {
+//
+//    List<Person> list(String name);
+//
+//    int count(String name);
+//}
+//""")
+//        }
+//
+//        expect:
+//        true == true
+//    }
+
     void "test build CRUD repository"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """

@@ -48,13 +48,16 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     private final SourcePersistentProperty[] id;
     private final SourcePersistentProperty version;
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
+    private final List<SourcePersistentProperty> persistentProperties;
 
     /**
      * Default constructor.
      * @param classElement The class element
      * @param entityResolver The entity resolver to resolve any additional entities such as associations
      */
-    public SourcePersistentEntity(@NonNull ClassElement classElement, @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
+    public SourcePersistentEntity(
+            @NonNull ClassElement classElement,
+            @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(classElement);
         this.entityResolver = entityResolver;
         this.classElement = classElement;
@@ -80,6 +83,20 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
         this.version = version;
         this.id = id.toArray(new SourcePersistentProperty[0]);
+        this.persistentProperties = this.beanProperties.values().stream().map(propertyElement -> {
+            Optional<AnnotationValue<Relation>> relation = propertyElement.findAnnotation(Relation.class);
+            if (relation.isPresent()) {
+                Relation.Kind kind = relation.flatMap(av -> av.enumValue(Relation.Kind.class)).orElse(null);
+                if (kind == Relation.Kind.EMBEDDED) {
+                    return new SourceEmbedded(this, propertyElement, entityResolver);
+                } else {
+                    return new SourceAssociation(this, propertyElement, entityResolver);
+                }
+            } else {
+                return new SourcePersistentProperty(this, propertyElement);
+            }
+        })
+        .collect(Collectors.toList());
     }
 
     @NonNull
@@ -131,38 +148,25 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     @NonNull
     @Override
-    public List<PersistentProperty> getPersistentProperties() {
-        return beanProperties.values().stream().map(propertyElement -> {
-            Optional<AnnotationValue<Relation>> relation = propertyElement.findAnnotation(Relation.class);
-            if (relation.isPresent()) {
-                Relation.Kind kind = relation.flatMap(av -> av.enumValue(Relation.Kind.class)).orElse(null);
-                if (kind == Relation.Kind.EMBEDDED) {
-                    return new SourceEmbedded(this, propertyElement, entityResolver);
-                } else {
-                    return new SourceAssociation(this, propertyElement, entityResolver);
-                }
-            } else {
-                return new SourcePersistentProperty(this, propertyElement);
-            }
-        })
-        .collect(Collectors.toList());
+    public List<SourcePersistentProperty> getPersistentProperties() {
+        return persistentProperties;
     }
 
     @NonNull
     @Override
     public List<Association> getAssociations() {
-        return beanProperties.values().stream()
-                .filter(bp -> bp.hasStereotype(Relation.class))
-                .map(propertyElement -> new SourceAssociation(this, propertyElement, entityResolver))
+        return persistentProperties.stream()
+                .filter(bp -> bp instanceof Association)
+                .map(bp -> (Association) bp)
                 .collect(Collectors.toList());
     }
 
     @NonNull
     @Override
     public List<Embedded> getEmbedded() {
-        return beanProperties.values().stream()
-                .filter(this::isEmbedded)
-                .map(propertyElement -> new SourceEmbedded(this, propertyElement, entityResolver))
+        return persistentProperties.stream()
+                .filter(p -> p instanceof Embedded)
+                .map(p -> (Embedded) p)
                 .collect(Collectors.toList());
     }
 

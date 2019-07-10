@@ -9,6 +9,8 @@ import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Country
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.CountryRegionCity
+import io.micronaut.data.tck.entities.Face
+import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -16,6 +18,8 @@ import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import spock.lang.IgnoreIf
@@ -37,6 +41,9 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract CountryRepository getCountryRepository()
     abstract CityRepository getCityRepository()
     abstract RegionRepository getRegionRepository()
+    abstract NoseRepository getNoseRepository()
+    abstract FaceRepository getFaceRepository()
+
 
     abstract void init()
 
@@ -388,6 +395,46 @@ abstract class AbstractRepositorySpec extends Specification {
         results[0].countryRegion.name
         results[0].countryRegion.country.uuid == spain.uuid
         results[0].countryRegion.country.name == "Spain"
+    }
+
+    void "test one-to-one mappedBy"() {
+        when:"when a one-to-one mapped by is saved"
+        def face = faceRepository.save(new Face("Bob"))
+        def nose = noseRepository.save(new Nose(face: face))
+
+        // so that we have a few records
+        def anotherFace = faceRepository.save(new Face("Fred"))
+        noseRepository.save(new Nose(face: anotherFace))
+
+        then:"They are saved correctly"
+        face.id
+        nose.id
+        nose.face.id
+
+        when:"retrieving a face"
+        face = faceRepository.findById(face.id).orElse(null)
+
+        then:"The association is not fetched"
+        face
+        face.id
+        face.nose == null
+
+        when:"Querying with a join"
+        face = faceRepository.queryById(face.id)
+
+        then:"The association is fetched"
+        face
+        face.id
+        face.name == "Bob"
+        face.nose.id
+
+        when:"querying the inverse side"
+        nose = noseRepository.findById(nose.id).orElse(null)
+
+        then:"The association is not initialized"
+        nose
+        nose.id
+        nose.face == null
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

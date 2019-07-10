@@ -290,7 +290,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : joinPaths) {
                     Association association = joinPath.getAssociation();
-                    if (association.isForeignKey()) {
+                    if (association.isForeignKey() && association.getKind() != Relation.Kind.ONE_TO_ONE) {
                         throw new IllegalArgumentException("Join fetching is not currently supported with foreign key association. Specify a manual query");
                     }
                     if (association instanceof Embedded) {
@@ -398,18 +398,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (!prop.isGenerated()) {
                     if (prop instanceof Association) {
                         Association association = (Association) prop;
-                        Relation.Kind kind = association.getKind();
-                        switch (kind) {
-                            case MANY_TO_ONE:
-                            case ONE_TO_ONE:
-                                parameters.put(prop.getName(), String.valueOf(index++));
-                                columnNames.add(getColumnName(prop));
-                                continue;
-                            case EMBEDDED:
-                                // TODO: handle embedded
-                            default:
-                                // skip, for foreign key
-
+                        if (!association.isForeignKey()) {
+                            parameters.put(prop.getName(), String.valueOf(index++));
+                            columnNames.add(getColumnName(prop));
                         }
                     } else {
                         parameters.put(prop.getName(), String.valueOf(index++));

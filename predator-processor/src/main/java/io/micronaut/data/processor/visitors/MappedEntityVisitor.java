@@ -51,7 +51,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             });
         }
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
-        List<PersistentProperty> properties = entity.getPersistentProperties();
+        List<SourcePersistentProperty> properties = entity.getPersistentProperties();
         for (PersistentProperty property : properties) {
             computeMappingDefaults(namingStrategy, property, dataTypes);
         }
