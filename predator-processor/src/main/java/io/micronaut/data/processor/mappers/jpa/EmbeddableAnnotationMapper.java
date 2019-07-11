@@ -11,6 +11,12 @@ import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Maps JPA Embeddable to Predator Embedabble.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class EmbeddableAnnotationMapper implements NamedAnnotationMapper {
     @Nonnull
     @Override

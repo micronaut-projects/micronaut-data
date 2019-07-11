@@ -39,11 +39,17 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     };
     private final boolean mappedEntity;
 
+    /**
+     * Default constructor.
+     */
     public MappedEntityVisitor() {
         mappedEntity = true;
     }
 
-    public MappedEntityVisitor(boolean mappedEntity) {
+    /**
+     * @param mappedEntity Whether this applies to Mapped entity
+     */
+    MappedEntityVisitor(boolean mappedEntity) {
         this.mappedEntity = mappedEntity;
     }
 

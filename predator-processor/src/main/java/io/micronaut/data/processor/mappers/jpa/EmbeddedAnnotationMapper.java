@@ -10,6 +10,12 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Maps JPA Embedded to Predator embedded.
+ *
+ * @author graemerocher
+ * @since 1.0.0
+ */
 public class EmbeddedAnnotationMapper implements NamedAnnotationMapper {
     @Nonnull
     @Override
