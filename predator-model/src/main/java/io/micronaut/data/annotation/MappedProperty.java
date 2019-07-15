@@ -18,6 +18,11 @@ import java.lang.annotation.*;
 public @interface MappedProperty {
 
     /**
+     * name of the meta-annotation member to store the embedded property configuration.
+     */
+    String EMBEDDED_PROPERTIES = "embeddedProperties";
+
+    /**
      * The destination the property is persisted to. This could be the column name etc. or some external form.
      *
      * @return The destination

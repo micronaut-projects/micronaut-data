@@ -1,6 +1,7 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
+import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
@@ -8,6 +9,67 @@ import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
+
+    void "test embedded"() {
+        given:
+        def introspection = buildBeanIntrospection('test.TestEntity', '''
+package test;
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
+import javax.persistence.*;
+import java.util.UUID;
+
+@Entity
+class TestEntity {
+    @Embedded
+    private Name name;
+    @Id
+    private Integer id;
+    
+    public Name getName() {
+        return name;
+    }
+
+    public void setName(Name name) {
+        this.name = name;
+    }
+    
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+}
+
+@Embeddable
+class Name {
+    private String name;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+}
+
+''')
+        expect:
+        introspection != null
+        introspection.hasStereotype(MappedEntity)
+        introspection.getPropertyNames()
+        introspection.getRequiredProperty("name", Object)
+                .getAnnotation(MappedProperty)
+                .getAnnotations(MappedProperty.EMBEDDED_PROPERTIES, Property.class)[0]
+                .stringValue().get() =='name_name'
+    }
 
     void "test mapping Embeddable"() {
         given:

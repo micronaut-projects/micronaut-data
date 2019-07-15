@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.reflect.InstantiationUtils;
@@ -8,6 +9,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategies;
@@ -101,7 +103,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         return dataTypes;
     }
 
-    private void computeMappingDefaults(NamingStrategy namingStrategy, PersistentProperty property, Map<String, DataType> dataTypes) {
+    private void computeMappingDefaults(
+            NamingStrategy namingStrategy,
+            PersistentProperty property,
+            Map<String, DataType> dataTypes) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
         PropertyElement propertyElement = spp.getPropertyElement();
@@ -114,10 +119,39 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             dataType = TypeUtils.resolveDataType(type, dataTypes);
         }
 
-        if (dataType == DataType.ENTITY && !propertyElement.hasStereotype(Relation.class)) {
+        boolean isRelation = propertyElement.hasStereotype(Relation.class);
+        if (dataType == DataType.ENTITY && !isRelation) {
             propertyElement = (PropertyElement) propertyElement.annotate(Relation.class, builder ->
                 builder.value(Relation.Kind.MANY_TO_ONE)
             );
+        } else if (isRelation) {
+            Relation.Kind kind = propertyElement.enumValue(Relation.class, Relation.Kind.class).orElse(Relation.Kind.MANY_TO_ONE);
+            if (kind == Relation.Kind.EMBEDDED) {
+                // handled embedded
+                SourcePersistentEntity embeddedEntity = entityResolver.apply(propertyElement.getType());
+                List<SourcePersistentProperty> persistentProperties = embeddedEntity.getPersistentProperties();
+
+                List<AnnotationValue<Property>> embeddedProperties = new ArrayList<>(persistentProperties.size());
+
+                for (SourcePersistentProperty embeddedProperty : persistentProperties) {
+                    if (!(embeddedProperty instanceof Association)) {
+                        String mappedName = embeddedProperty.stringValue(MappedProperty.class)
+                                .orElseGet(() -> namingStrategy.mappedName(
+                                        property.getName() + embeddedProperty.getCapitilizedName()));
+                        AnnotationValue<Property> av = AnnotationValue.builder(Property.class)
+                                .value(mappedName)
+                                .member("name", embeddedProperty.getName()).build();
+                        embeddedProperties.add(av);
+                    }
+//                    else {
+//                        // TODO: handle nested embedded
+//                    }
+                }
+
+                propertyElement.annotate(MappedProperty.class, builder ->
+                    builder.member(MappedProperty.EMBEDDED_PROPERTIES, embeddedProperties.toArray(new AnnotationValue[0]))
+                );
+            }
         }
 
         Optional<String> mapping = annotationMetadata.stringValue(MappedProperty.class);
