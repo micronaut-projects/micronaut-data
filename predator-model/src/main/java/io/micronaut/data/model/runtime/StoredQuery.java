@@ -21,6 +21,8 @@ import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.JoinPath;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -181,7 +183,7 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     /**
      * @return The join paths that require a fetch
      */
-    default @NonNull Set<String> getJoinFetchPaths() {
+    default @NonNull Set<JoinPath> getJoinFetchPaths() {
         return Collections.emptySet();
     }
 }

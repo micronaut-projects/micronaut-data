@@ -117,7 +117,7 @@ public class DefaultQuery implements QueryModel {
      * @return The query
      */
     @Override
-    public JoinPath join(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType) {
+    public JoinPath join(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType, String alias) {
         PersistentEntity entity = getEntity();
         String[] elements = path.split("\\.");
         Association[] associations = new Association[elements.length];
@@ -136,7 +136,7 @@ public class DefaultQuery implements QueryModel {
 
         }
 
-        JoinPath jp = new JoinPath(path, associations, joinType);
+        JoinPath jp = new JoinPath(path, associations, joinType, alias);
         joinPaths.put(path, jp);
         return jp;
     }

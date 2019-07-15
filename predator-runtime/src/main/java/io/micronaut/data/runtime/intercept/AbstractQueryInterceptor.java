@@ -38,6 +38,7 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.PredatorInterceptor;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -699,7 +700,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         private final Map<String, DataType> dataTypes;
         private final DataType[] indexedDataTypes;
         private Map<String, Object> queryHints;
-        private Set<String> joinFetchPaths = null;
+        private Set<JoinPath> joinFetchPaths = null;
 
         /**
          * The default constructor.
@@ -826,12 +827,16 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @NonNull
         @Override
-        public Set<String> getJoinFetchPaths() {
+        public Set<JoinPath> getJoinFetchPaths() {
             if (joinFetchPaths == null) {
-                Set<String> set = method.getAnnotationValuesByType(Join.class).stream().filter(
+                Set<JoinPath> set = method.getAnnotationValuesByType(Join.class).stream().filter(
                         this::isJoinFetch
-                ).map(av -> av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition")))
-                        .collect(Collectors.toSet());
+                ).map(av -> {
+                    String path = av.stringValue().orElseThrow(() -> new IllegalStateException("Should not include annotations without a value definition"));
+                    String alias = av.stringValue("alias").orElse(null);
+                    // only the alias and path is needed, don't materialize the rest
+                    return new JoinPath(path, new Association[0], Join.Type.DEFAULT, alias);
+                }).collect(Collectors.toSet());
                 joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
             }
             return joinFetchPaths;
@@ -1093,7 +1098,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
 
         @NonNull
         @Override
-        public Set<String> getJoinFetchPaths() {
+        public Set<JoinPath> getJoinFetchPaths() {
             return storedQuery.getJoinFetchPaths();
         }
 

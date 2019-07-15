@@ -98,6 +98,48 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
     }
 
     @Unroll
+    void "test SQL join with custom alias #method"() {
+        given:
+        String joinAnn = ""
+        if (joinPaths) {
+            joinAnn = joinPaths.collect() {
+                """
+@Join(value="$it", alias="region_")
+"""
+            }.join('')
+        }
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+interface MyInterface extends GenericRepository<City, Long> {
+
+    $joinAnn
+    City $method(String name);
+}
+"""
+        )
+
+        def execMethod = repository.findPossibleMethods(method)
+                .findFirst()
+                .get()
+        def ann = execMethod
+                .synthesize(Query)
+        String queryStr = ann.value()
+
+        expect:
+        queryStr.contains('region_.id AS region_id,region_.name AS region_name')
+        queryStr.endsWith(whereClause)
+        queryStr.contains('INNER JOIN')
+
+        where:
+        method                           | joinPaths                 | whereClause
+        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (region_.name = ?)"
+
+    }
+
+    @Unroll
     void "test SQL join WHERE statement for association projection #method"() {
         given:
         String joinAnn = ""

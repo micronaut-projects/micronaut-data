@@ -71,10 +71,11 @@ public interface QueryModel extends Criteria {
      * @param path The join path
      * @param association The association, never null
      * @param joinType The join type
+     * @param alias The alias to use.
      * @return The query
      */
     @NonNull
-    JoinPath join(String path, @NonNull Association association, @NonNull Join.Type joinType);
+    JoinPath join(String path, @NonNull Association association, @NonNull Join.Type joinType, @Nullable String alias);
 
     /**
      * Join on the given association.
@@ -84,7 +85,7 @@ public interface QueryModel extends Criteria {
      */
     @NonNull
     default JoinPath join(@NonNull Association association, @NonNull Join.Type joinType) {
-        return join(association.getName(), association, joinType);
+        return join(association.getName(), association, joinType, null);
     }
 
     /**
@@ -94,7 +95,7 @@ public interface QueryModel extends Criteria {
      */
     @NonNull
     default JoinPath join(@NonNull Association association) {
-        return join(association.getName(), association, Join.Type.DEFAULT);
+        return join(association.getName(), association, Join.Type.DEFAULT, null);
     }
 
     /**

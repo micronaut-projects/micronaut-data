@@ -335,7 +335,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String columnNames = associatedProperties.stream()
                                 .map(p -> {
                                     String columnName = getColumnName(p);
-                                    return aliasName + DOT + columnName + AS_CLAUSE + '_' + joinPathAlias + columnName;
+                                    return aliasName + DOT + columnName + AS_CLAUSE + joinPathAlias + columnName;
                                 })
                                 .collect(Collectors.joining(","));
                         queryBuffer.append(columnNames);
@@ -550,7 +550,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder target, Map<String, String> appliedJoinPaths) {
+    protected String[] buildJoin(
+            String alias,
+            JoinPath joinPath,
+            String joinType,
+            StringBuilder target,
+            Map<String, String> appliedJoinPaths) {
         Association[] associationPath = joinPath.getAssociationPath();
         String[] joinAliases;
         if (ArrayUtils.isEmpty(associationPath)) {
@@ -568,7 +573,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 alias = existingAlias;
             } else {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                joinAliases[i] = getAliasName(new JoinPath(pathSoFar.toString(), Arrays.copyOfRange(associationPath, 0, i + 1), joinPath.getJoinType()));
+                joinAliases[i] = getAliasName(new JoinPath(
+                        pathSoFar.toString(),
+                        Arrays.copyOfRange(associationPath, 0, i + 1),
+                        joinPath.getJoinType(),
+                        joinPath.getAlias().orElse(null))
+                );
                 PersistentProperty identity = associatedEntity.getIdentity();
                 if (identity == null) {
                     throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");

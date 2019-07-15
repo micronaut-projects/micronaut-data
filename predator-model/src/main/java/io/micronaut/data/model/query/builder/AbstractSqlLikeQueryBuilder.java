@@ -375,7 +375,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         PersistentProperty persistentProperty = property.getProperty();
         String aliasRef = isApplyManualJoins() ? getColumnName(persistentProperty) : property.getPath();
         String currentAlias = queryState.getCurrentAlias();
-        String path = currentAlias == null ? "" :  currentAlias + DOT;
+        String path = currentAlias == null ? "" : currentAlias + DOT;
         if (persistentProperty.isAssignable(CharSequence.class)) {
 
             queryState.getWhereClause()
@@ -492,9 +492,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The alias
      */
     public String getAliasName(JoinPath joinPath) {
-        String joinPathAlias = getPathOnlyAliasName(joinPath);
-        PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-        return getAliasName(owner) + joinPathAlias;
+        return joinPath.getAlias().orElseGet(() -> {
+            String joinPathAlias = getPathOnlyAliasName(joinPath);
+            PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
+            return getAliasName(owner) + joinPathAlias;
+        });
     }
 
     /**
@@ -505,17 +507,19 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     @NonNull
     protected String getPathOnlyAliasName(JoinPath joinPath) {
-        String p = joinPath.getPath().replace('.', '_');
-        return NamingStrategy.DEFAULT.mappedName(p) + "_";
+        return joinPath.getAlias().orElseGet(() -> {
+                    String p = joinPath.getPath().replace('.', '_');
+                    return '_' + NamingStrategy.DEFAULT.mappedName(p) + "_";
+        });
     }
 
     /**
      * Build a join expression for the given alias, association, join type and builder.
      *
-     * @param alias         The alias
-     * @param joinPath      The join path
-     * @param joinType      The join type string
-     * @param stringBuilder The target builder
+     * @param alias            The alias
+     * @param joinPath         The join path
+     * @param joinType         The join type string
+     * @param stringBuilder    The target builder
      * @param appliedJoinPaths The applied joins paths
      * @return An array representing the aliases for each join association in the specified join path
      */
@@ -658,57 +662,54 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String currentName = queryState.getCurrentAlias();
         PersistentEntity currentEntity = queryState.getEntity();
         final PersistentEntity associatedEntity = association.getAssociatedEntity();
-        if (associatedEntity != null) {
 
-            String associationPath = associationQuery.getPath();
-            if (!isApplyManualJoins()) {
-                try {
-                    QueryModel queryModel = queryState.getQueryModel();
-                    JoinPath joinPath = queryModel.getJoinPath(associationPath).orElse(null);
-                    if (joinPath == null && association.isForeignKey()) {
-                        joinPath = queryModel.join(associationPath, association, Join.Type.DEFAULT);
-                    }
-
-                    String alias;
-                    if (joinPath != null) {
-                        alias = queryState.applyJoin(joinPath);
-                    } else {
-                        alias = queryState.computeAlias(associationPath);
-                    }
-                    queryState.setEntity(associatedEntity);
-                    queryState.setCurrentAlias(alias);
-                    buildWhereClauseForCriterion(
-                            queryState,
-                            associationCriteria,
-                            associationCriteriaList
-                    );
-                } finally {
-                    queryState.setCurrentAlias(currentName);
-                    queryState.setEntity(currentEntity);
-                }
-            } else {
+        String associationPath = associationQuery.getPath();
+        if (!isApplyManualJoins()) {
+            try {
                 QueryModel queryModel = queryState.getQueryModel();
                 JoinPath joinPath = queryModel.getJoinPath(associationPath).orElse(null);
-                if (joinPath == null) {
-                    joinPath = queryModel.join(associationPath, association, Join.Type.DEFAULT);
+                if (joinPath == null && association.isForeignKey()) {
+                    joinPath = queryModel.join(associationPath, association, Join.Type.DEFAULT, null);
                 }
 
-                String alias = queryState.applyJoin(joinPath);
-
-                try {
-                    queryState.setEntity(associatedEntity);
-                    queryState.setCurrentAlias(alias);
-                    buildWhereClauseForCriterion(
-                            queryState,
-                            associationCriteria,
-                            associationCriteriaList
-                    );
-                } finally {
-                    queryState.setCurrentAlias(currentName);
-                    queryState.setEntity(currentEntity);
+                String alias;
+                if (joinPath != null) {
+                    alias = queryState.applyJoin(joinPath);
+                } else {
+                    alias = queryState.computeAlias(associationPath);
                 }
+                queryState.setEntity(associatedEntity);
+                queryState.setCurrentAlias(alias);
+                buildWhereClauseForCriterion(
+                        queryState,
+                        associationCriteria,
+                        associationCriteriaList
+                );
+            } finally {
+                queryState.setCurrentAlias(currentName);
+                queryState.setEntity(currentEntity);
+            }
+        } else {
+            QueryModel queryModel = queryState.getQueryModel();
+            JoinPath joinPath = queryModel.getJoinPath(associationPath).orElse(null);
+            if (joinPath == null) {
+                joinPath = queryModel.join(associationPath, association, Join.Type.DEFAULT, null);
             }
 
+            String alias = queryState.applyJoin(joinPath);
+
+            try {
+                queryState.setEntity(associatedEntity);
+                queryState.setCurrentAlias(alias);
+                buildWhereClauseForCriterion(
+                        queryState,
+                        associationCriteria,
+                        associationCriteriaList
+                );
+            } finally {
+                queryState.setCurrentAlias(currentName);
+                queryState.setEntity(currentEntity);
+            }
         }
 
     }
@@ -751,8 +752,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
 
                 buff.append(order.getProperty())
-                    .append(SPACE)
-                    .append(order.getDirection().toString());
+                        .append(SPACE)
+                        .append(order.getDirection().toString());
                 if (i.hasNext()) {
                     buff.append(",");
                 }
@@ -884,7 +885,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         whereClause.append(name)
-                   .append(comparisonExpression);
+                .append(comparisonExpression);
         buildSubQuery(queryState, subquery);
         whereClause.append(CLOSE_BRACKET);
     }
@@ -966,7 +967,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         q.append(otherProperty);
     }
 
-    private @NonNull PropertyPath validateProperty(QueryState queryState, String name, Class criterionType) {
+    private @NonNull
+    PropertyPath validateProperty(QueryState queryState, String name, Class criterionType) {
         PersistentEntity entity = queryState.getEntity();
         PersistentProperty identity = entity.getIdentity();
         if (identity != null && identity.getName().equals(name)) {
@@ -1001,7 +1003,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 QueryModel queryModel = queryState.getQueryModel();
                 JoinPath joinPath = queryModel.getJoinPath(name).orElse(null);
                 if (joinPath == null) {
-                    joinPath = queryModel.join(p.getName(), (Association) p, Join.Type.DEFAULT);
+                    joinPath = queryModel.join(p.getName(), (Association) p, Join.Type.DEFAULT, null);
                 }
                 if (queryState.isAllowJoins()) {
                     String alias = queryState.applyJoin(joinPath);
@@ -1038,7 +1040,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .append(getTableName(entity));
         if (currentAlias != null) {
             queryString.append(SPACE)
-                        .append(currentAlias);
+                    .append(currentAlias);
         }
         buildUpdateStatement(queryState, propertiesToUpdate);
         buildWhereClause(query.getCriteria(), queryState);
@@ -1068,6 +1070,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     /**
      * Should aliases be used in batch statements.
+     *
      * @return True if they should
      */
     protected abstract boolean isAliasForBatch();
@@ -1107,7 +1110,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (persistentProperty instanceof Association) {
                 Association association = (Association) persistentProperty;
 
-                aliasName = getAliasName(new JoinPath(property, new Association[]{ association }, Join.Type.DEFAULT));
+                aliasName = getAliasName(new JoinPath(property, new Association[]{association}, Join.Type.DEFAULT, null));
             } else {
                 aliasName = getAliasName(entity);
             }
@@ -1180,7 +1183,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The current current alias
          */
-        public @Nullable String getCurrentAlias() {
+        public @Nullable
+        String getCurrentAlias() {
             return currentAlias;
         }
 
@@ -1263,6 +1267,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String alias = getCurrentAlias();
             StringBuilder associationPath = new StringBuilder(alias + DOT + joinPath.getPath());
             if (!appliedJoinPaths.containsKey(associationPath.toString())) {
+                Optional<JoinPath> jp = getQueryModel().getJoinPath(joinPath.getPath());
+                if (jp.isPresent()) {
+                    joinPath = jp.get();
+                }
                 StringBuilder stringBuilder = getQuery();
                 Join.Type jt = joinPath.getJoinType();
                 String joinType = resolveJoinType(jt);
@@ -1289,10 +1297,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         /**
          * Computes the alias for the given association path given the current state of the joins.
+         *
          * @param associationPath The assocation path.
          * @return The alias
          */
-        public @NonNull String computeAlias(String associationPath) {
+        public @NonNull
+        String computeAlias(String associationPath) {
             String name = getCurrentAlias() + DOT + associationPath;
             if (appliedJoinPaths.containsKey(name)) {
                 return appliedJoinPaths.get(name);
@@ -1358,8 +1368,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         /**
          * Default constructor.
+         *
          * @param property The property
-         * @param path The path
+         * @param path     The path
          */
         public PropertyPath(@NonNull PersistentProperty property, @NonNull String path) {
             this.property = property;
@@ -1369,14 +1380,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The property
          */
-        public @NonNull PersistentProperty getProperty() {
+        public @NonNull
+        PersistentProperty getProperty() {
             return property;
         }
 
         /**
          * @return The path
          */
-        public @NonNull String getPath() {
+        public @NonNull
+        String getPath() {
             return path;
         }
     }

@@ -14,12 +14,15 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,7 +37,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
 
     private final RuntimePersistentEntity<R> entity;
     private final ResultReader<RS, String> resultReader;
-    private final Set<String> joinPaths;
+    private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
 
     /**
@@ -70,7 +73,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable Set<String> joinPaths) {
+            @Nullable Set<JoinPath> joinPaths) {
         this(entity, resultReader, joinPaths, "");
     }
 
@@ -83,13 +86,20 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
     private SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable Set<String> joinPaths,
+            @Nullable Set<JoinPath> joinPaths,
             String startingPrefix) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
         this.resultReader = resultReader;
-        this.joinPaths = joinPaths != null ? joinPaths : Collections.emptySet();
+        if (joinPaths != null) {
+            this.joinPaths = new HashMap<>(joinPaths.size());
+            for (JoinPath joinPath : joinPaths) {
+                this.joinPaths.put(joinPath.getPath(), joinPath);
+            }
+        } else {
+            this.joinPaths = Collections.emptyMap();
+        }
         this.startingPrefix = startingPrefix != null ? startingPrefix : "";
     }
 
@@ -178,7 +188,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                             property.set(entity, associated);
                         }
                     } else {
-                        if (association.getKind() == Relation.Kind.ONE_TO_ONE && association.isForeignKey() && joinPaths.contains(path + association.getName())) {
+                        if (association.getKind() == Relation.Kind.ONE_TO_ONE && association.isForeignKey() && joinPaths.containsKey(path + association.getName())) {
                             Object associated = readAssociation(prefix, path, rs, association);
                             if (associated != null) {
                                 property.set(entity, associated);
@@ -226,8 +236,12 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
         RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
         RuntimePersistentProperty identity = associatedEntity.getIdentity();
         String associationName = association.getName();
-        if (joinPaths.contains(path + associationName)) {
-            String newPrefix = prefix.length() == 0 ? "_" + association.getAliasName() : prefix + association.getAliasName();
+        String joinPath = path + associationName;
+        if (joinPaths.containsKey(joinPath)) {
+            JoinPath jp = joinPaths.get(joinPath);
+            String newPrefix = jp.getAlias().orElseGet(() ->
+                prefix.length() == 0 ? "_" + association.getAliasName() : prefix + association.getAliasName()
+            );
             associated = readEntity(newPrefix, path + associationName + '.', resultSet, associatedEntity);
         } else {
 

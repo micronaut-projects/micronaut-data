@@ -41,6 +41,11 @@ public @interface Join {
     Type type() default Type.FETCH;
 
     /**
+     * @return The alias prefix to use for the join
+     */
+    String alias() default "";
+
+    /**
      * The type of join.
      */
     enum Type {

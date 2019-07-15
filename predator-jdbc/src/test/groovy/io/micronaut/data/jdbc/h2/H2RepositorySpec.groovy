@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.h2
 
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -143,5 +144,15 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         then:"The result is correct"
         book != null
         book.author.name == 'Stephen King'
+    }
+
+    void "test custom alias"() {
+        given:
+        def book = br.queryByTitle("The Stand")
+
+        expect:
+        book.title == "The Stand"
+        book.author != null
+        book.author.name == "Stephen King"
     }
 }

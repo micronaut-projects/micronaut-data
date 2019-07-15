@@ -390,6 +390,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.stringValue().orElse(null);
             Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(Join.Type.FETCH);
+            String alias = joinSpec.stringValue("alias").orElse(null);
             if (path != null) {
                 PersistentProperty prop = rootEntity.getPropertyByPath(path).orElse(null);
                 if (!(prop instanceof Association)) {
@@ -406,7 +407,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     if (!hasExisting) {
                         query.add(new AssociationQuery(path, (Association) prop));
                     }
-                    query.join(path, (Association) prop, type);
+                    query.join(path, (Association) prop, type, alias);
                 }
             }
         }

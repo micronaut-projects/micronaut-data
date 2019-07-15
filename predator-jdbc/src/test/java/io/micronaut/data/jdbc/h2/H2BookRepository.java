@@ -1,8 +1,10 @@
 package io.micronaut.data.jdbc.h2;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.jdbc.annotation.*;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
 import java.util.Arrays;
@@ -35,4 +37,7 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
             newBook(dw, "The Border", 700)
         ));
     }
+
+    @Join(value = "author", alias = "auth")
+    abstract Book queryByTitle(String title);
 }
