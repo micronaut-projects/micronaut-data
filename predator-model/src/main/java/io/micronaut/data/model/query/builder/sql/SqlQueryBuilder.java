@@ -362,7 +362,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
 
             columns = persistentProperties.stream()
-                    .map(p -> alias + DOT + getColumnName(p))
+                    .map(p -> {
+                        if (p instanceof Association) {
+                            Association association = (Association) p;
+                            if (association.getKind() == Relation.Kind.EMBEDDED) {
+                                PersistentEntity embeddedEntity = association.getAssociatedEntity();
+                                List<PersistentProperty> embeddedProps = getPropertiesThatAreColumns(embeddedEntity);
+                                return embeddedProps.stream().map(ep ->
+                                        alias + DOT + ep.getAnnotationMetadata().stringValue(MappedProperty.class).orElseGet(() ->
+                                        entity.getNamingStrategy().mappedName(association.getName() + ep.getCapitilizedName())
+                                    )
+                                ).collect(Collectors.joining(","));
+                            }
+                        }
+                        return alias + DOT + getColumnName(p);
+                    })
                     .collect(Collectors.joining(","));
         } else {
             columns = "*";

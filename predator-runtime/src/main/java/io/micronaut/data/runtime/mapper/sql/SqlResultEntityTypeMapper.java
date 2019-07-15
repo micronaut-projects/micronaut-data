@@ -13,6 +13,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -20,10 +21,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A {@link TypeMapper} that can take a {@link RuntimePersistentEntity} and a {@link ResultReader} and materialize an instance using
@@ -231,37 +229,41 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
 
     @Nullable
     private Object readAssociation(String prefix, String path, RS resultSet, Association association) {
-        Object associated = null;
-        String persistedName = association.getPersistedName();
         RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
-        RuntimePersistentProperty identity = associatedEntity.getIdentity();
+        Object associated = null;
         String associationName = association.getName();
-        String joinPath = path + associationName;
-        if (joinPaths.containsKey(joinPath)) {
-            JoinPath jp = joinPaths.get(joinPath);
-            String newPrefix = jp.getAlias().orElseGet(() ->
-                prefix.length() == 0 ? "_" + association.getAliasName() : prefix + association.getAliasName()
-            );
-            associated = readEntity(newPrefix, path + associationName + '.', resultSet, associatedEntity);
+        if (association instanceof Embedded) {
+            associated = readEntity(associationName + "_", path + associationName + '.', resultSet, associatedEntity);
         } else {
-
-            BeanIntrospection associatedIntrospection = associatedEntity.getIntrospection();
-            Argument[] constructorArgs = associatedIntrospection.getConstructorArguments();
-            if (constructorArgs.length == 0) {
-                associated = associatedIntrospection.instantiate();
-                if (identity != null) {
-                    Object v = resultReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
-                    BeanWrapper.getWrapper(associated).setProperty(
-                            identity.getName(),
-                            v
-                    );
-                }
+            String persistedName = association.getPersistedName();
+            RuntimePersistentProperty identity = associatedEntity.getIdentity();
+            String joinPath = path + associationName;
+            if (joinPaths.containsKey(joinPath)) {
+                JoinPath jp = joinPaths.get(joinPath);
+                String newPrefix = jp.getAlias().orElseGet(() ->
+                        prefix.length() == 0 ? "_" + association.getAliasName() : prefix + association.getAliasName()
+                );
+                associated = readEntity(newPrefix, path + associationName + '.', resultSet, associatedEntity);
             } else {
-                if (constructorArgs.length == 1 && identity != null) {
-                    Argument arg = constructorArgs[0];
-                    if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
+
+                BeanIntrospection associatedIntrospection = associatedEntity.getIntrospection();
+                Argument[] constructorArgs = associatedIntrospection.getConstructorArguments();
+                if (constructorArgs.length == 0) {
+                    associated = associatedIntrospection.instantiate();
+                    if (identity != null) {
                         Object v = resultReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
-                        associated = associatedIntrospection.instantiate(resultReader.convertRequired(v, identity.getType()));
+                        BeanWrapper.getWrapper(associated).setProperty(
+                                identity.getName(),
+                                v
+                        );
+                    }
+                } else {
+                    if (constructorArgs.length == 1 && identity != null) {
+                        Argument arg = constructorArgs[0];
+                        if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
+                            Object v = resultReader.readDynamic(resultSet, prefix + persistedName, identity.getDataType());
+                            associated = associatedIntrospection.instantiate(resultReader.convertRequired(v, identity.getType()));
+                        }
                     }
                 }
             }

@@ -181,15 +181,15 @@ import java.util.UUID;
 
 @Entity
 class TestEntity {
-    private Name name;
+    private SName name;
     @Id
     private Integer id;
     
-    public Name getName() {
+    public SName getName() {
         return name;
     }
 
-    public void setName(Name name) {
+    public void setName(SName name) {
         this.name = name;
     }
     
@@ -204,7 +204,7 @@ class TestEntity {
 }
 
 @TypeDef(type=DataType.STRING) 
-class Name {
+class SName {
     String name;
 }
 

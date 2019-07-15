@@ -8,16 +8,10 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.AutoPopulated;
-import io.micronaut.data.annotation.DateCreated;
-import io.micronaut.data.annotation.DateUpdated;
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.PredatorMethod;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -36,7 +30,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -106,89 +99,120 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      */
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
         Date now = null;
-        for (Map.Entry<RuntimePersistentProperty<T>, Integer> entry : insert.getParameterBinding().entrySet()) {
-            RuntimePersistentProperty<T> prop = entry.getKey();
-            DataType type = prop.getDataType();
-            BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
-            Object value = beanProperty.get(entity);
-            int index = entry.getValue();
-            if (prop instanceof Association) {
-                Association association = (Association) prop;
-                if (!association.isForeignKey()) {
-                    if (value != null) {
-                        @SuppressWarnings("unchecked")
-                        RuntimePersistentEntity<Object> associatedEntity = getEntity((Class<Object>) value.getClass());
-                        RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
-                        if (identity == null) {
-                            throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
-                        }
-                        value = identity.getProperty().get(value);
-                    }
-                    if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                        PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                    }
+        RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
+        for (Map.Entry<String, Integer> entry : insert.getParameterBinding().entrySet()) {
+            String propName = entry.getKey();
+            RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(propName);
+            if (prop == null) {
+                int i = propName.indexOf('.');
+                if (i > -1) {
+                    RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
+                            persistentEntity.getPropertyByPath(propName).orElse(null);
+                    if (embeddedProp != null) {
 
-                    preparedStatementWriter.setDynamic(
-                            stmt,
-                            index,
-                            type,
-                            value
-                    );
+                        // embedded case
+                        prop = persistentEntity.getPropertyByName(propName.substring(0, i));
+                        if (prop instanceof Association) {
+                            Association assoc = (Association) prop;
+                            if (assoc.getKind() == Relation.Kind.EMBEDDED) {
+
+                                Object value = prop.getProperty().get(entity);
+                                Object embeddedValue = embeddedProp.getProperty().get(value);
+                                int index = entry.getValue();
+                                preparedStatementWriter.setDynamic(
+                                        stmt,
+                                        index,
+                                        embeddedProp.getDataType(),
+                                        embeddedValue
+                                );
+                            }
+                        }
+                    }
                 }
+            } else {
+                DataType type = prop.getDataType();
+                BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
+                Object value = beanProperty.get(entity);
+                int index = entry.getValue();
+                if (prop instanceof Association) {
+                    Association association = (Association) prop;
+                    if (!association.isForeignKey()) {
+                        if (value != null) {
+                            @SuppressWarnings("unchecked")
+                            RuntimePersistentEntity<Object> associatedEntity = getEntity((Class<Object>) value.getClass());
+                            RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
+                            if (identity == null) {
+                                throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
+                            }
+                            value = identity.getProperty().get(value);
+                        }
+                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                        }
 
-            } else if (!prop.isGenerated()) {
-                if (beanProperty.hasStereotype(AutoPopulated.class)) {
-                    if (beanProperty.hasAnnotation(DateCreated.class)) {
-                        now = now != null ? now : new Date();
-                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                        }
                         preparedStatementWriter.setDynamic(
                                 stmt,
                                 index,
                                 type,
-                                now
+                                value
                         );
-                        beanProperty.convertAndSet(entity, now);
-                    } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                        now = now != null ? now : new Date();
-                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                    }
+
+                } else if (!prop.isGenerated()) {
+                    if (beanProperty.hasStereotype(AutoPopulated.class)) {
+                        if (beanProperty.hasAnnotation(DateCreated.class)) {
+                            now = now != null ? now : new Date();
+                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                                PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                            }
+                            preparedStatementWriter.setDynamic(
+                                    stmt,
+                                    index,
+                                    type,
+                                    now
+                            );
+                            beanProperty.convertAndSet(entity, now);
+                        } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
+                            now = now != null ? now : new Date();
+                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                                PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                            }
+                            preparedStatementWriter.setDynamic(
+                                    stmt,
+                                    index,
+                                    type,
+                                    now
+                            );
+                            beanProperty.convertAndSet(entity, now);
+                        } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
+                            UUID uuid = UUID.randomUUID();
+                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                                PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
+                            }
+                            preparedStatementWriter.setDynamic(
+                                    stmt,
+                                    index,
+                                    type,
+                                    uuid
+                            );
+                            beanProperty.set(entity, uuid);
+                        } else {
+                            throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                         }
-                        preparedStatementWriter.setDynamic(
-                                stmt,
-                                index,
-                                type,
-                                now
-                        );
-                        beanProperty.convertAndSet(entity, now);
-                    } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
-                        UUID uuid = UUID.randomUUID();
-                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
-                        }
-                        preparedStatementWriter.setDynamic(
-                                stmt,
-                                index,
-                                type,
-                                uuid
-                        );
-                        beanProperty.set(entity, uuid);
                     } else {
-                        throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
+                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
+                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                        }
+                        preparedStatementWriter.setDynamic(
+                                stmt,
+                                index,
+                                type,
+                                value
+                        );
                     }
-                } else {
-                    if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                        PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                    }
-                    preparedStatementWriter.setDynamic(
-                            stmt,
-                            index,
-                            type,
-                            value
-                    );
                 }
             }
+
         }
     }
 
@@ -212,7 +236,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             }
 
             RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-            Map<RuntimePersistentProperty<T>, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata, persistentEntity);
+            Map<String, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata);
             // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
             boolean supportsBatch = annotationMetadata.findAnnotation(Repository.class)
                     .flatMap(av -> av.enumValue("dialect", Dialect.class)
@@ -356,39 +380,29 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         }
     }
 
-    private <T> Map<RuntimePersistentProperty<T>, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata, RuntimePersistentEntity<T> entity) {
+    private <T> Map<String, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata) {
         AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
         if (annotation == null) {
             return Collections.emptyMap();
         }
         List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(PredatorMethod.META_MEMBER_INSERT_BINDING,
                 Property.class);
-        Map<String, String> parameterValues;
+        Map<String, Integer> parameterValues;
         if (CollectionUtils.isNotEmpty(parameterData)) {
             parameterValues = new HashMap<>(parameterData.size());
             for (AnnotationValue<Property> annotationValue : parameterData) {
                 String name = annotationValue.stringValue("name").orElse(null);
-                String argument = annotationValue.stringValue("value").orElse(null);
-                if (name != null && argument != null) {
+                Integer argument = annotationValue.intValue("value").orElseThrow(() ->
+                    new IllegalArgumentException("Query indices should be stored as integers")
+                );
+                if (name != null) {
                     parameterValues.put(name, argument);
                 }
             }
         } else {
             parameterValues = Collections.emptyMap();
         }
-        return parameterValues
-                .entrySet().stream()
-                .collect(Collectors.toMap(
-                        entry -> {
-                            String name = entry.getKey();
-                            RuntimePersistentProperty<T> prop = entity.getPropertyByName(name);
-                            if (prop == null) {
-                                throw new IllegalStateException("No property [" + name + "] found on entity: " + entity.getName());
-                            }
-                            return prop;
-                        },
-                        entry -> Integer.valueOf(entry.getValue())
-                ));
+        return parameterValues;
     }
 
     @NonNull
@@ -484,11 +498,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T> The entity type
      */
     protected final class StoredInsert<T> {
-        private final Map<RuntimePersistentProperty<T>, Integer> parameterBinding;
+        private final Map<String, Integer> parameterBinding;
         private final RuntimePersistentProperty identity;
         private final boolean generateId;
         private final String sql;
         private final boolean supportsBatch;
+        private final RuntimePersistentEntity<T> persistentEntity;
 
         /**
          * Default constructor.
@@ -501,13 +516,21 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         StoredInsert(
                 String sql,
                 RuntimePersistentEntity<T> persistentEntity,
-                Map<RuntimePersistentProperty<T>, Integer> parameterBinding,
+                Map<String, Integer> parameterBinding,
                 boolean supportsBatch) {
             this.sql = sql;
+            this.persistentEntity = persistentEntity;
             this.parameterBinding = parameterBinding;
             this.identity = persistentEntity.getIdentity();
             this.generateId = identity != null && identity.isGenerated();
             this.supportsBatch = supportsBatch;
+        }
+
+        /**
+         * @return The persistent entity
+         */
+        public RuntimePersistentEntity<T> getPersistentEntity() {
+            return persistentEntity;
         }
 
         /**
@@ -529,7 +552,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
          * @return The parameter binding
          */
         public @NonNull
-        Map<RuntimePersistentProperty<T>, Integer> getParameterBinding() {
+        Map<String, Integer> getParameterBinding() {
             return parameterBinding;
         }
 

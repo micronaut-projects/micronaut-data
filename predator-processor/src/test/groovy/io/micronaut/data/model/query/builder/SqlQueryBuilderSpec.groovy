@@ -23,6 +23,18 @@ import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
 
+    void "test select embedded"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Restaurant)
+        QueryModel q = QueryModel.from(entity)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        def encoded = encoder.buildQuery(q)
+
+        expect:
+        encoded.query.startsWith('SELECT restaurant_.id,restaurant_.name,restaurant_.address_street,restaurant_.address_zip_code FROM')
+
+    }
+
     void "test encode to-one join - single level"() {
         given:
         PersistentEntity entity = PersistentEntity.of(Book)
@@ -105,7 +117,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE restaurant (name VARCHAR(255),address_street VARCHAR(255),address_zip_code VARCHAR(255));'
+        result == 'CREATE TABLE restaurant (id BIGINT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255),address_street VARCHAR(255),address_zip_code VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {
