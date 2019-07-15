@@ -5,6 +5,7 @@ import javax.persistence.*;
 @Entity
 public class Sale {
 
+    @ManyToOne
     private final Product product;
     private final Quantity quantity;
 

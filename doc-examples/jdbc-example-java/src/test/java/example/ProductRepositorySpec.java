@@ -38,6 +38,16 @@ class ProductRepositorySpec {
     }
 
     @Test
+    void testNativeJoin() {
+        List<Product> list = productRepository.searchProducts("MacBook%");
+        Assertions.assertTrue(
+                list.stream().allMatch( p ->
+                        p.getManufacturer().getName().equals("Apple")
+                )
+        );
+    }
+
+    @Test
     void testJoinSpec() {
         List<Product> list = productRepository.list();
         Assertions.assertTrue(

@@ -495,7 +495,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return joinPath.getAlias().orElseGet(() -> {
             String joinPathAlias = getPathOnlyAliasName(joinPath);
             PersistentEntity owner = joinPath.getAssociationPath()[0].getOwner();
-            return getAliasName(owner) + joinPathAlias;
+            String ownerAlias = getAliasName(owner);
+            if (ownerAlias.endsWith("_") && joinPathAlias.startsWith("_")) {
+                return ownerAlias + joinPathAlias.substring(1);
+            } else {
+                return ownerAlias + joinPathAlias;
+            }
         });
     }
 
