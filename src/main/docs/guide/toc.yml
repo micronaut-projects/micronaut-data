@@ -25,7 +25,7 @@ dataUpdates:
 howItWorks:
   title: How Predator Works
 spring:
-  title: Spring Integration
+  title: Spring Data Support
 sql:
   title: Predator with SQL
   jdbc:
