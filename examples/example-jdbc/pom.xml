@@ -3,8 +3,9 @@
   <groupId>example.jdbc</groupId>
   <artifactId>example-jdbc</artifactId>
   <version>0.1</version>
-  <properties>
+  <properties>    
     <micronaut.version>1.2.0.RC2</micronaut.version>
+    <predator.version>1.0.0.BUILD-SNAPSHOT</predator.version>
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>example.Application</exec.mainClass>
@@ -46,7 +47,7 @@
     <dependency>
         <groupId>io.micronaut.data</groupId>
         <artifactId>micronaut-predator-jdbc</artifactId>
-        <version>1.0.0.BUILD-SNAPSHOT</version>
+        <version>${predator.version}</version>
         <scope>compile</scope>
     </dependency>
     <dependency>
@@ -169,7 +170,7 @@
                   <path>
                     <groupId>io.micronaut.data</groupId>
                     <artifactId>micronaut-predator-processor</artifactId>
-                    <version>1.0.0.BUILD-SNAPSHOT</version>                      
+                    <version>${predator.version}</version>                      
                   </path>                  
                   <path>
                     <groupId>io.micronaut</groupId>
@@ -202,7 +203,7 @@
                   <path>
                     <groupId>io.micronaut.data</groupId>
                     <artifactId>micronaut-predator-processor</artifactId>
-                    <version>1.0.0.BUILD-SNAPSHOT</version>                      
+                    <version>${predator.version}</version>                      
                   </path>
                   <path>
                     <groupId>io.micronaut</groupId>
