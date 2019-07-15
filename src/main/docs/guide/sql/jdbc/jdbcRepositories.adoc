@@ -19,3 +19,5 @@ snippet::example.AbstractBookRepository[project-base="doc-examples/jdbc-example"
 As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that performs your own SQL queries.
 
 The example above uses the api:data.jdbc.runtime.JdbcOperations[] interface which simplifies executing JDBC queries within the context of transactions.
+
+TIP: You could also inject whichever other tool you wish to use to handle more complex  queries, such as QueryDSL, JOOQ, Spring JdbcTemplate etc.
