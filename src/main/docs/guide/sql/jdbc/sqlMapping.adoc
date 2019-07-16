@@ -63,6 +63,8 @@ In the case of using JPA only a subset of annotations are supported including th
 * `@OneToOne`
 * `@ManyToOne`
 * `@ManyToMany`
+* `@Embedded`
+* `@Embeddable`
 
 Again Predator JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don't apply, however for users familiar with these annotations it is handy being able to use them.
 
