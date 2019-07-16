@@ -35,6 +35,42 @@ import javax.annotation.processing.SupportedAnnotationTypes
 
 class PageSpec extends AbstractPredatorSpec {
 
+    void "test compile error on incorrect property order"() {
+        when:
+        buildRepository('test.MyInterface' , """
+
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    Page<Person> findAllByNameNotStartsWith(Pageable pageable, String name);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Unable to implement Repository method: MyInterface.findAllByNameNotStartsWith(Pageable pageable,String name). Parameter [pageable] of method [findAllByNameNotStartsWith] is not compatible with property [name] of entity: io.micronaut.data.model.entities.Person')
+    }
+
+    void "test compile error on incorrect property order with multiple items"() {
+        when:
+        buildRepository('test.MyInterface' , """
+
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    Page<Person> findByNameOrAge(Pageable pageable, String name, int age);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Unable to implement Repository method: MyInterface.findByNameOrAge(Pageable pageable,String name,int age). Parameter [pageable] of method [findByNameOrAge] is not compatible with property [name] of entity')
+    }
+
     void "test page method match"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
@@ -47,6 +83,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     Page<Person> list(Pageable pageable);
     
     Page<Person> findByName(String title, Pageable pageable);
+    
 }
 """)
 
@@ -58,6 +95,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         def findMethod = beanDefinition.getRequiredMethod("findByName", String, Pageable)
         def findAnn = findMethod.synthesize(PredatorMethod)
+
 
         then:"it is configured correctly"
         listAnn.interceptor() == FindPageInterceptor

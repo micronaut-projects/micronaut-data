@@ -25,6 +25,25 @@ import spock.lang.Unroll
 
 class EqualsSpec extends AbstractPredatorMethodSpec {
 
+    void "test compile error on incorrect property order with multiple items"() {
+        when:
+        buildRepository('test.MyInterface' , """
+
+import io.micronaut.data.model.entities.Person;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    Person findByNameOrAge(int age, String name);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('MyInterface.findByNameOrAge(int age,String name). Parameter [age] of method [findByNameOrAge] is not compatible with property [name] of entity')
+    }
+
+
     @Unroll
     void "test equals method #method"() {
         given:

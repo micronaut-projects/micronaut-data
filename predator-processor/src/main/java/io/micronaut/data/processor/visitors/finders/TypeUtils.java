@@ -327,4 +327,23 @@ public class TypeUtils {
         });
 
     }
+
+    /**
+     * Return true if the left type is compatible or can be assigned to the right type.
+     * @param leftType The left type
+     * @param rightType The right type
+     * @return True if they are
+     */
+    public static boolean areTypesCompatible(ClassElement leftType, ClassElement rightType) {
+        if (leftType.isAssignable(rightType.getName())) {
+            return true;
+        } else {
+            if (isNumber(leftType) && isNumber(rightType)) {
+                return true;
+            } else if (isBoolean(leftType) && isBoolean(rightType)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

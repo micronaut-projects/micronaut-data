@@ -23,6 +23,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
@@ -180,6 +181,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
 
                         for (int k = 0; k < requiredArgs; k++, argumentCursor++) {
                             ParameterElement argument = parameters[argumentCursor];
+                            verifyFinderParameter(methodName, entity, currentExpression, argument);
                             currentArguments[k] = argument.getName();
                         }
                         initializeExpression(currentExpression, currentArguments);
@@ -231,7 +233,9 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             totalRequiredArguments += requiredArguments;
             String[] soloArgs = new String[requiredArguments];
             for (int i = 0; i < soloArgs.length; i++) {
-                soloArgs[i] = parameters[i].getName();
+                ParameterElement parameter = parameters[i];
+                verifyFinderParameter(methodName, entity, solo, parameter);
+                soloArgs[i] = parameter.getName();
             }
             initializeExpression(solo, soloArgs);
             expressions.add(solo);
@@ -302,6 +306,25 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                 queryResultType,
                 query
         );
+    }
+
+    private void verifyFinderParameter(String methodName, SourcePersistentEntity entity, CriterionMethodExpression methodExpression, ParameterElement parameter) {
+        boolean isID = methodExpression.propertyName.equals(TypeRole.ID);
+        SourcePersistentProperty persistentProperty = (SourcePersistentProperty) entity.getPropertyByPath(methodExpression.propertyName).orElseGet(() -> {
+            if (isID) {
+                SourcePersistentProperty identity = entity.getIdentity();
+                if (identity != null) {
+                    return identity;
+                }
+            }
+            throw new IllegalArgumentException("Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + methodExpression.propertyName);
+        });
+        ClassElement genericType = parameter.getGenericType();
+        if (!TypeUtils.areTypesCompatible(genericType, persistentProperty.getType())) {
+            if (!isID && !genericType.isAssignable(Iterable.class)) {
+                throw new IllegalArgumentException("Parameter [" + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + persistentProperty.getName() + "] of entity: " + entity.getName());
+            }
+        }
     }
 
     private void initializeExpression(CriterionMethodExpression currentExpression, String[] currentArguments) {

@@ -142,7 +142,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (!returnType.getName().equals("void")) {
             if (isValidResultType(returnType)) {
-                if (areTypesCompatible(returnType, queryResultType, matchContext)) {
+                if (TypeUtils.areTypesCompatible(returnType, queryResultType)) {
                     if (isFindByIdQuery(matchContext, queryResultType, query)) {
                         return new MethodMatchInfo(
                                 matchContext.getReturnType(),
@@ -243,7 +243,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 } else {
                     boolean dto = false;
-                    if (!areTypesCompatible(typeArgument, queryResultType, matchContext)) {
+                    if (!TypeUtils.areTypesCompatible(typeArgument, queryResultType)) {
                         if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                             if (attemptProjection(matchContext, queryResultType, query, typeArgument)) {
                                 return null;
@@ -298,7 +298,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @Nullable QueryModel query,
             @NonNull ClassElement returnType) {
         boolean dto = false;
-        if (!areTypesCompatible(returnType, queryResultType, matchContext)) {
+        if (!TypeUtils.areTypesCompatible(returnType, queryResultType)) {
             if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                 if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
                     dto = true;
@@ -329,25 +329,12 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 return true;
             }
 
-            if (!areTypesCompatible(beanProperty.getType(), pp.getType(), matchContext)) {
+            if (!TypeUtils.areTypesCompatible(beanProperty.getType(), pp.getType())) {
                 matchContext.fail("Property [" + propertyName + "] of type [" + beanProperty.getType().getName() + "] is not compatible with equivalent property declared in entity: " + entity.getName());
                 return true;
             }
             // add an alias projection for each property
             query.projections().add(Projections.property(propertyName).aliased());
-        }
-        return false;
-    }
-
-    private boolean areTypesCompatible(ClassElement returnType, ClassElement queryResultType, MethodMatchContext matchContext) {
-        if (returnType.isAssignable(queryResultType.getName())) {
-            return true;
-        } else {
-            if (TypeUtils.isNumber(returnType) && TypeUtils.isNumber(queryResultType)) {
-                return true;
-            } else if (TypeUtils.isBoolean(returnType) && TypeUtils.isBoolean(queryResultType)) {
-                return true;
-            }
         }
         return false;
     }

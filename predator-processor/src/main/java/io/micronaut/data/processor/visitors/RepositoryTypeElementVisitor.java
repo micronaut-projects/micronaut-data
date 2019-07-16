@@ -209,7 +209,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             parameters,
                             entityResolver
                     );
-                    MethodMatchInfo methodInfo = finder.buildMatchInfo(methodMatchContext);
+                    MethodMatchInfo methodInfo;
+                    try {
+                        methodInfo = finder.buildMatchInfo(methodMatchContext);
+                    } catch (Exception e) {
+                        matchContext.fail(e.getMessage());
+                        return;
+                    }
                     if (methodInfo != null) {
 
                         // populate parameter roles
