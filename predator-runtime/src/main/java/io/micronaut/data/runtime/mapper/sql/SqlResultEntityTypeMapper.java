@@ -10,6 +10,7 @@ import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
@@ -141,6 +142,16 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         try {
             R entity;
+            Object id = null;
+            RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
+            if (identity != null) {
+                String persistedName = identity.getPersistedName();
+                id = resultReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
+                if (id == null) {
+                    throw new DataAccessException("Table contains null ID for entity: " + persistentEntity.getName());
+                }
+            }
+
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
             } else {
@@ -172,6 +183,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                 }
                 entity = introspection.instantiate(args);
             }
+            Map<Association, List> toManyJoins = null;
             for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
                 RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
                 if (persistentProperty.isReadOnly()) {
@@ -186,10 +198,19 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                             property.set(entity, associated);
                         }
                     } else {
-                        if (association.getKind() == Relation.Kind.ONE_TO_ONE && association.isForeignKey() && joinPaths.containsKey(path + association.getName())) {
-                            Object associated = readAssociation(prefix, path, rs, association);
-                            if (associated != null) {
-                                property.set(entity, associated);
+                        Relation.Kind kind = association.getKind();
+                        boolean hasJoin = joinPaths.containsKey(path + association.getName());
+                        if (hasJoin) {
+                            if (kind == Relation.Kind.ONE_TO_ONE && association.isForeignKey()) {
+                                Object associated = readAssociation(prefix, path, rs, association);
+                                if (associated != null) {
+                                    property.set(entity, associated);
+                                }
+                            } else if (id != null && (kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY)) {
+                                if (toManyJoins == null) {
+                                    toManyJoins = new HashMap<>(3);
+                                }
+                                toManyJoins.put(association, new ArrayList());
                             }
                         }
                     }
@@ -204,27 +225,55 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                     }
                 }
             }
-            RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
-            if (identity != null) {
-                String persistedName = identity.getPersistedName();
-                Object v = resultReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
-                BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
-                if (v == null) {
-                    throw new DataAccessException("Table contains null ID for entity: " + entity);
+
+            if (id != null) {
+                Object currentId = id;
+                if (CollectionUtils.isNotEmpty(toManyJoins)) {
+
+                    while (currentId != null && currentId.equals(id)) {
+                        for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
+                            Association association = entry.getKey();
+                            Object associated = readAssociation(prefix, path, rs, association);
+                            entry.getValue().add(associated);
+                        }
+                        currentId = nextId(identity, rs);
+                    }
+
+                    for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
+                        List value = entry.getValue();
+                        RuntimePersistentProperty association = (RuntimePersistentProperty) entry.getKey();
+                        BeanProperty property = association.getProperty();
+                        if (property.getType().isInstance(value)) {
+                            property.set(entity, value);
+                        } else {
+                            property.convertAndSet(entity, value);
+                        }
+                    }
                 }
-                if (property.getType().isInstance(v)) {
+                BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
+                if (property.getType().isInstance(id)) {
                     property.set(
                             entity,
-                            v
+                            id
                     );
                 } else {
-                    property.convertAndSet(entity, v);
+                    property.convertAndSet(entity, id);
                 }
             }
             return entity;
         } catch (InstantiationException e) {
             throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Resolve the ID of the next row.
+     * @param identity The identity
+     * @param resultSet The result set
+     * @return The ID
+     */
+    Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet) {
+        return resultReader.readNextDynamic(resultSet, identity.getPersistedName(), identity.getDataType());
     }
 
     @Nullable

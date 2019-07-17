@@ -314,9 +314,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (CollectionUtils.isNotEmpty(joinPaths)) {
                 for (JoinPath joinPath : joinPaths) {
                     Association association = joinPath.getAssociation();
-                    if (association.isForeignKey() && association.getKind() != Relation.Kind.ONE_TO_ONE) {
-                        throw new IllegalArgumentException("Join fetching is not currently supported with foreign key association. Specify a manual query");
-                    }
                     if (association instanceof Embedded) {
                         // joins on embedded don't make sense
                         continue;

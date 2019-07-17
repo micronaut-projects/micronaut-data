@@ -186,4 +186,10 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     default @NonNull Set<JoinPath> getJoinFetchPaths() {
         return Collections.emptySet();
     }
+
+    /**
+     * Whether the query can be treated as a single result.
+     * @return True if it can.
+     */
+    boolean isSingleResult();
 }

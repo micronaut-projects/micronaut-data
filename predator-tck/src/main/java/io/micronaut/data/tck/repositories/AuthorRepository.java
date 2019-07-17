@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
 
@@ -16,4 +17,8 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     Author findByNameEndsWith(String name);
 
     Author findByNameIgnoreCase(String name);
+
+    @Join("books")
+    Author searchByName(String name);
+
 }

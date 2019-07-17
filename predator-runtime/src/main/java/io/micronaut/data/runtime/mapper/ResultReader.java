@@ -63,6 +63,32 @@ public interface ResultReader<RS, IDX> {
         throws DataAccessException;
 
     /**
+     * Read the next value dynamically using the result set and the given name and data type.
+     * @param resultSet The result set
+     * @param index The name
+     * @param dataType The data type
+     * @return The value, can be null
+     * @throws DataAccessException if the value cannot be read
+     */
+    default @Nullable Object readNextDynamic(
+            @NonNull RS resultSet,
+            @NonNull IDX index,
+            @NonNull DataType dataType) {
+        if (next(resultSet)) {
+            return readDynamic(resultSet, index, dataType);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Move the index to the next result if possible.
+     * @return The next result
+     * @param resultSet The result set
+     */
+    boolean next(RS resultSet);
+
+    /**
      * Read a value dynamically using the result set and the given name and data type.
      * @param resultSet The result set
      * @param index The name

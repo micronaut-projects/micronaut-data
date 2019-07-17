@@ -161,6 +161,15 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
         }
     }
 
+    @Override
+    public boolean next(ResultSet resultSet) {
+        try {
+            return resultSet.next();
+        } catch (SQLException e) {
+            throw new DataAccessException("Error calling next on SQL result set: " + e.getMessage(), e);
+        }
+    }
+
     private DataAccessException exceptionForColumn(Integer index, Exception e) {
         return new DataAccessException("Error reading object for index [" + index + "] from result set: " + e.getMessage(), e);
     }

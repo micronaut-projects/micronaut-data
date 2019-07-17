@@ -60,6 +60,18 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.setupData()
     }
 
+    void "test join on many ended association"() {
+        when:
+        def author = authorRepository.searchByName("Stephen King")
+
+        then:
+        author != null
+        author.books.size() == 2
+        author.books.find { it.title == "The Stand"}
+        author.books.find { it.title == "Pet Cemetery"}
+
+    }
+
     void "test save one"() {
         when:"one is saved"
         def person = new Person(name: "Fred")
@@ -266,6 +278,7 @@ abstract class AbstractRepositorySpec extends Specification {
         book.author.id != null
         book.author.name == "Stephen King"
     }
+
 
     void "test find by name"() {
         when:

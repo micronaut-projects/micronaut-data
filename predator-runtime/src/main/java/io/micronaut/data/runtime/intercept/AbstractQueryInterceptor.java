@@ -842,6 +842,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             return joinFetchPaths;
         }
 
+        @Override
+        public boolean isSingleResult() {
+            return !isCount() && getJoinFetchPaths().isEmpty();
+        }
+
         private boolean isJoinFetch(AnnotationValue<Join> av) {
             if (!av.stringValue().isPresent()) {
                 return false;
@@ -1100,6 +1105,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @Override
         public Set<JoinPath> getJoinFetchPaths() {
             return storedQuery.getJoinFetchPaths();
+        }
+
+        @Override
+        public boolean isSingleResult() {
+            return storedQuery.isSingleResult();
         }
 
         @NonNull

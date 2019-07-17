@@ -287,7 +287,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     pageable = Pageable.from(pageable.getNumber(), 1);
                 }
                 query += queryBuilder.buildPagination(pageable).getQuery();
-            } else if (isSingleResult && !preparedQuery.isCount()) {
+            } else if (isSingleResult && preparedQuery.isSingleResult()) {
                 Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
                 boolean isSqlServer = isSqlServerWithoutOrderBy(query, dialect);
                 if (!isSqlServer || rootEntity == preparedQuery.getResultType()) {

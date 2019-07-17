@@ -45,6 +45,15 @@ class HibernateQuerySpec extends AbstractQuerySpec {
         books.every({ it instanceof Book })
     }
 
+    void "test join on many ended association"() {
+        when:
+        def author = authorRepository.searchByName("Stephen King")
+
+        then:
+        author != null
+        author.books.size() == 2
+    }
+
     @Override
     BookRepository getBookRepository() {
         return br

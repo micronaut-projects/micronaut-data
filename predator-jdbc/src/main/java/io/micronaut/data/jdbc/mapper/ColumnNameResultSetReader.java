@@ -20,6 +20,15 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     private final ConversionService<?> conversionService = ConversionService.SHARED;
 
     @Override
+    public boolean next(ResultSet resultSet) {
+        try {
+            return resultSet.next();
+        } catch (SQLException e) {
+            throw new DataAccessException("Error calling next on SQL result set: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public <T> T convertRequired(Object value, Class<T> type) {
         return conversionService.convert(
                 value,
