@@ -5,7 +5,7 @@
 
 Micronaut Predator (short for **Pre**computed **Dat**a **R**epositories) is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.
 
-Predator is inspired by https://gorm.grails.org[GORM] and https://spring.io/projects/spring-data[Spring Data], however improves on those solutions in the following ways:
+Predator is inspired by [GORM](https://gorm.grails.org) and [Spring Data](https://spring.io/projects/spring-data), however improves on those solutions in the following ways:
 
 * *No runtime model* - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models.
 * *No query translation* - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Predator and this work is carried out by the Micronaut compiler at compilation time.
