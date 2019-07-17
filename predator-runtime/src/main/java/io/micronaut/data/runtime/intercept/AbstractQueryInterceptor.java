@@ -837,7 +837,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     // only the alias and path is needed, don't materialize the rest
                     return new JoinPath(path, new Association[0], Join.Type.DEFAULT, alias);
                 }).collect(Collectors.toSet());
-                joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
+                this.joinFetchPaths = set.isEmpty() ? Collections.emptySet() : Collections.unmodifiableSet(set);
             }
             return joinFetchPaths;
         }
@@ -926,8 +926,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @NonNull
         @Override
         public DataType getResultDataType() {
-            return annotationMetadata.findAnnotation(PREDATOR_ANN_NAME)
-                                     .flatMap(av -> av.enumValue(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class))
+            return annotationMetadata.enumValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
                                      .orElse(DataType.OBJECT);
         }
 
