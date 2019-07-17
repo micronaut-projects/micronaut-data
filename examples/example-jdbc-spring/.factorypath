@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<factorypath>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut.spring/micronaut-spring-boot-annotation/1.0.0/5992c947986855b65a2e56095d02741458ddc66a/micronaut-spring-boot-annotation-1.0.0.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut.spring/micronaut-spring-web-annotation/1.0.0/32b5103cde0a77ec43338b0f9f16deebf039db12/micronaut-spring-web-annotation-1.0.0.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-inject-java/1.2.0.RC2/micronaut-inject-java-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-graal/1.2.0.RC2/micronaut-graal-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut.spring/micronaut-spring-annotation/1.0.0/499770e82caca1cb80be68bc75fc484ff6d7de1b/micronaut-spring-annotation-1.0.0.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-processor/1.0.0.BUILD-SNAPSHOT/micronaut-predator-processor-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-model/1.0.0.BUILD-SNAPSHOT/micronaut-predator-model-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-validation/1.2.0.RC2/micronaut-validation-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-runtime/1.2.0.RC2/micronaut-runtime-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-aop/1.2.0.RC2/micronaut-aop-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-http/1.2.0.RC2/micronaut-http-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-inject/1.2.0.RC2/micronaut-inject-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-core/1.2.0.RC2/micronaut-core-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/org/slf4j/slf4j-api/1.7.26/slf4j-api-1.7.26.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.9.9/jackson-datatype-jdk8-2.9.9.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.9.9/jackson-datatype-jsr310-2.9.9.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.9.9/jackson-databind-2.9.9.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/javax/validation/validation-api/2.0.1.Final/validation-api-2.0.1.Final.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/javax/inject/javax.inject/1/javax.inject-1.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/org/yaml/snakeyaml/1.24/snakeyaml-1.24.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.9.9/jackson-annotations-2.9.9.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.9.9/jackson-core-2.9.9.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/github/spotbugs/spotbugs-annotations/3.1.12/spotbugs-annotations-3.1.12.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/reactivex/rxjava2/rxjava/2.2.9/rxjava-2.2.9.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/org/reactivestreams/reactive-streams/1.0.2/reactive-streams-1.0.2.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/com/google/code/findbugs/jsr305/3.0.2/jsr305-3.0.2.jar" enabled="true" runInBatchMode="false"/>
+</factorypath>
