@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.exceptions.DataAccessException;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -80,4 +81,68 @@ public interface JdbcOperations {
      */
     @NonNull
     <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @NonNull Class<T> rootEntity);
+
+
+    /**
+     * Read an entity using the given prefix to be passes to result set lookups.
+     * @param prefix The prefix
+     * @param resultSet The result set
+     * @param type The entity type
+     * @param <E> The entity generic type
+     * @throws DataAccessException if it is not possible read the result from the result set.
+     * @return The entity result
+     */
+    @NonNull <E> E readEntity(
+            @NonNull String prefix,
+            @NonNull ResultSet resultSet,
+            @NonNull Class<E> type) throws DataAccessException;
+
+
+    /**
+     * Read an entity using the given prefix to be passes to result set lookups.
+     * @param resultSet The result set
+     * @param type The entity type
+     * @param <E> The entity generic type
+     * @throws DataAccessException if it is not possible read the result from the result set.
+     * @return The entity result
+     */
+    default @NonNull <E> E readEntity(
+            @NonNull ResultSet resultSet,
+            @NonNull Class<E> type) throws DataAccessException {
+        return readEntity("", resultSet, type);
+    }
+
+    /**
+     * Read an entity using the given prefix to be passes to result set lookups.
+     * @param prefix The prefix
+     * @param resultSet The result set
+     * @param rootEntity The entity type
+     * @param dtoType The DTO type. Must be annotated with {@link io.micronaut.core.annotation.Introspected}
+     * @param <E> The entity generic type
+     * @param <D> The DTO generic type
+     * @throws DataAccessException if it is not possible read the result from the result set.
+     * @return The entity result
+     */
+    @NonNull <E, D> D readDTO(
+            @NonNull String prefix,
+            @NonNull ResultSet resultSet,
+            @NonNull Class<E> rootEntity,
+            @NonNull Class<D> dtoType) throws DataAccessException;
+
+    /**
+     * Read an entity using the given prefix to be passes to result set lookups.
+     * @param resultSet The result set
+     * @param rootEntity The entity type
+     * @param dtoType The DTO type. Must be annotated with {@link io.micronaut.core.annotation.Introspected}
+     * @param <E> The entity generic type
+     * @param <D> The DTO generic type
+     * @throws DataAccessException if it is not possible read the result from the result set.
+     * @return The entity result
+     */
+    default @NonNull <E, D> D readDTO(
+            @NonNull ResultSet resultSet,
+            @NonNull Class<E> rootEntity,
+            @NonNull Class<D> dtoType) throws DataAccessException {
+        return readDTO("", resultSet, rootEntity, dtoType);
+    }
 }

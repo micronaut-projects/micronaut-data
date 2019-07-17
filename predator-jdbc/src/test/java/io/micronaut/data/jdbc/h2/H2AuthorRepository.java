@@ -12,7 +12,6 @@ public interface H2AuthorRepository extends io.micronaut.data.tck.repositories.A
     @Query("select *, author.name as author_name, author.nick_name as author_nick_name from book as book inner join author as author where book.title = :title and book.pages > :pages")
     Book customSearch(String title, int pages, SqlResultConsumer<Book> mappingFunction);
 
-
     default Book testReadSingleProperty(String title, int pages) {
         return customSearch(title, pages, (book, context) -> {
             Author author = new Author();

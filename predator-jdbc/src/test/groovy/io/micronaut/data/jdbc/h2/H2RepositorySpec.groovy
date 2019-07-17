@@ -122,6 +122,18 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     void init() {
     }
 
+    void "test manual joining on many ended association"() {
+        when:
+        def author = br.findByName("Stephen King")
+
+        then:
+        author != null
+        author.name == "Stephen King"
+        author.books.size() == 2
+        author.books.find { it.title == "The Stand"}
+        author.books.find { it.title == "Pet Cemetery"}
+    }
+
     void "test SQL mapping function"() {
         when:"using a function that maps a single value"
         def book = ar.testReadSingleProperty("The Stand", 700)

@@ -582,6 +582,25 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @NonNull
     @Override
+    public <E> E readEntity(@NonNull String prefix, @NonNull ResultSet resultSet, @NonNull Class<E> type) throws DataAccessException {
+        return new SqlResultEntityTypeMapper<>(
+                prefix,
+                getEntity(type),
+                columnNameResultSetReader
+        ).map(resultSet, type);
+    }
+
+    @NonNull
+    @Override
+    public <E, D> D readDTO(@NonNull String prefix, @NonNull ResultSet resultSet, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException {
+        return new DTOMapper<E, ResultSet, D>(
+                getEntity(rootEntity),
+                columnNameResultSetReader
+        ).map(resultSet, dtoType);
+    }
+
+    @NonNull
+    @Override
     public <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
         ArgumentUtils.requireNonNull("resultSet", resultSet);
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
