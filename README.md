@@ -12,6 +12,8 @@ Predator is inspired by [GORM](https://gorm.grails.org) and [Spring Data](https:
 * *No Reflection or Runtime Proxies* - Predator uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).
 * *Type Safety* - Predator will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.
 
+See also the [Predator Announcement](https://objectcomputing.com/news/2019/07/18/unleashing-predator-precomputed-data-repositories) for details about how and why Predator was built.
+
 ## Documentation
 
 <!--- See the [Documentation](https://micronaut-projects.github.io/micronaut-grpc/latest/guide) for more information. -->
