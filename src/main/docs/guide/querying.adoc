@@ -79,5 +79,5 @@ Finally, as an alternative to the `By` syntax you also define simple finders tha
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="simple-alt", indent="0"]
 
-Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specific more than one parameter to perform a logical `AND`.
+Note that in this case if the `title` parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical `AND`.
 
