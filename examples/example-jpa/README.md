@@ -23,7 +23,7 @@ Alternatively you can import the example into either IntelliJ, Visual Studio Cod
 
 ## Native Image
 
-A native image can be built by installing GraalVM and running the following for Gradle:
+A native image can be built by installing GraalVM 19.1 or above and running the following for Gradle:
 
 ```bash
 $ ./gradlew assemble 
