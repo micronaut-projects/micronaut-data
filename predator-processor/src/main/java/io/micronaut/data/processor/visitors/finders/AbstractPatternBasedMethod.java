@@ -176,16 +176,16 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 );
                 if (returnType.isAssignable(CompletionStage.class) || returnType.isAssignable(Future.class)) {
                     Class<? extends PredatorInterceptor> interceptorType;
-                    ClassElement futureTypeArgument;
+                    ClassElement firstTypeArgument;
 
                     if (typeArgument.isAssignable(Iterable.class) || isSlice || isPage) {
-                        futureTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
-                        if (futureTypeArgument == null) {
+                        firstTypeArgument = typeArgument.getFirstTypeArgument().orElse(null);
+                        if (firstTypeArgument == null) {
                             matchContext.fail("Async return type missing type argument");
                             return null;
                         }
                     } else {
-                        futureTypeArgument = typeArgument;
+                        firstTypeArgument = typeArgument;
                     }
                     if (isPage) {
                         interceptorType = FindPageAsyncInterceptor.class;
@@ -200,10 +200,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                             interceptorType = FindOneAsyncInterceptor.class;
                         }
                     } else {
-                        matchContext.fail("Unsupported Async return type: " + futureTypeArgument.getName());
+                        matchContext.fail("Unsupported Async return type: " + firstTypeArgument.getName());
                         return null;
                     }
-                    ClassElement finalResultType = futureTypeArgument;
+                    ClassElement finalResultType = firstTypeArgument;
                     if (TypeUtils.isObjectClass(finalResultType)) {
                         finalResultType = matchContext.getRootEntity().getType();
                     }
@@ -244,10 +244,13 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 } else {
                     boolean dto = false;
                     if (!TypeUtils.areTypesCompatible(typeArgument, queryResultType)) {
-                        if (query != null && typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
-                            if (attemptProjection(matchContext, queryResultType, query, typeArgument)) {
+
+                        if ((typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class))) {
+                            QueryModel projectionQuery = query != null ? query : QueryModel.from(matchContext.getRootEntity());
+                            if (attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
                                 return null;
                             }
+                            query = projectionQuery;
                             dto = true;
                         } else {
                             matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + typeArgument.getName());
