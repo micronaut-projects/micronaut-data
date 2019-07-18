@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>3 Repository Interfaces 1.0.0.BUILD-SNAPSHOT</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Predator
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../guide/quickStart.html">&lt;&lt; <strong>2</strong><span>Quick Start</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+                    <div class="toc-item next-right"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span> >></a></div>
+                
+
+
+                <div class="project">
+                    <h1>3 Repository Interfaces</h1>
+
+                    <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
+                </div>
+
+                
+
+                
+
+<h1 id="repositories">3 Repository Interfaces</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-predator/edit/master/src/main/docs/guide/repositories.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>As seen in the <a href="#quickStart">Quick Start</a> repositories in Predator are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Predator will look for the default datasource.</p>
+</div>
+<div class="paragraph">
+<p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
+</div>
+<div class="paragraph">
+<p>If no root entity can be established then a compilation error will occur.</p>
+</div>
+<div class="paragraph">
+<p>The following table summarizes the repository interfaces that come with Predator:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Builtin Repository Interfaces</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Interface</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A root interface that features no methods but defines the entity type and ID type as generic arguments</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods to perform CRUD</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/async/AsyncCrudRepository.html">AsyncCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for asynchronous CRUD execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for reactive CRUD execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/RxJavaCrudRepository.html">RxJavaCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for reactive CRUD execution using RxJava 2</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/PageableRepository.html">PageableRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> and adds methods for pagination</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Note that in addition to interfaces you can also define repositories as abstract classes:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
+
+import javax.persistence.EntityManager;
+import java.util.List;
+
+@Repository
+public abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt; {
+
+    private final EntityManager entityManager;
+
+    public AbstractBookRepository(@CurrentSession EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    public List&lt;Book&gt; findByTitle(String title) {
+        return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book.class)
+                    .setParameter("title", title)
+                    .getResultList();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.repository.CrudRepository
+
+import javax.persistence.EntityManager
+
+@Repository
+abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt; {
+
+    private final EntityManager entityManager
+
+    AbstractBookRepository(@CurrentSession EntityManager entityManager) {
+        this.entityManager = entityManager
+    }
+
+    List&lt;Book&gt; findByTitle(String title) {
+        return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book)
+                .setParameter("title", title)
+                .getResultList()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.repository.CrudRepository
+
+import javax.persistence.EntityManager
+
+@Repository
+abstract class AbstractBookRepository(@param:CurrentSession private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
+
+    fun findByTitle(title: String): List&lt;Book&gt; {
+        return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book::class.java)
+                .setParameter("title", title)
+                .resultList
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with JPA and repository interface code implemented automatically by Predator.</p>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../guide/quickStart.html">&lt;&lt; <strong>2</strong><span>Quick Start</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span> >></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>8.1.7 Explicit JDBC Queries 1.0.0.BUILD-SNAPSHOT</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Predator
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>7</strong><span>Spring Data Support</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+
+
+                <div class="project">
+                    <h1>8.1.7 Explicit JDBC Queries</h1>
+
+                    <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
+                </div>
+
+                
+
+                
+
+<h2 id="jdbcNativeQueries">8.1.7 Explicit JDBC Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-predator/edit/master/src/main/docs/guide/sql/jdbc/jdbcNativeQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>When using Predator with JDBC you can execute native SQL queries using the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Query("select * from book b where b.title like :title limit 5")
+List&lt;Book&gt; findBooks(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Query("select * from book b where b.title like :title limit 5")
+List&lt;Book&gt; findBooks(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Query("select * from book b where b.title like :title limit 5")
+fun findBooks(title: String): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example will execute the raw SQL against the database.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For <a href="#pagination">Pagination</a> queries that return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> you also need to specify a native <code>countQuery</code>.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_explicit_queries_and_joins">Explicit Queries and Joins</h3>
+<div class="paragraph">
+<p>When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Predator will not automatically do this, instead you need to specify the associated <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">    @Query("SELECT *, m_.name as m_name, m_.id as m_id FROM product p INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id WHERE p.name like :name limit 5")
+    @Join(value = "manufacturer", alias = "m_")
+    List&lt;Product&gt; searchProducts(String name);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">    @Query("""SELECT *, m_.name as m_name, m_.id as m_id
+              FROM product p
+              INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
+              WHERE p.name like :name limit 5""")
+    @Join(value = "manufacturer", alias = "m_")
+    List&lt;Product&gt; searchProducts(String name);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">    @Query("""SELECT *, m_.name as m_name, m_.id as m_id
+                    FROM product p
+                    INNER JOIN manufacturer m_ ON p.manufacturer_id = m_.id
+                    WHERE p.name like :name limit 5""")
+    @Join(value = "manufacturer", alias = "m_")
+    fun searchProducts(name: String): List&lt;Product&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the above example the query uses an alias called <code>m_</code> to query the <code>manufacturer</code> table via an <code>INNER JOIN</code>. Since the returned <code>Product</code> entity features a <code>manufacturer</code> association it may be nice to materialize this object as well. The <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is used to specify which alias to materialize the <code>Manufacturer</code> instance from.</p>
+</div>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>7</strong><span>Spring Data Support</span></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>

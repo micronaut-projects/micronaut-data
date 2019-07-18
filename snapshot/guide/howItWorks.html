@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>6 How Predator Works 1.0.0.BUILD-SNAPSHOT</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Predator
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../guide/dataUpdates.html">&lt;&lt; <strong>5</strong><span>Updating Data</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+                    <div class="toc-item next-right"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span> >></a></div>
+                
+
+
+                <div class="project">
+                    <h1>6 How Predator Works</h1>
+
+                    <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
+                </div>
+
+                
+
+                
+
+<h1 id="howItWorks">6 How Predator Works</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-predator/edit/master/src/main/docs/guide/howItWorks.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Predator uses two key features of <a href="https://micronaut.io">Micronaut</a>: The <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/visitor/TypeElementVisitor.html">TypeElementVisitor</a> API and <a href="https://docs.micronaut.io/latest/guide/index.html#introductionAdvice">Introduction Advice</a>.</p>
+</div>
+<div class="paragraph">
+<p>Predator defines a <a href="../api/io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html">RepositoryTypeElementVisitor</a> that at compilation time visits all interfaces in the source tree that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The <code>RepositoryTypeElementVisitor</code> uses service loader to load all available <a href="../api/io/micronaut/data/processor/visitors/finders/MethodCandidate.html">MethodCandidate</a> implementations and iterate over them.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+You can add additional method candidates by creating a library that depends on <code>micronaut-predator-processor</code> and defining the <code>META-INF/services</code> definition for the method candidate. The new library should be added to your annotation processor path.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The <code>MethodCandidate</code> interface features a <code>isMethodMatch</code> method which allows matching a <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html">MethodElement</a>. Once a <code>MethodElement</code> has been matched the <code>buildMatchInfo</code> method of the <code>MethodCandidate</code> is invoked which returns an instance of <a href="../api/io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html">MethodMatchInfo</a>.</p>
+</div>
+<div class="paragraph">
+<p>The constructor for <code>MethodMatchInfo</code> allows specifying the runtime <a href="../api/io/micronaut/data/intercept/PredatorInterceptor.html">PredatorInterceptor</a> to execute, which typically differs based on the return type and behaviour required and an optional <a href="../api/io/micronaut/data/model/query/Query.html">Query</a> instance which represents the query model of the query to be executed.</p>
+</div>
+<div class="paragraph">
+<p>The <code>RepositoryTypeElementVisitor</code> takes the <code>MethodMatchInfo</code> and converts the <a href="../api/io/micronaut/data/model/query/Query.html">Query</a> instance into the equivalent String-based query (such as JPA-QL) using the <a href="../api/io/micronaut/data/model/query/builder/QueryBuilder.html">QueryBuilder</a> that is configured by the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>A binding between runtime method parameters and named query parameters is also created.</p>
+</div>
+<div class="paragraph">
+<p>The visited <code>MethodElement</code> is then dynamically annotated with the following information:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The constructed string-based query (for example JPA-QL)</p>
+</li>
+<li>
+<p>The parameter binding (A map containing the named parameter in the query as key and the name of the method argument as a value)</p>
+</li>
+<li>
+<p>The runtime <a href="../api/io/micronaut/data/intercept/PredatorInterceptor.html">PredatorInterceptor</a> to execute.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>At runtime all the <a href="../api/io/micronaut/data/intercept/PredatorInterceptor.html">PredatorInterceptor</a> has to do is retrieve the query, read the method parameter values using the parameter binding and execute the query.</p>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../guide/dataUpdates.html">&lt;&lt; <strong>5</strong><span>Updating Data</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span> >></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>
