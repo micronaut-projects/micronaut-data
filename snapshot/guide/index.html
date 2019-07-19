@@ -1006,7 +1006,7 @@ More details about the batch update variants of these methods is covered in the 
 </div>
 </div>
 <div class="paragraph">
-<p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specific more than one parameter to perform a logical <code>AND</code>.</p>
+<p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical <code>AND</code>.</p>
 </div>
 
 
@@ -1820,7 +1820,7 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 </table>
 </div>
 <div class="paragraph">
-<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple time for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
+<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple times for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
 </div>
 <div class="sect2">
 <h3 id="_jpa_2_1_entity_graphs">JPA 2.1 Entity Graphs</h3>
@@ -2509,7 +2509,7 @@ You can add additional method candidates by creating a library that depends on <
 </p>
 </div>
 <div class="paragraph">
-<p>You can extends from existing Spring Data interfaces such as <code>CrudRepository</code>, <code>PagingAndSortingRepository</code> and so on.</p>
+<p>You can extend from existing Spring Data interfaces such as <code>CrudRepository</code>, <code>PagingAndSortingRepository</code> and so on.</p>
 </div>
 <div class="paragraph">
 <p>The following Spring Data types are also supported:</p>
@@ -2738,7 +2738,7 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 </table>
 </div>
 <div class="paragraph">
-<p>To retrieve objects from the database you need to define a class annotated with <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a>. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotation include the following <code>compileOnly</code> scoped dependency:</p>
+<p>To retrieve objects from the database you need to define a class annotated with <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a>. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotations include the following <code>compileOnly</code> scoped dependency:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -3273,7 +3273,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 <p>As mentioned in the <a href="#jdbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Predators own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
 </div>
 <div class="paragraph">
-<p>An important aspect of Predator JDBC is that regardless whether you use JPA annotations of Predator annotations the entity classes must be compiled with Predator.</p>
+<p>An important aspect of Predator JDBC is that regardless whether you use JPA annotations or Predator annotations the entity classes must be compiled with Predator.</p>
 </div>
 <div class="paragraph">
 <p>This is because Predator pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Predator JDBC can startup so fast.</p>
@@ -3372,7 +3372,7 @@ public class Country {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Relation.html">@Relation</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a relationship (one-to-one, one-to-many etc.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a relationship (one-to-one, one-to-many, etc.)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Transient.html">@Transient</a></p></td>
@@ -3435,7 +3435,7 @@ public class Country {
 <p>You can remove the <code>@GeneratedValue</code> annotation and in this case the expectation is that you will assign an ID before calling <code>save()</code>.</p>
 </div>
 <div class="paragraph">
-<p>If you wish to uses sequences for the ID you should invoke the SQL that generates the sequence value and assign it prior to calling <code>save()</code>.</p>
+<p>If you wish to use sequences for the ID you should invoke the SQL that generates the sequence value and assign it prior to calling <code>save()</code>.</p>
 </div>
 <div class="paragraph">
 <p>Automatically assigned UUIDs are also supported by adding a property annotated with <code>@Id</code> and <code>@AutoPopulated</code>.</p>
@@ -3558,7 +3558,7 @@ public class CountryRegion {
 <p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practise due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
 </div>
 <div class="paragraph">
-<p>Predator JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example if you define an association in a constructor argument such as the following entity:</p>
+<p>Predator JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
