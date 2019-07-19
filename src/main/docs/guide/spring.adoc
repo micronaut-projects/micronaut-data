@@ -2,7 +2,7 @@ Predator is able to compile existing Spring Data repository interfaces if you ad
 
 dependency:org.springframework.data:spring-data-commons[version="2.1.8.RELEASE"]
 
-You can extends from existing Spring Data interfaces such as `CrudRepository`, `PagingAndSortingRepository` and so on.
+You can extend from existing Spring Data interfaces such as `CrudRepository`, `PagingAndSortingRepository` and so on.
 
 The following Spring Data types are also supported:
 
