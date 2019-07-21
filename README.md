@@ -18,7 +18,7 @@ See also the [Predator Announcement](https://objectcomputing.com/news/2019/07/18
 
 <!--- See the [Documentation](https://micronaut-projects.github.io/micronaut-grpc/latest/guide) for more information. -->
 
-See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-predator/snapshot/guide) for the current development docs.
+See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-predator/snapshot/guide/) for the current development docs.
 
 ## Examples
 
