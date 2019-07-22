@@ -21,6 +21,7 @@ import io.micronaut.core.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Default implementation of {@link Slice}.
@@ -55,5 +56,31 @@ class DefaultSlice<T> implements Slice<T> {
     @Override
     public Pageable getPageable() {
         return pageable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DefaultSlice)) {
+            return false;
+        }
+        DefaultSlice<?> that = (DefaultSlice<?>) o;
+        return Objects.equals(content, that.content) &&
+                Objects.equals(pageable, that.pageable);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(content, pageable);
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultSlice{" +
+                "content=" + content +
+                ", pageable=" + pageable +
+                '}';
     }
 }

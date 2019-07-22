@@ -15,6 +15,10 @@
  */
 package io.micronaut.data.model
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.transform.EqualsAndHashCode
+import groovy.transform.ToString
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -52,5 +56,37 @@ class PageSpec extends Specification {
         newPage.content == [2,3,4,5,6]
         newPage.totalSize == 14
         newPage.size == 5
+    }
+
+    void "test serialization and deserialization of a page"() {
+        def page = Page.of([new Dummy(
+                propertyOne: "value one",
+                propertyTwo: 1L,
+                propertyThree: new BigDecimal("1.00")
+        ), new Dummy(
+                propertyOne: "value two",
+                propertyTwo: 2L,
+                propertyThree: new BigDecimal("2.00")
+        ), new Dummy(
+                propertyOne: "value three",
+                propertyTwo: 3L,
+                propertyThree: new BigDecimal("3.00")
+        )], Pageable.from(0, 3), 14)
+        def mapper = new ObjectMapper()
+
+        when:
+        def json = mapper.writeValueAsString(page)
+
+        then:
+        def deserializedPage = mapper.readValue(json, new TypeReference<Page<Dummy>>() {})
+        deserializedPage == page
+    }
+
+    @EqualsAndHashCode
+    @ToString
+    static class Dummy {
+        String propertyOne
+        Long propertyTwo
+        BigDecimal propertyThree
     }
 }

@@ -16,6 +16,7 @@
 package io.micronaut.data.model;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Default implementation of {@link Page}.
@@ -42,5 +43,31 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
     @Override
     public long getTotalSize() {
         return totalSize;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DefaultPage)) {
+            return false;
+        }
+        DefaultPage<?> that = (DefaultPage<?>) o;
+        return totalSize == that.totalSize && super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(totalSize, super.hashCode());
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultPage{" +
+                "totalSize=" + totalSize +
+                ",content=" + getContent() +
+                ",pageable=" + getPageable() +
+                '}';
     }
 }
