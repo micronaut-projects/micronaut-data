@@ -1153,7 +1153,7 @@ public class Product {
     @GeneratedValue
     private Long id;
     private String name;
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne
     private Manufacturer manufacturer;
 
     public Product(String name, Manufacturer manufacturer) {
@@ -1192,7 +1192,7 @@ class Product {
     @GeneratedValue
     Long id
     private String name
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne
     private Manufacturer manufacturer
 
     Product(String name, Manufacturer manufacturer) {
@@ -1222,7 +1222,7 @@ data class Product(
     @GeneratedValue
     var id: Long?,
     var name: String,
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne
     var manufacturer: Manufacturer
 )</code></pre>
 </div>
