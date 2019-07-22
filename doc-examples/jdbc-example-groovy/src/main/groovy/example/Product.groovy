@@ -9,7 +9,7 @@ class Product {
     @GeneratedValue
     Long id
     private String name
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne
     private Manufacturer manufacturer
 
     Product(String name, Manufacturer manufacturer) {
