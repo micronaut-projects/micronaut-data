@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":17};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -132,13 +132,18 @@ var activeTableTab = "activeTableTab";
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getParameterTypes--">getParameterTypes</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getQuery--">getQuery</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>static <a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#of-java.lang.String-java.util.Map-">of</a></span>(java.lang.String&nbsp;query,
-  java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;parameters)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#of-java.lang.String-java.util.Map-java.util.Map-">of</a></span>(java.lang.String&nbsp;query,
+  java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;parameters,
+  java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;parameterTypes)</code>
 <div class="block">Creates a new encoded query.</div>
 </td>
 </tr>
@@ -187,7 +192,21 @@ java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParameters()</pre
 </dl>
 </li>
 </ul>
-<a name="of-java.lang.String-java.util.Map-">
+<a name="getParameterTypes--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getParameterTypes</h4>
+<pre>@NonNull
+java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;getParameterTypes()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The computed parameter types.</dd>
+</dl>
+</li>
+</ul>
+<a name="of-java.lang.String-java.util.Map-java.util.Map-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -197,7 +216,9 @@ java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParameters()</pre
 static&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;of(@NonNull
                                java.lang.String&nbsp;query,
                                @Nullable
-                               java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;parameters)</pre>
+                               java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;parameters,
+                               @Nullable
+                               java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;parameterTypes)</pre>
 <div class="block">Creates a new encoded query.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
