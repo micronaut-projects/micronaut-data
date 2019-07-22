@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.Introspected;
@@ -29,6 +32,7 @@ import java.util.List;
  * @since 1.0.0
  */
 @Introspected
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface Pageable extends Sort {
 
     /**
@@ -159,7 +163,11 @@ public interface Pageable extends Sort {
      * @param sort the sort
      * @return The pageable
      */
-    static @NonNull Pageable from(int number, int size, @Nullable Sort sort) {
+    @JsonCreator
+    static @NonNull Pageable from(
+            @JsonProperty("number") int number,
+            @JsonProperty("size") int size,
+            @JsonProperty("sort") @Nullable Sort sort) {
         return new DefaultPageable(number, size, sort);
     }
 

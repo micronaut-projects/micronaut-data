@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import javax.annotation.Nonnull;
@@ -33,6 +35,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface Slice<T> extends Iterable<T> {
 
     /**
@@ -90,6 +93,7 @@ public interface Slice<T> extends Iterable<T> {
     /**
      * @return The sort
      */
+    @JsonIgnore
     default @NonNull Sort getSort() {
         return getPageable();
     }

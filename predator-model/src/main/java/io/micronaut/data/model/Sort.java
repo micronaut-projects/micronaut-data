@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
@@ -29,6 +32,7 @@ import java.util.Objects;
  * @author graemerocher
  * @since 1.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface Sort {
 
     /**
@@ -86,7 +90,9 @@ public interface Sort {
      * @param orderList The order list
      * @return The sort
      */
-    static @NonNull Sort of(@Nullable List<Order> orderList) {
+    @JsonCreator
+    static @NonNull Sort of(
+            @JsonProperty("orderBy") @Nullable List<Order> orderList) {
         if (CollectionUtils.isEmpty(orderList)) {
             return UNSORTED;
         }
@@ -115,7 +121,11 @@ public interface Sort {
          * @param direction The direction
          * @param ignoreCase Whether to ignore case
          */
-        public Order(@NonNull String property, @NonNull Direction direction, boolean ignoreCase) {
+        @JsonCreator
+        public Order(
+                @JsonProperty("property") @NonNull String property,
+                @JsonProperty("direction") @NonNull Direction direction,
+                @JsonProperty("ignoreCase") boolean ignoreCase) {
             ArgumentUtils.requireNonNull("direction", direction);
             ArgumentUtils.requireNonNull("property", property);
             this.direction = direction;
