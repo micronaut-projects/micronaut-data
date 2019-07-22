@@ -45,7 +45,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.pages,book_.publisher_id,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM book AS book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.id = ?)'
+        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.pages,book_.publisher_id,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM book book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.id = ?)'
 
     }
 
@@ -164,7 +164,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildQuery(query)
 
         expect:
-        result.query == "SELECT $columns FROM book AS book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_author_.nick_name = ?)"
+        result.query == "SELECT $columns FROM book book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_author_.nick_name = ?)"
     }
 
     @Unroll
@@ -184,7 +184,7 @@ class SqlQueryBuilderSpec extends Specification {
         encodedQuery != null
         mappedName == 'some_id'
         encodedQuery.query ==
-                "SELECT $columns FROM person AS person_ WHERE (person_.${mappedName} $operator ?)"
+                "SELECT $columns FROM person person_ WHERE (person_.${mappedName} $operator ?)"
         encodedQuery.parameters == ['1': 'test']
 
         where:
@@ -212,7 +212,7 @@ class SqlQueryBuilderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT ${projection.toUpperCase()}($aliasName.$property) FROM person AS $aliasName WHERE ($aliasName.$property $operator ?)"
+                "SELECT ${projection.toUpperCase()}($aliasName.$property) FROM person $aliasName WHERE ($aliasName.$property $operator ?)"
         encodedQuery.parameters == ['1': 'test']
 
         where:

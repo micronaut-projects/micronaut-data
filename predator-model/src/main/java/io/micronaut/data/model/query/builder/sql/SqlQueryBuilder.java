@@ -53,6 +53,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * The start of an IN expression.
      */
     public static final String IN_EXPRESSION_START = " ?$IN(";
+    private static final String BLANK_SPACE = " ";
 
     private Dialect dialect = Dialect.ANSI;
 
@@ -224,6 +225,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         builder.append(");");
         createStatements.add(builder.toString());
         return createStatements.toArray(new String[0]);
+    }
+
+    @Override
+    protected String getTableAsKeyword() {
+        return BLANK_SPACE;
     }
 
     private String addGeneratedStatementToColumn(PersistentProperty identity, PersistentProperty prop, String column) {
