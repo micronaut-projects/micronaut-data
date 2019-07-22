@@ -94,7 +94,11 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                     return new SourceAssociation(this, propertyElement, entityResolver);
                 }
             } else {
-                return new SourcePersistentProperty(this, propertyElement);
+                SourcePersistentProperty pp = new SourcePersistentProperty(this, propertyElement);
+                if (pp.getDataType() == DataType.ENTITY) {
+                    return new SourceAssociation(this, propertyElement, entityResolver);
+                }
+                return pp;
             }
         })
         .collect(Collectors.toList());

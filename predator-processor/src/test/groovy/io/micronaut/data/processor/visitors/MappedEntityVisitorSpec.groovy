@@ -10,6 +10,76 @@ import io.micronaut.data.model.DataType
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
 
+    void "test to-one with no annotation"() {
+        given:
+        def introspection = buildBeanIntrospection('test.TestEntity', '''
+package test;
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
+import javax.persistence.*;
+import java.util.UUID;
+
+@Entity
+class TestEntity {
+    private Name name;
+    @Id
+    private Integer id;
+    
+    public Name getName() {
+        return name;
+    }
+
+    public void setName(Name name) {
+        this.name = name;
+    }
+    
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+}
+
+@Entity
+class Name {
+    @Id
+    private Integer id;
+    
+    private String name;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
+}
+
+''')
+        expect:
+        introspection != null
+        introspection.hasStereotype(MappedEntity)
+        introspection.getPropertyNames()
+        introspection.getRequiredProperty("name", Object)
+                .stringValue(MappedProperty).get() == 'name_id'
+    }
+
     void "test embedded"() {
         given:
         def introspection = buildBeanIntrospection('test.TestEntity', '''

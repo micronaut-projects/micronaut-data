@@ -167,8 +167,13 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                         } else {
 
                             Object v = resultReader.readDynamic(rs, prefix + prop.getPersistedName(), prop.getDataType());
-                            if (v == null && !prop.isOptional()) {
-                                throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
+                            if (v == null) {
+                                if (!prop.isOptional()) {
+                                    throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
+                                } else {
+                                    args[i] = null;
+                                    continue;
+                                }
                             }
                             Class<?> t = argument.getType();
                             if (!t.isInstance(v)) {
