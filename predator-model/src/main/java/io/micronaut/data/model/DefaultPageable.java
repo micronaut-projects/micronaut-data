@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Introspected;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.validation.constraints.Min;
+import java.util.Objects;
 
 /**
  * The default pageable implementation.
@@ -69,5 +70,33 @@ final class DefaultPageable implements Pageable {
     @Override
     public Sort getSort() {
         return sort;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof DefaultPageable)) {
+            return false;
+        }
+        DefaultPageable that = (DefaultPageable) o;
+        return max == that.max &&
+                number == that.number &&
+                Objects.equals(sort, that.sort);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(max, number, sort);
+    }
+
+    @Override
+    public String toString() {
+        return "DefaultPageable{" +
+                "max=" + max +
+                ", number=" + number +
+                ", sort=" + sort +
+                '}';
     }
 }

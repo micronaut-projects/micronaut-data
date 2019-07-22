@@ -570,8 +570,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         queryString.append(FROM_CLAUSE)
                 .append(getTableName(entity))
-                .append(AS_CLAUSE)
+                .append(getTableAsKeyword())
                 .append(logicalName);
+    }
+
+    /**
+     * Get the AS keyword to use for table aliases.
+     * @return The AS keyword if any
+     */
+    protected String getTableAsKeyword() {
+        return AS_CLAUSE;
     }
 
     private void buildSelect(QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String logicalName, PersistentEntity entity) {
@@ -1066,7 +1074,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         StringBuilder buffer = appendDeleteClause(queryString);
         buffer.append(getTableName(entity)).append(SPACE);
         if (currentAlias != null) {
-            buffer.append(AS_CLAUSE)
+            buffer.append(getTableAsKeyword())
                     .append(currentAlias);
         }
         buildWhereClause(query.getCriteria(), queryState);

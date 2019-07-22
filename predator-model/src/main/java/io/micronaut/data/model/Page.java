@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import javax.annotation.Nonnull;
@@ -34,6 +37,7 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface Page<T> extends Slice<T> {
 
     Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);
@@ -69,10 +73,14 @@ public interface Page<T> extends Slice<T> {
      * @param content The content
      * @param pageable The pageable
      * @param totalSize The total size
-     * @param <T2> The generic type
+     * @param <T> The generic type
      * @return The slice
      */
-    static @NonNull <T2> Page<T2> of(@NonNull List<T2> content, @NonNull Pageable pageable, long totalSize) {
+    @JsonCreator
+    static @NonNull <T> Page<T> of(
+            @JsonProperty("content") @NonNull List<T> content,
+            @JsonProperty("pageable") @NonNull Pageable pageable,
+            @JsonProperty("totalSize") long totalSize) {
         return new DefaultPage<>(content, pageable, totalSize);
     }
 
