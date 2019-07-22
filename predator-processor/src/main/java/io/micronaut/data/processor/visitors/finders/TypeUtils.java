@@ -335,7 +335,10 @@ public class TypeUtils {
      * @return True if they are
      */
     public static boolean areTypesCompatible(ClassElement leftType, ClassElement rightType) {
-        if (leftType.isAssignable(rightType.getName())) {
+        String rightTypeName = rightType.getName();
+        if (leftType.getName().equals(rightTypeName)) {
+            return true;
+        } if (leftType.isAssignable(rightTypeName)) {
             return true;
         } else {
             if (isNumber(leftType) && isNumber(rightType)) {

@@ -1,12 +1,13 @@
 package io.micronaut.data.tck.entities;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
 
-import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 
-@Entity
+
+@MappedEntity
 public class Plant {
     @Id
     @GeneratedValue
