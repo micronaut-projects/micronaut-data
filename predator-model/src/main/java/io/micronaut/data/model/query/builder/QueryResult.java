@@ -19,6 +19,8 @@ import io.micronaut.core.util.ArgumentUtils;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.model.DataType;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -44,12 +46,17 @@ public interface QueryResult {
     @NonNull Map<String, String> getParameters();
 
     /**
+     * @return The computed parameter types.
+     */
+    @NonNull Map<String, DataType> getParameterTypes();
+
+    /**
      * Creates a new encoded query.
      * @param query The query
      * @param parameters The parameters
      * @return The query
      */
-    static @NonNull QueryResult of(@NonNull String query, @Nullable Map<String, String> parameters) {
+    static @NonNull QueryResult of(@NonNull String query, @Nullable Map<String, String> parameters, @Nullable Map<String, DataType> parameterTypes) {
         ArgumentUtils.requireNonNull("query", query);
         return new QueryResult() {
             @NonNull
@@ -61,7 +68,13 @@ public interface QueryResult {
             @NonNull
             @Override
             public Map<String, String> getParameters() {
-                return parameters != null ? parameters : Collections.emptyMap();
+                return parameters != null ? Collections.unmodifiableMap(parameters) : Collections.emptyMap();
+            }
+
+            @NonNull
+            @Override
+            public Map<String, DataType> getParameterTypes() {
+                return parameterTypes != null ? Collections.unmodifiableMap(parameterTypes) : Collections.emptyMap();
             }
         };
     }

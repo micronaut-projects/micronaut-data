@@ -19,6 +19,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -41,6 +43,8 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
 
     private final SourcePersistentEntity owner;
     private final PropertyElement propertyElement;
+    private final DataType dataType;
+    private final ClassElement type;
 
     /**
      * Default constructor.
@@ -51,19 +55,34 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     SourcePersistentProperty(SourcePersistentEntity owner, PropertyElement propertyElement) {
         this.owner = owner;
         this.propertyElement = propertyElement;
+        this.type = propertyElement.getGenericType();
+        this.dataType = computeDataType(propertyElement);
+    }
+
+    private DataType computeDataType(PropertyElement propertyElement) {
+        if (this instanceof Association) {
+            return DataType.ENTITY;
+        } else {
+            AnnotationMetadata annotationMetadata = propertyElement.getAnnotationMetadata();
+            return annotationMetadata.enumValue(MappedProperty.class, "type", DataType.class)
+                    .orElseGet(() -> {
+                        DataType dt = annotationMetadata.getValue(TypeDef.class, "type", DataType.class).orElse(null);
+                        if (dt != null) {
+                            return dt;
+                        } else {
+                            if (isEnum()) {
+                                return DataType.STRING;
+                            } else {
+                                return TypeUtils.resolveDataType(type, Collections.emptyMap());
+                            }
+                        }
+                    });
+        }
     }
 
     @Override
     public boolean isEnum() {
-        return propertyElement.getType().isEnum();
-    }
-
-    @Override
-    public DataType getDataType() {
-        return enumValue(MappedProperty.class, "type", DataType.class).orElseGet(() -> TypeUtils.resolveDataType(
-                        getType(),
-                        Collections.emptyMap()
-                ));
+        return type.isEnum();
     }
 
     @Override
@@ -77,6 +96,11 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         SourcePersistentProperty that = (SourcePersistentProperty) o;
         return owner.equals(that.owner) &&
                 propertyElement.getName().equals(that.propertyElement.getName());
+    }
+
+    @Override
+    public DataType getDataType() {
+        return dataType;
     }
 
     @Override
@@ -113,7 +137,6 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @NonNull
     @Override
     public String getTypeName() {
-        final ClassElement type = propertyElement.getType();
         return type.getName();
     }
 
@@ -139,7 +162,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @NonNull
     @Override
     public ClassElement getType() {
-        return propertyElement.getType();
+        return type;
     }
 
     @NonNull

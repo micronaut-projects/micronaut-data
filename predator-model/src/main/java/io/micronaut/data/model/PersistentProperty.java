@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.TypeDef;
 
 
 /**
@@ -115,15 +116,24 @@ public interface PersistentProperty extends PersistentElement {
      * @return The data type
      */
     default DataType getDataType() {
-
-        return findAnnotation(MappedProperty.class)
-                .flatMap(av -> av.enumValue("type", DataType.class)).orElseGet(() -> {
-                    if (isEnum()) {
-                        return DataType.STRING;
-                    } else {
-                        return DataType.OBJECT;
-                    }
-                });
+        if (this instanceof Association) {
+            return DataType.ENTITY;
+        } else {
+            AnnotationMetadata annotationMetadata = getAnnotationMetadata();
+            return annotationMetadata.enumValue(MappedProperty.class, "type", DataType.class)
+                    .orElseGet(() -> {
+                        DataType dt = annotationMetadata.getValue(TypeDef.class, "type", DataType.class).orElse(null);
+                        if (dt != null) {
+                            return dt;
+                        } else {
+                            if (isEnum()) {
+                                return DataType.STRING;
+                            } else {
+                                return DataType.OBJECT;
+                            }
+                        }
+                    });
+        }
     }
 
     /**

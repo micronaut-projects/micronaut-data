@@ -431,6 +431,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         List<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
+        Map<String, DataType> parameterTypes = new LinkedHashMap<>(persistentProperties.size());
         boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
         int index = 1;
         if (hasProperties) {
@@ -453,10 +454,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 }
                             }
                         } else if (!association.isForeignKey()) {
+                            parameterTypes.put(prop.getName(), prop.getDataType());
                             parameters.put(prop.getName(), String.valueOf(index++));
                             columnNames.add(getColumnName(prop));
                         }
                     } else {
+                        parameterTypes.put(prop.getName(), prop.getDataType());
                         parameters.put(prop.getName(), String.valueOf(index++));
                         columnNames.add(getColumnName(prop));
                     }
@@ -500,7 +503,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         builder.append(CLOSE_BRACKET);
         return QueryResult.of(
                 builder.toString(),
-                parameters
+                parameters,
+                parameterTypes
         );
     }
 
@@ -549,6 +553,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         return QueryResult.of(
                 builder.toString(),
+                Collections.emptyMap(),
                 Collections.emptyMap()
         );
     }

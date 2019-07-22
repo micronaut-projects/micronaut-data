@@ -5,10 +5,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.JoinPath;
@@ -355,7 +352,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     qualifiedName = (isApplyManualJoins() ? getColumnName(prop.getProperty()) : prop.getPath());
                 }
                 Placeholder placeholder = queryState.newParameter();
-                queryState.getParameters().put(placeholder.key, queryParameter.getName());
+                String queryParameterName = queryParameter.getName();
+                queryState.getParameters().put(placeholder.key, queryParameterName);
+                queryState.addParameterType(queryParameterName, prop.getProperty().getDataType());
                 StringBuilder whereClause = queryState.getWhereClause();
                 whereClause
                         .append(qualifiedName);
@@ -411,8 +410,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .append(parameterName.name)
                 .append(suffix);
         Object value = eq.getValue();
-        if (value instanceof QueryParameter) {
-            queryState.getParameters().put(parameterName.key, ((QueryParameter) value).getName());
+        addComputedParameter(queryState, prop.getProperty(), parameterName, value);
+    }
+
+    private void addComputedParameter(QueryState queryState, PersistentProperty property, Placeholder placeholder, Object queryValue) {
+        if (queryValue instanceof QueryParameter) {
+            String queryParameter = ((QueryParameter) queryValue).getName();
+            queryState.addParameterType(queryParameter, property.getDataType());
+            queryState.getParameters().put(placeholder.key, queryParameter);
         }
     }
 
@@ -464,7 +469,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         appendOrder(query, queryState);
-        return QueryResult.of(queryState.getQuery().toString(), parameters);
+        return QueryResult.of(queryState.getQuery().toString(), parameters, queryState.getParameterTypes());
     }
 
     /**
@@ -850,9 +855,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         whereClause.append(isApplyManualJoins() ? getColumnName(property) : path)
                 .append(operator)
                 .append(placeholder.name);
-        if (value instanceof QueryParameter) {
-            queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
-        }
+        addComputedParameter(queryState, property, placeholder, value);
     }
 
     private void appendCaseInsensitiveCriterion(QueryState queryState, QueryModel.PropertyCriterion criterion, PersistentProperty prop, String path, String operator) {
@@ -873,9 +876,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .append(placeholder.name)
                 .append(")");
         Object value = criterion.getValue();
-        if (value instanceof QueryParameter) {
-            queryState.getParameters().put(placeholder.key, ((QueryParameter) value).getName());
-        }
+        addComputedParameter(queryState, prop, placeholder, value);
     }
 
     /**
@@ -1057,7 +1058,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         buildUpdateStatement(queryState, propertiesToUpdate);
         buildWhereClause(query.getCriteria(), queryState);
-        return QueryResult.of(queryString.toString(), queryState.getParameters());
+        return QueryResult.of(queryString.toString(), queryState.getParameters(), queryState.getParameterTypes());
     }
 
     @NonNull
@@ -1078,7 +1079,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     .append(currentAlias);
         }
         buildWhereClause(query.getCriteria(), queryState);
-        return QueryResult.of(queryString.toString(), queryState.getParameters());
+        return QueryResult.of(queryString.toString(), queryState.getParameters(), queryState.getParameterTypes());
     }
 
     /**
@@ -1137,7 +1138,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         }
 
-        return QueryResult.of(buff.toString(), Collections.emptyMap());
+        return QueryResult.of(buff.toString(), Collections.emptyMap(), Collections.emptyMap());
     }
 
     /**
@@ -1179,6 +1180,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final Map<String, String> appliedJoinPaths = new HashMap<>();
         private final AtomicInteger position = new AtomicInteger(0);
         private final Map<String, String> parameters = new LinkedHashMap<>();
+        private final Map<String, DataType> parameterTypes = new LinkedHashMap<>();
         private final StringBuilder query = new StringBuilder();
         private final StringBuilder whereClause = new StringBuilder();
         private final boolean allowJoins;
@@ -1231,6 +1233,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          */
         public Map<String, String> getParameters() {
             return parameters;
+        }
+
+        /**
+         * @return The precomputed parameter types
+         */
+        public Map<String, DataType> getParameterTypes() {
+            return Collections.unmodifiableMap(parameterTypes);
+        }
+
+        /**
+         * Add a parameter type.
+         * @param name The name
+         * @param dataType The type
+         */
+        public void addParameterType(@NonNull String name, @NonNull DataType dataType) {
+            this.parameterTypes.put(name, dataType);
         }
 
         /**
