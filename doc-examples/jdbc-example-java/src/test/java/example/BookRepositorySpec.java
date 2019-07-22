@@ -39,7 +39,7 @@ class BookRepositorySpec {
 								.orElse(null);
 
 		assertEquals( // <4>
-				"SELECT book_.id,book_.title,book_.pages FROM book AS book_ WHERE (book_.title = ?)",
+				"SELECT book_.id,book_.title,book_.pages FROM book book_ WHERE (book_.title = ?)",
 				query
 		);
 
@@ -68,7 +68,7 @@ class BookRepositorySpec {
 		// Check the count
 		assertEquals(1, bookRepository.count());
 		assertTrue(bookRepository.findAll().iterator().hasNext());
-		
+
 		// Update: Update the book and save it again
         // tag::update[]
 		bookRepository.update(book.getId(), "Changed");
