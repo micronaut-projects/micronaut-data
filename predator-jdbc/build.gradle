@@ -1,3 +1,14 @@
+repositories {
+    maven {
+
+        url "https://www.oracle.com/content/secure/maven/content"
+
+        credentials {
+            username = project.oracleMavenUsername
+            password = project.oracleMavenPassword
+        }
+    }
+}
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     compile project(":predator-runtime")
@@ -21,9 +32,11 @@ dependencies {
     testCompile "org.testcontainers:mysql:1.11.3"
     testCompile "org.testcontainers:postgresql:1.11.3"
     testCompile "org.testcontainers:mssqlserver:1.11.3"
-    testCompile 'mysql:mysql-connector-java:5.1.45'
-    testCompile 'org.postgresql:postgresql:42.2.5'
-    testCompile 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
+    testCompile "org.testcontainers:oracle-xe:1.11.3"
+    testRuntime 'mysql:mysql-connector-java:5.1.45'
+    testRuntime 'org.postgresql:postgresql:42.2.5'
+    testRuntime 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
+    testRuntime 'com.oracle.jdbc:ojdbc8:18.3.0.0'
 }
 
 //compileTestJava.options.fork = true
