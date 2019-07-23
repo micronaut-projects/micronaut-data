@@ -399,15 +399,22 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:"A multiple level join is executed"
         results = cityRepository.getByCountryRegionCountryName("Spain")
+        results.sort { it.name }
 
         then:"The results include the joined table"
         results.size() == 2
-        results[0].name
+        results[0].name == 'Bilbao'
         results[0].id
         results[0].countryRegion
-        results[0].countryRegion.name
+        results[0].countryRegion.name == 'Pais Vasco'
         results[0].countryRegion.country.uuid == spain.uuid
         results[0].countryRegion.country.name == "Spain"
+        results[1].name == 'Madrid'
+        results[1].id
+        results[1].countryRegion
+        results[1].countryRegion.name == 'Madrid'
+        results[1].countryRegion.country.uuid == spain.uuid
+        results[1].countryRegion.country.name == "Spain"
     }
 
     void "test one-to-one mappedBy"() {
