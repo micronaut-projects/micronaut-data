@@ -6,7 +6,7 @@ dependencies {
     compile "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
     compile 'jakarta.persistence:jakarta.persistence-api:2.2.2'
     runtimeOnly "cglib:cglib-nodep:2.2.2"
-    runtimeOnly "org.objenesis:objenesis:1.4"
+    runtimeOnly "org.objenesis:objenesis:3.0.1"
 
     compile("org.spockframework:spock-core:${spockVersion}") {
         exclude module:'groovy-all'
