@@ -8,6 +8,7 @@ import io.micronaut.data.jdbc.h2.H2RegionRepository
 import io.micronaut.data.jdbc.sqlserver.MSNoseRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -91,5 +92,36 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
                 "datasources.default.schema-generate": SchemaGenerate.CREATE,
                 "datasources.default.dialect": Dialect.POSTGRES
         )
+    }
+
+    void "test CRUD with custom schema and catalog"() {
+        given:
+        PostgresCarRepository carRepo = context.getBean(PostgresCarRepository)
+        when:
+        def a5 = carRepo.save(new Car(name: "A5"))
+
+        then:
+        a5.id
+
+
+        when:
+        a5 = carRepo.findById(a5.id).orElse(null)
+
+        then:
+        a5.id
+        a5.name == 'A5'
+
+        when:"an update happens"
+        carRepo.update(a5.id, "A6")
+        a5 = carRepo.findById(a5.id).orElse(null)
+
+        then:"the updated worked"
+        a5.name == 'A6'
+
+        when:"A deleted"
+        carRepo.deleteById(a5.id)
+
+        then:"It was deleted"
+        !carRepo.findById(a5.id).isPresent()
     }
 }

@@ -15,6 +15,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Restaurant
@@ -22,6 +23,17 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
+
+    void "test build queries with schema"() {
+        when:"A select is encoded"
+        PersistentEntity entity = PersistentEntity.of(Car)
+        QueryModel q = QueryModel.from(entity)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.H2)
+        def encoded = encoder.buildQuery(q)
+
+        then:"The select includes the schema in the table name reference"
+        encoded.query == 'SELECT cars_.id,cars_.name FROM ford.cars cars_'
+    }
 
     void "test select embedded"() {
         given:

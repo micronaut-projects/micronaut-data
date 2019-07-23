@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
@@ -42,13 +43,10 @@ public final class TableAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        final String name = annotation.get("name", String.class).orElse(null);
-        if (name != null) {
-            final AnnotationValueBuilder<MappedEntity> builder = AnnotationValue.builder(MappedEntity.class);
-            builder.value(name);
-            return Collections.singletonList(builder.build());
-        } else {
-            return Collections.emptyList();
-        }
+        final AnnotationValueBuilder<MappedEntity> builder = AnnotationValue.builder(MappedEntity.class);
+        annotation.stringValue("name").ifPresent(builder::value);
+        annotation.stringValue(SqlMembers.CATALOG).ifPresent( catalog -> builder.member(SqlMembers.CATALOG, catalog));
+        annotation.stringValue(SqlMembers.SCHEMA).ifPresent( catalog -> builder.member(SqlMembers.SCHEMA, catalog));
+        return Collections.singletonList(builder.build());
     }
 }

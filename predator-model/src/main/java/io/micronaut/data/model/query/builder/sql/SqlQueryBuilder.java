@@ -24,8 +24,10 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.sql.JoinTable;
+import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -159,6 +161,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         List<String> createStatements = new ArrayList<>();
+        String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null);
+        if (StringUtils.isNotEmpty(schema)) {
+            createStatements.add("CREATE SCHEMA " + schema + ";");
+        }
 
         List<Association> foreignKeyAssociations = getJoinTableAssociations(props);
 
@@ -567,8 +573,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected String getAliasName(PersistentEntity entity) {
+        return entity.getPersistedName() + "_";
+    }
+
+    @Override
     public String getTableName(PersistentEntity entity) {
-        return entity.getPersistedName();
+        String tableName = entity.getPersistedName();
+        String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null);
+        if (StringUtils.isNotEmpty(schema)) {
+            return schema + '.' + tableName;
+        }
+        return tableName;
     }
 
     @Override

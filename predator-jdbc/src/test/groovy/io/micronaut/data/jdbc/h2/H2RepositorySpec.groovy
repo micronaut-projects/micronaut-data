@@ -3,6 +3,7 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -69,6 +70,10 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     @Shared
     H2NoseRepository nr
 
+    @Inject
+    @Shared
+    H2CarRepository carRepo
+
     @Override
     NoseRepository getNoseRepository() {
         return nr
@@ -120,6 +125,35 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     }
 
     void init() {
+    }
+
+    void "test CRUD with custom schema and catalog"() {
+        when:
+        def a5 = carRepo.save(new Car(name: "A5"))
+
+        then:
+        a5.id
+
+
+        when:
+        a5 = carRepo.findById(a5.id).orElse(null)
+
+        then:
+        a5.id
+        a5.name == 'A5'
+
+        when:"an update happens"
+        carRepo.update(a5.id, "A6")
+        a5 = carRepo.findById(a5.id).orElse(null)
+
+        then:"the updated worked"
+        a5.name == 'A6'
+
+        when:"A deleted"
+        carRepo.deleteById(a5.id)
+
+        then:"It was deleted"
+        !carRepo.findById(a5.id).isPresent()
     }
 
     void "test manual joining on many ended association"() {
