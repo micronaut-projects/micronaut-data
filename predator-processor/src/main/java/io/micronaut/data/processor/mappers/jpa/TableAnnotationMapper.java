@@ -45,8 +45,8 @@ public final class TableAnnotationMapper implements NamedAnnotationMapper {
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         final AnnotationValueBuilder<MappedEntity> builder = AnnotationValue.builder(MappedEntity.class);
         annotation.stringValue("name").ifPresent(builder::value);
-        annotation.stringValue(SqlMembers.CATALOG).ifPresent( catalog -> builder.member(SqlMembers.CATALOG, catalog));
-        annotation.stringValue(SqlMembers.SCHEMA).ifPresent( catalog -> builder.member(SqlMembers.SCHEMA, catalog));
+        annotation.stringValue(SqlMembers.CATALOG).ifPresent(catalog -> builder.member(SqlMembers.CATALOG, catalog));
+        annotation.stringValue(SqlMembers.SCHEMA).ifPresent(catalog -> builder.member(SqlMembers.SCHEMA, catalog));
         return Collections.singletonList(builder.build());
     }
 }
