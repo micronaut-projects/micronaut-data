@@ -47,13 +47,19 @@ class PredatorInitializer {
                 new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
         );
         conversionService.addConverter(Date.class, LocalDateTime.class, date ->
-                LocalDateTime.ofEpochSecond(date.getTime(), 0, ZoneOffset.UTC)
+                date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+        );
+        conversionService.addConverter(Date.class, OffsetDateTime.class, date ->
+                date.toInstant().atZone(ZoneId.systemDefault()).toOffsetDateTime()
+        );
+        conversionService.addConverter(Date.class, LocalDate.class, date ->
+                date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
         );
         conversionService.addConverter(Date.class, Instant.class, date ->
                 Instant.ofEpochSecond(date.getTime())
         );
-        conversionService.addConverter(ChronoLocalDate.class, Date.class, localDateTime ->
-                new Date(localDateTime.toEpochDay())
+        conversionService.addConverter(ChronoLocalDate.class, Date.class, localDate ->
+                new Date(localDate.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
         );
         conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime ->
                 new Date(offsetDateTime.toInstant().toEpochMilli())
