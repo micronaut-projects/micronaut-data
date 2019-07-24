@@ -137,14 +137,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 if (prop instanceof Association) {
                     Association association = (Association) prop;
                     if (!association.isForeignKey()) {
+                        @SuppressWarnings("unchecked")
+                        RuntimePersistentEntity<Object> associatedEntity = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
+                        RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
+                        if (identity == null) {
+                            throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
+                        } else {
+                            type = identity.getDataType();
+                        }
+                        BeanProperty<Object, ?> identityProperty = identity.getProperty();
                         if (value != null) {
-                            @SuppressWarnings("unchecked")
-                            RuntimePersistentEntity<Object> associatedEntity = getEntity((Class<Object>) value.getClass());
-                            RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
-                            if (identity == null) {
-                                throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
-                            }
-                            value = identity.getProperty().get(value);
+                            value = identityProperty.get(value);
                         }
                         if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
                             PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
@@ -354,11 +357,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 dataType = DataType.OBJECT;
             }
             if (value == null) {
-                preparedStatementWriter.setDynamic(
-                        statement,
-                        index,
-                        dataType,
-                        null);
+                setStatementParameter(statement, index, dataType, null);
             } else {
                 if (value instanceof Iterable) {
                     Iterable i = (Iterable) value;
