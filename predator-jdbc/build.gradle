@@ -15,6 +15,7 @@ dependencies {
     testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
     testCompile "org.codehaus.groovy:groovy-sql:$groovyVersion"
     testCompile project(":predator-processor")
+    testCompile "io.micronaut:micronaut-validation:$micronautVersion"
     testRuntime "com.h2database:h2"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
     testCompile "org.testcontainers:spock:1.11.3"
