@@ -406,6 +406,11 @@ interface BookRepository : CrudRepository&lt;Book, Long&gt; { <b class="conum">(
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Inject @Shared BookRepository bookRepository</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Inject
 lateinit var bookRepository: BookRepository</code></pre>
 </div>
@@ -419,6 +424,12 @@ lateinit var bookRepository: BookRepository</code></pre>
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">Book book = new Book("The Stand", 1000);
 bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book book = new Book("The Stand", 1000)
+bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -452,6 +463,11 @@ Unlike the JPA implementation there is no dirty checking so <code>save</code> al
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">book = bookRepository.findById(id).orElse(null)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">book = bookRepository.findById(id).orElse(null)</code></pre>
 </div>
 </div>
@@ -464,6 +480,11 @@ Unlike the JPA implementation there is no dirty checking so <code>save</code> al
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">bookRepository.update(book.getId(), "Changed");</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">bookRepository.update(book.getId(), "Changed")</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">

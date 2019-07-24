@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10};
+var methods = {"i0":10,"i1":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -73,13 +73,13 @@ var activeTableTab = "activeTableTab";
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
@@ -133,6 +133,19 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../../.
 <!--   -->
 </a>
 <h3>Field Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
+<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Field and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MappedEntityVisitor.html#POSITION">POSITION</a></span></code>
+<div class="block">The position of the visitor.</div>
+</td>
+</tr>
+</table>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.io.micronaut.core.order.Ordered">
 <!--   -->
@@ -174,6 +187,10 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../../.
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MappedEntityVisitor.html#getOrder--">getOrder</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MappedEntityVisitor.html#visitClass-io.micronaut.inject.ast.ClassElement-io.micronaut.inject.visitor.VisitorContext-">visitClass</a></span>(io.micronaut.inject.ast.ClassElement&nbsp;element,
           io.micronaut.inject.visitor.VisitorContext&nbsp;context)</code>&nbsp;</td>
@@ -193,13 +210,6 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../../.
 <h3>Methods inherited from interface&nbsp;io.micronaut.inject.visitor.TypeElementVisitor</h3>
 <code>finish, start, visitConstructor, visitField, visitMethod</code></li>
 </ul>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.order.Ordered">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.core.order.Ordered</h3>
-<code>getOrder</code></li>
-</ul>
 </li>
 </ul>
 </li>
@@ -208,6 +218,28 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../../.
 <div class="details">
 <ul class="blockList">
 <li class="blockList">
+<!-- ============ FIELD DETAIL =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="field.detail">
+<!--   -->
+</a>
+<h3>Field Detail</h3>
+<a name="POSITION">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>POSITION</h4>
+<pre>public static final&nbsp;int POSITION</pre>
+<div class="block">The position of the visitor.</div>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../../../constant-values.html#io.micronaut.data.processor.visitors.MappedEntityVisitor.POSITION">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
 <!-- ========= CONSTRUCTOR DETAIL ======== -->
 <ul class="blockList">
 <li class="blockList"><a name="constructor.detail">
@@ -232,6 +264,19 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../../.
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getOrder--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getOrder</h4>
+<pre>public&nbsp;int&nbsp;getOrder()</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>getOrder</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.order.Ordered</code></dd>
+</dl>
+</li>
+</ul>
 <a name="visitClass-io.micronaut.inject.ast.ClassElement-io.micronaut.inject.visitor.VisitorContext-">
 <!--   -->
 </a>
@@ -299,13 +344,13 @@ implements io.micronaut.inject.visitor.TypeElementVisitor&lt;<a href="../../../.
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
 <li>Nested&nbsp;|&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li>Field&nbsp;|&nbsp;</li>
+<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
