@@ -7,7 +7,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
-@MicronautTest
+// @MicronautTest
 class BookRepositorySpec extends Specification {
 
     // tag::inject[]
