@@ -6,7 +6,7 @@ dependencies {
         exclude group:'org.springframework', module:'spring-aop'
         exclude group:'org.springframework', module:'spring-expression'
     }
-    compile "org.springframework:spring-jdbc:5.1.5.RELEASE"
+    compile "org.springframework:spring-jdbc:5.1.8.RELEASE"
     testCompile project(":predator-tck")
 
     testCompile 'jakarta.persistence:jakarta.persistence-api:2.2.2'
