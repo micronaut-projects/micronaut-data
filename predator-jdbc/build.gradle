@@ -22,7 +22,7 @@ dependencies {
     testCompile "org.testcontainers:mysql:1.11.4"
     testCompile "org.testcontainers:postgresql:1.11.3"
     testCompile "org.testcontainers:mssqlserver:1.11.4"
-    testCompile 'mysql:mysql-connector-java:5.1.45'
+    testCompile 'mysql:mysql-connector-java:8.0.17'
     testCompile 'org.postgresql:postgresql:42.2.6'
     testCompile 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
 }
