@@ -63,7 +63,11 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", ta
 
 === Updating an Instance (Update)
 
-To update an instance use an `update` method:
+With Predator JDBC, you must manually implement an `update` method since the JDBC implementation doesn't include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main" tags="update", indent="0"]
+
+Which can then be called like so:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="update", indent="0"]
 
