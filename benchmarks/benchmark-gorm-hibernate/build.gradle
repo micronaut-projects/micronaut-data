@@ -11,7 +11,7 @@ dependencies {
     runtime "ch.qos.logback:logback-classic:1.2.3"
     implementation "org.grails:grails-core:$grailsVersion"
 
-    testImplementation "cglib:cglib-nodep:2.2.2"
+    testImplementation "cglib:cglib-nodep:3.2.12"
     testImplementation "org.objenesis:objenesis:3.0.1"
 
     testImplementation("org.spockframework:spock-core:${spockVersion}") {
