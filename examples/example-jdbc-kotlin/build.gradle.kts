@@ -38,7 +38,7 @@ dependencies {
     kapt("io.micronaut:micronaut-inject-java")
     kapt("io.micronaut:micronaut-validation")
     kapt("io.micronaut:micronaut-graal")
-    kapt("io.micronaut.data:micronaut-predator-processor:$predatorVersion")
+    kapt("io.micronaut.data:micronaut-data-processor:$predatorVersion")
     kaptTest("io.micronaut:micronaut-inject-java")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion")
@@ -48,7 +48,7 @@ dependencies {
     implementation("io.micronaut:micronaut-http-client")
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9")
     implementation("jakarta.persistence:jakarta.persistence-api:2.2.2")
-    implementation("io.micronaut.data:micronaut-predator-jdbc:$predatorVersion")
+    implementation("io.micronaut.data:micronaut-data-jdbc:$predatorVersion")
     runtimeOnly("ch.qos.logback:logback-classic:1.2.3")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("io.micronaut.configuration:micronaut-jdbc-tomcat")

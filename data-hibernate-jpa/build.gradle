@@ -1,6 +1,6 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
-    compile project(":predator-runtime")
+    compile project(":data-runtime")
     compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.1.0", {
         exclude group:'org.springframework', module:'spring-aop'
         exclude group:'org.springframework', module:'spring-expression'
@@ -8,12 +8,12 @@ dependencies {
         exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-validator'
     }
 
-    testCompile project(":predator-tck")
+    testCompile project(":data-tck")
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
-    testAnnotationProcessor project(":predator-processor")
+    testAnnotationProcessor project(":data-processor")
     testCompile "io.micronaut:micronaut-inject-groovy:$micronautVersion"
-    testCompile project(":predator-processor")
+    testCompile project(":data-processor")
     testRuntime "com.h2database:h2"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
     testCompile 'org.springframework.data:spring-data-commons:2.1.9.RELEASE'

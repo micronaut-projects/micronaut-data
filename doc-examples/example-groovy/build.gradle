@@ -15,12 +15,12 @@ configurations {
 dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     compile "io.micronaut:micronaut-http-client"
-    compile project(":predator-hibernate-jpa")
+    compile project(":data-hibernate-jpa")
     compile "io.micronaut.configuration:micronaut-jdbc-tomcat"
     compile "io.micronaut:micronaut-http-server-netty"
     compile "io.micronaut:micronaut-runtime-groovy"
     compile "io.micronaut:micronaut-validation"
-    compileOnly project(":predator-processor")
+    compileOnly project(":data-processor")
     compileOnly "io.micronaut:micronaut-inject-groovy"
     runtime "ch.qos.logback:logback-classic:1.2.3"
     runtime "com.h2database:h2"

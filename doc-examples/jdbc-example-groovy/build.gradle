@@ -8,9 +8,9 @@ group "example"
 dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     compileOnly "io.micronaut:micronaut-inject-groovy"
-    compileOnly project(":predator-processor")
+    compileOnly project(":data-processor")
     compileOnly "io.micronaut:micronaut-validation"
-    implementation project(":predator-jdbc")
+    implementation project(":data-jdbc")
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"

@@ -1,5 +1,5 @@
 dependencies {
-	implementation project(":predator-model")
+	implementation project(":data-model")
 	implementation "io.micronaut:micronaut-inject:$micronautVersion"
 
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
@@ -11,5 +11,5 @@ dependencies {
 		testCompile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}
 	testCompile 'org.springframework.data:spring-data-commons:2.1.9.RELEASE'
-	testCompile project(":predator-tck")
+	testCompile project(":data-tck")
 }

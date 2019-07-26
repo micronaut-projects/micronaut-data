@@ -52,7 +52,7 @@ subprojects { Project subproject ->
         isBuildSnapshot = version.toString().endsWith("-SNAPSHOT")
     }
 
-    if (subproject.name != 'predator-tck') {
+    if (subproject.name != 'data-tck') {
         apply plugin: "io.spring.nohttp"
     }
     apply plugin:"groovy"
@@ -130,7 +130,7 @@ subprojects { Project subproject ->
 
     task allDeps(type: DependencyReportTask) {}
 
-    if (subproject.name != 'predator-tck') {
+    if (subproject.name != 'data-tck') {
         apply plugin: 'checkstyle'
 
         checkstyle {

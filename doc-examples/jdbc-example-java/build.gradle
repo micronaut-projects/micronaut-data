@@ -10,10 +10,10 @@ dependencies {
     annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
     testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
 
-    annotationProcessor project(":predator-processor")
+    annotationProcessor project(":data-processor")
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-validation"
-    implementation project(":predator-jdbc")
+    implementation project(":data-jdbc")
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"

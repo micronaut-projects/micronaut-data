@@ -1,12 +1,12 @@
 To get started with Micronaut Data and SQL/JDBC add the following dependency to your annotation processor path:
 
-dependency:io.micronaut.data:micronaut-predator-processor[scope="annotationProcessor", version="{version}"]
+dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor", version="{version}"]
 
 NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
 
 You should then configure a compile scoped dependency on the `micronaut-predator-jdbc` module:
 
-dependency:io.micronaut.data:micronaut-predator-jdbc[version="{version}"]
+dependency:io.micronaut.data:micronaut-data-jdbc[version="{version}"]
 
 You should also ensure you have the JDBC driver and connection pool dependencies configured. For example for H2 in-memory database driver:
 
