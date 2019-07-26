@@ -1,7 +1,7 @@
 # Micronaut Data
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.data/micronaut-predator-model.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.micronaut.data%22%20AND%20a:%22micronaut-predator-model%22)
-[![Build Status](https://travis-ci.org/micronaut-projects/micronaut-predator.svg?branch=master)](https://travis-ci.org/micronaut-projects/micronaut-predator)
+[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.data/micronaut-data-model.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.micronaut.data%22%20AND%20a:%22micronaut-data-model%22)
+[![Build Status](https://travis-ci.org/micronaut-projects/micronaut-data.svg?branch=master)](https://travis-ci.org/micronaut-projects/micronaut-data)
 
 Micronaut Data is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.
 
@@ -18,8 +18,8 @@ See also the [Micronaut Data Announcement](https://objectcomputing.com/news/2019
 
 <!--- See the [Documentation](https://micronaut-projects.github.io/micronaut-grpc/latest/guide) for more information. -->
 
-See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-predator/snapshot/guide/) for the current development docs.
+See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-data/snapshot/guide/) for the current development docs.
 
 ## Examples
 
-Examples can be found in the [examples](https://github.com/micronaut-projects/micronaut-predator/tree/master/examples) directory.
+Examples can be found in the [examples](https://github.com/micronaut-projects/micronaut-data/tree/master/examples) directory.
