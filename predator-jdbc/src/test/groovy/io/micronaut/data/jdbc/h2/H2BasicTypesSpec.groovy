@@ -70,6 +70,23 @@ class H2BasicTypesSpec extends Specification {
         retrievedBook.byteArray == book.byteArray
         retrievedBook.charSequence == book.charSequence
         retrievedBook.charset == book.charset
+        retrievedBook.primitiveBoolean == book.primitiveBoolean
+        retrievedBook.primitiveByte == book.primitiveByte
+        retrievedBook.primitiveChar == book.primitiveChar
+        retrievedBook.primitiveDouble == book.primitiveDouble
+        retrievedBook.primitiveFloat == book.primitiveFloat
+        retrievedBook.primitiveInteger == book.primitiveInteger
+        retrievedBook.primitiveLong == book.primitiveLong
+        retrievedBook.primitiveShort == book.primitiveShort
+        retrievedBook.wrapperBoolean == book.wrapperBoolean
+        retrievedBook.wrapperByte == book.wrapperByte
+        retrievedBook.wrapperChar == book.wrapperChar
+        retrievedBook.wrapperDouble == book.wrapperDouble
+        retrievedBook.wrapperFloat == book.wrapperFloat
+        retrievedBook.wrapperInteger == book.wrapperInteger
+        retrievedBook.wrapperLong == book.wrapperLong
+        retrievedBook.uri == book.uri
+        retrievedBook.url == book.url
         // stored as a DATE type without time
 //        retrievedBook.date == book.date
 

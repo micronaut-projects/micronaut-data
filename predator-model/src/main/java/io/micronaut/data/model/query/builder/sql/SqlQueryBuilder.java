@@ -766,9 +766,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case STRING:
                 column += " VARCHAR(255)";
                 break;
-            case BYTE:
             case BOOLEAN:
-                column += " BIT";
+                if (dialect == Dialect.SQL_SERVER) {
+                    column += " BIT NOT NULL";
+                } else {
+                    column += " BOOLEAN";
+                }
                 break;
             case TIMESTAMP:
                 if (dialect == Dialect.SQL_SERVER) {
@@ -809,18 +812,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case BYTE_ARRAY:
                 if (dialect == Dialect.POSTGRES) {
                     column += " BYTEA";
+                } else if (dialect == Dialect.SQL_SERVER) {
+                    column += " VARBINARY(MAX)";
                 } else {
-                    column += " BINARY";
+                    column += " BLOB";
                 }
                 break;
             case DOUBLE:
-                if (dialect == Dialect.POSTGRES || dialect == Dialect.SQL_SERVER) {
-                    column += " REAL";
-                } else {
+                if (dialect == Dialect.ORACLE) {
+                    column += " NUMBER";
+                } else if (dialect == Dialect.MYSQL || dialect == Dialect.H2) {
                     column += " DOUBLE";
+                } else {
+                    column += " DOUBLE PRECISION";
                 }
                 break;
             case SHORT:
+            case BYTE:
                 if (dialect == Dialect.POSTGRES) {
                     column += " SMALLINT";
                 } else {

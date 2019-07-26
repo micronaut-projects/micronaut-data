@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.postgres
 
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.jdbc.h2.H2CityRepository
 import io.micronaut.data.jdbc.h2.H2CountryRepository
 import io.micronaut.data.jdbc.h2.H2RegionRepository
@@ -94,6 +95,44 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
         )
     }
 
+    void "test save and retrieve basic types"() {
+        when: "we save a new book"
+        def basicTypesRepo = context.getBean(PostgresBasicTypesRepository)
+        def book = basicTypesRepo.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        book.myId != null
+
+        when:"A book is found"
+        def retrievedBook = basicTypesRepo.findById(book.myId).orElse(null)
+
+        then:"The book is correct"
+        retrievedBook.uuid == book.uuid
+        retrievedBook.bigDecimal == book.bigDecimal
+        retrievedBook.byteArray == book.byteArray
+        retrievedBook.charSequence == book.charSequence
+        retrievedBook.charset == book.charset
+        retrievedBook.primitiveBoolean == book.primitiveBoolean
+        retrievedBook.primitiveByte == book.primitiveByte
+        retrievedBook.primitiveChar == book.primitiveChar
+        retrievedBook.primitiveDouble == book.primitiveDouble
+        retrievedBook.primitiveFloat == book.primitiveFloat
+        retrievedBook.primitiveInteger == book.primitiveInteger
+        retrievedBook.primitiveLong == book.primitiveLong
+        retrievedBook.primitiveShort == book.primitiveShort
+        retrievedBook.wrapperBoolean == book.wrapperBoolean
+        retrievedBook.wrapperByte == book.wrapperByte
+        retrievedBook.wrapperChar == book.wrapperChar
+        retrievedBook.wrapperDouble == book.wrapperDouble
+        retrievedBook.wrapperFloat == book.wrapperFloat
+        retrievedBook.wrapperInteger == book.wrapperInteger
+        retrievedBook.wrapperLong == book.wrapperLong
+        retrievedBook.uri == book.uri
+        retrievedBook.url == book.url
+        // stored as a DATE type without time
+//        retrievedBook.date == book.date
+
+    }
     void "test CRUD with custom schema and catalog"() {
         given:
         PostgresCarRepository carRepo = context.getBean(PostgresCarRepository)
