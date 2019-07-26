@@ -1,4 +1,4 @@
-When using Predator with JDBC you can execute native SQL queries using the ann:data.annotation.Query[] annotation:
+When using Micronaut Data with JDBC you can execute native SQL queries using the ann:data.annotation.Query[] annotation:
 
 snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main", tags="native", indent="0"]
 
@@ -8,7 +8,7 @@ NOTE: For <<pagination, Pagination>> queries that return a api:data.model.Page[]
 
 === Explicit Queries and Joins
 
-When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Predator will not automatically do this, instead you need to specify the associated ann:data.annotation.Join[] annotation.
+When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Micronaut Data will not automatically do this, instead you need to specify the associated ann:data.annotation.Join[] annotation.
 
 For example:
 

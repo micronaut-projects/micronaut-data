@@ -1,4 +1,4 @@
-When using Predator with JPA you can execute native SQL queries by setting `nativeQuery` to true in the ann:data.annotation.Query[] annotation:
+When using Micronaut Data with JPA you can execute native SQL queries by setting `nativeQuery` to true in the ann:data.annotation.Query[] annotation:
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="native", indent="0"]
 

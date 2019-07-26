@@ -1,4 +1,4 @@
-Typically when returning multiple records you need some control over paging the data. Predator includes the ability to specify pagination requirements with the api:data.model.Pageable[] type (inspired by GORM's https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html[PagedResultList] and Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html[Pageable]).
+Typically when returning multiple records you need some control over paging the data. Micronaut Data includes the ability to specify pagination requirements with the api:data.model.Pageable[] type (inspired by GORM's https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html[PagedResultList] and Spring Data's https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html[Pageable]).
 
 In addition methods can return a api:data.model.Page[] object which includes the execution of an additional query to obtain the total number of results for a given query.
 

@@ -1,4 +1,4 @@
-Predator supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with `@Introspected`.
+Micronaut Data supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with `@Introspected`.
 
 For example if you wanted to project on an entity called `Book` you could define a DTO as follows:
 
@@ -10,5 +10,5 @@ You can then use the DTO object as return type in query methods:
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="dto", indent="0"]
 
-Predator will optimize the query to only select the necessary properties from the database.
+Micronaut Data will optimize the query to only select the necessary properties from the database.
 

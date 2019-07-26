@@ -1,6 +1,6 @@
 The previous example presented a simple `findByTitle` query which searches for all `Book` instances that have a `title` property _equal to_ the given value.
 
-This is the simplest type of query supported by Predator, but you can use an optional suffix on the property name to modify the type of criterion to apply.
+This is the simplest type of query supported by Micronaut Data, but you can use an optional suffix on the property name to modify the type of criterion to apply.
 
 For example the following query pattern will execute a query that finds only `Book` instances that have a page count greater than the given value:
 

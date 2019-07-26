@@ -1,4 +1,4 @@
-Predator is able to compile existing Spring Data repository interfaces if you add the `spring-data-commons` dependency to your compilation classpath:
+Micronaut Data is able to compile existing Spring Data repository interfaces if you add the `spring-data-commons` dependency to your compilation classpath:
 
 dependency:org.springframework.data:spring-data-commons[version="2.1.8.RELEASE"]
 

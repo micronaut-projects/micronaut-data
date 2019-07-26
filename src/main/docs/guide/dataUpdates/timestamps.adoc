@@ -2,6 +2,6 @@ It is common to want to add a field that represents the time when an entity is w
 
 You can annotate a property that is a date type of an entity with ann:data.annotation.DateCreated[] which will be automatically populated when saving entities and indicates the date a record was created.
 
-You can also annotate a property that is a date type of an entity with ann:data.annotation.DateUpdated[] which will be automatically populated whenever the entity is updated either via the `persist` method or when using one of the batch update methods of Predator.
+You can also annotate a property that is a date type of an entity with ann:data.annotation.DateUpdated[] which will be automatically populated whenever the entity is updated either via the `persist` method or when using one of the batch update methods of Micronaut Data.
 
 NOTE: If you update the entity with an external SQL statement or custom logic you will need to update the underlying `DateUpdated` column manually.

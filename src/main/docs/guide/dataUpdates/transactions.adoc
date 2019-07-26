@@ -1,9 +1,9 @@
-Predator will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:
+Micronaut Data will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:
 
 * `javax.transaction.Transactional`
 * `org.springframework.transaction.annotation.Transactional`
 * `io.micronaut.spring.tx.annotation.Transactional`
 
-Predator maps the declared transaction annotation to the correct underlying semantics and compilation time.
+Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.
 
-Predator will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.
+Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.

@@ -1,6 +1,6 @@
 To optimize your queries you may need to alter joins to fetch exactly the data you need in the result set.
 
-TIP: If a `LazyInitializationException` occurs this is not a bug in Predator or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
+TIP: If a `LazyInitializationException` occurs this is not a bug in Micronaut Data or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
 
 Consider a `Product` entity:
 

@@ -1,4 +1,4 @@
-The implementation of querying in Predator is based on the dynamic finders in https://gorm.grails.org[GORM].
+The implementation of querying in Micronaut Data is based on the dynamic finders in https://gorm.grails.org[GORM].
 
 A pattern matching approach is taken at compilation time. The general pattern of query methods is:
 

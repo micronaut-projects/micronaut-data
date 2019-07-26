@@ -1,4 +1,4 @@
-To get started with Predator and SQL/JDBC add the following dependency to your annotation processor path:
+To get started with Micronaut Data and SQL/JDBC add the following dependency to your annotation processor path:
 
 dependency:io.micronaut.data:micronaut-predator-processor[scope="annotationProcessor", version="{version}"]
 
@@ -24,7 +24,7 @@ Next up you need to configure at least one data source. The following snippet fr
 include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 ----
 
-NOTE: The `schema-generate` setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Predator with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
+NOTE: The `schema-generate` setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotations include the following `compileOnly` scoped dependency:
 
@@ -63,7 +63,7 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", ta
 
 === Updating an Instance (Update)
 
-With Predator JDBC, you must manually implement an `update` method since the JDBC implementation doesn't include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:
+With Micronaut Data JDBC, you must manually implement an `update` method since the JDBC implementation doesn't include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:
 
 snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main" tags="update", indent="0"]
 
@@ -77,4 +77,4 @@ To delete an instance use `deleteById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="delete", indent="0"]
 
-Congratulations you have implemented your first Predator JDBC repository! Read on to find out more.
+Congratulations you have implemented your first Micronaut Data JDBC repository! Read on to find out more.

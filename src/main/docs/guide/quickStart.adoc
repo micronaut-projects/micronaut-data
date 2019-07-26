@@ -1,4 +1,4 @@
-To get started with Predator and JPA add the following dependency to your annotation processor path:
+To get started with Micronaut Data and JPA add the following dependency to your annotation processor path:
 
 dependency:io.micronaut.data:micronaut-predator-processor[scope="annotationProcessor", version="{version}"]
 
@@ -49,4 +49,4 @@ To delete an instance use `deleteById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/example", tags="delete", indent="0"]
 
-Congratulations you have implemented your first Predator repository! Read on to find out more.
+Congratulations you have implemented your first Micronaut Data repository! Read on to find out more.

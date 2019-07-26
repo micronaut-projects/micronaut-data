@@ -1,4 +1,4 @@
-Predator JDBC supports most common Java data types. The following properties types are supported by default:
+Micronaut Data JDBC supports most common Java data types. The following properties types are supported by default:
 
 * All primitive types and their wrappers (`int`, `java.lang.Integer` etc.)
 * `CharSequence`, `String` etc.
@@ -21,7 +21,7 @@ As you can see `@TypeDef` is used to define the `Quantity` type as an `INTEGER` 
 
 TIP: If you cannot declare `@TypeDef` directly on the type then you can declare it on the field where the type is used.
 
-The last step is to add custom type conversion so that Predator knows how to read and write the type from an `Integer`:
+The last step is to add custom type conversion so that Micronaut Data knows how to read and write the type from an `Integer`:
 
 snippet::example.QuantityConverters[project-base="doc-examples/jdbc-example", source="main"]
 

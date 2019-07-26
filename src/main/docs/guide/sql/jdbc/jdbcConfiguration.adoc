@@ -1,14 +1,14 @@
-Predator JDBC requires that an appropriate `java.sql.DataSource` bean is configured.
+Micronaut Data JDBC requires that an appropriate `java.sql.DataSource` bean is configured.
 
 You can either do this manually or use the https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[Micronaut JDBC] module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari or Commons DBCP.
 
 === Creating the Schema
 
-To create the database schema it is recommended you pair Predator with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
+To create the database schema it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
 SQL migration tools provide more complete support for creating and evolving your schema across a range of databases.
 
-If you want to quickly test out Predator then you can set the `schema-generate` option of the data source to `create-drop` as well as the appropriate schema name:
+If you want to quickly test out Micronaut Data then you can set the `schema-generate` option of the data source to `create-drop` as well as the appropriate schema name:
 
 .Using `schema-generate`
 [source,yaml]

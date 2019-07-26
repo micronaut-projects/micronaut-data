@@ -1,4 +1,4 @@
-There are various ways to perform write operations with Predator interfaces.
+There are various ways to perform write operations with Micronaut Data interfaces.
 
 To insert data the simplest form is to define a method that accepts the type of the entity, the same way as the api:data.repository.CrudRepository[] interface does:
 

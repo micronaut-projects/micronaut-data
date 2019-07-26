@@ -1,12 +1,12 @@
-As mentioned in the <<jdbcQuickStart, Quick Start>> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Predators own annotations in the `io.micronaut.data.annotation` package.
+As mentioned in the <<jdbcQuickStart, Quick Start>> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the `io.micronaut.data.annotation` package.
 
-An important aspect of Predator JDBC is that regardless whether you use JPA annotations or Predator annotations the entity classes must be compiled with Predator.
+An important aspect of Micronaut Data JDBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.
 
-This is because Predator pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Predator JDBC can startup so fast.
+This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can startup so fast.
 
-An example of mapping with Predator annotations can be seen below:
+An example of mapping with Micronaut Data annotations can be seen below:
 
-.Predator Annotation Mapping Example
+.Micronaut Data Annotation Mapping Example
 [source,java]
 ----
 include::predator-tck/src/main/java/io/micronaut/data/tck/entities/Country.java[]
@@ -14,14 +14,14 @@ include::predator-tck/src/main/java/io/micronaut/data/tck/entities/Country.java[
 
 The following table summarizes the different annotations and what they enable. If you are familiar with and prefer the JPA annotations then feel free to skip to the next section:
 
-.Predator Annotations
+.Micronaut Data Annotations
 [cols=2*]
 |===
 |*Annotation*
 |*Description*
 
 |ann:data.annotation.AutoPopulated[]
-|Meta annotation for a value that should be auto-populated by Predator (such as time stamps and UUIDs)
+|Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)
 
 |ann:data.annotation.DateCreated[]
 |Allows assigning a data created value (such as a `java.time.Instant`) prior to an insert
@@ -66,7 +66,7 @@ In the case of using JPA only a subset of annotations are supported including th
 * `@Embedded`
 * `@Embeddable`
 
-Again Predator JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don't apply, however for users familiar with these annotations it is handy being able to use them.
+Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don't apply, however for users familiar with these annotations it is handy being able to use them.
 
 === ID Generation
 
@@ -80,7 +80,7 @@ Automatically assigned UUIDs are also supported by adding a property annotated w
 
 === Constructor Arguments
 
-Predator JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with `io.micronaut.core.annotation.Creator`.
+Micronaut Data JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with `io.micronaut.core.annotation.Creator`.
 
 For example:
 
@@ -94,7 +94,7 @@ The default naming strategy when converting camel case class and property names 
 
 If this is not satisfactory then you can customize this by setting the `namingStrategy` member of the ann:data.annotation.MappedEntity[] annotation on the entity:
 
-.Predator Naming Strategy
+.Micronaut Data Naming Strategy
 [source,java]
 ----
 include::predator-tck/src/main/java/io/micronaut/data/tck/entities/CountryRegion.java[tags="namingStrategy"]
@@ -102,17 +102,17 @@ include::predator-tck/src/main/java/io/micronaut/data/tck/entities/CountryRegion
 }
 ----
 
-Few important things to note. Since Predator pre-computes the table and column name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java or `kapt` for Kotlin).
+Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java or `kapt` for Kotlin).
 
 In addition if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
 
 === Association Fetching
 
-Predator is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.
+Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.
 
 You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practise due to the N+1 query issue and the recommendation is always to write an optimized join query.
 
-Predator JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:
+Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:
 
 snippet::example.Product[project-base="doc-examples/jdbc-example", source="main"]
 

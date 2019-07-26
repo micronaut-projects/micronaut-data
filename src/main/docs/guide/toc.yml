@@ -23,13 +23,13 @@ dataUpdates:
   batchDeletes: Batch Deletes
   timestamps: Entity Timestamps
 howItWorks:
-  title: How Predator Works
+  title: How Micronaut Data Works
 spring:
   title: Spring Data Support
 sql:
-  title: Predator with SQL
+  title: Micronaut Data with SQL
   jdbc:
-    title: Predator JDBC
+    title: Micronaut Data JDBC
     jdbcQuickStart: JDBC Quick Start
     jdbcConfiguration: JDBC Configuration
     jdbcRepositories: JDBC Repositories
