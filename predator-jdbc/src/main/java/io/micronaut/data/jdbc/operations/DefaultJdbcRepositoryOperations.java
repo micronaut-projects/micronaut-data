@@ -567,6 +567,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     public <R> R prepareStatement(@NonNull String sql, @NonNull PreparedStatementCallback<R> callback) {
         ArgumentUtils.requireNonNull("sql", sql);
         ArgumentUtils.requireNonNull("callback", callback);
+        if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
+            PredatorSettings.QUERY_LOG.debug("Executing Query: {}", sql);
+        }
         try {
             return callback.call(transactionOperations.getConnection().prepareStatement(sql));
         } catch (SQLException e) {
