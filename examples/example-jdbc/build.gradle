@@ -18,7 +18,7 @@ configurations {
 }
 
 ext {
-    predatorVersion = "1.0.0.BUILD-SNAPSHOT"
+    micronautDataVersion = "1.0.0.BUILD-SNAPSHOT"
     micronautVersion = "1.2.0.RC2"
 }
 
@@ -30,7 +30,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-graal"
     annotationProcessor "io.micronaut:micronaut-validation"
-    annotationProcessor "io.micronaut.data:micronaut-data-processor:$predatorVersion"
+    annotationProcessor "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
 
     compileOnly "com.oracle.substratevm:svm"
     implementation "io.micronaut:micronaut-inject"
@@ -39,7 +39,7 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "jakarta.persistence:jakarta.persistence-api:2.2.2"
-    implementation "io.micronaut.data:micronaut-data-jdbc:$predatorVersion"
+    implementation "io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion"
     runtime "ch.qos.logback:logback-classic:1.2.3"
     runtime "com.h2database:h2"
     runtime "io.micronaut.configuration:micronaut-jdbc-tomcat"

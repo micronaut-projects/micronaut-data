@@ -4,7 +4,7 @@ Micronaut Data defines a api:data.processor.visitors.RepositoryTypeElementVisito
 
 The `RepositoryTypeElementVisitor` uses service loader to load all available api:data.processor.visitors.finders.MethodCandidate[] implementations and iterate over them.
 
-TIP: You can add additional method candidates by creating a library that depends on `micronaut-predator-processor` and defining the `META-INF/services` definition for the method candidate. The new library should be added to your annotation processor path.
+TIP: You can add additional method candidates by creating a library that depends on `micronaut-data-processor` and defining the `META-INF/services` definition for the method candidate. The new library should be added to your annotation processor path.
 
 The `MethodCandidate` interface features a `isMethodMatch` method which allows matching a https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html[MethodElement]. Once a `MethodElement` has been matched the `buildMatchInfo` method of the `MethodCandidate` is invoked which returns an instance of api:data.processor.visitors.finders.MethodMatchInfo[].
 

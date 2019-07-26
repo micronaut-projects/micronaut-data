@@ -9,7 +9,7 @@ An example of mapping with Micronaut Data annotations can be seen below:
 .Micronaut Data Annotation Mapping Example
 [source,java]
 ----
-include::predator-tck/src/main/java/io/micronaut/data/tck/entities/Country.java[]
+include::data-tck/src/main/java/io/micronaut/data/tck/entities/Country.java[]
 ----
 
 The following table summarizes the different annotations and what they enable. If you are familiar with and prefer the JPA annotations then feel free to skip to the next section:
@@ -97,7 +97,7 @@ If this is not satisfactory then you can customize this by setting the `namingSt
 .Micronaut Data Naming Strategy
 [source,java]
 ----
-include::predator-tck/src/main/java/io/micronaut/data/tck/entities/CountryRegion.java[tags="namingStrategy"]
+include::data-tck/src/main/java/io/micronaut/data/tck/entities/CountryRegion.java[tags="namingStrategy"]
     ...
 }
 ----

@@ -4,7 +4,7 @@ dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor
 
 NOTE: For Kotlin the dependency should be in the `kapt` scope and for Groovy it should be in `compileOnly` scope.
 
-You should then configure a compile scoped dependency on the `micronaut-predator-jdbc` module:
+You should then configure a compile scoped dependency on the `micronaut-data-jdbc` module:
 
 dependency:io.micronaut.data:micronaut-data-jdbc[version="{version}"]
 

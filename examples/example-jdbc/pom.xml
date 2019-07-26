@@ -5,7 +5,7 @@
   <version>0.1</version>
   <properties>    
     <micronaut.version>1.2.0.RC2</micronaut.version>
-    <predator.version>1.0.0.BUILD-SNAPSHOT</predator.version>
+    <micronaut.data.version>1.0.0.BUILD-SNAPSHOT</micronaut.data.version>
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>example.Application</exec.mainClass>
@@ -50,8 +50,8 @@
     </dependency>
     <dependency>
         <groupId>io.micronaut.data</groupId>
-        <artifactId>micronaut-predator-jdbc</artifactId>
-        <version>${predator.version}</version>
+        <artifactId>micronaut-data-jdbc</artifactId>
+        <version>${micronaut.data.version}</version>
         <scope>compile</scope>
     </dependency>
     <dependency>
@@ -173,8 +173,8 @@
                   </path>
                   <path>
                     <groupId>io.micronaut.data</groupId>
-                    <artifactId>micronaut-predator-processor</artifactId>
-                    <version>${predator.version}</version>                      
+                    <artifactId>micronaut-data-processor</artifactId>
+                    <version>${micronaut.data.version}</version>                      
                   </path>                  
                   <path>
                     <groupId>io.micronaut</groupId>
@@ -206,8 +206,8 @@
                   </path>
                   <path>
                     <groupId>io.micronaut.data</groupId>
-                    <artifactId>micronaut-predator-processor</artifactId>
-                    <version>${predator.version}</version>                      
+                    <artifactId>micronaut-data-processor</artifactId>
+                    <version>${micronaut.data.version}</version>                      
                   </path>
                   <path>
                     <groupId>io.micronaut</groupId>

@@ -26,7 +26,7 @@ import java.util.*;
 
 
 /**
- * The predator method info. This class describes the pre-computed method handling for a
+ * The method info. This class describes the pre-computed method handling for a
  * repository and is computed into a {@link DataMethod} annotation
  * which is readable at runtime.
  *
