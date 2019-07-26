@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -101,12 +101,12 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>To get started with Predator and JPA add the following dependency to your annotation processor path:</p>
+<p>To get started with Micronaut Data and JPA add the following dependency to your annotation processor path:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-predator-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -114,7 +114,7 @@ function addJsClass() {
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-        &lt;artifactId&gt;micronaut-predator-processor&lt;/artifactId&gt;
+        &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
         &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
@@ -140,14 +140,14 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-predator-hibernate-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-    &lt;artifactId&gt;micronaut-predator-hibernate-jpa&lt;/artifactId&gt;
+    &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
     &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -419,7 +419,7 @@ bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Congratulations you have implemented your first Predator repository! Read on to find out more.</p>
+<p>Congratulations you have implemented your first Micronaut Data repository! Read on to find out more.</p>
 </div>
 </div>
 

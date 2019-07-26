@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -99,19 +99,19 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>As mentioned in the <a href="#jdbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Predators own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
+<p>As mentioned in the <a href="#jdbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
 </div>
 <div class="paragraph">
-<p>An important aspect of Predator JDBC is that regardless whether you use JPA annotations or Predator annotations the entity classes must be compiled with Predator.</p>
+<p>An important aspect of Micronaut Data JDBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.</p>
 </div>
 <div class="paragraph">
-<p>This is because Predator pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Predator JDBC can startup so fast.</p>
+<p>This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can startup so fast.</p>
 </div>
 <div class="paragraph">
-<p>An example of mapping with Predator annotations can be seen below:</p>
+<p>An example of mapping with Micronaut Data annotations can be seen below:</p>
 </div>
 <div class="listingblock">
-<div class="title">Predator Annotation Mapping Example</div>
+<div class="title">Micronaut Data Annotation Mapping Example</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package io.micronaut.data.tck.entities;
 
@@ -161,7 +161,7 @@ public class Country {
 <p>The following table summarizes the different annotations and what they enable. If you are familiar with and prefer the JPA annotations then feel free to skip to the next section:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. Predator Annotations</caption>
+<caption class="title">Table 1. Micronaut Data Annotations</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -173,7 +173,7 @@ public class Country {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/AutoPopulated.html">@AutoPopulated</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Meta annotation for a value that should be auto-populated by Predator (such as time stamps and UUIDs)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a></p></td>
@@ -252,7 +252,7 @@ public class Country {
 </ul>
 </div>
 <div class="paragraph">
-<p>Again Predator JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
+<p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
 </div>
 </div>
 <div class="sect2">
@@ -273,7 +273,7 @@ public class Country {
 <div class="sect2">
 <h3 id="_constructor_arguments">Constructor Arguments</h3>
 <div class="paragraph">
-<p>Predator JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
+<p>Micronaut Data JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>
@@ -363,7 +363,7 @@ data class Manufacturer(
 <p>If this is not satisfactory then you can customize this by setting the <code>namingStrategy</code> member of the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation on the entity:</p>
 </div>
 <div class="listingblock">
-<div class="title">Predator Naming Strategy</div>
+<div class="title">Micronaut Data Naming Strategy</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
 public class CountryRegion {
@@ -372,7 +372,7 @@ public class CountryRegion {
 </div>
 </div>
 <div class="paragraph">
-<p>Few important things to note. Since Predator pre-computes the table and column name mappings at compilation time the specified <a href="../api/io/micronaut/data/model/naming/NamingStrategy.html">NamingStrategy</a> implementation must be on the annotation processor classpath (<code>annotationProcessor</code> scope for Java or <code>kapt</code> for Kotlin).</p>
+<p>Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified <a href="../api/io/micronaut/data/model/naming/NamingStrategy.html">NamingStrategy</a> implementation must be on the annotation processor classpath (<code>annotationProcessor</code> scope for Java or <code>kapt</code> for Kotlin).</p>
 </div>
 <div class="paragraph">
 <p>In addition if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
@@ -381,13 +381,13 @@ public class CountryRegion {
 <div class="sect2">
 <h3 id="_association_fetching">Association Fetching</h3>
 <div class="paragraph">
-<p>Predator is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
+<p>Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
 </div>
 <div class="paragraph">
 <p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practise due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
 </div>
 <div class="paragraph">
-<p>Predator JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
+<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">

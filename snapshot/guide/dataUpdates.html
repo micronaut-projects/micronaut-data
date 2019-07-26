@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -77,7 +77,7 @@ function addJsClass() {
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
 
                 
-                    <div class="toc-item next-right"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span> >></a></div>
                 
 
 
@@ -118,7 +118,7 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>There are various ways to perform write operations with Predator interfaces.</p>
+<p>There are various ways to perform write operations with Micronaut Data interfaces.</p>
 </div>
 <div class="paragraph">
 <p>To insert data the simplest form is to define a method that accepts the type of the entity, the same way as the <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> interface does:</p>
@@ -174,7 +174,7 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>Predator will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:</p>
+<p>Micronaut Data will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -190,10 +190,10 @@ function addJsClass() {
 </ul>
 </div>
 <div class="paragraph">
-<p>Predator maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
+<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
 </div>
 <div class="paragraph">
-<p>Predator will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
+<p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
 </div>
 
 
@@ -352,7 +352,7 @@ function addJsClass() {
 <p>You can annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a> which will be automatically populated when saving entities and indicates the date a record was created.</p>
 </div>
 <div class="paragraph">
-<p>You can also annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> which will be automatically populated whenever the entity is updated either via the <code>persist</code> method or when using one of the batch update methods of Predator.</p>
+<p>You can also annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> which will be automatically populated whenever the entity is updated either via the <code>persist</code> method or when using one of the batch update methods of Micronaut Data.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -372,7 +372,7 @@ If you update the entity with an external SQL statement or custom logic you will
                 
                     <div class="toc-item prev-left"><a href="../guide/querying.html">&lt;&lt; <strong>4</strong><span>Writing Queries</span></a></div>
                 
-                    <div class="toc-item next-right"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span> >></a></div>
                 
                 <div style="clear:both"></div>
             </div>

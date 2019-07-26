@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -99,7 +99,7 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>Predator JDBC requires that an appropriate <code>java.sql.DataSource</code> bean is configured.</p>
+<p>Micronaut Data JDBC requires that an appropriate <code>java.sql.DataSource</code> bean is configured.</p>
 </div>
 <div class="paragraph">
 <p>You can either do this manually or use the <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">Micronaut JDBC</a> module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari or Commons DBCP.</p>
@@ -107,13 +107,13 @@ function addJsClass() {
 <div class="sect2">
 <h3 id="_creating_the_schema">Creating the Schema</h3>
 <div class="paragraph">
-<p>To create the database schema it is recommended you pair Predator with a SQL migration tool such as <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or <a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.</p>
+<p>To create the database schema it is recommended you pair Micronaut Data with a SQL migration tool such as <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or <a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.</p>
 </div>
 <div class="paragraph">
 <p>SQL migration tools provide more complete support for creating and evolving your schema across a range of databases.</p>
 </div>
 <div class="paragraph">
-<p>If you want to quickly test out Predator then you can set the <code>schema-generate</code> option of the data source to <code>create-drop</code> as well as the appropriate schema name:</p>
+<p>If you want to quickly test out Micronaut Data then you can set the <code>schema-generate</code> option of the data source to <code>create-drop</code> as well as the appropriate schema name:</p>
 </div>
 <div class="listingblock">
 <div class="title">Using <code>schema-generate</code></div>

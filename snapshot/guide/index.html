@@ -2,7 +2,7 @@
         "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>Micronaut Predator</title>
+    <title>Micronaut Data</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
     <link rel="stylesheet" href="../css/custom.css" type="text/css" media="screen, print" title="Style" charset="utf-8" />
@@ -53,11 +53,11 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#dataUpdates"><strong>5</strong><span>Updating Data</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#howItWorks"><strong>6</strong><span>How Predator Works</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#howItWorks"><strong>6</strong><span>How Micronaut Data Works</span></a></div>
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>7</strong><span>Spring Data Support</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#sql"><strong>8</strong><span>Predator with SQL</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
                                 
                             </div>
                         </div>
@@ -126,13 +126,13 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-timestamps"><a href="#timestamps"><strong>5.4</strong><span>Entity Timestamps</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>6</strong><span>How Predator Works</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>6</strong><span>How Micronaut Data Works</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>7</strong><span>Spring Data Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-sql"><a href="#sql"><strong>8</strong><span>Predator with SQL</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-sql"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-jdbc"><a href="#jdbc"><strong>8.1</strong><span>Predator JDBC</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-jdbc"><a href="#jdbc"><strong>8.1</strong><span>Micronaut Data JDBC</span></a></div>
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcQuickStart"><a href="#jdbcQuickStart"><strong>8.1.1</strong><span>JDBC Quick Start</span></a></div>
         
@@ -153,7 +153,7 @@
     
     <div class="docs-content">
     <div class="project">
-        <h1>Micronaut Predator</h1>
+        <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
         <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
@@ -170,10 +170,10 @@
 
 
 <div class="paragraph">
-<p>Micronaut Predator (short for <strong>Pre</strong>computed <strong>Dat</strong>a <strong>R</strong>epositories) is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.</p>
+<p>Micronaut Data is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.</p>
 </div>
 <div class="paragraph">
-<p>Predator is inspired by <a href="https://gorm.grails.org">GORM</a> and <a href="https://spring.io/projects/spring-data">Spring Data</a>, however improves on those solutions in the following ways:</p>
+<p>Micronaut Data is inspired by <a href="https://gorm.grails.org">GORM</a> and <a href="https://spring.io/projects/spring-data">Spring Data</a>, however improves on those solutions in the following ways:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -181,18 +181,18 @@
 <p><strong>No runtime model</strong> - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models.</p>
 </li>
 <li>
-<p><strong>No query translation</strong> - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Predator and this work is carried out by the Micronaut compiler at compilation time.</p>
+<p><strong>No query translation</strong> - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Micronaut Data and this work is carried out by the Micronaut compiler at compilation time.</p>
 </li>
 <li>
-<p><strong>No Reflection or Runtime Proxies</strong> - Predator uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).</p>
+<p><strong>No Reflection or Runtime Proxies</strong> - Micronaut Data uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).</p>
 </li>
 <li>
-<p><strong>Type Safety</strong> - Predator will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.</p>
+<p><strong>Type Safety</strong> - Micronaut Data will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Predator provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:</p>
+<p>Micronaut Data provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -208,10 +208,10 @@
 <p>Further implementations for other databases are planned in the future.</p>
 </div>
 <div class="paragraph">
-<p>The following sections will take you through the basics of querying and using Predator, if you wish to understand more detail about how Predator works check out the <a href="#howItWorks">How Predator Works</a> section.</p>
+<p>The following sections will take you through the basics of querying and using Micronaut Data, if you wish to understand more detail about how Micronaut Data works check out the <a href="#howItWorks">How Micronaut Data Works</a> section.</p>
 </div>
 <div class="paragraph">
-<p>At a fundamental level however what Predator does can be summed up in the following snippets. Given the following interface:</p>
+<p>At a fundamental level however what Micronaut Data does can be summed up in the following snippets. Given the following interface:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -269,7 +269,7 @@ interface BookRepository : CrudRepository&lt;Book, Long&gt; { <b class="conum">(
 </table>
 </div>
 <div class="paragraph">
-<p>Predator computes the query for the <code>find</code> method automatically at compilation time making it available at runtime via annotation metadata:</p>
+<p>Micronaut Data computes the query for the <code>find</code> method automatically at compilation time making it available at runtime via annotation metadata:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -364,12 +364,12 @@ fun testAnnotationMetadata() {
 
 
 <div class="paragraph">
-<p>To get started with Predator and JPA add the following dependency to your annotation processor path:</p>
+<p>To get started with Micronaut Data and JPA add the following dependency to your annotation processor path:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-predator-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -377,7 +377,7 @@ fun testAnnotationMetadata() {
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-        &lt;artifactId&gt;micronaut-predator-processor&lt;/artifactId&gt;
+        &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
         &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
@@ -403,14 +403,14 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-predator-hibernate-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-    &lt;artifactId&gt;micronaut-predator-hibernate-jpa&lt;/artifactId&gt;
+    &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
     &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -682,7 +682,7 @@ bookRepository.save(book)</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Congratulations you have implemented your first Predator repository! Read on to find out more.</p>
+<p>Congratulations you have implemented your first Micronaut Data repository! Read on to find out more.</p>
 </div>
 </div>
 
@@ -697,10 +697,10 @@ bookRepository.save(book)</code></pre>
 
 
 <div class="paragraph">
-<p>As seen in the <a href="#quickStart">Quick Start</a> repositories in Predator are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
+<p>As seen in the <a href="#quickStart">Quick Start</a> repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
 </div>
 <div class="paragraph">
-<p>The <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Predator will look for the default datasource.</p>
+<p>The <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Micronaut Data will look for the default datasource.</p>
 </div>
 <div class="paragraph">
 <p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
@@ -709,7 +709,7 @@ bookRepository.save(book)</code></pre>
 <p>If no root entity can be established then a compilation error will occur.</p>
 </div>
 <div class="paragraph">
-<p>The following table summarizes the repository interfaces that come with Predator:</p>
+<p>The following table summarizes the repository interfaces that come with Micronaut Data:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <caption class="title">Table 1. Builtin Repository Interfaces</caption>
@@ -828,7 +828,7 @@ abstract class AbstractBookRepository(@param:CurrentSession private val entityMa
 </div>
 </div>
 <div class="paragraph">
-<p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with JPA and repository interface code implemented automatically by Predator.</p>
+<p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with JPA and repository interface code implemented automatically by Micronaut Data.</p>
 </div>
 
 
@@ -842,7 +842,7 @@ abstract class AbstractBookRepository(@param:CurrentSession private val entityMa
 
 
 <div class="paragraph">
-<p>The implementation of querying in Predator is based on the dynamic finders in <a href="https://gorm.grails.org">GORM</a>.</p>
+<p>The implementation of querying in Micronaut Data is based on the dynamic finders in <a href="https://gorm.grails.org">GORM</a>.</p>
 </div>
 <div class="paragraph">
 <p>A pattern matching approach is taken at compilation time. The general pattern of query methods is:</p>
@@ -1023,7 +1023,7 @@ More details about the batch update variants of these methods is covered in the 
 <p>The previous example presented a simple <code>findByTitle</code> query which searches for all <code>Book</code> instances that have a <code>title</code> property <em>equal to</em> the given value.</p>
 </div>
 <div class="paragraph">
-<p>This is the simplest type of query supported by Predator, but you can use an optional suffix on the property name to modify the type of criterion to apply.</p>
+<p>This is the simplest type of query supported by Micronaut Data, but you can use an optional suffix on the property name to modify the type of criterion to apply.</p>
 </div>
 <div class="paragraph">
 <p>For example the following query pattern will execute a query that finds only <code>Book</code> instances that have a page count greater than the given value:</p>
@@ -1214,7 +1214,7 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 
 
 <div class="paragraph">
-<p>Typically when returning multiple records you need some control over paging the data. Predator includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
+<p>Typically when returning multiple records you need some control over paging the data. Micronaut Data includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
 </div>
 <div class="paragraph">
 <p>In addition methods can return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> object which includes the execution of an additional query to obtain the total number of results for a given query.</p>
@@ -1406,7 +1406,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-If the projected property type and the return generic type do not match up then Predator will fail to compile the method.
+If the projected property type and the return generic type do not match up then Micronaut Data will fail to compile the method.
 </td>
 </tr>
 </table>
@@ -1415,7 +1415,7 @@ If the projected property type and the return generic type do not match up then 
 <p>You can also use projections on association paths, for example if an <code>author</code> association were present you could write <code>findAuthorNameByPagesGreaterThan</code> to retrieve the names of all the authors.</p>
 </div>
 <div class="paragraph">
-<p>In addition to this, Predator also supports projection expressions. The following table summarizes the possible expressions with an example and description:</p>
+<p>In addition to this, Micronaut Data also supports projection expressions. The following table summarizes the possible expressions with an example and description:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <caption class="title">Table 1. Projection Expressions</caption>
@@ -1500,7 +1500,7 @@ If the projected property type and the return generic type do not match up then 
 
 
 <div class="paragraph">
-<p>Predator supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with <code>@Introspected</code>.</p>
+<p>Micronaut Data supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with <code>@Introspected</code>.</p>
 </div>
 <div class="paragraph">
 <p>For example if you wanted to project on an entity called <code>Book</code> you could define a DTO as follows:</p>
@@ -1583,7 +1583,7 @@ data class BookDTO(
 </div>
 </div>
 <div class="paragraph">
-<p>Predator will optimize the query to only select the necessary properties from the database.</p>
+<p>Micronaut Data will optimize the query to only select the necessary properties from the database.</p>
 </div>
 
 
@@ -1606,7 +1606,7 @@ data class BookDTO(
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-If a <code>LazyInitializationException</code> occurs this is not a bug in Predator or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
+If a <code>LazyInitializationException</code> occurs this is not a bug in Micronaut Data or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
 </td>
 </tr>
 </table>
@@ -1896,7 +1896,7 @@ fun listBooks(t: String): List&lt;Book&gt;</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Currently Predator does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Predator.
+Currently Micronaut Data does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Micronaut Data.
 </td>
 </tr>
 </table>
@@ -1916,7 +1916,7 @@ Currently Predator does not parse the JPA-QL AST and perform any further type ch
 
 
 <div class="paragraph">
-<p>When using Predator with JPA you can execute native SQL queries by setting <code>nativeQuery</code> to true in the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
+<p>When using Micronaut Data with JPA you can execute native SQL queries by setting <code>nativeQuery</code> to true in the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -1965,10 +1965,10 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 
 
 <div class="paragraph">
-<p>Predator supports asynchronous query execution by defining methods that return either <code>CompletionStage</code>, <code>CompletableFuture</code> or <code>Future</code>.</p>
+<p>Micronaut Data supports asynchronous query execution by defining methods that return either <code>CompletionStage</code>, <code>CompletableFuture</code> or <code>Future</code>.</p>
 </div>
 <div class="paragraph">
-<p>In the case of asynchronous execution and if the backing implementation is blocking, Predator will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+<p>In the case of asynchronous execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
 </div>
 <div class="paragraph">
 <p>The following is an example of a couple of asynchronous methods:</p>
@@ -2068,10 +2068,10 @@ In the case of JPA each operation will run with its own transaction and session,
 
 
 <div class="paragraph">
-<p>Predator supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
+<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
 </div>
 <div class="paragraph">
-<p>In the case of reactive execution and if the backing implementation is blocking, Predator will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+<p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
 </div>
 <div class="paragraph">
 <p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used and instead it is assumed the driver will handle the query in a non-blocking manner.</p>
@@ -2166,7 +2166,7 @@ Assertions.assertEquals(
 
 
 <div class="paragraph">
-<p>There are various ways to perform write operations with Predator interfaces.</p>
+<p>There are various ways to perform write operations with Micronaut Data interfaces.</p>
 </div>
 <div class="paragraph">
 <p>To insert data the simplest form is to define a method that accepts the type of the entity, the same way as the <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> interface does:</p>
@@ -2222,7 +2222,7 @@ Assertions.assertEquals(
 
 
 <div class="paragraph">
-<p>Predator will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:</p>
+<p>Micronaut Data will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -2238,10 +2238,10 @@ Assertions.assertEquals(
 </ul>
 </div>
 <div class="paragraph">
-<p>Predator maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
+<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
 </div>
 <div class="paragraph">
-<p>Predator will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
+<p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
 </div>
 
 
@@ -2400,7 +2400,7 @@ Assertions.assertEquals(
 <p>You can annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a> which will be automatically populated when saving entities and indicates the date a record was created.</p>
 </div>
 <div class="paragraph">
-<p>You can also annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> which will be automatically populated whenever the entity is updated either via the <code>persist</code> method or when using one of the batch update methods of Predator.</p>
+<p>You can also annotate a property that is a date type of an entity with <a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a> which will be automatically populated whenever the entity is updated either via the <code>persist</code> method or when using one of the batch update methods of Micronaut Data.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -2416,7 +2416,7 @@ If you update the entity with an external SQL statement or custom logic you will
 </div>
 
 
-<h1 id="howItWorks">6 How Predator Works</h1>
+<h1 id="howItWorks">6 How Micronaut Data Works</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-predator/edit/master/src/main/docs/guide/howItWorks.adoc"'>
@@ -2426,10 +2426,10 @@ If you update the entity with an external SQL statement or custom logic you will
 
 
 <div class="paragraph">
-<p>Predator uses two key features of <a href="https://micronaut.io">Micronaut</a>: The <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/visitor/TypeElementVisitor.html">TypeElementVisitor</a> API and <a href="https://docs.micronaut.io/latest/guide/index.html#introductionAdvice">Introduction Advice</a>.</p>
+<p>Micronaut Data uses two key features of <a href="https://micronaut.io">Micronaut</a>: The <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/visitor/TypeElementVisitor.html">TypeElementVisitor</a> API and <a href="https://docs.micronaut.io/latest/guide/index.html#introductionAdvice">Introduction Advice</a>.</p>
 </div>
 <div class="paragraph">
-<p>Predator defines a <a href="../api/io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html">RepositoryTypeElementVisitor</a> that at compilation time visits all interfaces in the source tree that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
+<p>Micronaut Data defines a <a href="../api/io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html">RepositoryTypeElementVisitor</a> that at compilation time visits all interfaces in the source tree that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
 </div>
 <div class="paragraph">
 <p>The <code>RepositoryTypeElementVisitor</code> uses service loader to load all available <a href="../api/io/micronaut/data/processor/visitors/finders/MethodCandidate.html">MethodCandidate</a> implementations and iterate over them.</p>
@@ -2441,7 +2441,7 @@ If you update the entity with an external SQL statement or custom logic you will
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-You can add additional method candidates by creating a library that depends on <code>micronaut-predator-processor</code> and defining the <code>META-INF/services</code> definition for the method candidate. The new library should be added to your annotation processor path.
+You can add additional method candidates by creating a library that depends on <code>micronaut-data-processor</code> and defining the <code>META-INF/services</code> definition for the method candidate. The new library should be added to your annotation processor path.
 </td>
 </tr>
 </table>
@@ -2450,7 +2450,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>The <code>MethodCandidate</code> interface features a <code>isMethodMatch</code> method which allows matching a <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html">MethodElement</a>. Once a <code>MethodElement</code> has been matched the <code>buildMatchInfo</code> method of the <code>MethodCandidate</code> is invoked which returns an instance of <a href="../api/io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html">MethodMatchInfo</a>.</p>
 </div>
 <div class="paragraph">
-<p>The constructor for <code>MethodMatchInfo</code> allows specifying the runtime <a href="../api/io/micronaut/data/intercept/PredatorInterceptor.html">PredatorInterceptor</a> to execute, which typically differs based on the return type and behaviour required and an optional <a href="../api/io/micronaut/data/model/query/Query.html">Query</a> instance which represents the query model of the query to be executed.</p>
+<p>The constructor for <code>MethodMatchInfo</code> allows specifying the runtime <a href="../api/io/micronaut/data/intercept/DataInterceptor.html">DataInterceptor</a> to execute, which typically differs based on the return type and behaviour required and an optional <a href="../api/io/micronaut/data/model/query/Query.html">Query</a> instance which represents the query model of the query to be executed.</p>
 </div>
 <div class="paragraph">
 <p>The <code>RepositoryTypeElementVisitor</code> takes the <code>MethodMatchInfo</code> and converts the <a href="../api/io/micronaut/data/model/query/Query.html">Query</a> instance into the equivalent String-based query (such as JPA-QL) using the <a href="../api/io/micronaut/data/model/query/builder/QueryBuilder.html">QueryBuilder</a> that is configured by the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
@@ -2470,12 +2470,12 @@ You can add additional method candidates by creating a library that depends on <
 <p>The parameter binding (A map containing the named parameter in the query as key and the name of the method argument as a value)</p>
 </li>
 <li>
-<p>The runtime <a href="../api/io/micronaut/data/intercept/PredatorInterceptor.html">PredatorInterceptor</a> to execute.</p>
+<p>The runtime <a href="../api/io/micronaut/data/intercept/DataInterceptor.html">DataInterceptor</a> to execute.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>At runtime all the <a href="../api/io/micronaut/data/intercept/PredatorInterceptor.html">PredatorInterceptor</a> has to do is retrieve the query, read the method parameter values using the parameter binding and execute the query.</p>
+<p>At runtime all the <a href="../api/io/micronaut/data/intercept/DataInterceptor.html">DataInterceptor</a> has to do is retrieve the query, read the method parameter values using the parameter binding and execute the query.</p>
 </div>
 
 
@@ -2489,7 +2489,7 @@ You can add additional method candidates by creating a library that depends on <
 
 
 <div class="paragraph">
-<p>Predator is able to compile existing Spring Data repository interfaces if you add the <code>spring-data-commons</code> dependency to your compilation classpath:</p>
+<p>Micronaut Data is able to compile existing Spring Data repository interfaces if you add the <code>spring-data-commons</code> dependency to your compilation classpath:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -2538,7 +2538,7 @@ You can add additional method candidates by creating a library that depends on <
 </div>
 
 
-<h1 id="sql">8 Predator with SQL</h1>
+<h1 id="sql">8 Micronaut Data with SQL</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-predator/edit/master/src/main/docs/guide/sql.adoc"'>
@@ -2548,11 +2548,11 @@ You can add additional method candidates by creating a library that depends on <
 
 
 <div class="paragraph">
-<p>In addition to JPA, Predator supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC is the only supported implementation for executing SQL queries, however this may change in the future.</p>
+<p>In addition to JPA, Micronaut Data supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC is the only supported implementation for executing SQL queries, however this may change in the future.</p>
 </div>
 
 
-<h2 id="jdbc">8.1 Predator JDBC</h2>
+<h2 id="jdbc">8.1 Micronaut Data JDBC</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-predator/edit/master/src/main/docs/guide/sql/jdbc.adoc"'>
@@ -2562,13 +2562,13 @@ You can add additional method candidates by creating a library that depends on <
 
 
 <div class="paragraph">
-<p>Predator JDBC is an implementation that pre-computes native SQL queries (given a particular database dialect) and provides a repository implementation that is a simple data mapper between a JDBC <code>ResultSet</code> and an object.</p>
+<p>Micronaut Data JDBC is an implementation that pre-computes native SQL queries (given a particular database dialect) and provides a repository implementation that is a simple data mapper between a JDBC <code>ResultSet</code> and an object.</p>
 </div>
 <div class="paragraph">
-<p>Predator JDBC supports all of the features of Predator for JPA including <a href="#criteria">dynamic finders</a>, <a href="#pagination">pagination</a>, <a href="#projections">projections</a>, <a href="#dto">Data Transfer Objects (DTO)</a>, <a href="#dataUpdates">Batch Updates</a> and so on.</p>
+<p>Micronaut Data JDBC supports all of the features of Micronaut Data for JPA including <a href="#criteria">dynamic finders</a>, <a href="#pagination">pagination</a>, <a href="#projections">projections</a>, <a href="#dto">Data Transfer Objects (DTO)</a>, <a href="#dataUpdates">Batch Updates</a> and so on.</p>
 </div>
 <div class="paragraph">
-<p>However, Predator JDBC is not a Object Relational Mapping (ORM) implementation and does not and will not include any of the following concepts:</p>
+<p>However, Micronaut Data JDBC is not a Object Relational Mapping (ORM) implementation and does not and will not include any of the following concepts:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -2590,7 +2590,7 @@ You can add additional method candidates by creating a library that depends on <
 </ul>
 </div>
 <div class="paragraph">
-<p>Predator JDBC is designed for users who prefer a lower-level experience and working directly with SQL.</p>
+<p>Micronaut Data JDBC is designed for users who prefer a lower-level experience and working directly with SQL.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -2599,7 +2599,7 @@ You can add additional method candidates by creating a library that depends on <
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Predator JDBC is useful for implementing the majority of the simple SQL queries that exist in a typical application and does not include any runtime query building DSLs. For more complex queries Predator JDBC can be paired with one of the many great existing Java SQL DSLs out there like <a href="https://www.jooq.org">JOOQ</a>, <a href="http://www.querydsl.com">QueryDSL</a>, <a href="https://github.com/requery/requery">Requery</a> or even JPA.
+Micronaut Data JDBC is useful for implementing the majority of the simple SQL queries that exist in a typical application and does not include any runtime query building DSLs. For more complex queries Micronaut Data JDBC can be paired with one of the many great existing Java SQL DSLs out there like <a href="https://www.jooq.org">JOOQ</a>, <a href="http://www.querydsl.com">QueryDSL</a>, <a href="https://github.com/requery/requery">Requery</a> or even JPA.
 </td>
 </tr>
 </table>
@@ -2616,12 +2616,12 @@ Predator JDBC is useful for implementing the majority of the simple SQL queries 
 
 
 <div class="paragraph">
-<p>To get started with Predator and SQL/JDBC add the following dependency to your annotation processor path:</p>
+<p>To get started with Micronaut Data and SQL/JDBC add the following dependency to your annotation processor path:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-predator-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -2629,7 +2629,7 @@ Predator JDBC is useful for implementing the majority of the simple SQL queries 
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;annotationProcessorPaths&gt;
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-        &lt;artifactId&gt;micronaut-predator-processor&lt;/artifactId&gt;
+        &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
         &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
@@ -2650,19 +2650,19 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 </table>
 </div>
 <div class="paragraph">
-<p>You should then configure a compile scoped dependency on the <code>micronaut-predator-jdbc</code> module:</p>
+<p>You should then configure a compile scoped dependency on the <code>micronaut-data-jdbc</code> module:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-predator-jdbc:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-    &lt;artifactId&gt;micronaut-predator-jdbc&lt;/artifactId&gt;
+    &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
     &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
@@ -2732,7 +2732,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-The <code>schema-generate</code> setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Predator with a SQL migration tool such as <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or <a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.
+The <code>schema-generate</code> setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Micronaut Data with a SQL migration tool such as <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or <a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.
 </td>
 </tr>
 </table>
@@ -2992,7 +2992,7 @@ Unlike the JPA implementation there is no dirty checking so <code>save</code> al
 <div class="sect2">
 <h3 id="_updating_an_instance_update">Updating an Instance (Update)</h3>
 <div class="paragraph">
-<p>With Predator JDBC, you must manually implement an <code>update</code> method since the JDBC implementation doesn&#8217;t include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:</p>
+<p>With Micronaut Data JDBC, you must manually implement an <code>update</code> method since the JDBC implementation doesn&#8217;t include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -3055,7 +3055,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Congratulations you have implemented your first Predator JDBC repository! Read on to find out more.</p>
+<p>Congratulations you have implemented your first Micronaut Data JDBC repository! Read on to find out more.</p>
 </div>
 </div>
 
@@ -3070,7 +3070,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 
 
 <div class="paragraph">
-<p>Predator JDBC requires that an appropriate <code>java.sql.DataSource</code> bean is configured.</p>
+<p>Micronaut Data JDBC requires that an appropriate <code>java.sql.DataSource</code> bean is configured.</p>
 </div>
 <div class="paragraph">
 <p>You can either do this manually or use the <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">Micronaut JDBC</a> module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari or Commons DBCP.</p>
@@ -3078,13 +3078,13 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <div class="sect2">
 <h3 id="_creating_the_schema">Creating the Schema</h3>
 <div class="paragraph">
-<p>To create the database schema it is recommended you pair Predator with a SQL migration tool such as <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or <a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.</p>
+<p>To create the database schema it is recommended you pair Micronaut Data with a SQL migration tool such as <a href="https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html">Flyway</a> or <a href="https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html">Liquibase</a>.</p>
 </div>
 <div class="paragraph">
 <p>SQL migration tools provide more complete support for creating and evolving your schema across a range of databases.</p>
 </div>
 <div class="paragraph">
-<p>If you want to quickly test out Predator then you can set the <code>schema-generate</code> option of the data source to <code>create-drop</code> as well as the appropriate schema name:</p>
+<p>If you want to quickly test out Micronaut Data then you can set the <code>schema-generate</code> option of the data source to <code>create-drop</code> as well as the appropriate schema name:</p>
 </div>
 <div class="listingblock">
 <div class="title">Using <code>schema-generate</code></div>
@@ -3154,10 +3154,10 @@ fun update(@Id id: Long?, title: String)</code></pre>
 
 
 <div class="paragraph">
-<p>As seen in the <a href="#jdbcQuickStart">Quick Start</a> JDBC repositories in Predator are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation.</p>
+<p>As seen in the <a href="#jdbcQuickStart">Quick Start</a> JDBC repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation.</p>
 </div>
 <div class="paragraph">
-<p>The <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Predator will look for the default datasource.</p>
+<p>The <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Micronaut Data will look for the default datasource.</p>
 </div>
 <div class="paragraph">
 <p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
@@ -3315,19 +3315,19 @@ You could also inject whichever other tool you wish to use to handle more comple
 
 
 <div class="paragraph">
-<p>As mentioned in the <a href="#jdbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Predators own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
+<p>As mentioned in the <a href="#jdbcQuickStart">Quick Start</a> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the <code>io.micronaut.data.annotation</code> package.</p>
 </div>
 <div class="paragraph">
-<p>An important aspect of Predator JDBC is that regardless whether you use JPA annotations or Predator annotations the entity classes must be compiled with Predator.</p>
+<p>An important aspect of Micronaut Data JDBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.</p>
 </div>
 <div class="paragraph">
-<p>This is because Predator pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Predator JDBC can startup so fast.</p>
+<p>This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can startup so fast.</p>
 </div>
 <div class="paragraph">
-<p>An example of mapping with Predator annotations can be seen below:</p>
+<p>An example of mapping with Micronaut Data annotations can be seen below:</p>
 </div>
 <div class="listingblock">
-<div class="title">Predator Annotation Mapping Example</div>
+<div class="title">Micronaut Data Annotation Mapping Example</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package io.micronaut.data.tck.entities;
 
@@ -3377,7 +3377,7 @@ public class Country {
 <p>The following table summarizes the different annotations and what they enable. If you are familiar with and prefer the JPA annotations then feel free to skip to the next section:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. Predator Annotations</caption>
+<caption class="title">Table 1. Micronaut Data Annotations</caption>
 <colgroup>
 <col style="width: 50%;">
 <col style="width: 50%;">
@@ -3389,7 +3389,7 @@ public class Country {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/AutoPopulated.html">@AutoPopulated</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Meta annotation for a value that should be auto-populated by Predator (such as time stamps and UUIDs)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a></p></td>
@@ -3468,7 +3468,7 @@ public class Country {
 </ul>
 </div>
 <div class="paragraph">
-<p>Again Predator JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
+<p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
 </div>
 </div>
 <div class="sect2">
@@ -3489,7 +3489,7 @@ public class Country {
 <div class="sect2">
 <h3 id="_constructor_arguments">Constructor Arguments</h3>
 <div class="paragraph">
-<p>Predator JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
+<p>Micronaut Data JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with <code>io.micronaut.core.annotation.Creator</code>.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>
@@ -3579,7 +3579,7 @@ data class Manufacturer(
 <p>If this is not satisfactory then you can customize this by setting the <code>namingStrategy</code> member of the <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation on the entity:</p>
 </div>
 <div class="listingblock">
-<div class="title">Predator Naming Strategy</div>
+<div class="title">Micronaut Data Naming Strategy</div>
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@MappedEntity(namingStrategy = NamingStrategies.Raw.class)
 public class CountryRegion {
@@ -3588,7 +3588,7 @@ public class CountryRegion {
 </div>
 </div>
 <div class="paragraph">
-<p>Few important things to note. Since Predator pre-computes the table and column name mappings at compilation time the specified <a href="../api/io/micronaut/data/model/naming/NamingStrategy.html">NamingStrategy</a> implementation must be on the annotation processor classpath (<code>annotationProcessor</code> scope for Java or <code>kapt</code> for Kotlin).</p>
+<p>Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified <a href="../api/io/micronaut/data/model/naming/NamingStrategy.html">NamingStrategy</a> implementation must be on the annotation processor classpath (<code>annotationProcessor</code> scope for Java or <code>kapt</code> for Kotlin).</p>
 </div>
 <div class="paragraph">
 <p>In addition if you don&#8217;t want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.</p>
@@ -3597,13 +3597,13 @@ public class CountryRegion {
 <div class="sect2">
 <h3 id="_association_fetching">Association Fetching</h3>
 <div class="paragraph">
-<p>Predator is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
+<p>Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
 </div>
 <div class="paragraph">
 <p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practise due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
 </div>
 <div class="paragraph">
-<p>Predator JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
+<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -3714,7 +3714,7 @@ data class Product(
 
 
 <div class="paragraph">
-<p>As discussed in the previous section, Predator JDBC doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
+<p>As discussed in the previous section, Micronaut Data JDBC doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
 </div>
 <div class="paragraph">
 <p>Consider a <code>Product</code> entity from the previous section that has an association to a <code>Manufacturer</code> entity:</p>
@@ -3792,7 +3792,7 @@ data class Manufacturer(
 </div>
 </div>
 <div class="paragraph">
-<p>Say you query for <code>Product</code> instances, what happens is that by default Predator JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Predator will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
+<p>Say you query for <code>Product</code> instances, what happens is that by default Micronaut Data JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Micronaut Data will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
 </div>
 <div class="paragraph">
 <p>If you need to fetch the association too then you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that a <code>INNER JOIN</code> (or whichever join types is more appropriate) should be executed to retrieve the associated <code>Manufacturer</code>.</p>
@@ -3842,10 +3842,10 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 <p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple time for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
 </div>
 <div class="paragraph">
-<p>Finally, by default Predator will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
+<p>Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
 </div>
 <div class="paragraph">
-<p>If you need to do anything more complex than the join options Predator has to offer then you may need a native query.</p>
+<p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
 </div>
 
 
@@ -3859,7 +3859,7 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 
 
 <div class="paragraph">
-<p>Predator JDBC supports most common Java data types. The following properties types are supported by default:</p>
+<p>Micronaut Data JDBC supports most common Java data types. The following properties types are supported by default:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -4043,7 +4043,7 @@ If you cannot declare <code>@TypeDef</code> directly on the type then you can de
 </table>
 </div>
 <div class="paragraph">
-<p>The last step is to add custom type conversion so that Predator knows how to read and write the type from an <code>Integer</code>:</p>
+<p>The last step is to add custom type conversion so that Micronaut Data knows how to read and write the type from an <code>Integer</code>:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4154,7 +4154,7 @@ class QuantityConverters {
 
 
 <div class="paragraph">
-<p>When using Predator with JDBC you can execute native SQL queries using the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
+<p>When using Micronaut Data with JDBC you can execute native SQL queries using the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4192,7 +4192,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <div class="sect2">
 <h3 id="_explicit_queries_and_joins">Explicit Queries and Joins</h3>
 <div class="paragraph">
-<p>When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Predator will not automatically do this, instead you need to specify the associated <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
+<p>When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Micronaut Data will not automatically do this, instead you need to specify the associated <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>

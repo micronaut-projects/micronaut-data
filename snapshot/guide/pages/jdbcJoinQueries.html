@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -99,7 +99,7 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>As discussed in the previous section, Predator JDBC doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
+<p>As discussed in the previous section, Micronaut Data JDBC doesn&#8217;t support associations in the traditional ORM sense. There is no lazy loading or support for proxies.</p>
 </div>
 <div class="paragraph">
 <p>Consider a <code>Product</code> entity from the previous section that has an association to a <code>Manufacturer</code> entity:</p>
@@ -177,7 +177,7 @@ data class Manufacturer(
 </div>
 </div>
 <div class="paragraph">
-<p>Say you query for <code>Product</code> instances, what happens is that by default Predator JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Predator will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
+<p>Say you query for <code>Product</code> instances, what happens is that by default Micronaut Data JDBC will only query for and fetch the simple properties. In the case of single ended associations like the above Micronaut Data will only retrieve the ID and assign it if is possible (In the case of entities that require constructor arguments this is not even possible).</p>
 </div>
 <div class="paragraph">
 <p>If you need to fetch the association too then you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that a <code>INNER JOIN</code> (or whichever join types is more appropriate) should be executed to retrieve the associated <code>Manufacturer</code>.</p>
@@ -227,10 +227,10 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 <p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple time for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
 </div>
 <div class="paragraph">
-<p>Finally, by default Predator will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
+<p>Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
 </div>
 <div class="paragraph">
-<p>If you need to do anything more complex than the join options Predator has to offer then you may need a native query.</p>
+<p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
 </div>
 
 

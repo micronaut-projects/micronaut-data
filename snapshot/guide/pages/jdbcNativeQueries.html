@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -99,7 +99,7 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>When using Predator with JDBC you can execute native SQL queries using the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
+<p>When using Micronaut Data with JDBC you can execute native SQL queries using the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -137,7 +137,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <div class="sect2">
 <h3 id="_explicit_queries_and_joins">Explicit Queries and Joins</h3>
 <div class="paragraph">
-<p>When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Predator will not automatically do this, instead you need to specify the associated <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
+<p>When writing an explicit SQL query if you specify any joins within the query you may want the resulting data bound to the returned entity. Micronaut Data will not automatically do this, instead you need to specify the associated <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
 </div>
 <div class="paragraph">
 <p>For example:</p>

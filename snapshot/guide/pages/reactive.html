@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -101,10 +101,10 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>Predator supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
+<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
 </div>
 <div class="paragraph">
-<p>In the case of reactive execution and if the backing implementation is blocking, Predator will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+<p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
 </div>
 <div class="paragraph">
 <p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used and instead it is assumed the driver will handle the query in a non-blocking manner.</p>

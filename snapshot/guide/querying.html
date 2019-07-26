@@ -19,7 +19,7 @@ function addJsClass() {
 <div id="navigation">
     <div class="navTitle">
         
-        Micronaut Predator
+        Micronaut Data
     </div>
     <div class="navLinks">
         <ul>
@@ -44,13 +44,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Predator Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
                         <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Predator with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -136,7 +136,7 @@ function addJsClass() {
 
 
 <div class="paragraph">
-<p>The implementation of querying in Predator is based on the dynamic finders in <a href="https://gorm.grails.org">GORM</a>.</p>
+<p>The implementation of querying in Micronaut Data is based on the dynamic finders in <a href="https://gorm.grails.org">GORM</a>.</p>
 </div>
 <div class="paragraph">
 <p>A pattern matching approach is taken at compilation time. The general pattern of query methods is:</p>
@@ -317,7 +317,7 @@ More details about the batch update variants of these methods is covered in the 
 <p>The previous example presented a simple <code>findByTitle</code> query which searches for all <code>Book</code> instances that have a <code>title</code> property <em>equal to</em> the given value.</p>
 </div>
 <div class="paragraph">
-<p>This is the simplest type of query supported by Predator, but you can use an optional suffix on the property name to modify the type of criterion to apply.</p>
+<p>This is the simplest type of query supported by Micronaut Data, but you can use an optional suffix on the property name to modify the type of criterion to apply.</p>
 </div>
 <div class="paragraph">
 <p>For example the following query pattern will execute a query that finds only <code>Book</code> instances that have a page count greater than the given value:</p>
@@ -508,7 +508,7 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 
 
 <div class="paragraph">
-<p>Typically when returning multiple records you need some control over paging the data. Predator includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
+<p>Typically when returning multiple records you need some control over paging the data. Micronaut Data includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
 </div>
 <div class="paragraph">
 <p>In addition methods can return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> object which includes the execution of an additional query to obtain the total number of results for a given query.</p>
@@ -700,7 +700,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-If the projected property type and the return generic type do not match up then Predator will fail to compile the method.
+If the projected property type and the return generic type do not match up then Micronaut Data will fail to compile the method.
 </td>
 </tr>
 </table>
@@ -709,7 +709,7 @@ If the projected property type and the return generic type do not match up then 
 <p>You can also use projections on association paths, for example if an <code>author</code> association were present you could write <code>findAuthorNameByPagesGreaterThan</code> to retrieve the names of all the authors.</p>
 </div>
 <div class="paragraph">
-<p>In addition to this, Predator also supports projection expressions. The following table summarizes the possible expressions with an example and description:</p>
+<p>In addition to this, Micronaut Data also supports projection expressions. The following table summarizes the possible expressions with an example and description:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <caption class="title">Table 1. Projection Expressions</caption>
@@ -794,7 +794,7 @@ If the projected property type and the return generic type do not match up then 
 
 
 <div class="paragraph">
-<p>Predator supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with <code>@Introspected</code>.</p>
+<p>Micronaut Data supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with <code>@Introspected</code>.</p>
 </div>
 <div class="paragraph">
 <p>For example if you wanted to project on an entity called <code>Book</code> you could define a DTO as follows:</p>
@@ -877,7 +877,7 @@ data class BookDTO(
 </div>
 </div>
 <div class="paragraph">
-<p>Predator will optimize the query to only select the necessary properties from the database.</p>
+<p>Micronaut Data will optimize the query to only select the necessary properties from the database.</p>
 </div>
 
 
@@ -900,7 +900,7 @@ data class BookDTO(
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-If a <code>LazyInitializationException</code> occurs this is not a bug in Predator or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
+If a <code>LazyInitializationException</code> occurs this is not a bug in Micronaut Data or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
 </td>
 </tr>
 </table>
@@ -1190,7 +1190,7 @@ fun listBooks(t: String): List&lt;Book&gt;</code></pre>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-Currently Predator does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Predator.
+Currently Micronaut Data does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Micronaut Data.
 </td>
 </tr>
 </table>
@@ -1210,7 +1210,7 @@ Currently Predator does not parse the JPA-QL AST and perform any further type ch
 
 
 <div class="paragraph">
-<p>When using Predator with JPA you can execute native SQL queries by setting <code>nativeQuery</code> to true in the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
+<p>When using Micronaut Data with JPA you can execute native SQL queries by setting <code>nativeQuery</code> to true in the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -1259,10 +1259,10 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 
 
 <div class="paragraph">
-<p>Predator supports asynchronous query execution by defining methods that return either <code>CompletionStage</code>, <code>CompletableFuture</code> or <code>Future</code>.</p>
+<p>Micronaut Data supports asynchronous query execution by defining methods that return either <code>CompletionStage</code>, <code>CompletableFuture</code> or <code>Future</code>.</p>
 </div>
 <div class="paragraph">
-<p>In the case of asynchronous execution and if the backing implementation is blocking, Predator will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+<p>In the case of asynchronous execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
 </div>
 <div class="paragraph">
 <p>The following is an example of a couple of asynchronous methods:</p>
@@ -1362,10 +1362,10 @@ In the case of JPA each operation will run with its own transaction and session,
 
 
 <div class="paragraph">
-<p>Predator supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
+<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
 </div>
 <div class="paragraph">
-<p>In the case of reactive execution and if the backing implementation is blocking, Predator will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+<p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
 </div>
 <div class="paragraph">
 <p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used and instead it is assumed the driver will handle the query in a non-blocking manner.</p>
