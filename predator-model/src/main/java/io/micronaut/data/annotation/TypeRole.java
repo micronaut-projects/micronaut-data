@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.annotation;
 
-import io.micronaut.data.intercept.annotation.DataMethod;
-
 import java.lang.annotation.*;
 
 /**
@@ -27,7 +25,7 @@ import java.lang.annotation.*;
  * to other query arguments.</p>
  *
  * <p>The parameter names of each role can be resolved from the {@link io.micronaut.aop.MethodInvocationContext} as a member of the
- * {@link DataMethod} annotation where the member name is the role name.</p>
+ * {@link io.micronaut.data.intercept.annotation.DataMethod} annotation where the member name is the role name.</p>
  *
  * @author graemerocher
  * @since 1.0.0

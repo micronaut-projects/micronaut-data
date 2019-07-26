@@ -54,9 +54,13 @@ public interface QueryResult {
      * Creates a new encoded query.
      * @param query The query
      * @param parameters The parameters
+     * @param parameterTypes  The parameter types
      * @return The query
      */
-    static @NonNull QueryResult of(@NonNull String query, @Nullable Map<String, String> parameters, @Nullable Map<String, DataType> parameterTypes) {
+    static @NonNull QueryResult of(
+            @NonNull String query,
+            @Nullable Map<String, String> parameters,
+            @Nullable Map<String, DataType> parameterTypes) {
         ArgumentUtils.requireNonNull("query", query);
         return new QueryResult() {
             @NonNull

@@ -18,7 +18,6 @@ package io.micronaut.data.intercept.annotation;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.DataIntroductionAdvice;
 import io.micronaut.data.model.DataType;
 
 import java.io.Serializable;
@@ -28,7 +27,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Internal annotation used to configure execution handling for {@link DataIntroductionAdvice}.
+ * Internal annotation used to configure execution handling for {@link io.micronaut.data.intercept.DataIntroductionAdvice}.
  *
  * @author graemerocher
  * @since 1.0
