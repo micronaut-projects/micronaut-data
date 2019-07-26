@@ -178,7 +178,7 @@
 <li type="circle">io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model"><span class="typeNameLink">SourcePersistentEntity</span></a> (implements io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>, io.micronaut.inject.ast.TypedElement)</li>
 </ul>
 </li>
-<li type="circle">io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept"><span class="typeNameLink">AbstractQueryInterceptor</span></a>&lt;T,R&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/PredatorInterceptor.html" title="interface in io.micronaut.data.intercept">PredatorInterceptor</a>&lt;T,R&gt;)
+<li type="circle">io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept"><span class="typeNameLink">AbstractQueryInterceptor</span></a>&lt;T,R&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&lt;T,R&gt;)
 <ul>
 <li type="circle">io.micronaut.data.runtime.intercept.async.<a href="io/micronaut/data/runtime/intercept/async/AbstractAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async"><span class="typeNameLink">AbstractAsyncInterceptor</span></a>&lt;T,R&gt;
 <ul>
@@ -229,7 +229,7 @@
 <li type="circle">io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultSaveEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept"><span class="typeNameLink">DefaultSaveEntityInterceptor</span></a>&lt;T&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveEntityInterceptor.html" title="interface in io.micronaut.data.intercept">SaveEntityInterceptor</a>&lt;T&gt;)</li>
 <li type="circle">io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultSaveOneInterceptor.html" title="class in io.micronaut.data.runtime.intercept"><span class="typeNameLink">DefaultSaveOneInterceptor</span></a>&lt;T&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveOneInterceptor.html" title="interface in io.micronaut.data.intercept">SaveOneInterceptor</a>&lt;T&gt;)</li>
 <li type="circle">io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/DefaultUpdateInterceptor.html" title="class in io.micronaut.data.runtime.intercept"><span class="typeNameLink">DefaultUpdateInterceptor</span></a>&lt;T&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/UpdateInterceptor.html" title="interface in io.micronaut.data.intercept">UpdateInterceptor</a>&lt;T&gt;)</li>
-<li type="circle">io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept"><span class="typeNameLink">FlushInterceptor</span></a>&lt;T&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/PredatorInterceptor.html" title="interface in io.micronaut.data.intercept">PredatorInterceptor</a>&lt;T,R&gt;)</li>
+<li type="circle">io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept"><span class="typeNameLink">FlushInterceptor</span></a>&lt;T&gt; (implements io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&lt;T,R&gt;)</li>
 </ul>
 </li>
 <li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder</span></a> (implements io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a>)
@@ -315,6 +315,10 @@
 <li type="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.True.html" title="class in io.micronaut.data.processor.visitors.finders"><span class="typeNameLink">CriterionMethodExpression.True</span></a></li>
 </ul>
 </li>
+<li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">DataConfiguration</span></a> (implements io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config">DataSettings</a>)</li>
+<li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">DataConfiguration.PageableConfiguration</span></a></li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.intercept"><span class="typeNameLink">DataIntroductionAdvice</span></a> (implements io.micronaut.aop.MethodInterceptor&lt;T,R&gt;)</li>
+<li type="circle">io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config"><span class="typeNameLink">DataJdbcConfiguration</span></a> (implements io.micronaut.core.naming.Named)</li>
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query"><span class="typeNameLink">DefaultQuery</span></a> (implements io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>)
 <ul>
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/AssociationQuery.html" title="class in io.micronaut.data.model.query"><span class="typeNameLink">AssociationQuery</span></a> (implements io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a>)</li>
@@ -366,10 +370,6 @@
 <li type="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/PersonDto.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">PersonDto</span></a></li>
 <li type="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Pet.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Pet</span></a></li>
 <li type="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Plant.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Plant</span></a></li>
-<li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">PredatorConfiguration</span></a> (implements io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorSettings.html" title="interface in io.micronaut.data.runtime.config">PredatorSettings</a>)</li>
-<li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">PredatorConfiguration.PageableConfiguration</span></a></li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/PredatorIntroductionAdvice.html" title="class in io.micronaut.data.intercept"><span class="typeNameLink">PredatorIntroductionAdvice</span></a> (implements io.micronaut.aop.MethodInterceptor&lt;T,R&gt;)</li>
-<li type="circle">io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config"><span class="typeNameLink">PredatorJdbcConfiguration</span></a> (implements io.micronaut.core.naming.Named)</li>
 <li type="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html" title="class in io.micronaut.data.processor.visitors.finders"><span class="typeNameLink">ProjectionMethodExpression</span></a>
 <ul>
 <li type="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.Distinct.html" title="class in io.micronaut.data.processor.visitors.finders"><span class="typeNameLink">ProjectionMethodExpression.Distinct</span></a></li>
@@ -589,6 +589,7 @@
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query"><span class="typeNameLink">QueryModel</span></a></li>
 </ul>
 </li>
+<li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config"><span class="typeNameLink">DataSettings</span></a></li>
 <li type="circle">io.micronaut.data.repository.<a href="io/micronaut/data/repository/GenericRepository.html" title="interface in io.micronaut.data.repository"><span class="typeNameLink">GenericRepository</span></a>&lt;E,ID&gt;
 <ul>
 <li type="circle">io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async"><span class="typeNameLink">AsyncCrudRepository</span></a>&lt;E,ID&gt;</li>
@@ -703,7 +704,7 @@
 <ul>
 <li type="circle">io.micronaut.aop.MethodInterceptor&lt;T,R&gt;
 <ul>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/PredatorInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">PredatorInterceptor</span></a>&lt;T,R&gt;
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DataInterceptor</span></a>&lt;T,R&gt;
 <ul>
 <li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">CountAsyncInterceptor</span></a>&lt;T&gt;</li>
 <li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/CountInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">CountInterceptor</span></a>&lt;T&gt;</li>
@@ -760,7 +761,6 @@
 <li type="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders"><span class="typeNameLink">MethodCandidate</span></a></li>
 </ul>
 </li>
-<li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorSettings.html" title="interface in io.micronaut.data.runtime.config"><span class="typeNameLink">PredatorSettings</span></a></li>
 <li type="circle">io.micronaut.data.jdbc.runtime.<a href="io/micronaut/data/jdbc/runtime/PreparedStatementCallback.html" title="interface in io.micronaut.data.jdbc.runtime"><span class="typeNameLink">PreparedStatementCallback</span></a>&lt;R&gt;</li>
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/ProjectionList.html" title="interface in io.micronaut.data.model.query"><span class="typeNameLink">ProjectionList</span></a></li>
 <li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">QueryBuilder</span></a></li>
@@ -797,7 +797,7 @@
 <ul>
 <li type="circle">io.micronaut.data.jpa.annotation.<a href="io/micronaut/data/jpa/annotation/EntityGraph.html" title="annotation in io.micronaut.data.jpa.annotation"><span class="typeNameLink">EntityGraph</span></a> (implements java.lang.annotation.Annotation)</li>
 <li type="circle">io.micronaut.data.jdbc.annotation.<a href="io/micronaut/data/jdbc/annotation/JdbcRepository.html" title="annotation in io.micronaut.data.jdbc.annotation"><span class="typeNameLink">JdbcRepository</span></a> (implements java.lang.annotation.Annotation)</li>
-<li type="circle">io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation"><span class="typeNameLink">PredatorMethod</span></a> (implements java.lang.annotation.Annotation)</li>
+<li type="circle">io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation"><span class="typeNameLink">DataMethod</span></a> (implements java.lang.annotation.Annotation)</li>
 <li type="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Relation.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Relation</span></a> (implements java.lang.annotation.Annotation)</li>
 <li type="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/TypeDef.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">TypeDef</span></a> (implements java.lang.annotation.Annotation)</li>
 <li type="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Transient.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Transient</span></a> (implements java.lang.annotation.Annotation)</li>

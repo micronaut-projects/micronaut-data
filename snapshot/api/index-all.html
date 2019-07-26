@@ -334,7 +334,7 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/AutoPopulated.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">AutoPopulated</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
-<div class="block">Meta annotation to identity annotations that are auto-populated by the Predator.</div>
+<div class="block">Meta annotation to identity annotations that are auto-populated by the Micronaut Data.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/factory/Projections.html#avg-java.lang.String-">avg(String)</a></span> - Static method in class io.micronaut.data.model.query.factory.<a href="io/micronaut/data/model/query/factory/Projections.html" title="class in io.micronaut.data.model.query.factory">Projections</a></dt>
 <dd>
@@ -960,6 +960,41 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/config/DataConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">DataConfiguration</span></a> - Class in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
+<dd>
+<div class="block">General data configuration.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.html#DataConfiguration--">DataConfiguration()</a></span> - Constructor for class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">DataConfiguration.PageableConfiguration</span></a> - Class in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
+<dd>
+<div class="block">Configuration for pageable.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DataInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/DataInterceptor.html" title="type parameter in DataInterceptor">T</a>,<a href="io/micronaut/data/intercept/DataInterceptor.html" title="type parameter in DataInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">Marker interface for all Data related interceptors.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.intercept"><span class="typeNameLink">DataIntroductionAdvice</span></a> - Class in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
+<dd>
+<div class="block">The root Data introduction advice, which simply delegates to an appropriate interceptor
+ declared in the <code>io.micronaut.data.intercept</code> package.</div>
+</dd>
+<dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config"><span class="typeNameLink">DataJdbcConfiguration</span></a> - Class in <a href="io/micronaut/data/jdbc/config/package-summary.html">io.micronaut.data.jdbc.config</a></dt>
+<dd>
+<div class="block">Configuration for Data JDBC.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#DataJdbcConfiguration-java.lang.String-">DataJdbcConfiguration(String)</a></span> - Constructor for class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
+<dd>
+<div class="block">The configuration.</div>
+</dd>
+<dt><a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation"><span class="typeNameLink">DataMethod</span></a> - Annotation Type in <a href="io/micronaut/data/intercept/annotation/package-summary.html">io.micronaut.data.intercept.annotation</a></dt>
+<dd>
+<div class="block">Internal annotation used to configure execution handling for <a href="io/micronaut/data/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.intercept"><code>DataIntroductionAdvice</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config"><span class="typeNameLink">DataSettings</span></a> - Interface in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
+<dd>
+<div class="block">Parent configuration interface.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model"><span class="typeNameLink">DataType</span></a> - Enum in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
 <div class="block">Enum of basic data types allowing compile time computation which can then subsequently be used at runtime for fast
@@ -977,15 +1012,15 @@
 <dd>
 <div class="block">Constant for the default under score separated lower case strategy.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#DEFAULT_PAGE_PARAMETER">DEFAULT_PAGE_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_PAGE_PARAMETER">DEFAULT_PAGE_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html#DEFAULT_POSITION">DEFAULT_POSITION</a></span> - Static variable in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodCandidate</a></dt>
 <dd>
 <div class="block">The default position.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#DEFAULT_SIZE_PARAMETER">DEFAULT_SIZE_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SIZE_PARAMETER">DEFAULT_SIZE_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#DEFAULT_SORT_PARAMETER">DEFAULT_SORT_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SORT_PARAMETER">DEFAULT_SORT_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a></span> - Static variable in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -1560,7 +1595,7 @@
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/EmbeddableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">EmbeddableAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
 <dd>
-<div class="block">Maps JPA Embeddable to Predator Embedabble.</div>
+<div class="block">Maps JPA Embeddable to Micronaut Data Embedabble.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/EmbeddableAnnotationMapper.html#EmbeddableAnnotationMapper--">EmbeddableAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/EmbeddableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">EmbeddableAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -1580,7 +1615,7 @@
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/EmbeddedAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">EmbeddedAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
 <dd>
-<div class="block">Maps JPA Embedded to Predator embedded.</div>
+<div class="block">Maps JPA Embedded to Micronaut Data embedded.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/EmbeddedAnnotationMapper.html#EmbeddedAnnotationMapper--">EmbeddedAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/EmbeddedAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">EmbeddedAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -1632,7 +1667,7 @@
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/EntityAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">EntityAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
 <dd>
-<div class="block">Translates the <code>javax.persistence</code> annotation model into the generic model understood by Predator.</div>
+<div class="block">Translates the <code>javax.persistence</code> annotation model into the generic model understood by Micronaut Data.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/EntityAnnotationMapper.html#EntityAnnotationMapper--">EntityAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/EntityAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">EntityAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -2481,7 +2516,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getDecapitalizedName--">getDecapitalizedName()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#getDialect--">getDialect()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#getDialect--">getDialect()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Sort.Order.html#getDirection--">getDirection()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
@@ -2647,7 +2682,7 @@
 <dd>
 <div class="block">Get the pageSize results to return.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#getMaxPageSize--">getMaxPageSize()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getMaxPageSize--">getMaxPageSize()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Food.html#getMeal--">getMeal()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Food.html" title="class in io.micronaut.data.tck.entities">Food</a></dt>
 <dd>&nbsp;</dd>
@@ -2655,7 +2690,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Company.html#getMyId--">getMyId()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Company.html" title="class in io.micronaut.data.tck.entities">Company</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#getName--">getName()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#getName--">getName()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getName--">getName()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
@@ -2831,7 +2866,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Pet.html#getOwner--">getOwner()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Pet.html" title="class in io.micronaut.data.tck.entities">Pet</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#getPackages--">getPackages()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#getPackages--">getPackages()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/PagedQuery.html#getPageable--">getPageable()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PagedQuery.html" title="interface in io.micronaut.data.model.runtime">PagedQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -2847,7 +2882,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Slice.html#getPageNumber--">getPageNumber()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#getPageParameterName--">getPageParameterName()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getPageParameterName--">getPageParameterName()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Book.html#getPages--">getPages()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a></dt>
 <dd>&nbsp;</dd>
@@ -3082,7 +3117,7 @@
 <dd>
 <div class="block">The runtime interceptor that will handle the method.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#getSchemaGenerate--">getSchemaGenerate()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#getSchemaGenerate--">getSchemaGenerate()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getSimpleName--">getSimpleName()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>&nbsp;</dd>
@@ -3094,7 +3129,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Slice.html#getSize--">getSize()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#getSizeParameterName--">getSizeParameterName()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSizeParameterName--">getSizeParameterName()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Pageable.html#getSort--">getSort()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
 <dd>&nbsp;</dd>
@@ -3106,9 +3141,9 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Slice.html#getSort--">getSort()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#getSortDelimiterPattern--">getSortDelimiterPattern()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSortDelimiterPattern--">getSortDelimiterPattern()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#getSortParameterName--">getSortParameterName()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSortParameterName--">getSortParameterName()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html#getSql--">getSql()</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a></dt>
 <dd>&nbsp;</dd>
@@ -3488,7 +3523,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/event/EventIntegrator.html#integrate-org.hibernate.boot.Metadata-org.hibernate.engine.spi.SessionFactoryImplementor-org.hibernate.service.spi.SessionFactoryServiceRegistry-">integrate(Metadata, SessionFactoryImplementor, SessionFactoryServiceRegistry)</a></span> - Method in class io.micronaut.data.hibernate.event.<a href="io/micronaut/data/hibernate/event/EventIntegrator.html" title="class in io.micronaut.data.hibernate.event">EventIntegrator</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/PredatorIntroductionAdvice.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/PredatorIntroductionAdvice.html" title="class in io.micronaut.data.intercept">PredatorIntroductionAdvice</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/DataIntroductionAdvice.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.intercept">DataIntroductionAdvice</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;T, Void&gt;)</a></span> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -3576,7 +3611,7 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a> - package io.micronaut.data.annotation</dt>
 <dd>
-<div class="block">Package containing main user facing annotation API for Predator.</div>
+<div class="block">Package containing main user facing annotation API for Micronaut Data.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/repeatable/package-summary.html">io.micronaut.data.annotation.repeatable</a> - package io.micronaut.data.annotation.repeatable</dt>
 <dd>
@@ -3602,7 +3637,7 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a> - package io.micronaut.data.intercept</dt>
 <dd>
-<div class="block">Interfaces for Predator method interceptors implement.</div>
+<div class="block">Interfaces for Micronaut Data method interceptors implement.</div>
 </dd>
 <dt><a href="io/micronaut/data/intercept/annotation/package-summary.html">io.micronaut.data.intercept.annotation</a> - package io.micronaut.data.intercept.annotation</dt>
 <dd>
@@ -3694,15 +3729,15 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a> - package io.micronaut.data.processor.mappers.jpa</dt>
 <dd>
-<div class="block">Classes to map JPA annotations on to generic Predator annotations.</div>
+<div class="block">Classes to map JPA annotations on to generic Micronaut Data annotations.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jta/package-summary.html">io.micronaut.data.processor.mappers.jta</a> - package io.micronaut.data.processor.mappers.jta</dt>
 <dd>
-<div class="block">Classes to map JTA annotations onto generic Predator annotations.</div>
+<div class="block">Classes to map JTA annotations onto generic Micronaut Data annotations.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/spring/package-summary.html">io.micronaut.data.processor.mappers.spring</a> - package io.micronaut.data.processor.mappers.spring</dt>
 <dd>
-<div class="block">Classes to map Spring Data annotations on to generic Predator annotations.</div>
+<div class="block">Classes to map Spring Data annotations on to generic Micronaut Data annotations.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/support/package-summary.html">io.micronaut.data.processor.mappers.support</a> - package io.micronaut.data.processor.mappers.support</dt>
 <dd>&nbsp;</dd>
@@ -3817,7 +3852,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentProperty.html#isAssignable-java.lang.String-">isAssignable(String)</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#isBatchGenerate--">isBatchGenerate()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#isBatchGenerate--">isBatchGenerate()</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isBoolean-io.micronaut.inject.ast.ClassElement-">isBoolean(ClassElement)</a></span> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
@@ -4102,7 +4137,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Sort.html#isSorted--">isSorted()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#isSortIgnoreCase--">isSortIgnoreCase()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#isSortIgnoreCase--">isSortIgnoreCase()</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/Criteria.html#isTrue-java.lang.String-">isTrue(String)</a></span> - Method in interface io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></dt>
 <dd>
@@ -4607,71 +4642,71 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories"><span class="typeNameLink">MealRepository</span></a> - Interface in <a href="io/micronaut/data/tck/repositories/package-summary.html">io.micronaut.data.tck.repositories</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_COUNT_PARAMETERS">META_MEMBER_COUNT_PARAMETERS</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_COUNT_PARAMETERS">META_MEMBER_COUNT_PARAMETERS</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member that holds the count parameters.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_COUNT_QUERY">META_MEMBER_COUNT_QUERY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_COUNT_QUERY">META_MEMBER_COUNT_QUERY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member that holds the count query.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_DTO">META_MEMBER_DTO</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_DTO">META_MEMBER_DTO</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">Does the query result in a DTO object.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_ENTITY">META_MEMBER_ENTITY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_ENTITY">META_MEMBER_ENTITY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The parameter that references the entity.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_ID">META_MEMBER_ID</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_ID">META_MEMBER_ID</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The parameter that references the ID.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_ID_TYPE">META_MEMBER_ID_TYPE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_ID_TYPE">META_MEMBER_ID_TYPE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The ID type.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_INSERT_BINDING">META_MEMBER_INSERT_BINDING</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_INSERT_BINDING">META_MEMBER_INSERT_BINDING</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member that holds the insert statement.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_INSERT_STMT">META_MEMBER_INSERT_STMT</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_INSERT_STMT">META_MEMBER_INSERT_STMT</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member that holds the insert statement.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_INTERCEPTOR">META_MEMBER_INTERCEPTOR</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_INTERCEPTOR">META_MEMBER_INTERCEPTOR</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member name that holds the interceptor type.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_PAGE_INDEX">META_MEMBER_PAGE_INDEX</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_PAGE_INDEX">META_MEMBER_PAGE_INDEX</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The parameter that holds the offset value.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_PAGE_SIZE">META_MEMBER_PAGE_SIZE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_PAGE_SIZE">META_MEMBER_PAGE_SIZE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The parameter that holds the pageSize value.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_PARAMETER_BINDING">META_MEMBER_PARAMETER_BINDING</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_PARAMETER_BINDING">META_MEMBER_PARAMETER_BINDING</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member name that holds parameter binding.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_QUERY_BUILDER">META_MEMBER_QUERY_BUILDER</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_QUERY_BUILDER">META_MEMBER_QUERY_BUILDER</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The query builder to use.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_RAW_QUERY">META_MEMBER_RAW_QUERY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_RAW_QUERY">META_MEMBER_RAW_QUERY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">Whether the user is a raw user specified query.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_RESULT_DATA_TYPE">META_MEMBER_RESULT_DATA_TYPE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_RESULT_DATA_TYPE">META_MEMBER_RESULT_DATA_TYPE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member name that holds the result type.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_RESULT_TYPE">META_MEMBER_RESULT_TYPE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_RESULT_TYPE">META_MEMBER_RESULT_TYPE</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member name that holds the result type.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html#META_MEMBER_ROOT_ENTITY">META_MEMBER_ROOT_ENTITY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation">PredatorMethod</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/annotation/DataMethod.html#META_MEMBER_ROOT_ENTITY">META_MEMBER_ROOT_ENTITY</a></span> - Static variable in annotation type io.micronaut.data.intercept.annotation.<a href="io/micronaut/data/intercept/annotation/DataMethod.html" title="annotation in io.micronaut.data.intercept.annotation">DataMethod</a></dt>
 <dd>
 <div class="block">The member name that holds the root entity type.</div>
 </dd>
@@ -4691,15 +4726,15 @@
 <dd>
 <div class="block">The predator method info.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-">MethodMatchInfo(TypedElement, QueryModel, Class&lt;? extends PredatorInterceptor&gt;)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-">MethodMatchInfo(TypedElement, QueryModel, Class&lt;? extends DataInterceptor&gt;)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
 <dd>
 <div class="block">Creates a method info.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-boolean-">MethodMatchInfo(TypedElement, QueryModel, Class&lt;? extends PredatorInterceptor&gt;, boolean)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-boolean-">MethodMatchInfo(TypedElement, QueryModel, Class&lt;? extends DataInterceptor&gt;, boolean)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
 <dd>
 <div class="block">Creates a method info.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-java.lang.String...-">MethodMatchInfo(TypedElement, QueryModel, Class&lt;? extends PredatorInterceptor&gt;, MethodMatchInfo.OperationType, String...)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-java.lang.String...-">MethodMatchInfo(TypedElement, QueryModel, Class&lt;? extends DataInterceptor&gt;, MethodMatchInfo.OperationType, String...)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
 <dd>
 <div class="block">Creates a method info.</div>
 </dd>
@@ -5024,7 +5059,7 @@
 <dd>
 <div class="block">Models pageable data.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#PageableConfiguration--">PageableConfiguration()</a></span> - Constructor for class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#PageableConfiguration--">PageableConfiguration()</a></span> - Constructor for class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/repository/PageableRepository.html" title="interface in io.micronaut.data.repository"><span class="typeNameLink">PageableRepository</span></a>&lt;<a href="io/micronaut/data/repository/PageableRepository.html" title="type parameter in PageableRepository">E</a>,<a href="io/micronaut/data/repository/PageableRepository.html" title="type parameter in PageableRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/repository/package-summary.html">io.micronaut.data.repository</a></dt>
 <dd>
@@ -5034,7 +5069,7 @@
 <dd>
 <div class="block">A request argument binder for binding a <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> object from the request.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html#PageableRequestArgumentBinder-io.micronaut.data.runtime.config.PredatorConfiguration.PageableConfiguration-">PageableRequestArgumentBinder(PredatorConfiguration.PageableConfiguration)</a></span> - Constructor for class io.micronaut.data.runtime.http.<a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html" title="class in io.micronaut.data.runtime.http">PageableRequestArgumentBinder</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html#PageableRequestArgumentBinder-io.micronaut.data.runtime.config.DataConfiguration.PageableConfiguration-">PageableRequestArgumentBinder(DataConfiguration.PageableConfiguration)</a></span> - Constructor for class io.micronaut.data.runtime.http.<a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html" title="class in io.micronaut.data.runtime.http">PageableRequestArgumentBinder</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -5136,48 +5171,13 @@
 <dd>
 <div class="block">The position of the visitor.</div>
 </dd>
-<dt><a href="io/micronaut/data/runtime/config/PredatorConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">PredatorConfiguration</span></a> - Class in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
-<dd>
-<div class="block">General predator configuration.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.html#PredatorConfiguration--">PredatorConfiguration()</a></span> - Constructor for class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config"><span class="typeNameLink">PredatorConfiguration.PageableConfiguration</span></a> - Class in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
-<dd>
-<div class="block">Configuration for pageable.</div>
-</dd>
-<dt><a href="io/micronaut/data/intercept/PredatorInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">PredatorInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/PredatorInterceptor.html" title="type parameter in PredatorInterceptor">T</a>,<a href="io/micronaut/data/intercept/PredatorInterceptor.html" title="type parameter in PredatorInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
-<dd>
-<div class="block">Marker interface for all Predator related interceptors.</div>
-</dd>
-<dt><a href="io/micronaut/data/intercept/PredatorIntroductionAdvice.html" title="class in io.micronaut.data.intercept"><span class="typeNameLink">PredatorIntroductionAdvice</span></a> - Class in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
-<dd>
-<div class="block">The root Predator introduction advice, which simply delegates to an appropriate interceptor
- declared in the <code>io.micronaut.data.intercept</code> package.</div>
-</dd>
-<dt><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config"><span class="typeNameLink">PredatorJdbcConfiguration</span></a> - Class in <a href="io/micronaut/data/jdbc/config/package-summary.html">io.micronaut.data.jdbc.config</a></dt>
-<dd>
-<div class="block">Configuration for Predator JDBC.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#PredatorJdbcConfiguration-java.lang.String-">PredatorJdbcConfiguration(String)</a></span> - Constructor for class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
-<dd>
-<div class="block">The configuration.</div>
-</dd>
-<dt><a href="io/micronaut/data/intercept/annotation/PredatorMethod.html" title="annotation in io.micronaut.data.intercept.annotation"><span class="typeNameLink">PredatorMethod</span></a> - Annotation Type in <a href="io/micronaut/data/intercept/annotation/package-summary.html">io.micronaut.data.intercept.annotation</a></dt>
-<dd>
-<div class="block">Internal annotation used to configure execution handling for <a href="io/micronaut/data/intercept/PredatorIntroductionAdvice.html" title="class in io.micronaut.data.intercept"><code>PredatorIntroductionAdvice</code></a>.</div>
-</dd>
-<dt><a href="io/micronaut/data/runtime/config/PredatorSettings.html" title="interface in io.micronaut.data.runtime.config"><span class="typeNameLink">PredatorSettings</span></a> - Interface in <a href="io/micronaut/data/runtime/config/package-summary.html">io.micronaut.data.runtime.config</a></dt>
-<dd>
-<div class="block">Parent configuration interface.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#PREFIX">PREFIX</a></span> - Static variable in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#PREFIX">PREFIX</a></span> - Static variable in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>
 <div class="block">The prefix to use.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#PREFIX">PREFIX</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#PREFIX">PREFIX</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorSettings.html#PREFIX">PREFIX</a></span> - Static variable in interface io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorSettings.html" title="interface in io.micronaut.data.runtime.config">PredatorSettings</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataSettings.html#PREFIX">PREFIX</a></span> - Static variable in interface io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config">DataSettings</a></dt>
 <dd>
 <div class="block">Prefix for data related config.</div>
 </dd>
@@ -5327,7 +5327,7 @@
 <dd>
 <div class="block">Defines the query string such as SQL, JPA-QL, Cypher etc that should be executed.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorSettings.html#QUERY_LOG">QUERY_LOG</a></span> - Static variable in interface io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorSettings.html" title="interface in io.micronaut.data.runtime.config">PredatorSettings</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataSettings.html#QUERY_LOG">QUERY_LOG</a></span> - Static variable in interface io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config">DataSettings</a></dt>
 <dd>
 <div class="block">The logger that should be used to log queries.</div>
 </dd>
@@ -6138,7 +6138,7 @@
 <dd>
 <div class="block">Schema generator used for testing purposes.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/SchemaGenerator.html#SchemaGenerator-java.util.List-">SchemaGenerator(List&lt;PredatorJdbcConfiguration&gt;)</a></span> - Constructor for class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/SchemaGenerator.html" title="class in io.micronaut.data.jdbc.config">SchemaGenerator</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/SchemaGenerator.html#SchemaGenerator-java.util.List-">SchemaGenerator(List&lt;DataJdbcConfiguration&gt;)</a></span> - Constructor for class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/SchemaGenerator.html" title="class in io.micronaut.data.jdbc.config">SchemaGenerator</a></dt>
 <dd>
 <div class="block">Constructors a schema generator for the given configurations.</div>
 </dd>
@@ -6176,7 +6176,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Book.html#setAuthor-io.micronaut.data.tck.entities.Author-">setAuthor(Author)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#setBatchGenerate-boolean-">setBatchGenerate(boolean)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setBatchGenerate-boolean-">setBatchGenerate(boolean)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setBigDecimal-java.sql.PreparedStatement-java.lang.Integer-java.math.BigDecimal-">setBigDecimal(PreparedStatement, Integer, BigDecimal)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
@@ -6232,7 +6232,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Company.html#setDateCreated-java.util.Date-">setDateCreated(Date)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Company.html" title="class in io.micronaut.data.tck.entities">Company</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#setDialect-io.micronaut.data.model.query.builder.sql.Dialect-">setDialect(Dialect)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setDialect-io.micronaut.data.model.query.builder.sql.Dialect-">setDialect(Dialect)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>
 <div class="block">Sets the dialect.</div>
 </dd>
@@ -6314,7 +6314,7 @@
 <dd>
 <div class="block">Write a long value for the given name.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#setMaxPageSize-int-">setMaxPageSize(int)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setMaxPageSize-int-">setMaxPageSize(int)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>
 <div class="block">Sets the maximum page size when binding <a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> objects.</div>
 </dd>
@@ -6336,11 +6336,11 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Face.html#setNose-io.micronaut.data.tck.entities.Nose-">setNose(Nose)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Face.html" title="class in io.micronaut.data.tck.entities">Face</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#setPackages-java.util.List-">setPackages(List&lt;String&gt;)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setPackages-java.util.List-">setPackages(List&lt;String&gt;)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>
 <div class="block">Sets the packages to use.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#setPageParameterName-java.lang.String-">setPageParameterName(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setPageParameterName-java.lang.String-">setPageParameterName(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Book.html#setPages-int-">setPages(int)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a></dt>
 <dd>&nbsp;</dd>
@@ -6356,7 +6356,7 @@
 <dd>
 <div class="block">Set the transaction rollback-only.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html#setSchemaGenerate-io.micronaut.data.runtime.config.SchemaGenerate-">setSchemaGenerate(SchemaGenerate)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/PredatorJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">PredatorJdbcConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setSchemaGenerate-io.micronaut.data.runtime.config.SchemaGenerate-">setSchemaGenerate(SchemaGenerate)</a></span> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
 <dd>
 <div class="block">Sets the schema generation strategy.</div>
 </dd>
@@ -6366,13 +6366,13 @@
 <dd>
 <div class="block">Write a short value for the given name.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#setSizeParameterName-java.lang.String-">setSizeParameterName(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSizeParameterName-java.lang.String-">setSizeParameterName(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#setSortDelimiter-java.lang.String-">setSortDelimiter(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSortDelimiter-java.lang.String-">setSortDelimiter(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#setSortIgnoreCase-boolean-">setSortIgnoreCase(boolean)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSortIgnoreCase-boolean-">setSortIgnoreCase(boolean)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html#setSortParameterName-java.lang.String-">setSortParameterName(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/PredatorConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">PredatorConfiguration.PageableConfiguration</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSortParameterName-java.lang.String-">setSortParameterName(String)</a></span> - Method in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html#setString-java.sql.PreparedStatement-java.lang.Integer-java.lang.String-">setString(PreparedStatement, Integer, String)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
@@ -6561,7 +6561,7 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring"><span class="typeNameLink">SpringHibernateTransactionOperations</span></a> - Class in <a href="io/micronaut/data/hibernate/runtime/spring/package-summary.html">io.micronaut.data.hibernate.runtime.spring</a></dt>
 <dd>
-<div class="block">Adds Spring Transaction management capability to Predator.</div>
+<div class="block">Adds Spring Transaction management capability to Micronaut Data.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#SpringHibernateTransactionOperations-org.springframework.orm.hibernate5.HibernateTransactionManager-">SpringHibernateTransactionOperations(HibernateTransactionManager)</a></span> - Constructor for class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
 <dd>

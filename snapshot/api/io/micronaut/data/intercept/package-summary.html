@@ -70,7 +70,7 @@
 <div class="header">
 <h1 title="Package" class="title">Package&nbsp;io.micronaut.data.intercept</h1>
 <div class="docSummary">
-<div class="block">Interfaces for Predator method interceptors implement.</div>
+<div class="block">Interfaces for Micronaut Data method interceptors implement.</div>
 </div>
 <p>See:&nbsp;<a href="#package.description">Description</a></p>
 </div>
@@ -91,75 +91,75 @@
 </td>
 </tr>
 <tr class="rowColor">
+<td class="colFirst"><a href="../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&lt;T,R&gt;</td>
+<td class="colLast">
+<div class="block">Marker interface for all Data related interceptors.</div>
+</td>
+</tr>
+<tr class="altColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept">DeleteAllInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that executes a batch delete.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/DeleteOneInterceptor.html" title="interface in io.micronaut.data.intercept">DeleteOneInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">Interceptor that deletes a single entity.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/ExistsByInterceptor.html" title="interface in io.micronaut.data.intercept">ExistsByInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that checks for the existence of a record.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept">FindAllInterceptor</a>&lt;T,R&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that doesn't execute a query but instead just lists all the results.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindByIdInterceptor.html" title="interface in io.micronaut.data.intercept">FindByIdInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that finds an entity by ID.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindOneInterceptor.html" title="interface in io.micronaut.data.intercept">FindOneInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that executes a <a href="../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation"><code>Query</code></a> and returns a single entity result.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindOptionalInterceptor.html" title="interface in io.micronaut.data.intercept">FindOptionalInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that executes a <a href="../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation"><code>Query</code></a> and returns an optional single entity result.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept">FindPageInterceptor</a>&lt;T,R&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that handles a return type of <a href="../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a>.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindSliceInterceptor.html" title="interface in io.micronaut.data.intercept">FindSliceInterceptor</a>&lt;T,R&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that handles a return type of <a href="../../../../io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model"><code>Slice</code></a>.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/FindStreamInterceptor.html" title="interface in io.micronaut.data.intercept">FindStreamInterceptor</a>&lt;T&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that executes a <a href="../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation"><code>Query</code></a> and returns a <code>Stream</code> of results.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><a href="../../../../io/micronaut/data/intercept/IterableResultInterceptor.html" title="interface in io.micronaut.data.intercept">IterableResultInterceptor</a>&lt;T,R&gt;</td>
 <td class="colLast">
 <div class="block">An interceptor that returns an iterable result.</div>
-</td>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><a href="../../../../io/micronaut/data/intercept/PredatorInterceptor.html" title="interface in io.micronaut.data.intercept">PredatorInterceptor</a>&lt;T,R&gt;</td>
-<td class="colLast">
-<div class="block">Marker interface for all Predator related interceptors.</div>
 </td>
 </tr>
 <tr class="rowColor">
@@ -198,9 +198,9 @@
 </tr>
 <tbody>
 <tr class="altColor">
-<td class="colFirst"><a href="../../../../io/micronaut/data/intercept/PredatorIntroductionAdvice.html" title="class in io.micronaut.data.intercept">PredatorIntroductionAdvice</a></td>
+<td class="colFirst"><a href="../../../../io/micronaut/data/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.intercept">DataIntroductionAdvice</a></td>
 <td class="colLast">
-<div class="block">The root Predator introduction advice, which simply delegates to an appropriate interceptor
+<div class="block">The root Data introduction advice, which simply delegates to an appropriate interceptor
  declared in the <code>io.micronaut.data.intercept</code> package.</div>
 </td>
 </tr>
@@ -212,7 +212,7 @@
 <!--   -->
 </a>
 <h2 title="Package io.micronaut.data.intercept Description">Package io.micronaut.data.intercept Description</h2>
-<div class="block">Interfaces for Predator method interceptors implement.</div>
+<div class="block">Interfaces for Micronaut Data method interceptors implement.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>1.0.0</dd>
