@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
@@ -65,7 +65,7 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
         if (ArrayUtils.isNotEmpty(parameters)) {
             if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
                 ClassElement returnType = matchContext.getReturnType();
-                Class<? extends PredatorInterceptor> interceptor = pickSaveInterceptor(returnType);
+                Class<? extends DataInterceptor> interceptor = pickSaveInterceptor(returnType);
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
                     returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
                 }
@@ -100,8 +100,8 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
      * @param returnType The return type
      * @return The interceptor
      */
-    private static @NonNull Class<? extends PredatorInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
-        Class<? extends PredatorInterceptor> interceptor;
+    private static @NonNull Class<? extends DataInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
+        Class<? extends DataInterceptor> interceptor;
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = SaveEntityAsyncInterceptor.class;
         } else if (TypeUtils.isReactiveOrFuture(returnType)) {

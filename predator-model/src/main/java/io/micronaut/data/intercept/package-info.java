@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Interfaces for Predator method interceptors implement.
+ * Interfaces for Micronaut Data method interceptors implement.
  *
  * @author graemerocher
  * @since 1.0.0

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.intercept.async;
 
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 
 import java.util.concurrent.CompletionStage;
 
@@ -26,5 +26,5 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0
  */
-public interface SaveAllAsyncInterceptor<T> extends PredatorInterceptor<T, CompletionStage<Iterable<Object>>> {
+public interface SaveAllAsyncInterceptor<T> extends DataInterceptor<T, CompletionStage<Iterable<Object>>> {
 }

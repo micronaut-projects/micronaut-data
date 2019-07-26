@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
@@ -123,7 +123,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         }
 
         ClassElement returnType = matchContext.getReturnType();
-        Class<? extends PredatorInterceptor> interceptor = pickUpdateInterceptor(returnType);
+        Class<? extends DataInterceptor> interceptor = pickUpdateInterceptor(returnType);
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
         }
@@ -147,8 +147,8 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
      * @param returnType The return type
      * @return The interceptor
      */
-    static Class<? extends PredatorInterceptor> pickUpdateInterceptor(ClassElement returnType) {
-        Class<? extends PredatorInterceptor> interceptor;
+    static Class<? extends DataInterceptor> pickUpdateInterceptor(ClassElement returnType) {
+        Class<? extends DataInterceptor> interceptor;
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = UpdateAsyncInterceptor.class;
         } else if (TypeUtils.isReactiveType(returnType)) {

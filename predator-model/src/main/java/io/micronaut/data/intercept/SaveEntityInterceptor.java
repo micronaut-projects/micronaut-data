@@ -25,5 +25,5 @@ import io.micronaut.core.annotation.Blocking;
  * @since 1.0
  */
 @Blocking
-public interface SaveEntityInterceptor<T> extends PredatorInterceptor<T, Object> {
+public interface SaveEntityInterceptor<T> extends DataInterceptor<T, Object> {
 }

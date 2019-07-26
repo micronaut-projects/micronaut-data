@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Classes to map Spring Data annotations on to generic Predator annotations.
+ * Classes to map Spring Data annotations on to generic Micronaut Data annotations.
  *
  * @author graemerocher
  * @since 1.0.0

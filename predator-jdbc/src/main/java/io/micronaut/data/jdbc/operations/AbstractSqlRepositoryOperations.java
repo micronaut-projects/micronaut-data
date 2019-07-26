@@ -10,7 +10,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
@@ -21,7 +21,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.runtime.config.PredatorSettings;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
@@ -149,8 +149,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         if (value != null) {
                             value = identityProperty.get(value);
                         }
-                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                            DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                         }
 
                         preparedStatementWriter.setDynamic(
@@ -165,8 +165,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     if (beanProperty.hasStereotype(AutoPopulated.class)) {
                         if (beanProperty.hasAnnotation(DateCreated.class)) {
                             now = now != null ? now : new Date();
-                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                                PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
                             }
                             preparedStatementWriter.setDynamic(
                                     stmt,
@@ -177,8 +177,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             beanProperty.convertAndSet(entity, now);
                         } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
                             now = now != null ? now : new Date();
-                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                                PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
+                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
                             }
                             preparedStatementWriter.setDynamic(
                                     stmt,
@@ -189,8 +189,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             beanProperty.convertAndSet(entity, now);
                         } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
                             UUID uuid = UUID.randomUUID();
-                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                                PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
+                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
                             }
                             preparedStatementWriter.setDynamic(
                                     stmt,
@@ -203,8 +203,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                         }
                     } else {
-                        if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                            PredatorSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                            DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                         }
                         preparedStatementWriter.setDynamic(
                                 stmt,
@@ -231,8 +231,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
             AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             String insertStatement = annotationMetadata.stringValue(
-                    PredatorMethod.class,
-                    PredatorMethod.META_MEMBER_INSERT_STMT
+                    DataMethod.class,
+                    DataMethod.META_MEMBER_INSERT_STMT
             ).orElse(null);
             if (insertStatement == null) {
                 throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository and is annotated with @JdbcRepository");
@@ -349,8 +349,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         for (Map.Entry<Integer, Object> entry : parameterValues.entrySet()) {
             int index = entry.getKey();
             Object value = entry.getValue();
-            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                PredatorSettings.QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                DataSettings.QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
             }
             DataType dataType = paramTypeLen >= index ? parameterTypes[index - 1] : null;
             if (dataType == null) {
@@ -380,11 +380,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     private <T> Map<String, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata) {
-        AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
+        AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
         if (annotation == null) {
             return Collections.emptyMap();
         }
-        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(PredatorMethod.META_MEMBER_INSERT_BINDING,
+        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(DataMethod.META_MEMBER_INSERT_BINDING,
                 Property.class);
         Map<String, Integer> parameterValues;
         if (CollectionUtils.isNotEmpty(parameterData)) {

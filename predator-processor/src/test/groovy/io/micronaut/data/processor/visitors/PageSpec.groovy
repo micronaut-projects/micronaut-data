@@ -16,12 +16,11 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
-import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindPageInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
@@ -29,11 +28,10 @@ import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
-import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
-class PageSpec extends AbstractPredatorSpec {
+class PageSpec extends AbstractDataSpec {
 
     void "test compile error on incorrect property order"() {
         when:
@@ -91,17 +89,17 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         when: "the list method is retrieved"
         def listMethod = beanDefinition.getRequiredMethod("list", Pageable)
-        def listAnn = listMethod.synthesize(PredatorMethod)
+        def listAnn = listMethod.synthesize(DataMethod)
 
         def findMethod = beanDefinition.getRequiredMethod("findByName", String, Pageable)
-        def findAnn = findMethod.synthesize(PredatorMethod)
+        def findAnn = findMethod.synthesize(DataMethod)
 
 
         then:"it is configured correctly"
         listAnn.interceptor() == FindPageInterceptor
         findAnn.interceptor() == FindPageInterceptor
         findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT($alias) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
-        findMethod.getValue(PredatorMethod.class, PredatorMethod.META_MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
+        findMethod.getValue(DataMethod.class, DataMethod.META_MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
                   .get()[0]
 
     }

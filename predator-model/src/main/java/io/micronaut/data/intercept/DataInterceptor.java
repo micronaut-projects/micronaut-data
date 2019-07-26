@@ -19,7 +19,7 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.core.annotation.Introspected;
 
 /**
- * Marker interface for all Predator related interceptors.
+ * Marker interface for all Data related interceptors.
  *
  * @param <T> The declaring type
  * @param <R> The return type
@@ -28,5 +28,5 @@ import io.micronaut.core.annotation.Introspected;
  * @since 1.0
  */
 @Introspected
-public interface PredatorInterceptor<T, R> extends MethodInterceptor<T, R> {
+public interface DataInterceptor<T, R> extends MethodInterceptor<T, R> {
 }

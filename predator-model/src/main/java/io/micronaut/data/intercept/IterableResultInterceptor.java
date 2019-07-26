@@ -23,5 +23,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface IterableResultInterceptor<T, R> extends PredatorInterceptor<T, Iterable<R>> {
+public interface IterableResultInterceptor<T, R> extends DataInterceptor<T, Iterable<R>> {
 }

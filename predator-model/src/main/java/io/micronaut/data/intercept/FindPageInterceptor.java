@@ -23,5 +23,5 @@ package io.micronaut.data.intercept;
  * @param <R> The return type
  * @since 1.0.0
  */
-public interface FindPageInterceptor<T, R> extends PredatorInterceptor<T, R> {
+public interface FindPageInterceptor<T, R> extends DataInterceptor<T, R> {
 }

@@ -24,18 +24,18 @@ import java.time.chrono.ChronoLocalDate;
 import java.util.Date;
 
 /**
- * Internal Predator initialization.
+ * Internal Data initialization.
  *
  * @author graemerocher
  * @since 1.0
  */
 @Context
-class PredatorInitializer {
+class DataInitializer {
 
     /**
      * Default constructor.
      */
-    PredatorInitializer() {
+    DataInitializer() {
         ConversionService<?> conversionService = ConversionService.SHARED;
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime ->
                 new java.sql.Date(offsetDateTime.toInstant().toEpochMilli())

@@ -6,7 +6,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.tck.entities.City
 import spock.lang.Unroll
 
-class JoinPathSpec extends AbstractPredatorSpec {
+class JoinPathSpec extends AbstractDataSpec {
 
     @Unroll
     void "test JPA projection across nested property path for #method"() {

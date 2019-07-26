@@ -2,9 +2,9 @@ package io.micronaut.data.processor.visitors
 
 
 import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 
-class ParameterTypeDefSpec extends AbstractPredatorSpec {
+class ParameterTypeDefSpec extends AbstractDataSpec {
 
     void "test parameter type def resolved from entity"() {
         given:
@@ -45,13 +45,13 @@ class Person {
         expect:
         repository.getRequiredMethod("findByIdIn", List)
                 .getAnnotationMetadata()
-                .getAnnotation(PredatorMethod)
+                .getAnnotation(DataMethod)
                 .getAnnotations("typeDefs", TypeDef)[0]
                 .stringValue("type").get() == 'OBJECT'
 
         repository.getRequiredMethod("deleteAll", Iterable)
                 .getAnnotationMetadata()
-                .getAnnotation(PredatorMethod)
+                .getAnnotation(DataMethod)
                 .getAnnotations("typeDefs", TypeDef)[0]
                 .stringValue("type").get() == 'ENTITY'
 
@@ -94,7 +94,7 @@ class Person {
 
         repository.getRequiredMethod("deleteAll", Iterable)
                 .getAnnotationMetadata()
-                .getAnnotation(PredatorMethod)
+                .getAnnotation(DataMethod)
                 .getAnnotations("typeDefs", TypeDef)[0]
                 .stringValue("type").get() == 'ENTITY'
 

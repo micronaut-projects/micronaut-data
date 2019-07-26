@@ -16,13 +16,12 @@
 package io.micronaut.data.processor.visitors
 
 
-import io.micronaut.data.intercept.SaveEntityInterceptor
 import io.micronaut.data.intercept.SaveOneInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
-class JpaSaveSpec extends AbstractPredatorSpec {
+class JpaSaveSpec extends AbstractDataSpec {
 
     void "test save"() {
         given:
@@ -47,7 +46,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         when: "save method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("save", String, int.class)
-        def updateAnn = updateMethod.synthesize(PredatorMethod)
+        def updateAnn = updateMethod.synthesize(DataMethod)
 
         then: "It was correctly compiled"
         updateAnn.interceptor() == SaveOneInterceptor

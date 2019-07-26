@@ -3,19 +3,17 @@ package io.micronaut.data.runtime.http
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.runtime.config.PredatorConfiguration
+import io.micronaut.data.runtime.config.DataConfiguration
 import io.micronaut.http.HttpRequest
 import spock.lang.Specification
 import spock.lang.Unroll
-
-import javax.persistence.criteria.Order
 
 class PageableRequestArgumentBinderSpec extends Specification {
 
     @Unroll
     void 'test bind size #size and page #page'() {
         given:
-        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(new PredatorConfiguration.PageableConfiguration())
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(new DataConfiguration.PageableConfiguration())
         def get = HttpRequest.GET('/')
         get.parameters.add("size", size)
         get.parameters.add("page", page)
@@ -37,7 +35,7 @@ class PageableRequestArgumentBinderSpec extends Specification {
     @Unroll
     void 'test bind sort #sort'() {
         given:
-        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(new PredatorConfiguration.PageableConfiguration())
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(new DataConfiguration.PageableConfiguration())
         def get = HttpRequest.GET('/')
         get.parameters.add("sort", sort)
 

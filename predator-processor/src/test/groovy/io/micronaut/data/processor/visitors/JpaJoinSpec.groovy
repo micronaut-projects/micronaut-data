@@ -19,13 +19,11 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.JoinPath
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
-import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.City
 import spock.lang.Unroll
 
 
-class JpaJoinSpec extends AbstractPredatorSpec {
+class JpaJoinSpec extends AbstractDataSpec {
 
 
     @Unroll

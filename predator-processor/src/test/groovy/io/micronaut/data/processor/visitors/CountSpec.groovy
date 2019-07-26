@@ -17,25 +17,12 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.CountInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.CountAsyncInterceptor
-import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor
-import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor
-import io.micronaut.data.intercept.async.FindAllAsyncInterceptor
-import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor
-import io.micronaut.data.intercept.async.FindOneAsyncInterceptor
-import io.micronaut.data.intercept.async.FindPageAsyncInterceptor
-import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor
-import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor
-import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor
-import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor
-import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor
-import io.micronaut.data.model.entities.Person
-import io.micronaut.inject.ExecutableMethod
 import spock.lang.Unroll
 
-class CountSpec extends AbstractPredatorSpec {
+class CountSpec extends AbstractDataSpec {
 
     @Unroll
     void "test count method variations for method #method"() {
@@ -61,7 +48,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
                 .get()
         def query = executableMethod.stringValue(Query).orElse(null)
         def ann = executableMethod
-                .synthesize(PredatorMethod)
+                .synthesize(DataMethod)
 
         expect:
         ann.resultType() == resultType

@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Maps JPA Embedded to Predator embedded.
+ * Maps JPA Embedded to Micronaut Data embedded.
  *
  * @author graemerocher
  * @since 1.0.0

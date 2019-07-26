@@ -30,7 +30,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
 import javax.inject.Singleton;
@@ -39,7 +39,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * The root Predator introduction advice, which simply delegates to an appropriate interceptor
+ * The root Data introduction advice, which simply delegates to an appropriate interceptor
  * declared in the {@link io.micronaut.data.intercept} package.
  *
  * @author graemerocher
@@ -47,16 +47,16 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-public final class PredatorIntroductionAdvice implements MethodInterceptor<Object, Object> {
+public final class DataIntroductionAdvice implements MethodInterceptor<Object, Object> {
 
     private final BeanLocator beanLocator;
-    private final Map<InterceptorKey, PredatorInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
+    private final Map<InterceptorKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
 
     /**
      * Default constructor.
      * @param beanLocator The bean locator
      */
-    PredatorIntroductionAdvice(BeanLocator beanLocator) {
+    DataIntroductionAdvice(BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
     }
 
@@ -66,11 +66,11 @@ public final class PredatorIntroductionAdvice implements MethodInterceptor<Objec
         Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
                                          .orElse(RepositoryOperations.class);
         Class<?> interceptorType = context
-                .classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_INTERCEPTOR)
+                .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
                 .orElse(null);
 
-        if (interceptorType != null && PredatorInterceptor.class.isAssignableFrom(interceptorType)) {
-            PredatorInterceptor<Object, Object> childInterceptor =
+        if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+            DataInterceptor<Object, Object> childInterceptor =
                     findInterceptor(dataSourceName, operationsType, interceptorType);
             return childInterceptor.intercept(context);
 
@@ -79,12 +79,13 @@ public final class PredatorIntroductionAdvice implements MethodInterceptor<Objec
         }
     }
 
-    private @NonNull PredatorInterceptor<Object, Object> findInterceptor(
+    private @NonNull
+    DataInterceptor<Object, Object> findInterceptor(
             @Nullable String dataSourceName,
             @NonNull Class<?> operationsType,
             @NonNull Class<?> interceptorType) {
         InterceptorKey key = new InterceptorKey(dataSourceName, operationsType, interceptorType);
-        PredatorInterceptor interceptor = interceptorMap.get(key);
+        DataInterceptor interceptor = interceptorMap.get(key);
         if (interceptor == null) {
             if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
                 throw new IllegalArgumentException("Repository type must be an instance of RepositoryOperations!");
@@ -102,12 +103,12 @@ public final class PredatorIntroductionAdvice implements MethodInterceptor<Objec
                 throw new ConfigurationException("No backing RepositoryOperations configured for repository. Check your configuration and try again", e);
             }
             BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref -> interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
-                    new DataAccessException("No Predator interceptor found for type: " + interceptorType)
+                    new DataAccessException("No Data interceptor found for type: " + interceptorType)
             );
             if (introspection.getConstructorArguments().length == 0) {
-                interceptor = (PredatorInterceptor) introspection.instantiate();
+                interceptor = (DataInterceptor) introspection.instantiate();
             } else {
-                interceptor = (PredatorInterceptor) introspection.instantiate(datastore);
+                interceptor = (DataInterceptor) introspection.instantiate(datastore);
             }
             interceptorMap.put(key, interceptor);
         }

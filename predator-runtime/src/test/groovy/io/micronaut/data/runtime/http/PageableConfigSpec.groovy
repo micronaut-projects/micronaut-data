@@ -1,7 +1,7 @@
 package io.micronaut.data.runtime.http
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.runtime.config.PredatorConfiguration
+import io.micronaut.data.runtime.config.DataConfiguration
 import spock.lang.Specification
 
 class PageableConfigSpec extends Specification {
@@ -14,7 +14,7 @@ class PageableConfigSpec extends Specification {
                 'micronaut.data.pageable.page-parameter-name': 'index',
                 'micronaut.data.pageable.size-parameter-name': 'max'
         )
-        PredatorConfiguration.PageableConfiguration configuration = context.getBean(PredatorConfiguration.PageableConfiguration)
+        DataConfiguration.PageableConfiguration configuration = context.getBean(DataConfiguration.PageableConfiguration)
 
         expect:
         configuration.maxPageSize == 30

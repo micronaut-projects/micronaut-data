@@ -27,7 +27,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.runtime.config.PredatorSettings;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -280,8 +280,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 T entity = operation.getEntity();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
-                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                    PredatorSettings.QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
                 }
                 PreparedStatement stmt = connection
                         .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
@@ -418,8 +418,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         Map<Integer, Object> parameterValues = preparedQuery.getIndexedParameterValues();
         String query = prepareQueryString(preparedQuery, parameterValues, isSingleResult, isUpdate);
 
-        if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-            PredatorSettings.QUERY_LOG.debug("Executing Query: {}", query);
+        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+            DataSettings.QUERY_LOG.debug("Executing Query: {}", query);
         }
         final PreparedStatement ps = connection.prepareStatement(query);
         bindStatement(preparedQuery, ps, parameterValues);
@@ -497,8 +497,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 try {
                     PreparedStatement stmt = connection
                             .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                    if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                        PredatorSettings.QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
+                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                        DataSettings.QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
                     }
                     for (T entity : operation) {
                         setInsertParameters(insert, entity, stmt);

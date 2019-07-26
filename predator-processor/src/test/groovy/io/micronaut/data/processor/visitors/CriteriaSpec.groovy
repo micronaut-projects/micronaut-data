@@ -23,7 +23,7 @@ import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import spock.lang.Unroll
 
-class CriteriaSpec extends AbstractPredatorSpec {
+class CriteriaSpec extends AbstractDataSpec {
 
     @Unroll
     void "test #criterion criterion produces the correct query - comparison"() {

@@ -16,15 +16,13 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
-import io.micronaut.inject.BeanDefinition
-import io.micronaut.inject.ExecutableMethod
 
-class DtoSpec extends AbstractPredatorSpec {
+class DtoSpec extends AbstractDataSpec {
 
     void "test build repository with DTO projection - invalid types"() {
         when:
@@ -97,22 +95,22 @@ class PersonDto {
         then:
         repository != null
         def method = repository.getRequiredMethod("list", String)
-        def ann = method.synthesize(PredatorMethod)
+        def ann = method.synthesize(DataMethod)
         ann.resultType().name.contains("PersonDto")
         ann.rootEntity() == Person
         method.synthesize(Query).value() == "SELECT ${alias}.name AS name FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
-        method.isTrue(PredatorMethod, PredatorMethod.META_MEMBER_DTO)
+        method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
 
         and:
         def findMethod = repository.getRequiredMethod("find", String)
-        findMethod.synthesize(PredatorMethod).resultType().simpleName == "PersonDto"
+        findMethod.synthesize(DataMethod).resultType().simpleName == "PersonDto"
 
         and:
         def pageMethod = repository.getRequiredMethod("searchByNameLike", String, Pageable)
-        pageMethod.synthesize(PredatorMethod).resultType().simpleName == "PersonDto"
+        pageMethod.synthesize(DataMethod).resultType().simpleName == "PersonDto"
 
         and:
         def streamMethod = repository.getRequiredMethod("queryByNameLike", String, Pageable)
-        streamMethod.synthesize(PredatorMethod).resultType().simpleName == "PersonDto"
+        streamMethod.synthesize(DataMethod).resultType().simpleName == "PersonDto"
     }
 }

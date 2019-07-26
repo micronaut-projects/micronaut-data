@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Maps JPA Embeddable to Predator Embedabble.
+ * Maps JPA Embeddable to Micronaut Data Embedabble.
  *
  * @author graemerocher
  * @since 1.0.0

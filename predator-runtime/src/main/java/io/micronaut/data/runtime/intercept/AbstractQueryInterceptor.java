@@ -35,8 +35,8 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.intercept.PredatorInterceptor;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -60,9 +60,9 @@ import java.util.stream.Collectors;
  * @since 1.0
  * @author graemerocher
  */
-public abstract class AbstractQueryInterceptor<T, R> implements PredatorInterceptor<T, R> {
+public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("(:[a-zA-Z0-9]+)");
-    private static final String PREDATOR_ANN_NAME = PredatorMethod.class.getName();
+    private static final String PREDATOR_ANN_NAME = DataMethod.class.getName();
     protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
     private final ConcurrentMap<MethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
@@ -100,11 +100,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         MethodKey key = newMethodKey(repositoryType, executableMethod);
         StoredQuery<?, RT> storedQuery = findQueries.get(key);
         if (storedQuery == null) {
-            Class<?> rootEntity = context.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_ROOT_ENTITY)
+            Class<?> rootEntity = context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
             if (resultType == null) {
                 //noinspection unchecked
-                resultType = (Class<RT>) context.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_RESULT_TYPE).orElse(rootEntity);
+                resultType = (Class<RT>) context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_RESULT_TYPE).orElse(rootEntity);
             }
             String query = context.stringValue(Query.class).orElseThrow(() ->
                     new IllegalStateException("No query present in method")
@@ -114,7 +114,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     resultType,
                     rootEntity,
                     query,
-                    PredatorMethod.META_MEMBER_PARAMETER_BINDING
+                    DataMethod.META_MEMBER_PARAMETER_BINDING
             );
             findQueries.put(key, storedQuery);
         }
@@ -152,7 +152,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         StoredQuery<?, Long> storedQuery = countQueries.get(key);
         if (storedQuery == null) {
 
-            String query = context.stringValue(Query.class, PredatorMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
+            String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
                     new IllegalStateException("No query present in method")
             );
             Class rootEntity = getRequiredRootEntity(context);
@@ -162,7 +162,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     Long.class,
                     rootEntity,
                     query,
-                    context.isPresent(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_COUNT_PARAMETERS) ? PredatorMethod.META_MEMBER_COUNT_PARAMETERS : null
+                    context.isPresent(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_COUNT_PARAMETERS) ? DataMethod.META_MEMBER_COUNT_PARAMETERS : null
             );
             countQueries.put(key, storedQuery);
         }
@@ -190,7 +190,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
      */
     @NonNull
     protected Class<?> getRequiredRootEntity(MethodInvocationContext context) {
-        return context.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_ROOT_ENTITY)
+        return context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
                 .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
     }
 
@@ -234,13 +234,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         if (pageable == null) {
             Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
             if (sort != null) {
-                int max = context.intValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
-                int pageIndex = context.intValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_PAGE_INDEX).orElse(0);
+                int max = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                int pageIndex = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
                 if (max > 0) {
                     pageable = Pageable.from(pageIndex, max, sort);
                 }
             } else {
-                int max = context.intValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                int max = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
                 if (max > -1) {
                     return Pageable.from(0, max);
                 }
@@ -724,7 +724,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
                     .map(c -> c == SqlQueryBuilder.class).orElse(false);
             this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
 
-            if (isNumericPlaceHolder && method.isTrue(Query.class, PredatorMethod.META_MEMBER_RAW_QUERY)) {
+            if (isNumericPlaceHolder && method.isTrue(Query.class, DataMethod.META_MEMBER_RAW_QUERY)) {
                 Matcher matcher = VARIABLE_PATTERN.matcher(query);
                 this.query = matcher.replaceAll("?");
             } else {
@@ -732,10 +732,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
             }
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
-            this.isDto = method.isTrue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_DTO);
+            this.isDto = method.isTrue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_DTO);
 
             this.isCount = parameterBindingMember != null && parameterBindingMember.startsWith("count");
-            AnnotationValue<PredatorMethod> annotation = annotationMetadata.getAnnotation(PredatorMethod.class);
+            AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
             if (parameterBindingMember != null && annotation != null) {
 
                     List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
@@ -926,7 +926,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @NonNull
         @Override
         public DataType getResultDataType() {
-            return annotationMetadata.enumValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
+            return annotationMetadata.enumValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
                                      .orElse(DataType.OBJECT);
         }
 
@@ -936,7 +936,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements PredatorIntercep
         @SuppressWarnings("unchecked")
         @Override
         public Optional<Class<?>> getEntityIdentifierType() {
-            Optional o = annotationMetadata.classValue(PREDATOR_ANN_NAME, PredatorMethod.META_MEMBER_ID_TYPE);
+            Optional o = annotationMetadata.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_ID_TYPE);
             return o;
         }
 

@@ -11,13 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuration for Predator JDBC.
+ * Configuration for Data JDBC.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-@EachProperty(value = PredatorJdbcConfiguration.PREFIX, primary = "default")
-public class PredatorJdbcConfiguration implements Named {
+@EachProperty(value = DataJdbcConfiguration.PREFIX, primary = "default")
+public class DataJdbcConfiguration implements Named {
     /**
      * The prefix to use.
      */
@@ -33,7 +33,7 @@ public class PredatorJdbcConfiguration implements Named {
      * The configuration.
      * @param name The configuration name
      */
-    public PredatorJdbcConfiguration(@Parameter String name) {
+    public DataJdbcConfiguration(@Parameter String name) {
         this.name = name;
     }
 

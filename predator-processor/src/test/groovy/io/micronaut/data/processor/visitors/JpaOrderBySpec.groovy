@@ -20,7 +20,7 @@ import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
@@ -73,11 +73,11 @@ interface MyInterface extends GenericRepository<Person, Long> {
         then: "It was correctly compiled"
         findOne.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} WHERE (${alias}.name = :p1) ORDER BY ${alias}.name ASC"
         list.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
-        list.synthesize(PredatorMethod).resultType() == Person
+        list.synthesize(DataMethod).resultType() == Person
         listName.synthesize(Query).value() == "SELECT ${alias}.name FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
-        listName.synthesize(PredatorMethod).resultType() == String
+        listName.synthesize(DataMethod).resultType() == String
         listTop3.synthesize(Query).value() == "SELECT ${alias} FROM $Person.name AS ${alias} ORDER BY ${alias}.name ASC"
-        listTop3.synthesize(PredatorMethod).pageSize() == 3
+        listTop3.synthesize(DataMethod).pageSize() == 3
     }
 
     @Unroll

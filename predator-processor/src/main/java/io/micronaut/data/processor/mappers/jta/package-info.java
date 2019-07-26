@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Classes to map JTA annotations onto generic Predator annotations.
+ * Classes to map JTA annotations onto generic Micronaut Data annotations.
  *
  * @author graemerocher
  * @since 1.0.0

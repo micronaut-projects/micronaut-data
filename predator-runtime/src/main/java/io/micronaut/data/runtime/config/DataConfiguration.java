@@ -5,13 +5,13 @@ import io.micronaut.core.util.StringUtils;
 import java.util.regex.Pattern;
 
 /**
- * General predator configuration.
+ * General data configuration.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-@ConfigurationProperties(PredatorSettings.PREFIX)
-public class PredatorConfiguration implements PredatorSettings {
+@ConfigurationProperties(DataSettings.PREFIX)
+public class DataConfiguration implements DataSettings {
 
 
     /**

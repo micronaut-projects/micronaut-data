@@ -21,7 +21,7 @@ import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
@@ -44,11 +44,11 @@ class AssociationQuerySpec extends AbstractTypeElementSpec {
         beanDefinition != null
 
         def executableMethod = beanDefinition.getRequiredMethod(method, parameterTypes)
-        def ann = executableMethod.synthesize(PredatorMethod)
+        def ann = executableMethod.synthesize(DataMethod)
         ann.interceptor() == interceptor
         ann.rootEntity() == rootEntity
         ann.resultType() == resultType
-        executableMethod.getValue(PredatorMethod, "interceptor", Class).get() == interceptor
+        executableMethod.getValue(DataMethod, "interceptor", Class).get() == interceptor
         executableMethod.getValue(Query, String).orElse(null) == query
 
         where:

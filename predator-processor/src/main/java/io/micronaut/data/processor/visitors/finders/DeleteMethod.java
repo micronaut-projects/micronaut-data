@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
@@ -65,7 +65,7 @@ public class DeleteMethod extends AbstractListMethod {
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
-        Class<? extends PredatorInterceptor> interceptor = null;
+        Class<? extends DataInterceptor> interceptor = null;
         if (parameters.length == 1) {
             ClassElement genericType = parameters[0].getGenericType();
             SourcePersistentEntity rootEntity = matchContext.getRootEntity();
@@ -117,7 +117,7 @@ public class DeleteMethod extends AbstractListMethod {
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
-        Class<? extends PredatorInterceptor> interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
+        Class<? extends DataInterceptor> interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
         if (query != null) {
             return new MethodMatchInfo(
                     null,
@@ -140,8 +140,8 @@ public class DeleteMethod extends AbstractListMethod {
      * @param returnType The return type
      * @return The interceptor
      */
-    static Class<? extends PredatorInterceptor> pickDeleteAllInterceptor(ClassElement returnType) {
-        Class<? extends PredatorInterceptor> interceptor;
+    static Class<? extends DataInterceptor> pickDeleteAllInterceptor(ClassElement returnType) {
+        Class<? extends DataInterceptor> interceptor;
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = DeleteAllAsyncInterceptor.class;
         } else if (TypeUtils.isReactiveType(returnType)) {

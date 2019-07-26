@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * Package containing main user facing annotation API for Predator.
+ * Package containing main user facing annotation API for Micronaut Data.
  *
  * @author graemerocher
  * @since 1.0.0

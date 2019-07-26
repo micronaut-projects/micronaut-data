@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.intercept.reactive;
 
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 
 /**
  * An interceptor that saves a single entity reactively.
@@ -25,6 +25,6 @@ import io.micronaut.data.intercept.PredatorInterceptor;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface SaveEntityReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
+public interface SaveEntityReactiveInterceptor<T, R> extends DataInterceptor<T, R> {
 }
 

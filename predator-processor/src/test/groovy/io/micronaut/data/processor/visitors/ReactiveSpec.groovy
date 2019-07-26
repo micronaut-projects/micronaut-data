@@ -15,11 +15,11 @@
  */
 package io.micronaut.data.processor.visitors
 
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.reactive.*
 import spock.lang.Unroll
 
-class ReactiveSpec extends AbstractPredatorSpec {
+class ReactiveSpec extends AbstractDataSpec {
 
 
     @Unroll
@@ -46,7 +46,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
-                .synthesize(PredatorMethod)
+                .synthesize(DataMethod)
                 .interceptor() == interceptor
 
         where:

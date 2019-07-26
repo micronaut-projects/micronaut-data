@@ -23,5 +23,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0
  */
-public interface FindByIdInterceptor<T> extends PredatorInterceptor<T, Object> {
+public interface FindByIdInterceptor<T> extends DataInterceptor<T, Object> {
 }

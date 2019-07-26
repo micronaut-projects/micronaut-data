@@ -17,13 +17,13 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindOneInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import spock.lang.Unroll
 
-class EqualsSpec extends AbstractPredatorMethodSpec {
+class EqualsSpec extends AbstractDataMethodSpec {
 
     void "test compile error on incorrect property order with multiple items"() {
         when:
@@ -49,7 +49,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         given:
         def executableMethod = buildMethod(returnType, method, arguments)
         Class targetInterceptor = executableMethod
-                .classValue(PredatorMethod, "interceptor").orElse(null)
+                .classValue(DataMethod, "interceptor").orElse(null)
         String query = executableMethod.stringValue(Query).orElse(null)
 
         expect:

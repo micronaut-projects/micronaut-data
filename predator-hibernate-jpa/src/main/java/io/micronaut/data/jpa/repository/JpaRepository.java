@@ -17,7 +17,7 @@ package io.micronaut.data.jpa.repository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.repository.intercept.FlushInterceptor;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
@@ -60,6 +60,6 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
     /**
      * Adds a flush method.
      */
-    @PredatorMethod(interceptor = FlushInterceptor.class)
+    @DataMethod(interceptor = FlushInterceptor.class)
     void flush();
 }

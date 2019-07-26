@@ -20,7 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
@@ -146,8 +146,8 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
      * @param returnType The return type
      * @return The interceptor
      */
-    private static @NonNull Class<? extends PredatorInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
-        Class<? extends PredatorInterceptor> interceptor;
+    private static @NonNull Class<? extends DataInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
+        Class<? extends DataInterceptor> interceptor;
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = SaveOneAsyncInterceptor.class;
         } else if (TypeUtils.isReactiveOrFuture(returnType)) {

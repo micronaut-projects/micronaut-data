@@ -5,7 +5,7 @@ import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.data.runtime.config.PredatorConfiguration;
+import io.micronaut.data.runtime.config.DataConfiguration;
 import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
@@ -30,14 +30,14 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
 
     public static final Argument<Pageable> TYPE = Argument.of(Pageable.class);
 
-    private final PredatorConfiguration.PageableConfiguration configuration;
+    private final DataConfiguration.PageableConfiguration configuration;
     private final Function<String, Sort.Order> sortMapper;
 
     /**
      * Default constructor.
      * @param configuration The configuration
      */
-    protected PageableRequestArgumentBinder(PredatorConfiguration.PageableConfiguration configuration) {
+    protected PageableRequestArgumentBinder(DataConfiguration.PageableConfiguration configuration) {
         this.configuration = configuration;
         sortMapper = s -> {
             String[] tokens = configuration.getSortDelimiterPattern().split(s);

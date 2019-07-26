@@ -17,7 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.ExistsByInterceptor;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -41,7 +41,7 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
 
     @Override
     public Boolean intercept(MethodInvocationContext<T, Boolean> context) {
-        Class idType = context.classValue(PredatorMethod.class, PredatorMethod.META_MEMBER_ID_TYPE)
+        Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
         PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
         return operations.exists(preparedQuery);

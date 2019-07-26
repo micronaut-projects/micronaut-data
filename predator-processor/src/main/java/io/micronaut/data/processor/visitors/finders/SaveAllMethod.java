@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
@@ -65,7 +65,7 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         // default doesn't build a query and query construction left to runtime
         // this is fine for JPA, for SQL we need to build an insert
-        Class<? extends PredatorInterceptor> interceptor;
+        Class<? extends DataInterceptor> interceptor;
         ClassElement returnType = matchContext.getReturnType();
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = SaveAllAsyncInterceptor.class;

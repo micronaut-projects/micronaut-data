@@ -21,7 +21,7 @@ import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.TypeRole
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.UpdateInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Company
 import io.micronaut.data.model.entities.Person
@@ -61,9 +61,9 @@ interface MyInterface extends GenericRepository<Person, Long> {
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
         def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
-        def updateAnn = updateMethod.synthesize(PredatorMethod)
+        def updateAnn = updateMethod.synthesize(DataMethod)
         def updateQuery = updateMethod.synthesize(Query)
-        def updateByAnn = updateByMethod.synthesize(PredatorMethod)
+        def updateByAnn = updateByMethod.synthesize(DataMethod)
         def updateByQuery = updateByMethod.synthesize(Query)
 
         then: "It was correctly compiled"
@@ -111,13 +111,13 @@ interface MyInterface extends GenericRepository<Company, Long> {
         when: "update method is retrieved"
         def updateMethod = beanDefinition.getRequiredMethod("update", Long, String)
         def updateByMethod = beanDefinition.getRequiredMethod("updateByName", String, String)
-        def updateAnn = updateMethod.synthesize(PredatorMethod)
+        def updateAnn = updateMethod.synthesize(DataMethod)
         def updateQuery = updateMethod.synthesize(Query)
-        def updateByAnn = updateByMethod.synthesize(PredatorMethod)
+        def updateByAnn = updateByMethod.synthesize(DataMethod)
         def updateByQuery = updateByMethod.synthesize(Query)
 
         then: "It was correctly compiled"
-        updateByMethod.getValue(PredatorMethod.class, TypeRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
+        updateByMethod.getValue(DataMethod.class, TypeRole.LAST_UPDATED_PROPERTY, String).get() == 'lastUpdated'
         updateAnn.interceptor() == UpdateInterceptor
         updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
         updateAnn.id() == 'myId'

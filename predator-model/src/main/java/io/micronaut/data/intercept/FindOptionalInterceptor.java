@@ -24,5 +24,5 @@ import java.util.Optional;
  * @since 1.0
  * @param <T> The declaring type
  */
-public interface FindOptionalInterceptor<T> extends PredatorInterceptor<T, Optional<Object>> {
+public interface FindOptionalInterceptor<T> extends DataInterceptor<T, Optional<Object>> {
 }

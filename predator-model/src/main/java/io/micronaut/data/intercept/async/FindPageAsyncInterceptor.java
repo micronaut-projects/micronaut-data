@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.intercept.async;
 
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.Page;
 
 import java.util.concurrent.CompletionStage;
@@ -27,5 +27,5 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0
  */
-public interface FindPageAsyncInterceptor<T> extends PredatorInterceptor<T, CompletionStage<Page<Object>>> {
+public interface FindPageAsyncInterceptor<T> extends DataInterceptor<T, CompletionStage<Page<Object>>> {
 }

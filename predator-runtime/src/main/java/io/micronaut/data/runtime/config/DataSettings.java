@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface PredatorSettings {
+public interface DataSettings {
 
     /**
      * Prefix for data related config.

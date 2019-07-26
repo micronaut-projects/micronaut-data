@@ -14,7 +14,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.runtime.config.PredatorSettings;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
@@ -34,14 +34,14 @@ import java.util.List;
 @Internal
 public class SchemaGenerator {
 
-    private final List<PredatorJdbcConfiguration> configurations;
+    private final List<DataJdbcConfiguration> configurations;
 
     /**
      * Constructors a schema generator for the given configurations.
      *
      * @param configurations The configurations
      */
-    public SchemaGenerator(List<PredatorJdbcConfiguration> configurations) {
+    public SchemaGenerator(List<DataJdbcConfiguration> configurations) {
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
     }
 
@@ -52,7 +52,7 @@ public class SchemaGenerator {
      */
     @PostConstruct
     public void createSchema(BeanLocator beanLocator) {
-        for (PredatorJdbcConfiguration configuration : configurations) {
+        for (DataJdbcConfiguration configuration : configurations) {
             Dialect dialect = configuration.getDialect();
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
             if (schemaGenerate != null && schemaGenerate != SchemaGenerate.NONE) {
@@ -76,20 +76,20 @@ public class SchemaGenerator {
                                     case CREATE_DROP:
                                         try {
                                             String sql = builder.buildBatchDropTableStatement(entities);
-                                            if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                PredatorSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
+                                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                                DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
                                             }
                                             PreparedStatement ps = connection.prepareStatement(sql);
                                             ps.executeUpdate();
                                         } catch (SQLException e) {
-                                            if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                                                PredatorSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
+                                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                                                DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
                                             }
                                         }
                                     case CREATE:
                                         String sql = builder.buildBatchCreateTableStatement(entities);
-                                        if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                            PredatorSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
+                                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                            DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                                         }
                                         PreparedStatement ps = connection.prepareStatement(sql);
                                         ps.executeUpdate();
@@ -104,15 +104,15 @@ public class SchemaGenerator {
                                             try {
                                                 String[] statements = builder.buildDropTableStatements(entity);
                                                 for (String sql : statements) {
-                                                    if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                        PredatorSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                                                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                                        DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
                                                     }
                                                     PreparedStatement ps = connection.prepareStatement(sql);
                                                     ps.executeUpdate();
                                                 }
                                             } catch (SQLException e) {
-                                                if (PredatorSettings.QUERY_LOG.isTraceEnabled()) {
-                                                    PredatorSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
+                                                if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                                                    DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
                                                 }
                                             }
                                         }
@@ -121,15 +121,15 @@ public class SchemaGenerator {
 
                                             String[] sql = builder.buildCreateTableStatements(entity);
                                             for (String stmt : sql) {
-                                                if (PredatorSettings.QUERY_LOG.isDebugEnabled()) {
-                                                    PredatorSettings.QUERY_LOG.debug("Creating Table: \n{}", stmt);
+                                                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                                    DataSettings.QUERY_LOG.debug("Creating Table: \n{}", stmt);
                                                 }
                                                 try {
                                                     PreparedStatement ps = connection.prepareStatement(stmt);
                                                     ps.executeUpdate();
                                                 } catch (SQLException e) {
-                                                    if (PredatorSettings.QUERY_LOG.isWarnEnabled()) {
-                                                        PredatorSettings.QUERY_LOG.warn("Create Table Failed: " + e.getMessage());
+                                                    if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                                                        DataSettings.QUERY_LOG.warn("Create Table Failed: " + e.getMessage());
                                                     }
                                                 }
                                             }
@@ -146,7 +146,7 @@ public class SchemaGenerator {
                             throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
                         }
                     } catch (NoSuchBeanException e) {
-                        throw new ConfigurationException("No DataSource configured for setting [" + PredatorJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
+                        throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
                     }
                 }
             }

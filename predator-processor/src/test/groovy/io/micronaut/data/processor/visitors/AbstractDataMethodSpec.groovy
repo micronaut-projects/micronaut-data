@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.inject.ExecutableMethod
 
-abstract class AbstractPredatorMethodSpec extends AbstractPredatorSpec {
+abstract class AbstractDataMethodSpec extends AbstractDataSpec {
 
     ExecutableMethod<?, ?> buildMethod(String returnType, String method, String arguments, String...imports) {
         def repository = buildRepository('test.MyInterface', """

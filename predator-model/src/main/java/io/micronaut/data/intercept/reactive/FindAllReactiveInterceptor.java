@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.intercept.reactive;
 
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 
 /**
  * An interceptor that executes a {@link io.micronaut.data.annotation.Query} and a {@link org.reactivestreams.Publisher} that
@@ -26,5 +26,5 @@ import io.micronaut.data.intercept.PredatorInterceptor;
  * @author graemerocher
  * @since 1.0
  */
-public interface FindAllReactiveInterceptor<T, R> extends PredatorInterceptor<T, R> {
+public interface FindAllReactiveInterceptor<T, R> extends DataInterceptor<T, R> {
 }

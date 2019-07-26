@@ -16,7 +16,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.persistence.EntityManager;
 
 /**
- * Adds Spring Transaction management capability to Predator.
+ * Adds Spring Transaction management capability to Micronaut Data.
  *
  * @author graemerocher
  * @since 1.0.0

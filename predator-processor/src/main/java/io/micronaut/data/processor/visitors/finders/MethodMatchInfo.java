@@ -17,7 +17,8 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.inject.ast.TypedElement;
 
@@ -26,7 +27,7 @@ import java.util.*;
 
 /**
  * The predator method info. This class describes the pre-computed method handling for a
- * repository and is computed into a {@link io.micronaut.data.intercept.annotation.PredatorMethod} annotation
+ * repository and is computed into a {@link DataMethod} annotation
  * which is readable at runtime.
  *
  * @author graemerocher
@@ -36,7 +37,7 @@ public class MethodMatchInfo {
 
     private final TypedElement resultType;
     private final QueryModel query;
-    private final Class<? extends PredatorInterceptor> interceptor;
+    private final Class<? extends DataInterceptor> interceptor;
     private final OperationType operationType;
     private final String[] updateProperties;
 
@@ -52,7 +53,7 @@ public class MethodMatchInfo {
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
-            @Nullable Class<? extends PredatorInterceptor> interceptor) {
+            @Nullable Class<? extends DataInterceptor> interceptor) {
         this(resultType, query, interceptor, OperationType.QUERY);
     }
 
@@ -66,7 +67,7 @@ public class MethodMatchInfo {
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
-            @Nullable Class<? extends PredatorInterceptor> interceptor,
+            @Nullable Class<? extends DataInterceptor> interceptor,
             boolean dto) {
         this(resultType, query, interceptor, OperationType.QUERY);
         this.dto = dto;
@@ -83,7 +84,7 @@ public class MethodMatchInfo {
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
-            @Nullable Class<? extends PredatorInterceptor> interceptor,
+            @Nullable Class<? extends DataInterceptor> interceptor,
             @NonNull OperationType operationType,
             String... updateProperties) {
         this.query = query;
@@ -151,7 +152,7 @@ public class MethodMatchInfo {
      * The runtime interceptor that will handle the method.
      * @return The runtime interceptor
      */
-    @Nullable public Class<? extends PredatorInterceptor> getRuntimeInterceptor() {
+    @Nullable public Class<? extends DataInterceptor> getRuntimeInterceptor() {
         return interceptor;
     }
 

@@ -28,7 +28,7 @@ import io.micronaut.data.intercept.ExistsByInterceptor
 
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.SaveAllInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
@@ -90,8 +90,8 @@ interface MyInterface extends CrudRepository<Person, Long> {
         def saveMethod = beanDefinition.getRequiredMethod("save", Person.class)
 
         then:"It was correctly compiled"
-        saveMethod.getValue(PredatorMethod, "entity", String).isPresent()
-        saveMethod.getValue(PredatorMethod, "rootEntity", Class).get() == Person
+        saveMethod.getValue(DataMethod, "entity", String).isPresent()
+        saveMethod.getValue(DataMethod, "rootEntity", Class).get() == Person
         saveMethod.getReturnType().type == Person
         saveMethod.getArguments()[0].type == Person
 
@@ -102,8 +102,8 @@ interface MyInterface extends CrudRepository<Person, Long> {
         saveAll
         saveAll.getReturnType().asArgument().getFirstTypeVariable().get().type == Person
         saveAll.getArguments()[0].getFirstTypeVariable().get().type == Person
-        saveAll.synthesize(PredatorMethod).rootEntity() == Person
-        saveAll.synthesize(PredatorMethod).interceptor() == SaveAllInterceptor
+        saveAll.synthesize(DataMethod).rootEntity() == Person
+        saveAll.synthesize(DataMethod).interceptor() == SaveAllInterceptor
 
         when:"the exists by id method is retrieved"
         def existsMethod = beanDefinition.getRequiredMethod("existsById", Long)
@@ -111,9 +111,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is correctly configured"
         existsMethod
         existsMethod.getArguments()[0].getFirstTypeVariable().get().type == Long
-        existsMethod.synthesize(PredatorMethod).rootEntity() == Person
-        existsMethod.synthesize(PredatorMethod).idType() == Long
-        existsMethod.synthesize(PredatorMethod).interceptor() == ExistsByInterceptor
+        existsMethod.synthesize(DataMethod).rootEntity() == Person
+        existsMethod.synthesize(DataMethod).idType() == Long
+        existsMethod.synthesize(DataMethod).interceptor() == ExistsByInterceptor
 
         when:"the findAll method is retrieved"
         def findAll = beanDefinition.getRequiredMethod("findAll")
@@ -121,9 +121,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is correctly configured"
         findAll
         findAll.getReturnType().asArgument().getFirstTypeVariable().get().type == Person
-        findAll.synthesize(PredatorMethod).rootEntity() == Person
-        findAll.synthesize(PredatorMethod).idType() == Long
-        findAll.synthesize(PredatorMethod).interceptor() == FindAllInterceptor
+        findAll.synthesize(DataMethod).rootEntity() == Person
+        findAll.synthesize(DataMethod).idType() == Long
+        findAll.synthesize(DataMethod).interceptor() == FindAllInterceptor
 
         when:"the count method is retrieved"
         def count = beanDefinition.getRequiredMethod("count")
@@ -131,9 +131,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is correctly configured"
         count
         count.getReturnType().type == long.class
-        count.synthesize(PredatorMethod).rootEntity() == Person
-        count.synthesize(PredatorMethod).idType() == Long
-        count.synthesize(PredatorMethod).interceptor() == CountInterceptor
+        count.synthesize(DataMethod).rootEntity() == Person
+        count.synthesize(DataMethod).idType() == Long
+        count.synthesize(DataMethod).interceptor() == CountInterceptor
 
         when:"the list method with named query paremeters is retrieved"
         def listPeople = beanDefinition.getRequiredMethod("list", String)
@@ -141,9 +141,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is correctly configured"
         listPeople
         listPeople.getReturnType().type == List.class
-        listPeople.synthesize(PredatorMethod).rootEntity() == Person
-        listPeople.synthesize(PredatorMethod).idType() == Long
-        listPeople.synthesize(PredatorMethod).interceptor() == FindAllInterceptor
+        listPeople.synthesize(DataMethod).rootEntity() == Person
+        listPeople.synthesize(DataMethod).idType() == Long
+        listPeople.synthesize(DataMethod).interceptor() == FindAllInterceptor
 
         when:"the count method with named query parameters is retrieved"
         def countPeople = beanDefinition.getRequiredMethod("count", String)
@@ -151,8 +151,8 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is correctly configured"
         countPeople
         countPeople.getReturnType().type == int.class
-        countPeople.synthesize(PredatorMethod).rootEntity() == Person
-        countPeople.synthesize(PredatorMethod).idType() == Long
+        countPeople.synthesize(DataMethod).rootEntity() == Person
+        countPeople.synthesize(DataMethod).idType() == Long
 
         when:"the delete by id method is retrieved"
         def deleteById = beanDefinition.getRequiredMethod("deleteById", Long)
@@ -160,10 +160,10 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is correctly configured"
         deleteById
         deleteById.getReturnType().type == void .class
-        deleteById.synthesize(PredatorMethod).rootEntity() == Person
-        deleteById.synthesize(PredatorMethod).idType() == Long
+        deleteById.synthesize(DataMethod).rootEntity() == Person
+        deleteById.synthesize(DataMethod).idType() == Long
         deleteById.synthesize(Query).value() == "DELETE $Person.name  AS ${alias} WHERE (${alias}.id = :p1)"
-        deleteById.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
+        deleteById.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
         when:"the deleteAll method is retrieved"
         def deleteAll = beanDefinition.getRequiredMethod("deleteAll")
@@ -171,9 +171,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is configured correctly"
         deleteAll
         deleteAll.getReturnType().type == void .class
-        deleteAll.synthesize(PredatorMethod).rootEntity() == Person
-        deleteAll.synthesize(PredatorMethod).idType() == Long
-        deleteAll.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
+        deleteAll.synthesize(DataMethod).rootEntity() == Person
+        deleteAll.synthesize(DataMethod).idType() == Long
+        deleteAll.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
         when:"the deleteOne method is retrieved"
         def deleteOne = beanDefinition.getRequiredMethod("delete", Person)
@@ -181,9 +181,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is configured correctly"
         deleteOne
         deleteOne.getReturnType().type == void .class
-        deleteOne.synthesize(PredatorMethod).rootEntity() == Person
-        deleteOne.synthesize(PredatorMethod).idType() == Long
-        deleteOne.synthesize(PredatorMethod).interceptor() == DeleteOneInterceptor
+        deleteOne.synthesize(DataMethod).rootEntity() == Person
+        deleteOne.synthesize(DataMethod).idType() == Long
+        deleteOne.synthesize(DataMethod).interceptor() == DeleteOneInterceptor
 
         when:"the deleteAll with ids"
         def deleteIds = beanDefinition.getRequiredMethod("deleteAll", Iterable)
@@ -191,9 +191,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         then:"The method is configured correctly"
         deleteIds
         deleteIds.getReturnType().type == void .class
-        deleteIds.synthesize(PredatorMethod).rootEntity() == Person
-        deleteIds.synthesize(PredatorMethod).idType() == Long
-        deleteIds.synthesize(PredatorMethod).interceptor() == DeleteAllInterceptor
+        deleteIds.synthesize(DataMethod).rootEntity() == Person
+        deleteIds.synthesize(DataMethod).idType() == Long
+        deleteIds.synthesize(DataMethod).interceptor() == DeleteAllInterceptor
 
     }
 

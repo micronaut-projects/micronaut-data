@@ -25,7 +25,7 @@ import io.micronaut.core.annotation.Introspected;
 import java.util.List;
 
 /**
- * Models pageable data. The {@link #from(int, int)} method can be used to construct a new instance to pass to Predator methods.
+ * Models pageable data. The {@link #from(int, int)} method can be used to construct a new instance to pass to Micronaut Data methods.
  *
  * @author boros
  * @author graemerocher

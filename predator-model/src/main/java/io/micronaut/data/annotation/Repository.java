@@ -17,7 +17,7 @@ package io.micronaut.data.annotation;
 
 import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
-import io.micronaut.data.intercept.PredatorIntroductionAdvice;
+import io.micronaut.data.intercept.DataIntroductionAdvice;
 
 import java.lang.annotation.*;
 
@@ -32,7 +32,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
-@Type(PredatorIntroductionAdvice.class)
+@Type(DataIntroductionAdvice.class)
 public @interface Repository {
     /**
      * The name of the underlying datasource connection name. In a multiple data source scenario this will

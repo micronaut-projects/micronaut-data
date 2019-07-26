@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.SaveEntityInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
@@ -66,7 +66,7 @@ interface MyInterface {
 
         def executableMethod = beanDefinition.getRequiredMethod(method, parameterTypes)
         executableMethod.getValue(Query, String).orElse(null) == query
-        executableMethod.getValue(PredatorMethod, "interceptor", Class).get() == interceptor
+        executableMethod.getValue(DataMethod, "interceptor", Class).get() == interceptor
         validateParameterBinding(query, executableMethod, arguments)
 
         where:
@@ -104,8 +104,8 @@ interface MyInterface {
         def executableMethod = beanDefinition.getRequiredMethod(method, parameterTypes)
         executableMethod.getAnnotationMetadata().hasAnnotation(Query)
         executableMethod.getValue(Query, String).get() == query
-        executableMethod.getValue(PredatorMethod, "interceptor", Class).get() == interceptor
-        executableMethod.getValue(PredatorMethod, "pageable", String).get() == 'pager'
+        executableMethod.getValue(DataMethod, "interceptor", Class).get() == interceptor
+        executableMethod.getValue(DataMethod, "pageable", String).get() == 'pager'
         validateParameterBinding(query, executableMethod, arguments)
 
         where:
@@ -119,7 +119,7 @@ interface MyInterface {
         if (query == null) {
             return true
         }
-        def annotations = method.getAnnotation(PredatorMethod).getAnnotations("parameterBinding", Property)
+        def annotations = method.getAnnotation(DataMethod).getAnnotations("parameterBinding", Property)
         if (annotations.size() == argumentTypes.size()) {
             return annotations.every() { ann ->
                 argumentTypes.containsKey(ann.getValue(String.class).get())

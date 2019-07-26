@@ -18,14 +18,11 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindByIdInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
-import io.micronaut.data.intercept.FindPageInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
-import io.micronaut.data.model.Pageable
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
@@ -68,10 +65,10 @@ interface MyInterface extends GenericRepository<Person, Long> {
         def findMethod3 = beanDefinition.getRequiredMethod("findById", Long)
         def findByIds = beanDefinition.getRequiredMethod("findByIds", Iterable.class)
 
-        def findAnn = findMethod.synthesize(PredatorMethod)
-        def findAnn2 = findMethod2.synthesize(PredatorMethod)
-        def findAnn3 = findMethod3.synthesize(PredatorMethod)
-        def findByIdsAnn = findByIds.synthesize(PredatorMethod)
+        def findAnn = findMethod.synthesize(DataMethod)
+        def findAnn2 = findMethod2.synthesize(DataMethod)
+        def findAnn3 = findMethod3.synthesize(DataMethod)
+        def findByIdsAnn = findByIds.synthesize(DataMethod)
 
         then:"it is configured correctly"
         findAnn.interceptor() == FindByIdInterceptor

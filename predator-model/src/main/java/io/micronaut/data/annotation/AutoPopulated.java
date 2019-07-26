@@ -3,7 +3,7 @@ package io.micronaut.data.annotation;
 import java.lang.annotation.*;
 
 /**
- * Meta annotation to identity annotations that are auto-populated by the Predator.
+ * Meta annotation to identity annotations that are auto-populated by the Micronaut Data.
  *
  * @see DateCreated
  * @see DateUpdated

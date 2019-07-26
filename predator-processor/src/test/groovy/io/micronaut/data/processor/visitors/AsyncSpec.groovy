@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors
 
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.CountAsyncInterceptor
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor
 import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor
@@ -30,10 +30,9 @@ import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonDto
-import io.micronaut.inject.ExecutableMethod
 import spock.lang.Unroll
 
-class AsyncSpec extends AbstractPredatorSpec {
+class AsyncSpec extends AbstractDataSpec {
 
     void "test compile async CRUD repository"() {
         given:
@@ -80,12 +79,12 @@ interface MyInterface extends GenericRepository<Person, Long> {
                 .findFirst()
                 .get()
         def ann = execMethod
-                .synthesize(PredatorMethod)
+                .synthesize(DataMethod)
 
         expect:
         ann.resultType() == resultType
         ann.interceptor() == interceptor
-        execMethod.isTrue(PredatorMethod, PredatorMethod.META_MEMBER_DTO)
+        execMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
 
         where:
         method    | returnType                         | arguments     | interceptor             | resultType
@@ -115,7 +114,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         def ann = repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
-                .synthesize(PredatorMethod)
+                .synthesize(DataMethod)
 
         expect:
         ann.resultType() == resultType
@@ -165,7 +164,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
-                .synthesize(PredatorMethod)
+                .synthesize(DataMethod)
                 .interceptor() == interceptor
 
         where:
@@ -206,7 +205,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         repository.findPossibleMethods(method)
                 .findFirst()
                 .get()
-                .synthesize(PredatorMethod)
+                .synthesize(DataMethod)
                 .interceptor() == interceptor
 
         where:

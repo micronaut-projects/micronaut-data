@@ -21,7 +21,7 @@ import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.FindPageInterceptor
-import io.micronaut.data.intercept.annotation.PredatorMethod
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Person
 import io.micronaut.inject.BeanDefinition
@@ -59,7 +59,7 @@ interface MyInterface {
         def listMethod = beanDefinition.getRequiredMethod("listPeople", String.class)
 
         then: "It was correctly compiled"
-        def ann = listMethod.synthesize(PredatorMethod)
+        def ann = listMethod.synthesize(DataMethod)
         ann.rootEntity() == Person
         ann.interceptor() == FindAllInterceptor
         ann.parameterBinding()[0].name() == '1'
@@ -70,7 +70,7 @@ interface MyInterface {
         def findOne = beanDefinition.getRequiredMethod("queryByName", String.class, Pageable.class)
 
         then: "It was correctly compiled"
-        def ann2 = findOne.synthesize(PredatorMethod)
+        def ann2 = findOne.synthesize(DataMethod)
         ann2.rootEntity() == Person
         ann2.interceptor() == FindPageInterceptor
         ann2.parameterBinding()[0].name() == '1'
@@ -106,7 +106,7 @@ interface MyInterface {
         def listMethod = beanDefinition.getRequiredMethod("listPeople", String.class)
 
         then: "It was correctly compiled"
-        def ann = listMethod.synthesize(PredatorMethod)
+        def ann = listMethod.synthesize(DataMethod)
         ann.rootEntity() == Person
         ann.interceptor() == FindAllInterceptor
         ann.parameterBinding()[0].name() == 'n'
@@ -117,7 +117,7 @@ interface MyInterface {
         def findOne = beanDefinition.getRequiredMethod("queryByName", String.class)
 
         then: "It was correctly compiled"
-        def ann2 = findOne.synthesize(PredatorMethod)
+        def ann2 = findOne.synthesize(DataMethod)
         ann2.rootEntity() == Person
         ann2.interceptor() == FindOneInterceptor
         ann2.parameterBinding()[0].name() == 'n'

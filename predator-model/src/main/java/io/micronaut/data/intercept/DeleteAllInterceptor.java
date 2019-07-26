@@ -22,5 +22,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface DeleteAllInterceptor<T> extends PredatorInterceptor<T, Number> {
+public interface DeleteAllInterceptor<T> extends DataInterceptor<T, Number> {
 }

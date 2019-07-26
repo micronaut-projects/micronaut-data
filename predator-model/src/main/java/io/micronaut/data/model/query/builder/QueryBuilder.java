@@ -22,7 +22,7 @@ import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
@@ -109,7 +109,7 @@ public interface QueryBuilder {
         }
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
-                PredatorMethod.META_MEMBER_QUERY_BUILDER
+                DataMethod.META_MEMBER_QUERY_BUILDER
         ).flatMap(type -> BeanIntrospector.SHARED.findIntrospections(ref -> ref.isPresent() && ref.getBeanType().getName().equals(type))
                 .stream().findFirst()
                 .map(introspection -> {

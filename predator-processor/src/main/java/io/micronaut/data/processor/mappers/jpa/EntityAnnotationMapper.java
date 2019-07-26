@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Translates the {@code javax.persistence} annotation model into the generic model understood by Predator.
+ * Translates the {@code javax.persistence} annotation model into the generic model understood by Micronaut Data.
  *
  * @author graemerocher
  * @since 1.0

@@ -1,8 +1,6 @@
 package io.micronaut.data.processor.visitors
 
-import io.micronaut.inject.BeanDefinition
-
-class EnumSpec extends AbstractPredatorSpec {
+class EnumSpec extends AbstractDataSpec {
 
     void "test handle enum type match"() {
         when:

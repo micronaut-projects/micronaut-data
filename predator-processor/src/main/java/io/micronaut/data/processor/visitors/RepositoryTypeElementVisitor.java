@@ -25,8 +25,8 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.intercept.PredatorInterceptor;
-import io.micronaut.data.intercept.annotation.PredatorMethod;
+import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.Sort;
@@ -171,7 +171,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 );
             }
 
-            if (element.hasDeclaredAnnotation(PredatorMethod.class)) {
+            if (element.hasDeclaredAnnotation(DataMethod.class)) {
                 // explicitly handled
                 return;
             }
@@ -296,7 +296,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     QueryResult finalPreparedCount = preparedCount;
                                     element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
                                                 annotationBuilder.value(encodedQuery.getQuery());
-                                                annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_QUERY, finalPreparedCount.getQuery());
+                                                annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, finalPreparedCount.getQuery());
                                             }
                                     );
                                 } else {
@@ -307,14 +307,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             }
                         }
 
-                        Class<? extends PredatorInterceptor> runtimeInterceptor = methodInfo.getRuntimeInterceptor();
+                        Class<? extends DataInterceptor> runtimeInterceptor = methodInfo.getRuntimeInterceptor();
 
                         if (runtimeInterceptor != null) {
                             Map<String, String> finalParameterBinding = parameterBinding;
                             QueryResult finalPreparedCount1 = preparedCount;
                             boolean finalRawCount = rawCount;
                             Map<String, DataType> finalParameterTypes = parameterTypes;
-                            element.annotate(PredatorMethod.class, annotationBuilder -> {
+                            element.annotate(DataMethod.class, annotationBuilder -> {
 
                                 if (runtimeInterceptor.getSimpleName().startsWith("Save")) {
                                     try {
@@ -323,72 +323,72 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             Map<String, String> qp = queryResult.getParameters();
                                             addParameterTypeDefinitions(methodMatchContext, qp, parameters, annotationBuilder, queryResult.getParameterTypes());
                                             AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(qp);
-                                            annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
-                                            annotationBuilder.member(PredatorMethod.META_MEMBER_INSERT_BINDING, annotationValues);
+                                            annotationBuilder.member(DataMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
+                                            annotationBuilder.member(DataMethod.META_MEMBER_INSERT_BINDING, annotationValues);
                                         }
                                     } catch (Exception e) {
                                         context.fail("Error building insert statement", element);
                                         failing = true;
                                     }
                                 }
-                                annotationBuilder.member(PredatorMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
+                                annotationBuilder.member(DataMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
 
                                 // include the roles
                                 methodInfo.getParameterRoles()
                                         .forEach(annotationBuilder::member);
 
                                 if (methodInfo.isDto()) {
-                                    annotationBuilder.member(PredatorMethod.META_MEMBER_DTO, true);
+                                    annotationBuilder.member(DataMethod.META_MEMBER_DTO, true);
                                 }
 
                                 TypedElement resultType = methodInfo.getResultType();
                                 if (resultType != null) {
-                                    annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));
+                                    annotationBuilder.member(DataMethod.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));
 
                                     ClassElement type = resultType.getType();
                                     if (!type.getName().equals("void")) {
-                                        annotationBuilder.member(PredatorMethod.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type, dataTypes));
+                                        annotationBuilder.member(DataMethod.META_MEMBER_RESULT_DATA_TYPE, TypeUtils.resolveDataType(type, dataTypes));
                                     }
                                 }
                                 if (idType != null) {
-                                    annotationBuilder.member(PredatorMethod.META_MEMBER_ID_TYPE, idType);
+                                    annotationBuilder.member(DataMethod.META_MEMBER_ID_TYPE, idType);
                                 }
-                                annotationBuilder.member(PredatorMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
+                                annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
                                 if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalParameterBinding);
                                     if (ArrayUtils.isNotEmpty(annotationParameters)) {
-                                        annotationBuilder.member(PredatorMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
+                                        annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
                                         if (finalRawCount) {
-                                            annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                            annotationBuilder.member(DataMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
                                         }
                                     }
                                     addParameterTypeDefinitions(methodMatchContext, finalParameterBinding, parameters, annotationBuilder, finalParameterTypes);
                                 }
                                 if (finalPreparedCount1 != null) {
                                     AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalPreparedCount1.getParameters());
-                                    annotationBuilder.member(PredatorMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
+                                    annotationBuilder.member(DataMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
                                 }
 
                                 Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
                                     ClassElement t = p.getGenericType();
                                     return t.isAssignable(entity.getName());
                                 }).findFirst();
-                                entityParam.ifPresent(parameterElement -> annotationBuilder.member(PredatorMethod.META_MEMBER_ENTITY, parameterElement.getName()));
+                                entityParam.ifPresent(parameterElement -> annotationBuilder.member(DataMethod.META_MEMBER_ENTITY, parameterElement.getName()));
 
                                 for (Map.Entry<String, String> entry : methodInfo.getParameterRoles().entrySet()) {
                                     annotationBuilder.member(entry.getKey(), entry.getValue());
                                 }
                                 if (queryObject != null) {
                                     if (queryObject instanceof RawQuery) {
-                                        element.annotate(Query.class, (builder) -> builder.member(PredatorMethod.META_MEMBER_RAW_QUERY, true));
+                                        element.annotate(Query.class, (builder) -> builder.member(DataMethod.META_MEMBER_RAW_QUERY, true));
                                     }
                                     int max = queryObject.getMax();
                                     if (max > -1) {
-                                        annotationBuilder.member(PredatorMethod.META_MEMBER_PAGE_SIZE, max);
+                                        annotationBuilder.member(DataMethod.META_MEMBER_PAGE_SIZE, max);
                                     }
                                     long offset = queryObject.getOffset();
                                     if (offset > 0) {
-                                        annotationBuilder.member(PredatorMethod.META_MEMBER_PAGE_INDEX, offset);
+                                        annotationBuilder.member(DataMethod.META_MEMBER_PAGE_INDEX, offset);
                                     }
                                 }
                             });
@@ -416,7 +416,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             MethodMatchContext matchContext,
             Map<String, String> parameterBinding,
             ParameterElement[] parameters,
-            AnnotationValueBuilder<PredatorMethod> annotationBuilder,
+            AnnotationValueBuilder<DataMethod> annotationBuilder,
             Map<String, DataType> parameterTypes) {
         if (!matchContext.supportsImplicitQueries()) {
             List<AnnotationValue<?>> annotationValues = new ArrayList<>(parameterBinding.size());
@@ -509,7 +509,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 try {
                     finderList.add(definition.load());
                 } catch (Exception e) {
-                    context.warn("Could not load Predator method candidate [" + definition.getName() + "]: " + e.getMessage(), null);
+                    context.warn("Could not load Data method candidate [" + definition.getName() + "]: " + e.getMessage(), null);
                 }
             }
         }

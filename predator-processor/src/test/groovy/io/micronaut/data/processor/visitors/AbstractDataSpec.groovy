@@ -26,7 +26,7 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
-class AbstractPredatorSpec extends AbstractTypeElementSpec {
+class AbstractDataSpec extends AbstractTypeElementSpec {
 
     BeanDefinition<?> buildRepository(String name, String source) {
         def pkg = NameUtils.getPackageName(name)

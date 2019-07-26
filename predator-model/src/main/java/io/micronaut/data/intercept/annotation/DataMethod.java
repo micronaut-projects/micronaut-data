@@ -17,7 +17,8 @@ package io.micronaut.data.intercept.annotation;
 
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.DataIntroductionAdvice;
 import io.micronaut.data.model.DataType;
 
 import java.io.Serializable;
@@ -27,7 +28,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Internal annotation used to configure execution handling for {@link io.micronaut.data.intercept.PredatorIntroductionAdvice}.
+ * Internal annotation used to configure execution handling for {@link DataIntroductionAdvice}.
  *
  * @author graemerocher
  * @since 1.0
@@ -35,7 +36,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 @Internal
-public @interface PredatorMethod {
+public @interface DataMethod {
 
     /**
      * The member that holds the count query.
@@ -125,7 +126,7 @@ public @interface PredatorMethod {
     /**
      * @return The child interceptor to use for the method execution.
      */
-    Class<? extends PredatorInterceptor> interceptor();
+    Class<? extends DataInterceptor> interceptor();
 
     /**
      * The root entity this method applies to.

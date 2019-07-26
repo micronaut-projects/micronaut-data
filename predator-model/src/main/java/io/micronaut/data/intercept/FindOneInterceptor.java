@@ -22,5 +22,5 @@ package io.micronaut.data.intercept;
  * @since 1.0
  * @param <T> The declaring type
  */
-public interface FindOneInterceptor<T> extends PredatorInterceptor<T, Object> {
+public interface FindOneInterceptor<T> extends DataInterceptor<T, Object> {
 }

@@ -22,5 +22,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0
  */
-public interface ExistsByInterceptor<T> extends PredatorInterceptor<T, Boolean>  {
+public interface ExistsByInterceptor<T> extends DataInterceptor<T, Boolean> {
 }

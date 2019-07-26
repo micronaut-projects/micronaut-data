@@ -175,7 +175,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         TypeRole.SLICE
                 );
                 if (returnType.isAssignable(CompletionStage.class) || returnType.isAssignable(Future.class)) {
-                    Class<? extends PredatorInterceptor> interceptorType;
+                    Class<? extends DataInterceptor> interceptorType;
                     ClassElement firstTypeArgument;
 
                     if (typeArgument.isAssignable(Iterable.class) || isSlice || isPage) {
@@ -214,7 +214,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return new MethodMatchInfo(finalResultType, query, interceptorType, dto);
                     }
                 } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
-                    Class<? extends PredatorInterceptor> interceptorType;
+                    Class<? extends DataInterceptor> interceptorType;
                     ClassElement finalResultType = TypeUtils.isObjectClass(typeArgument) ? matchContext.getRootEntity().getType() : typeArgument;
                     boolean isContainerType = isSlice || isPage;
                     if (isContainerType) {

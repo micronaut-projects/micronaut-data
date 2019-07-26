@@ -18,7 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.ExistsByInterceptor;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
@@ -62,7 +62,7 @@ public class ExistsByFinder extends DynamicFinder {
             @NonNull MethodMatchContext matchContext,
             @NonNull ClassElement queryResultType,
             @Nullable QueryModel query) {
-        Class<? extends PredatorInterceptor> interceptor = ExistsByInterceptor.class;
+        Class<? extends DataInterceptor> interceptor = ExistsByInterceptor.class;
         ClassElement returnType = matchContext.getReturnType();
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = ExistsByAsyncInterceptor.class;

@@ -1,6 +1,6 @@
 package io.micronaut.data.processor.visitors
 
-class CustomIdSpec extends AbstractPredatorSpec {
+class CustomIdSpec extends AbstractDataSpec {
 
     void 'test compile repo with custom ID'() {
         when:

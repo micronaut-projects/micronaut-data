@@ -23,5 +23,5 @@ package io.micronaut.data.intercept;
  * @param <R> The return type
  * @since 1.0.0
  */
-public interface FindSliceInterceptor<T, R> extends PredatorInterceptor<T, R> {
+public interface FindSliceInterceptor<T, R> extends DataInterceptor<T, R> {
 }

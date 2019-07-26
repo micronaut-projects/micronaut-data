@@ -10,14 +10,14 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneId
 
-class PredatorInitializerSpec extends Specification {
+class DataInitializerSpec extends Specification {
 
     static def DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
 
     @Unroll
     def "test date conversion #obj to #targetType"() {
         given:
-            new PredatorInitializer()
+            new DataInitializer()
             ConversionService<?> conversionService = ConversionService.SHARED
         when:
             def expectedValue = conversionService.convert(obj, targetType)

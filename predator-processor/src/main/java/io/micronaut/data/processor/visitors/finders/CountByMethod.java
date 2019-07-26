@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.intercept.CountInterceptor;
-import io.micronaut.data.intercept.PredatorInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
 import io.micronaut.data.model.query.ProjectionList;
@@ -63,7 +63,7 @@ public class CountByMethod extends DynamicFinder {
      * @return The method info
      */
     static MethodMatchInfo buildCountInfo(@NonNull MethodMatchContext matchContext, @Nullable QueryModel query) {
-        Class<? extends PredatorInterceptor> interceptor = CountInterceptor.class;
+        Class<? extends DataInterceptor> interceptor = CountInterceptor.class;
         ClassElement returnType = matchContext.getReturnType();
         if (TypeUtils.isFutureType(returnType)) {
             interceptor = CountAsyncInterceptor.class;

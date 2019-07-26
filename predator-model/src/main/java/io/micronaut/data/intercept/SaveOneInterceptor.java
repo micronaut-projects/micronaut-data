@@ -22,5 +22,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0
  */
-public interface SaveOneInterceptor<T> extends PredatorInterceptor<T, Object> {
+public interface SaveOneInterceptor<T> extends DataInterceptor<T, Object> {
 }
