@@ -14,7 +14,7 @@ dependency:com.h2database:h2[scope="runtime"]
 
 And Hikari connection pool:
 
-dependency:com.zaxxer:HikariCP[version="3.3.1"]
+dependency:io.micronaut.configuration:micronaut-jdbc-hikari[scope="runtime"]
 
 Next up you need to configure at least one data source. The following snippet from `application.yml` is an example of configuring the default JDBC data source:
 
