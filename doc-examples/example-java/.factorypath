@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <factorypath>
-	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-processor/1.0.0.BUILD-SNAPSHOT/micronaut-predator-processor-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-data-processor/1.0.0.BUILD-SNAPSHOT/micronaut-data-processor-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-inject-java/1.1.1/6ba50501e2add648f28ff31148ab09862e758f1/micronaut-inject-java-1.1.1.jar" enabled="true" runInBatchMode="false"/>
-	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-model/1.0.0.BUILD-SNAPSHOT/micronaut-predator-model-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-data-model/1.0.0.BUILD-SNAPSHOT/micronaut-data-model-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-validation/1.1.1/ce3c24318689bd42724a12f5f65182cf9375d6/micronaut-validation-1.1.1.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-aop/1.1.1/11a6fbeea487ee21500b40714decb91c0efd4f9a/micronaut-aop-1.1.1.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut/micronaut-http/1.1.1/10b6ca790dc5f6c1b0dfc32cae8e8a9bacbf3270/micronaut-http-1.1.1.jar" enabled="true" runInBatchMode="false"/>

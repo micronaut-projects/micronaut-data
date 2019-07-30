@@ -5,8 +5,8 @@
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-inject-java/1.2.0.RC2/micronaut-inject-java-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-graal/1.2.0.RC2/micronaut-graal-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.gradle/caches/modules-2/files-2.1/io.micronaut.spring/micronaut-spring-annotation/1.0.0/499770e82caca1cb80be68bc75fc484ff6d7de1b/micronaut-spring-annotation-1.0.0.jar" enabled="true" runInBatchMode="false"/>
-	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-processor/1.0.0.BUILD-SNAPSHOT/micronaut-predator-processor-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
-	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-predator-model/1.0.0.BUILD-SNAPSHOT/micronaut-predator-model-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-data-processor/1.0.0.BUILD-SNAPSHOT/micronaut-data-processor-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
+	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/data/micronaut-data-model/1.0.0.BUILD-SNAPSHOT/micronaut-data-model-1.0.0.BUILD-SNAPSHOT.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-validation/1.2.0.RC2/micronaut-validation-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-runtime/1.2.0.RC2/micronaut-runtime-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
 	<factorypathentry kind="EXTJAR" id="/Users/graemerocher/.m2/repository/io/micronaut/micronaut-aop/1.2.0.RC2/micronaut-aop-1.2.0.RC2.jar" enabled="true" runInBatchMode="false"/>
