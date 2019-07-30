@@ -1,11 +1,11 @@
-# Predator JPA Java Example
+# Micronaut Data JPA Java Example
 
-This example demonstrates Predator JPA for Java.
+This example demonstrates Micronaut Data JPA for Java.
 
 ## Example Structure
 
 * `src/main/java/example/domain` - Entities that map onto database tables
-* `src/main/java/example/repositories` - Predator Repository interfaces
+* `src/main/java/example/repositories` - Micronaut Data Repository interfaces
 * `src/main/java/example/controllers` - Controllers that are injected with the repository interfaces
 * `src/test/java/example` - JUnit 5 tests that test the example.
 

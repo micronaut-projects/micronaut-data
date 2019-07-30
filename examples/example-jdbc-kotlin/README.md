@@ -1,11 +1,11 @@
-# Predator JDBC Kotlin Example
+# Micronaut Data JDBC Kotlin Example
 
-This example demonstrates Predator JDBC for Kotlin.
+This example demonstrates Micronaut Data JDBC for Kotlin.
 
 ## Example Structure
 
 * `src/main/kotlin/example/domain` - Entities that map onto database tables
-* `src/main/kotlin/example/repositories` - Predator Repository interfaces
+* `src/main/kotlin/example/repositories` - Micronaut Data Repository interfaces
 * `src/main/kotlin/example/controllers` - Controllers that are injected with the repository interfaces
 * `src/test/kotlin/example` - JUnit 5 tests that test the example.
 
