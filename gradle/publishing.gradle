@@ -190,7 +190,7 @@ bintray {
     user = bintrayUser
     key = bintrayKey
     publications = ['maven']
-    publish = false
+    publish = true
     pkg {
         repo = 'core-releases-local'
         userOrg = 'micronaut'
@@ -220,26 +220,37 @@ bintray {
 task synchronizeWithMavenCentral() {
     description = "Syncs with Maven Central/Sonatype"
     doLast {
+        boolean ongoing = true
+
         println """
 Synchronizing with Maven central. This may take a few minutes ...
 If this fails, log on to http://oss.sonatype.org/ using the centralUser credentials
 and progress through process manually -> Close -> Publish ... under staging repositories
 """
+        // this hack is here to keep Travis from thinking this is
+        // a stalled build
+        Thread.start {
+            while(ongoing) {
+                sleep 5000
+                println "Still Publishing. Please wait..."
+            }
+        }
         try {
             try {
                 def mavenClent = new RESTClient("https://repo.maven.apache.org/maven2/")
-                mavenClent.get(path:"${project.group.replace('.','/')}/$project.name/$projectVersion/$project.name-${projectVersion}.jar")
+                mavenClent.get(path:"${project.group.replace('.','/')}/micronaut-$project.name/$project.version/micronaut-$project.name-${project.version}.jar")
             } catch(groovyx.net.http.HttpResponseException e) {
                 // doesn't exist.. try sync
                 def client = new RESTClient('https://api.bintray.com/maven_central_sync/micronaut/core-releases-local/')
                 client.headers['Authorization'] = 'Basic ' + "$bintrayUser:$bintrayKey".getBytes('iso-8859-1').encodeBase64()
                 def body = /{}/
                 def resp = client.post(
-                        path: "$bintray.pkg.name/versions/$projectVersion",
+                        path: "$bintray.pkg.name/versions/$project.version",
                         body: body,
                         requestContentType: JSON
                 )
                 assert resp.status == 200
+
                 println resp.data.status
                 println resp.data.messages.join('\n')
             }
@@ -248,6 +259,8 @@ and progress through process manually -> Close -> Publish ... under staging repo
             println "Message: $e.message"
             println "Body: $e.response.data"
             throw e
+        } finally {
+            ongoing = false
         }
     }
 }
