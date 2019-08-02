@@ -1,7 +1,7 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     compile project(":data-runtime")
-    compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.1.1", {
+    compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.2.0", {
         exclude group:'org.springframework', module:'spring-aop'
         exclude group:'org.springframework', module:'spring-expression'
         exclude group:'org.javassist', module:'javassist'
