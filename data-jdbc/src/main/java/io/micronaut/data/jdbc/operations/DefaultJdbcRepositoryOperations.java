@@ -240,124 +240,134 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-        Class<T> rootEntity = preparedQuery.getRootEntity();
-        Class<R> resultType = preparedQuery.getResultType();
 
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             Connection connection = status.getResource();
+            return findStream(preparedQuery, connection);
+        });
+    }
 
-            PreparedStatement ps;
-            try {
-                ps = prepareStatement(connection, preparedQuery, false, false);
-            } catch (SQLException e) {
-                throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
-            }
+    private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery, Connection connection) {
+        Class<T> rootEntity = preparedQuery.getRootEntity();
+        Class<R> resultType = preparedQuery.getResultType();
 
-            ResultSet rs;
+        PreparedStatement ps;
+        try {
+            ps = prepareStatement(connection, preparedQuery, false, false);
+        } catch (SQLException e) {
+            throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
+        }
+
+        ResultSet rs;
+        try {
+            rs = ps.executeQuery();
+        } catch (SQLException e) {
             try {
-                rs = ps.executeQuery();
-            } catch (SQLException e) {
-                try {
-                    ps.close();
-                } catch (SQLException e2) {
-                    // ignore
-                }
-                throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
+                ps.close();
+            } catch (SQLException e2) {
+                // ignore
             }
-            boolean dtoProjection = preparedQuery.isDtoProjection();
-            boolean isRootResult = resultType == rootEntity;
-            Spliterator<R> spliterator;
-            AtomicBoolean finished = new AtomicBoolean();
-            if (isRootResult || dtoProjection) {
-                SqlResultConsumer sqlMappingConsumer = preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null);
-                TypeMapper<ResultSet, R> mapper;
-                if (dtoProjection) {
-                    mapper = new DTOMapper<>(
-                            getEntity(rootEntity),
-                            columnNameResultSetReader
-                    );
-                } else {
-                    mapper = new SqlResultEntityTypeMapper<>(
-                            getEntity(resultType),
-                            columnNameResultSetReader,
-                            preparedQuery.getJoinFetchPaths()
-                    );
-                }
-                spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                        Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                    @Override
-                    public boolean tryAdvance(Consumer<? super R> action) {
-                        if (finished.get()) {
-                            return false;
-                        }
-                        try {
-                            boolean hasNext = rs.next();
-                            if (hasNext) {
-                                R o = mapper.map(rs, resultType);
-                                if (sqlMappingConsumer != null) {
-                                    sqlMappingConsumer.accept(rs, o);
-                                }
-                                action.accept(o);
-                            } else {
-                                if (finished.compareAndSet(false, true)) {
-                                    rs.close();
-                                    ps.close();
-                                }
-                            }
-                            return hasNext;
-                        } catch (SQLException e) {
-                            throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
-                        }
-                    }
-                };
+            throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
+        }
+        boolean dtoProjection = preparedQuery.isDtoProjection();
+        boolean isRootResult = resultType == rootEntity;
+        Spliterator<R> spliterator;
+        AtomicBoolean finished = new AtomicBoolean();
+        if (isRootResult || dtoProjection) {
+            SqlResultConsumer sqlMappingConsumer = preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null);
+            TypeMapper<ResultSet, R> mapper;
+            if (dtoProjection) {
+                mapper = new DTOMapper<>(
+                        getEntity(rootEntity),
+                        columnNameResultSetReader
+                );
             } else {
-                spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                        Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                    @Override
-                    public boolean tryAdvance(Consumer<? super R> action) {
-                        try {
-                            boolean hasNext = rs.next();
-                            if (hasNext) {
-                                Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
-                                if (resultType.isInstance(v)) {
-                                    //noinspection unchecked
-                                    action.accept((R) v);
-                                } else {
-                                    Object r = columnIndexResultSetReader.convertRequired(v, resultType);
-                                    action.accept((R) r);
-                                }
-                            } else {
-                                if (finished.compareAndSet(false, true)) {
-                                    rs.close();
-                                    ps.close();
-                                }
-                            }
-                            return hasNext;
-                        } catch (SQLException e) {
-                            throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
-                        }
-                    }
-                };
+                mapper = new SqlResultEntityTypeMapper<>(
+                        getEntity(resultType),
+                        columnNameResultSetReader,
+                        preparedQuery.getJoinFetchPaths()
+                );
             }
-
-            return StreamSupport.stream(spliterator, false).onClose(() -> {
-                if (finished.compareAndSet(false, true)) {
+            spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+                @Override
+                public boolean tryAdvance(Consumer<? super R> action) {
+                    if (finished.get()) {
+                        return false;
+                    }
                     try {
-                        rs.close();
-                        ps.close();
+                        boolean hasNext = rs.next();
+                        if (hasNext) {
+                            R o = mapper.map(rs, resultType);
+                            if (sqlMappingConsumer != null) {
+                                sqlMappingConsumer.accept(rs, o);
+                            }
+                            action.accept(o);
+                        } else {
+                            if (finished.compareAndSet(false, true)) {
+                                rs.close();
+                                ps.close();
+                            }
+                        }
+                        return hasNext;
                     } catch (SQLException e) {
-                        throw new DataAccessException("Error closing JDBC result stream: " + e.getMessage(), e);
+                        throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
                     }
                 }
-            });
+            };
+        } else {
+            spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
+                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+                @Override
+                public boolean tryAdvance(Consumer<? super R> action) {
+                    if (finished.get()) {
+                        return false;
+                    }
+                    try {
+                        boolean hasNext = rs.next();
+                        if (hasNext) {
+                            Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                            if (resultType.isInstance(v)) {
+                                //noinspection unchecked
+                                action.accept((R) v);
+                            } else {
+                                Object r = columnIndexResultSetReader.convertRequired(v, resultType);
+                                action.accept((R) r);
+                            }
+                        } else {
+                            if (finished.compareAndSet(false, true)) {
+                                rs.close();
+                                ps.close();
+                            }
+                        }
+                        return hasNext;
+                    } catch (SQLException e) {
+                        throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
+                    }
+                }
+            };
+        }
+
+        return StreamSupport.stream(spliterator, false).onClose(() -> {
+            if (finished.compareAndSet(false, true)) {
+                try {
+                    rs.close();
+                    ps.close();
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error closing JDBC result stream: " + e.getMessage(), e);
+                }
+            }
         });
     }
 
     @NonNull
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return findStream(preparedQuery).collect(Collectors.toList());
+        return transactionOperations.executeRead(status -> {
+            Connection connection = status.getResource();
+            return findStream(preparedQuery, connection).collect(Collectors.toList());
+        });
     }
 
     @NonNull
