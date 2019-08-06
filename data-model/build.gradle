@@ -4,7 +4,7 @@ dependencies {
 	compile "io.micronaut:micronaut-inject:$micronautVersion"
 	compile "io.micronaut:micronaut-validation:$micronautVersion"
 	compile "io.micronaut:micronaut-aop:$micronautVersion"
-	compile "io.reactivex.rxjava2:rxjava:2.2.10"
+	compile "io.reactivex.rxjava2:rxjava:2.2.11"
 	testCompile "io.micronaut:micronaut-inject-java-test:$micronautVersion"
 	compileOnly "com.fasterxml.jackson.core:jackson-annotations"
 	testCompile "com.fasterxml.jackson.core:jackson-databind"
