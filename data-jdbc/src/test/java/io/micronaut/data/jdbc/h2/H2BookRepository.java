@@ -1,20 +1,15 @@
 package io.micronaut.data.jdbc.h2;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.exceptions.EmptyResultException;
-import io.micronaut.data.jdbc.annotation.*;
-import io.micronaut.data.jdbc.runtime.ConnectionCallback;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.repositories.AuthorRepository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;

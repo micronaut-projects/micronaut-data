@@ -9,7 +9,6 @@ dependencies {
     runtime "com.h2database:h2"
     runtime "com.zaxxer:HikariCP:3.3.1"
     runtime "ch.qos.logback:logback-classic:1.2.3"
-    implementation "org.grails:grails-core:$grailsVersion"
 
     testImplementation "cglib:cglib-nodep:3.2.12"
     testImplementation "org.objenesis:objenesis:3.0.1"
