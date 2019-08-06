@@ -1,7 +1,7 @@
 dependencies {
 	annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
 	compile project(":data-model")
-	compileOnly 'org.springframework.data:spring-data-commons:2.1.9.RELEASE'
+	compileOnly 'org.springframework.data:spring-data-commons:2.1.10.RELEASE'
 	compileOnly 'io.micronaut:micronaut-http'
 	testCompile 'javax.persistence:javax.persistence-api:2.2'
 	testCompile project(":data-processor")

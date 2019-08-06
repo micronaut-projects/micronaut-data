@@ -10,6 +10,6 @@ dependencies {
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testCompile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}
-	testCompile 'org.springframework.data:spring-data-commons:2.1.9.RELEASE'
+	testCompile 'org.springframework.data:spring-data-commons:2.1.10.RELEASE'
 	testCompile project(":data-tck")
 }
