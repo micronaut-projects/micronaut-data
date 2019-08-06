@@ -18,15 +18,37 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
+import io.micronaut.annotation.processing.visitor.JavaClassElement
 import io.micronaut.core.naming.NameUtils
+import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.inject.BeanDefinition
+import io.micronaut.inject.ast.ClassElement
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 import javax.annotation.processing.SupportedAnnotationTypes
+import javax.lang.model.element.TypeElement
+import java.util.function.Function
 
 class AbstractDataSpec extends AbstractTypeElementSpec {
+
+    SourcePersistentEntity buildJpaEntity(String name, String source) {
+        def pkg = NameUtils.getPackageName(name)
+        ClassElement classElement = buildClassElement("""
+package $pkg;
+
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
+import javax.persistence.*;
+import java.util.*;
+
+$source
+""")
+        return new SourcePersistentEntity(classElement, { ClassElement ce ->
+            new SourcePersistentEntity(ce, this)
+        } as Function<ClassElement, SourcePersistentEntity>)
+    }
 
     BeanDefinition<?> buildRepository(String name, String source) {
         def pkg = NameUtils.getPackageName(name)

@@ -760,7 +760,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         String definition = annotationMetadata.stringValue(MappedProperty.class, "definition").orElse(null);
         DataType dataType = prop.getDataType();
         if (definition != null) {
-            return " " + definition;
+            return column + " " + definition;
         }
         switch (dataType) {
             case STRING:
