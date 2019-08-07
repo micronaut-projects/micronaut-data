@@ -28,7 +28,7 @@ dependencies {
     runtime "com.h2database:h2"
     runtime "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8"
     testCompile "org.junit.jupiter:junit-jupiter-api"
-    testCompile "org.jetbrains.spek:spek-api:1.1.5"
+    testCompile "org.jetbrains.spek:spek-api:1.2.1"
     testRuntime "org.junit.jupiter:junit-jupiter-engine"
     testCompile "io.micronaut.test:micronaut-test-junit5"
 }
