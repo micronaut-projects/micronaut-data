@@ -4,7 +4,7 @@
   <artifactId>example</artifactId>
   <version>0.1</version>
   <properties>
-    <micronaut.version>1.2.0.RC2</micronaut.version>
+    <micronaut.version>1.2.0</micronaut.version>
     <micronaut.data.version>1.0.0.BUILD-SNAPSHOT</micronaut.data.version>
     <jdk.version>1.8</jdk.version>
     <maven.compiler.target>${jdk.version}</maven.compiler.target>

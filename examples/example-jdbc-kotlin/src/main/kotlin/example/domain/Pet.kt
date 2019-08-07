@@ -11,7 +11,7 @@ data class Pet (@Id
                 val name: String,
                 @ManyToOne
                 val owner: Owner,
-                var type : PetType = PetType.DOG) {
+                val type : PetType = PetType.DOG) {
 
     enum class PetType {
         DOG,
