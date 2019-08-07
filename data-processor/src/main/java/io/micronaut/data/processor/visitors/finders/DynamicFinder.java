@@ -309,15 +309,16 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     }
 
     private void verifyFinderParameter(String methodName, SourcePersistentEntity entity, CriterionMethodExpression methodExpression, ParameterElement parameter) {
-        boolean isID = methodExpression.propertyName.equals(TypeRole.ID);
-        SourcePersistentProperty persistentProperty = (SourcePersistentProperty) entity.getPropertyByPath(methodExpression.propertyName).orElseGet(() -> {
+        String propertyName = methodExpression.propertyName;
+        boolean isID = propertyName.equals(TypeRole.ID);
+        SourcePersistentProperty persistentProperty = (SourcePersistentProperty) entity.getPropertyByPath(propertyName).orElseGet(() -> {
             if (isID) {
                 SourcePersistentProperty identity = entity.getIdentity();
                 if (identity != null) {
                     return identity;
                 }
             }
-            throw new IllegalArgumentException("Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + methodExpression.propertyName);
+            throw new IllegalArgumentException("Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + propertyName);
         });
         ClassElement genericType = parameter.getGenericType();
         if (!TypeUtils.areTypesCompatible(genericType, persistentProperty.getType())) {

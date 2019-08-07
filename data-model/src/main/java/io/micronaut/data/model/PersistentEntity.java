@@ -162,6 +162,12 @@ public interface PersistentEntity extends PersistentElement {
 
                 String name = i.next();
                 PersistentProperty sp = currentEntity.getPropertyByName(name);
+                if (sp == null) {
+                    PersistentProperty identity = currentEntity.getIdentity();
+                    if (identity != null && identity.getName().equals(name)) {
+                        sp = identity;
+                    }
+                }
                 if (sp != null) {
                     b.append(name);
                     if (i.hasNext()) {
@@ -219,7 +225,14 @@ public interface PersistentEntity extends PersistentElement {
      */
     default Optional<PersistentProperty> getPropertyByPath(String path) {
         if (path.indexOf('.') == -1) {
-            return Optional.ofNullable(getPropertyByName(path));
+            PersistentProperty pp = getPropertyByName(path);
+            if (pp == null) {
+                PersistentProperty identity = getIdentity();
+                if (identity != null && identity.getName().equals(path)) {
+                    pp = identity;
+                }
+            }
+            return Optional.ofNullable(pp);
         } else {
             String[] tokens = path.split("\\.");
             PersistentEntity startingEntity = this;
@@ -227,7 +240,12 @@ public interface PersistentEntity extends PersistentElement {
             for (String token : tokens) {
                 prop = startingEntity.getPropertyByName(token);
                 if (prop == null) {
-                    return Optional.empty();
+                    PersistentProperty identity = startingEntity.getIdentity();
+                    if (identity != null && identity.getName().equals(token)) {
+                        prop = identity;
+                    } else {
+                        return Optional.empty();
+                    }
                 } else if (prop instanceof Association) {
                     startingEntity = ((Association) prop).getAssociatedEntity();
                 }

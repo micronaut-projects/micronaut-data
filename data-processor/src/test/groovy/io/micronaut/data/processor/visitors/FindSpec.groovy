@@ -15,9 +15,7 @@
  */
 package io.micronaut.data.processor.visitors
 
-import io.micronaut.annotation.processing.TypeElementVisitorProcessor
-import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.annotation.processing.test.JavaParser
+
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindByIdInterceptor
@@ -27,13 +25,90 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
-import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
-import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
-import javax.annotation.processing.SupportedAnnotationTypes
+class FindSpec extends AbstractDataSpec {
 
-class FindSpec extends AbstractTypeElementSpec {
+    void "test find by association id - singled ended"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', '''
+
+@MappedEntity
+class Player {
+
+    @GeneratedValue
+    @Id
+    private Integer id;
+    private String name;
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Team team;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+        
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+    
+    public Team getTeam() {
+        return this.team;
+    }
+}
+
+@MappedEntity
+class Team {
+    @GeneratedValue
+    @Id
+    private Integer id;
+    private String name;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }    
+    
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+}
+
+@Repository
+interface PlayerRepository extends GenericRepository<Player, Integer> {
+
+    Collection<Player> findByTeamName(String name);
+
+    Collection<Player> findByTeamId(Integer id);
+}
+
+''')
+        def findByTeamName = beanDefinition.getRequiredMethod("findByTeamName", String)
+        def findByTeamId = beanDefinition.getRequiredMethod("findByTeamId", Integer)
+
+        expect:
+        findByTeamName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.name = :p1)'
+        findByTeamId.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.id = :p1)'
+    }
 
     void "test find method match"() {
         given:
@@ -78,21 +153,4 @@ interface MyInterface extends GenericRepository<Person, Long> {
         findByIds.synthesize(Query).value() == "SELECT $alias FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.id IN (:p1))"
     }
 
-    @Override
-    protected JavaParser newJavaParser() {
-        return new JavaParser() {
-            @Override
-            protected TypeElementVisitorProcessor getTypeElementVisitorProcessor() {
-                return new MyTypeElementVisitorProcessor()
-            }
-        }
-    }
-
-    @SupportedAnnotationTypes("*")
-    static class MyTypeElementVisitorProcessor extends TypeElementVisitorProcessor {
-        @Override
-        protected Collection<TypeElementVisitor> findTypeElementVisitors() {
-            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor()]
-        }
-    }
 }
