@@ -28,11 +28,99 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 class FindSpec extends AbstractDataSpec {
+    void "test find order by"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', """
+
+${playerTeamModel()}
+
+@Repository
+interface PlayerRepository extends GenericRepository<Player, Integer> {
+
+    Collection<Player> findAllOrderByName();
+    Collection<Player> findAllOrderByNameAsc();
+    Collection<Player> findAllOrderByNameDesc();
+}
+
+""")
+        def findAllOrderByName = beanDefinition.getRequiredMethod("findAllOrderByName")
+        def findAllOrderByNameAsc = beanDefinition.getRequiredMethod("findAllOrderByNameAsc")
+        def findAllOrderByNameDesc = beanDefinition.getRequiredMethod("findAllOrderByNameDesc")
+
+        expect:
+        findAllOrderByName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ ORDER BY player_.name ASC'
+        findAllOrderByNameAsc.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ ORDER BY player_.name ASC'
+        findAllOrderByNameDesc.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ ORDER BY player_.name DESC'
+    }
 
     void "test find by association id - singled ended"() {
         given:
-        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', '''
+        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', """
 
+${playerTeamModel()}
+
+@Repository
+interface PlayerRepository extends GenericRepository<Player, Integer> {
+
+    Collection<Player> findByTeamName(String name);
+
+    Collection<Player> findByTeamId(Integer id);
+}
+
+""")
+        def findByTeamName = beanDefinition.getRequiredMethod("findByTeamName", String)
+        def findByTeamId = beanDefinition.getRequiredMethod("findByTeamId", Integer)
+
+        expect:
+        findByTeamName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.name = :p1)'
+        findByTeamId.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.id = :p1)'
+    }
+
+    void "test find method match"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.GenericRepository;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    Person find(Long id);
+    
+    Person find(Long id, String name);
+    
+    Person findById(Long id);
+    
+    Iterable<Person> findByIds(Iterable<Long> ids);
+}
+""")
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
+
+        when: "the list method is retrieved"
+
+        def findMethod = beanDefinition.getRequiredMethod("find", Long)
+        def findMethod2 = beanDefinition.getRequiredMethod("find", Long, String)
+        def findMethod3 = beanDefinition.getRequiredMethod("findById", Long)
+        def findByIds = beanDefinition.getRequiredMethod("findByIds", Iterable.class)
+
+        def findAnn = findMethod.synthesize(DataMethod)
+        def findAnn2 = findMethod2.synthesize(DataMethod)
+        def findAnn3 = findMethod3.synthesize(DataMethod)
+        def findByIdsAnn = findByIds.synthesize(DataMethod)
+
+        then:"it is configured correctly"
+        findAnn.interceptor() == FindByIdInterceptor
+        findAnn3.interceptor() == FindByIdInterceptor
+        findAnn2.interceptor() == FindOneInterceptor
+        findByIdsAnn.interceptor() == FindAllInterceptor
+        findByIds.synthesize(Query).value() == "SELECT $alias FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.id IN (:p1))"
+    }
+
+    String playerTeamModel() {
+        '''
 @MappedEntity
 class Player {
 
@@ -91,66 +179,6 @@ class Team {
     public void setId(Integer id) {
         this.id = id;
     }
-}
-
-@Repository
-interface PlayerRepository extends GenericRepository<Player, Integer> {
-
-    Collection<Player> findByTeamName(String name);
-
-    Collection<Player> findByTeamId(Integer id);
-}
-
-''')
-        def findByTeamName = beanDefinition.getRequiredMethod("findByTeamName", String)
-        def findByTeamId = beanDefinition.getRequiredMethod("findByTeamId", Integer)
-
-        expect:
-        findByTeamName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.name = :p1)'
-        findByTeamId.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.id = :p1)'
+}'''
     }
-
-    void "test find method match"() {
-        given:
-        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
-package test;
-
-import io.micronaut.data.model.entities.Person;
-import io.micronaut.data.annotation.Repository;
-import io.micronaut.data.repository.GenericRepository;
-
-@Repository
-interface MyInterface extends GenericRepository<Person, Long> {
-
-    Person find(Long id);
-    
-    Person find(Long id, String name);
-    
-    Person findById(Long id);
-    
-    Iterable<Person> findByIds(Iterable<Long> ids);
-}
-""")
-        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
-
-        when: "the list method is retrieved"
-
-        def findMethod = beanDefinition.getRequiredMethod("find", Long)
-        def findMethod2 = beanDefinition.getRequiredMethod("find", Long, String)
-        def findMethod3 = beanDefinition.getRequiredMethod("findById", Long)
-        def findByIds = beanDefinition.getRequiredMethod("findByIds", Iterable.class)
-
-        def findAnn = findMethod.synthesize(DataMethod)
-        def findAnn2 = findMethod2.synthesize(DataMethod)
-        def findAnn3 = findMethod3.synthesize(DataMethod)
-        def findByIdsAnn = findByIds.synthesize(DataMethod)
-
-        then:"it is configured correctly"
-        findAnn.interceptor() == FindByIdInterceptor
-        findAnn3.interceptor() == FindByIdInterceptor
-        findAnn2.interceptor() == FindOneInterceptor
-        findByIdsAnn.interceptor() == FindAllInterceptor
-        findByIds.synthesize(Query).value() == "SELECT $alias FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.id IN (:p1))"
-    }
-
 }

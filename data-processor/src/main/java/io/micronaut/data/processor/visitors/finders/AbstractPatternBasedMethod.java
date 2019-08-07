@@ -95,7 +95,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     String prop = NameUtils.decapitalize(orderDef);
                     if (prop.endsWith("Desc")) {
                         orders.add(Sort.Order.desc(prop.substring(0, prop.length() - 4)));
-                    } else if (prop.equalsIgnoreCase("Asc")) {
+                    } else if (prop.endsWith("Asc")) {
                         orders.add(Sort.Order.asc(prop.substring(0, prop.length() - 3)));
                     } else {
                         orders.add(Sort.Order.asc(prop));
