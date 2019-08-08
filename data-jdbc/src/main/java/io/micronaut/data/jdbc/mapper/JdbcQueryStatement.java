@@ -101,8 +101,12 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 statement.setClob(index, (Clob) value);
             } else if (value instanceof Blob) {
                 statement.setBlob(index, (Blob) value);
-            } else {
-                statement.setObject(index, value);
+            } else if (value != null) {
+                if (value.getClass().isEnum()) {
+                    statement.setString(index, ((Enum) value).name());
+                } else {
+                    statement.setObject(index, value);
+                }
             }
         } catch (SQLException e) {
             throw newDataAccessException(e);
