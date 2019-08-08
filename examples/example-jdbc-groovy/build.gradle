@@ -1,0 +1,65 @@
+plugins {
+    id "groovy"
+    id "com.github.johnrengelman.shadow" version "5.0.0"
+    id "application"
+}
+
+
+
+version "0.1"
+group "example.jdbc"
+
+repositories {
+    mavenLocal()
+    maven { url "https://jcenter.bintray.com" }
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+configurations {
+    // for dependencies that are needed for development only
+    developmentOnly 
+}
+
+ext {
+    micronautDataVersion = "1.0.0.BUILD-SNAPSHOT"
+    micronautVersion = "1.2.0"
+}
+
+dependencies {
+    compileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")
+    compileOnly "io.micronaut:micronaut-inject-groovy"
+    compileOnly "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
+    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    implementation "io.micronaut:micronaut-runtime-groovy"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut:micronaut-http-server-netty"
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "jakarta.persistence:jakarta.persistence-api:2.2.2"
+    implementation "io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion"
+    runtimeOnly "com.h2database:h2"
+    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    testCompileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testImplementation("org.spockframework:spock-core") {
+        exclude group: "org.codehaus.groovy", module: "groovy-all"
+    }
+    testImplementation "io.micronaut:micronaut-inject-groovy"
+    testImplementation "io.micronaut.test:micronaut-test-spock"
+    testImplementation "io.micronaut.test:micronaut-test-junit5"
+    testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.5.0"
+}
+
+test.classpath += configurations.developmentOnly
+
+mainClassName = "example.jdbc.Application"
+tasks.withType(GroovyCompile) {
+    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
+}
+
+shadowJar {
+    mergeServiceFiles()
+}
+
+run.classpath += configurations.developmentOnly
+run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
