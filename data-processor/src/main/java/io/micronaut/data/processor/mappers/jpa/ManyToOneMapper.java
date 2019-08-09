@@ -22,6 +22,7 @@ import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,7 +41,18 @@ public class ManyToOneMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-        AnnotationValue<Relation> ann = AnnotationValue.builder(Relation.class).value(Relation.Kind.MANY_TO_ONE).build();
-        return Collections.singletonList(ann);
+
+        AnnotationValue<Relation> ann = AnnotationValue.builder(Relation.class)
+                .value(Relation.Kind.MANY_TO_ONE)
+                .build();
+        boolean nullable = annotation.booleanValue("optional").orElse(true);
+        if (nullable) {
+            return Arrays.asList(
+                AnnotationValue.builder("javax.annotation.Nullable").build(),
+                ann
+            );
+        } else {
+            return Collections.singletonList(ann);
+        }
     }
 }
