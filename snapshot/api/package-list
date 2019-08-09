@@ -53,6 +53,7 @@ io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.operations
 io.micronaut.data.runtime.spring
 io.micronaut.data.tck.entities
+io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.repositories
 io.micronaut.data.transaction
 io.micronaut.data.transaction.exceptions

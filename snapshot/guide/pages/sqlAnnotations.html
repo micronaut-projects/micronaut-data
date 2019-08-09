@@ -1,0 +1,231 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>8.1.4.1 SQL Annotations 1.0.0.BUILD-SNAPSHOT</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Data
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>7</strong><span>Spring Data Support</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+
+
+                <div class="project">
+                    <h1>8.1.4.1 SQL Annotations</h1>
+
+                    <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
+                </div>
+
+                
+
+                
+
+<h2 id="sqlAnnotations">8.1.4.1 SQL Annotations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The following table summarizes the different annotations and what they enable. If you are familiar with and prefer the JPA annotations then feel free to skip to the next section:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Micronaut Data Annotations</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Annotation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/AutoPopulated.html">@AutoPopulated</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/DateCreated.html">@DateCreated</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows assigning a data created value (such as a <code>java.time.Instant</code>) prior to an insert</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/DateUpdated.html">@DateUpdated</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Allows assigning a last updated value (such as a <code>java.time.Instant</code>) prior to an insert</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/GeneratedValue.html">@GeneratedValue</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies that the property value is generated by the database and not included in inserts</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Id.html">@Id</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the ID of an entity</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/EmbeddedId.html">@EmbeddedId</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies an embedded ID of an entity</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the entity is mapped to the database</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/MappedProperty.html">@MappedProperty</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to customize the column name, definition and data type</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Relation.html">@Relation</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a relationship (one-to-one, one-to-many, etc.)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Transient.html">@Transient</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a property is transient</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In the case of using JPA only a subset of annotations are supported including the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>@Table</code></p>
+</li>
+<li>
+<p><code>@Id</code></p>
+</li>
+<li>
+<p><code>@Column</code></p>
+</li>
+<li>
+<p><code>@Transient</code></p>
+</li>
+<li>
+<p><code>@JoinTable</code></p>
+</li>
+<li>
+<p><code>@OneToMany</code></p>
+</li>
+<li>
+<p><code>@OneToOne</code></p>
+</li>
+<li>
+<p><code>@ManyToOne</code></p>
+</li>
+<li>
+<p><code>@ManyToMany</code></p>
+</li>
+<li>
+<p><code>@Embedded</code></p>
+</li>
+<li>
+<p><code>@Embeddable</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>7</strong><span>Spring Data Support</span></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>

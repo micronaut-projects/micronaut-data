@@ -269,52 +269,52 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 </td>
 </tr>
 <tr id="i8" class="altColor">
+<td class="colFirst"><code>protected boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#computePropertyPaths--">computePropertyPaths</a></span>()</code>
+<div class="block">Whether property path expressions require computation by the implementation.</div>
+</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#encodeInExpression-java.lang.StringBuilder-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">encodeInExpression</a></span>(java.lang.StringBuilder&nbsp;whereClause,
                   <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a>&nbsp;placeholder)</code>
 <div class="block">Placeholders for IN queries in SQL require special treatment.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#formatParameter-int-">formatParameter</a></span>(int&nbsp;index)</code>
 <div class="block">Format the parameter at the given index.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getAliasName-io.micronaut.data.model.PersistentEntity-">getAliasName</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code>
 <div class="block">Get an alias name for the given entity.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getColumnName-io.micronaut.data.model.PersistentProperty-">getColumnName</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty)</code>
 <div class="block">Get the column name for the given property.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getTableAsKeyword--">getTableAsKeyword</a></span>()</code>
 <div class="block">Get the AS keyword to use for table aliases.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getTableName-io.micronaut.data.model.PersistentEntity-">getTableName</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code>
 <div class="block">Get the table name for the given entity.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isAliasForBatch--">isAliasForBatch</a></span>()</code>
 <div class="block">Should aliases be used in batch statements.</div>
-</td>
-</tr>
-<tr id="i15" class="rowColor">
-<td class="colFirst"><code>protected boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isApplyManualJoins--">isApplyManualJoins</a></span>()</code>
-<div class="block">Whether manual query joins need to be built.</div>
 </td>
 </tr>
 <tr id="i16" class="altColor">
@@ -781,20 +781,22 @@ public&nbsp;<a href="../../../../../../../io/micronaut/data/model/query/builder/
 </dl>
 </li>
 </ul>
-<a name="isApplyManualJoins--">
+<a name="computePropertyPaths--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>isApplyManualJoins</h4>
-<pre>protected final&nbsp;boolean&nbsp;isApplyManualJoins()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#isApplyManualJoins--">AbstractSqlLikeQueryBuilder</a></code></span></div>
-<div class="block">Whether manual query joins need to be built.</div>
+<h4>computePropertyPaths</h4>
+<pre>protected final&nbsp;boolean&nbsp;computePropertyPaths()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#computePropertyPaths--">AbstractSqlLikeQueryBuilder</a></code></span></div>
+<div class="block">Whether property path expressions require computation by the implementation. In a certain query dialects
+ property paths are supported (such as JPA-QL where you can do select foo.bar) whilst for explicit SQL queries paths like
+ this have to be computed into aliases / column name references.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#isApplyManualJoins--">isApplyManualJoins</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#computePropertyPaths--">computePropertyPaths</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>True if manual query joins are required.</dd>
+<dd>True if property path computation is required.</dd>
 </dl>
 </li>
 </ul>
