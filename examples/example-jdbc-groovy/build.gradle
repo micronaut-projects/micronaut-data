@@ -10,7 +10,6 @@ version "0.1"
 group "example.jdbc"
 
 repositories {
-    mavenLocal()
     maven { url "https://jcenter.bintray.com" }
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
