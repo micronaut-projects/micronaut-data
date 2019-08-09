@@ -3,6 +3,7 @@ dependencies {
     annotationProcessor project(":data-processor")
     compileOnly "io.micronaut:micronaut-inject-groovy:$micronautVersion"
     compile project(":data-model")
+    compile project(":data-jdbc")
     compile "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
     compile 'jakarta.persistence:jakarta.persistence-api:2.2.2'
     runtimeOnly "cglib:cglib-nodep:3.2.12"

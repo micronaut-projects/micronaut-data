@@ -19,7 +19,9 @@ class H2CompositePrimaryKeySpec extends Specification {
     void "test CRUD with composite ID"() {
         when:"An entity is saved"
         def id = new ProjectId(10, 1)
-        def project = projectRepository.save(new Project(id, "Project 1"))
+        def p = new Project(id, "Project 1")
+        p.setOrg("test")
+        def project = projectRepository.save(p)
 
         then:"The save worked"
         project.projectId.departmentId == 10
@@ -39,7 +41,7 @@ class H2CompositePrimaryKeySpec extends Specification {
         project != null
         project.projectId.departmentId == 10
         project.projectId.projectId == 1
-        project.name == "Project 1"
+        project.name == "PROJECT 1"
         projectRepository.existsById(id)
 
         when: "An update is executed"
@@ -47,7 +49,7 @@ class H2CompositePrimaryKeySpec extends Specification {
         project = projectRepository.findById(id).orElse(null)
 
         then:"The object is updated"
-        project.name == "Project Changed"
+        project.name == "PROJECT CHANGED"
 
 
         when:"A delete is executed"

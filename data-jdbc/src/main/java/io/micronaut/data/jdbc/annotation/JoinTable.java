@@ -1,4 +1,4 @@
-package io.micronaut.data.annotation.sql;
+package io.micronaut.data.jdbc.annotation;
 
 import io.micronaut.data.annotation.MappedProperty;
 

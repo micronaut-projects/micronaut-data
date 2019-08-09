@@ -1,0 +1,23 @@
+Inspired by the similar annotation in Hibernate, you can apply a transformation when either reading or writing a column from or to the database using the ann:data.jdbc.annotation.ColumnTransformer[] annotation.
+
+This feature can be used to encrypt/decrypt values or invoke any arbitrary database function. To define a read transformation use the `read` member. For example:
+
+.Applying a read transformation
+[source,java]
+----
+@ColumnTransformer(read = "UPPER(name)")
+private String name;
+----
+
+NOTE: You may need to use the alias before the column name which is the table name followed by underscore. Example: `project_.name`.
+
+To apply a write transformation you should use the `write` member and include exactly one `?` placeholder:
+
+.Apply a write transformation
+[source,java]
+----
+@ColumnTransformer(write = "UPPER(?)")
+private String name;
+----
+
+With this any place any `INSERT` or `UPDATE` statement generated will include the above `write` entry.

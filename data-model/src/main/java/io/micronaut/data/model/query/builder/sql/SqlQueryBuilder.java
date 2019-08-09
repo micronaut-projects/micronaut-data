@@ -26,7 +26,6 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.annotation.sql.JoinTable;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
@@ -55,6 +54,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * The start of an IN expression.
      */
     public static final String IN_EXPRESSION_START = " ?$IN(";
+    /**
+     * Annotation used to represent join tables.
+     */
+    private static final String ANN_JOIN_TABLE = "io.micronaut.data.jdbc.annotation.JoinTable";
     private static final String BLANK_SPACE = " ";
 
     private Dialect dialect = Dialect.ANSI;
@@ -130,7 +133,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
             NamingStrategy namingStrategy = entity.getNamingStrategy();
             String joinTableName = associationMetadata
-                    .stringValue(JoinTable.class, "name")
+                    .stringValue(ANN_JOIN_TABLE, "name")
                     .orElseGet(() ->
                             namingStrategy.mappedName(association)
                     );
@@ -174,7 +177,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
                 NamingStrategy namingStrategy = entity.getNamingStrategy();
                 String joinTableName = association.getAnnotationMetadata()
-                        .stringValue(JoinTable.class, "name")
+                        .stringValue(ANN_JOIN_TABLE, "name")
                         .orElseGet(() ->
                                 namingStrategy.mappedName(association)
                         );
@@ -276,7 +279,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @NonNull
     private String[] resolveJoinTableColumns(@NonNull PersistentEntity entity, PersistentEntity associatedEntity, Association association, PersistentProperty identity, PersistentProperty associatedId, NamingStrategy namingStrategy) {
-        List<AnnotationValue<MappedProperty>> joinColumns = association.getAnnotationMetadata().findAnnotation(JoinTable.class)
+        List<AnnotationValue<MappedProperty>> joinColumns = association.getAnnotationMetadata().findAnnotation(ANN_JOIN_TABLE)
                 .map(av -> av.getAnnotations("joinColumns", MappedProperty.class)).orElse(Collections.emptyList());
         if (identity == null) {
             throw new MappingException("Cannot have a foreign key association without an ID on entity: " + entity.getName());
@@ -397,7 +400,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 ).collect(Collectors.joining(","));
                             }
                         }
-                        return alias + DOT + getColumnName(p);
+                        return p.getAnnotationMetadata().stringValue(DataTransformer.class, "read")
+                                    .map(str -> str + AS_CLAUSE + p.getPersistedName())
+                                    .orElseGet(() -> alias + DOT + getColumnName(p));
                     })
                     .collect(Collectors.joining(","));
         } else {
@@ -452,7 +457,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
         Map<String, DataType> parameterTypes = new LinkedHashMap<>(persistentProperties.size());
         boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
-        int index = 1;
+        List<String> values = new ArrayList<>(persistentProperties.size());
         if (hasProperties) {
             List<String> columnNames = new ArrayList<>(persistentProperties.size());
             for (PersistentProperty prop : persistentProperties) {
@@ -464,7 +469,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             List<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                             for (PersistentProperty embeddedProp : embeddedProps) {
                                 String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
-                                parameters.put(prop.getName() + "." + embeddedProp.getName(), String.valueOf(index++));
+                                addWriteExpression(values, prop);
+                                parameters.put(prop.getName() + "." + embeddedProp.getName(), String.valueOf(values.size()));
                                 if (explicitColumn != null) {
                                     columnNames.add(explicitColumn);
                                 } else {
@@ -474,12 +480,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             }
                         } else if (!association.isForeignKey()) {
                             parameterTypes.put(prop.getName(), prop.getDataType());
-                            parameters.put(prop.getName(), String.valueOf(index++));
+                            addWriteExpression(values, prop);
+                            parameters.put(prop.getName(), String.valueOf(values.size()));
                             columnNames.add(getColumnName(prop));
                         }
                     } else {
                         parameterTypes.put(prop.getName(), prop.getDataType());
-                        parameters.put(prop.getName(), String.valueOf(index++));
+                        addWriteExpression(values, prop);
+                        parameters.put(prop.getName(), String.valueOf(values.size()));
                         columnNames.add(getColumnName(prop));
                     }
                 }
@@ -512,7 +520,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     List<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                     for (PersistentProperty embeddedProp : embeddedProps) {
                         String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
-                        parameters.put(identity.getName() + "." + embeddedProp.getName(), String.valueOf(index++));
+                        addWriteExpression(values, embeddedProp);
+                        parameters.put(identity.getName() + "." + embeddedProp.getName(), String.valueOf(values.size()));
                         if (explicitColumn != null) {
                             columnNames.add(explicitColumn);
                         } else {
@@ -524,25 +533,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 } else {
                     builder.append(getColumnName(identity));
-                    parameters.put(identity.getName(), String.valueOf(index++));
+                    addWriteExpression(values, identity);
+                    parameters.put(identity.getName(), String.valueOf(values.size()));
                 }
             }
         }
 
         builder.append(CLOSE_BRACKET);
         builder.append(" VALUES (");
-        for (int i = 1; i < index; i++) {
-            builder.append('?');
-            if (i < index - 1) {
-                builder.append(COMMA);
-            }
-        }
+        builder.append(String.join(String.valueOf(COMMA), values));
         builder.append(CLOSE_BRACKET);
         return QueryResult.of(
                 builder.toString(),
                 parameters,
                 parameterTypes
         );
+    }
+
+    private boolean addWriteExpression(List<String> values, PersistentProperty property) {
+        return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
     }
 
     @NonNull
@@ -680,7 +689,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         PersistentEntity entity = association.getOwner();
                         NamingStrategy namingStrategy = entity.getNamingStrategy();
                         String joinTableName = association.getAnnotationMetadata()
-                                .stringValue(JoinTable.class, "name")
+                                .stringValue(ANN_JOIN_TABLE, "name")
                                 .orElseGet(() ->
                                         namingStrategy.mappedName(association)
                                 );
