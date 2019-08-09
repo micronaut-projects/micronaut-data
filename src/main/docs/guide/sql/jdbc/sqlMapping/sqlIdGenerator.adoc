@@ -1,0 +1,7 @@
+The default ID generation expects the database to populate a value for the ID such as an `IDENTITY` column.
+
+You can remove the `@GeneratedValue` annotation and in this case the expectation is that you will assign an ID before calling `save()`.
+
+If you wish to use sequences for the ID you should invoke the SQL that generates the sequence value and assign it prior to calling `save()`.
+
+Automatically assigned UUIDs are also supported by adding a property annotated with `@Id` and `@AutoPopulated`.

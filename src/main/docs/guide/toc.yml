@@ -33,7 +33,14 @@ sql:
     jdbcQuickStart: JDBC Quick Start
     jdbcConfiguration: JDBC Configuration
     jdbcRepositories: JDBC Repositories
-    sqlMapping: Mapping Entities
+    sqlMapping:
+      title: Mapping Entities
+      sqlAnnotations: SQL Annotations
+      sqlIdGenerator: ID Generation
+      sqlCompositeId: Composite Primary Keys
+      sqlConstructorArguments: Constructor Arguments
+      sqlNaming: SQL Naming Strategies
+      sqlAssociations: Association Fetching
     jdbcJoinQueries: JDBC Join Queries
     jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
