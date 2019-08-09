@@ -52,7 +52,7 @@ dependencies {
 
 test.classpath += configurations.developmentOnly
 
-mainClassName = "example.jdbc.Application"
+mainClassName = "example.Application"
 tasks.withType(GroovyCompile) {
     groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
 }
