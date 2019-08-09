@@ -1,12 +1,11 @@
 package io.micronaut.data.tck.jdbc.entities;
 
 import javax.persistence.Embeddable;
-import javax.persistence.GeneratedValue;
+import java.io.Serializable;
 
 @Embeddable
-public class ProjectId {
+public class ProjectId implements Serializable {
     private final int departmentId;
-    @GeneratedValue
     private final int projectId;
 
     public ProjectId(int departmentId, int projectId) {

@@ -909,7 +909,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     PersistentProperty identity = associatedEntity.getIdentity();
                     if (identity != null) {
-                        return addTypeToColumn(identity, false, column, true);
+                        return addTypeToColumn(identity, false, column, required);
                     }
                 } else {
                     if (prop.isEnum()) {

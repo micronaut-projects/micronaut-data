@@ -25,6 +25,13 @@ class H2CompositePrimaryKeySpec extends Specification {
         project.projectId.departmentId == 10
         project.projectId.projectId == 1
 
+        when:"All are retrieved"
+        project = projectRepository.findAll().iterator().next()
+
+        then:"Listing works"
+        project.projectId.departmentId == 10
+        project.projectId.projectId == 1
+
         when:"Querying for an entity by ID"
         project = projectRepository.findById(id).orElse(null)
 
@@ -34,6 +41,21 @@ class H2CompositePrimaryKeySpec extends Specification {
         project.projectId.projectId == 1
         project.name == "Project 1"
         projectRepository.existsById(id)
+
+        when: "An update is executed"
+        projectRepository.update(id, "Project Changed")
+        project = projectRepository.findById(id).orElse(null)
+
+        then:"The object is updated"
+        project.name == "Project Changed"
+
+
+        when:"A delete is executed"
+        projectRepository.deleteById(id)
+        project = projectRepository.findById(id).orElse(null)
+
+        then:"The object was deleted"
+        project == null
 
     }
 }

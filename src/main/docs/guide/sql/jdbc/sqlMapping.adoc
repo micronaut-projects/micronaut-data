@@ -78,6 +78,22 @@ If you wish to use sequences for the ID you should invoke the SQL that generates
 
 Automatically assigned UUIDs are also supported by adding a property annotated with `@Id` and `@AutoPopulated`.
 
+=== Composite IDs
+
+You can define a composite primary key using either JPA or Micronaut Data annotations.
+
+A composite ID requires an additional class for example:
+
+snippet::example.ProjectId[project-base="doc-examples/jdbc-example", source="main"]
+
+It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
+
+You should then declare the `id` property of the entity with either JPA's `@EmbeddedId` or ann:data.annotation.EmbeddedId[]:
+
+snippet::example.Project[project-base="doc-examples/jdbc-example", source="main"]
+
+TIP: To alter the column mappings for the ID you use `@Column` in the `ProjectId` class
+
 === Constructor Arguments
 
 Micronaut Data JDBC also allows the definition of immutable objects using constructor arguments instead of getters/setters. If you define multiple constructors then the one used to create the object from the database should be annotated with `io.micronaut.core.annotation.Creator`.
