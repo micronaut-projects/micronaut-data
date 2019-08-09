@@ -42,4 +42,7 @@ dependencies {
 test {
 	useJUnitPlatform()
 }
-bootJar.enabled = false
+
+springBoot {
+    mainClassName = 'example.Application'
+}
