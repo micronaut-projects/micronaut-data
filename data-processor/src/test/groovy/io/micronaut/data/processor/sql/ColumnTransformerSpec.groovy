@@ -71,6 +71,6 @@ class Project {
         def sql = builder.buildQuery(QueryModel.from(entity)).query
 
         expect:
-        sql == 'SELECT project_.project_id_department_id,project_.project_id_project_id,project_.name,UPPER(project_.org) AS org FROM project project_'
+        sql == 'SELECT project_.project_id_department_id,project_.project_id_project_id,project_.name,UPPER(org) AS org FROM project project_'
     }
 }
