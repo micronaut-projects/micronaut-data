@@ -15,6 +15,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -145,10 +146,15 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
             Object id = null;
             RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
             if (identity != null) {
-                String persistedName = identity.getPersistedName();
-                id = resultReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
-                if (id == null) {
-                    throw new DataAccessException("Table contains null ID for entity: " + persistentEntity.getName());
+                if (identity instanceof Embedded) {
+                    PersistentEntity embeddedEntity = ((Embedded) identity).getAssociatedEntity();
+                    id = readEntity(identity.getPersistedName() + "_", path + identity.getName() + '.', rs, (RuntimePersistentEntity<R>) embeddedEntity);
+                } else {
+                    String persistedName = identity.getPersistedName();
+                    id = resultReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
+                    if (id == null) {
+                        throw new DataAccessException("Table contains null ID for entity: " + persistentEntity.getName());
+                    }
                 }
             }
 
@@ -256,13 +262,15 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                     }
                 }
                 BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
-                if (property.getType().isInstance(id)) {
-                    property.set(
-                            entity,
-                            id
-                    );
-                } else {
-                    property.convertAndSet(entity, id);
+                if (!property.isReadOnly()) {
+                    if (property.getType().isInstance(id)) {
+                        property.set(
+                                entity,
+                                id
+                        );
+                    } else {
+                        property.convertAndSet(entity, id);
+                    }
                 }
             }
             return entity;
@@ -287,7 +295,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
         Object associated = null;
         String associationName = association.getName();
         if (association instanceof Embedded) {
-            associated = readEntity(associationName + "_", path + associationName + '.', resultSet, associatedEntity);
+            associated = readEntity(association.getPersistedName() + "_", path + associationName + '.', resultSet, associatedEntity);
         } else {
             String persistedName = association.getPersistedName();
             RuntimePersistentProperty identity = associatedEntity.getIdentity();
