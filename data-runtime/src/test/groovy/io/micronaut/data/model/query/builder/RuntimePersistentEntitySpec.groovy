@@ -24,6 +24,14 @@ import spock.lang.Specification
 
 class RuntimePersistentEntitySpec extends Specification {
 
+    void "test that JPA single ended associations are nullable by default"() {
+        given:
+        PersistentEntity entity = PersistentEntity.of(Book)
+
+        expect:
+        entity.getPropertyByName("author").isOptional()
+    }
+
     void "test runtime entity"() {
         given:
         PersistentEntity entity = PersistentEntity.of(Person)

@@ -59,6 +59,11 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         this.dataType = computeDataType(propertyElement);
     }
 
+    @Override
+    public boolean isOptional() {
+        return propertyElement.isNullable();
+    }
+
     private DataType computeDataType(PropertyElement propertyElement) {
         if (this instanceof Association) {
             return DataType.ENTITY;

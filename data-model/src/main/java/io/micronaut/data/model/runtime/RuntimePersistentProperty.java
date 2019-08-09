@@ -49,6 +49,11 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     }
 
     @Override
+    public final boolean isOptional() {
+        return property.isNullable();
+    }
+
+    @Override
     public boolean isEnum() {
         return type.isEnum();
     }
