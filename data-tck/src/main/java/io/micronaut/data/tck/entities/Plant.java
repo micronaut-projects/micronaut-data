@@ -6,7 +6,6 @@ import io.micronaut.data.annotation.MappedEntity;
 
 import javax.persistence.GeneratedValue;
 
-
 @MappedEntity
 public class Plant {
     @Id

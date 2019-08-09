@@ -71,7 +71,9 @@ public class ExistsByFinder extends DynamicFinder {
             interceptor = ExistsByReactiveInterceptor.class;
             returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
         }
-        query = matchContext.supportsImplicitQueries() ? query : QueryModel.from(matchContext.getRootEntity());
+        if (query == null) {
+            query = matchContext.supportsImplicitQueries() ? query : QueryModel.from(matchContext.getRootEntity());
+        }
         if (query != null) {
             query.projections().id();
         }

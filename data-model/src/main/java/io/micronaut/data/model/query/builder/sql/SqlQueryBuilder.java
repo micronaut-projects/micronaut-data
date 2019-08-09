@@ -182,9 +182,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 PersistentProperty associatedId = associatedEntity.getIdentity();
                 String[] joinColumnNames = resolveJoinTableColumns(entity, associatedEntity, association, identity, associatedId, namingStrategy);
                 //noinspection ConstantConditions
-                joinTableBuilder.append(addTypeToColumn(identity, false, joinColumnNames[0])).append(" NOT NULL")
+                joinTableBuilder.append(addTypeToColumn(identity, false, joinColumnNames[0], true))
                         .append(',')
-                        .append(addTypeToColumn(associatedId, false, joinColumnNames[1])).append(" NOT NULL");
+                        .append(addTypeToColumn(associatedId, false, joinColumnNames[1], true));
                 joinTableBuilder.append(");");
 
                 createStatements.add(joinTableBuilder.toString());
@@ -213,21 +213,34 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             prop.getName() + embeddedProperty.getCapitilizedName()
                     );
 
-                    column = addTypeToColumn(embeddedProperty, embeddedProperty instanceof Association, column);
+                    boolean required = embeddedProperty.isRequired() || prop.getAnnotationMetadata().hasStereotype(Id.class);
+                    column = addTypeToColumn(embeddedProperty, embeddedProperty instanceof Association, column, required);
                     column = addGeneratedStatementToColumn(identity, prop, column);
                     columns.add(column);
                 }
 
             } else {
                 String column = getColumnName(prop);
-
-                column = addTypeToColumn(prop, isAssociation, column);
+                column = addTypeToColumn(prop, isAssociation, column, prop.isRequired());
                 column = addGeneratedStatementToColumn(identity, prop, column);
                 columns.add(column);
             }
 
         }
         builder.append(String.join(",", columns));
+        if (identity instanceof Embedded) {
+            Embedded embedded = (Embedded) identity;
+            PersistentEntity embeddedId = embedded.getAssociatedEntity();
+            List<String> primaryKeyColumns = new ArrayList<>();
+            for (PersistentProperty embeddedProperty : embeddedId.getPersistentProperties()) {
+                String explicitColumn = embeddedProperty.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                String column = explicitColumn != null ? explicitColumn : entity.getNamingStrategy().mappedName(
+                        identity.getName() + embeddedProperty.getCapitilizedName()
+                );
+                primaryKeyColumns.add(column);
+            }
+            builder.append(", PRIMARY KEY(").append(String.join(",", primaryKeyColumns)).append(')');
+        }
         builder.append(");");
         createStatements.add(builder.toString());
         return createStatements.toArray(new String[0]);
@@ -493,8 +506,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (hasProperties) {
                     builder.append(COMMA);
                 }
-                builder.append(getColumnName(identity));
-                parameters.put(identity.getName(), String.valueOf(index++));
+                if (identity instanceof Embedded) {
+                    List<String> columnNames = new ArrayList<>(persistentProperties.size());
+                    PersistentEntity embeddedEntity = ((Embedded) identity).getAssociatedEntity();
+                    List<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
+                    for (PersistentProperty embeddedProp : embeddedProps) {
+                        String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                        parameters.put(identity.getName() + "." + embeddedProp.getName(), String.valueOf(index++));
+                        if (explicitColumn != null) {
+                            columnNames.add(explicitColumn);
+                        } else {
+                            NamingStrategy namingStrategy = entity.getNamingStrategy();
+                            columnNames.add(namingStrategy.mappedName(identity.getName() + embeddedProp.getCapitilizedName()));
+                        }
+                    }
+                    builder.append(String.join(",", columnNames));
+
+                } else {
+                    builder.append(getColumnName(identity));
+                    parameters.put(identity.getName(), String.valueOf(index++));
+                }
             }
         }
 
@@ -733,7 +764,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected final boolean isApplyManualJoins() {
+    protected final boolean computePropertyPaths() {
         return true;
     }
 
@@ -755,40 +786,59 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return GeneratedValue.Type.AUTO;
     }
 
-    private String addTypeToColumn(PersistentProperty prop, boolean isAssociation, String column) {
+    private String addTypeToColumn(PersistentProperty prop, boolean isAssociation, String column, boolean required) {
         AnnotationMetadata annotationMetadata = prop.getAnnotationMetadata();
         String definition = annotationMetadata.stringValue(MappedProperty.class, "definition").orElse(null);
         DataType dataType = prop.getDataType();
         if (definition != null) {
             return column + " " + definition;
         }
+
         switch (dataType) {
             case STRING:
                 column += " VARCHAR(255)";
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case BOOLEAN:
                 if (dialect == Dialect.SQL_SERVER) {
                     column += " BIT NOT NULL";
                 } else {
                     column += " BOOLEAN";
+                    if (required) {
+                        column += " NOT NULL";
+                    }
                 }
                 break;
             case TIMESTAMP:
                 if (dialect == Dialect.SQL_SERVER) {
                     // sql server timestamp is an internal type, use datetime instead
                     column += " DATETIME";
+                    if (required) {
+                        column += " NOT NULL";
+                    }
                 } else if (dialect == Dialect.MYSQL) {
                     // mysql doesn't allow timestamp without default
                     column += " TIMESTAMP DEFAULT NOW()";
                 } else {
                     column += " TIMESTAMP";
+                    if (required) {
+                        column += " NOT NULL";
+                    }
                 }
                 break;
             case DATE:
                 column += " DATE";
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case LONG:
                 column += " BIGINT";
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case CHARACTER:
             case INTEGER:
@@ -797,16 +847,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 } else {
                     column += " INT";
                 }
-
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case BIGDECIMAL:
                 column += " DECIMAL";
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case FLOAT:
                 if (dialect == Dialect.POSTGRES || dialect == Dialect.SQL_SERVER) {
                     column += " REAL";
                 } else {
                     column += " FLOAT";
+                }
+                if (required) {
+                    column += " NOT NULL";
                 }
                 break;
             case BYTE_ARRAY:
@@ -817,6 +875,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 } else {
                     column += " BLOB";
                 }
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case DOUBLE:
                 if (dialect == Dialect.ORACLE) {
@@ -826,6 +887,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 } else {
                     column += " DOUBLE PRECISION";
                 }
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             case SHORT:
             case BYTE:
@@ -834,7 +898,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 } else {
                     column += " TINYINT";
                 }
-
+                if (required) {
+                    column += " NOT NULL";
+                }
                 break;
             default:
                 if (isAssociation) {
@@ -843,11 +909,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                     PersistentProperty identity = associatedEntity.getIdentity();
                     if (identity != null) {
-                        return addTypeToColumn(identity, false, column);
+                        return addTypeToColumn(identity, false, column, required);
                     }
                 } else {
                     if (prop.isEnum()) {
                         column += " VARCHAR(255)";
+                        if (required) {
+                            column += " NOT NULL";
+                        }
                         break;
                     } else if (prop.isAssignable(Clob.class)) {
                         if (dialect == Dialect.POSTGRES) {
@@ -855,12 +924,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         } else {
                             column += " CLOB";
                         }
+                        if (required) {
+                            column += " NOT NULL";
+                        }
                         break;
                     } else if (prop.isAssignable(Blob.class)) {
                         if (dialect == Dialect.POSTGRES) {
                             column += " BYTEA";
                         } else {
                             column += " BLOB";
+                        }
+                        if (required) {
+                            column += " NOT NULL";
                         }
                         break;
                     } else {

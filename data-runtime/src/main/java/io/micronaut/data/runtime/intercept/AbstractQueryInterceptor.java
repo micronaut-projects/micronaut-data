@@ -26,6 +26,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.type.Argument;
@@ -35,6 +36,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
@@ -300,7 +302,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
     }
 
-    private <RT> void storeInParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity, Map<String, Object> namedValues, Object index, String argument, Map parameterValues) {
+    private <RT> void storeInParameterValues(
+            MethodInvocationContext<T, R> context,
+            StoredQuery<?, RT> storedQuery, Class<?> rootEntity,
+            Map<String, Object> namedValues,
+            Object index,
+            String argument,
+            Map parameterValues) {
         String v = storedQuery.getLastUpdatedProperty().orElse(null);
         if (namedValues.containsKey(argument)) {
             parameterValues.put(index, namedValues.get(argument));
@@ -315,16 +323,32 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             }
             parameterValues.put(index, timestamp);
         } else {
-            Optional<Argument> named = Arrays.stream(context.getArguments())
-                    .filter(arg -> {
-                        String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
-                        return n.equals(argument);
-                    })
-                    .findFirst();
-            if (named.isPresent()) {
-                parameterValues.put(index, namedValues.get(named.get().getName()));
+            int i = argument.indexOf('.');
+            if (i > -1) {
+                String argumentName = argument.substring(0, i);
+                Object o = namedValues.get(argumentName);
+                if (o != null) {
+                    try {
+                        BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(o);
+                        String prop = argument.substring(i + 1);
+                        Object val = wrapper.getRequiredProperty(prop, Object.class);
+                        parameterValues.put(index, val);
+                    } catch (IntrospectionException e) {
+                        throw new DataAccessException("Embedded value [" + o + "] should be annotated with introspected");
+                    }
+                }
             } else {
-                throw new IllegalArgumentException("Missing query arguments: " + argument);
+                Optional<Argument> named = Arrays.stream(context.getArguments())
+                        .filter(arg -> {
+                            String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
+                            return n.equals(argument);
+                        })
+                        .findFirst();
+                if (named.isPresent()) {
+                    parameterValues.put(index, namedValues.get(named.get().getName()));
+                } else {
+                    throw new IllegalArgumentException("Missing query arguments: " + argument);
+                }
             }
         }
     }

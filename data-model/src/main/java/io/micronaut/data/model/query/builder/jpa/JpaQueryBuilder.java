@@ -137,7 +137,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected final boolean isApplyManualJoins() {
+    protected final boolean computePropertyPaths() {
         return false;
     }
 

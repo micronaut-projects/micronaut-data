@@ -71,7 +71,11 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 continue;
             }
             if (beanProperty.hasStereotype(Id.class)) {
-                id.add(new SourcePersistentProperty(this, beanProperty));
+                if (beanProperty.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
+                    id.add(new SourceEmbedded(this, beanProperty, entityResolver));
+                } else {
+                    id.add(new SourcePersistentProperty(this, beanProperty));
+                }
             } else if (beanProperty.hasStereotype(Version.class)) {
                 version = new SourcePersistentProperty(this, beanProperty);
             } else {

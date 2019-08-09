@@ -60,9 +60,13 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
-        identity = introspection.getIndexedProperty(Id.class).map(bp ->
-                new RuntimePersistentProperty<>(this, bp)
-        ).orElse(null);
+        identity = introspection.getIndexedProperty(Id.class).map(bp -> {
+            if (bp.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
+                return new RuntimeEmbedded<>(this, bp);
+            } else {
+                return new RuntimePersistentProperty<>(this, bp);
+            }
+        }).orElse(null);
         version = introspection.getIndexedProperty(Version.class).map(bp ->
                 new RuntimePersistentProperty<>(this, bp)
         ).orElse(null);

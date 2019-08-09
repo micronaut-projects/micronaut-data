@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.sql
 
+
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.processor.visitors.AbstractDataSpec

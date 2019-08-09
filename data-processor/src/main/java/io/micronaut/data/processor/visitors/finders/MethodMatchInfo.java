@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.inject.ast.TypedElement;
 
@@ -27,7 +26,7 @@ import java.util.*;
 
 /**
  * The method info. This class describes the pre-computed method handling for a
- * repository and is computed into a {@link DataMethod} annotation
+ * repository and is computed into a {@link io.micronaut.data.intercept.annotation.DataMethod} annotation
  * which is readable at runtime.
  *
  * @author graemerocher

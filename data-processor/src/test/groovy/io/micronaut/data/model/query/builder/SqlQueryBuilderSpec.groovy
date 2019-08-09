@@ -129,7 +129,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE restaurant (id BIGINT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255),address_street VARCHAR(255),address_zip_code VARCHAR(255));'
+        result == 'CREATE TABLE restaurant (id BIGINT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL,address_street VARCHAR(255) NOT NULL,address_zip_code VARCHAR(255) NOT NULL);'
     }
 
     void "test encode insert statement - custom mapping strategy"() {

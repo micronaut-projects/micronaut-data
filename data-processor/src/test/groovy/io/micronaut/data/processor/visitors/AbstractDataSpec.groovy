@@ -45,9 +45,8 @@ import java.util.*;
 
 $source
 """)
-        return new SourcePersistentEntity(classElement, { ClassElement ce ->
-            new SourcePersistentEntity(ce, this)
-        } as Function<ClassElement, SourcePersistentEntity>)
+
+        return TestUtils.sourcePersistentEntity(classElement)
     }
 
     BeanDefinition<?> buildRepository(String name, String source) {
