@@ -32,7 +32,9 @@ sql:
     title: Micronaut Data JDBC
     jdbcQuickStart: JDBC Quick Start
     jdbcConfiguration: JDBC Configuration
-    jdbcRepositories: JDBC Repositories
+    jdbcRepositories:
+      title: JDBC Repositories
+      sqlInserts: Inserts and Updates
     sqlMapping:
       title: Mapping Entities
       sqlAnnotations: SQL Annotations

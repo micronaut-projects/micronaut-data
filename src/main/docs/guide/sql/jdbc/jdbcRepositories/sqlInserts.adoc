@@ -1,0 +1,11 @@
+Unlike JPA/Hibernate, Micronaut Data JDBC is stateless and has no notion of a persistence session that requires state management.
+
+Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.
+
+By default when saving an entity with a method like `save(MyEntity)` a SQL `INSERT` is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.
+
+If you wish to update an entity you should instead define an appropriate `update` method, for example:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main" tags="update", indent="0"]
+
+By being explicit in defining the method as an update method Micronaut Data knows to execute an `UPDATE`.
