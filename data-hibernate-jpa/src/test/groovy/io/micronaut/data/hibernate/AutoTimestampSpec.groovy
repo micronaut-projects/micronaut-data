@@ -41,7 +41,7 @@ class AutoTimestampSpec extends Specification {
         then:
         company.myId != null
         dateCreated != null
-        company.dateCreated.toInstant() == company.lastUpdated
+        company.dateCreated.toInstant().toEpochMilli() == company.lastUpdated.toEpochMilli()
         companyRepo.findById(company.myId).get().dateCreated == company.dateCreated
 
         when:
