@@ -3,7 +3,9 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import spock.lang.Requires
 
+@Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
 
     void "test custom column definition"() {

@@ -26,11 +26,13 @@ import io.micronaut.inject.ast.ClassElement
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import spock.lang.Requires
 
 import javax.annotation.processing.SupportedAnnotationTypes
 import javax.lang.model.element.TypeElement
 import java.util.function.Function
 
+@Requires({ javaVersion <= 1.8 })
 class AbstractDataSpec extends AbstractTypeElementSpec {
 
     SourcePersistentEntity buildJpaEntity(String name, String source) {
