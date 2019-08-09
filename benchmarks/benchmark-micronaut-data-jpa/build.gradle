@@ -12,7 +12,22 @@ configurations {
     // for dependencies that are needed for development only
     developmentOnly 
 }
+configurations {
+    all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                //specifying a fixed version for all libraries with 'org.gradle' group
+                if (details.requested.group == 'org.springframework') {
+                    details.useVersion '5.2.0.RC1'
+                }
+                if (details.requested.group == 'org.hibernate') {
+                    details.useVersion '5.4.4.Final'
+                }
+            }
+        }
+    }
 
+}
 dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     testCompile platform("io.micronaut:micronaut-bom:$micronautVersion")
