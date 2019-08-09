@@ -41,18 +41,4 @@ public @interface MappedProperty {
      * @return A string-based definition of the property type.
      */
     String definition() default "";
-
-    /**
-     * The read expression used to read the property.
-     *
-     * @return The read expression.
-     */
-    String readExpression() default "";
-
-    /**
-     * The write expression used to write the property. In the case of SQL must have exactly one '?' placeholder.
-     *
-     * @return The write expression.
-     */
-    String writeExpression() default "";
 }
