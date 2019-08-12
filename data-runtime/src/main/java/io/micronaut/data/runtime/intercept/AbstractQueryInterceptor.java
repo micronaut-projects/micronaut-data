@@ -126,8 +126,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
 
-        Class<?> rootEntity = storedQuery.getRootEntity();
-        Map<String, Object> parameterValues = buildParameterValues(context, storedQuery, rootEntity);
+        Map<String, Object> parameterValues = buildParameterValues(context, storedQuery);
 
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         String query = storedQuery.getQuery();
@@ -138,11 +137,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 parameterValues,
                 pageable
         );
-    }
-
-    @NonNull
-    private MethodKey newMethodKey(Class<?> type, ExecutableMethod<T, R> executableMethod) {
-        return new MethodKey(type, executableMethod.getMethodName(), executableMethod.getArgumentTypes());
     }
 
     /**
@@ -173,7 +167,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         Pageable pageable = getPageable(context);
-        Map<String, Object> parameterValues = buildParameterValues(context, storedQuery, storedQuery.getRootEntity());
+        Map<String, Object> parameterValues = buildParameterValues(context, storedQuery);
         //noinspection unchecked
         return new DefaultPreparedQuery(
                 context,
@@ -281,14 +275,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         return o;
     }
 
-    private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery, Class<?> rootEntity) {
+    private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery) {
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         if (storedQuery.useNumericPlaceholders()) {
             String[] indexedParameterBinding = storedQuery.getIndexedParameterBinding();
             Map parameterValues = new HashMap<>(indexedParameterBinding.length);
             for (int index = 0; index < indexedParameterBinding.length; index++) {
                 String argument = indexedParameterBinding[index];
-                storeInParameterValues(context, storedQuery, rootEntity, parameterValueMap, index + 1, argument, parameterValues);
+                storeInParameterValues(context, storedQuery, parameterValueMap, index + 1, argument, parameterValues);
             }
             return parameterValues;
         } else {
@@ -297,7 +291,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             for (Map.Entry entry : parameterBinding.entrySet()) {
                 Object name = entry.getKey();
                 String argument = (String) entry.getValue();
-                storeInParameterValues(context, storedQuery, rootEntity, parameterValueMap, name, argument, parameterValues);
+                storeInParameterValues(context, storedQuery, parameterValueMap, name, argument, parameterValues);
 
             }
             return parameterValues;
@@ -306,7 +300,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     private <RT> void storeInParameterValues(
             MethodInvocationContext<T, R> context,
-            StoredQuery<?, RT> storedQuery, Class<?> rootEntity,
+            StoredQuery<?, RT> storedQuery,
             Map<String, Object> namedValues,
             Object index,
             String argument,
@@ -315,6 +309,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         if (namedValues.containsKey(argument)) {
             parameterValues.put(index, namedValues.get(argument));
         } else if (v != null && v.equals(argument)) {
+            Class<?> rootEntity = storedQuery.getRootEntity();
             Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
             if (lastUpdatedType == null) {
                 throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
@@ -1282,39 +1277,4 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
     }
 
-    /**
-     * Class used as a method key.
-     */
-    private final class MethodKey {
-        final Class declaringType;
-        final String name;
-        final Class[] argumentTypes;
-
-        MethodKey(Class declaringType, String name, Class[] argumentTypes) {
-            this.declaringType = declaringType;
-            this.name = name;
-            this.argumentTypes = argumentTypes;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            MethodKey methodKey = (MethodKey) o;
-            return declaringType.equals(methodKey.declaringType) &&
-                    name.equals(methodKey.name) &&
-                    Arrays.equals(argumentTypes, methodKey.argumentTypes);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = Objects.hash(declaringType, name);
-            result = 31 * result + Arrays.hashCode(argumentTypes);
-            return result;
-        }
-    }
 }
