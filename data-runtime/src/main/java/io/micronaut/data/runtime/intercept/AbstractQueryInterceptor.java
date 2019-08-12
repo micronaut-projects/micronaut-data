@@ -55,6 +55,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
+
 /**
  * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
  * @param <T> The declaring type
@@ -125,7 +127,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         Class<?> rootEntity = storedQuery.getRootEntity();
         Map<String, Object> parameterValues = buildParameterValues(context, storedQuery, rootEntity);
 
-        Pageable pageable = getPageable(context);
+        Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         String query = storedQuery.getQuery();
         return new DefaultPreparedQuery<>(
                 context,
@@ -236,13 +238,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         if (pageable == null) {
             Sort sort = getParameterInRole(context, TypeRole.SORT, Sort.class).orElse(null);
             if (sort != null) {
-                int max = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                int max = context.intValue(PREDATOR_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
                 int pageIndex = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
                 if (max > 0) {
                     pageable = Pageable.from(pageIndex, max, sort);
                 }
             } else {
-                int max = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_SIZE).orElse(-1);
+                int max = context.intValue(PREDATOR_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
                 if (max > -1) {
                     return Pageable.from(0, max);
                 }
@@ -526,14 +528,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Validates null arguments ensuring no argument is null unless declared so.
      * @param context The context
      */
-    protected void validateNullArguments(MethodInvocationContext<T, R> context) {
-        Collection<MutableArgumentValue<?>> values =
-                context.getParameters().values();
-
-        for (MutableArgumentValue<?> value : values) {
-            Object o = value.getValue();
-            if (o == null && !value.getAnnotationMetadata().hasAnnotation("javax.annotation.Nullable")) {
-                throw new IllegalArgumentException("Argument [" + value.getName() + "] value is null and the method parameter is not declared as nullable");
+    protected final void validateNullArguments(MethodInvocationContext<T, R> context) {
+        Object[] parameterValues = context.getParameterValues();
+        for (int i = 0; i < parameterValues.length; i++) {
+            Object o = parameterValues[i];
+            if (o == null && !context.getArguments()[i].getAnnotationMetadata().hasAnnotation("javax.annotation.Nullable")) {
+                throw new IllegalArgumentException("Argument [" + context.getArguments()[i].getName() + "] value is null and the method parameter is not declared as nullable");
             }
         }
     }
@@ -718,6 +718,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final boolean isDto;
         private final boolean isNative;
         private final boolean isNumericPlaceHolder;
+        private final boolean hasPageable;
         private final AnnotationMetadata annotationMetadata;
         private final boolean hasIn;
         private final boolean isCount;
@@ -747,6 +748,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     .classValue(RepositoryConfiguration.class, "queryBuilder")
                     .map(c -> c == SqlQueryBuilder.class).orElse(false);
             this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
+            this.hasPageable = method.stringValue(PREDATOR_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
+                                    method.stringValue(PREDATOR_ANN_NAME, TypeRole.SORT).isPresent() ||
+                                    method.intValue(PREDATOR_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
 
             if (isNumericPlaceHolder && method.isTrue(Query.class, DataMethod.META_MEMBER_RAW_QUERY)) {
                 Matcher matcher = VARIABLE_PATTERN.matcher(query);
@@ -980,6 +984,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public boolean hasInExpression() {
             return hasIn;
+        }
+
+        @Override
+        public boolean hasPageable() {
+            return hasPageable;
         }
 
         /**
@@ -1237,6 +1246,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public boolean hasInExpression() {
             return storedQuery.hasInExpression();
+        }
+
+        @Override
+        public boolean hasPageable() {
+            return storedQuery.hasPageable();
         }
 
         @NonNull

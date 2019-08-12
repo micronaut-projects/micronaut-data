@@ -53,6 +53,12 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     boolean hasInExpression();
 
     /**
+     * Does the query have a pageable.
+     * @return True if it does
+     */
+    boolean hasPageable();
+
+    /**
      * The query to execute.
      *
      * @return The query to execute
