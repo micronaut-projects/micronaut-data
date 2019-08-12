@@ -42,7 +42,7 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);

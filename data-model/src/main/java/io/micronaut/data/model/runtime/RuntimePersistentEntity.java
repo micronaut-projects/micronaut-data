@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
@@ -42,6 +43,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private final BeanIntrospection<T> introspection;
     private final RuntimePersistentProperty<T> identity;
     private final List<RuntimePersistentProperty<T>> persistentProperties;
+    private final Argument<?>[] constructorArguments;
     private RuntimePersistentProperty<T> version;
 
     /**
@@ -60,6 +62,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         super(introspection);
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
+        this.constructorArguments = introspection.getConstructorArguments();
         identity = introspection.getIndexedProperty(Id.class).map(bp -> {
             if (bp.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
                 return new RuntimeEmbedded<>(this, bp);
@@ -189,5 +192,12 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
         return PersistentEntity.of(type);
+    }
+
+    /**
+     * @return The constructor arguments.
+     */
+    public Argument<?>[] getConstructorArguments() {
+        return constructorArguments;
     }
 }

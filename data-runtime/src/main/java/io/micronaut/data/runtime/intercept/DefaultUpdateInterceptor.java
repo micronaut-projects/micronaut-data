@@ -39,8 +39,8 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boo
     }
 
     @Override
-    public Boolean intercept(RepositoryMethodKey key, MethodInvocationContext<T, Boolean> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+    public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Boolean> context) {
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
         Number number = operations.executeUpdate(preparedQuery).orElse(null);
         return number == null || number.longValue() < 0;
     }

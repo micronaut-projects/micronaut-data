@@ -44,11 +44,11 @@ public class DefaultFindPageReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Publisher<Page<Object>> publisher;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
             publisher = Flowable.fromPublisher(reactiveOperations.findOne(countQuery))
                     .flatMap(total -> {

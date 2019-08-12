@@ -43,8 +43,8 @@ public class DefaultFindOneReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(key, context);
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+        PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
         Publisher<Object> publisher = reactiveOperations.findOptional(preparedQuery);
         Argument<Object> returnType = context.getReturnType().asArgument();
         Argument<?> type = returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);

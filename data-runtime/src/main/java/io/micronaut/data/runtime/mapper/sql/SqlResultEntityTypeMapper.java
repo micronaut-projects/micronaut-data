@@ -92,7 +92,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
         this.resultReader = resultReader;
-        if (joinPaths != null) {
+        if (CollectionUtils.isNotEmpty(joinPaths)) {
             this.joinPaths = new HashMap<>(joinPaths.size());
             for (JoinPath joinPath : joinPaths) {
                 this.joinPaths.put(joinPath.getPath(), joinPath);
@@ -140,7 +140,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
 
     private R readEntity(String prefix, String path, RS rs, RuntimePersistentEntity<R> persistentEntity) {
         BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
-        Argument<?>[] constructorArguments = introspection.getConstructorArguments();
+        Argument<?>[] constructorArguments = persistentEntity.getConstructorArguments();
         try {
             R entity;
             Object id = null;
@@ -158,15 +158,20 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                 }
             }
 
+            Set<String> processedViaConstructor;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
+                processedViaConstructor = Collections.emptySet();
             } else {
-                Object[] args = new Object[constructorArguments.length];
-                for (int i = 0; i < constructorArguments.length; i++) {
+                int len = constructorArguments.length;
+                Object[] args = new Object[len];
+                processedViaConstructor = new HashSet<>(len);
+                for (int i = 0; i < len; i++) {
                     Argument<?> argument = constructorArguments[i];
                     String n = argument.getName();
                     RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
                     if (prop != null) {
+                        processedViaConstructor.add(prop.getName());
                         if (prop instanceof Association) {
                             Object associated = readAssociation(prefix, path, rs, (Association) prop);
                             args[i] = associated;
@@ -197,7 +202,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
             Map<Association, List> toManyJoins = null;
             for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
                 RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
-                if (persistentProperty.isReadOnly()) {
+                    if (persistentProperty.isReadOnly() || processedViaConstructor.contains(persistentProperty.getName())) {
                     continue;
                 }
                 BeanProperty property = rpp.getProperty();

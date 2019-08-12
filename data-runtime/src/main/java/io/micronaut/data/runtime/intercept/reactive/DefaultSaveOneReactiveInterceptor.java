@@ -42,7 +42,7 @@ public class DefaultSaveOneReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
 

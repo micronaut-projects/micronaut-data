@@ -41,7 +41,7 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<T, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         Object instance = instantiateEntity(rootEntity, parameterValueMap);

@@ -42,8 +42,8 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
     }
 
     @Override
-    public Optional<Object> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Optional<Object>> context) {
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+    public Optional<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Optional<Object>> context) {
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
         Object result = operations.findOne(preparedQuery);
         return Optional.ofNullable(result);
     }

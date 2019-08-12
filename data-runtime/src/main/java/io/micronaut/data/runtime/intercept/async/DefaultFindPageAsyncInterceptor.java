@@ -47,10 +47,10 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Page<Object>> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Page<Object>>> context) {
+    public CompletionStage<Page<Object>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Page<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
             return asyncDatastoreOperations.findOne(countQuery)
                     .thenCompose(total -> asyncDatastoreOperations.findAll(preparedQuery)

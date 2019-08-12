@@ -43,7 +43,7 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Iterable<R> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Iterable<R>> context) {
+    public Iterable<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Iterable<R>> context) {
         Object[] parameterValues = context.getParameterValues();
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked

@@ -45,10 +45,10 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Iterable<R> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Iterable<R>> context) {
+    public Iterable<R> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Iterable<R>> context) {
         Class<Iterable<R>> rt = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             Iterable<?> iterable = operations.findAll(preparedQuery);
             if (rt.isInstance(iterable)) {
                 return (Iterable<R>) iterable;

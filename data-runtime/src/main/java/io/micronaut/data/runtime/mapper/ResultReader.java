@@ -42,6 +42,7 @@ public interface ResultReader<RS, IDX> {
      * @throws DataAccessException if the value cannot be converted
      */
     default <T> T convertRequired(Object value, Class<T> type) {
+
         return ConversionService.SHARED.convert(
                 value,
                 type

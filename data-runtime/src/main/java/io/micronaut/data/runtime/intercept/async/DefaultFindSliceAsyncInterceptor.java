@@ -49,9 +49,9 @@ public class DefaultFindSliceAsyncInterceptor<T> extends AbstractAsyncIntercepto
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Slice<Object>> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Slice<Object>>> context) {
+    public CompletionStage<Slice<Object>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Slice<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
             return asyncDatastoreOperations.findAll(preparedQuery)
                     .thenApply(objects ->

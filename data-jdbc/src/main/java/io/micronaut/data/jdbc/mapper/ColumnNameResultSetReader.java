@@ -3,6 +3,7 @@ package io.micronaut.data.jdbc.mapper;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
@@ -30,6 +31,10 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
 
     @Override
     public <T> T convertRequired(Object value, Class<T> type) {
+        Class wrapperType = ReflectionUtils.getWrapperType(type);
+        if (wrapperType.isInstance(value)) {
+            return (T) value;
+        }
         return conversionService.convert(
                 value,
                 type

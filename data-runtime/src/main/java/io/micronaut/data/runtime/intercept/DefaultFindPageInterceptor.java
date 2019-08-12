@@ -47,11 +47,11 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
     }
 
     @Override
-    public R intercept(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
+    public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         Class<R> returnType = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
             Iterable<?> iterable = operations.findAll(preparedQuery);
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);

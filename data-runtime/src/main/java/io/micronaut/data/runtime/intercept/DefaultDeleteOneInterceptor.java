@@ -43,12 +43,12 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
     }
 
     @Override
-    public Void intercept(RepositoryMethodKey key, MethodInvocationContext<T, Void> context) {
+    public Void intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Void> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Object o = parameterValues[0];
             if (context.hasAnnotation(Query.class)) {
-                PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+                PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
                 operations.executeUpdate(preparedQuery).orElse(0);
                 return null;
             } else {

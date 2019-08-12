@@ -46,10 +46,10 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Number> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Number>> context) {
+    public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
         Argument<CompletionStage<Number>> arg = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
             return asyncDatastoreOperations.executeUpdate(preparedQuery)
                         .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
         } else {

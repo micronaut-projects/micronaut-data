@@ -39,7 +39,7 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<T, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
         if (!(id instanceof Serializable)) {

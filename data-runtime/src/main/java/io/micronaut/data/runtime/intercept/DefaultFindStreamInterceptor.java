@@ -43,9 +43,9 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Stream<T> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Stream<T>> context) {
+    public Stream<T> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Stream<T>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             return (Stream<T>) operations.findStream(preparedQuery);
         } else {
             return operations.findStream(getPagedQuery(context));

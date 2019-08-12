@@ -41,10 +41,10 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
     }
 
     @Override
-    public Boolean intercept(RepositoryMethodKey key, MethodInvocationContext<T, Boolean> context) {
+    public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Boolean> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context, idType);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context, idType);
         return operations.exists(preparedQuery);
     }
 }

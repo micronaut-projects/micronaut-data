@@ -43,8 +43,8 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Object>> context) {
-        PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(key, context);
+    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+        PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
         CompletionStage<Object> future = asyncDatastoreOperations.findOne(preparedQuery);
         Argument<?> type = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         return future.thenApply(o -> {

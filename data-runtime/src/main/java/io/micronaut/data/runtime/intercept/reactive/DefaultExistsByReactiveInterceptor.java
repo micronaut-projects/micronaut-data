@@ -42,10 +42,10 @@ public class DefaultExistsByReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context, idType);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context, idType);
         Flowable<Boolean> publisher = Flowable.fromPublisher(reactiveOperations.findOptional(preparedQuery))
                 .map(o -> true)
                 .switchIfEmpty(Flowable.just(false));

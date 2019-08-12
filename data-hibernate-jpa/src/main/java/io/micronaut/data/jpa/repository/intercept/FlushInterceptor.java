@@ -39,7 +39,7 @@ public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> imple
     }
 
     @Override
-    public Void intercept(RepositoryMethodKey key, MethodInvocationContext<T, Void> context) {
+    public Void intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Void> context) {
         ((JpaRepositoryOperations) operations).flush();
         return null;
     }

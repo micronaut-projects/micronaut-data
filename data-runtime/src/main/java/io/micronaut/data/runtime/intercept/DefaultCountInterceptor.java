@@ -44,10 +44,10 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
     }
 
     @Override
-    public Number intercept(RepositoryMethodKey key, MethodInvocationContext<T, Number> context) {
+    public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Number> context) {
         long result;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Long> preparedQuery = prepareQuery(key, context, Long.class);
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(methodKey, context, Long.class);
             Iterable<Long> iterable = operations.findAll(preparedQuery);
             Iterator<Long> i = iterable.iterator();
             result = i.hasNext() ? i.next() : 0;

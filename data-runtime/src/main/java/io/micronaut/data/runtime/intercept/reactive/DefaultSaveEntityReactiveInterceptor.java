@@ -40,7 +40,7 @@ public class DefaultSaveEntityReactiveInterceptor extends AbstractReactiveInterc
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Publisher<Object> publisher = reactiveOperations.persist(getInsertOperation(context));
         return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }

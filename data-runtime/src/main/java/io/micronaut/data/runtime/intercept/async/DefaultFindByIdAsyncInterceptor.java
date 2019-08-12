@@ -41,7 +41,7 @@ public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Object> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Object>> context) {
+    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
         if (!(id instanceof Serializable)) {

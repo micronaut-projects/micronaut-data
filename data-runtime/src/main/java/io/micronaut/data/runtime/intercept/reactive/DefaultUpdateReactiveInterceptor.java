@@ -43,8 +43,8 @@ public class DefaultUpdateReactiveInterceptor extends AbstractReactiveIntercepto
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
         ReturnType<Object> returnType = context.getReturnType();
         Publisher<Number> publisher = Publishers.map(reactiveOperations.executeUpdate(preparedQuery),
                 n -> convertNumberArgumentIfNecessary(n, returnType.asArgument())

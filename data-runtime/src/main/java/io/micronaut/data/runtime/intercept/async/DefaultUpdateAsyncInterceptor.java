@@ -41,8 +41,8 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
     }
 
     @Override
-    public CompletionStage<Number> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Number>> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+    public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
         return asyncDatastoreOperations.executeUpdate(preparedQuery)
                 .thenApply(n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument()));
     }

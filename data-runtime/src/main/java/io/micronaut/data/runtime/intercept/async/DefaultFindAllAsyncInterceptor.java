@@ -48,10 +48,10 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Iterable<Object>> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Iterable<Object>>> context) {
+    public CompletionStage<Iterable<Object>> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Iterable<Object>>> context) {
         CompletionStage<? extends Iterable<?>> future;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             future = asyncDatastoreOperations.findAll(preparedQuery);
 
         } else {

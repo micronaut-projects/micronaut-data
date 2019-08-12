@@ -33,9 +33,9 @@ public interface DataInterceptor<T, R> {
     /**
      * Intercepts a data method execution.
      *
-     * @param key
+     * @param methodKey The method key
      * @param context The context
      * @return The result
      */
-    R intercept(RepositoryMethodKey key, MethodInvocationContext<T, R> context);
+    R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context);
 }

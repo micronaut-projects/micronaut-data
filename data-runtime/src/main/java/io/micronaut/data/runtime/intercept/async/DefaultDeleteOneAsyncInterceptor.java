@@ -44,7 +44,7 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Number> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Number>> context) {
+    public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Object o = parameterValues[0];

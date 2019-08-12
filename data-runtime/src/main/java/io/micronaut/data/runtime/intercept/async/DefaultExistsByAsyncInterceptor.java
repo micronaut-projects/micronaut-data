@@ -43,10 +43,10 @@ public class DefaultExistsByAsyncInterceptor<T> extends AbstractAsyncInterceptor
     }
 
     @Override
-    public CompletionStage<Boolean> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Boolean>> context) {
+    public CompletionStage<Boolean> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Boolean>> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context, idType);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context, idType);
         return asyncDatastoreOperations.findOptional(preparedQuery)
                 .thenApply(Objects::nonNull);
     }

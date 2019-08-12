@@ -44,11 +44,11 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Argument<Object> arg = context.getReturnType().asArgument();
         Publisher<Number> publisher;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
             publisher = Publishers.map(reactiveOperations.executeUpdate(preparedQuery),
                     number -> convertNumberArgumentIfNecessary(number, arg)
             );

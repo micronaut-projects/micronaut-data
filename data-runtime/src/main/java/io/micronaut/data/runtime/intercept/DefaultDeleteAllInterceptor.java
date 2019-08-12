@@ -44,10 +44,10 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
     }
 
     @Override
-    public Number intercept(RepositoryMethodKey key, MethodInvocationContext<T, Number> context) {
+    public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Number> context) {
         Argument<Number> resultType = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
             Number result = operations.executeUpdate(preparedQuery).orElse(0);
             return convertIfNecessary(resultType, result);
         } else {

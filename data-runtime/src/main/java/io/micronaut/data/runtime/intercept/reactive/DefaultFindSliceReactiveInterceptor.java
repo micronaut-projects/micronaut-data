@@ -46,9 +46,9 @@ public class DefaultFindSliceReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(key, context);
+            PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
 
             Single<Slice<Object>> publisher = Flowable.fromPublisher(reactiveOperations.findAll(preparedQuery))

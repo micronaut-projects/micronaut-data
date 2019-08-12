@@ -49,9 +49,9 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
 
     @SuppressWarnings("unchecked")
     @Override
-    public R intercept(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
+    public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
             Iterable<R> iterable = (Iterable<R>) operations.findAll(preparedQuery);
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);
