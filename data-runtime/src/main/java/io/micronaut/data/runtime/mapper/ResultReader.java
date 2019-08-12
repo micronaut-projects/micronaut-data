@@ -103,6 +103,8 @@ public interface ResultReader<RS, IDX> {
         switch (dataType) {
             case STRING:
                 return readString(resultSet, index);
+            case LONG:
+                return readLong(resultSet, index);
             case INTEGER:
                 return readInt(resultSet, index);
             case BOOLEAN:
@@ -113,8 +115,6 @@ public interface ResultReader<RS, IDX> {
                 return readTimestamp(resultSet, index);
             case DATE:
                 return readDate(resultSet, index);
-            case LONG:
-                return readLong(resultSet, index);
             case CHARACTER:
                 return readChar(resultSet, index);
             case FLOAT:
