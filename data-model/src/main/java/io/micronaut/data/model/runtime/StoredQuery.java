@@ -16,6 +16,7 @@
 package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
@@ -182,8 +183,8 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      *
      * @return The last updated property
      */
-    default Optional<String> getLastUpdatedProperty() {
-        return Optional.empty();
+    default @Nullable String getLastUpdatedProperty() {
+        return null;
     }
 
     /**

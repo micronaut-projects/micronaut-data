@@ -110,7 +110,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
             if (resultType == null) {
                 //noinspection unchecked
-                resultType = (Class<RT>) context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_RESULT_TYPE).orElse(rootEntity);
+                resultType = (Class<RT>) context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_RESULT_TYPE)
+                        .orElse(rootEntity);
             }
             String query = context.stringValue(Query.class).orElseThrow(() ->
                     new IllegalStateException("No query present in method")
@@ -135,7 +136,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 storedQuery,
                 query,
                 parameterValues,
-                pageable
+                pageable,
+                storedQuery.isDtoProjection()
         );
     }
 
@@ -305,48 +307,53 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             Object index,
             String argument,
             Map parameterValues) {
-        String v = storedQuery.getLastUpdatedProperty().orElse(null);
         if (namedValues.containsKey(argument)) {
             parameterValues.put(index, namedValues.get(argument));
-        } else if (v != null && v.equals(argument)) {
-            Class<?> rootEntity = storedQuery.getRootEntity();
-            Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
-            if (lastUpdatedType == null) {
-                throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
-            }
-            Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
-            if (timestamp == null) {
-                throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-            }
-            parameterValues.put(index, timestamp);
         } else {
-            int i = argument.indexOf('.');
-            if (i > -1) {
-                String argumentName = argument.substring(0, i);
-                Object o = namedValues.get(argumentName);
-                if (o != null) {
-                    try {
-                        BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(o);
-                        String prop = argument.substring(i + 1);
-                        Object val = wrapper.getRequiredProperty(prop, Object.class);
-                        parameterValues.put(index, val);
-                    } catch (IntrospectionException e) {
-                        throw new DataAccessException("Embedded value [" + o + "] should be annotated with introspected");
+            String v = storedQuery.getLastUpdatedProperty();
+            if (v != null && v.equals(argument)) {
+
+                Class<?> rootEntity = storedQuery.getRootEntity();
+                Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
+                if (lastUpdatedType == null) {
+                    throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
+                }
+                Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+                if (timestamp == null) {
+                    throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+                }
+                parameterValues.put(index, timestamp);
+            } else {
+                int i = argument.indexOf('.');
+                if (i > -1) {
+                    String argumentName = argument.substring(0, i);
+                    Object o = namedValues.get(argumentName);
+                    if (o != null) {
+                        try {
+                            BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(o);
+                            String prop = argument.substring(i + 1);
+                            Object val = wrapper.getRequiredProperty(prop, Object.class);
+                            parameterValues.put(index, val);
+                        } catch (IntrospectionException e) {
+                            throw new DataAccessException("Embedded value [" + o + "] should be annotated with introspected");
+                        }
+                    }
+                } else {
+                    Optional<Argument> named = Arrays.stream(context.getArguments())
+                            .filter(arg -> {
+                                String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
+                                return n.equals(argument);
+                            })
+                            .findFirst();
+                    if (named.isPresent()) {
+                        parameterValues.put(index, namedValues.get(named.get().getName()));
+                    } else {
+                        throw new IllegalArgumentException("Missing query arguments: " + argument);
                     }
                 }
-            } else {
-                Optional<Argument> named = Arrays.stream(context.getArguments())
-                        .filter(arg -> {
-                            String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
-                            return n.equals(argument);
-                        })
-                        .findFirst();
-                if (named.isPresent()) {
-                    parameterValues.put(index, namedValues.get(named.get().getName()));
-                } else {
-                    throw new IllegalArgumentException("Missing query arguments: " + argument);
-                }
             }
+
+
         }
     }
 
@@ -1026,8 +1033,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
-        public Optional<String> getLastUpdatedProperty() {
-            return Optional.ofNullable(lastUpdatedProp);
+        public String getLastUpdatedProperty() {
+            return lastUpdatedProp;
         }
 
         @Override
@@ -1266,7 +1273,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
-        public Optional<String> getLastUpdatedProperty() {
+        public String getLastUpdatedProperty() {
             return storedQuery.getLastUpdatedProperty();
         }
 
