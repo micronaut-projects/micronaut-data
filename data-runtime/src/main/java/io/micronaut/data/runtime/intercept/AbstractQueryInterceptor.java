@@ -102,7 +102,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param resultType The result type
      * @return The query
      */
-    protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Class<RT> resultType) {
+    protected final <RT> PreparedQuery<?, RT> prepareQuery(
+            RepositoryMethodKey methodKey,
+            MethodInvocationContext<T, R> context,
+            Class<RT> resultType) {
         validateNullArguments(context);
         StoredQuery<?, RT> storedQuery = findQueries.get(methodKey);
         if (storedQuery == null) {

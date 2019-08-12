@@ -24,6 +24,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import org.slf4j.Logger;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -40,6 +41,7 @@ import java.util.regex.Pattern;
  * @since 1.0.0
  */
 public abstract class AbstractSqlRepositoryOperations<RS, PS> implements RepositoryOperations {
+    protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
     private static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
     private static final String NOT_TRUE_EXPRESSION = "1 = 2";
@@ -273,8 +275,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
         if (!isUpdate) {
             Pageable pageable = preparedQuery.getPageable();
-            Class<T> rootEntity = preparedQuery.getRootEntity();
             if (pageable != Pageable.UNPAGED) {
+                Class<T> rootEntity = preparedQuery.getRootEntity();
                 Sort sort = pageable.getSort();
                 Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
@@ -336,8 +338,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         for (Map.Entry<Integer, Object> entry : parameterValues.entrySet()) {
             int index = entry.getKey();
             Object value = entry.getValue();
-            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                DataSettings.QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+            if (QUERY_LOG.isTraceEnabled()) {
+                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
             }
             DataType dataType = paramTypeLen >= index ? parameterTypes[index - 1] : null;
             if (dataType == null) {
