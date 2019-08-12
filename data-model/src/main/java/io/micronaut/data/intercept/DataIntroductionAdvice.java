@@ -31,6 +31,7 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
 import javax.inject.Singleton;
@@ -62,21 +63,29 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        String dataSourceName = context.stringValue(Repository.class).orElse(null);
-        Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
-                                         .orElse(RepositoryOperations.class);
-        Class<?> interceptorType = context
-                .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
-                .orElse(null);
+        InterceptorKey key = new InterceptorKey(context.getTarget(), context.getExecutableMethod());
+        DataInterceptor<Object, Object> dataInterceptor = interceptorMap.get(key);
+        if (dataInterceptor == null) {
+            String dataSourceName = context.stringValue(Repository.class).orElse(null);
+            Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
+                    .orElse(RepositoryOperations.class);
+            Class<?> interceptorType = context
+                    .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
+                    .orElse(null);
 
-        if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-            DataInterceptor<Object, Object> childInterceptor =
-                    findInterceptor(dataSourceName, operationsType, interceptorType);
-            return childInterceptor.intercept(context);
+            if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+                DataInterceptor<Object, Object> childInterceptor =
+                        findInterceptor(dataSourceName, operationsType, interceptorType);
+                interceptorMap.put(key, childInterceptor);
+                return childInterceptor.intercept(context);
 
+            } else {
+                return context.proceed();
+            }
         } else {
-            return context.proceed();
+            return dataInterceptor.intercept(context);
         }
+
     }
 
     private @NonNull
@@ -84,33 +93,29 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
             @Nullable String dataSourceName,
             @NonNull Class<?> operationsType,
             @NonNull Class<?> interceptorType) {
-        InterceptorKey key = new InterceptorKey(dataSourceName, operationsType, interceptorType);
-        DataInterceptor interceptor = interceptorMap.get(key);
-        if (interceptor == null) {
-            if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
-                throw new IllegalArgumentException("Repository type must be an instance of RepositoryOperations!");
-            }
+        DataInterceptor interceptor;
+        if (!RepositoryOperations.class.isAssignableFrom(operationsType)) {
+            throw new IllegalArgumentException("Repository type must be an instance of RepositoryOperations!");
+        }
 
-            RepositoryOperations datastore;
-            try {
-                if (dataSourceName != null) {
-                    Qualifier qualifier = Qualifiers.byName(dataSourceName);
-                    datastore = (RepositoryOperations) beanLocator.getBean(operationsType, qualifier);
-                } else {
-                    datastore = (RepositoryOperations) beanLocator.getBean(operationsType);
-                }
-            } catch (NoSuchBeanException e) {
-                throw new ConfigurationException("No backing RepositoryOperations configured for repository. Check your configuration and try again", e);
-            }
-            BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref -> interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
-                    new DataAccessException("No Data interceptor found for type: " + interceptorType)
-            );
-            if (introspection.getConstructorArguments().length == 0) {
-                interceptor = (DataInterceptor) introspection.instantiate();
+        RepositoryOperations datastore;
+        try {
+            if (dataSourceName != null) {
+                Qualifier qualifier = Qualifiers.byName(dataSourceName);
+                datastore = (RepositoryOperations) beanLocator.getBean(operationsType, qualifier);
             } else {
-                interceptor = (DataInterceptor) introspection.instantiate(datastore);
+                datastore = (RepositoryOperations) beanLocator.getBean(operationsType);
             }
-            interceptorMap.put(key, interceptor);
+        } catch (NoSuchBeanException e) {
+            throw new ConfigurationException("No backing RepositoryOperations configured for repository. Check your configuration and try again", e);
+        }
+        BeanIntrospection<Object> introspection = BeanIntrospector.SHARED.findIntrospections(ref -> interceptorType.isAssignableFrom(ref.getBeanType())).stream().findFirst().orElseThrow(() ->
+                new DataAccessException("No Data interceptor found for type: " + interceptorType)
+        );
+        if (introspection.getConstructorArguments().length == 0) {
+            interceptor = (DataInterceptor) introspection.instantiate();
+        } else {
+            interceptor = (DataInterceptor) introspection.instantiate(datastore);
         }
         return interceptor;
     }
@@ -119,14 +124,12 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
      * Key used to cache the target child interceptor.
      */
     private final class InterceptorKey {
-        final String dataSource;
-        final Class<?> operationsType;
-        final Class<?> interceptorType;
+        private final Object repository;
+        private final ExecutableMethod method;
 
-        InterceptorKey(String dataSource, Class<?> operationsType, Class<?> interceptorType) {
-            this.dataSource = dataSource;
-            this.operationsType = operationsType;
-            this.interceptorType = interceptorType;
+        InterceptorKey(Object repository, ExecutableMethod method) {
+            this.repository = repository;
+            this.method = method;
         }
 
         @Override
@@ -138,14 +141,13 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 return false;
             }
             InterceptorKey that = (InterceptorKey) o;
-            return Objects.equals(dataSource, that.dataSource) &&
-                    operationsType.equals(that.operationsType) &&
-                    interceptorType.equals(that.interceptorType);
+            return repository.equals(that.repository) &&
+                    method.equals(that.method);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(dataSource, operationsType, interceptorType);
+            return Objects.hash(repository, method);
         }
     }
 }
