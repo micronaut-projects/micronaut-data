@@ -20,6 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -43,11 +44,11 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         Argument<Object> arg = context.getReturnType().asArgument();
         Publisher<Number> publisher;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
             publisher = Publishers.map(reactiveOperations.executeUpdate(preparedQuery),
                     number -> convertNumberArgumentIfNecessary(number, arg)
             );

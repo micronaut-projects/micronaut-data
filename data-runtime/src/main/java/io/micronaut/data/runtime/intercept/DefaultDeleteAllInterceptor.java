@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -43,10 +44,10 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
     }
 
     @Override
-    public Number intercept(MethodInvocationContext<T, Number> context) {
+    public Number intercept(RepositoryMethodKey key, MethodInvocationContext<T, Number> context) {
         Argument<Number> resultType = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
             Number result = operations.executeUpdate(preparedQuery).orElse(0);
             return convertIfNecessary(resultType, result);
         } else {

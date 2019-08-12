@@ -22,6 +22,7 @@ import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindSliceInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -48,9 +49,9 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
 
     @SuppressWarnings("unchecked")
     @Override
-    public R intercept(MethodInvocationContext<T, R> context) {
+    public R intercept(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
             Pageable pageable = preparedQuery.getPageable();
             Iterable<R> iterable = (Iterable<R>) operations.findAll(preparedQuery);
             Slice<R> slice = Slice.of(CollectionUtils.iterableToList(iterable), pageable);

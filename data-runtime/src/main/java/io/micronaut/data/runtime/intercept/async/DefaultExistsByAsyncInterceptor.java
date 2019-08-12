@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor;
@@ -42,10 +43,10 @@ public class DefaultExistsByAsyncInterceptor<T> extends AbstractAsyncInterceptor
     }
 
     @Override
-    public CompletionStage<Boolean> intercept(MethodInvocationContext<T, CompletionStage<Boolean>> context) {
+    public CompletionStage<Boolean> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Boolean>> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context, idType);
         return asyncDatastoreOperations.findOptional(preparedQuery)
                 .thenApply(Objects::nonNull);
     }

@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -46,11 +47,11 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
     }
 
     @Override
-    public R intercept(MethodInvocationContext<T, R> context) {
+    public R intercept(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
         Class<R> returnType = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(key, context);
 
             Iterable<?> iterable = operations.findAll(preparedQuery);
             List<R> resultList = (List<R>) CollectionUtils.iterableToList(iterable);

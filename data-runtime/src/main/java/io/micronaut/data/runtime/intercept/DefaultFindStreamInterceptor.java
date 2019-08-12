@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindStreamInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
 
@@ -42,9 +43,9 @@ public class DefaultFindStreamInterceptor<T> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Stream<T> intercept(MethodInvocationContext<T, Stream<T>> context) {
+    public Stream<T> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Stream<T>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
             return (Stream<T>) operations.findStream(preparedQuery);
         } else {
             return operations.findStream(getPagedQuery(context));

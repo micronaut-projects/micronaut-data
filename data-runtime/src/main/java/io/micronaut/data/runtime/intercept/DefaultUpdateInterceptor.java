@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -38,8 +39,8 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boo
     }
 
     @Override
-    public Boolean intercept(MethodInvocationContext<T, Boolean> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+    public Boolean intercept(RepositoryMethodKey key, MethodInvocationContext<T, Boolean> context) {
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
         Number number = operations.executeUpdate(preparedQuery).orElse(null);
         return number == null || number.longValue() < 0;
     }

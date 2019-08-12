@@ -18,6 +18,7 @@ package io.micronaut.data.jpa.repository.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
@@ -38,7 +39,7 @@ public class FlushInterceptor<T> extends AbstractQueryInterceptor<T, Void> imple
     }
 
     @Override
-    public Void intercept(MethodInvocationContext<T, Void> context) {
+    public Void intercept(RepositoryMethodKey key, MethodInvocationContext<T, Void> context) {
         ((JpaRepositoryOperations) operations).flush();
         return null;
     }

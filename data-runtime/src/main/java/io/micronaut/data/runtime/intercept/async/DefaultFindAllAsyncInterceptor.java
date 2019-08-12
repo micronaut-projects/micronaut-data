@@ -20,6 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindAllAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -47,10 +48,10 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Iterable<Object>> intercept(MethodInvocationContext<T, CompletionStage<Iterable<Object>>> context) {
+    public CompletionStage<Iterable<Object>> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Iterable<Object>>> context) {
         CompletionStage<? extends Iterable<?>> future;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
             future = asyncDatastoreOperations.findAll(preparedQuery);
 
         } else {

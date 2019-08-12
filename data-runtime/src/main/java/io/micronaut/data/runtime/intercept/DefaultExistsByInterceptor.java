@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.ExistsByInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -40,10 +41,10 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
     }
 
     @Override
-    public Boolean intercept(MethodInvocationContext<T, Boolean> context) {
+    public Boolean intercept(RepositoryMethodKey key, MethodInvocationContext<T, Boolean> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context, idType);
         return operations.exists(preparedQuery);
     }
 }

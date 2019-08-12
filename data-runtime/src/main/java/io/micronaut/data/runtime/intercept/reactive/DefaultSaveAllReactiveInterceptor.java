@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -41,7 +42,7 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractReactiveIntercept
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         Object[] parameterValues = context.getParameterValues();
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked

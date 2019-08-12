@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -41,7 +42,7 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);

@@ -31,12 +31,10 @@ import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
 import javax.inject.Singleton;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -51,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class DataIntroductionAdvice implements MethodInterceptor<Object, Object> {
 
     private final BeanLocator beanLocator;
-    private final Map<InterceptorKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
+    private final Map<RepositoryMethodKey, DataInterceptor> interceptorMap = new ConcurrentHashMap<>(20);
 
     /**
      * Default constructor.
@@ -63,7 +61,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        InterceptorKey key = new InterceptorKey(context.getTarget(), context.getExecutableMethod());
+        RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
         DataInterceptor<Object, Object> dataInterceptor = interceptorMap.get(key);
         if (dataInterceptor == null) {
             String dataSourceName = context.stringValue(Repository.class).orElse(null);
@@ -77,13 +75,13 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 DataInterceptor<Object, Object> childInterceptor =
                         findInterceptor(dataSourceName, operationsType, interceptorType);
                 interceptorMap.put(key, childInterceptor);
-                return childInterceptor.intercept(context);
+                return childInterceptor.intercept(key, context);
 
             } else {
                 return context.proceed();
             }
         } else {
-            return dataInterceptor.intercept(context);
+            return dataInterceptor.intercept(key, context);
         }
 
     }
@@ -120,34 +118,4 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         return interceptor;
     }
 
-    /**
-     * Key used to cache the target child interceptor.
-     */
-    private final class InterceptorKey {
-        private final Object repository;
-        private final ExecutableMethod method;
-
-        InterceptorKey(Object repository, ExecutableMethod method) {
-            this.repository = repository;
-            this.method = method;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-            InterceptorKey that = (InterceptorKey) o;
-            return repository.equals(that.repository) &&
-                    method.equals(that.method);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(repository, method);
-        }
-    }
 }

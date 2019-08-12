@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -43,11 +44,11 @@ public class DefaultFindPageReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         Publisher<Page<Object>> publisher;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(key, context);
 
             publisher = Flowable.fromPublisher(reactiveOperations.findOne(countQuery))
                     .flatMap(total -> {

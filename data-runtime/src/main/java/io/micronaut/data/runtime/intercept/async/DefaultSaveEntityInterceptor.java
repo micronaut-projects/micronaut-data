@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 
@@ -40,7 +41,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractAsyncInterceptor<T,
     }
 
     @Override
-    public CompletionStage<Object> intercept(MethodInvocationContext<T, CompletionStage<Object>> context) {
+    public CompletionStage<Object> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Object>> context) {
         return asyncDatastoreOperations.persist(getInsertOperation(context));
     }
 }

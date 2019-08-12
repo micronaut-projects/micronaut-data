@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
@@ -43,7 +44,7 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
+    public CompletionStage<Number> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Number>> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Object o = parameterValues[0];

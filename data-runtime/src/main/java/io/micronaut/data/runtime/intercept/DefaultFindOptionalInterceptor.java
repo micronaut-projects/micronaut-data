@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.FindOptionalInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -41,8 +42,8 @@ public class DefaultFindOptionalInterceptor<T> extends AbstractQueryInterceptor<
     }
 
     @Override
-    public Optional<Object> intercept(MethodInvocationContext<T, Optional<Object>> context) {
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+    public Optional<Object> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Optional<Object>> context) {
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
         Object result = operations.findOne(preparedQuery);
         return Optional.ofNullable(result);
     }

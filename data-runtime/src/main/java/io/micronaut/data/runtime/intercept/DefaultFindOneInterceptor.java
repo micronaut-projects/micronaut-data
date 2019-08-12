@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.FindOneInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -41,8 +42,8 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<T, Object> context) {
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<T, Object> context) {
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
         Object result = operations.findOne(preparedQuery);
 
         if (result != null) {

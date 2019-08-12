@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.FindByIdInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.io.Serializable;
@@ -38,7 +39,7 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<T, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<T, Object> context) {
         Class<?> rootEntity = getRequiredRootEntity(context);
         Object id = context.getParameterValues()[0];
         if (!(id instanceof Serializable)) {

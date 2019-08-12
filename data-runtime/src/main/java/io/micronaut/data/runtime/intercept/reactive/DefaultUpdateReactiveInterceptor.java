@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.type.ReturnType;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -42,8 +43,8 @@ public class DefaultUpdateReactiveInterceptor extends AbstractReactiveIntercepto
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
         ReturnType<Object> returnType = context.getReturnType();
         Publisher<Number> publisher = Publishers.map(reactiveOperations.executeUpdate(preparedQuery),
                 n -> convertNumberArgumentIfNecessary(n, returnType.asArgument())

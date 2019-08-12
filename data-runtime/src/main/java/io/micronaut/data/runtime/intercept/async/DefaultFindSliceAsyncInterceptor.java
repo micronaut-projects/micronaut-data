@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor;
@@ -48,9 +49,9 @@ public class DefaultFindSliceAsyncInterceptor<T> extends AbstractAsyncIntercepto
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Slice<Object>> intercept(MethodInvocationContext<T, CompletionStage<Slice<Object>>> context) {
+    public CompletionStage<Slice<Object>> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Slice<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
             Pageable pageable = preparedQuery.getPageable();
             return asyncDatastoreOperations.findAll(preparedQuery)
                     .thenApply(objects ->

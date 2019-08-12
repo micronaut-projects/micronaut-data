@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -42,8 +43,8 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Object> intercept(MethodInvocationContext<T, CompletionStage<Object>> context) {
-        PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(context);
+    public CompletionStage<Object> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Object>> context) {
+        PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(key, context);
         CompletionStage<Object> future = asyncDatastoreOperations.findOne(preparedQuery);
         Argument<?> type = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         return future.thenApply(o -> {

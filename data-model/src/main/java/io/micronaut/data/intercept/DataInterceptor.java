@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.intercept;
 
-import io.micronaut.aop.MethodInterceptor;
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Introspected;
 
 /**
@@ -28,5 +28,14 @@ import io.micronaut.core.annotation.Introspected;
  * @since 1.0
  */
 @Introspected
-public interface DataInterceptor<T, R> extends MethodInterceptor<T, R> {
+public interface DataInterceptor<T, R> {
+
+    /**
+     * Intercepts a data method execution.
+     *
+     * @param key
+     * @param context The context
+     * @return The result
+     */
+    R intercept(RepositoryMethodKey key, MethodInvocationContext<T, R> context);
 }

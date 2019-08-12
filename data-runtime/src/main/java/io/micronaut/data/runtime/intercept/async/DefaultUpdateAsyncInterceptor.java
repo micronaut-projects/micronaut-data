@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -40,8 +41,8 @@ public class DefaultUpdateAsyncInterceptor<T> extends AbstractAsyncInterceptor<T
     }
 
     @Override
-    public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
-        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+    public CompletionStage<Number> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Number>> context) {
+        PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
         return asyncDatastoreOperations.executeUpdate(preparedQuery)
                 .thenApply(n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument()));
     }

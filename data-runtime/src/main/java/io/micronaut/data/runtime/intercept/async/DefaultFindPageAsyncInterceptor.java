@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindPageAsyncInterceptor;
 import io.micronaut.data.model.Page;
@@ -46,10 +47,10 @@ public class DefaultFindPageAsyncInterceptor<T> extends AbstractAsyncInterceptor
 
     @SuppressWarnings("unchecked")
     @Override
-    public CompletionStage<Page<Object>> intercept(MethodInvocationContext<T, CompletionStage<Page<Object>>> context) {
+    public CompletionStage<Page<Object>> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Page<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
-            PreparedQuery<?, Number> countQuery = prepareCountQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
+            PreparedQuery<?, Number> countQuery = prepareCountQuery(key, context);
 
             return asyncDatastoreOperations.findOne(countQuery)
                     .thenCompose(total -> asyncDatastoreOperations.findAll(preparedQuery)

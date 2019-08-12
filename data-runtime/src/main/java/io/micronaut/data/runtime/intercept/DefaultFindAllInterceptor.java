@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -44,10 +45,10 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Iterable<R> intercept(MethodInvocationContext<T, Iterable<R>> context) {
+    public Iterable<R> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Iterable<R>> context) {
         Class<Iterable<R>> rt = context.getReturnType().getType();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, ?> preparedQuery = prepareQuery(context);
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context);
             Iterable<?> iterable = operations.findAll(preparedQuery);
             if (rt.isInstance(iterable)) {
                 return (Iterable<R>) iterable;

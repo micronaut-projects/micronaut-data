@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
@@ -39,7 +40,7 @@ public class DefaultSaveEntityReactiveInterceptor extends AbstractReactiveInterc
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         Publisher<Object> publisher = reactiveOperations.persist(getInsertOperation(context));
         return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }

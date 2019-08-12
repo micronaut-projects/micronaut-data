@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -41,9 +42,9 @@ public class DefaultCountReactiveInterceptor extends AbstractReactiveInterceptor
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Long> preparedQuery = prepareQuery(context, Long.class);
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(key, context, Long.class);
             return Publishers.convertPublisher(
                     reactiveOperations.findAll(preparedQuery),
                     context.getReturnType().getType()

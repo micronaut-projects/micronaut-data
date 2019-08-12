@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -45,10 +46,10 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Number> intercept(MethodInvocationContext<T, CompletionStage<Number>> context) {
+    public CompletionStage<Number> intercept(RepositoryMethodKey key, MethodInvocationContext<T, CompletionStage<Number>> context) {
         Argument<CompletionStage<Number>> arg = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
             return asyncDatastoreOperations.executeUpdate(preparedQuery)
                         .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
         } else {

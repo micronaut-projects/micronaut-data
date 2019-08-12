@@ -20,6 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -42,7 +43,7 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Iterable<R> intercept(MethodInvocationContext<T, Iterable<R>> context) {
+    public Iterable<R> intercept(RepositoryMethodKey key, MethodInvocationContext<T, Iterable<R>> context) {
         Object[] parameterValues = context.getParameterValues();
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked

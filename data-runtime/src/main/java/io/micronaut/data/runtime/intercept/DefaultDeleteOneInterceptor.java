@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -42,12 +43,12 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
     }
 
     @Override
-    public Void intercept(MethodInvocationContext<T, Void> context) {
+    public Void intercept(RepositoryMethodKey key, MethodInvocationContext<T, Void> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
             Object o = parameterValues[0];
             if (context.hasAnnotation(Query.class)) {
-                PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(context);
+                PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(key, context);
                 operations.executeUpdate(preparedQuery).orElse(0);
                 return null;
             } else {

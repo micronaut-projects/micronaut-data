@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.intercept.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -41,10 +42,10 @@ public class DefaultExistsByReactiveInterceptor extends AbstractReactiveIntercep
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(context, idType);
+        PreparedQuery<?, ?> preparedQuery = prepareQuery(key, context, idType);
         Flowable<Boolean> publisher = Flowable.fromPublisher(reactiveOperations.findOptional(preparedQuery))
                 .map(o -> true)
                 .switchIfEmpty(Flowable.just(false));

@@ -38,6 +38,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.JoinPath;
@@ -69,8 +70,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private static final String PREDATOR_ANN_NAME = DataMethod.class.getName();
     protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
-    private final ConcurrentMap<MethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
-    private final ConcurrentMap<MethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
+    private final ConcurrentMap<RepositoryMethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
+    private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
 
     /**
      * Default constructor.
@@ -83,26 +84,27 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Prepares a query for the given context.
+     *
+     * @param key The method key
      * @param context The context
      * @return The query
      */
-    protected final PreparedQuery<?, ?> prepareQuery(MethodInvocationContext<T, R> context) {
-        return prepareQuery(context, null);
+    protected final PreparedQuery<?, ?> prepareQuery(RepositoryMethodKey key, MethodInvocationContext<T, R> context) {
+        return prepareQuery(key, context, null);
     }
 
     /**
      * Prepares a query for the given context.
+     *
+     * @param <RT> The result generic type
+     * @param methodKey The method key
      * @param context The context
      * @param resultType The result type
      * @return The query
-     * @param <RT> The result generic type
      */
-    protected final <RT> PreparedQuery<?, RT> prepareQuery(MethodInvocationContext<T, R> context, Class<RT> resultType) {
+    protected final <RT> PreparedQuery<?, RT> prepareQuery(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context, Class<RT> resultType) {
         validateNullArguments(context);
-        ExecutableMethod<T, R> executableMethod = context.getExecutableMethod();
-        Class<?> repositoryType = context.getTarget().getClass();
-        MethodKey key = newMethodKey(repositoryType, executableMethod);
-        StoredQuery<?, RT> storedQuery = findQueries.get(key);
+        StoredQuery<?, RT> storedQuery = findQueries.get(methodKey);
         if (storedQuery == null) {
             Class<?> rootEntity = context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
@@ -114,13 +116,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     new IllegalStateException("No query present in method")
             );
             storedQuery = new DefaultStoredQuery<>(
-                    executableMethod,
+                    context.getExecutableMethod(),
                     resultType,
                     rootEntity,
                     query,
                     DataMethod.META_MEMBER_PARAMETER_BINDING
             );
-            findQueries.put(key, storedQuery);
+            findQueries.put(methodKey, storedQuery);
         }
 
 
@@ -131,7 +133,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         String query = storedQuery.getQuery();
         return new DefaultPreparedQuery<>(
                 context,
-                repositoryType,
                 storedQuery,
                 query,
                 parameterValues,
@@ -146,14 +147,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Prepares a query for the given context.
+     *
+     * @param methodKey The method key
      * @param context The context
      * @return The query
      */
-    protected final PreparedQuery<?, Number> prepareCountQuery(@NonNull MethodInvocationContext<T, R> context) {
+    protected final PreparedQuery<?, Number> prepareCountQuery(RepositoryMethodKey methodKey, @NonNull MethodInvocationContext<T, R> context) {
         ExecutableMethod<T, R> executableMethod = context.getExecutableMethod();
-        Class<?> repositoryType = context.getTarget().getClass();
-        MethodKey key = newMethodKey(repositoryType, executableMethod);
-        StoredQuery<?, Long> storedQuery = countQueries.get(key);
+        StoredQuery<?, Long> storedQuery = countQueries.get(methodKey);
         if (storedQuery == null) {
 
             String query = context.stringValue(Query.class, DataMethod.META_MEMBER_COUNT_QUERY).orElseThrow(() ->
@@ -168,7 +169,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     query,
                     context.isPresent(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_COUNT_PARAMETERS) ? DataMethod.META_MEMBER_COUNT_PARAMETERS : null
             );
-            countQueries.put(key, storedQuery);
+            countQueries.put(methodKey, storedQuery);
         }
 
         Pageable pageable = getPageable(context);
@@ -176,7 +177,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         //noinspection unchecked
         return new DefaultPreparedQuery(
                 context,
-                repositoryType,
                 storedQuery,
                 storedQuery.getQuery(),
                 parameterValues,
@@ -1067,13 +1067,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final String query;
         private final boolean dto;
         private final @NonNull Map<Integer, Object> indexedValues;
-        private final Class<?> repositoryType;
         private final MethodInvocationContext<T, R> context;
 
         /**
          * The default constructor.
          * @param context The execution context
-         * @param repositoryType The repository type
          * @param storedQuery The stored query
          * @param finalQuery The final query
          * @param parameterValues The parameter values
@@ -1081,19 +1079,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
          */
         DefaultPreparedQuery(
                 MethodInvocationContext<T, R> context,
-                Class<?> repositoryType,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
                 @Nullable Map<String, Object> parameterValues,
                 @Nullable Pageable pageable) {
-            this(context, repositoryType, storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
+            this(context, storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
         }
 
         /**
          * The default constructor.
          *
          * @param context The execution context
-         * @param repositoryType The repository type
          * @param storedQuery The stored query
          * @param finalQuery The final query
          * @param parameterValues The parameter values
@@ -1102,14 +1098,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
          */
         DefaultPreparedQuery(
                 MethodInvocationContext<T, R> context,
-                Class<?> repositoryType,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
                 @Nullable Map parameterValues,
                 @Nullable Pageable pageable,
                 boolean dtoProjection) {
             this.context = context;
-            this.repositoryType = repositoryType;
             this.query = finalQuery;
             this.storedQuery = storedQuery;
             if (storedQuery.useNumericPlaceholders()) {
@@ -1175,7 +1169,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         @Override
         public Class<?> getRepositoryType() {
-            return repositoryType;
+            return context.getTarget().getClass();
         }
 
         @NonNull

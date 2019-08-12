@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.runtime.PagedQuery;
@@ -45,9 +46,9 @@ public class DefaultFindSliceReactiveInterceptor extends AbstractReactiveInterce
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<Object, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(context);
+            PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(key, context);
             Pageable pageable = preparedQuery.getPageable();
 
             Single<Slice<Object>> publisher = Flowable.fromPublisher(reactiveOperations.findAll(preparedQuery))

@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -38,7 +39,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T,
     }
 
     @Override
-    public Object intercept(MethodInvocationContext<T, Object> context) {
+    public Object intercept(RepositoryMethodKey key, MethodInvocationContext<T, Object> context) {
         return operations.persist(getInsertOperation(context));
     }
 

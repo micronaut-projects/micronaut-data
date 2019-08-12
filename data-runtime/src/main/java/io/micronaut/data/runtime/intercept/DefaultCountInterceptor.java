@@ -20,6 +20,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.CountInterceptor;
+import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -43,10 +44,10 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
     }
 
     @Override
-    public Number intercept(MethodInvocationContext<T, Number> context) {
+    public Number intercept(RepositoryMethodKey key, MethodInvocationContext<T, Number> context) {
         long result;
         if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Long> preparedQuery = prepareQuery(context, Long.class);
+            PreparedQuery<?, Long> preparedQuery = prepareQuery(key, context, Long.class);
             Iterable<Long> iterable = operations.findAll(preparedQuery);
             Iterator<Long> i = iterable.iterator();
             result = i.hasNext() ? i.next() : 0;
