@@ -16,7 +16,8 @@ class BookRepositoryTest {
 
 	@Test
 	void bookCount() {
-
+		bookRepository.findByTitle("Title");
+		bookRepository.findByTitle("Title");
 		Assertions.assertEquals(0, bookRepository.count());
 
 		Book book = bookRepository.save(new Book("Title", 42));

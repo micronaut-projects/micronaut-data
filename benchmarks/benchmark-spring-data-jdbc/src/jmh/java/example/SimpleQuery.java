@@ -44,7 +44,9 @@ public class SimpleQuery {
 	}
 
 	public static void main(String[] args) throws RunnerException {
-		Options opt = new OptionsBuilder().include(".*" + SimpleQuery.class.getSimpleName() + ".*").warmupIterations(2)
+		Options opt = new OptionsBuilder()
+//				.jvmArgs("-agentpath:/Applications/YourKit-Java-Profiler-2019.8.app/Contents/Resources/bin/mac/libyjpagent.dylib")
+				.include(".*" + SimpleQuery.class.getSimpleName() + ".*").warmupIterations(2)
 				.measurementIterations(5).forks(1).jvmArgsAppend("-ea").build();
 
 		new Runner(opt).run();

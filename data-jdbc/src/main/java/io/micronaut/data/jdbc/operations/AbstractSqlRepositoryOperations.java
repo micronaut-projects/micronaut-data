@@ -290,19 +290,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     pageable = Pageable.from(pageable.getNumber(), 1);
                 }
                 query += queryBuilder.buildPagination(pageable).getQuery();
-            } else if (isSingleResult && preparedQuery.isSingleResult()) {
-                Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
-                boolean isSqlServer = isSqlServerWithoutOrderBy(query, dialect);
-                if (!isSqlServer || rootEntity == preparedQuery.getResultType()) {
-
-                    QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
-                    if (isSqlServer) {
-                        RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
-                        Sort sort = sortById(persistentEntity);
-                        query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
-                    }
-                    query += queryBuilder.buildPagination(Pageable.from(0, 1)).getQuery();
-                }
             }
         }
         return query;

@@ -49,7 +49,7 @@ public class SimpleQuery {
                 .warmupIterations(3)
                 .measurementIterations(4)
                 .forks(1)
-//                .jvmArgs("-agentpath:/Applications/YourKit-Java-Profiler-2018.04.app/Contents/Resources/bin/mac/libyjpagent.jnilib")
+//                .jvmArgs("-agentpath:/Applications/YourKit-Java-Profiler-2019.8.app/Contents/Resources/bin/mac/libyjpagent.dylib")
                 .build();
 
         new Runner(opt).run();
