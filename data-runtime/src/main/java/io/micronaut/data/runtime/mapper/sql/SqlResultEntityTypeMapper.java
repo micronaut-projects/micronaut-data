@@ -33,7 +33,7 @@ import java.util.*;
  * @param <R> The result type
  */
 @Internal
-public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
+public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
 
     private final RuntimePersistentEntity<R> entity;
     private final ResultReader<RS, String> resultReader;
@@ -140,18 +140,20 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
 
     private R readEntity(String prefix, String path, RS rs, RuntimePersistentEntity<R> persistentEntity) {
         BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
-        Argument<?>[] constructorArguments = persistentEntity.getConstructorArguments();
+        RuntimePersistentProperty<R>[] constructorArguments = persistentEntity.getConstructorArguments();
         try {
             R entity;
             Object id = null;
             RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
+            boolean hasPrefix = prefix != null;
+            boolean hasPath = path != null;
             if (identity != null) {
                 if (identity instanceof Embedded) {
                     PersistentEntity embeddedEntity = ((Embedded) identity).getAssociatedEntity();
-                    id = readEntity(identity.getPersistedName() + "_", path + identity.getName() + '.', rs, (RuntimePersistentEntity<R>) embeddedEntity);
+                    id = readEntity(identity.getPersistedName() + "_", (hasPath ? path : "") + identity.getName() + '.', rs, (RuntimePersistentEntity<R>) embeddedEntity);
                 } else {
                     String persistedName = identity.getPersistedName();
-                    id = resultReader.readDynamic(rs, prefix != null ? prefix + persistedName : persistedName, identity.getDataType());
+                    id = resultReader.readDynamic(rs, hasPrefix ? prefix + persistedName : persistedName, identity.getDataType());
                     if (id == null) {
                         throw new DataAccessException("Table contains null ID for entity: " + persistentEntity.getName());
                     }
@@ -167,26 +169,28 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                 Object[] args = new Object[len];
                 processedViaConstructor = new HashSet<>(len);
                 for (int i = 0; i < len; i++) {
-                    Argument<?> argument = constructorArguments[i];
-                    String n = argument.getName();
-                    RuntimePersistentProperty<R> prop = persistentEntity.getPropertyByName(n);
+                    RuntimePersistentProperty<R> prop = constructorArguments[i];
                     if (prop != null) {
                         processedViaConstructor.add(prop.getName());
                         if (prop instanceof Association) {
-                            Object associated = readAssociation(prefix, path, rs, (Association) prop);
+                            Object associated = readAssociation(hasPrefix ? prefix : "", (hasPath ? path : ""), rs, (Association) prop);
                             args[i] = associated;
                         } else {
 
-                            Object v = resultReader.readDynamic(rs, prefix != null ? prefix + prop.getPersistedName() : prop.getPersistedName(), prop.getDataType());
+                            Object v = resultReader.readDynamic(
+                                    rs,
+                                    hasPrefix ? prefix + prop.getPersistedName() : prop.getPersistedName(),
+                                    prop.getDataType()
+                            );
                             if (v == null) {
                                 if (!prop.isOptional()) {
-                                    throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
+                                    throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
                                 } else {
                                     args[i] = null;
                                     continue;
                                 }
                             }
-                            Class<?> t = argument.getType();
+                            Class<?> t = prop.getType();
                             if (!t.isInstance(v)) {
                                 args[i] = resultReader.convertRequired(v, t);
                             } else {
@@ -194,7 +198,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                             }
                         }
                     } else {
-                        throw new DataAccessException("Constructor [" + argument.getName() + "] must have a getter for type: " + persistentEntity.getName());
+                        throw new DataAccessException("Constructor [" + prop.getName() + "] must have a getter for type: " + persistentEntity.getName());
                     }
                 }
                 entity = introspection.instantiate(args);
@@ -209,16 +213,16 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                 if (persistentProperty instanceof Association) {
                     Association association = (Association) persistentProperty;
                     if (!association.isForeignKey()) {
-                        Object associated = readAssociation(prefix, path, rs, association);
+                        Object associated = readAssociation(prefix, (hasPath ? path : ""), rs, association);
                         if (associated != null) {
                             property.set(entity, associated);
                         }
                     } else {
                         Relation.Kind kind = association.getKind();
-                        boolean hasJoin = joinPaths.containsKey(path + association.getName());
+                        boolean hasJoin = joinPaths.containsKey((hasPath ? path : "") + association.getName());
                         if (hasJoin) {
                             if (kind == Relation.Kind.ONE_TO_ONE && association.isForeignKey()) {
-                                Object associated = readAssociation(prefix, path, rs, association);
+                                Object associated = readAssociation(prefix, (hasPath ? path : ""), rs, association);
                                 if (associated != null) {
                                     property.set(entity, associated);
                                 }
@@ -232,7 +236,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                     }
                 } else {
                     String persistedName = persistentProperty.getPersistedName();
-                    Object v = resultReader.readDynamic(rs, prefix + persistedName, persistentProperty.getDataType());
+                    Object v = resultReader.readDynamic(rs, hasPrefix ? prefix + persistedName : persistedName, persistentProperty.getDataType());
 
                     if (rpp.getType().isInstance(v)) {
                         property.set(entity, v);
@@ -249,7 +253,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                     while (currentId != null && currentId.equals(id)) {
                         for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
                             Association association = entry.getKey();
-                            Object associated = readAssociation(prefix, path, rs, association);
+                            Object associated = readAssociation(hasPrefix ? prefix : "", (hasPath ? path : ""), rs, association);
                             entry.getValue().add(associated);
                         }
                         currentId = nextId(identity, rs);
