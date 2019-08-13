@@ -480,6 +480,7 @@
 </ul>
 </li>
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query"><span class="typeNameLink">QueryParameter</span></a> (implements io.micronaut.core.naming.Named)</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept"><span class="typeNameLink">RepositoryMethodKey</span></a></li>
 <li type="circle">io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html" title="class in io.micronaut.data.processor.visitors"><span class="typeNameLink">RepositoryTypeElementVisitor</span></a> (implements io.micronaut.inject.visitor.TypeElementVisitor&lt;C,E&gt;)</li>
 <li type="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Restaurant.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Restaurant</span></a></li>
 <li type="circle">io.micronaut.data.model.query.factory.<a href="io/micronaut/data/model/query/factory/Restrictions.html" title="class in io.micronaut.data.model.query.factory"><span class="typeNameLink">Restrictions</span></a></li>
@@ -591,6 +592,56 @@
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query"><span class="typeNameLink">Criteria</span></a>
 <ul>
 <li type="circle">io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query"><span class="typeNameLink">QueryModel</span></a></li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DataInterceptor</span></a>&lt;T,R&gt;
+<ul>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">CountAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/CountInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">CountInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/CountReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">CountReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/DeleteAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">DeleteAllAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DeleteAllInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/DeleteAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">DeleteAllReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/DeleteOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">DeleteOneAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DeleteOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DeleteOneInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/DeleteOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">DeleteOneReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/ExistsByAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">ExistsByAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/ExistsByInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">ExistsByInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/ExistsByReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">ExistsByReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindAllAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindAllInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindAllReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindByIdAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindByIdAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindByIdInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindByIdInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindByIdReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindByIdReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindOneAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindOneInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindOneReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindOptionalInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindOptionalInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindPageAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindPageAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindPageInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindPageReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindPageReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindSliceAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindSliceAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindSliceInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindSliceInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindSliceReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindSliceReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindStreamInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindStreamInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/IterableResultInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">IterableResultInterceptor</span></a>&lt;T,R&gt;
+<ul>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindAllInterceptor</span></a>&lt;T,R&gt;</li>
+</ul>
+</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/SaveAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">SaveAllAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">SaveAllInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/SaveAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">SaveAllReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/SaveEntityAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">SaveEntityAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveEntityInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">SaveEntityInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/SaveEntityReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">SaveEntityReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/SaveOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">SaveOneAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">SaveOneInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/SaveOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">SaveOneReactiveInterceptor</span></a>&lt;T,R&gt;</li>
+<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/UpdateAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">UpdateAsyncInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/UpdateInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">UpdateInterceptor</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/UpdateReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">UpdateReactiveInterceptor</span></a>&lt;T,R&gt;</li>
 </ul>
 </li>
 <li type="circle">io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataSettings.html" title="interface in io.micronaut.data.runtime.config"><span class="typeNameLink">DataSettings</span></a></li>
@@ -706,64 +757,6 @@
 <li type="circle">io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><span class="typeNameLink">NamingStrategy</span></a></li>
 <li type="circle">io.micronaut.core.order.Ordered
 <ul>
-<li type="circle">io.micronaut.aop.Interceptor&lt;T,R&gt;
-<ul>
-<li type="circle">io.micronaut.aop.MethodInterceptor&lt;T,R&gt;
-<ul>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DataInterceptor</span></a>&lt;T,R&gt;
-<ul>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">CountAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/CountInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">CountInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/CountReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">CountReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/DeleteAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">DeleteAllAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DeleteAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DeleteAllInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/DeleteAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">DeleteAllReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/DeleteOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">DeleteOneAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/DeleteOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">DeleteOneInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/DeleteOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">DeleteOneReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/ExistsByAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">ExistsByAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/ExistsByInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">ExistsByInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/ExistsByReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">ExistsByReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindAllAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindAllInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindAllReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindByIdAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindByIdAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindByIdInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindByIdInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindByIdReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindByIdReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindOneAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindOneInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindOneReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindOptionalInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindOptionalInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindPageAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindPageAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindPageInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindPageReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindPageReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/FindSliceAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindSliceAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindSliceInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindSliceInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/FindSliceReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">FindSliceReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindStreamInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindStreamInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/IterableResultInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">IterableResultInterceptor</span></a>&lt;T,R&gt;
-<ul>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindAllInterceptor</span></a>&lt;T,R&gt;</li>
-</ul>
-</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/SaveAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">SaveAllAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">SaveAllInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/SaveAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">SaveAllReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/SaveEntityAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">SaveEntityAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveEntityInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">SaveEntityInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/SaveEntityReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">SaveEntityReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/SaveOneAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">SaveOneAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/SaveOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">SaveOneInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/SaveOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">SaveOneReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-<li type="circle">io.micronaut.data.intercept.async.<a href="io/micronaut/data/intercept/async/UpdateAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">UpdateAsyncInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/UpdateInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">UpdateInterceptor</span></a>&lt;T&gt;</li>
-<li type="circle">io.micronaut.data.intercept.reactive.<a href="io/micronaut/data/intercept/reactive/UpdateReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="typeNameLink">UpdateReactiveInterceptor</span></a>&lt;T,R&gt;</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
 <li type="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders"><span class="typeNameLink">MethodCandidate</span></a></li>
 </ul>
 </li>

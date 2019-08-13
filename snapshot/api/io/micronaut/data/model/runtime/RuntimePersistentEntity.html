@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -200,64 +200,68 @@ implements <a href="../../../../../io/micronaut/data/model/PersistentEntity.html
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getConstructorArguments--">getConstructorArguments</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getEmbedded--">getEmbedded</a></span>()</code>
 <div class="block">A list of embedded associations for this entity.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getEntity-java.lang.Class-">getEntity</a></span>(java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</code>
 <div class="block">Obtain an entity for the given type.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getIdentity--">getIdentity</a></span>()</code>
 <div class="block">Returns the identity of the instance.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>io.micronaut.core.beans.BeanIntrospection&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getIntrospection--">getIntrospection</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getName--">getName</a></span>()</code>
 <div class="block">The entity name including any package prefix.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getParentEntity--">getParentEntity</a></span>()</code>
 <div class="block">Returns the parent entity of this entity.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getPersistentProperties--">getPersistentProperties</a></span>()</code>
 <div class="block">A list of properties to be persisted.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getPersistentPropertyNames--">getPersistentPropertyNames</a></span>()</code>
 <div class="block">A list of property names that a persistent.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getPropertyByName-java.lang.String-">getPropertyByName</a></span>(java.lang.String&nbsp;name)</code>
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getVersion--">getVersion</a></span>()</code>
 <div class="block">Returns the version property.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#isOwningEntity-io.micronaut.data.model.PersistentEntity-">isOwningEntity</a></span>(<a href="../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code>
 <div class="block">Returns whether the specified entity asserts ownership over this
@@ -581,7 +585,7 @@ public&nbsp;<a href="../../../../../io/micronaut/data/model/PersistentEntity.htm
 <a name="getEntity-java.lang.Class-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getEntity</h4>
 <pre>protected&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;getEntity(java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&nbsp;type)</pre>
@@ -593,6 +597,19 @@ public&nbsp;<a href="../../../../../io/micronaut/data/model/PersistentEntity.htm
 <dd>The entity</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code>io.micronaut.core.beans.exceptions.IntrospectionException</code> - if the entity doesn't exist</dd>
+</dl>
+</li>
+</ul>
+<a name="getConstructorArguments--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getConstructorArguments</h4>
+<pre>public&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;[]&nbsp;getConstructorArguments()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The constructor arguments.</dd>
 </dl>
 </li>
 </ul>

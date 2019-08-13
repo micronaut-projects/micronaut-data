@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":6,"i3":18,"i4":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":18,"i6":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -151,29 +151,35 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html"
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>default java.util.Map&lt;java.lang.Integer,java.lang.Object&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getIndexedParameterValues--">getIndexedParameterValues</a></span>()</code>
-<div class="block">The indexed parameter values if this is native query SQL query.</div>
-</td>
+<td class="colFirst"><code>io.micronaut.core.type.Argument[]</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getArguments--">getArguments</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getLastUpdatedType--">getLastUpdatedType</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>java.lang.Object[]</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getParameterArray--">getParameterArray</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>default &lt;RT&gt;&nbsp;java.util.Optional&lt;RT&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a></span>(java.lang.String&nbsp;role,
                   java.lang.Class&lt;RT&gt;&nbsp;type)</code>
 <div class="block">Return the value of the given parameter if the given role.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getParameterValues--">getParameterValues</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getQueryHints--">getQueryHints</a></span>()</code>
 <div class="block">The parameter binding.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getRepositoryType--">getRepositoryType</a></span>()</code>&nbsp;</td>
 </tr>
@@ -190,7 +196,7 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html"
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></h3>
-<code><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes--">getArgumentTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getEntityIdentifierType--">getEntityIdentifierType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterTypes--">getParameterTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getQuery--">getQuery</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultType--">getResultType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--">getRootEntity</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></code></li>
+<code><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes--">getArgumentTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getEntityIdentifierType--">getEntityIdentifierType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getQuery--">getQuery</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultType--">getResultType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--">getRootEntity</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.naming.Named">
@@ -254,18 +260,29 @@ java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getParameterValues()
 </dl>
 </li>
 </ul>
-<a name="getIndexedParameterValues--">
+<a name="getParameterArray--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>getIndexedParameterValues</h4>
-<pre>@NonNull
-default&nbsp;java.util.Map&lt;java.lang.Integer,java.lang.Object&gt;&nbsp;getIndexedParameterValues()</pre>
-<div class="block">The indexed parameter values if this is native query SQL query. Returns empty if <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--"><code>StoredQuery.isNative()</code></a> is false.</div>
+<h4>getParameterArray</h4>
+<pre>java.lang.Object[]&nbsp;getParameterArray()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The indexed values</dd>
+<dd>The method parameters</dd>
+</dl>
+</li>
+</ul>
+<a name="getArguments--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getArguments</h4>
+<pre>io.micronaut.core.type.Argument[]&nbsp;getArguments()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The method arguments</dd>
 </dl>
 </li>
 </ul>
@@ -292,7 +309,7 @@ default&nbsp;java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getQuer
 <a name="getParameterInRole-java.lang.String-java.lang.Class-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getParameterInRole</h4>
 <pre>default&nbsp;&lt;RT&gt;&nbsp;java.util.Optional&lt;RT&gt;&nbsp;getParameterInRole(@NonNull
@@ -308,6 +325,19 @@ default&nbsp;java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getQuer
 <dd><code>type</code> - The type</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>An optional value.</dd>
+</dl>
+</li>
+</ul>
+<a name="getLastUpdatedType--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getLastUpdatedType</h4>
+<pre>java.lang.Class&lt;?&gt;&nbsp;getLastUpdatedType()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The last updated type.</dd>
 </dl>
 </li>
 </ul>

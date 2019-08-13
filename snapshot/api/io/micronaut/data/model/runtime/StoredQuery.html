@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":6,"i9":18,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":18,"i16":18,"i17":6,"i18":6};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":6,"i9":18,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":18,"i17":18,"i18":6,"i19":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -167,37 +167,35 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 </td>
 </tr>
 <tr id="i2" class="altColor">
-<td class="colFirst"><code>default java.lang.String[]</code></td>
+<td class="colFirst"><code>default int[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding</a></span>()</code>
 <div class="block">The parameter binding.</div>
 </td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>default java.lang.String[]</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes</a></span>()</code>
 <div class="block">The compute time computed parameter data types for the query indices.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default java.util.Set&lt;<a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
-<td class="colFirst"><code>default java.util.Optional&lt;java.lang.String&gt;</code></td>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a></span>()</code>
 <div class="block">The name of the last updated property on the entity if any.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>default java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a></span>()</code>
 <div class="block">The parameter binding.</div>
-</td>
-</tr>
-<tr id="i7" class="rowColor">
-<td class="colFirst"><code>default java.util.Map&lt;java.lang.String,<a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterTypes--">getParameterTypes</a></span>()</code>
-<div class="block">The compute time computed parameter data types.</div>
 </td>
 </tr>
 <tr id="i8" class="altColor">
@@ -236,27 +234,33 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 </tr>
 <tr id="i14" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable</a></span>()</code>
+<div class="block">Does the query have a pageable.</div>
+</td>
 </tr>
 <tr id="i15" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a></span>()</code>
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a></span>()</code>
 <div class="block">In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a></span>()</code>
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></span>()</code>
 <div class="block">Are the placeholders for query set using numeric indices starting from 1.</div>
@@ -321,6 +325,20 @@ java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/Store
 <h4>hasInExpression</h4>
 <pre>boolean&nbsp;hasInExpression()</pre>
 <div class="block">Does the query contain an in expression.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it does</dd>
+</dl>
+</li>
+</ul>
+<a name="hasPageable--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>hasPageable</h4>
+<pre>boolean&nbsp;hasPageable()</pre>
+<div class="block">Does the query have a pageable.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if it does</dd>
@@ -470,21 +488,6 @@ default&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getPara
 </dl>
 </li>
 </ul>
-<a name="getParameterTypes--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getParameterTypes</h4>
-<pre>@NonNull
-default&nbsp;java.util.Map&lt;java.lang.String,<a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;getParameterTypes()</pre>
-<div class="block">The compute time computed parameter data types.</div>
-<dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The indexed values</dd>
-</dl>
-</li>
-</ul>
 <a name="getIndexedParameterTypes--">
 <!--   -->
 </a>
@@ -509,13 +512,26 @@ default&nbsp;<a href="../../../../../io/micronaut/data/model/DataType.html" titl
 <li class="blockList">
 <h4>getIndexedParameterBinding</h4>
 <pre>@NonNull
-default&nbsp;java.lang.String[]&nbsp;getIndexedParameterBinding()</pre>
+default&nbsp;int[]&nbsp;getIndexedParameterBinding()</pre>
 <div class="block">The parameter binding. That is the mapping between named query parameters and parameters of the method.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The parameter binding.</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--"><code>useNumericPlaceholders()</code></a></dd>
+</dl>
+</li>
+</ul>
+<a name="getIndexedParameterPaths--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getIndexedParameterPaths</h4>
+<pre>default&nbsp;java.lang.String[]&nbsp;getIndexedParameterPaths()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The indexed parameter paths.</dd>
 </dl>
 </li>
 </ul>
@@ -540,7 +556,8 @@ default&nbsp;java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getQuer
 <ul class="blockList">
 <li class="blockList">
 <h4>getLastUpdatedProperty</h4>
-<pre>default&nbsp;java.util.Optional&lt;java.lang.String&gt;&nbsp;getLastUpdatedProperty()</pre>
+<pre>@Nullable
+default&nbsp;java.lang.String&nbsp;getLastUpdatedProperty()</pre>
 <div class="block">The name of the last updated property on the entity if any.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>

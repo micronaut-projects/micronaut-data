@@ -112,7 +112,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd>io.micronaut.aop.Interceptor&lt;T,R&gt;, io.micronaut.aop.MethodInterceptor&lt;T,R&gt;, io.micronaut.core.order.Ordered, <a href="../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&lt;T,R&gt;</dd>
+<dd><a href="../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&lt;T,R&gt;</dd>
 </dl>
 <dl>
 <dt>Direct Known Subclasses:</dt>
@@ -153,20 +153,6 @@ implements <a href="../../../../../io/micronaut/data/intercept/DataInterceptor.h
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#operations">operations</a></span></code>&nbsp;</td>
 </tr>
 </table>
-<ul class="blockList">
-<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.aop.Interceptor">
-<!--   -->
-</a>
-<h3>Fields inherited from interface&nbsp;io.micronaut.aop.Interceptor</h3>
-<code>HOTSWAP, LAZY, PROXY_TARGET</code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.core.order.Ordered">
-<!--   -->
-</a>
-<h3>Fields inherited from interface&nbsp;io.micronaut.core.order.Ordered</h3>
-<code>HIGHEST_PRECEDENCE, LOWEST_PRECEDENCE</code></li>
-</ul>
 </li>
 </ul>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -289,19 +275,22 @@ implements <a href="../../../../../io/micronaut/data/intercept/DataInterceptor.h
 </tr>
 <tr id="i13" class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareCountQuery-io.micronaut.aop.MethodInvocationContext-">prepareCountQuery</a></span>(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareCountQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">prepareCountQuery</a></span>(<a href="../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+                 io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code>
 <div class="block">Prepares a query for the given context.</div>
 </td>
 </tr>
 <tr id="i14" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.aop.MethodInvocationContext-">prepareQuery</a></span>(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">prepareQuery</a></span>(<a href="../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;key,
+            io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</code>
 <div class="block">Prepares a query for the given context.</div>
 </td>
 </tr>
 <tr id="i15" class="rowColor">
 <td class="colFirst"><code>protected &lt;RT&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,RT&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">prepareQuery</a></span>(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">prepareQuery</a></span>(<a href="../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+            io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
             java.lang.Class&lt;RT&gt;&nbsp;resultType)</code>
 <div class="block">Prepares a query for the given context.</div>
 </td>
@@ -321,18 +310,11 @@ implements <a href="../../../../../io/micronaut/data/intercept/DataInterceptor.h
 <code>clone, equals, finalize, getClass, hashCode, notify, notifyAll, toString, wait, wait, wait</code></li>
 </ul>
 <ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.aop.MethodInterceptor">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.intercept.DataInterceptor">
 <!--   -->
 </a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.aop.MethodInterceptor</h3>
-<code>intercept, intercept</code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.order.Ordered">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.core.order.Ordered</h3>
-<code>getOrder</code></li>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.intercept.<a href="../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a></h3>
+<code><a href="../../../../../io/micronaut/data/intercept/DataInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept</a></code></li>
 </ul>
 </li>
 </ul>
@@ -388,35 +370,39 @@ implements <a href="../../../../../io/micronaut/data/intercept/DataInterceptor.h
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="prepareQuery-io.micronaut.aop.MethodInvocationContext-">
+<a name="prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>prepareQuery</h4>
-<pre>protected final&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;prepareQuery(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</pre>
+<pre>protected final&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,?&gt;&nbsp;prepareQuery(<a href="../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;key,
+                                                io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</pre>
 <div class="block">Prepares a query for the given context.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>key</code> - The method key</dd>
 <dd><code>context</code> - The context</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The query</dd>
 </dl>
 </li>
 </ul>
-<a name="prepareQuery-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">
+<a name="prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>prepareQuery</h4>
-<pre>protected final&nbsp;&lt;RT&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,RT&gt;&nbsp;prepareQuery(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
+<pre>protected final&nbsp;&lt;RT&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,RT&gt;&nbsp;prepareQuery(<a href="../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+                                                      io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context,
                                                       java.lang.Class&lt;RT&gt;&nbsp;resultType)</pre>
 <div class="block">Prepares a query for the given context.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>RT</code> - The result generic type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>methodKey</code> - The method key</dd>
 <dd><code>context</code> - The context</dd>
 <dd><code>resultType</code> - The result type</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -424,17 +410,19 @@ implements <a href="../../../../../io/micronaut/data/intercept/DataInterceptor.h
 </dl>
 </li>
 </ul>
-<a name="prepareCountQuery-io.micronaut.aop.MethodInvocationContext-">
+<a name="prepareCountQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>prepareCountQuery</h4>
-<pre>protected final&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;prepareCountQuery(@NonNull
+<pre>protected final&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;?,java.lang.Number&gt;&nbsp;prepareCountQuery(<a href="../../../../../io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a>&nbsp;methodKey,
+                                                                    @NonNull
                                                                     io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</pre>
 <div class="block">Prepares a query for the given context.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>methodKey</code> - The method key</dd>
 <dd><code>context</code> - The context</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The query</dd>
@@ -710,7 +698,7 @@ protected&nbsp;&lt;E&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/ru
 <ul class="blockListLast">
 <li class="blockList">
 <h4>validateNullArguments</h4>
-<pre>protected&nbsp;void&nbsp;validateNullArguments(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</pre>
+<pre>protected final&nbsp;void&nbsp;validateNullArguments(io.micronaut.aop.MethodInvocationContext&lt;<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt;&nbsp;context)</pre>
 <div class="block">Validates null arguments ensuring no argument is null unless declared so.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>

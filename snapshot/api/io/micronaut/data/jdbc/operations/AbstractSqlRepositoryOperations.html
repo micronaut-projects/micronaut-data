@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -186,10 +186,22 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#dialects">dialects</a></span></code>&nbsp;</td>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>protected static java.util.regex.Pattern</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#IN_EXPRESSION_PATTERN">IN_EXPRESSION_PATTERN</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected static java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#NOT_TRUE_EXPRESSION">NOT_TRUE_EXPRESSION</a></span></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,java.lang.Integer&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a></span></code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
+<td class="colFirst"><code>protected static org.slf4j.Logger</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a></span></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
 <td class="colFirst"><code>protected java.util.Map&lt;<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>,<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a></span></code>&nbsp;</td>
 </tr>
@@ -232,46 +244,57 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>protected &lt;T,R&gt;&nbsp;void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#bindStatement-io.micronaut.data.model.runtime.PreparedQuery-PS-java.util.Map-">bindStatement</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery,
-             <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;statement,
-             java.util.Map&lt;java.lang.Integer,java.lang.Object&gt;&nbsp;parameterValues)</code>
-<div class="block">Bind the given prepared statement for the query and parameter values.</div>
-</td>
-</tr>
-<tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Retrieves the entity for the given type.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#getIdReader-java.lang.Object-">getIdReader</a></span>(java.lang.Object&nbsp;o)</code>
 <div class="block">Obtain an ID reader for the given object.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
-<td class="colFirst"><code>protected &lt;T,R&gt;&nbsp;java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#prepareQueryString-io.micronaut.data.model.runtime.PreparedQuery-java.util.Map-boolean-boolean-">prepareQueryString</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery,
-                  java.util.Map&lt;java.lang.Integer,java.lang.Object&gt;&nbsp;parameterValues,
-                  boolean&nbsp;isSingleResult,
-                  boolean&nbsp;isUpdate)</code>
-<div class="block">Prepare the final query string for the given prepared query.</div>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>protected boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#isSqlServerWithoutOrderBy-java.lang.String-io.micronaut.data.model.query.builder.sql.Dialect-">isSqlServerWithoutOrderBy</a></span>(java.lang.String&nbsp;query,
+                         <a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</code>
+<div class="block">In the dialect SQL server and is order by required.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#resolveInsert-io.micronaut.data.model.runtime.EntityOperation-">resolveInsert</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Resolve the INSERT for the given <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime"><code>EntityOperation</code></a>.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#setInsertParameters-io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations.StoredInsert-T-PS-">setInsertParameters</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a>&lt;T&gt;&nbsp;insert,
                    T&nbsp;entity,
                    <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt)</code>
 <div class="block">Sets the insert parameters for the given insert, entity and statement.</div>
+</td>
+</tr>
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>protected void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#setStatementParameter-PS-int-io.micronaut.data.model.DataType-java.lang.Object-">setStatementParameter</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;preparedStatement,
+                     int&nbsp;index,
+                     <a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;dataType,
+                     java.lang.Object&nbsp;value)</code>
+<div class="block">Set the parameter value on the given statement.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code>protected int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#sizeOf-java.lang.Object-">sizeOf</a></span>(java.lang.Object&nbsp;value)</code>
+<div class="block">Compute the size of the given object.</div>
+</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>protected &lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#sortById-io.micronaut.data.model.runtime.RuntimePersistentEntity-">sortById</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code>
+<div class="block">Build a sort for ID for the given entity.</div>
 </td>
 </tr>
 </table>
@@ -303,6 +326,15 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <!--   -->
 </a>
 <h3>Field Detail</h3>
+<a name="QUERY_LOG">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>QUERY_LOG</h4>
+<pre>protected static final&nbsp;org.slf4j.Logger QUERY_LOG</pre>
+</li>
+</ul>
 <a name="DEFAULT_SQL_BUILDER">
 <!--   -->
 </a>
@@ -310,6 +342,28 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <li class="blockList">
 <h4>DEFAULT_SQL_BUILDER</h4>
 <pre>protected static final&nbsp;<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a> DEFAULT_SQL_BUILDER</pre>
+</li>
+</ul>
+<a name="IN_EXPRESSION_PATTERN">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>IN_EXPRESSION_PATTERN</h4>
+<pre>protected static final&nbsp;java.util.regex.Pattern IN_EXPRESSION_PATTERN</pre>
+</li>
+</ul>
+<a name="NOT_TRUE_EXPRESSION">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>NOT_TRUE_EXPRESSION</h4>
+<pre>protected static final&nbsp;java.lang.String NOT_TRUE_EXPRESSION</pre>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../../../constant-values.html#io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations.NOT_TRUE_EXPRESSION">Constant Field Values</a></dd>
+</dl>
 </li>
 </ul>
 <a name="columnNameResultSetReader">
@@ -459,34 +513,6 @@ protected final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/jd
 </dl>
 </li>
 </ul>
-<a name="prepareQueryString-io.micronaut.data.model.runtime.PreparedQuery-java.util.Map-boolean-boolean-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>prepareQueryString</h4>
-<pre>@NonNull
-protected final&nbsp;&lt;T,R&gt;&nbsp;java.lang.String&nbsp;prepareQueryString(@NonNull
-                                                                   <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery,
-                                                                   @NonNull
-                                                                   java.util.Map&lt;java.lang.Integer,java.lang.Object&gt;&nbsp;parameterValues,
-                                                                   boolean&nbsp;isSingleResult,
-                                                                   boolean&nbsp;isUpdate)</pre>
-<div class="block">Prepare the final query string for the given prepared query.</div>
-<dl>
-<dt><span class="paramLabel">Type Parameters:</span></dt>
-<dd><code>T</code> - The entity type</dd>
-<dd><code>R</code> - The result type</dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>preparedQuery</code> - The prepared query</dd>
-<dd><code>parameterValues</code> - The parameter values</dd>
-<dd><code>isSingleResult</code> - Is the result a single result</dd>
-<dd><code>isUpdate</code> - Is the query an update</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The query string</dd>
-</dl>
-</li>
-</ul>
 <a name="getIdReader-java.lang.Object-">
 <!--   -->
 </a>
@@ -505,29 +531,78 @@ protected final&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/Run
 </dl>
 </li>
 </ul>
-<a name="bindStatement-io.micronaut.data.model.runtime.PreparedQuery-java.lang.Object-java.util.Map-">
+<a name="sortById-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
 <!--   -->
-</a><a name="bindStatement-io.micronaut.data.model.runtime.PreparedQuery-PS-java.util.Map-">
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sortById</h4>
+<pre>@NonNull
+protected final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sortById(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</pre>
+<div class="block">Build a sort for ID for the given entity.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The entity type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>persistentEntity</code> - The entity</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The sort</dd>
+</dl>
+</li>
+</ul>
+<a name="isSqlServerWithoutOrderBy-java.lang.String-io.micronaut.data.model.query.builder.sql.Dialect-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isSqlServerWithoutOrderBy</h4>
+<pre>protected final&nbsp;boolean&nbsp;isSqlServerWithoutOrderBy(java.lang.String&nbsp;query,
+                                                  <a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect)</pre>
+<div class="block">In the dialect SQL server and is order by required.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>query</code> - The query</dd>
+<dd><code>dialect</code> - The dialect</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it is</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeOf-java.lang.Object-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeOf</h4>
+<pre>protected final&nbsp;int&nbsp;sizeOf(java.lang.Object&nbsp;value)</pre>
+<div class="block">Compute the size of the given object.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>value</code> - The value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The size</dd>
+</dl>
+</li>
+</ul>
+<a name="setStatementParameter-java.lang.Object-int-io.micronaut.data.model.DataType-java.lang.Object-">
+<!--   -->
+</a><a name="setStatementParameter-PS-int-io.micronaut.data.model.DataType-java.lang.Object-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
-<h4>bindStatement</h4>
-<pre>protected final&nbsp;&lt;T,R&gt;&nbsp;void&nbsp;bindStatement(@NonNull
-                                         <a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a>&lt;T,R&gt;&nbsp;preparedQuery,
-                                         @NonNull
-                                         <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;statement,
-                                         @NonNull
-                                         java.util.Map&lt;java.lang.Integer,java.lang.Object&gt;&nbsp;parameterValues)</pre>
-<div class="block">Bind the given prepared statement for the query and parameter values.</div>
+<h4>setStatementParameter</h4>
+<pre>protected final&nbsp;void&nbsp;setStatementParameter(<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;preparedStatement,
+                                           int&nbsp;index,
+                                           <a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;dataType,
+                                           java.lang.Object&nbsp;value)</pre>
+<div class="block">Set the parameter value on the given statement.</div>
 <dl>
-<dt><span class="paramLabel">Type Parameters:</span></dt>
-<dd><code>T</code> - The entity type</dd>
-<dd><code>R</code> - The result type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>preparedQuery</code> - The prepared query</dd>
-<dd><code>statement</code> - The statement</dd>
-<dd><code>parameterValues</code> - The parameter values</dd>
+<dd><code>preparedStatement</code> - The prepared statement</dd>
+<dd><code>index</code> - The index</dd>
+<dd><code>dataType</code> - The data type</dd>
+<dd><code>value</code> - The value</dd>
 </dl>
 </li>
 </ul>
