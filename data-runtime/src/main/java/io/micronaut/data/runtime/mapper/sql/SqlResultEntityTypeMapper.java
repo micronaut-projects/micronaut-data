@@ -120,7 +120,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
     @NonNull
     @Override
     public R map(@NonNull RS object, @NonNull Class<R> type) throws DataAccessException {
-        return readEntity(startingPrefix, "", object, entity);
+        return readEntity(startingPrefix, null, object, entity);
     }
 
     @Nullable
@@ -151,7 +151,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                     id = readEntity(identity.getPersistedName() + "_", path + identity.getName() + '.', rs, (RuntimePersistentEntity<R>) embeddedEntity);
                 } else {
                     String persistedName = identity.getPersistedName();
-                    id = resultReader.readDynamic(rs, prefix + persistedName, identity.getDataType());
+                    id = resultReader.readDynamic(rs, prefix != null ? prefix + persistedName : persistedName, identity.getDataType());
                     if (id == null) {
                         throw new DataAccessException("Table contains null ID for entity: " + persistentEntity.getName());
                     }
@@ -177,7 +177,7 @@ public class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
                             args[i] = associated;
                         } else {
 
-                            Object v = resultReader.readDynamic(rs, prefix + prop.getPersistedName(), prop.getDataType());
+                            Object v = resultReader.readDynamic(rs, prefix != null ? prefix + prop.getPersistedName() : prop.getPersistedName(), prop.getDataType());
                             if (v == null) {
                                 if (!prop.isOptional()) {
                                     throw new DataAccessException("Null value read for non-null constructor argument [" + argument.getName() + "] of type: " + persistentEntity.getName());
