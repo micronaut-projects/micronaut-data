@@ -23,7 +23,7 @@ The above examples return a single instance of an entity, the supported return t
 |A `java.util.List` or any common `Iterable` type
 
 |`Stream<Book>`
-|A Java 8 `java.util.stream.Steam` instance
+|A Java 8 `java.util.stream.Stream` instance
 
 |`Optional<Book>`
 |An optional value, if `null` is retrieved otherwise a api:data.exceptions.EmptyResultException[] is thrown
