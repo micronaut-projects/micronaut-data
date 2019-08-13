@@ -10,7 +10,7 @@ dependencies {
     runtime "com.zaxxer:HikariCP:3.3.1"
     runtime "ch.qos.logback:logback-classic:1.2.3"
 
-    testImplementation "cglib:cglib-nodep:3.2.12"
+    testImplementation "cglib:cglib-nodep:3.3.0"
     testImplementation "org.objenesis:objenesis:3.0.1"
 
     testImplementation("org.spockframework:spock-core:${spockVersion}") {
