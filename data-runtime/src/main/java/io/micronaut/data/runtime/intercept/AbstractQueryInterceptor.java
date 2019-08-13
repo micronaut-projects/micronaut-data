@@ -68,6 +68,7 @@ import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
     private static final Pattern VARIABLE_PATTERN = Pattern.compile("(:[a-zA-Z0-9]+)");
     private static final String PREDATOR_ANN_NAME = DataMethod.class.getName();
+    private static final int[] EMPTY_INT_ARRAY = new int[0];
     protected final RepositoryOperations operations;
     private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
@@ -130,7 +131,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
 
-        Map<String, Object> parameterValues = buildParameterValues(context, storedQuery);
 
         Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         String query = storedQuery.getQuery();
@@ -138,7 +138,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 context,
                 storedQuery,
                 query,
-                parameterValues,
                 pageable,
                 storedQuery.isDtoProjection()
         );
@@ -172,13 +171,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         Pageable pageable = getPageable(context);
-        Map<String, Object> parameterValues = buildParameterValues(context, storedQuery);
         //noinspection unchecked
         return new DefaultPreparedQuery(
                 context,
                 storedQuery,
                 storedQuery.getQuery(),
-                parameterValues,
                 pageable,
                 false
         );
@@ -282,25 +279,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     private <RT> Map buildParameterValues(MethodInvocationContext<T, R> context, StoredQuery<?, RT> storedQuery) {
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
-        if (storedQuery.useNumericPlaceholders()) {
-            String[] indexedParameterBinding = storedQuery.getIndexedParameterBinding();
-            Map parameterValues = new HashMap<>(indexedParameterBinding.length);
-            for (int index = 0; index < indexedParameterBinding.length; index++) {
-                String argument = indexedParameterBinding[index];
-                storeInParameterValues(context, storedQuery, parameterValueMap, index + 1, argument, parameterValues);
-            }
-            return parameterValues;
-        } else {
-            Map<?, ?> parameterBinding = storedQuery.getParameterBinding();
-            Map parameterValues = new HashMap<>(parameterBinding.size());
-            for (Map.Entry entry : parameterBinding.entrySet()) {
-                Object name = entry.getKey();
-                String argument = (String) entry.getValue();
-                storeInParameterValues(context, storedQuery, parameterValueMap, name, argument, parameterValues);
+        Map<?, ?> parameterBinding = storedQuery.getParameterBinding();
+        Map parameterValues = new HashMap<>(parameterBinding.size());
+        for (Map.Entry entry : parameterBinding.entrySet()) {
+            Object name = entry.getKey();
+            String argument = (String) entry.getValue();
+            storeInParameterValues(context, storedQuery, parameterValueMap, name, argument, parameterValues);
 
-            }
-            return parameterValues;
         }
+        return parameterValues;
     }
 
     private <RT> void storeInParameterValues(
@@ -717,7 +704,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final @NonNull Class<E> rootEntity;
         private final @NonNull String query;
         private final @Nullable Map<String, String> parameterBinding;
-        private final @Nullable String[] indexedParameterBinding;
+        private final @Nullable int[] indexedParameterBinding;
+        private final @Nullable String[] parameterPaths;
         private final ExecutableMethod<?, ?> method;
         private final String lastUpdatedProp;
         private final boolean isDto;
@@ -727,7 +715,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final AnnotationMetadata annotationMetadata;
         private final boolean hasIn;
         private final boolean isCount;
-        private final Map<String, DataType> dataTypes;
         private final DataType[] indexedDataTypes;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
@@ -770,39 +757,48 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.isCount = parameterBindingMember != null && parameterBindingMember.startsWith("count");
             AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
             if (parameterBindingMember != null && annotation != null) {
-
+                if (isNumericPlaceHolder) {
+                    this.indexedParameterBinding = annotation.get(
+                            parameterBindingMember, int[].class).orElse(EMPTY_INT_ARRAY);
+                    String[] strArray = annotation.stringValues(parameterBindingMember + "Paths");
+                    if (strArray.length == indexedParameterBinding.length) {
+                        for (int i = 0; i < strArray.length; i++) {
+                            String s = strArray[i];
+                            if (StringUtils.isEmpty(s)) {
+                                strArray[i] = null;
+                            }
+                        }
+                        this.parameterPaths = strArray;
+                    } else {
+                        this.parameterPaths = new String[indexedParameterBinding.length];
+                    }
+                    this.parameterBinding = null;
+                } else {
                     List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(parameterBindingMember,
                             Property.class);
+                    this.indexedParameterBinding = EMPTY_INT_ARRAY;
+                    this.parameterPaths = null;
                     if (CollectionUtils.isNotEmpty(parameterData)) {
 
-                        if (isNumericPlaceHolder) {
-                            this.indexedParameterBinding = new String[parameterData.size()];
-                            this.parameterBinding = null;
-                            for (AnnotationValue<Property> annotationValue : parameterData) {
-                                String argument = annotationValue.stringValue("value").orElse(null);
-                                int i = annotationValue.intValue("name").orElse(1);
-                                indexedParameterBinding[i - 1] = argument;
+                        Map parameterValues = new HashMap(parameterData.size());
+                        for (AnnotationValue<Property> annotationValue : parameterData) {
+                            Object placeHolderName;
+                            placeHolderName = annotationValue.stringValue("name").orElse(null);
+                            String argument = annotationValue.stringValue("value").orElse(null);
+                            if (placeHolderName != null && argument != null) {
+                                parameterValues.put(placeHolderName, argument);
                             }
-                        } else {
-                            Map parameterValues = new HashMap(parameterData.size());
-                            for (AnnotationValue<Property> annotationValue : parameterData) {
-                                Object placeHolderName;
-                                placeHolderName = annotationValue.stringValue("name").orElse(null);
-                                String argument = annotationValue.stringValue("value").orElse(null);
-                                if (placeHolderName != null && argument != null) {
-                                    parameterValues.put(placeHolderName, argument);
-                                }
-                            }
-                            this.parameterBinding = parameterValues;
-                            this.indexedParameterBinding = null;
                         }
+                        this.parameterBinding = parameterValues;
 
                     } else {
                         this.parameterBinding = null;
-                        this.indexedParameterBinding = null;
                     }
+                }
+
             } else {
-                this.indexedParameterBinding = null;
+                this.indexedParameterBinding = EMPTY_INT_ARRAY;
+                this.parameterPaths = null;
                 this.parameterBinding = null;
             }
             if (method.hasAnnotation(QueryHint.class)) {
@@ -825,37 +821,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 }
             }
 
-            List<AnnotationValue<TypeDef>> typeDefs = annotation != null ? annotation.getAnnotations("typeDefs", TypeDef.class) : null;
-            if (CollectionUtils.isNotEmpty(typeDefs)) {
-                if (isNumericPlaceHolder) {
-                    this.dataTypes = null;
-                    this.indexedDataTypes = new DataType[typeDefs.size()];
-                    for (AnnotationValue<TypeDef> typeDef : typeDefs) {
-                        typeDef.enumValue("type", DataType.class).ifPresent(dataType -> {
-                            String[] values = typeDef.stringValues("names");
-                            for (String value : values) {
-                                indexedDataTypes[Integer.valueOf(value) - 1] = dataType;
-                            }
-                        });
-                    }
-                } else {
-                    this.dataTypes = new HashMap<>(typeDefs.size());
-                    this.indexedDataTypes = null;
-                    for (AnnotationValue<TypeDef> typeDef : typeDefs) {
-                        typeDef.enumValue("type", DataType.class).ifPresent(dataType -> {
-                            String[] values = typeDef.stringValues("names");
-                            for (String value : values) {
-                                dataTypes.put(value, dataType);
-                            }
-                        });
-                    }
-                }
-
-
+            if (isNumericPlaceHolder) {
+                this.indexedDataTypes = annotationMetadata
+                        .getValue(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType[].class)
+                        .orElse(DataType.EMPTY_DATA_TYPE_ARRAY);
             } else {
                 this.indexedDataTypes = null;
-                this.dataTypes = null;
             }
+        }
+
+        @Override
+        public String[] getIndexedParameterPaths() {
+            if (parameterPaths != null) {
+                return parameterPaths;
+            }
+            return StringUtils.EMPTY_STRING_ARRAY;
         }
 
         @NonNull
@@ -895,20 +875,20 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         @NonNull
         @Override
-        public Map<String, DataType> getParameterTypes() {
-            if (dataTypes == null) {
-                return Collections.emptyMap();
+        public DataType[] getIndexedParameterTypes() {
+            if (indexedDataTypes == null) {
+                return DataType.EMPTY_DATA_TYPE_ARRAY;
             }
-            return this.dataTypes;
+            return this.indexedDataTypes;
         }
 
         @NonNull
         @Override
-        public DataType[] getIndexedParameterTypes() {
-            if (indexedDataTypes == null) {
-                return new DataType[0];
+        public int[] getIndexedParameterBinding() {
+            if (this.indexedParameterBinding != null) {
+                return this.indexedParameterBinding;
             }
-            return this.indexedDataTypes;
+            return EMPTY_INT_ARRAY;
         }
 
         @NonNull
@@ -1026,15 +1006,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return parameterBinding;
         }
 
-        @NonNull
-        @Override
-        public String[] getIndexedParameterBinding() {
-            if (indexedParameterBinding == null) {
-                return StringUtils.EMPTY_STRING_ARRAY;
-            }
-            return indexedParameterBinding;
-        }
-
         @Override
         public String getLastUpdatedProperty() {
             return lastUpdatedProp;
@@ -1066,30 +1037,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <RT> The result type
      */
     private final class DefaultPreparedQuery<E, RT> implements PreparedQuery<E, RT> {
-        private final @NonNull Map<String, Object> parameterValues;
         private final Pageable pageable;
         private final StoredQuery<E, RT> storedQuery;
         private final String query;
         private final boolean dto;
-        private final @NonNull Map<Integer, Object> indexedValues;
         private final MethodInvocationContext<T, R> context;
-
-        /**
-         * The default constructor.
-         * @param context The execution context
-         * @param storedQuery The stored query
-         * @param finalQuery The final query
-         * @param parameterValues The parameter values
-         * @param pageable The pageable
-         */
-        DefaultPreparedQuery(
-                MethodInvocationContext<T, R> context,
-                StoredQuery<E, RT> storedQuery,
-                String finalQuery,
-                @Nullable Map<String, Object> parameterValues,
-                @Nullable Pageable pageable) {
-            this(context, storedQuery, finalQuery, parameterValues, pageable, storedQuery.isDtoProjection());
-        }
 
         /**
          * The default constructor.
@@ -1097,7 +1049,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
          * @param context The execution context
          * @param storedQuery The stored query
          * @param finalQuery The final query
-         * @param parameterValues The parameter values
          * @param pageable The pageable
          * @param dtoProjection Whether the prepared query is a dto projection
          */
@@ -1105,31 +1056,34 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 MethodInvocationContext<T, R> context,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
-                @Nullable Map parameterValues,
                 @Nullable Pageable pageable,
                 boolean dtoProjection) {
             this.context = context;
             this.query = finalQuery;
             this.storedQuery = storedQuery;
-            if (storedQuery.useNumericPlaceholders()) {
-                if (parameterValues != null) {
-                    indexedValues = parameterValues;
-                } else {
-                    indexedValues = Collections.emptyMap();
-                }
-                this.parameterValues = Collections.emptyMap();
-            } else {
-                this.indexedValues = Collections.emptyMap();
-                this.parameterValues = parameterValues == null ? Collections.emptyMap() : parameterValues;
-            }
-
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
             this.dto = dtoProjection;
         }
 
         @Override
+        public String[] getIndexedParameterPaths() {
+            return storedQuery.getIndexedParameterPaths();
+        }
+
+        @Override
         public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
             return AbstractQueryInterceptor.this.getParameterInRole(context, role, type);
+        }
+
+        @Override
+        public Class<?> getLastUpdatedType() {
+            return AbstractQueryInterceptor.this.getLastUpdatedType(getRootEntity(), getLastUpdatedProperty());
+        }
+
+        @NonNull
+        @Override
+        public int[] getIndexedParameterBinding() {
+            return storedQuery.getIndexedParameterBinding();
         }
 
         @NonNull
@@ -1147,18 +1101,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public DataType[] getIndexedParameterTypes() {
             return storedQuery.getIndexedParameterTypes();
-        }
-
-        @NonNull
-        @Override
-        public String[] getIndexedParameterBinding() {
-            return storedQuery.getIndexedParameterBinding();
-        }
-
-        @NonNull
-        @Override
-        public Map<String, DataType> getParameterTypes() {
-            return storedQuery.getParameterTypes();
         }
 
         @Override
@@ -1180,17 +1122,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @NonNull
         @Override
         public Map<String, Object> getParameterValues() {
-            return parameterValues;
+            return buildParameterValues(context, this);
         }
 
         @Override
-        @NonNull
-        public Map<Integer, Object> getIndexedParameterValues() {
-            if (hasInExpression()) {
-                // IN expansion requires a copy
-                return new HashMap<>(indexedValues);
-            }
-            return indexedValues;
+        public Object[] getParameterArray() {
+            return context.getParameterValues();
+        }
+
+        @Override
+        public Argument[] getArguments() {
+            return context.getArguments();
         }
 
         @NonNull

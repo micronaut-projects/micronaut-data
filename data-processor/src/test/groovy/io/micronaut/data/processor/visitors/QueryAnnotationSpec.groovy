@@ -62,8 +62,6 @@ interface MyInterface {
         def ann = listMethod.synthesize(DataMethod)
         ann.rootEntity() == Person
         ann.interceptor() == FindAllInterceptor
-        ann.parameterBinding()[0].name() == '1'
-        ann.parameterBinding()[0].value() == 'n'
         listMethod.getReturnType().type == List
 
         when: "the findOne method is retrieved"
@@ -73,8 +71,6 @@ interface MyInterface {
         def ann2 = findOne.synthesize(DataMethod)
         ann2.rootEntity() == Person
         ann2.interceptor() == FindPageInterceptor
-        ann2.parameterBinding()[0].name() == '1'
-        ann2.parameterBinding()[0].value() == 'n'
     }
 
     void "test build CRUD repository"() {

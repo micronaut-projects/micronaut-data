@@ -13,11 +13,9 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.EntityOperation;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -29,7 +27,6 @@ import org.slf4j.Logger;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -43,8 +40,8 @@ import java.util.regex.Pattern;
 public abstract class AbstractSqlRepositoryOperations<RS, PS> implements RepositoryOperations {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
-    private static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
-    private static final String NOT_TRUE_EXPRESSION = "1 = 2";
+    protected static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
+    protected static final String NOT_TRUE_EXPRESSION = "1 = 2";
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
     @SuppressWarnings("WeakerAccess")
@@ -251,53 +248,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     /**
-     * Prepare the final query string for the given prepared query.
-     *
-     * @param preparedQuery   The prepared query
-     * @param parameterValues The parameter values
-     * @param isSingleResult  Is the result a single result
-     * @param isUpdate        Is the query an update
-     * @param <T>             The entity type
-     * @param <R>             The result type
-     * @return The query string
-     */
-    protected final @NonNull <T, R> String prepareQueryString(
-            @NonNull PreparedQuery<T, R> preparedQuery,
-            @NonNull Map<Integer, Object> parameterValues,
-            boolean isSingleResult,
-            boolean isUpdate) {
-        String query = preparedQuery.getQuery();
-
-        final boolean hasIn = preparedQuery.hasInExpression();
-        if (hasIn) {
-            query = expandInExpressions(query, parameterValues);
-        }
-
-        if (!isUpdate) {
-            Pageable pageable = preparedQuery.getPageable();
-            if (pageable != Pageable.UNPAGED) {
-                Class<T> rootEntity = preparedQuery.getRootEntity();
-                Sort sort = pageable.getSort();
-                Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
-                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
-                if (sort.isSorted()) {
-                    query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
-                } else if (isSqlServerWithoutOrderBy(query, dialect)) {
-                    // SQL server requires order by
-                    RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
-                    sort = sortById(persistentEntity);
-                    query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
-                }
-                if (isSingleResult && pageable.getOffset() > 0) {
-                    pageable = Pageable.from(pageable.getNumber(), 1);
-                }
-                query += queryBuilder.buildPagination(pageable).getQuery();
-            }
-        }
-        return query;
-    }
-
-    /**
      * Obtain an ID reader for the given object.
      *
      * @param o The object
@@ -318,54 +268,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             idReaders.put(type, beanProperty);
         }
         return beanProperty;
-    }
-
-    /**
-     * Bind the given prepared statement for the query and parameter values.
-     *
-     * @param preparedQuery   The prepared query
-     * @param statement       The statement
-     * @param parameterValues The parameter values
-     * @param <T>             The entity type
-     * @param <R>             The result type
-     */
-    protected final <T, R> void bindStatement(
-            @NonNull PreparedQuery<T, R> preparedQuery,
-            @NonNull PS statement,
-            @NonNull Map<Integer, Object> parameterValues) {
-        DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
-        int paramTypeLen = parameterTypes.length;
-        for (Map.Entry<Integer, Object> entry : parameterValues.entrySet()) {
-            int index = entry.getKey();
-            Object value = entry.getValue();
-            if (QUERY_LOG.isTraceEnabled()) {
-                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
-            }
-            DataType dataType = paramTypeLen >= index ? parameterTypes[index - 1] : null;
-            if (dataType == null) {
-                dataType = DataType.OBJECT;
-            }
-            if (value == null) {
-                setStatementParameter(statement, index, dataType, null);
-            } else {
-                if (value instanceof Iterable) {
-                    Iterable i = (Iterable) value;
-                    for (Object o : i) {
-                        setStatementParameter(statement, index, dataType, o);
-                        index++;
-                    }
-                } else if (value.getClass().isArray()) {
-                    int len = Array.getLength(value);
-                    for (int i = 0; i < len; i++) {
-                        Object o = Array.get(value, i);
-                        setStatementParameter(statement, index, dataType, o);
-                        index++;
-                    }
-                } else {
-                    setStatementParameter(statement, index, dataType, value);
-                }
-            }
-        }
     }
 
     private <T> Map<String, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata) {
@@ -393,8 +295,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return parameterValues;
     }
 
+    /**
+     * Build a sort for ID for the given entity.
+     * @param persistentEntity The entity
+     * @param <T> The entity type
+     * @return The sort
+     */
     @NonNull
-    private <T> Sort sortById(RuntimePersistentEntity<T> persistentEntity) {
+    protected final <T> Sort sortById(RuntimePersistentEntity<T> persistentEntity) {
         Sort sort;
         RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
         if (identity == null) {
@@ -404,11 +312,22 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return sort;
     }
 
-    private boolean isSqlServerWithoutOrderBy(String query, Dialect dialect) {
+    /**
+     * In the dialect SQL server and is order by required.
+     * @param query The query
+     * @param dialect The dialect
+     * @return True if it is
+     */
+    protected final boolean isSqlServerWithoutOrderBy(String query, Dialect dialect) {
         return dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE);
     }
 
-    private int sizeOf(Object value) {
+    /**
+     * Compute the size of the given object.
+     * @param value The value
+     * @return The size
+     */
+    protected final int sizeOf(Object value) {
         if (value instanceof Collection) {
             return ((Collection) value).size();
         } else if (value instanceof Iterable) {
@@ -423,59 +342,34 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return 1;
     }
 
-    private String expandInExpressions(String query, Map<Integer, Object> parameterValues) {
-        Set<Integer> indexes = parameterValues.keySet();
-        Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
-        while (matcher.find()) {
-            int inIndex = Integer.valueOf(matcher.group(1));
-            Object value = parameterValues.get(inIndex);
-            if (value == null) {
-                query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
-                parameterValues.remove(inIndex);
-            } else {
-                int size = sizeOf(value);
-                if (size == 0) {
-                    parameterValues.remove(inIndex);
-                    query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
-                } else {
-                    String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
-                    query = matcher.replaceFirst(replacement);
-                    for (Integer index : indexes) {
-                        if (index > inIndex) {
-                            Object v = parameterValues.remove(index);
-                            parameterValues.put(index + size, v);
-                        }
-                    }
-                }
-            }
-
-            matcher = IN_EXPRESSION_PATTERN.matcher(query);
-
-        }
-        return query;
-    }
-
-    private void setStatementParameter(PS ps, int index, DataType dataType, Object o) {
-        if (o != null) {
+    /**
+     * Set the parameter value on the given statement.
+     * @param preparedStatement The prepared statement
+     * @param index The index
+     * @param dataType The data type
+     * @param value The value
+     */
+    protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value) {
+        if (value != null) {
             if (dataType == DataType.ENTITY) {
-                RuntimePersistentProperty<Object> idReader = getIdReader(o);
-                Object id = idReader.getProperty().get(o);
+                RuntimePersistentProperty<Object> idReader = getIdReader(value);
+                Object id = idReader.getProperty().get(value);
                 if (id == null) {
-                    throw new DataAccessException("Supplied entity is a transient instance: " + o);
+                    throw new DataAccessException("Supplied entity is a transient instance: " + value);
                 }
-                o = id;
+                value = id;
                 preparedStatementWriter.setDynamic(
-                        ps,
+                        preparedStatement,
                         index,
                         idReader.getDataType(),
-                        o);
+                        value);
             } else {
 
                 preparedStatementWriter.setDynamic(
-                        ps,
+                        preparedStatement,
                         index,
                         dataType,
-                        o);
+                        value);
             }
         }
     }

@@ -46,14 +46,12 @@ class Person {
         repository.getRequiredMethod("findByIdIn", List)
                 .getAnnotationMetadata()
                 .getAnnotation(DataMethod)
-                .getAnnotations("typeDefs", TypeDef)[0]
-                .stringValue("type").get() == 'OBJECT'
+                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS)[0] == 'OBJECT'
 
         repository.getRequiredMethod("deleteAll", Iterable)
                 .getAnnotationMetadata()
                 .getAnnotation(DataMethod)
-                .getAnnotations("typeDefs", TypeDef)[0]
-                .stringValue("type").get() == 'ENTITY'
+                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS)[0] == 'ENTITY'
 
 
     }
@@ -95,8 +93,7 @@ class Person {
         repository.getRequiredMethod("deleteAll", Iterable)
                 .getAnnotationMetadata()
                 .getAnnotation(DataMethod)
-                .getAnnotations("typeDefs", TypeDef)[0]
-                .stringValue("type").get() == 'ENTITY'
+                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS)[0] == 'ENTITY'
 
 
     }

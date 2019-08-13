@@ -16,6 +16,8 @@
 package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.type.Argument;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -42,12 +44,14 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
     Map<String, Object> getParameterValues();
 
     /**
-     * The indexed parameter values if this is native query SQL query. Returns empty if {@link #isNative()} is false.
-     * @return The indexed values
+     * @return The method parameters
      */
-    default @NonNull Map<Integer, Object> getIndexedParameterValues() {
-        return Collections.emptyMap();
-    }
+    Object[] getParameterArray();
+
+    /**
+     * @return The method arguments
+     */
+    Argument[] getArguments();
 
     @NonNull
     @Override
@@ -65,4 +69,9 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
     default <RT> Optional<RT> getParameterInRole(@NonNull String role, @NonNull Class<RT> type) {
         return Optional.empty();
     }
+
+    /**
+     * @return The last updated type.
+     */
+    Class<?> getLastUpdatedType();
 }

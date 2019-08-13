@@ -140,14 +140,6 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     boolean isCount();
 
     /**
-     * The compute time computed parameter data types.
-     * @return The indexed values
-     */
-    default @NonNull Map<String, DataType> getParameterTypes() {
-        return Collections.emptyMap();
-    }
-
-    /**
      * The compute time computed parameter data types for the query indices.
      * @return The indexed values
      * @see #useNumericPlaceholders()
@@ -156,7 +148,6 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
         return new DataType[0];
     }
 
-
     /**
      * The parameter binding. That is the mapping between named query parameters and parameters of the method.
      *
@@ -164,7 +155,14 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @see #useNumericPlaceholders()
      */
     @NonNull
-    default String[] getIndexedParameterBinding() {
+    default int[] getIndexedParameterBinding() {
+        return new int[0];
+    }
+
+    /**
+     * @return The indexed parameter paths.
+     */
+    default String[] getIndexedParameterPaths() {
         return StringUtils.EMPTY_STRING_ARRAY;
     }
 

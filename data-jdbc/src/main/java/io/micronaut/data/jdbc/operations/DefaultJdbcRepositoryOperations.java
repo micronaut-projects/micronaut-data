@@ -7,6 +7,8 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -17,7 +19,10 @@ import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -41,12 +46,15 @@ import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.sql.*;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -64,6 +72,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         ReactiveCapableRepository,
         AutoCloseable {
 
+    private static final Object IGNORED_PARAMETER = new Object();
     private final TransactionOperations<Connection> transactionOperations;
     private final DataSource dataSource;
     private ExecutorAsyncOperations asyncOperations;
@@ -435,14 +444,124 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             @NonNull PreparedQuery<T, R> preparedQuery,
             boolean isUpdate,
             boolean isSingleResult) throws SQLException {
-        Map<Integer, Object> parameterValues = preparedQuery.getIndexedParameterValues();
-        String query = prepareQueryString(preparedQuery, parameterValues, isSingleResult, isUpdate);
+        Object[] queryParameters = preparedQuery.getParameterArray();
+        int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
+        DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
+        String query = preparedQuery.getQuery();
+
+        final boolean hasIn = preparedQuery.hasInExpression();
+        if (hasIn) {
+            Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
+            // this has to be done is two passes, one to remove and establish new indexes
+            // and again to expand existing indexes
+            while (matcher.find()) {
+                int inIndex = Integer.valueOf(matcher.group(1));
+                int queryParameterIndex = parameterBinding[inIndex - 1];
+                Object value = queryParameters[queryParameterIndex];
+
+                if (value == null) {
+                    query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
+                    queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
+                } else {
+                    int size = sizeOf(value);
+                    if (size == 0) {
+                        queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
+                        query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
+                    } else {
+                        String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
+                        query = matcher.replaceFirst(replacement);
+                    }
+                }
+                matcher = IN_EXPRESSION_PATTERN.matcher(query);
+            }
+        }
+
+        if (!isUpdate) {
+            Pageable pageable = preparedQuery.getPageable();
+            if (pageable != Pageable.UNPAGED) {
+                Class<T> rootEntity = preparedQuery.getRootEntity();
+                Sort sort = pageable.getSort();
+                Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+                if (sort.isSorted()) {
+                    query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
+                } else if (isSqlServerWithoutOrderBy(query, dialect)) {
+                    // SQL server requires order by
+                    RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
+                    sort = sortById(persistentEntity);
+                    query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
+                }
+                if (isSingleResult && pageable.getOffset() > 0) {
+                    pageable = Pageable.from(pageable.getNumber(), 1);
+                }
+                query += queryBuilder.buildPagination(pageable).getQuery();
+            }
+        }
 
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Query: {}", query);
         }
         final PreparedStatement ps = connection.prepareStatement(query);
-        bindStatement(preparedQuery, ps, parameterValues);
+        int index = 1;
+        for (int i = 0; i < parameterBinding.length; i++) {
+            int parameterIndex = parameterBinding[i];
+            DataType dataType = parameterTypes[i];
+            Object value;
+            if (parameterIndex > -1) {
+                value = queryParameters[parameterIndex];
+            } else {
+                String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
+                String propertyPath = indexedParameterPaths[i];
+                if (propertyPath != null) {
+
+                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
+                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
+                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
+                        if (lastUpdatedType == null) {
+                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
+                        }
+                        Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+                        if (timestamp == null) {
+                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+                        }
+                        value = timestamp;
+                    } else {
+                        int j = propertyPath.indexOf('.');
+                        if (j > -1) {
+                            String subProp = propertyPath.substring(j + 1);
+                            value = queryParameters[Integer.valueOf(propertyPath.substring(0, j))];
+                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Object.class);
+                        } else {
+                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                        }
+                    }
+                } else {
+                    throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                }
+            }
+
+            if (QUERY_LOG.isTraceEnabled()) {
+                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+            }
+            if (value == null) {
+                setStatementParameter(ps, index++, dataType, null);
+            } else if (value != IGNORED_PARAMETER) {
+                if (value instanceof Iterable) {
+                    Iterable iter = (Iterable) value;
+                    for (Object o : iter) {
+                        setStatementParameter(ps, index++, dataType, o);
+                    }
+                } else if (value.getClass().isArray()) {
+                    int len = Array.getLength(value);
+                    for (int j = 0; j < len; j++) {
+                        Object o = Array.get(value, j);
+                        setStatementParameter(ps, index++, dataType, o);
+                    }
+                } else {
+                    setStatementParameter(ps, index++, dataType, value);
+                }
+            }
+        }
         return ps;
     }
 

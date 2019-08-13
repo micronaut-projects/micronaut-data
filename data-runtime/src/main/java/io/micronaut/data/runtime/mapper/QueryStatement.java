@@ -185,7 +185,7 @@ public interface QueryStatement<PS, IDX> {
                 value,
                 type
         ).orElseThrow(() ->
-                new DataAccessException("Cannot convert type [" + value.getClass() + "] to target type: " + type + ". Considering defining a TypeConverter bean to handle this case.")
+                new DataAccessException("Cannot convert type [" + value.getClass() + "] to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.")
         );
     }
 

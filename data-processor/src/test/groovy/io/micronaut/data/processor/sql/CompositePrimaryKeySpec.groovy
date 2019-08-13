@@ -1,11 +1,13 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.inject.ExecutableMethod
 import spock.lang.Requires
 import spock.lang.Shared
 
@@ -14,6 +16,23 @@ class CompositePrimaryKeySpec extends AbstractDataSpec {
 
     @Shared SourcePersistentEntity entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
 
+    void "test compile repository 2"() {
+        given:
+        def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository{
+}
+""")
+        def updateMethod = repository.findPossibleMethods("update").findFirst().get()
+        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths", String[].class).get()
+
+        expect:"The repository compiles"
+        repository != null
+        updatePaths == ['', "lastUpdated", ""] as String[]
+    }
+
     void "test compile repository"() {
         given:
         def repository = buildRepository('test.ProjectRepository', """
@@ -21,15 +40,30 @@ import javax.persistence.Entity;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Column;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-
+import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
-interface ProjectRepository extends CrudRepository<Project, ProjectId>{}
+interface ProjectRepository extends CrudRepository<Project, ProjectId>{
+    void update(@Id Long id, @Parameter("name") String name);
+}
 """)
+        def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()
+        def updateMethod = repository.findPossibleMethods("update").findFirst().get()
+        def paths = findByIdMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths", String[].class).get()
+        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths", String[].class).get()
+
         expect:"The repository compiles"
         repository != null
+        findByIdMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS) == ['INTEGER', 'INTEGER'] as String[]
+        findByIdMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [-1,-1] as int[]
+
+        and:"include paths for embedded parameters"
+        paths == ["0.departmentId", "0.projectId"] as String[]
+
+        and:"Don't include paths for regular parameters that are not the embedded id"
+        updatePaths == ['', "0.departmentId", "0.projectId"] as String[]
     }
 
     void "test create table"() {

@@ -83,5 +83,10 @@ public enum DataType {
     /**
      * A class annotated with {@link io.micronaut.data.annotation.MappedEntity}.
      */
-    ENTITY
+    ENTITY;
+
+    /**
+     * Empty array of data types.
+     */
+    public static final DataType[] EMPTY_DATA_TYPE_ARRAY = new DataType[0];
 }
