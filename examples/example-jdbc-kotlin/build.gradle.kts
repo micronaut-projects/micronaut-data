@@ -22,7 +22,6 @@ group = "example"
 repositories {
     mavenCentral()
     maven("https://jcenter.bintray.com")
-    maven("https://oss.sonatype.org/content/repositories/snapshots/")
 }
 
 configurations {
