@@ -105,8 +105,7 @@ interface MyInterface {
         def ann = listMethod.synthesize(DataMethod)
         ann.rootEntity() == Person
         ann.interceptor() == FindAllInterceptor
-        ann.parameterBinding()[0].name() == 'n'
-        ann.parameterBinding()[0].value() == 'n'
+        listMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['n'] as String[]
         listMethod.getReturnType().type == List
 
         when: "the findOne method is retrieved"
@@ -116,8 +115,7 @@ interface MyInterface {
         def ann2 = findOne.synthesize(DataMethod)
         ann2.rootEntity() == Person
         ann2.interceptor() == FindOneInterceptor
-        ann2.parameterBinding()[0].name() == 'n'
-        ann2.parameterBinding()[0].value() == 'n'
+        findOne.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['n'] as String[]
         findOne.getReturnType().type == Person
     }
 

@@ -119,13 +119,8 @@ interface MyInterface {
         if (query == null) {
             return true
         }
-        def annotations = method.getAnnotation(DataMethod).getAnnotations("parameterBinding", Property)
-        if (annotations.size() == argumentTypes.size()) {
-            return annotations.every() { ann ->
-                argumentTypes.containsKey(ann.getValue(String.class).get())
-            }
-        }
-        false
+        def names = method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names")
+        return names.size() == argumentTypes.size()
     }
 
     @Override

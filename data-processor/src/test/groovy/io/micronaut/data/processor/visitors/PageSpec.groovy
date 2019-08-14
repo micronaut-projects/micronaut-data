@@ -99,8 +99,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         listAnn.interceptor() == FindPageInterceptor
         findAnn.interceptor() == FindPageInterceptor
         findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT($alias) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
-        findMethod.getValue(DataMethod.class, DataMethod.META_MEMBER_COUNT_PARAMETERS, AnnotationValue[].class)
-                  .get()[0]
+        findMethod.stringValues(DataMethod.class, DataMethod.META_MEMBER_COUNT_PARAMETERS + "Names") == ['p1'] as String[]
 
     }
 

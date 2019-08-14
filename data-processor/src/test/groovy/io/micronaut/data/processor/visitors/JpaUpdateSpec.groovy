@@ -70,17 +70,13 @@ interface MyInterface extends GenericRepository<Person, Long> {
         updateAnn.interceptor() == UpdateInterceptor
         updateQuery.value() == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.id = :p2)"
         updateAnn.id() == 'myId'
-        updateAnn.parameterBinding()[0].name() =='p1'
-        updateAnn.parameterBinding()[0].value() =='name'
-        updateAnn.parameterBinding()[1].name() =='p2'
-        updateAnn.parameterBinding()[1].value() =='myId'
+        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2'] as String[]
+        updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,0] as int[]
 
         updateByAnn.interceptor() == UpdateInterceptor
         updateByQuery.value() == "UPDATE $Person.name ${alias} SET ${alias}.name=:p1 WHERE (${alias}.name = :p2)"
-        updateByAnn.parameterBinding()[0].name() =='p1'
-        updateByAnn.parameterBinding()[0].value() =='name'
-        updateByAnn.parameterBinding()[1].name() =='p2'
-        updateByAnn.parameterBinding()[1].value() =='nameToUpdate'
+        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2'] as String[]
+        updateByMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,0] as int[]
     }
 
 
@@ -121,17 +117,15 @@ interface MyInterface extends GenericRepository<Company, Long> {
         updateAnn.interceptor() == UpdateInterceptor
         updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
         updateAnn.id() == 'myId'
-        updateAnn.parameterBinding()[0].name() =='p1'
-        updateAnn.parameterBinding()[0].value() =='name'
-        updateAnn.parameterBinding()[1].name() =='p2'
-        updateAnn.parameterBinding()[1].value() =='lastUpdated'
+        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2', 'p3'] as String[]
+        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") == ['', 'lastUpdated', ''] as String[]
+        updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,-1,0] as int[]
 
         updateByAnn.interceptor() == UpdateInterceptor
         updateByQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.name = :p3)"
-        updateByAnn.parameterBinding()[0].name() =='p1'
-        updateByAnn.parameterBinding()[0].value() =='name'
-        updateByAnn.parameterBinding()[1].name() =='p2'
-        updateByAnn.parameterBinding()[1].value() =='lastUpdated'
+        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2', 'p3'] as String[]
+        updateByMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") == ['', 'lastUpdated', ''] as String[]
+        updateByMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,-1,0] as int[]
     }
 
     @Override
