@@ -95,9 +95,13 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         this.constructorArguments = new RuntimePersistentProperty[constructorArguments.length];
         for (int i = 0; i < constructorArguments.length; i++) {
             Argument<?> constructorArgument = constructorArguments[i];
-            RuntimePersistentProperty<T> prop = getPropertyByName(constructorArgument.getName());
+            String argumentName = constructorArgument.getName();
+            RuntimePersistentProperty<T> prop = getPropertyByName(argumentName);
             if (prop == null) {
-                throw new MappingException("Constructor argument [" + constructorArgument.getName() + "] must have an associated getter");
+                RuntimePersistentProperty<T> identity = getIdentity();
+                if (identity != null && !identity.getName().equals(argumentName)) {
+                    throw new MappingException("Constructor argument [" + argumentName + "] must have an associated getter");
+                }
             }
             this.constructorArguments[i] = prop;
         }
@@ -164,7 +168,14 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getPropertyByName(String name) {
-        return persistentProperties.get(name);
+        RuntimePersistentProperty<T> property = persistentProperties.get(name);
+        if (property == null) {
+            RuntimePersistentProperty<T> identity = getIdentity();
+            if (identity != null && identity.getName().equals(name)) {
+                return identity;
+            }
+        }
+        return property;
     }
 
     @NonNull
