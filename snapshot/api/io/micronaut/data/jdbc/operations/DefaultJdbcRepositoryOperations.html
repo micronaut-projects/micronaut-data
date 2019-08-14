@@ -117,6 +117,7 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>@EachBean(value=javax.sql.DataSource.class)
+ @Requires(missingBeans=<a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations.class</a>)
 public class <span class="typeNameLabel">DefaultJdbcRepositoryOperations</span>
 extends <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a>&lt;java.sql.ResultSet,java.sql.PreparedStatement&gt;
 implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../../../../../io/micronaut/data/operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../../../../io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, java.lang.AutoCloseable</pre>

@@ -188,7 +188,7 @@ implements <a href="../../../../../io/micronaut/data/model/PersistentEntity.html
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
+<td class="colFirst"><code>java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getAssociations--">getAssociations</a></span>()</code>
 <div class="block">A list of the associations for this entity.</div>
 </td>
@@ -204,7 +204,7 @@ implements <a href="../../../../../io/micronaut/data/model/PersistentEntity.html
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getConstructorArguments--">getConstructorArguments</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
-<td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;</code></td>
+<td class="colFirst"><code>java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getEmbedded--">getEmbedded</a></span>()</code>
 <div class="block">A list of embedded associations for this entity.</div>
 </td>
@@ -238,7 +238,7 @@ implements <a href="../../../../../io/micronaut/data/model/PersistentEntity.html
 </td>
 </tr>
 <tr id="i9" class="rowColor">
-<td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></td>
+<td class="colFirst"><code>java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getPersistentProperties--">getPersistentProperties</a></span>()</code>
 <div class="block">A list of properties to be persisted.</div>
 </td>
@@ -457,7 +457,7 @@ public&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersi
 <li class="blockList">
 <h4>getPersistentProperties</h4>
 <pre>@NonNull
-public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;&nbsp;getPersistentProperties()</pre>
+public&nbsp;java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="type parameter in RuntimePersistentEntity">T</a>&gt;&gt;&nbsp;getPersistentProperties()</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentProperties--">PersistentEntity</a></code></span></div>
 <div class="block">A list of properties to be persisted.</div>
 <dl>
@@ -475,7 +475,7 @@ public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/ru
 <li class="blockList">
 <h4>getAssociations</h4>
 <pre>@NonNull
-public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;getAssociations()</pre>
+public&nbsp;java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;getAssociations()</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/PersistentEntity.html#getAssociations--">PersistentEntity</a></code></span></div>
 <div class="block">A list of the associations for this entity. This is typically
  a subset of the list returned by <a href="../../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentProperties--"><code>PersistentEntity.getPersistentProperties()</code></a></div>
@@ -494,7 +494,7 @@ public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/As
 <li class="blockList">
 <h4>getEmbedded</h4>
 <pre>@NonNull
-public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;&nbsp;getEmbedded()</pre>
+public&nbsp;java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;&nbsp;getEmbedded()</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/PersistentEntity.html#getEmbedded--">PersistentEntity</a></code></span></div>
 <div class="block">A list of embedded associations for this entity. This is typically
  a subset of the list returned by <a href="../../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentProperties--"><code>PersistentEntity.getPersistentProperties()</code></a></div>
