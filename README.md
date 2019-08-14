@@ -16,7 +16,7 @@ See also the [Micronaut Data Announcement](https://objectcomputing.com/news/2019
 
 ## Documentation
 
-<!--- See the [Documentation](https://micronaut-projects.github.io/micronaut-grpc/latest/guide) for more information. -->
+See the [Documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/) for more information. 
 
 See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-data/snapshot/guide/) for the current development docs.
 
