@@ -182,3 +182,11 @@ project.afterEvaluate {
         }
     }
 }
+
+task benchmarks {
+     subprojects.each { 
+        if (it.name.startsWith("benchmark-")) {
+            dependsOn("benchmarks:${it.name}:jmh")     
+        }        
+    }
+}
