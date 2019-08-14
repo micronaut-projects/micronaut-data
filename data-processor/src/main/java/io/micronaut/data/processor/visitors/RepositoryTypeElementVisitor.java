@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.*;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
@@ -323,6 +322,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         if (queryResult != null) {
                                             Map<String, String> qp = queryResult.getParameters();
                                             addParameterTypeDefinitions(methodMatchContext, qp, parameters, annotationBuilder, queryResult.getParameterTypes());
+
                                             AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(qp);
                                             annotationBuilder.member(DataMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
                                             annotationBuilder.member(DataMethod.META_MEMBER_INSERT_BINDING, annotationValues);
@@ -355,32 +355,47 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     annotationBuilder.member(DataMethod.META_MEMBER_ID_TYPE, idType);
                                 }
                                 annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
+                                boolean supportsImplicitQueries = matchContext.supportsImplicitQueries();
                                 if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
-                                    if (matchContext.supportsImplicitQueries()) {
+                                    if (!supportsImplicitQueries) {
+                                        addParameterTypeDefinitions(
+                                                methodMatchContext,
+                                                finalParameterBinding,
+                                                parameters,
+                                                annotationBuilder,
+                                                finalParameterTypes
+                                        );
+                                    }
 
-                                        AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalParameterBinding);
-                                        if (ArrayUtils.isNotEmpty(annotationParameters)) {
-                                            annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_BINDING, annotationParameters);
-                                            if (finalRawCount) {
-                                                annotationBuilder.member(DataMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
-                                            }
-                                        }
+                                    if (finalRawCount) {
+                                        parameterBindingToIndex(
+                                                annotationBuilder,
+                                                parameters,
+                                                finalParameterBinding,
+                                                methodMatchContext,
+                                                supportsImplicitQueries,
+                                                DataMethod.META_MEMBER_COUNT_PARAMETERS,
+                                                DataMethod.META_MEMBER_PARAMETER_BINDING);
                                     } else {
-                                        addParameterTypeDefinitions(methodMatchContext, finalParameterBinding, parameters, annotationBuilder, finalParameterTypes);
-                                        if (finalRawCount) {
-                                            parameterBindingToIndex(annotationBuilder, parameters, finalParameterBinding, methodMatchContext, DataMethod.META_MEMBER_COUNT_PARAMETERS, DataMethod.META_MEMBER_PARAMETER_BINDING);
-                                        } else {
-                                            parameterBindingToIndex(annotationBuilder, parameters, finalParameterBinding, methodMatchContext, DataMethod.META_MEMBER_PARAMETER_BINDING);
-                                        }
+                                        parameterBindingToIndex(
+                                                annotationBuilder,
+                                                parameters,
+                                                finalParameterBinding,
+                                                methodMatchContext,
+                                                supportsImplicitQueries,
+                                                DataMethod.META_MEMBER_PARAMETER_BINDING
+                                        );
                                     }
                                 }
                                 if (finalPreparedCount1 != null) {
-                                    if (methodMatchContext.supportsImplicitQueries()) {
-                                        AnnotationValue<?>[] annotationParameters = parameterBindingToAnnotationValues(finalPreparedCount1.getParameters());
-                                        annotationBuilder.member(DataMethod.META_MEMBER_COUNT_PARAMETERS, annotationParameters);
-                                    } else {
-                                        parameterBindingToIndex(annotationBuilder, parameters, finalPreparedCount1.getParameters(), methodMatchContext, DataMethod.META_MEMBER_COUNT_PARAMETERS);
-                                    }
+                                    parameterBindingToIndex(
+                                            annotationBuilder,
+                                            parameters,
+                                            finalPreparedCount1.getParameters(),
+                                            methodMatchContext,
+                                            supportsImplicitQueries,
+                                            DataMethod.META_MEMBER_COUNT_PARAMETERS
+                                    );
                                 }
 
                                 Optional<ParameterElement> entityParam = Arrays.stream(parameters).filter(p -> {
@@ -431,33 +446,38 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             ParameterElement[] parameters,
             Map<String, String> finalParameterBinding,
             MethodMatchContext methodMatchContext,
+            boolean includeNames,
             String... members) {
         List<String> parameterNames = Arrays.stream(parameters).map(parameterElement ->
                 parameterElement.stringValue(Parameter.class).orElse(parameterElement.getName())).collect(Collectors.toList()
         );
-        String[] parameterPaths = new String[finalParameterBinding.size()];
+        int len = finalParameterBinding.size();
+        String[] parameterPaths = new String[len];
+        String[] nameIndex = new String[len];
         AtomicInteger ai = new AtomicInteger(0);
-        int[] parameterIndices = finalParameterBinding.values().stream().map(s -> {
+        int[] parameterIndices = finalParameterBinding.entrySet().stream().map(entry -> {
+            String parameterName = entry.getValue();
             int pathIndex = ai.getAndIncrement();
             parameterPaths[pathIndex] = "";
-            int i = parameterNames.indexOf(s);
+            nameIndex[pathIndex] = entry.getKey();
+            int i = parameterNames.indexOf(parameterName);
             if (i > -1) {
                 return i;
             } else {
-                int j = s.indexOf('.');
+                int j = parameterName.indexOf('.');
                 if (j > -1) {
-                    String prop = s.substring(0, j);
+                    String prop = parameterName.substring(0, j);
                     int paramIndex = parameterNames.indexOf(prop);
-                    parameterPaths[pathIndex] = paramIndex + "." + s.substring(j + 1);
+                    parameterPaths[pathIndex] = paramIndex + "." + parameterName.substring(j + 1);
                     return -1;
                 } else {
                     // -1 indicates special handling for parameters in roles etc.
                     Map<String, Element> parametersInRole = methodMatchContext.getParametersInRole();
-                    for (Map.Entry<String, Element> entry : parametersInRole.entrySet()) {
-                        Element element = entry.getValue();
+                    for (Map.Entry<String, Element> roleEntry : parametersInRole.entrySet()) {
+                        Element element = roleEntry.getValue();
                         if (element instanceof PropertyElement) {
                             String name = element.getName();
-                            if (name.equals(s)) {
+                            if (name.equals(parameterName)) {
                                 parameterPaths[pathIndex] = name;
                                 break;
                             }
@@ -471,6 +491,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         for (String member : members) {
             annotationBuilder.member(member, parameterIndices);
             annotationBuilder.member(member + "Paths", parameterPaths);
+            if (includeNames) {
+                annotationBuilder.member(member + "Names", nameIndex);
+            }
         }
 
 

@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
@@ -51,6 +52,7 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +125,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             Class<R> resultType = preparedQuery.getResultType();
             String query = preparedQuery.getQuery();
 
-            Map<String, Object> parameters = preparedQuery.getParameterValues();
             Session currentSession = getCurrentSession();
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
@@ -135,7 +136,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     q = currentSession
                             .createQuery(query, Tuple.class);
                 }
-                bindParameters(q, parameters);
+                bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional()
@@ -152,12 +153,48 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     q = currentSession
                             .createQuery(query, wrapperType);
                 }
-                bindParameters(q, parameters);
+                bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
                 q.setMaxResults(1);
                 return q.uniqueResultOptional().orElse(null);
             }
         });
+    }
+
+    private <T, R> void bindParameters(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, String query) {
+        String[] parameterNames = preparedQuery.getParameterNames();
+        Object[] parameterArray = preparedQuery.getParameterArray();
+        int[] indexedParameterBinding = preparedQuery.getIndexedParameterBinding();
+        for (int i = 0; i < parameterNames.length; i++) {
+            String parameterName = parameterNames[i];
+            int parameterIndex = indexedParameterBinding[i];
+            Object value;
+            if (parameterIndex > -1) {
+                value = parameterArray[parameterIndex];
+            } else {
+                String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
+                String propertyPath = i < indexedParameterPaths.length ? indexedParameterPaths[i] : null;
+                if (propertyPath != null) {
+                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
+                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
+                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
+                        if (lastUpdatedType == null) {
+                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
+                        }
+                        Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+                        if (timestamp == null) {
+                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+                        }
+                        value = timestamp;
+                    } else {
+                        throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
+                    }
+                } else {
+                    throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
+                }
+            }
+            q.setParameter(parameterName, value);
+        }
     }
 
     @Override
@@ -225,7 +262,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                             .createQuery(queryStr, Tuple.class);
                 }
 
-                bindPreparedQuery(q, preparedQuery, currentSession);
+                bindPreparedQuery(q, preparedQuery, currentSession, queryStr);
                 return q.stream()
                         .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()))
                         .collect(Collectors.toList());
@@ -240,14 +277,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     q = currentSession
                             .createQuery(queryStr, wrapperType);
                 }
-                bindPreparedQuery(q, preparedQuery, currentSession);
+                bindPreparedQuery(q, preparedQuery, currentSession, queryStr);
                 return q.list();
             }
         });
     }
 
-    private <T, R> void bindPreparedQuery(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, Session currentSession) {
-        bindParameters(q, preparedQuery.getParameterValues());
+    private <T, R> void bindPreparedQuery(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, Session currentSession, String query) {
+        bindParameters(q, preparedQuery, query);
         bindPageable(q, preparedQuery.getPageable());
         bindQueryHints(q, preparedQuery, currentSession);
     }
@@ -323,8 +360,9 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
         //noinspection ConstantConditions
         return transactionOperations.executeWrite(status -> {
-            Query<?> q = getCurrentSession().createQuery(preparedQuery.getQuery());
-            bindParameters(q, preparedQuery.getParameterValues());
+            String query = preparedQuery.getQuery();
+            Query<?> q = getCurrentSession().createQuery(query);
+            bindParameters(q, preparedQuery, query);
             return Optional.of(q.executeUpdate());
         });
     }
@@ -375,7 +413,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     q = currentSession
                             .createQuery(query, Tuple.class);
                 }
-                bindParameters(q, parameterValues);
+                bindParameters(q, preparedQuery, query);
                 bindPageable(q, pageable);
                 return q.stream()
                         .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()));
@@ -389,7 +427,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 } else {
                     q = currentSession.createQuery(query, wrapperType);
                 }
-                bindParameters(q, parameterValues);
+                bindParameters(q, preparedQuery, query);
                 bindPageable(q, pageable);
 
                 return q.stream();
@@ -451,14 +489,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         );
         bindPageable(q, pageable);
         return q;
-    }
-
-    private <T> void bindParameters(@NonNull Query<T> query, Map<String, Object> parameters) {
-        if (parameters != null) {
-            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-                query.setParameter(entry.getKey(), entry.getValue());
-            }
-        }
     }
 
     private <T> void bindPageable(Query<T> q, @NonNull Pageable pageable) {

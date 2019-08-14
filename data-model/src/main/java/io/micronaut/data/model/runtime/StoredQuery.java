@@ -145,7 +145,7 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @see #useNumericPlaceholders()
      */
     default @NonNull DataType[] getIndexedParameterTypes() {
-        return new DataType[0];
+        return DataType.EMPTY_DATA_TYPE_ARRAY;
     }
 
     /**
@@ -157,6 +157,13 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
     @NonNull
     default int[] getIndexedParameterBinding() {
         return new int[0];
+    }
+
+    /**
+     * @return The parameter names the case where named parameters are supported
+     */
+    default String[] getParameterNames() {
+        return StringUtils.EMPTY_STRING_ARRAY;
     }
 
     /**
