@@ -1,0 +1,315 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <title>1 Introduction 1.0.0.M1</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Data
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+                    <div class="toc-item next-right"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span> >></a></div>
+                
+
+
+                <div class="project">
+                    <h1>1 Introduction</h1>
+
+                    <p><strong>Version:</strong> 1.0.0.M1</p>
+                </div>
+
+                
+
+                
+
+<h1 id="introduction">1 Introduction</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/introduction.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data is inspired by <a href="https://gorm.grails.org">GORM</a> and <a href="https://spring.io/projects/spring-data">Spring Data</a>, however improves on those solutions in the following ways:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><strong>No runtime model</strong> - Both GORM and Spring Data maintain a runtime meta-model that uses reflection to model relationships between entities. This model consumes significant memory and memory requirements grow as your application size grows. The problem is worse when combined with Hibernate which maintains its own meta-model as you end up with duplicate meta-models.</p>
+</li>
+<li>
+<p><strong>No query translation</strong> - Both GORM and Spring Data use regular expressions and pattern matching in combination with runtime generated proxies to translate a method definition on a Java interface into a query at runtime. No such runtime translation exists in Micronaut Data and this work is carried out by the Micronaut compiler at compilation time.</p>
+</li>
+<li>
+<p><strong>No Reflection or Runtime Proxies</strong> - Micronaut Data uses no reflection or runtime proxies, resulting in better performance, smaller stack traces and reduced memory consumption due to a complete lack of reflection caches (Note that the backing implementation, for example Hibernate, may use reflection).</p>
+</li>
+<li>
+<p><strong>Type Safety</strong> - Micronaut Data will actively check at compile time that a repository method can be implemented and fail compilation if it cannot.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Micronaut Data provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>JPA (Hibernate)</p>
+</li>
+<li>
+<p>SQL (JDBC)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Further implementations for other databases are planned in the future.</p>
+</div>
+<div class="paragraph">
+<p>The following sections will take you through the basics of querying and using Micronaut Data, if you wish to understand more detail about how Micronaut Data works check out the <a href="#howItWorks">How Micronaut Data Works</a> section.</p>
+</div>
+<div class="paragraph">
+<p>At a fundamental level however what Micronaut Data does can be summed up in the following snippets. Given the following interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.*;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@Repository <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    Book find(String title);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.*
+import io.micronaut.data.model.*
+import io.micronaut.data.repository.CrudRepository
+
+@Repository <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    Book find(String title)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.*
+import io.micronaut.data.model.*
+import io.micronaut.data.repository.CrudRepository
+
+@Repository <b class="conum">(1)</b>
+interface BookRepository : CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    fun find(title: String): Book
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>@Repository</code> annotation designates <code>BookRepository</code> as a data repository. Since, it is is an interface, the <code>@Repository</code> annotation provides implementations at compilation time.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>By extending <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> you enable automatic generation of CRUD (Create, Read, Update, Delete) operations.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Micronaut Data computes the query for the <code>find</code> method automatically at compilation time making it available at runtime via annotation metadata:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Inject
+BeanContext beanContext;
+
+@Test
+void testAnnotationMetadata() {
+	String query = beanContext.getBeanDefinition(BookRepository.class) <b class="conum">(1)</b>
+							.getRequiredMethod("find", String.class) <b class="conum">(2)</b>
+						    .getAnnotationMetadata()
+							.stringValue(Query.class) <b class="conum">(3)</b>
+							.orElse(null);
+
+	assertEquals( <b class="conum">(4)</b>
+			"SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)",
+			query
+	);
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Inject
+BeanContext beanContext
+
+void "test annotation metadata"() {
+    given:"The value of the Query annotation"
+    String query = beanContext.getBeanDefinition(BookRepository.class) <b class="conum">(1)</b>
+            .getRequiredMethod("find", String.class) <b class="conum">(2)</b>
+            .getAnnotationMetadata()
+            .stringValue(Query.class) <b class="conum">(3)</b>
+            .orElse(null)
+
+    expect:"The JPA-QL query to be correct" <b class="conum">(4)</b>
+    query == "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)"
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Inject
+lateinit var beanContext: BeanContext
+
+@Test
+fun testAnnotationMetadata() {
+    val query = beanContext.getBeanDefinition(BookRepository::class.java) <b class="conum">(1)</b>
+            .getRequiredMethod&lt;Any&gt;("find", String::class.java) <b class="conum">(2)</b>
+            .annotationMetadata
+            .stringValue(Query::class.java) <b class="conum">(3)</b>
+            .orElse(null)
+
+
+    assertEquals( <b class="conum">(4)</b>
+            "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)",
+            query
+    )
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/BeanDefinition.html">BeanDefinition</a> is retrieved from the <a href="https://docs.micronaut.io/latest/api/io/micronaut/context/BeanContext.html">BeanContext</a></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>find</code> method is retrieved</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The value of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation is retrieved</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The JPA-QL query for the method is correct</td>
+</tr>
+</table>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item next-right"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span> >></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>
