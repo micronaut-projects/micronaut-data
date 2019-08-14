@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Company
+import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
@@ -32,7 +33,11 @@ class AutoTimestampSpec extends Specification {
     @Inject
     CompanyRepo companyRepo
 
-    void "test date created and last updated"() {
+    @Shared
+    @Inject
+    ProductRepo productRepo
+
+    void "test java.util.Date date created and last updated"() {
         when:
         def company = new Company("Apple", new URL("http://apple.com"))
         companyRepo.save(company)
@@ -53,5 +58,29 @@ class AutoTimestampSpec extends Specification {
         company.dateCreated.time == company2.dateCreated.time
         company2.name == 'Changed'
         company2.lastUpdated.toEpochMilli() > company2.dateCreated.toInstant().toEpochMilli()
+    }
+
+    void "test java.time.LocalDateTime date created and last updated"() {
+        when:
+        def product = new Product("Foo", BigDecimal.ONE)
+        productRepo.save(product)
+        def dateCreated = product.dateCreated
+
+        then:
+        product.id != null
+        dateCreated != null
+        product.dateCreated == product.lastUpdated
+        productRepo.findById(product.id).get().dateCreated == product.dateCreated
+
+        when:
+        product.changePrice()
+        productRepo.update(product.id, BigDecimal.TEN)
+        def product2 = productRepo.findById(product.id).orElse(null)
+
+        then:
+        product.dateCreated == dateCreated
+        product.dateCreated == product2.dateCreated
+        product2.price == BigDecimal.TEN
+        product2.lastUpdated > product2.dateCreated
     }
 }
