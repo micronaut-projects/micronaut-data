@@ -74,4 +74,9 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
      * @return The last updated type.
      */
     Class<?> getLastUpdatedType();
+
+    /**
+     * @return Whether a result consumer is present
+     */
+    boolean hasResultConsumer();
 }

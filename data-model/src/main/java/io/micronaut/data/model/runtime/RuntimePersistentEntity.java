@@ -27,9 +27,7 @@ import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,7 +41,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     private final BeanIntrospection<T> introspection;
     private final RuntimePersistentProperty<T> identity;
-    private final List<RuntimePersistentProperty<T>> persistentProperties;
+    private final Map<String, RuntimePersistentProperty<T>> persistentProperties;
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private RuntimePersistentProperty<T> version;
 
@@ -64,32 +62,35 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         ArgumentUtils.requireNonNull("introspection", introspection);
         this.introspection = introspection;
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
-
+        Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
         identity = introspection.getIndexedProperty(Id.class).map(bp -> {
             if (bp.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
-                return new RuntimeEmbedded<>(this, bp);
+                return new RuntimeEmbedded<>(this, bp, constructorArgumentNames.contains(bp.getName()));
             } else {
-                return new RuntimePersistentProperty<>(this, bp);
+                return new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
             }
         }).orElse(null);
         version = introspection.getIndexedProperty(Version.class).map(bp ->
-                new RuntimePersistentProperty<>(this, bp)
+                new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()))
         ).orElse(null);
-        this.persistentProperties = Collections.unmodifiableList(introspection.getBeanProperties()
-                .stream()
-                .filter((bp) -> !bp.hasStereotype(Id.class, Version.class))
-                .map(bp -> {
-                    if (bp.hasAnnotation(Relation.class)) {
-                        if (isEmbedded(bp)) {
-                            return new RuntimeEmbedded<>(this, bp);
-                        } else {
-                            return new RuntimeAssociation<>(this, bp);
-                        }
+        Collection<BeanProperty<T, Object>> beanProperties = introspection.getBeanProperties();
+        this.persistentProperties = new LinkedHashMap<>(beanProperties.size());
+
+        for (BeanProperty<T, Object> bp : beanProperties) {
+            if (!bp.hasStereotype(Id.class, Version.class)) {
+                RuntimePersistentProperty<T> prop;
+                if (bp.hasAnnotation(Relation.class)) {
+                    if (isEmbedded(bp)) {
+                        prop = new RuntimeEmbedded<>(this, bp, constructorArgumentNames.contains(bp.getName()));
                     } else {
-                        return new RuntimePersistentProperty<>(this, bp);
+                        prop = new RuntimeAssociation<>(this, bp, constructorArgumentNames.contains(bp.getName()));
                     }
-                })
-                .collect(Collectors.toList()));
+                } else {
+                    prop = new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
+                }
+                persistentProperties.put(prop.getName(), prop);
+            }
+        }
 
         this.constructorArguments = new RuntimePersistentProperty[constructorArguments.length];
         for (int i = 0; i < constructorArguments.length; i++) {
@@ -136,14 +137,15 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     @NonNull
     @Override
-    public List<RuntimePersistentProperty<T>> getPersistentProperties() {
-        return persistentProperties;
+    public Collection<RuntimePersistentProperty<T>> getPersistentProperties() {
+        return persistentProperties.values();
     }
 
     @NonNull
     @Override
-    public List<Association> getAssociations() {
+    public Collection<Association> getAssociations() {
         return persistentProperties
+                .values()
                 .stream()
                 .filter(bp -> bp.getAnnotationMetadata().hasStereotype(Relation.class))
                 .map(p -> (Association) p)
@@ -152,27 +154,17 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     @NonNull
     @Override
-    public List<Embedded> getEmbedded() {
-        return introspection.getBeanProperties().stream()
-                .filter(this::isEmbedded)
-                .map(propertyElement -> new RuntimeEmbedded<>(this, propertyElement))
+    public Collection<Embedded> getEmbedded() {
+        return persistentProperties.values().stream()
+                .filter(pp -> pp instanceof Embedded)
+                .map(pp -> (Embedded) pp)
                 .collect(Collectors.toList());
     }
 
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getPropertyByName(String name) {
-        return introspection.getProperty(name).map(bp -> {
-            if (bp.hasStereotype(Relation.class)) {
-                if (isEmbedded(bp)) {
-                    return new RuntimeEmbedded<>(this, bp);
-                } else {
-                    return new RuntimeAssociation<>(this, bp);
-                }
-            } else {
-                return new RuntimePersistentProperty<>(this, bp);
-            }
-        }).orElse(null);
+        return persistentProperties.get(name);
     }
 
     @NonNull

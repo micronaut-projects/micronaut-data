@@ -35,17 +35,25 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final BeanProperty<T, ?> property;
     private final Class<?> type;
     private final DataType dataType;
+    private final boolean constructorArg;
 
     /**
      * Default constructor.
      * @param owner The owner
      * @param property The property
+     * @param constructorArg whether it is a constructor arg
      */
-    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property) {
+    RuntimePersistentProperty(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property, boolean constructorArg) {
         this.owner = owner;
         this.property = property;
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
+        this.constructorArg = constructorArg;
+    }
+
+    @Override
+    public boolean isConstructorArgument() {
+        return constructorArg;
     }
 
     @Override

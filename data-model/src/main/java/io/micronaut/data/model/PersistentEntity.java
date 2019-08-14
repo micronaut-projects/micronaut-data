@@ -24,10 +24,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.model.AssociationUtils.CAMEL_CASE_SPLIT_PATTERN;
@@ -83,7 +81,7 @@ public interface PersistentEntity extends PersistentElement {
      * A list of properties to be persisted.
      * @return A list of PersistentProperty instances
      */
-    @NonNull List<? extends PersistentProperty> getPersistentProperties();
+    @NonNull Collection<? extends PersistentProperty> getPersistentProperties();
 
     /**
      * A list of the associations for this entity. This is typically
@@ -91,7 +89,8 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return A list of associations
      */
-    @NonNull List<Association> getAssociations();
+    @NonNull
+    Collection<Association> getAssociations();
 
     /**
      * A list of embedded associations for this entity. This is typically
@@ -99,7 +98,7 @@ public interface PersistentEntity extends PersistentElement {
      *
      * @return A list of associations
      */
-    @NonNull List<Embedded> getEmbedded();
+    @NonNull Collection<Embedded> getEmbedded();
 
     /**
      * Obtains a PersistentProperty instance by name.
@@ -113,7 +112,7 @@ public interface PersistentEntity extends PersistentElement {
      * A list of property names that a persistent.
      * @return A List of strings
      */
-    @NonNull List<String> getPersistentPropertyNames();
+    @NonNull Collection<String> getPersistentPropertyNames();
 
     /**
      * @return The simple name without the package of entity

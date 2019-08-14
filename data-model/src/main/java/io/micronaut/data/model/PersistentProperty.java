@@ -88,6 +88,13 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
+     * @return Is the property also a constructor argument.
+     */
+    default boolean isConstructorArgument() {
+        return false;
+    }
+
+    /**
      * Whether the property is generated.
      *
      * @return True if is generated

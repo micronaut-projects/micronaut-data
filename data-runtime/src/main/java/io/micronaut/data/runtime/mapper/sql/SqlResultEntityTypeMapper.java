@@ -160,18 +160,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R>
                 }
             }
 
-            Set<String> processedViaConstructor;
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
-                processedViaConstructor = Collections.emptySet();
             } else {
                 int len = constructorArguments.length;
                 Object[] args = new Object[len];
-                processedViaConstructor = new HashSet<>(len);
                 for (int i = 0; i < len; i++) {
                     RuntimePersistentProperty<R> prop = constructorArguments[i];
                     if (prop != null) {
-                        processedViaConstructor.add(prop.getName());
                         if (prop instanceof Association) {
                             Object associated = readAssociation(hasPrefix ? prefix : "", (hasPath ? path : ""), rs, (Association) prop);
                             args[i] = associated;
@@ -206,7 +202,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R>
             Map<Association, List> toManyJoins = null;
             for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
                 RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
-                    if (persistentProperty.isReadOnly() || processedViaConstructor.contains(persistentProperty.getName())) {
+                    if (persistentProperty.isReadOnly() || persistentProperty.isConstructorArgument()) {
                     continue;
                 }
                 BeanProperty property = rpp.getProperty();

@@ -397,7 +397,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(instance);
-        List<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         for (PersistentProperty prop : persistentProperties) {
             if (!prop.isReadOnly() && !prop.isGenerated()) {
                 String propName = prop.getName();
@@ -1042,6 +1042,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final String query;
         private final boolean dto;
         private final MethodInvocationContext<T, R> context;
+        private final boolean hasResultConsumer;
 
         /**
          * The default constructor.
@@ -1063,6 +1064,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.storedQuery = storedQuery;
             this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
             this.dto = dtoProjection;
+            this.hasResultConsumer = context.stringValue(PREDATOR_ANN_NAME, "sqlMappingFunction").isPresent();
         }
 
         @Override
@@ -1078,6 +1080,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public Class<?> getLastUpdatedType() {
             return AbstractQueryInterceptor.this.getLastUpdatedType(getRootEntity(), getLastUpdatedProperty());
+        }
+
+        @Override
+        public boolean hasResultConsumer() {
+            return hasResultConsumer;
         }
 
         @NonNull

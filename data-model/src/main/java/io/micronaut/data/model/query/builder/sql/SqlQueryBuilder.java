@@ -127,7 +127,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
         String sql = "DROP TABLE " + tableName + ";";
-        List<Association> foreignKeyAssociations = getJoinTableAssociations(entity.getPersistentProperties());
+        Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity.getPersistentProperties());
         List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
@@ -169,7 +169,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             createStatements.add("CREATE SCHEMA " + schema + ";");
         }
 
-        List<Association> foreignKeyAssociations = getJoinTableAssociations(props);
+        Collection<Association> foreignKeyAssociations = getJoinTableAssociations(props);
 
         if (CollectionUtils.isNotEmpty(foreignKeyAssociations)) {
             for (Association association : foreignKeyAssociations) {
@@ -209,7 +209,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (prop instanceof Embedded) {
                 Embedded embedded = (Embedded) prop;
                 PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
-                List<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
+                Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
                 for (PersistentProperty embeddedProperty : embeddedProperties) {
                     String explicitColumn = embeddedProperty.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                     String column = explicitColumn != null ? explicitColumn : entity.getNamingStrategy().mappedName(
@@ -311,7 +311,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @NonNull
-    private List<Association> getJoinTableAssociations(List<? extends PersistentProperty> props) {
+    private Collection<Association> getJoinTableAssociations(Collection<? extends PersistentProperty> props) {
         return props.stream().filter(p -> {
                 if (p instanceof Association) {
                     Association a = (Association) p;
@@ -453,7 +453,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         builder.append(getTableName(entity));
         builder.append(" (");
 
-        List<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
+        Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
         Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
         Map<String, DataType> parameterTypes = new LinkedHashMap<>(persistentProperties.size());
         boolean hasProperties = CollectionUtils.isNotEmpty(persistentProperties);
@@ -466,7 +466,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         Association association = (Association) prop;
                         if (association instanceof Embedded) {
                             PersistentEntity embeddedEntity = association.getAssociatedEntity();
-                            List<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
+                            Collection<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                             for (PersistentProperty embeddedProp : embeddedProps) {
                                 String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                                 addWriteExpression(values, prop);
@@ -517,7 +517,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (identity instanceof Embedded) {
                     List<String> columnNames = new ArrayList<>(persistentProperties.size());
                     PersistentEntity embeddedEntity = ((Embedded) identity).getAssociatedEntity();
-                    List<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
+                    Collection<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                     for (PersistentProperty embeddedProp : embeddedProps) {
                         String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                         addWriteExpression(values, embeddedProp);

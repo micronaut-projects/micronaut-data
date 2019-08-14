@@ -162,8 +162,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     preparedQuery.getJoinFetchPaths()
                             );
                             R result = mapper.map(rs, resultType);
-                            preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
-                                    .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                            if (preparedQuery.hasResultConsumer()) {
+                                preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
+                                        .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
+                            }
                             return result;
                         } else {
                             if (preparedQuery.isDtoProjection()) {

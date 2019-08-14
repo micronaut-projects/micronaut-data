@@ -39,9 +39,10 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
      * Default constructor.
      * @param owner The owner
      * @param property The property
+     * @param constructorArg Whether it is a constructor arg
      */
-    RuntimeAssociation(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property) {
-        super(owner, property);
+    RuntimeAssociation(RuntimePersistentEntity<T> owner, BeanProperty<T, ?> property, boolean constructorArg) {
+        super(owner, property, constructorArg);
         this.kind = Association.super.getKind();
         this.aliasName = Association.super.getAliasName();
         this.isForeignKey = Association.super.isForeignKey();

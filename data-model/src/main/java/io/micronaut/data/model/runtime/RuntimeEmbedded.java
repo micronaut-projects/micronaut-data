@@ -31,8 +31,9 @@ class RuntimeEmbedded<T> extends RuntimeAssociation<T> implements Embedded {
      * Default constructor.
      * @param owner The owner
      * @param property The bean property
+     * @param constructorArg Whether it is a constructor arg
      */
-    RuntimeEmbedded(RuntimePersistentEntity owner, BeanProperty<T, ?> property) {
-        super(owner, property);
+    RuntimeEmbedded(RuntimePersistentEntity owner, BeanProperty<T, ?> property, boolean constructorArg) {
+        super(owner, property, constructorArg);
     }
 }
