@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
@@ -45,6 +46,10 @@ class ProjectionSpec extends Specification {
     @Shared
     BookRepository bookRepository
 
+    @Inject
+    @Shared
+    OrderRepo orderRepository
+
     def setupSpec() {
         crudRepository.saveAndFlush(new Person(name: "Jeff", age: 40))
         crudRepository.saveAll([
@@ -54,6 +59,19 @@ class ProjectionSpec extends Specification {
 
         crudRepository.flush()
         bookRepository.setupData()
+        orderRepository.saveAll([
+                new Order("AAA", BigDecimal.TEN, new Double("10"), 10, 10L),
+                new Order("AAA", new BigDecimal("5.25"), new Double("5.25"), 5, 5L),
+                new Order("BBB", BigDecimal.TEN, new Double("10"), 10, 10L)
+        ])
+    }
+
+    void "test project sum on big decimal property"(){
+        expect:
+        orderRepository.findSumTotalAmountByCustomer("AAA") == 15.25
+        orderRepository.findSumWeightByCustomer("AAA") == 15.25
+        orderRepository.findSumUnitsByCustomer("AAA") == 15
+        orderRepository.findSumTaxByCustomer("AAA") == 15
     }
 
     void "test project on single property"() {
