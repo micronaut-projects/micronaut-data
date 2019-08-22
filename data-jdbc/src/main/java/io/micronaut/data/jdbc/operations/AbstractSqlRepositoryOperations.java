@@ -350,27 +350,24 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param value The value
      */
     protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value) {
-        if (value != null) {
-            if (dataType == DataType.ENTITY) {
-                RuntimePersistentProperty<Object> idReader = getIdReader(value);
-                Object id = idReader.getProperty().get(value);
-                if (id == null) {
-                    throw new DataAccessException("Supplied entity is a transient instance: " + value);
-                }
-                value = id;
-                preparedStatementWriter.setDynamic(
-                        preparedStatement,
-                        index,
-                        idReader.getDataType(),
-                        value);
-            } else {
-
-                preparedStatementWriter.setDynamic(
-                        preparedStatement,
-                        index,
-                        dataType,
-                        value);
+        if (dataType == DataType.ENTITY && value != null) {
+            RuntimePersistentProperty<Object> idReader = getIdReader(value);
+            Object id = idReader.getProperty().get(value);
+            if (id == null) {
+                throw new DataAccessException("Supplied entity is a transient instance: " + value);
             }
+            value = id;
+            preparedStatementWriter.setDynamic(
+                    preparedStatement,
+                    index,
+                    idReader.getDataType(),
+                    value);
+        } else {
+            preparedStatementWriter.setDynamic(
+                    preparedStatement,
+                    index,
+                    dataType,
+                    value);
         }
     }
 

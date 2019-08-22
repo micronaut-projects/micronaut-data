@@ -149,6 +149,13 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         then:"the updated worked"
         a5.name == 'A6'
 
+        when:"an update to null happens"
+            carRepo.update(a5.id, null)
+            a5 = carRepo.findById(a5.id).orElse(null)
+
+        then:"the updated to null worked"
+            a5.name == null
+
         when:"A deleted"
         carRepo.deleteById(a5.id)
 
