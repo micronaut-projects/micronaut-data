@@ -53,6 +53,11 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
      */
     Argument[] getArguments();
 
+    /**
+     * @return The last updated type.
+     */
+    Class<?> getLastUpdatedType();
+
     @NonNull
     @Override
     default Map<String, Object> getQueryHints() {
@@ -70,13 +75,4 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
         return Optional.empty();
     }
 
-    /**
-     * @return The last updated type.
-     */
-    Class<?> getLastUpdatedType();
-
-    /**
-     * @return Whether a result consumer is present
-     */
-    boolean hasResultConsumer();
 }

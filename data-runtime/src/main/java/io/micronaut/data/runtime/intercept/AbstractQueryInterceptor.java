@@ -168,7 +168,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             countQueries.put(methodKey, storedQuery);
         }
 
-        Pageable pageable = getPageable(context);
+        Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
         //noinspection unchecked
         return new DefaultPreparedQuery(
                 context,
@@ -715,6 +715,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final boolean isCount;
         private final DataType[] indexedDataTypes;
         private final String[] parameterNames;
+        private final boolean hasResultConsumer;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
 
@@ -735,6 +736,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
             this.isNative = method.isTrue(Query.class, "nativeQuery");
+            this.hasResultConsumer = method.stringValue(PREDATOR_ANN_NAME, "sqlMappingFunction").isPresent();
             this.isNumericPlaceHolder = method
                     .classValue(RepositoryConfiguration.class, "queryBuilder")
                     .map(c -> c == SqlQueryBuilder.class).orElse(false);
@@ -850,6 +852,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public boolean isSingleResult() {
             return !isCount() && getJoinFetchPaths().isEmpty();
+        }
+
+        @Override
+        public boolean hasResultConsumer() {
+            return this.hasResultConsumer;
         }
 
         private boolean isJoinFetch(AnnotationValue<Join> av) {
@@ -1034,7 +1041,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final String query;
         private final boolean dto;
         private final MethodInvocationContext<T, R> context;
-        private final boolean hasResultConsumer;
 
         /**
          * The default constructor.
@@ -1049,14 +1055,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 MethodInvocationContext<T, R> context,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
-                @Nullable Pageable pageable,
+                @NonNull Pageable pageable,
                 boolean dtoProjection) {
             this.context = context;
             this.query = finalQuery;
             this.storedQuery = storedQuery;
-            this.pageable = pageable != null ? pageable : Pageable.UNPAGED;
+            this.pageable = pageable;
             this.dto = dtoProjection;
-            this.hasResultConsumer = context.stringValue(PREDATOR_ANN_NAME, "sqlMappingFunction").isPresent();
         }
 
         @Override
@@ -1081,7 +1086,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         @Override
         public boolean hasResultConsumer() {
-            return hasResultConsumer;
+            return storedQuery.hasResultConsumer();
         }
 
         @NonNull

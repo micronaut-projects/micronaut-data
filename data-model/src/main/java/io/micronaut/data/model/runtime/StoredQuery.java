@@ -204,4 +204,9 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      * @return True if it can.
      */
     boolean isSingleResult();
+
+    /**
+     * @return Whether a result consumer is present
+     */
+    boolean hasResultConsumer();
 }
