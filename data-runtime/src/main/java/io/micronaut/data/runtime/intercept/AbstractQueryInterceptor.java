@@ -523,7 +523,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         Object[] parameterValues = context.getParameterValues();
         for (int i = 0; i < parameterValues.length; i++) {
             Object o = parameterValues[i];
-            if (o == null && !context.getArguments()[i].getAnnotationMetadata().hasAnnotation("javax.annotation.Nullable")) {
+            if (o == null && !context.getArguments()[i].isNullable()) {
                 throw new IllegalArgumentException("Argument [" + context.getArguments()[i].getName() + "] value is null and the method parameter is not declared as nullable");
             }
         }
