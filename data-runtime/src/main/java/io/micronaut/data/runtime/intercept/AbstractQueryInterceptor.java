@@ -28,6 +28,7 @@ import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.core.util.ArgumentUtils;
@@ -732,7 +733,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 @NonNull Class<E> rootEntity,
                 @NonNull String query,
                 @Nullable String parameterBindingMember) {
-            this.resultType = resultType;
+            this.resultType = ReflectionUtils.getWrapperType(resultType);
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
             this.isNative = method.isTrue(Query.class, "nativeQuery");

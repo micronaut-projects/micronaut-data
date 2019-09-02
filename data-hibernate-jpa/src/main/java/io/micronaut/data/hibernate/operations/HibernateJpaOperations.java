@@ -143,15 +143,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                         .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType))
                         .orElse(null);
             } else {
-                Class<R> wrapperType = ReflectionUtils.getWrapperType(resultType);
                 Query<R> q;
 
                 if (preparedQuery.isNative()) {
                     q = currentSession
-                            .createNativeQuery(query, wrapperType);
+                            .createNativeQuery(query, resultType);
                 } else {
                     q = currentSession
-                            .createQuery(query, wrapperType);
+                            .createQuery(query, resultType);
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
