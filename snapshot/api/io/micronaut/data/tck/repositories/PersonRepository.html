@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":6,"i20":6,"i21":6,"i22":6,"i23":6,"i24":6,"i25":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":6,"i20":6,"i21":6,"i22":6,"i23":6,"i24":6,"i25":6,"i26":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -136,99 +136,103 @@ extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#countByAgeLessThan-int-">countByAgeLessThan</a></span>(int&nbsp;wrapper)</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>java.lang.Long</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#deleteByNameLike-java.lang.String-">deleteByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#find-io.micronaut.data.model.Pageable-">find</a></span>(<a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findAgeByName-java.lang.String-">findAgeByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findAllByName-java.lang.String-">findAllByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findAllByNameLike-java.lang.String-io.micronaut.data.model.Pageable-">findAllByNameLike</a></span>(java.lang.String&nbsp;name,
                  <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findByName-java.lang.String-">findByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findByNameLike-java.lang.String-">findByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findByNameLike-java.lang.String-io.micronaut.data.model.Pageable-">findByNameLike</a></span>(java.lang.String&nbsp;name,
               <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findByNameLikeOrderByAge-java.lang.String-">findByNameLikeOrderByAge</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findByNameLikeOrderByAgeDesc-java.lang.String-">findByNameLikeOrderByAgeDesc</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findMaxAgeByNameLike-java.lang.String-">findMaxAgeByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findMinAgeByNameLike-java.lang.String-">findMinAgeByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>java.util.Optional&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findOptionalByName-java.lang.String-">findOptionalByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model">Page</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#findPeople-java.lang.String-io.micronaut.data.model.Pageable-">findPeople</a></span>(java.lang.String&nbsp;n,
           <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#get-java.lang.Long-">get</a></span>(java.lang.Long&nbsp;id)</code>&nbsp;</td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#getAvgAgeByNameLike-java.lang.String-">getAvgAgeByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#getByName-java.lang.String-">getByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#getSumAgeByNameLike-java.lang.String-">getSumAgeByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#list-io.micronaut.data.model.Pageable-">list</a></span>(<a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#listTop10-io.micronaut.data.model.Sort-">listTop10</a></span>(<a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code>&nbsp;</td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#queryByNameLike-java.lang.String-io.micronaut.data.model.Pageable-">queryByNameLike</a></span>(java.lang.String&nbsp;name,
                <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;java.lang.Integer&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#readAgeByNameLike-java.lang.String-">readAgeByNameLike</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#save-java.lang.String-int-">save</a></span>(java.lang.String&nbsp;name,
     int&nbsp;age)</code>&nbsp;</td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonRepository.html#updatePerson-java.lang.Long-java.lang.String-">updatePerson</a></span>(java.lang.Long&nbsp;id,
             java.lang.String&nbsp;name)</code>&nbsp;</td>
@@ -337,6 +341,15 @@ extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html
 <h4>findByName</h4>
 <pre>@Nullable
 <a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&nbsp;findByName(java.lang.String&nbsp;name)</pre>
+</li>
+</ul>
+<a name="deleteByNameLike-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>deleteByNameLike</h4>
+<pre>java.lang.Long&nbsp;deleteByNameLike(java.lang.String&nbsp;name)</pre>
 </li>
 </ul>
 <a name="getByName-java.lang.String-">
