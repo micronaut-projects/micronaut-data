@@ -63,9 +63,9 @@ The following table summarizes the possible expressions and behaviour:
 |Finds string values "like" the given expression
 |`findByTitleLike`
 
-|`ILike`
+|`Ilike`
 |Case insensitive "like" query
-|`findByTitleILike`
+|`findByTitleIlike`
 
 |`InList` or `In`
 |Find results where the property is that are contained within the given list
