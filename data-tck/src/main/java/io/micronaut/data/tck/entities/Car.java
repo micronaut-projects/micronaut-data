@@ -1,5 +1,6 @@
 package io.micronaut.data.tck.entities;
 
+import javax.annotation.Nullable;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -11,6 +12,8 @@ public class Car {
     @GeneratedValue
     @Id
     private Long id;
+
+    @Nullable
     private String name;
 
     public Long getId() {
