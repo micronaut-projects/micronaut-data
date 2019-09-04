@@ -20,7 +20,7 @@ dependencies {
     compile "io.micronaut:micronaut-http-client"
     compile project(":data-jdbc")
     compile "io.micronaut.configuration:micronaut-jdbc-tomcat"
-    implementation "jakarta.persistence:jakarta.persistence-api:2.2.2"
+    implementation "jakarta.persistence:jakarta.persistence-api:2.2.3"
     implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
 
     compile "io.micronaut:micronaut-http-server-netty"
