@@ -47,7 +47,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
     @Unroll
     void "test equals method #method"() {
         given:
-        def executableMethod = buildMethod(returnType, method, arguments)
+        def executableMethod = buildMethod("Person", returnType, method, arguments)
         Class targetInterceptor = executableMethod
                 .classValue(DataMethod, "interceptor").orElse(null)
         String query = executableMethod.stringValue(Query).orElse(null)

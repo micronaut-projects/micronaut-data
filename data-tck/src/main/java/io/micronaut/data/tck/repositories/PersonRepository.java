@@ -34,6 +34,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Nullable
     Person findByName(String name);
 
+    Long deleteByNameLike(String name);
+
     Person getByName(String name);
 
     List<Person> findByNameLike(String name);

@@ -227,6 +227,7 @@ public class TypeUtils {
      */
     static boolean isValidBatchUpdateReturnType(MethodElement methodElement) {
         return doesReturnVoid(methodElement) ||
+                doesReturnNumber(methodElement) ||
                 (isReactiveOrFuture(methodElement.getReturnType()) &&
                         isVoidOrNumberArgument(methodElement.getReturnType()));
     }

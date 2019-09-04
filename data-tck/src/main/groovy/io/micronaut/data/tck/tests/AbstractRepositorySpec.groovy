@@ -166,6 +166,20 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test delete all"() {
+        when:"A new person is saved"
+        personRepository.save("Greg", 30)
+        personRepository.save("Groot", 300)
+
+        then:"The count is 3"
+        personRepository.count() == 3
+
+        when:"batch delete occurs"
+        def deleted = personRepository.deleteByNameLike("G%")
+
+        then:"The count is back to 1 and it entries were deleted"
+        deleted == 2
+        personRepository.count() == 1
+
         when:"everything is deleted"
         personRepository.deleteAll()
 
