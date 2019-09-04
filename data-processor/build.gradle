@@ -3,7 +3,7 @@ dependencies {
 	implementation "io.micronaut:micronaut-inject:$micronautVersion"
 
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-	testCompile "io.projectreactor:reactor-core:3.2.11.RELEASE"
+	testCompile "io.projectreactor:reactor-core:3.2.12.RELEASE"
 	testCompile "io.micronaut:micronaut-inject-groovy"
 	testCompile "io.micronaut:micronaut-inject-java-test"
 	testCompile 'javax.persistence:javax.persistence-api:2.2'
