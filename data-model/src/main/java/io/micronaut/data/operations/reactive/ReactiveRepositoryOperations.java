@@ -48,6 +48,14 @@ public interface ReactiveRepositoryOperations {
     <T> Publisher<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
 
     /**
+     * Check with an record exists for the given query.
+     * @param preparedQuery The query
+     * @param <T> The declaring type
+     * @return True if it exists
+     */
+    <T> Publisher<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
+
+    /**
      * Find one by Query.
      *
      * @param preparedQuery The prepared query

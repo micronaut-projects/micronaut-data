@@ -22,6 +22,7 @@ import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import org.reactivestreams.Publisher;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
@@ -52,6 +53,15 @@ public interface AsyncRepositoryOperations {
      */
     @NonNull
     <T> CompletionStage<T> findOne(@NonNull Class<T> type, @NonNull Serializable id);
+
+
+    /**
+     * Check with an record exists for the given query.
+     * @param preparedQuery The query
+     * @param <T> The declaring type
+     * @return True if it exists
+     */
+    <T> CompletionStage<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
     /**
      * Find one by Query.

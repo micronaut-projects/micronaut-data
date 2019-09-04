@@ -73,6 +73,13 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
         );
     }
 
+    @Override
+    public <T> Publisher<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
+        return Publishers.fromCompletableFuture(() ->
+                asyncOperations.exists(preparedQuery)
+        );
+    }
+
     @NonNull
     @Override
     public <T, R> Publisher<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {

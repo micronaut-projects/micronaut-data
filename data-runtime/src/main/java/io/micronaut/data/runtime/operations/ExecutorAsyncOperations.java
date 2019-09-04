@@ -28,6 +28,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 /**
@@ -46,8 +47,9 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     /**
      * Default constructor.
+     *
      * @param operations The target operations
-     * @param executor The executor to use.
+     * @param executor   The executor to use.
      */
     public ExecutorAsyncOperations(@NonNull RepositoryOperations operations, @NonNull Executor executor) {
         ArgumentUtils.requireNonNull("operations", operations);
@@ -64,186 +66,112 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     @NonNull
     @Override
     public <T> CompletableFuture<T> findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                T r = datastore.findOne(type, id);
-                if (r != null) {
-                    future.complete(r);
-                } else {
-                    future.completeExceptionally(new EmptyResultException());
-                }
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+                    T r = datastore.findOne(type, id);
+                    if (r != null) {
+                        return r;
+                    } else {
+                        throw new EmptyResultException();
+                    }
+                }, executor
+        );
+    }
+
+    @Override
+    public <T> CompletableFuture<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
+        return CompletableFuture.supplyAsync(() -> datastore.exists(preparedQuery), executor);
     }
 
     @NonNull
     @Override
     public <T, R> CompletableFuture<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
-        CompletableFuture<R> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                R r = datastore.findOne(preparedQuery);
-                if (r != null) {
-                    future.complete(r);
-                } else {
-                    future.completeExceptionally(new EmptyResultException());
-                }
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+                    R r = datastore.findOne(preparedQuery);
+                    if (r != null) {
+                        return r;
+                    } else {
+                        throw new EmptyResultException();
+                    }
+                }, executor
+        );
     }
 
     @NonNull
     @Override
     public <T> CompletableFuture<T> findOptional(@NonNull Class<T> type, @NonNull Serializable id) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                T r = datastore.findOne(type, id);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> {
+                    T r = datastore.findOne(type, id);
+                    if (r != null) {
+                        return r;
+                    } else {
+                        throw new EmptyResultException();
+                    }
+                }, executor
+        );
     }
 
     @NonNull
     @Override
     public <T, R> CompletableFuture<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery) {
-        CompletableFuture<R> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                R r = datastore.findOne(preparedQuery);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() ->
+                datastore.findOne(preparedQuery), executor
+        );
     }
 
     @NonNull
     @Override
     public <T> CompletableFuture<Iterable<T>> findAll(@NonNull PagedQuery<T> pagedQuery) {
-        CompletableFuture<Iterable<T>> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Iterable<T> r = datastore.findAll(pagedQuery);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() ->
+                datastore.findAll(pagedQuery), executor
+        );
     }
 
     @Override
     public <T> CompletableFuture<Long> count(@NonNull PagedQuery<T> pagedQuery) {
-        CompletableFuture<Long> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                long r = datastore.count(pagedQuery);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() ->
+                datastore.count(pagedQuery), executor
+        );
     }
 
     @NonNull
     @Override
     public <T, R> CompletableFuture<Iterable<R>> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        CompletableFuture<Iterable<R>> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Iterable<R> r = datastore.findAll(preparedQuery);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() ->
+                datastore.findAll(preparedQuery), executor
+        );
     }
 
     @NonNull
     @Override
     public <T> CompletableFuture<T> persist(@NonNull InsertOperation<T> entity) {
-        CompletableFuture<T> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                T r = datastore.persist(entity);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() ->
+                datastore.persist(entity), executor
+        );
     }
 
     @NonNull
     @Override
     public <T> CompletableFuture<Iterable<T>> persistAll(@NonNull BatchOperation<T> operation) {
-        CompletableFuture<Iterable<T>> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Iterable<T> r = datastore.persistAll(operation);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> datastore.persistAll(operation), executor);
     }
 
     @NonNull
     @Override
     public CompletableFuture<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        CompletableFuture<Number> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Number n = datastore.executeUpdate(preparedQuery).orElse(0);
-                future.complete(n);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> datastore.executeUpdate(preparedQuery).orElse(0), executor);
     }
 
     @NonNull
     @Override
     public <T> CompletableFuture<Number> deleteAll(@NonNull BatchOperation<T> operation) {
-        CompletableFuture<Number> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Number total = datastore.deleteAll(operation).orElse(0);
-                future.complete(total);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() ->
+                datastore.deleteAll(operation).orElse(0),
+                executor
+        );
     }
 
     @Override
     public <R> CompletableFuture<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery) {
-        CompletableFuture<Page<R>> future = new CompletableFuture<>();
-        executor.execute(() -> {
-            try {
-                Page<R> r = datastore.findPage(pagedQuery);
-                future.complete(r);
-            } catch (Throwable e) {
-                future.completeExceptionally(e);
-            }
-        });
-        return future;
+        return CompletableFuture.supplyAsync(() -> datastore.findPage(pagedQuery), executor);
     }
 }

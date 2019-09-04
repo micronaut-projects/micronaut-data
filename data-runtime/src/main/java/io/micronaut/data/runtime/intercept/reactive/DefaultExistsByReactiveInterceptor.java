@@ -24,6 +24,7 @@ import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.reactivex.Flowable;
+import org.reactivestreams.Publisher;
 
 /**
  * Default implementation of {@link ExistsByReactiveInterceptor}.
@@ -45,10 +46,7 @@ public class DefaultExistsByReactiveInterceptor extends AbstractReactiveIntercep
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
                 .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context, idType);
-        Flowable<Boolean> publisher = Flowable.fromPublisher(reactiveOperations.findOptional(preparedQuery))
-                .map(o -> true)
-                .switchIfEmpty(Flowable.just(false));
-        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
+        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, idType);
+        return Publishers.convertPublisher(reactiveOperations.exists(preparedQuery), context.getReturnType().getType());
     }
 }
