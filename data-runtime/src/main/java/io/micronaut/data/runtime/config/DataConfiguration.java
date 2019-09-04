@@ -24,6 +24,7 @@ public class DataConfiguration implements DataSettings {
         public static final String DEFAULT_PAGE_PARAMETER = "page";
         public static final String PREFIX = "pageable";
         private int maxPageSize = 100;
+        private int defaultPageSize = maxPageSize;
         private boolean sortIgnoreCase = false;
         private String sortParameterName = DEFAULT_SORT_PARAMETER;
         private String sizeParameterName = DEFAULT_SIZE_PARAMETER;
@@ -73,6 +74,24 @@ public class DataConfiguration implements DataSettings {
          */
         public void setMaxPageSize(int maxPageSize) {
             this.maxPageSize = maxPageSize;
+        }
+
+        /**
+         * @return the page size to use when binding {@link io.micronaut.data.model.Pageable}
+         * objects and no size parameter is used.
+         */
+        public int getDefaultPageSize() {
+            return defaultPageSize;
+        }
+
+        /**
+         * Sets the default page size when binding {@link io.micronaut.data.model.Pageable} objects and no size
+         * parameter is used. Should be smaller or equal than {@link #maxPageSize}.
+         *
+         * @param defaultPageSize The default page size
+         */
+        public void setDefaultPageSize(int defaultPageSize) {
+            this.defaultPageSize = defaultPageSize;
         }
 
         /**

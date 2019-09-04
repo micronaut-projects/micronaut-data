@@ -52,4 +52,31 @@ class PageableRequestArgumentBinderSpec extends Specification {
         ['name,desc', 'age'] | Sort.of([Sort.Order.desc("name"), Sort.Order.asc("age")])
         ['name,DESC', 'age'] | Sort.of([Sort.Order.desc("name"), Sort.Order.asc("age")])
     }
+
+    @Unroll
+    void 'test bind size #size and page #page with custom configuration'() {
+        given:
+        def configuration = new DataConfiguration.PageableConfiguration()
+        configuration.defaultPageSize=40
+        configuration.maxPageSize=200
+        configuration.sizeParameterName="perPage"
+        configuration.pageParameterName="myPage"
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(configuration)
+        def get = HttpRequest.GET('/')
+        get.parameters.add("perPage", size)
+        get.parameters.add("myPage", page)
+        Pageable p = binder.bind(ConversionContext.of(Pageable), get).get()
+
+        expect:
+        p.size == pageSize
+        p.number == pageNumber
+
+        where:
+        size   | page | pageSize | pageNumber
+        "20"   | "1"  | 20       | 1
+        "230"  | "12" | 200      | 12  // exceeds max => uses max
+        "-1"   | "10" | 40       | 10  // negative    => uses default != max
+        "-1"   | "0"  | 40       | 0   // negative    => uses default != max
+        "junk" | "0"  | 40       | 0   // can't be parsed
+    }
 }

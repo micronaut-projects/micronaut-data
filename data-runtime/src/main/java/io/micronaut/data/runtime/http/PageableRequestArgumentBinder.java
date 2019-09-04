@@ -65,8 +65,9 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
         int page = Math.max(parameters.getFirst(configuration.getPageParameterName(), Integer.class)
                         .orElse(0), 0);
         final int configuredMaxSize = configuration.getMaxPageSize();
+        final int defaultSize = configuration.getDefaultPageSize();
         int size = Math.min(parameters.getFirst(configuration.getSizeParameterName(), Integer.class)
-                       .orElse(configuredMaxSize), configuredMaxSize);
+                       .orElse(defaultSize), configuredMaxSize);
         String sortParameterName = configuration.getSortParameterName();
         boolean hasSort = parameters.contains(sortParameterName);
         Pageable pageable;
@@ -84,7 +85,7 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
             if (page == 0 && configuredMaxSize < 1 && sort == null) {
                 pageable = Pageable.UNPAGED;
             } else {
-                pageable = Pageable.from(page, configuredMaxSize, sort);
+                pageable = Pageable.from(page, defaultSize, sort);
             }
         } else {
             pageable = Pageable.from(page, size, sort);
