@@ -22,8 +22,6 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
-
-import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
 /**

@@ -23,8 +23,6 @@ import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.reactive.ExistsByReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.reactivex.Flowable;
-import org.reactivestreams.Publisher;
 
 /**
  * Default implementation of {@link ExistsByReactiveInterceptor}.
