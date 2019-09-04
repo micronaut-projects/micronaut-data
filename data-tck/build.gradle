@@ -5,7 +5,7 @@ dependencies {
     compile project(":data-model")
     compile project(":data-jdbc")
     compile "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
-    compile 'jakarta.persistence:jakarta.persistence-api:2.2.2'
+    compile 'jakarta.persistence:jakarta.persistence-api:2.2.3'
     runtimeOnly "cglib:cglib-nodep:3.3.0"
     runtimeOnly "org.objenesis:objenesis:3.0.1"
 
