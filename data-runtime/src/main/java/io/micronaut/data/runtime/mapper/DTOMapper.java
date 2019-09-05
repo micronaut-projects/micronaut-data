@@ -55,9 +55,9 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @return The result
      */
     public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<T> property) {
-        String persistedName = property.getPersistedName();
+        String propertyName = property.getName();
         DataType dataType = property.getDataType();
-        return read(resultSet, persistedName, dataType);
+        return read(resultSet, propertyName, dataType);
     }
 
     /**

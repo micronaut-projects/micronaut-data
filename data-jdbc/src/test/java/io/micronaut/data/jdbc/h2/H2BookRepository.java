@@ -50,7 +50,7 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
 
     @Transactional(readOnly = true)
     public Author findByName(String name) {
-        return jdbcOperations.prepareStatement("SELECT author_.id,author_.name,author_.nick_name,author_books_.id AS _books_id,author_books_.author_id AS _books_author_id,author_books_.title AS _books_title,author_books_.pages AS _books_pages,author_books_.publisher_id AS _books_publisher_id FROM author AS author_ INNER JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_.name = ?)", statement -> {
+        return jdbcOperations.prepareStatement("SELECT author_.id,author_.name,author_.nick_name,author_books_.id AS _books_id,author_books_.author_id AS _books_author_id,author_books_.title AS _books_title,author_books_.total_pages AS _books_total_pages,author_books_.publisher_id AS _books_publisher_id FROM author AS author_ INNER JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_.name = ?)", statement -> {
             statement.setString(1, name);
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {

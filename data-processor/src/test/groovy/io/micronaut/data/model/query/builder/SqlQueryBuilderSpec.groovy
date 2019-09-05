@@ -57,7 +57,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.pages,book_.publisher_id,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM book book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.id = ?)'
+        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.total_pages,book_.publisher_id,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM book book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.id = ?)'
 
     }
 

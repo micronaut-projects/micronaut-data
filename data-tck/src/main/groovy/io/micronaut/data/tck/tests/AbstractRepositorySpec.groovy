@@ -22,13 +22,10 @@ import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Stepwise
 
 import java.time.LocalDate
-import java.time.Year
-import java.time.YearMonth
 
 @Stepwise
 abstract class AbstractRepositorySpec extends Specification {
@@ -53,9 +50,9 @@ abstract class AbstractRepositorySpec extends Specification {
                 new Person(name: "Jeff"),
                 new Person(name: "James")
         ])
-        bookRepository.save(new Book(title: "Anonymous", pages: 400))
+        bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
         // blank title
-        bookRepository.save(new Book(title: "", pages: 0))
+        bookRepository.save(new Book(title: "", totalPages: 0))
         // book without an author
         bookRepository.setupData()
     }

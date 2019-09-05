@@ -23,7 +23,7 @@ public class Book {
     @GeneratedValue
     private Long id;
     private String title;
-    private int pages;
+    private int totalPages;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Author author;
@@ -55,12 +55,12 @@ public class Book {
         this.title = title;
     }
 
-    public int getPages() {
-        return pages;
+    public int getTotalPages() {
+        return totalPages;
     }
 
-    public void setPages(int pages) {
-        this.pages = pages;
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
     }
 
     public Publisher getPublisher() {

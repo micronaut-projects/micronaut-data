@@ -21,7 +21,7 @@ import io.micronaut.core.annotation.Introspected;
 public class BookDto {
 
     private String title;
-    private int pages;
+    private int totalPages;
 
     public String getTitle() {
         return title;
@@ -31,11 +31,11 @@ public class BookDto {
         this.title = title;
     }
 
-    public int getPages() {
-        return pages;
+    public int getTotalPages() {
+        return totalPages;
     }
 
-    public void setPages(int pages) {
-        this.pages = pages;
+    public void setTotalPages(int totalPages) {
+        this.totalPages = totalPages;
     }
 }

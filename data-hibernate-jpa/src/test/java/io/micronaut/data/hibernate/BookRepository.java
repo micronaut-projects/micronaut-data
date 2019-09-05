@@ -40,7 +40,7 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @EntityGraph(
             attributePaths = {
-                    "pages",
+                    "totalPages",
                     "author"
             }
     )

@@ -65,7 +65,7 @@ public abstract class BookRepository implements CrudRepository<Book, Long> {
         author.getBooks().add(book);
         book.setAuthor(author);
         book.setTitle(title);
-        book.setPages(pages);
+        book.setTotalPages(pages);
         return book;
     }
 }
