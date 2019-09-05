@@ -70,7 +70,7 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     List<Person> findAllByNameLike(String name, Pageable pageable);
 
-    @Query(value = "select * from person p where p.name like :n",
-            countQuery = "select count(*) from person p where p.name like :n")
+    @Query(value = "select * from person person_ where person_.name like :n",
+            countQuery = "select count(*) from person person_ where person_.name like :n")
     Page<Person> findPeople(String n, Pageable pageable);
 }

@@ -39,20 +39,20 @@ final class DefaultPageable implements Pageable {
     /**
      * Default constructor.
      *
-     * @param index The index
+     * @param page The page
      * @param size The size
      * @param sort The sort
      */
     @Creator
-    DefaultPageable(int index, int size, @Nullable Sort sort) {
-        if (index < 0) {
+    DefaultPageable(int page, int size, @Nullable Sort sort) {
+        if (page < 0) {
             throw new IllegalArgumentException("Page index cannot be negative");
         }
         if (size < 1) {
             throw new IllegalArgumentException("Max size cannot be less than 1");
         }
         this.max = size;
-        this.number = index;
+        this.number = page;
         this.sort = sort == null ? Sort.unsorted() : sort;
     }
 

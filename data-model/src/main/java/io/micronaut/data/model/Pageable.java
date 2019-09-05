@@ -66,7 +66,7 @@ public interface Pageable extends Sort {
      * @return offset in the requested collection
      */
     default long getOffset() {
-        return getNumber() * getSize();
+        return (long) getNumber() * (long) getSize();
     }
 
     /**
@@ -139,36 +139,36 @@ public interface Pageable extends Sort {
 
     /**
      * Creates a new {@link Pageable} at the given offset with a default size of 10.
-     * @param index The index
+     * @param page The page
      * @return The pageable
      */
-    static @NonNull Pageable from(int index) {
-        return new DefaultPageable(index, 10, null);
+    static @NonNull Pageable from(int page) {
+        return new DefaultPageable(page, 10, null);
     }
 
     /**
      * Creates a new {@link Pageable} at the given offset.
-     * @param index The index
+     * @param page The page
      * @param size the size
      * @return The pageable
      */
-    static @NonNull Pageable from(int index, int size) {
-        return new DefaultPageable(index, size, null);
+    static @NonNull Pageable from(int page, int size) {
+        return new DefaultPageable(page, size, null);
     }
 
     /**
      * Creates a new {@link Pageable} at the given offset.
-     * @param number The offset
+     * @param page The page
      * @param size the size
      * @param sort the sort
      * @return The pageable
      */
     @JsonCreator
     static @NonNull Pageable from(
-            @JsonProperty("number") int number,
+            @JsonProperty("page") int page,
             @JsonProperty("size") int size,
             @JsonProperty("sort") @Nullable Sort sort) {
-        return new DefaultPageable(number, size, sort);
+        return new DefaultPageable(page, size, sort);
     }
 
     /**

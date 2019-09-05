@@ -2,7 +2,6 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.City

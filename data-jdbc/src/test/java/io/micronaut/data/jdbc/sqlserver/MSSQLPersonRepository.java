@@ -6,4 +6,5 @@ import io.micronaut.data.tck.repositories.PersonRepository;
 
 @JdbcRepository(dialect = Dialect.SQL_SERVER)
 public interface MSSQLPersonRepository extends PersonRepository {
+    
 }

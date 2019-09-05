@@ -578,7 +578,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case POSTGRES:
                 builder.append("LIMIT ").append(to).append(" ");
                 if (from != 0) {
-                    builder.append("OFFSET ").append(to);
+                    builder.append("OFFSET ").append(from);
                 }
             break;
 
@@ -592,7 +592,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case ORACLE:
             default:
                 if (from != 0) {
-                    builder.append("OFFSET ").append(to).append(" ROWS ");
+                    builder.append("OFFSET ").append(from).append(" ROWS ");
                 }
                 builder.append("FETCH NEXT ").append(to).append(" ROWS ONLY ");
             break;
