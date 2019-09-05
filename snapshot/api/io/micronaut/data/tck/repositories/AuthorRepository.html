@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -151,6 +151,11 @@ extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/AuthorRepository.html#searchByName-java.lang.String-">searchByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/AuthorRepository.html#updateNickname-java.lang.Long-java.lang.String-">updateNickname</a></span>(java.lang.Long&nbsp;id,
+              java.lang.String&nbsp;nickName)</code>&nbsp;</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.repository.CrudRepository">
@@ -230,10 +235,22 @@ extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html
 <a name="searchByName-java.lang.String-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>searchByName</h4>
 <pre><a href="../../../../../io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a>&nbsp;searchByName(java.lang.String&nbsp;name)</pre>
+</li>
+</ul>
+<a name="updateNickname-java.lang.Long-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>updateNickname</h4>
+<pre>void&nbsp;updateNickname(<a href="../../../../../io/micronaut/data/annotation/Id.html" title="annotation in io.micronaut.data.annotation">@Id</a>
+                    java.lang.Long&nbsp;id,
+                    @Parameter(value="nickName") @Nullable
+                    java.lang.String&nbsp;nickName)</pre>
 </li>
 </ul>
 </li>
