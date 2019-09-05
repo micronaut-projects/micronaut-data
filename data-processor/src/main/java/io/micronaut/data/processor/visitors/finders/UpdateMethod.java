@@ -105,11 +105,11 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             String name = parameter.stringValue(Parameter.class).orElse(parameter.getName());
             SourcePersistentProperty prop = entity.getPropertyByName(name);
             if (prop == null) {
-                matchContext.fail("Cannot update non-existent property" + name);
+                matchContext.fail("Cannot update non-existent property: " + name);
                 return null;
             } else {
                 if (prop.isGenerated()) {
-                    matchContext.fail("Cannot update a generated property" + name);
+                    matchContext.fail("Cannot update a generated property: " + name);
                     return null;
                 } else {
                     properiesToUpdate.add(name);

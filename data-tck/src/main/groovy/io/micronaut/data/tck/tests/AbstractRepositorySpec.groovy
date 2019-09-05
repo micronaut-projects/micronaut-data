@@ -2,6 +2,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.City
@@ -264,6 +265,21 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         def e = thrown(IllegalArgumentException)
         e.message == 'Argument [wrapper] value is null and the method parameter is not declared as nullable'
+
+        when:
+        def author = authorRepository.findByName("Stephen King")
+        authorRepository.updateNickname(author.id, "SK")
+        author = authorRepository.findByName("Stephen King")
+
+        then:
+        author.nickName == 'SK'
+
+        when:
+        authorRepository.updateNickname(author.id, null)
+        author = authorRepository.findByName("Stephen King")
+
+        then:
+        author.nickName == null
     }
 
     void "test project on single ended association"() {
