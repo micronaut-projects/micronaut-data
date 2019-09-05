@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -134,12 +134,20 @@ extends java.lang.Object</pre>
 <th class="colLast" scope="col">Field and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><code>static java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_PAGE_PARAMETER">DEFAULT_PAGE_PARAMETER</a></span></code>&nbsp;</td>
+<td class="colFirst"><code>static int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_MAX_PAGE_SIZE">DEFAULT_MAX_PAGE_SIZE</a></span></code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>static java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_PAGE_PARAMETER">DEFAULT_PAGE_PARAMETER</a></span></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SIZE_PARAMETER">DEFAULT_SIZE_PARAMETER</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SORT_IGNORE_CASE">DEFAULT_SORT_IGNORE_CASE</a></span></code>&nbsp;</td>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>static java.lang.String</code></td>
@@ -183,51 +191,62 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>int</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getMaxPageSize--">getMaxPageSize</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getDefaultPageSize--">getDefaultPageSize</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getPageParameterName--">getPageParameterName</a></span>()</code>&nbsp;</td>
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getMaxPageSize--">getMaxPageSize</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSizeParameterName--">getSizeParameterName</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getPageParameterName--">getPageParameterName</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSizeParameterName--">getSizeParameterName</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.util.regex.Pattern</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSortDelimiterPattern--">getSortDelimiterPattern</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#getSortParameterName--">getSortParameterName</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#isSortIgnoreCase--">isSortIgnoreCase</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setDefaultPageSize-int-">setDefaultPageSize</a></span>(int&nbsp;defaultPageSize)</code>
+<div class="block">Sets the default page size when binding <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> objects and no size
+ parameter is used.</div>
+</td>
+</tr>
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setMaxPageSize-int-">setMaxPageSize</a></span>(int&nbsp;maxPageSize)</code>
 <div class="block">Sets the maximum page size when binding <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> objects.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setPageParameterName-java.lang.String-">setPageParameterName</a></span>(java.lang.String&nbsp;pageParameterName)</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSizeParameterName-java.lang.String-">setSizeParameterName</a></span>(java.lang.String&nbsp;sizeParameterName)</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSortDelimiter-java.lang.String-">setSortDelimiter</a></span>(java.lang.String&nbsp;sortDelimiter)</code>&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSortIgnoreCase-boolean-">setSortIgnoreCase</a></span>(boolean&nbsp;sortIgnoreCase)</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#setSortParameterName-java.lang.String-">setSortParameterName</a></span>(java.lang.String&nbsp;sortParameterName)</code>&nbsp;</td>
 </tr>
@@ -253,6 +272,32 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Field Detail</h3>
+<a name="DEFAULT_MAX_PAGE_SIZE">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>DEFAULT_MAX_PAGE_SIZE</h4>
+<pre>public static final&nbsp;int DEFAULT_MAX_PAGE_SIZE</pre>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../../../constant-values.html#io.micronaut.data.runtime.config.DataConfiguration.PageableConfiguration.DEFAULT_MAX_PAGE_SIZE">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
+<a name="DEFAULT_SORT_IGNORE_CASE">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>DEFAULT_SORT_IGNORE_CASE</h4>
+<pre>public static final&nbsp;boolean DEFAULT_SORT_IGNORE_CASE</pre>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../../../constant-values.html#io.micronaut.data.runtime.config.DataConfiguration.PageableConfiguration.DEFAULT_SORT_IGNORE_CASE">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
 <a name="DEFAULT_SORT_PARAMETER">
 <!--   -->
 </a>
@@ -406,6 +451,35 @@ extends java.lang.Object</pre>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>maxPageSize</code> - The max page size</dd>
+</dl>
+</li>
+</ul>
+<a name="getDefaultPageSize--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getDefaultPageSize</h4>
+<pre>public&nbsp;int&nbsp;getDefaultPageSize()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the page size to use when binding <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a>
+ objects and no size parameter is used. By default is set to the same vale as <a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#maxPageSize"><code>maxPageSize</code></a></dd>
+</dl>
+</li>
+</ul>
+<a name="setDefaultPageSize-int-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setDefaultPageSize</h4>
+<pre>public&nbsp;void&nbsp;setDefaultPageSize(int&nbsp;defaultPageSize)</pre>
+<div class="block">Sets the default page size when binding <a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> objects and no size
+ parameter is used. Should be smaller or equal than <a href="../../../../../io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#maxPageSize"><code>maxPageSize</code></a>.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>defaultPageSize</code> - The default page size</dd>
 </dl>
 </li>
 </ul>
