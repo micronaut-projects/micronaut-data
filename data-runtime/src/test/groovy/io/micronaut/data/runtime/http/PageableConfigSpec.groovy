@@ -27,4 +27,13 @@ class PageableConfigSpec extends Specification {
         cleanup:
         context.close()
     }
+
+    void 'defaultPageSize is equal to maxPageSize if not set '(){
+        given:
+           def configuration = new DataConfiguration.PageableConfiguration()
+           configuration.maxPageSize = 50
+
+        expect:
+            configuration.defaultPageSize == 50
+    }
 }

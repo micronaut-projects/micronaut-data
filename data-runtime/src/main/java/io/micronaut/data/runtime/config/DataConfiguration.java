@@ -26,7 +26,7 @@ public class DataConfiguration implements DataSettings {
         public static final String DEFAULT_PAGE_PARAMETER = "page";
         public static final String PREFIX = "pageable";
         private int maxPageSize = DEFAULT_MAX_PAGE_SIZE;
-        private int defaultPageSize = maxPageSize;
+        private Integer defaultPageSize = null; // When is not specified the maxPageSize should be used
         private boolean sortIgnoreCase = DEFAULT_SORT_IGNORE_CASE;
         private String sortParameterName = DEFAULT_SORT_PARAMETER;
         private String sizeParameterName = DEFAULT_SIZE_PARAMETER;
@@ -83,7 +83,7 @@ public class DataConfiguration implements DataSettings {
          * objects and no size parameter is used. By default is set to the same vale as {@link #maxPageSize}
          */
         public int getDefaultPageSize() {
-            return defaultPageSize;
+            return defaultPageSize == null ? maxPageSize : defaultPageSize;
         }
 
         /**
