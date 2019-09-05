@@ -1051,8 +1051,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
+        PersistentProperty prop = entity.getPropertyByName(name);
         String path = name.contains(".") ? name : entity.getPath(name).orElse(null);
-        PersistentProperty prop = path != null ? entity.getPropertyByPath(path).orElse(null) : null;
+        if (prop == null) {
+            prop = path != null ? entity.getPropertyByPath(path).orElse(null) : null;
+        }
         if (prop == null) {
 
             // special case handling for ID
@@ -1082,7 +1085,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
-        return new PropertyPath(prop, path);
+        return new PropertyPath(prop, path != null ? path : name);
     }
 
     /**

@@ -28,6 +28,75 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 class FindSpec extends AbstractDataSpec {
+    void "test find by with overlapping property paths"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.DeviceInfoRepository', """
+@javax.persistence.Entity
+class DeviceInfo {
+
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue(strategy=javax.persistence.GenerationType.IDENTITY)
+    private Long id;
+
+    private String manufacturerDeviceId;
+
+    @javax.persistence.ManyToOne
+    @javax.persistence.JoinColumn(name="manufacturer_id")
+    public DeviceManufacturer manufacturer;
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getManufacturerDeviceId() {
+        return manufacturerDeviceId;
+    }
+
+    public void setManufacturerDeviceId(String manufacturerDeviceId) {
+        this.manufacturerDeviceId = manufacturerDeviceId;
+    }
+        
+    public DeviceManufacturer getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(DeviceManufacturer manufacturerDeviceId) {
+        this.manufacturer = manufacturer;
+    }        
+}
+
+@javax.persistence.Entity
+class DeviceManufacturer {
+    
+    @javax.persistence.Id
+    private Long id;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+}
+
+@Repository
+interface DeviceInfoRepository extends GenericRepository<DeviceInfo, Long> {
+
+    DeviceInfo findByManufacturerDeviceId(String id);
+}
+
+""")
+        def findByManufacturerDeviceId = beanDefinition.getRequiredMethod("findByManufacturerDeviceId", String)
+
+        expect:
+        findByManufacturerDeviceId != null
+    }
+
     void "test find order by"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', """
