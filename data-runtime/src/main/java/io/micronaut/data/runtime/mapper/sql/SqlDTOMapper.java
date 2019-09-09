@@ -1,14 +1,11 @@
 package io.micronaut.data.runtime.mapper.sql;
 
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 /**
- * A {@link BeanIntrospectionMapper} that reads the result using the specified
- * {@link PersistentEntity} and {@link ResultReader} and using the {@link #map(Object, Class)} allows mapping a result to a introspected Data Transfer Object (DTO).
+ * Subclass of {@link DTOMapper} specifically for SQL.
  *
  * @param <T> The entity type
  * @param <S> The source type.

@@ -22,8 +22,6 @@ import io.micronaut.data.model.runtime.BatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import org.reactivestreams.Publisher;
-
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
