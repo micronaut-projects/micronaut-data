@@ -3,6 +3,7 @@ io.micronaut.data.annotation.repeatable
 io.micronaut.data.annotation.sql
 io.micronaut.data.exceptions
 io.micronaut.data.hibernate.event
+io.micronaut.data.hibernate.naming
 io.micronaut.data.hibernate.operations
 io.micronaut.data.hibernate.runtime.spring
 io.micronaut.data.intercept
