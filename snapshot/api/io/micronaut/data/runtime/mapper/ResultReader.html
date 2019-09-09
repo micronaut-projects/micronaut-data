@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18};
+var methods = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18,"i18":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -256,6 +256,12 @@ var activeTableTab = "activeTableTab";
 <div class="block">Read a timestamp value for the given index.</div>
 </td>
 </tr>
+<tr id="i18" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#skipNext--">skipNext</a></span>()</code>
+<div class="block">Skip the next call to <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#next-RS-"><code>next(Object)</code></a> and return the last result.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -365,6 +371,16 @@ default&nbsp;java.lang.Object&nbsp;readNextDynamic(@NonNull
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The next result</dd>
 </dl>
+</li>
+</ul>
+<a name="skipNext--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>skipNext</h4>
+<pre>void&nbsp;skipNext()</pre>
+<div class="block">Skip the next call to <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#next-RS-"><code>next(Object)</code></a> and return the last result.</div>
 </li>
 </ul>
 <a name="readDynamic-java.lang.Object-java.lang.Object-io.micronaut.data.model.DataType-">
