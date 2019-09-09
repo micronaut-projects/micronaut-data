@@ -3460,6 +3460,14 @@
 <dd>
 <div class="block">Does the query contain an in expression.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html#hasNext-S-">hasNext(S)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlDTOMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#hasNext-RS-">hasNext(RS)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html#hasNext-RS-">hasNext(RS)</a></span> - Method in interface io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a></dt>
+<dd>
+<div class="block">Is another result available.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
 <div class="block">Does the query have a pageable.</div>
@@ -6686,14 +6694,6 @@
 <dd>
 <div class="block">Compute the size of the given object.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#skipNext--">skipNext()</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#skipNext--">skipNext()</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/ResultReader.html#skipNext--">skipNext()</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
-<dd>
-<div class="block">Skip the next call to <a href="io/micronaut/data/runtime/mapper/ResultReader.html#next-RS-"><code>ResultReader.next(Object)</code></a> and return the last result.</div>
-</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/annotation/TypeRole.html#SLICE">SLICE</a></span> - Static variable in annotation type io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/TypeRole.html" title="annotation in io.micronaut.data.annotation">TypeRole</a></dt>
 <dd>
 <div class="block">The parameter that is used to represent a <a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model"><code>Slice</code></a>.</div>
@@ -6815,6 +6815,14 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/spring/SpringVersionMapper.html#SpringVersionMapper--">SpringVersionMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringVersionMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringVersionMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">SqlDTOMapper</span></a>&lt;<a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">T</a>,<a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">S</a>,<a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="type parameter in SqlDTOMapper">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/mapper/sql/package-summary.html">io.micronaut.data.runtime.mapper.sql</a></dt>
+<dd>
+<div class="block">Subclass of <a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="class in io.micronaut.data.runtime.mapper"><code>DTOMapper</code></a> specifically for SQL.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html#SqlDTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-">SqlDTOMapper(RuntimePersistentEntity&lt;T&gt;, ResultReader&lt;S, String&gt;)</a></span> - Constructor for class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlDTOMapper</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/annotation/sql/SqlMembers.html" title="interface in io.micronaut.data.annotation.sql"><span class="typeNameLink">SqlMembers</span></a> - Interface in <a href="io/micronaut/data/annotation/sql/package-summary.html">io.micronaut.data.annotation.sql</a></dt>
 <dd>
 <div class="block">Interface for meta annotation members specific to SQL.</div>
@@ -6853,6 +6861,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#SqlResultEntityTypeMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-java.util.Set-">SqlResultEntityTypeMapper(RuntimePersistentEntity&lt;R&gt;, ResultReader&lt;RS, String&gt;, Set&lt;JoinPath&gt;)</a></span> - Constructor for class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
 <dd>
 <div class="block">Constructor used to customize the join paths.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">SqlTypeMapper</span></a>&lt;<a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="type parameter in SqlTypeMapper">RS</a>,<a href="io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="type parameter in SqlTypeMapper">R</a>&gt; - Interface in <a href="io/micronaut/data/runtime/mapper/sql/package-summary.html">io.micronaut.data.runtime.mapper.sql</a></dt>
+<dd>
+<div class="block">A <a href="io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that specific to SQL.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html#start-io.micronaut.inject.visitor.VisitorContext-">start(VisitorContext)</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html" title="class in io.micronaut.data.processor.visitors">RepositoryTypeElementVisitor</a></dt>
 <dd>&nbsp;</dd>

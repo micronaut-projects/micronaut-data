@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -259,12 +259,6 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readTimestamp-java.sql.ResultSet-java.lang.Integer-">readTimestamp</a></span>(java.sql.ResultSet&nbsp;resultSet,
              java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a timestamp value for the given index.</div>
-</td>
-</tr>
-<tr id="i15" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#skipNext--">skipNext</a></span>()</code>
-<div class="block">Skip the next call to <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#next-RS-"><code>ResultReader.next(Object)</code></a> and return the last result.</div>
 </td>
 </tr>
 </table>
@@ -618,7 +612,7 @@ public&nbsp;java.lang.String&nbsp;readString(java.sql.ResultSet&nbsp;resultSet,
 <a name="next-java.sql.ResultSet-">
 <!--   -->
 </a>
-<ul class="blockList">
+<ul class="blockListLast">
 <li class="blockList">
 <h4>next</h4>
 <pre>public&nbsp;boolean&nbsp;next(java.sql.ResultSet&nbsp;resultSet)</pre>
@@ -631,21 +625,6 @@ public&nbsp;java.lang.String&nbsp;readString(java.sql.ResultSet&nbsp;resultSet,
 <dd><code>resultSet</code> - The result set</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The next result</dd>
-</dl>
-</li>
-</ul>
-<a name="skipNext--">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>skipNext</h4>
-<pre>public&nbsp;void&nbsp;skipNext()</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#skipNext--">ResultReader</a></code></span></div>
-<div class="block">Skip the next call to <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#next-RS-"><code>ResultReader.next(Object)</code></a> and return the last result.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#skipNext--">skipNext</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;java.sql.ResultSet,java.lang.Integer&gt;</code></dd>
 </dl>
 </li>
 </ul>

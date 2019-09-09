@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -47,8 +47,8 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li>Prev&nbsp;Class</li>
-<li>Next&nbsp;Class</li>
+<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" target="_top">Frames</a></li>
@@ -112,14 +112,14 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd><a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;RS,R&gt;</dd>
+<dd><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;RS,R&gt;, <a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;RS,R&gt;</dd>
 </dl>
 <hr>
 <br>
 <pre>@Internal
 public final class <span class="typeNameLabel">SqlResultEntityTypeMapper&lt;RS,R&gt;</span>
 extends java.lang.Object
-implements <a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;RS,R&gt;</pre>
+implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;RS,R&gt;</pre>
 <div class="block">A <a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper"><code>TypeMapper</code></a> that can take a <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime"><code>RuntimePersistentEntity</code></a> and a <a href="../../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper"><code>ResultReader</code></a> and materialize an instance using
  using column naming conventions mapped by the entity.</div>
 </li>
@@ -183,13 +183,19 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMappe
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#getResultReader--">getResultReader</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#hasNext-RS-">hasNext</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet)</code>
+<div class="block">Is another result available.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#map-RS-java.lang.Class-">map</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;object,
    java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;type)</code>
 <div class="block">Map the given result set to the given object.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#read-RS-java.lang.String-">read</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet,
     java.lang.String&nbsp;name)</code>
@@ -354,7 +360,7 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlR
 </a><a name="read-RS-java.lang.String-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>read</h4>
 <pre>@Nullable
@@ -372,6 +378,27 @@ public&nbsp;java.lang.Object&nbsp;read(@NonNull
 <dd><code>name</code> - The name</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The value</dd>
+</dl>
+</li>
+</ul>
+<a name="hasNext-java.lang.Object-">
+<!--   -->
+</a><a name="hasNext-RS-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>hasNext</h4>
+<pre>public&nbsp;boolean&nbsp;hasNext(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;resultSet)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html#hasNext-RS-">SqlTypeMapper</a></code></span></div>
+<div class="block">Is another result available.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html#hasNext-RS-">hasNext</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlTypeMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it is</dd>
 </dl>
 </li>
 </ul>
@@ -402,8 +429,8 @@ public&nbsp;java.lang.Object&nbsp;read(@NonNull
 </div>
 <div class="subNav">
 <ul class="navList">
-<li>Prev&nbsp;Class</li>
-<li>Next&nbsp;Class</li>
+<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" target="_top">Frames</a></li>
