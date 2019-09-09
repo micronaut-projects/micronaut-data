@@ -255,6 +255,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R>
                         currentId = nextId(identity, rs);
                     }
 
+                    if (currentId != null) {
+                        resultReader.skipNext();
+                    }
+
                     for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
                         List value = entry.getValue();
                         RuntimePersistentProperty association = (RuntimePersistentProperty) entry.getKey();

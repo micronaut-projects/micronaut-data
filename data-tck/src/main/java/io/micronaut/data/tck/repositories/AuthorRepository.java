@@ -7,6 +7,7 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
 
 import javax.annotation.Nullable;
+import java.util.List;
 
 public interface AuthorRepository extends CrudRepository<Author, Long> {
 
@@ -24,6 +25,9 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
 
     @Join("books")
     Author searchByName(String name);
+
+    @Join("books")
+    List<Author> listAll();
 
     void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
 }

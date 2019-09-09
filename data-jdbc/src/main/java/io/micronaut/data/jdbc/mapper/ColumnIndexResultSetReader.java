@@ -17,6 +17,8 @@ import java.util.Date;
  */
 public final class ColumnIndexResultSetReader implements ResultReader<ResultSet, Integer> {
 
+    private boolean callNext = true;
+
     @Override
     public Timestamp readTimestamp(ResultSet resultSet, Integer index) {
         try {
@@ -163,11 +165,24 @@ public final class ColumnIndexResultSetReader implements ResultReader<ResultSet,
 
     @Override
     public boolean next(ResultSet resultSet) {
-        try {
-            return resultSet.next();
-        } catch (SQLException e) {
-            throw new DataAccessException("Error calling next on SQL result set: " + e.getMessage(), e);
+        if (callNext) {
+            try {
+                return resultSet.next();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error calling next on SQL result set: " + e.getMessage(), e);
+            }
+        } else {
+            try {
+                return true;
+            } finally {
+                callNext = true;
+            }
         }
+    }
+
+    @Override
+    public void skipNext() {
+        this.callNext = false;
     }
 
     private DataAccessException exceptionForColumn(Integer index, Exception e) {

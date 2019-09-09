@@ -90,6 +90,11 @@ public interface ResultReader<RS, IDX> {
     boolean next(RS resultSet);
 
     /**
+     * Skip the next call to {@link #next(Object)} and return the last result.
+     */
+    void skipNext();
+
+    /**
      * Read a value dynamically using the result set and the given name and data type.
      * @param resultSet The result set
      * @param index The name

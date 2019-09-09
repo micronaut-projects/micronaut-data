@@ -2,6 +2,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.City
@@ -67,6 +68,12 @@ abstract class AbstractRepositorySpec extends Specification {
         author.books.find { it.title == "The Stand"}
         author.books.find { it.title == "Pet Cemetery"}
 
+        when:
+        def authors = authorRepository.listAll()
+
+        then:
+        authors.every { it.books.size() == 2 }
+        authors.size() == 3
     }
 
     void "test save one"() {
