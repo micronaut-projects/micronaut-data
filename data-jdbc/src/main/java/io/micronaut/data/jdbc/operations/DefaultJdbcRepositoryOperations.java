@@ -36,7 +36,9 @@ import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.runtime.mapper.TypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
+import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.transaction.TransactionOperations;
@@ -287,10 +289,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         Spliterator<R> spliterator;
         AtomicBoolean finished = new AtomicBoolean();
         if (isRootResult || dtoProjection) {
-            SqlResultConsumer sqlMappingConsumer = preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null);
-            TypeMapper<ResultSet, R> mapper;
+            SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
+            SqlTypeMapper<ResultSet, R> mapper;
             if (dtoProjection) {
-                mapper = new DTOMapper<>(
+                mapper = new SqlDTOMapper<>(
                         getEntity(rootEntity),
                         columnNameResultSetReader
                 );
@@ -308,24 +310,17 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (finished.get()) {
                         return false;
                     }
-                    try {
-                        boolean hasNext = rs.next();
-                        if (hasNext) {
-                            R o = mapper.map(rs, resultType);
-                            if (sqlMappingConsumer != null) {
-                                sqlMappingConsumer.accept(rs, o);
-                            }
-                            action.accept(o);
-                        } else {
-                            if (finished.compareAndSet(false, true)) {
-                                rs.close();
-                                ps.close();
-                            }
+                    boolean hasNext = mapper.hasNext(rs);
+                    if (hasNext) {
+                        R o = mapper.map(rs, resultType);
+                        if (sqlMappingConsumer != null) {
+                            sqlMappingConsumer.accept(rs, o);
                         }
-                        return hasNext;
-                    } catch (SQLException e) {
-                        throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
+                        action.accept(o);
+                    } else {
+                        closeResultSet(ps, rs, finished);
                     }
+                    return hasNext;
                 }
             };
         } else {
@@ -348,10 +343,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 action.accept((R) r);
                             }
                         } else {
-                            if (finished.compareAndSet(false, true)) {
-                                rs.close();
-                                ps.close();
-                            }
+                            closeResultSet(ps, rs, finished);
                         }
                         return hasNext;
                     } catch (SQLException e) {
@@ -362,15 +354,19 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
 
         return StreamSupport.stream(spliterator, false).onClose(() -> {
-            if (finished.compareAndSet(false, true)) {
-                try {
-                    rs.close();
-                    ps.close();
-                } catch (SQLException e) {
-                    throw new DataAccessException("Error closing JDBC result stream: " + e.getMessage(), e);
-                }
-            }
+            closeResultSet(ps, rs, finished);
         });
+    }
+
+    private void closeResultSet(PreparedStatement ps, ResultSet rs, AtomicBoolean finished) {
+        if (finished.compareAndSet(false, true)) {
+            try {
+                rs.close();
+                ps.close();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error closing JDBC result stream: " + e.getMessage(), e);
+            }
+        }
     }
 
     @NonNull

@@ -33,12 +33,13 @@ import java.util.*;
  * @param <R> The result type
  */
 @Internal
-public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R> {
+public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS, R> {
 
     private final RuntimePersistentEntity<R> entity;
     private final ResultReader<RS, String> resultReader;
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
+    private boolean callNext = true;
 
     /**
      * Default constructor.
@@ -256,7 +257,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R>
                     }
 
                     if (currentId != null) {
-                        resultReader.skipNext();
+                        this.callNext = false;
                     }
 
                     for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
@@ -340,5 +341,18 @@ public final class SqlResultEntityTypeMapper<RS, R> implements TypeMapper<RS, R>
             }
         }
         return associated;
+    }
+
+    @Override
+    public boolean hasNext(RS resultSet) {
+        if (callNext) {
+            return resultReader.next(resultSet);
+        } else {
+            try {
+                return true;
+            } finally {
+                callNext = true;
+            }
+        }
     }
 }

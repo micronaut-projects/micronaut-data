@@ -32,7 +32,6 @@ import java.util.Date;
  */
 public interface ResultReader<RS, IDX> {
 
-
     /**
      * Convert the value to the given type.
      * @param value The value
@@ -88,11 +87,6 @@ public interface ResultReader<RS, IDX> {
      * @param resultSet The result set
      */
     boolean next(RS resultSet);
-
-    /**
-     * Skip the next call to {@link #next(Object)} and return the last result.
-     */
-    void skipNext();
 
     /**
      * Read a value dynamically using the result set and the given name and data type.

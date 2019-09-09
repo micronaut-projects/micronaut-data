@@ -20,28 +20,13 @@ import java.util.Date;
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
     private final ConversionService<?> conversionService = ConversionService.SHARED;
 
-    private boolean callNext = true;
-
     @Override
     public boolean next(ResultSet resultSet) {
-        if (callNext) {
-            try {
-                return resultSet.next();
-            } catch (SQLException e) {
-                throw new DataAccessException("Error calling next on SQL result set: " + e.getMessage(), e);
-            }
-        } else {
-            try {
-                return true;
-            } finally {
-                callNext = true;
-            }
+        try {
+            return resultSet.next();
+        } catch (SQLException e) {
+            throw new DataAccessException("Error calling next on SQL result set: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    public void skipNext() {
-        callNext = false;
     }
 
     @Override
