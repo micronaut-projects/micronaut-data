@@ -13,10 +13,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -130,11 +127,26 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + entity.getName());
         }
 
+        DataType dataType = property.getDataType();
+        String columnName = property.getPersistedName();
         return resultReader.readDynamic(
             resultSet,
-            property.getPersistedName(),
-            property.getDataType()
+            columnName,
+            dataType
         );
+    }
+
+    @Override
+    public boolean hasNext(RS resultSet) {
+        if (callNext) {
+            return resultReader.next(resultSet);
+        } else {
+            try {
+                return true;
+            } finally {
+                callNext = true;
+            }
+        }
     }
 
     private R readEntity(String prefix, String path, RS rs, RuntimePersistentEntity<R> persistentEntity) {
@@ -231,13 +243,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 } else {
                     String persistedName = persistentProperty.getPersistedName();
-                    Object v = resultReader.readDynamic(rs, hasPrefix ? prefix + persistedName : persistedName, persistentProperty.getDataType());
+                    DataType dataType = persistentProperty.getDataType();
+                    Object v = resultReader.readDynamic(rs, hasPrefix ? prefix + persistedName : persistedName, dataType);
 
-                    if (rpp.getType().isInstance(v)) {
-                        property.set(entity, v);
-                    } else {
-                        property.convertAndSet(entity, v);
-                    }
+                    convertAndSet(entity, rpp, property, v, dataType);
                 }
             }
 
@@ -262,23 +271,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         List value = entry.getValue();
                         RuntimePersistentProperty association = (RuntimePersistentProperty) entry.getKey();
                         BeanProperty property = association.getProperty();
-                        if (property.getType().isInstance(value)) {
-                            property.set(entity, value);
-                        } else {
-                            property.convertAndSet(entity, value);
-                        }
+                        convertAndSet(entity, association, property, value, association.getDataType());
                     }
                 }
                 BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
                 if (!property.isReadOnly()) {
-                    if (property.getType().isInstance(id)) {
-                        property.set(
-                                entity,
-                                id
-                        );
-                    } else {
-                        property.convertAndSet(entity, id);
-                    }
+                    convertAndSet(entity, identity, property, id, identity.getDataType());
                 }
             }
             return entity;
@@ -295,6 +293,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      */
     Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet) {
         return resultReader.readNextDynamic(resultSet, identity.getPersistedName(), identity.getDataType());
+    }
+
+    private void convertAndSet(
+            R entity,
+            RuntimePersistentProperty rpp,
+            BeanProperty property,
+            Object v,
+            DataType dataType) {
+        Class<?> propertyType = rpp.getType();
+        if (propertyType.isInstance(v)) {
+            property.set(entity, v);
+        } else {
+            property.set(entity, resultReader.convertRequired(v, propertyType));
+        }
     }
 
     @Nullable
@@ -339,18 +351,5 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
         }
         return associated;
-    }
-
-    @Override
-    public boolean hasNext(RS resultSet) {
-        if (callNext) {
-            return resultReader.next(resultSet);
-        } else {
-            try {
-                return true;
-            } finally {
-                callNext = true;
-            }
-        }
     }
 }

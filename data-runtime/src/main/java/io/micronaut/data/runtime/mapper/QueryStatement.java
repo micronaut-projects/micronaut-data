@@ -44,6 +44,7 @@ public interface QueryStatement<PS, IDX> {
             Object value) {
         switch (dataType) {
             case STRING:
+            case JSON:
                 if (value instanceof CharSequence) {
                     return setString(statement, index, value.toString());
                 } else {
