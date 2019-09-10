@@ -21,12 +21,10 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.data.runtime.mapper.TypeMapper;
-
 import java.util.*;
 
 /**
- * A {@link TypeMapper} that can take a {@link RuntimePersistentEntity} and a {@link ResultReader} and materialize an instance using
+ * A {@link io.micronaut.data.runtime.mapper.TypeMapper} that can take a {@link RuntimePersistentEntity} and a {@link ResultReader} and materialize an instance using
  * using column naming conventions mapped by the entity.
  *
  * @param <RS> The result set type

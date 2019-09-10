@@ -94,7 +94,7 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
 
         where:
         method             | returnType      | arguments     | joinTableExpression
-        "findByCitiesName" | "CountryRegion" | "String name" | "INNER JOIN countryRegionCity CountryRegion_cities_countryRegionCity_ ON CountryRegion_.id=CountryRegion_cities_countryRegionCity_.countryRegionId  INNER JOIN T_CITY CountryRegion_cities_ ON CountryRegion_cities_countryRegionCity_.cityId=CountryRegion_cities_.id"
+        "findByCitiesName" | "CountryRegion" | "String name" | "INNER JOIN countryRegionCity country_region_cities_countryRegionCity_ ON country_region_.id=country_region_cities_countryRegionCity_.countryRegionId  INNER JOIN T_CITY country_region_cities_ ON country_region_cities_countryRegionCity_.cityId=country_region_cities_.id"
     }
 
     @Unroll
@@ -168,7 +168,7 @@ interface MyInterface extends GenericRepository<City, Long> {
                 .get()
         def ann = execMethod
                 .synthesize(Query)
-        String columnNames = columns(City, 'T_CITY_')
+        String columnNames = columns(City, 'city_')
         String queryStr = ann.value()
 
         expect:
@@ -178,10 +178,10 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         method                           | joinPaths                 | whereClause
-        "findByCountryRegionName"        | ["countryRegion.country"] | "WHERE (T_CITY_country_region_.name = ?)"
-        "findByCountryRegionCountryName" | []                        | "WHERE (T_CITY_country_region_country_.name = ?)"
-        "findByCountryRegionName"        | []                        | "WHERE (T_CITY_country_region_.name = ?)"
-        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (T_CITY_country_region_.name = ?)"
+        "findByCountryRegionName"        | ["countryRegion.country"] | "WHERE (city_country_region_.name = ?)"
+        "findByCountryRegionCountryName" | []                        | "WHERE (city_country_region_country_.name = ?)"
+        "findByCountryRegionName"        | []                        | "WHERE (city_country_region_.name = ?)"
+        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (city_country_region_.name = ?)"
 
     }
 
@@ -213,7 +213,7 @@ interface MyInterface extends GenericRepository<City, Long> {
                 .get()
         def ann = execMethod
                 .synthesize(Query)
-        String columnNames = columns(City, 'T_CITY_')
+        String columnNames = columns(City, 'city_')
         String queryStr = ann.value()
 
         expect:
@@ -224,12 +224,12 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         method                           | joinCount | joinPaths                                  | joinExpression
-        "findByCountryRegionCountryName" | 2         | ["countryRegion"]                          | 'ON T_CITY_country_region_.countryId=T_CITY_country_region_country_.uuid'
-        "findByCountryRegionCountryName" | 2         | ["countryRegion", "countryRegion.country"] | 'ON T_CITY_country_region_.countryId=T_CITY_country_region_country_.uuid'
-        "findByCountryRegionName"        | 2         | ["countryRegion.country"]                  | 'ON T_CITY_country_region_.countryId=T_CITY_country_region_country_.uuid'
-        "findByCountryRegionCountryName" | 2         | []                                         | 'ON T_CITY_country_region_.countryId=T_CITY_country_region_country_.uuid'
-        "findByCountryRegionName"        | 1         | []                                         | 'ON T_CITY_.country_region_id=T_CITY_country_region_.id'
-        "findByCountryRegionName"        | 1         | ["countryRegion"]                          | 'ON T_CITY_.country_region_id=T_CITY_country_region_.id'
+        "findByCountryRegionCountryName" | 2         | ["countryRegion"]                          | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
+        "findByCountryRegionCountryName" | 2         | ["countryRegion", "countryRegion.country"] | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
+        "findByCountryRegionName"        | 2         | ["countryRegion.country"]                  | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
+        "findByCountryRegionCountryName" | 2         | []                                         | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
+        "findByCountryRegionName"        | 1         | []                                         | 'ON city_.country_region_id=city_country_region_.id'
+        "findByCountryRegionName"        | 1         | ["countryRegion"]                          | 'ON city_.country_region_id=city_country_region_.id'
 
     }
 

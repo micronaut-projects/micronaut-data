@@ -43,4 +43,9 @@ public @interface MappedEntity {
      * @return The naming strategy to use.
      */
     Class<? extends NamingStrategy> namingStrategy() default NamingStrategies.UnderScoreSeparatedLowerCase.class;
+
+    /**
+     * @return Whether to escape identifiers in generated queries. Defaults to false.
+     */
+    boolean escape() default false;
 }

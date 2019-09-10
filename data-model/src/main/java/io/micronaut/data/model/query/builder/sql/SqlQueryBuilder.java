@@ -126,7 +126,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
-        String sql = "DROP TABLE " + tableName + ";";
+        boolean escape = shouldEscape(entity);
+        String sql = "DROP TABLE " + (escape ? quote(tableName) : tableName) + ";";
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity.getPersistentProperties());
         List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
@@ -137,7 +138,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .orElseGet(() ->
                             namingStrategy.mappedName(association)
                     );
-            dropStatements.add("DROP TABLE " + joinTableName + ";");
+            dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName) : joinTableName) + ";");
         }
 
         dropStatements.add(sql);
@@ -155,6 +156,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         String tableName = getTableName(entity);
+        boolean escape = shouldEscape(entity);
+        if (escape) {
+            tableName = quote(tableName);
+        }
         StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
 
         ArrayList<PersistentProperty> props = new ArrayList<>(entity.getPersistentProperties());
@@ -166,6 +171,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         List<String> createStatements = new ArrayList<>();
         String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null);
         if (StringUtils.isNotEmpty(schema)) {
+            if (escape) {
+                schema = quote(schema);
+            }
             createStatements.add("CREATE SCHEMA " + schema + ";");
         }
 
@@ -181,6 +189,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         .orElseGet(() ->
                                 namingStrategy.mappedName(association)
                         );
+                if (escape) {
+                    joinTableName = quote(joinTableName);
+                }
                 joinTableBuilder.append(joinTableName).append(" (");
                 PersistentProperty associatedId = associatedEntity.getIdentity();
                 String[] joinColumnNames = resolveJoinTableColumns(entity, associatedEntity, association, identity, associatedId, namingStrategy);
@@ -216,6 +227,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             prop.getName() + embeddedProperty.getCapitilizedName()
                     );
 
+                    if (escape) {
+                        column = quote(column);
+                    }
+
                     boolean required = embeddedProperty.isRequired() || prop.getAnnotationMetadata().hasStereotype(Id.class);
                     column = addTypeToColumn(embeddedProperty, embeddedProperty instanceof Association, column, required);
                     column = addGeneratedStatementToColumn(identity, prop, column);
@@ -224,6 +239,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             } else {
                 String column = getColumnName(prop);
+                if (escape) {
+                    column = quote(column);
+                }
                 column = addTypeToColumn(prop, isAssociation, column, prop.isRequired());
                 column = addGeneratedStatementToColumn(identity, prop, column);
                 columns.add(column);
@@ -240,6 +258,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 String column = explicitColumn != null ? explicitColumn : entity.getNamingStrategy().mappedName(
                         identity.getName() + embeddedProperty.getCapitilizedName()
                 );
+                if (escape) {
+                    column = quote(column);
+                }
                 primaryKeyColumns.add(column);
             }
             builder.append(", PRIMARY KEY(").append(String.join(",", primaryKeyColumns)).append(')');
@@ -379,6 +400,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     public String selectAllColumns(PersistentEntity entity, String alias) {
         String columns;
+        boolean escape = shouldEscape(entity);
         List<PersistentProperty> persistentProperties = getPropertiesThatAreColumns(entity);
         if (CollectionUtils.isNotEmpty(persistentProperties)) {
             PersistentProperty identity = entity.getIdentity();
@@ -393,16 +415,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             if (association.getKind() == Relation.Kind.EMBEDDED) {
                                 PersistentEntity embeddedEntity = association.getAssociatedEntity();
                                 List<PersistentProperty> embeddedProps = getPropertiesThatAreColumns(embeddedEntity);
-                                return embeddedProps.stream().map(ep ->
-                                        alias + DOT + ep.getAnnotationMetadata().stringValue(MappedProperty.class).orElseGet(() ->
-                                        entity.getNamingStrategy().mappedName(association.getName() + ep.getCapitilizedName())
-                                    )
+                                return embeddedProps.stream().map(ep -> {
+                                            String columnName = ep.getAnnotationMetadata().stringValue(MappedProperty.class).orElseGet(() ->
+                                                    entity.getNamingStrategy().mappedName(association.getName() + ep.getCapitilizedName())
+                                            );
+                                            if (escape) {
+                                                columnName = quote(columnName);
+                                            }
+                                            return alias + DOT + columnName;
+                                        }
                                 ).collect(Collectors.joining(","));
                             }
                         }
                         return p.getAnnotationMetadata().stringValue(DataTransformer.class, "read")
                                     .map(str -> str + AS_CLAUSE + p.getPersistedName())
-                                    .orElseGet(() -> alias + DOT + getColumnName(p));
+                                    .orElseGet(() -> {
+                                        String columnName = getColumnName(p);
+                                        if (escape) {
+                                            columnName = quote(columnName);
+                                        }
+                                        return alias + DOT + columnName;
+                                    });
                     })
                     .collect(Collectors.joining(","));
         } else {
@@ -450,7 +483,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         StringBuilder builder = new StringBuilder("INSERT INTO ");
-        builder.append(getTableName(entity));
+        String tableName = getTableName(entity);
+        boolean escape = shouldEscape(entity);
+        if (escape) {
+            tableName = quote(tableName);
+        }
+        builder.append(tableName);
         builder.append(" (");
 
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
@@ -472,23 +510,38 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 addWriteExpression(values, prop);
                                 parameters.put(prop.getName() + "." + embeddedProp.getName(), String.valueOf(values.size()));
                                 if (explicitColumn != null) {
+                                    if (escape) {
+                                        explicitColumn = quote(explicitColumn);
+                                    }
                                     columnNames.add(explicitColumn);
                                 } else {
                                     NamingStrategy namingStrategy = entity.getNamingStrategy();
-                                    columnNames.add(namingStrategy.mappedName(prop.getName() + embeddedProp.getCapitilizedName()));
+                                    String columnName = namingStrategy.mappedName(prop.getName() + embeddedProp.getCapitilizedName());
+                                    if (escape) {
+                                        columnName = quote(columnName);
+                                    }
+                                    columnNames.add(columnName);
                                 }
                             }
                         } else if (!association.isForeignKey()) {
                             parameterTypes.put(prop.getName(), prop.getDataType());
                             addWriteExpression(values, prop);
                             parameters.put(prop.getName(), String.valueOf(values.size()));
-                            columnNames.add(getColumnName(prop));
+                            String columnName = getColumnName(prop);
+                            if (escape) {
+                                columnName = quote(columnName);
+                            }
+                            columnNames.add(columnName);
                         }
                     } else {
                         parameterTypes.put(prop.getName(), prop.getDataType());
                         addWriteExpression(values, prop);
                         parameters.put(prop.getName(), String.valueOf(values.size()));
-                        columnNames.add(getColumnName(prop));
+                        String columnName = getColumnName(prop);
+                        if (escape) {
+                            columnName = quote(columnName);
+                        }
+                        columnNames.add(columnName);
                     }
                 }
             }
@@ -523,16 +576,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         addWriteExpression(values, embeddedProp);
                         parameters.put(identity.getName() + "." + embeddedProp.getName(), String.valueOf(values.size()));
                         if (explicitColumn != null) {
+                            if (escape) {
+                                explicitColumn = quote(explicitColumn);
+                            }
                             columnNames.add(explicitColumn);
                         } else {
                             NamingStrategy namingStrategy = entity.getNamingStrategy();
-                            columnNames.add(namingStrategy.mappedName(identity.getName() + embeddedProp.getCapitilizedName()));
+                            String columnName = namingStrategy.mappedName(identity.getName() + embeddedProp.getCapitilizedName());
+                            if (escape) {
+                                columnName = quote(columnName);
+                            }
+                            columnNames.add(columnName);
                         }
                     }
                     builder.append(String.join(",", columnNames));
 
                 } else {
-                    builder.append(getColumnName(identity));
+                    String columnName = getColumnName(identity);
+                    if (escape) {
+                        columnName = quote(columnName);
+                    }
+                    builder.append(columnName);
                     addWriteExpression(values, identity);
                     parameters.put(identity.getName(), String.valueOf(values.size()));
                 }
@@ -614,7 +678,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected String getAliasName(PersistentEntity entity) {
-        return entity.getPersistedName() + "_";
+        return entity.getAliasName();
     }
 
     @Override
@@ -747,6 +811,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @param persistedName The persisted name.
      * @return The quoted name
      */
+    @Override
     protected String quote(String persistedName) {
         switch (dialect) {
             case MYSQL:

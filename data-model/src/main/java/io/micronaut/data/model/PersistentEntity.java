@@ -48,6 +48,12 @@ public interface PersistentEntity extends PersistentElement {
     @NonNull String getName();
 
     /**
+     * @return A name to use when referring to this element via an alias.
+     */
+    @NonNull
+    String getAliasName();
+
+    /**
      * The composite id.
      *
      * @return The composite id or null if there isn't one

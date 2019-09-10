@@ -32,7 +32,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         then:"The select includes the schema in the table name reference"
-        encoded.query == 'SELECT cars_.id,cars_.name FROM ford.cars cars_'
+        encoded.query == 'SELECT car_.id,car_.name FROM ford.cars car_'
     }
 
     void "test select embedded"() {

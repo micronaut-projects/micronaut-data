@@ -6,6 +6,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.DataTransformer;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -566,6 +567,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private void buildSelectClause(QueryModel query, QueryState queryState) {
         String logicalName = queryState.getCurrentAlias();
         PersistentEntity entity = queryState.getEntity();
+        boolean escape = shouldEscape(entity);
         StringBuilder queryString = queryState.getQuery();
         buildSelect(
                 queryState,
@@ -575,10 +577,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 entity
         );
 
+        String tableName = getTableName(entity);
+        if (escape) {
+            tableName = quote(tableName);
+        }
         queryString.append(FROM_CLAUSE)
-                .append(getTableName(entity))
+                .append(tableName)
                 .append(getTableAsKeyword())
                 .append(logicalName);
+    }
+
+    /**
+     * Whether queries should be escaped for the given entity.
+     * @param entity The entity
+     * @return True if they should be escaped
+     */
+    protected boolean shouldEscape(@NonNull PersistentEntity entity) {
+        return entity.getAnnotationMetadata().isTrue(MappedEntity.class, "escape");
     }
 
     /**
@@ -587,6 +602,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      */
     protected String getTableAsKeyword() {
         return AS_CLAUSE;
+    }
+
+    /**
+     * Quote a column name for the dialect.
+     * @param persistedName The persisted name.
+     * @return The quoted name
+     */
+    protected String quote(String persistedName) {
+        return "\"" + persistedName + "\"";
     }
 
     private void buildSelect(QueryState queryState, StringBuilder queryString, List<QueryModel.Projection> projectionList, String logicalName, PersistentEntity entity) {
@@ -643,12 +667,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     private void appendPropertyProjection(StringBuilder queryString, String alias, PersistentProperty persistentProperty, String propertyName) {
+        PersistentEntity owner = persistentProperty.getOwner();
+        boolean escape = shouldEscape(owner);
         if (persistentProperty instanceof Embedded) {
             PersistentEntity embedded = ((Embedded) persistentProperty).getAssociatedEntity();
             Iterator<? extends PersistentProperty> embeddedIterator = embedded.getPersistentProperties().iterator();
             while (embeddedIterator.hasNext()) {
                 PersistentProperty embeddedProp = embeddedIterator.next();
                 String columnName = computeEmbeddedName(persistentProperty, persistentProperty.getName(), embeddedProp);
+                if (escape) {
+                    columnName = quote(columnName);
+                }
                 queryString.append(alias)
                         .append(DOT)
                         .append(columnName);
@@ -658,9 +687,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         } else {
-            queryString.append(alias)
-                    .append(DOT)
-                    .append(computePropertyPaths() ? getColumnName(persistentProperty) : propertyName);
+            if (computePropertyPaths()) {
+                String columnName = getColumnName(persistentProperty);
+                if (escape) {
+                    columnName = quote(columnName);
+                }
+                queryString.append(alias)
+                        .append(DOT)
+                        .append(columnName);
+            } else {
+                queryString.append(alias)
+                        .append(DOT)
+                        .append(propertyName);
+            }
+
         }
     }
 
@@ -670,13 +710,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryModel.PropertyProjection propertyProjection,
             String logicalName,
             StringBuilder queryString) {
+        boolean escape = shouldEscape(entity);
         PersistentProperty persistentProperty = entity.getPropertyByPath(propertyProjection.getPropertyName())
                 .orElseThrow(() -> new IllegalArgumentException("Cannot project on non-existent property: " + propertyProjection.getPropertyName()));
+        String columnName = getColumnName(persistentProperty);
+        if (escape) {
+            columnName = quote(columnName);
+        }
         queryString.append(functionName)
                 .append(OPEN_BRACKET)
                 .append(logicalName)
                 .append(DOT)
-                .append(getColumnName(persistentProperty))
+                .append(columnName)
                 .append(CLOSE_BRACKET);
     }
 
@@ -896,9 +941,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             .append(DOT);
                 }
 
-                whereClause.append(computePropertyPaths() ? getColumnName(property) : path)
-                        .append(operator)
-                        .append(placeholder.name);
+                boolean computePropertyPaths = computePropertyPaths();
+                if (computePropertyPaths) {
+                    String columnName = getColumnName(property);
+                    if (queryState.shouldEscape()) {
+                        columnName = quote(columnName);
+                    }
+                    whereClause.append(columnName)
+                            .append(operator)
+                            .append(placeholder.name);
+                } else {
+
+                    whereClause.append(path)
+                            .append(operator)
+                            .append(placeholder.name);
+                }
                 addComputedParameter(queryState, property, placeholder, queryParameter);
             }
         }
@@ -924,12 +981,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     .append(DOT);
         }
 
-        whereClause.append(computePropertyPaths() ? getColumnName(prop) : path)
-                .append(") ")
+        boolean isComputePaths = computePropertyPaths();
+        if (isComputePaths) {
+            String columnName = getColumnName(prop);
+            if (queryState.shouldEscape()) {
+                columnName = quote(columnName);
+            }
+            whereClause.append(columnName);
+        } else {
+            whereClause.append(path);
+        }
+        whereClause.append(") ")
                 .append(operator)
                 .append(" lower(")
                 .append(placeholder.name)
                 .append(")");
+
         Object value = criterion.getValue();
         addComputedParameter(queryState, prop, placeholder, value);
     }
@@ -1010,7 +1077,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (currentAlias != null) {
                 queryString.append(currentAlias).append(DOT);
             }
-            queryString.append(getColumnName(prop)).append('=');
+            String columnName = getColumnName(prop);
+            if (queryState.escape) {
+                columnName = quote(columnName);
+            }
+            queryString.append(columnName).append('=');
             Placeholder param = queryState.newParameter();
             queryString.append(prop.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse(param.name));
             parameters.put(param.key, prop.getName());
@@ -1110,8 +1181,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryState.setCurrentAlias(null);
         }
         String currentAlias = queryState.getCurrentAlias();
+        String tableName = getTableName(entity);
+        if (queryState.escape) {
+            tableName = quote(tableName);
+        }
         queryString.append(UPDATE_CLAUSE)
-                .append(getTableName(entity));
+                .append(tableName);
         if (currentAlias != null) {
             queryString.append(SPACE)
                     .append(currentAlias);
@@ -1133,7 +1208,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryState.setCurrentAlias(null);
         }
         StringBuilder buffer = appendDeleteClause(queryString);
-        buffer.append(getTableName(entity)).append(SPACE);
+        String tableName = getTableName(entity);
+        if (queryState.escape) {
+            tableName = quote(tableName);
+        }
+        buffer.append(tableName).append(SPACE);
         if (currentAlias != null) {
             buffer.append(getTableAsKeyword())
                     .append(currentAlias);
@@ -1245,6 +1324,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final StringBuilder whereClause = new StringBuilder();
         private final boolean allowJoins;
         private final QueryModel queryObject;
+        private final boolean escape;
         private String currentAlias;
         private PersistentEntity entity;
 
@@ -1252,6 +1332,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             this.allowJoins = allowJoins;
             this.queryObject = query;
             this.entity = query.getPersistentEntity();
+            this.escape = AbstractSqlLikeQueryBuilder.this.shouldEscape(entity);
             this.currentAlias = getAliasName(entity);
         }
 
@@ -1407,6 +1488,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             return getCurrentAlias() + DOT + associationPath;
+        }
+
+        /**
+         * @return Should escape the query
+         */
+        public boolean shouldEscape() {
+            return escape;
         }
     }
 

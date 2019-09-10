@@ -35,6 +35,12 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
     }
 
     @NonNull
+    @Override
+    public String getAliasName() {
+        return NamingStrategy.DEFAULT.mappedName(getSimpleName()) + "_";
+    }
+
+    @NonNull
     private NamingStrategy getNamingStrategy(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
                 .classValue(MappedEntity.class, "namingStrategy")

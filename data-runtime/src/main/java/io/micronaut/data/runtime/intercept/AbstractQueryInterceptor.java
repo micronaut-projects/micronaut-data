@@ -124,7 +124,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     resultType,
                     rootEntity,
                     query,
-                    DataMethod.META_MEMBER_PARAMETER_BINDING
+                    DataMethod.META_MEMBER_PARAMETER_BINDING,
+                    false
             );
             findQueries.put(methodKey, storedQuery);
         }
@@ -164,7 +165,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     Long.class,
                     rootEntity,
                     query,
-                    DataMethod.META_MEMBER_PARAMETER_BINDING
+                    DataMethod.META_MEMBER_PARAMETER_BINDING,
+                    true
             );
             countQueries.put(methodKey, storedQuery);
         }
@@ -726,13 +728,15 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
          * @param resultType The result type of the query
          * @param rootEntity The root entity of the query
          * @param query The query itself
+         * @param isCount Is the query a count query
          */
         DefaultStoredQuery(
                 @NonNull ExecutableMethod<?, ?> method,
                 @NonNull Class<RT> resultType,
                 @NonNull Class<E> rootEntity,
                 @NonNull String query,
-                @Nullable String parameterBindingMember) {
+                @Nullable String parameterBindingMember,
+                boolean isCount) {
             this.resultType = ReflectionUtils.getWrapperType(resultType);
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
@@ -756,7 +760,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_DTO);
 
-            this.isCount = parameterBindingMember != null && parameterBindingMember.startsWith("count");
+            this.isCount = isCount;
             AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
             if (parameterBindingMember != null && annotation != null) {
                 this.indexedParameterBinding = annotation.get(

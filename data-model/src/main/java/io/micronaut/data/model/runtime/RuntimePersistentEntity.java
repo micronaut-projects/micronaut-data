@@ -43,6 +43,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private final RuntimePersistentProperty<T> identity;
     private final Map<String, RuntimePersistentProperty<T>> persistentProperties;
     private final RuntimePersistentProperty<T>[] constructorArguments;
+    private final String aliasName;
     private RuntimePersistentProperty<T> version;
 
     /**
@@ -105,8 +106,14 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             }
             this.constructorArguments[i] = prop;
         }
+        this.aliasName = super.getAliasName();
     }
 
+    @NonNull
+    @Override
+    public String getAliasName() {
+        return aliasName;
+    }
 
     /**
      * @return The underlying introspection.
