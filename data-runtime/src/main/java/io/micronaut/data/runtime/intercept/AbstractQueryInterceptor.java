@@ -164,7 +164,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     Long.class,
                     rootEntity,
                     query,
-                    context.isPresent(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_COUNT_PARAMETERS) ? DataMethod.META_MEMBER_COUNT_PARAMETERS : null
+                    DataMethod.META_MEMBER_PARAMETER_BINDING
             );
             countQueries.put(methodKey, storedQuery);
         }

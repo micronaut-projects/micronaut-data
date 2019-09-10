@@ -15,15 +15,18 @@
  */
 package io.micronaut.data.hibernate
 
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.GenericRepository
 import io.micronaut.data.tck.entities.Person
+import io.reactivex.Single
 
 @Repository
-interface PersonRepository {
+interface PersonRepository extends GenericRepository<Person, Long> {
 
     Page<Person> findByNameLike(String name, Pageable pageable)
 
@@ -42,4 +45,5 @@ interface PersonRepository {
     List<Person> findAllByName(String name)
 
     List<Person> findAllByNameLike(String name, Pageable pageable)
+
 }

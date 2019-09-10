@@ -22,6 +22,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonRepository;
+import io.reactivex.Single;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -38,4 +39,10 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
 
     @Query("from Person p where p.name = :n")
     Person queryByName(String n);
+
+    @Query(
+            value = "SELECT u FROM Person u WHERE u.age > :age",
+            countQuery = "SELECT COUNT(u) FROM Person u WHERE u.age > :age"
+    )
+    Single<Page<Person>> find(int age, Pageable pageable);
 }

@@ -45,11 +45,21 @@ class PageSpec extends Specification {
         List<Person> people = []
         50.times { num ->
             ('A'..'Z').each {
-                people << new Person(name: it * 5 + num)
+                people << new Person(name: it * 5 + num, age: num)
             }
         }
 
         crudRepository.saveAll(people)
+    }
+
+    void "test reactive single result that returns pageable"() {
+        given:
+        def page = crudRepository.find(10, Pageable.from(1)).blockingGet()
+
+        expect:
+        page.size == 10
+        page.totalPages == 102
+        page.totalSize == 1014
     }
 
     void "test sort"() {
