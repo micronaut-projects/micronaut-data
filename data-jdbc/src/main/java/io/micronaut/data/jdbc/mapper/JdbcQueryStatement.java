@@ -42,6 +42,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                         statement.setNull(index, Types.BIGINT);
                         return this;
                     case STRING:
+                    case JSON:
                         statement.setNull(index, Types.VARCHAR);
                         return this;
                     case DATE:

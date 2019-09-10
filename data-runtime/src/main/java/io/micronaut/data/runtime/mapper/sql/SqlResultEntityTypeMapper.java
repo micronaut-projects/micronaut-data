@@ -143,11 +143,26 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + entity.getName());
         }
 
+        DataType dataType = property.getDataType();
+        String columnName = property.getPersistedName();
         return resultReader.readDynamic(
             resultSet,
-            property.getPersistedName(),
-            property.getDataType()
+            columnName,
+            dataType
         );
+    }
+
+    @Override
+    public boolean hasNext(RS resultSet) {
+        if (callNext) {
+            return resultReader.next(resultSet);
+        } else {
+            try {
+                return true;
+            } finally {
+                callNext = true;
+            }
+        }
     }
 
     private R readEntity(
@@ -271,17 +286,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             isEmbedded,
                             hasPrefix
                     );
+                    final DataType dataType = persistentProperty.getDataType();
                     Object v = resultReader.readDynamic(
                             rs,
                             columnName,
-                            persistentProperty.getDataType()
+                            dataType
                     );
 
-                    if (rpp.getType().isInstance(v)) {
-                        property.set(entity, v);
-                    } else {
-                        property.convertAndSet(entity, v);
-                    }
+                    convertAndSet(entity, rpp, property, v, dataType);
                 }
             }
 
@@ -308,23 +320,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         List value = entry.getValue();
                         RuntimePersistentProperty association = (RuntimePersistentProperty) entry.getKey();
                         BeanProperty property = association.getProperty();
-                        if (property.getType().isInstance(value)) {
-                            property.set(entity, value);
-                        } else {
-                            property.convertAndSet(entity, value);
-                        }
+                        convertAndSet(entity, association, property, value, association.getDataType());
                     }
                 }
                 BeanProperty<R, Object> property = (BeanProperty<R, Object>) identity.getProperty();
                 if (!property.isReadOnly()) {
-                    if (property.getType().isInstance(id)) {
-                        property.set(
-                                entity,
-                                id
-                        );
-                    } else {
-                        property.convertAndSet(entity, id);
-                    }
+                    convertAndSet(entity, identity, property, id, identity.getDataType());
                 }
             }
             return entity;
@@ -356,6 +357,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      */
     Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet) {
         return resultReader.readNextDynamic(resultSet, identity.getPersistedName(), identity.getDataType());
+    }
+
+    private void convertAndSet(
+            R entity,
+            RuntimePersistentProperty rpp,
+            BeanProperty property,
+            Object v,
+            DataType dataType) {
+        Class<?> propertyType = rpp.getType();
+        if (propertyType.isInstance(v)) {
+            property.set(entity, v);
+        } else {
+            property.set(entity, resultReader.convertRequired(v, propertyType));
+        }
     }
 
     @Nullable
@@ -411,18 +426,5 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             }
         }
         return associated;
-    }
-
-    @Override
-    public boolean hasNext(RS resultSet) {
-        if (callNext) {
-            return resultReader.next(resultSet);
-        } else {
-            try {
-                return true;
-            } finally {
-                callNext = true;
-            }
-        }
     }
 }

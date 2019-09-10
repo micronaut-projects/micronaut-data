@@ -83,7 +83,11 @@ public enum DataType {
     /**
      * A class annotated with {@link io.micronaut.data.annotation.MappedEntity}.
      */
-    ENTITY;
+    ENTITY,
+    /**
+     * A JSON type.
+     */
+    JSON;
 
     /**
      * Empty array of data types.

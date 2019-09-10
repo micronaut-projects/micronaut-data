@@ -970,6 +970,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     column += " NOT NULL";
                 }
                 break;
+            case JSON:
+                switch (dialect) {
+                    case POSTGRES:
+                        column += " JSONB";
+                        break;
+                    case SQL_SERVER:
+                        column += " NVARCHAR(MAX)";
+                        break;
+                    case ORACLE:
+                        column += " CLOB";
+                        break;
+                    default:
+                        column += " JSON";
+                        break;
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
             default:
                 if (isAssociation) {
                     Association association = (Association) prop;

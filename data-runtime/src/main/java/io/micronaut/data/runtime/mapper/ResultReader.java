@@ -102,6 +102,7 @@ public interface ResultReader<RS, IDX> {
             @NonNull DataType dataType) {
         switch (dataType) {
             case STRING:
+            case JSON:
                 return readString(resultSet, index);
             case LONG:
                 return readLong(resultSet, index);
