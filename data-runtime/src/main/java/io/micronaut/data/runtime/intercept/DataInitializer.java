@@ -55,8 +55,8 @@ class DataInitializer {
         conversionService.addConverter(Date.class, LocalDate.class, date ->
                 date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
         );
-        conversionService.addConverter(Date.class, Instant.class, date ->
-                Instant.ofEpochSecond(date.getTime())
+        conversionService.addConverter(Date.class, Instant.class,
+                Date::toInstant
         );
         conversionService.addConverter(ChronoLocalDate.class, Date.class, localDate ->
                 new Date(localDate.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
