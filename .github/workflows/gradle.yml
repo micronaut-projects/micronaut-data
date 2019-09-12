@@ -22,3 +22,12 @@ jobs:
          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       run: ./gradlew publish 
+    - name: Publish Documentation
+      if: github.event_name == 'push'
+      uses: micronaut-projects/github-pages-deploy-action@master
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        BASE_BRANCH: master 
+        BRANCH: gh-pages 
+        FOLDER: build/docs
+        BUILD_SCRIPT: ./gradlew docs      
