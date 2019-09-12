@@ -5,6 +5,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.text.SimpleDateFormat
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -19,6 +20,7 @@ class DataInitializerSpec extends Specification {
         given:
             new DataInitializer()
             ConversionService<?> conversionService = ConversionService.SHARED
+
         when:
             def expectedValue = conversionService.convert(obj, targetType)
         then:
@@ -30,6 +32,10 @@ class DataInitializerSpec extends Specification {
             DATE_FORMAT.parse("1970-01-02")              || OffsetDateTime || LocalDate.parse("1970-01-02").atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime()
             LocalDate.parse("1970-01-02")                || Date           || DATE_FORMAT.parse("1970-01-02")
             LocalDate.parse("1970-01-02").atStartOfDay() || Date           || DATE_FORMAT.parse("1970-01-02")
+            new Date(1500000000000)                      || Instant        || Instant.ofEpochMilli(1500000000000)
+            Instant.ofEpochMilli(1500000000000)      || Date           || new Date(1500000000000)
+
+
     }
 
 }
