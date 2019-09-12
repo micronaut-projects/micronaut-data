@@ -15,7 +15,7 @@ jobs:
     - name: Build and Deploy
       uses: micronaut-projects/github-pages-deploy-action@master
       env:
-        ACCESS_TOKEN: ${{ secrets.GH_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
         BASE_BRANCH: master 
         BRANCH: gh-pages 
         FOLDER: build/docs
