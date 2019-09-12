@@ -16,7 +16,7 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew build docs
     - name: Publish to Sonatype OSS
       env:
          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
@@ -30,4 +30,3 @@ jobs:
         BASE_BRANCH: master 
         BRANCH: gh-pages 
         FOLDER: build/docs
-        BUILD_SCRIPT: ./gradlew docs      
