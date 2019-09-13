@@ -14,10 +14,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -169,9 +166,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             hasPrefix
                     );
 
-                    id = resultReader.readDynamic(rs, columnName, identity.getDataType());
+                    id = resultReader.readDynamic(rs, columnName, DataType.OBJECT);
                     if (id == null) {
-                        throw new DataAccessException("Table contains null ID for entity: " + persistentEntity.getName());
+                        return null;
                     }
                 }
             }
@@ -281,7 +278,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
                             Association association = entry.getKey();
                             Object associated = readAssociation(hasPrefix ? prefix : "", (hasPath ? path : ""), rs, association, hasPrefix);
-                            entry.getValue().add(associated);
+                            if (associated != null) {
+                                entry.getValue().add(associated);
+                            }
                         }
                         currentId = nextId(identity, rs);
                     }

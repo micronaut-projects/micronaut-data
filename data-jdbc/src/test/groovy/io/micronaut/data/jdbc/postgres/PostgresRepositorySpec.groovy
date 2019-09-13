@@ -9,6 +9,7 @@ import io.micronaut.data.jdbc.h2.H2RegionRepository
 import io.micronaut.data.jdbc.sqlserver.MSNoseRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -43,7 +44,7 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
     }
 
     @Override
-    AuthorRepository getAuthorRepository() {
+    PostgresAuthorRepository getAuthorRepository() {
         return context.getBean(PostgresAuthorRepository)
     }
 
@@ -93,6 +94,21 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
                 "datasources.default.schema-generate": SchemaGenerate.CREATE,
                 "datasources.default.dialect": Dialect.POSTGRES
         )
+    }
+
+    void "test save and fetch author with no books"() {
+
+        given:
+        def author = new Author(name: "Some Dude")
+        authorRepository.save(author)
+
+        author = authorRepository.queryByName("Some Dude")
+
+        expect:
+        author.books.size() == 0
+
+        cleanup:
+        authorRepository.deleteById(author.id)
     }
 
     void "test save and retrieve basic types"() {
