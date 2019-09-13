@@ -7,16 +7,25 @@ import java.util.UUID;
 import example.domain.NameDTO;
 import example.domain.Pet;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.spring.tx.annotation.Transactional;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface PetRepository extends PageableRepository<Pet, UUID> {
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository("other")
+public abstract class PetRepository implements PageableRepository<Pet, UUID> {
 
-    List<NameDTO> list(Pageable pageable);
+    abstract List<NameDTO> list(Pageable pageable);
 
     @Join("owner")
-    Optional<Pet> findByName(String name);
+    abstract Optional<Pet> findByName(String name);
+
+    abstract Optional<Pet> find(String name);
+
+    public Pet findPet(String name) {
+        return find(name).orElse(null);
+    }
 }

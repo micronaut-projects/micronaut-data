@@ -36,6 +36,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final Class<?> type;
     private final DataType dataType;
     private final boolean constructorArg;
+    private String persistedName;
 
     /**
      * Default constructor.
@@ -126,7 +127,10 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     @NonNull
     @Override
     public String getPersistedName() {
-        return owner.getNamingStrategy().mappedName(this);
+        if (persistedName == null) {
+            persistedName = owner.getNamingStrategy().mappedName(this);
+        }
+        return this.persistedName;
     }
 
     @Override

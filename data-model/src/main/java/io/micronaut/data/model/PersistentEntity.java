@@ -19,6 +19,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
@@ -119,6 +120,13 @@ public interface PersistentEntity extends PersistentElement {
      * @return A List of strings
      */
     @NonNull Collection<String> getPersistentPropertyNames();
+
+    /**
+     * @return Is the entity embeddable.
+     */
+    default boolean isEmbeddable() {
+        return getAnnotationMetadata().hasAnnotation(Embeddable.class);
+    }
 
     /**
      * @return The simple name without the package of entity
