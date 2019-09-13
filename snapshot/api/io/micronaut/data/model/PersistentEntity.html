@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":18,"i10":6,"i11":6,"i12":6,"i13":18,"i14":18,"i15":18,"i16":6,"i17":6,"i18":18,"i19":18,"i20":17,"i21":17};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":18,"i10":6,"i11":6,"i12":6,"i13":18,"i14":18,"i15":18,"i16":6,"i17":18,"i18":6,"i19":18,"i20":18,"i21":17,"i22":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -249,31 +249,35 @@ extends <a href="../../../../io/micronaut/data/model/PersistentElement.html" tit
 </td>
 </tr>
 <tr id="i17" class="rowColor">
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isEmbeddable--">isEmbeddable</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isOwningEntity-io.micronaut.data.model.PersistentEntity-">isOwningEntity</a></span>(<a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code>
 <div class="block">Returns whether the specified entity asserts ownership over this
  entity.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isRoot--">isRoot</a></span>()</code>
 <div class="block">Whether this entity is a root entity.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isVersioned--">isVersioned</a></span>()</code>
 <div class="block">Is the entity versioned for optimistic locking.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#of-io.micronaut.core.beans.BeanIntrospection-">of</a></span>(io.micronaut.core.beans.BeanIntrospection&lt;T&gt;&nbsp;introspection)</code>
 <div class="block">Creates a new persistent entity representation of the given type.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#of-java.lang.Class-">of</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Creates a new persistent entity representation of the given type.</div>
@@ -481,6 +485,19 @@ java.util.Collection&lt;java.lang.String&gt;&nbsp;getPersistentPropertyNames()</
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>A List of strings</dd>
+</dl>
+</li>
+</ul>
+<a name="isEmbeddable--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isEmbeddable</h4>
+<pre>default&nbsp;boolean&nbsp;isEmbeddable()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>Is the entity embeddable.</dd>
 </dl>
 </li>
 </ul>
