@@ -9,6 +9,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['1.8', '11.0.4']
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up JDK
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java }}
+    - name: Build with Gradle
+      run: ./gradlew build 
+  publish:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - name: Set up JDK 1.8
@@ -16,7 +29,7 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Gradle
-      run: ./gradlew build docs
+      run: ./gradlew docs
     - name: Publish to Sonatype OSS
       if: github.event_name == 'push'
       env:
