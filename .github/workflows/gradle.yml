@@ -18,6 +18,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build docs
     - name: Publish to Sonatype OSS
+      if: github.event_name == 'push'
       env:
          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
