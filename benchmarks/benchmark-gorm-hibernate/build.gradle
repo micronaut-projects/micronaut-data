@@ -7,7 +7,7 @@ dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     implementation "org.grails:grails-datastore-gorm-hibernate5"
     runtime "com.h2database:h2"
-    runtime "com.zaxxer:HikariCP:3.3.1"
+    runtime "com.zaxxer:HikariCP:3.4.0"
     runtime "ch.qos.logback:logback-classic:1.2.3"
 
     testImplementation "cglib:cglib-nodep:3.3.0"
