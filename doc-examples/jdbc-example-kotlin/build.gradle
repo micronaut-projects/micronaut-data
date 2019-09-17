@@ -29,7 +29,7 @@ dependencies {
     compile "io.micronaut:micronaut-runtime"    
     runtime "ch.qos.logback:logback-classic:1.2.3"
     runtime "com.h2database:h2"
-    runtime "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.8"
+    runtime "com.fasterxml.jackson.module:jackson-module-kotlin:2.10.0.pr3"
     testCompile "org.junit.jupiter:junit-jupiter-api"
     testCompile "org.jetbrains.spek:spek-api:1.1.5"
     testRuntime "org.junit.jupiter:junit-jupiter-engine"
