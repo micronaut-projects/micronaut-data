@@ -21,11 +21,11 @@ jobs:
       run: echo ::set-output name=release_version::${GITHUB_REF:11}
     - name: Publish to Github Pages
       run: echo Version is ${VERSION}
-      # if: success()
+      if: success()
       # uses: micronaut-projects/github-pages-deploy-action@master
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
         BASE_BRANCH: master 
         BRANCH: gh-pages 
         FOLDER: build/docs
-        VERSION: {{ steps.release_version.outputs.release_version }}
+        VERSION: ${{ steps.release_version.outputs.release_version }}
