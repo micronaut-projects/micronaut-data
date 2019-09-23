@@ -19,9 +19,7 @@ jobs:
       with:
         java-version: ${{ matrix.java }}   
     - name: Env Test
-      env:
-        VERSION: ${{ github.ref.substring(5) }}  
-      run: echo ${VERSION}
+      run: echo ${GITHUB_REF:10}
     - name: Build with Gradle
       run: ./gradlew build docs
     - name: Publish to Sonatype OSS
