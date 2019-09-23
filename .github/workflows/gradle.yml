@@ -18,8 +18,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}   
-    - name: Env Test
-      run: echo ${GITHUB_REF:10}
     - name: Build with Gradle
       run: ./gradlew build docs
     - name: Publish to Sonatype OSS
