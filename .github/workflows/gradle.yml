@@ -18,6 +18,10 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}
+    - name: Dump strategy context
+      env:
+        STRATEGY_CONTEXT: ${{ toJson(strategy) }}
+      run: echo "$STRATEGY_CONTEXT"        
     - name: Build with Gradle
       run: ./gradlew build docs
     - name: Publish to Sonatype OSS
