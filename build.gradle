@@ -72,7 +72,7 @@ subprojects { Project subproject ->
         }
     }
 
-    bintray.publish = false
+    bintray.publish = true
 
     tasks.withType(Test) {
         jvmArgs '-Duser.country=US'

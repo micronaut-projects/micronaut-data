@@ -29,3 +29,9 @@ jobs:
         FOLDER: build/docs
         BETA: true
         VERSION: ${{ steps.release_version.outputs.release_version }}
+    - name: Synchronize Maven Central
+      if: success()
+      env:
+         BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+         BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+      run: ./gradlew sWMC
