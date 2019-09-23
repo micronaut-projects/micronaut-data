@@ -1,7 +1,7 @@
 # Micronaut Data
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.data/micronaut-data-model.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.micronaut.data%22%20AND%20a:%22micronaut-data-model%22)
-[![Build Status](https://travis-ci.org/micronaut-projects/micronaut-data.svg?branch=master)](https://travis-ci.org/micronaut-projects/micronaut-data)
+[![](https://github.com/micronaut-projects/micronaut-data/workflows/Java%20CI/badge.svg)](https://github.com/micronaut-projects/micronaut-data/actions)
 
 Micronaut Data is a database access toolkit that uses Ahead of Time (AoT) compilation to pre-compute queries for repository interfaces that are then executed by a thin, lightweight runtime layer.
 
