@@ -27,7 +27,6 @@ jobs:
         BASE_BRANCH: master 
         BRANCH: gh-pages 
         FOLDER: build/docs
-        BETA: true
         VERSION: ${{ steps.release_version.outputs.release_version }}
     - name: Synchronize Maven Central
       if: success()
