@@ -624,23 +624,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         StringBuilder builder = new StringBuilder(" ");
         int size = pageable.getSize();
         long from = pageable.getOffset();
-        long to = from + size;
-        if (to < 0) {
-            // handle overflow
-            from = 0;
-            to = size;
-        }
         switch (dialect) {
             case H2:
             case MYSQL:
                 if (from == 0) {
-                    builder.append("LIMIT ").append(to);
+                    builder.append("LIMIT ").append(size);
                 } else {
-                    builder.append("LIMIT ").append(from).append(',').append(to);
+                    builder.append("LIMIT ").append(from).append(',').append(size);
                 }
             break;
             case POSTGRES:
-                builder.append("LIMIT ").append(to).append(" ");
+                builder.append("LIMIT ").append(size).append(" ");
                 if (from != 0) {
                     builder.append("OFFSET ").append(from);
                 }
@@ -658,7 +652,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (from != 0) {
                     builder.append("OFFSET ").append(from).append(" ROWS ");
                 }
-                builder.append("FETCH NEXT ").append(to).append(" ROWS ONLY ");
+                builder.append("FETCH NEXT ").append(size).append(" ROWS ONLY ");
             break;
         }
         return QueryResult.of(

@@ -46,7 +46,8 @@ abstract class AbstractPageSpec extends Specification {
         count == 1300
 
         when:"10 people are paged"
-        Page<Person> page = personRepository.findAll(Pageable.from(0, 10))
+        def pageable = Pageable.from(0, 10)
+        Page<Person> page = personRepository.findAll(pageable)
 
         then:"The data is correct"
         page.content.size() == 10
@@ -59,12 +60,24 @@ abstract class AbstractPageSpec extends Specification {
         page.nextPageable().size == 10
 
         when:"The next page is selected"
-        page = personRepository.findAll(page.nextPageable())
+        pageable = page.nextPageable()
+        page = personRepository.findAll(pageable)
 
         then:"it is correct"
         page.offset == 10
         page.pageNumber == 1
         page.content[0].name.startsWith("K")
+        page.content.size() == 10
+
+        when:"The previous page is selected"
+        pageable = page.previousPageable()
+        page = personRepository.findAll(pageable)
+
+        then:"it is correct"
+        page.offset == 0
+        page.pageNumber == 0
+        page.content[0].name.startsWith("A")
+        page.content.size() == 10
     }
 
     void "test pageable sort"() {
