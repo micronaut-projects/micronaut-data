@@ -28,6 +28,108 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 class FindSpec extends AbstractDataSpec {
+
+    void "test find by with overlapping property paths 2"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', '''
+@javax.persistence.Entity
+@javax.persistence.Table(name = "player")
+class Player {
+
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue(strategy=javax.persistence.GenerationType.IDENTITY)
+    private Long id;
+    private Team team;
+    private String name;
+       
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+       
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+    public void setTeam(Team team) {
+        this.team = team;
+    }
+    
+    public Team getTeam() {
+        return team;
+    }
+}
+
+@javax.persistence.Entity
+@javax.persistence.Table(name = "team")
+class Team {
+
+    @javax.persistence.Id
+    @javax.persistence.GeneratedValue(strategy=javax.persistence.GenerationType.IDENTITY)
+    private Long id;
+    private Integer externalTeamId;
+    private String externalTeam;
+    private String name;
+       
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+               
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+    
+           
+    public Integer getExternalTeamId() {
+        return externalTeamId;
+    }
+
+    public void setExternalTeamId(Integer externalTeamId) {
+        this.externalTeamId = externalTeamId;
+    }
+    
+    public String getExternalTeam() {
+        return externalTeam;
+    }
+
+    public void setExternalTeam(String externalTeam) {
+        this.externalTeam = externalTeam;
+    }
+}
+
+@Repository
+interface PlayerRepository extends GenericRepository<Player, Long> {
+
+    Collection<Player> findByName(String name);
+
+    Collection<Player> findByTeamName(String name);
+
+    Collection<Player> findByTeamId(Integer id);
+
+    Collection<Player> findByTeamExternalTeamId(Integer id);
+
+    Collection<Player> findByTeamExternalTeam(String team);
+}
+''')
+        expect:
+        beanDefinition != null
+    }
+
     void "test find by with overlapping property paths"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.DeviceInfoRepository', """

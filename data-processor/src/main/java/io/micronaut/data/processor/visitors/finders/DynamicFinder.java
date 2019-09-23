@@ -374,6 +374,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             Optional<String> propertyPath = entity.getPath(propertyName);
             if (propertyPath.isPresent()) {
                 String path = propertyPath.get();
+                propertyName = path;
                 PersistentProperty persistentProperty = entity.getPropertyByPath(path).orElse(null);
                 if (persistentProperty != null) {
                     int i = path.lastIndexOf('.');
