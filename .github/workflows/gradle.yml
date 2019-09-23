@@ -18,16 +18,20 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java }}   
+    - name: Env Test
+      env:
+        VERSION: ${{ github.ref.substring(5) }}  
+      run: echo ${VERSION}
     - name: Build with Gradle
       run: ./gradlew build docs
     - name: Publish to Sonatype OSS
-      if: github.event_name == 'push' && matrix.java == '1.8'
+      if: success() && github.event_name == 'push' && matrix.java == '1.8'
       env:
          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
       run: ./gradlew publish 
     - name: Publish to Github Pages
-      if: github.event_name == 'push' && matrix.java == '1.8'
+      if: success() && github.event_name == 'push' && matrix.java == '1.8'
       uses: micronaut-projects/github-pages-deploy-action@master
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
