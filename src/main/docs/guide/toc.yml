@@ -2,6 +2,8 @@ introduction:
   title: Introduction
 quickStart:
   title: Quick Start
+buildConfig:
+  title: Build Configuration
 repositories:
   title: Repository Interfaces
 querying:

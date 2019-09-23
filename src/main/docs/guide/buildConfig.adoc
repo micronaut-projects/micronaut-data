@@ -1,0 +1,50 @@
+Since Micronaut Data is a build time tool, it will not work correctly unless your build is configured correctly.
+
+There are two imporant aspects to Micronaut Data:
+
+1. The build time annotation processors
+2. The runtime APIs
+
+The build time processor is added by adding the `micronaut-data-processor` module to your annotation processor configuration in either Gradle or Maven:
+
+dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor", version="{version}"]
+
+==== Micronaut Data and Lombok
+
+If you intend to use Lombok with Micronaut Data then you must place the Lombok annotation processor *before* the Micronaut processors in your build configuration since Micronaut needs to see the mutations to the AST that Lombok applies.
+
+WARNING: Lombok plugins like the Gradle plugin `io.franzbecker.gradle-lombok` are not supported as they place the annotation processors in an incorrect order.
+
+==== Micronaut Data Runtime Dependencies
+
+At runtime for both Micronaut Data JPA and JDBC you as a minimum need the following:
+
+*1)* A SQL driver for your database in your build configuration. For example for H2:
+
+dependency:com.h2database:h2[scope="runtime]
+
+*2)* A JDBC Connection Pool Module (Hikari, Tomcat JDBC or DBCP ) from the Micronaut SQL project. For example for Tomcat JDBC:
+
+dependency:io.micronaut.configuration:micronaut-jdbc-tomcat[scope="runtime]
+
+*3)* A configured data source in `application.yml`. For example for H2:
+
+[source,yaml]
+----
+datasources:
+  default:
+    url: jdbc:h2:mem:devDb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    schema-generate: CREATE_DROP
+    dialect: H2
+----
+
+Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa` module:
+
+dependency:io.micronaut.data:micronaut-data-hibernate-jpa[]
+
+Or if you wish to use SQL then the `micronaut-data-jdbc` module:
+
+dependency:io.micronaut.data:micronaut-data-jdbc[]
