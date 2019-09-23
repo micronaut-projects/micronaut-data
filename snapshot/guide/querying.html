@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>4 Writing Queries 1.0.0.BUILD-SNAPSHOT</title>
+    <title>5 Writing Queries 1.0.0.BUILD-SNAPSHOT</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -35,22 +35,25 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>4</strong><span>Repository Interfaces</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>5</strong><span>Writing Queries</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>8</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>9</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -71,18 +74,18 @@ function addJsClass() {
             <div id="main" class="corner-all">
 
                 
-                    <div class="toc-item prev-left"><a href="../guide/repositories.html">&lt;&lt; <strong>3</strong><span>Repository Interfaces</span></a></div>
+                    <div class="toc-item prev-left"><a href="../guide/repositories.html">&lt;&lt; <strong>4</strong><span>Repository Interfaces</span></a></div>
                 
 
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
 
                 
-                    <div class="toc-item next-right"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span> >></a></div>
                 
 
 
                 <div class="project">
-                    <h1>4 Writing Queries</h1>
+                    <h1>5 Writing Queries</h1>
 
                     <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
                 </div>
@@ -91,34 +94,34 @@ function addJsClass() {
                 <div id="table-of-content">
                     <h2>Table of Contents</h2>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#criteria"><strong>4.1</strong><span>Query Criteria</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#criteria"><strong>5.1</strong><span>Query Criteria</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#pagination"><strong>4.2</strong><span>Pagination</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#pagination"><strong>5.2</strong><span>Pagination</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#ordering"><strong>4.3</strong><span>Ordering</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#ordering"><strong>5.3</strong><span>Ordering</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#projections"><strong>4.4</strong><span>Query Projections</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#projections"><strong>5.4</strong><span>Query Projections</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#dto"><strong>4.5</strong><span>DTO Projections</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#dto"><strong>5.5</strong><span>DTO Projections</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#joinQueries"><strong>4.6</strong><span>Join Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#joinQueries"><strong>5.6</strong><span>Join Queries</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#explicitQueries"><strong>4.7</strong><span>Explicit Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#explicitQueries"><strong>5.7</strong><span>Explicit Queries</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#nativeQueries"><strong>4.8</strong><span>Native Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#nativeQueries"><strong>5.8</strong><span>Native Queries</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#async"><strong>4.9</strong><span>Asynchronous Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#async"><strong>5.9</strong><span>Asynchronous Queries</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#reactive"><strong>4.10</strong><span>Reactive Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#reactive"><strong>5.10</strong><span>Reactive Queries</span></a>
                     </div>
                     
                 </div>
@@ -126,7 +129,7 @@ function addJsClass() {
 
                 
 
-<h1 id="querying">4 Writing Queries</h1>
+<h1 id="querying">5 Writing Queries</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying.adoc"'>
@@ -304,7 +307,7 @@ More details about the batch update variants of these methods is covered in the 
 </div>
 
 
-<h2 id="criteria">4.1 Query Criteria</h2>
+<h2 id="criteria">5.1 Query Criteria</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/criteria.adoc"'>
@@ -498,7 +501,7 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 </div>
 
 
-<h2 id="pagination">4.2 Pagination</h2>
+<h2 id="pagination">5.2 Pagination</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/pagination.adoc"'>
@@ -622,7 +625,7 @@ val page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))</code></p
 </div>
 
 
-<h2 id="ordering">4.3 Ordering</h2>
+<h2 id="ordering">5.3 Ordering</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/ordering.adoc"'>
@@ -660,7 +663,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 </div>
 
 
-<h2 id="projections">4.4 Query Projections</h2>
+<h2 id="projections">5.4 Query Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/projections.adoc"'>
@@ -784,7 +787,7 @@ If the projected property type and the return generic type do not match up then 
 </div>
 
 
-<h2 id="dto">4.5 DTO Projections</h2>
+<h2 id="dto">5.5 DTO Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/dto.adoc"'>
@@ -881,7 +884,7 @@ data class BookDTO(
 </div>
 
 
-<h2 id="joinQueries">4.6 Join Queries</h2>
+<h2 id="joinQueries">5.6 Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/joinQueries.adoc"'>
@@ -1150,7 +1153,7 @@ override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 
 
-<h2 id="explicitQueries">4.7 Explicit Queries</h2>
+<h2 id="explicitQueries">5.7 Explicit Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/explicitQueries.adoc"'>
@@ -1200,7 +1203,7 @@ Currently Micronaut Data does not parse the JPA-QL AST and perform any further t
 </div>
 
 
-<h2 id="nativeQueries">4.8 Native Queries</h2>
+<h2 id="nativeQueries">5.8 Native Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/nativeQueries.adoc"'>
@@ -1249,7 +1252,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </div>
 
 
-<h2 id="async">4.9 Asynchronous Queries</h2>
+<h2 id="async">5.9 Asynchronous Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/async.adoc"'>
@@ -1352,7 +1355,7 @@ In the case of JPA each operation will run with its own transaction and session,
 </div>
 
 
-<h2 id="reactive">4.10 Reactive Queries</h2>
+<h2 id="reactive">5.10 Reactive Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/reactive.adoc"'>
@@ -1452,9 +1455,9 @@ Assertions.assertEquals(
 
                 <div style="clear:both;margin-top:15px;"></div>
                 
-                    <div class="toc-item prev-left"><a href="../guide/repositories.html">&lt;&lt; <strong>3</strong><span>Repository Interfaces</span></a></div>
+                    <div class="toc-item prev-left"><a href="../guide/repositories.html">&lt;&lt; <strong>4</strong><span>Repository Interfaces</span></a></div>
                 
-                    <div class="toc-item next-right"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span> >></a></div>
                 
                 <div style="clear:both"></div>
             </div>

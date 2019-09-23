@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>8.1 Micronaut Data JDBC 1.0.0.BUILD-SNAPSHOT</title>
+    <title>9.1 Micronaut Data JDBC 1.0.0.BUILD-SNAPSHOT</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -35,22 +35,25 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/repositories.html"><strong>4</strong><span>Repository Interfaces</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/querying.html"><strong>5</strong><span>Writing Queries</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>8</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>9</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -71,7 +74,7 @@ function addJsClass() {
             <div id="main" class="corner-all">
 
                 
-                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>7</strong><span>Spring Data Support</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>8</strong><span>Spring Data Support</span></a></div>
                 
 
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
@@ -80,7 +83,7 @@ function addJsClass() {
 
 
                 <div class="project">
-                    <h1>8.1 Micronaut Data JDBC</h1>
+                    <h1>9.1 Micronaut Data JDBC</h1>
 
                     <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
                 </div>
@@ -89,49 +92,49 @@ function addJsClass() {
                 <div id="table-of-content">
                     <h2>Table of Contents</h2>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcQuickStart"><strong>8.1</strong><span>JDBC Quick Start</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcQuickStart"><strong>9.1</strong><span>JDBC Quick Start</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcConfiguration"><strong>8.2</strong><span>JDBC Configuration</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcConfiguration"><strong>9.2</strong><span>JDBC Configuration</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcRepositories"><strong>8.3</strong><span>JDBC Repositories</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcRepositories"><strong>9.3</strong><span>JDBC Repositories</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlInserts"><strong>8.3.1</strong><span>Inserts and Updates</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlInserts"><strong>9.3.1</strong><span>Inserts and Updates</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlMapping"><strong>8.4</strong><span>Mapping Entities</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlMapping"><strong>9.4</strong><span>Mapping Entities</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlAnnotations"><strong>8.4.1</strong><span>SQL Annotations</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlAnnotations"><strong>9.4.1</strong><span>SQL Annotations</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlIdGenerator"><strong>8.4.2</strong><span>ID Generation</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlIdGenerator"><strong>9.4.2</strong><span>ID Generation</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlCompositeId"><strong>8.4.3</strong><span>Composite Primary Keys</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlCompositeId"><strong>9.4.3</strong><span>Composite Primary Keys</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlConstructorArguments"><strong>8.4.4</strong><span>Constructor Arguments</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlConstructorArguments"><strong>9.4.4</strong><span>Constructor Arguments</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlNaming"><strong>8.4.5</strong><span>SQL Naming Strategies</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlNaming"><strong>9.4.5</strong><span>SQL Naming Strategies</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#sqlAssociations"><strong>8.4.6</strong><span>Association Fetching</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlAssociations"><strong>9.4.6</strong><span>Association Fetching</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:10px"><a href="#columnTransformer"><strong>8.4.7</strong><span>Using @ColumnTransformer</span></a>
+                    <div class="toc-item" style="margin-left:10px"><a href="#columnTransformer"><strong>9.4.7</strong><span>Using @ColumnTransformer</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcJoinQueries"><strong>8.5</strong><span>JDBC Join Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcJoinQueries"><strong>9.5</strong><span>JDBC Join Queries</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcDataTypes"><strong>8.6</strong><span>JDBC Data Types</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcDataTypes"><strong>9.6</strong><span>JDBC Data Types</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcNativeQueries"><strong>8.7</strong><span>Explicit JDBC Queries</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#jdbcNativeQueries"><strong>9.7</strong><span>Explicit JDBC Queries</span></a>
                     </div>
                     
                 </div>
@@ -139,7 +142,7 @@ function addJsClass() {
 
                 
 
-<h2 id="jdbc">8.1 Micronaut Data JDBC</h2>
+<h2 id="jdbc">9.1 Micronaut Data JDBC</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc.adoc"'>
@@ -193,7 +196,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 </div>
 
 
-<h2 id="jdbcQuickStart">8.1.1 JDBC Quick Start</h2>
+<h2 id="jdbcQuickStart">9.1.1 JDBC Quick Start</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcQuickStart.adoc"'>
@@ -647,7 +650,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 
 
-<h2 id="jdbcConfiguration">8.1.2 JDBC Configuration</h2>
+<h2 id="jdbcConfiguration">9.1.2 JDBC Configuration</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcConfiguration.adoc"'>
@@ -731,7 +734,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 
 
-<h2 id="jdbcRepositories">8.1.3 JDBC Repositories</h2>
+<h2 id="jdbcRepositories">9.1.3 JDBC Repositories</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories.adoc"'>
@@ -892,7 +895,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 </div>
 
 
-<h2 id="sqlInserts">8.1.3.1 Inserts and Updates</h2>
+<h2 id="sqlInserts">9.1.3.1 Inserts and Updates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/sqlInserts.adoc"'>
@@ -939,7 +942,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 
 
-<h2 id="sqlMapping">8.1.4 Mapping Entities</h2>
+<h2 id="sqlMapping">9.1.4 Mapping Entities</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping.adoc"'>
@@ -1009,7 +1012,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlAnnotations">8.1.4.1 SQL Annotations</h2>
+<h2 id="sqlAnnotations">9.1.4.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
@@ -1119,7 +1122,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlIdGenerator">8.1.4.2 ID Generation</h2>
+<h2 id="sqlIdGenerator">9.1.4.2 ID Generation</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlIdGenerator.adoc"'>
@@ -1142,7 +1145,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlCompositeId">8.1.4.3 Composite Primary Keys</h2>
+<h2 id="sqlCompositeId">9.1.4.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlCompositeId.adoc"'>
@@ -1322,7 +1325,7 @@ To alter the column mappings for the ID you use <code>@Column</code> in the <cod
 </div>
 
 
-<h2 id="sqlConstructorArguments">8.1.4.4 Constructor Arguments</h2>
+<h2 id="sqlConstructorArguments">9.1.4.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlConstructorArguments.adoc"'>
@@ -1414,7 +1417,7 @@ data class Manufacturer(
 </div>
 
 
-<h2 id="sqlNaming">8.1.4.5 SQL Naming Strategies</h2>
+<h2 id="sqlNaming">9.1.4.5 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlNaming.adoc"'>
@@ -1463,7 +1466,7 @@ public class CountryRegion {
 </div>
 
 
-<h2 id="sqlAssociations">8.1.4.6 Association Fetching</h2>
+<h2 id="sqlAssociations">9.1.4.6 Association Fetching</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociations.adoc"'>
@@ -1579,7 +1582,7 @@ data class Product(
 </div>
 
 
-<h2 id="columnTransformer">8.1.4.7 Using @ColumnTransformer</h2>
+<h2 id="columnTransformer">9.1.4.7 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/columnTransformer.adoc"'>
@@ -1628,7 +1631,7 @@ private String name;</code></pre>
 </div>
 
 
-<h2 id="jdbcJoinQueries">8.1.5 JDBC Join Queries</h2>
+<h2 id="jdbcJoinQueries">9.1.5 JDBC Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcJoinQueries.adoc"'>
@@ -1773,7 +1776,7 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 </div>
 
 
-<h2 id="jdbcDataTypes">8.1.6 JDBC Data Types</h2>
+<h2 id="jdbcDataTypes">9.1.6 JDBC Data Types</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcDataTypes.adoc"'>
@@ -2069,7 +2072,7 @@ class QuantityConverters {
 </div>
 
 
-<h2 id="jdbcNativeQueries">8.1.7 Explicit JDBC Queries</h2>
+<h2 id="jdbcNativeQueries">9.1.7 Explicit JDBC Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcNativeQueries.adoc"'>
@@ -2157,7 +2160,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 
                 <div style="clear:both;margin-top:15px;"></div>
                 
-                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>7</strong><span>Spring Data Support</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>8</strong><span>Spring Data Support</span></a></div>
                 
                 <div style="clear:both"></div>
             </div>
