@@ -17,6 +17,6 @@ public interface PetRepository extends PageableRepository<Pet, UUID> {
 
     List<NameDTO> list(Pageable pageable);
 
-    @Join(value = "owner", type = Join.Type.LEFT)
+    @Join("owner")
     Optional<Pet> findByName(String name);
 }
