@@ -213,7 +213,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             }
                         }
                     } else {
-                        throw new DataAccessException("Constructor [" + prop.getName() + "] must have a getter for type: " + persistentEntity.getName());
+                        throw new DataAccessException("Constructor argument [" + constructorArguments[i].getName() + "] must have an associated getter.");
                     }
                 }
                 entity = introspection.instantiate(args);
