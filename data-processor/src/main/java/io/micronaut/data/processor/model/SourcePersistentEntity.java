@@ -207,8 +207,9 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 }
             }
 
-            if (version!=null && version.getName().equals(name))
+            if (version != null && version.getName().equals(name)) {
                 return version;
+            }
         }
         return null;
     }
