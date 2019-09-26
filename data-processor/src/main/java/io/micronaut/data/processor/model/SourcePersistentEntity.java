@@ -195,6 +195,19 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                     return new SourcePersistentProperty(this, prop);
                 }
             }
+
+            if (ArrayUtils.isNotEmpty(id)) {
+                SourcePersistentProperty persistentProp = Arrays.stream(id)
+                        .filter(p->p.getName().equals(name))
+                        .findFirst()
+                        .orElse(null);
+
+                if (persistentProp!=null)
+                    return persistentProp;
+            }
+
+            if (version!=null && version.getName().equals(name))
+                return version;
         }
         return null;
     }
