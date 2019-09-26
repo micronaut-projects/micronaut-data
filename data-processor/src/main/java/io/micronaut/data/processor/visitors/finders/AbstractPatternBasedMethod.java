@@ -30,9 +30,9 @@ import io.micronaut.data.intercept.async.*;
 import io.micronaut.data.intercept.reactive.*;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.factory.Projections;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -327,6 +327,11 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         for (PropertyElement beanProperty : beanProperties) {
             String propertyName = beanProperty.getName();
             SourcePersistentProperty pp = entity.getPropertyByName(propertyName);
+
+            if (pp == null) {
+                pp = entity.getIdOrVersionPropertyByName(propertyName);
+            }
+
             if (pp == null) {
                 matchContext.fail("Property " + propertyName + " is not present in entity: " + entity.getName());
                 return true;
