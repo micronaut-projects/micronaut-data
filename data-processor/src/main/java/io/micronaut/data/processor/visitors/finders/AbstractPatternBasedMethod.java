@@ -326,7 +326,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         SourcePersistentEntity entity = matchContext.getEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
             String propertyName = beanProperty.getName();
-            SourcePersistentProperty pp = entity.getPropertyByName(propertyName); //WS: maybe here??
+            SourcePersistentProperty pp = entity.getPropertyByName(propertyName);
             if (pp == null) {
                 matchContext.fail("Property " + propertyName + " is not present in entity: " + entity.getName());
                 return true;
