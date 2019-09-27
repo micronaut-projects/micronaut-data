@@ -199,6 +199,31 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return null;
     }
 
+    /**
+     * Obtains a PersistentProperty representing id or version property by name.
+     *
+     * @param name The name of the id or version property
+     * @return The PersistentProperty used as id or version or null if it doesn't exist
+     */
+    public SourcePersistentProperty getIdOrVersionPropertyByName(String name) {
+        if (ArrayUtils.isNotEmpty(id)) {
+            SourcePersistentProperty persistentProp = Arrays.stream(id)
+                    .filter(p -> p.getName().equals(name))
+                    .findFirst()
+                    .orElse(null);
+
+            if (persistentProp != null) {
+                return persistentProp;
+            }
+        }
+
+        if (version != null && version.getName().equals(name)) {
+            return version;
+        }
+
+        return null;
+    }
+
     @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
