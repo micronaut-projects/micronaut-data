@@ -6,7 +6,7 @@ dependencies {
         exclude group:'org.springframework', module:'spring-aop'
         exclude group:'org.springframework', module:'spring-expression'
     }
-    compile "org.springframework:spring-jdbc:5.1.9.RELEASE"
+    compile "org.springframework:spring-jdbc:5.1.10.RELEASE"
     compileOnly project(":data-hibernate-jpa") 
     testCompile project(":data-tck")
 
