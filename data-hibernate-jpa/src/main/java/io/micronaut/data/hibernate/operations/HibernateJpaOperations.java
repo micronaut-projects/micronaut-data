@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.ArgumentUtils;
@@ -40,6 +41,7 @@ import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.transaction.TransactionOperations;
+import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
@@ -69,6 +71,7 @@ import java.util.stream.Stream;
  * @since 1.0
  */
 @EachBean(SessionFactory.class)
+@TypeHint(HibernatePresenceCondition.class)
 public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCapableRepository, ReactiveCapableRepository {
 
     private static final String ENTITY_GRAPH_FETCH = "javax.persistence.fetchgraph";

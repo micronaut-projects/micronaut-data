@@ -1,5 +1,6 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
     compile project(":data-runtime")
     compile "io.micronaut:micronaut-jdbc:$micronautVersion"
     compile "io.micronaut:micronaut-spring:$micronautVersion", {
