@@ -12,6 +12,7 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
+        ref: ${{ github.head_ref }}
     - name: Publish to Bintray
       env:
          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
