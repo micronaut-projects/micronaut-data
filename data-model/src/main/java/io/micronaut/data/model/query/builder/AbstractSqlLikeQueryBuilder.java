@@ -835,7 +835,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             .append(DOT);
                 }
 
-                buff.append(order.getProperty())
+                String property = order.getProperty();
+                PropertyPath propertyPath = validateProperty(queryState, property, Sort.Order.class);
+                buff.append(getColumnName(propertyPath.getProperty()))
                         .append(SPACE)
                         .append(order.getDirection().toString());
                 if (i.hasNext()) {
@@ -1133,8 +1135,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (name.equals("id") && identity != null) {
                 return new PropertyPath(identity, identity.getName());
             } else {
-                throw new IllegalArgumentException("Cannot use [" +
-                        criterionType.getSimpleName() + "] criterion on non-existent property path: " + name);
+                if (criterionType == Sort.Order.class) {
+                    throw new IllegalArgumentException("Cannot order on non-existent property path: " + name);
+
+                } else {
+                    throw new IllegalArgumentException("Cannot use [" +
+                            criterionType.getSimpleName() + "] criterion on non-existent property path: " + name);
+                }
             }
         }
 
