@@ -7,7 +7,8 @@ dependencies {
         exclude group:'org.springframework', module:'spring-expression'
     }
     compile "org.springframework:spring-jdbc:5.1.9.RELEASE"
-    compileOnly project(":data-hibernate-jpa") 
+    compileOnly project(":data-hibernate-jpa")
+    compileOnly "com.oracle.substratevm:svm"
     testCompile project(":data-tck")
 
     testCompile 'jakarta.persistence:jakarta.persistence-api:2.2.3'
