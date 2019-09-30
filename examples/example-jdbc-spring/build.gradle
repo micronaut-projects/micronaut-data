@@ -18,8 +18,8 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0.M1"
-    micronautVersion = "1.2.0"
+    micronautDataVersion = "1.0.0.M2"
+    micronautVersion = "1.2.3"
 }
 
 dependencyManagement {
