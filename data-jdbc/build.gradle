@@ -22,7 +22,7 @@ dependencies {
     testRuntime "com.h2database:h2"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
     testCompile "org.testcontainers:spock:1.12.2"
-    testCompile "org.testcontainers:mysql:1.12.1"
+    testCompile "org.testcontainers:mysql:1.12.2"
     testCompile "org.testcontainers:postgresql:1.12.2"
     testCompile "org.testcontainers:mssqlserver:1.12.2"
     testCompile 'mysql:mysql-connector-java:8.0.17'
