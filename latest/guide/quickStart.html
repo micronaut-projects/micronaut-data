@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>2 Quick Start 1.0.0.M1</title>
+    <title>2 Quick Start 1.0.0.M2</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -35,22 +35,25 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>4</strong><span>Writing Queries</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>4</strong><span>Repository Interfaces</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>5</strong><span>Updating Data</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>5</strong><span>Writing Queries</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>6</strong><span>How Micronaut Data Works</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>7</strong><span>Spring Data Support</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>8</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>9</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
                     </div>
@@ -77,14 +80,14 @@ function addJsClass() {
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
 
                 
-                    <div class="toc-item next-right"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span> >></a></div>
                 
 
 
                 <div class="project">
                     <h1>2 Quick Start</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M1</p>
+                    <p><strong>Version:</strong> 1.0.0.M2</p>
                 </div>
 
                 
@@ -106,7 +109,7 @@ function addJsClass() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M1'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M2'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -115,7 +118,7 @@ function addJsClass() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M1&lt;/version&gt;
+        &lt;version&gt;1.0.0.M2&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -140,7 +143,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M1'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M2'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -148,7 +151,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M1&lt;/version&gt;
+    &lt;version&gt;1.0.0.M2&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -428,7 +431,7 @@ bookRepository.save(book)</code></pre>
                 
                     <div class="toc-item prev-left"><a href="../guide/introduction.html">&lt;&lt; <strong>1</strong><span>Introduction</span></a></div>
                 
-                    <div class="toc-item next-right"><a href="../guide/repositories.html"><strong>3</strong><span>Repository Interfaces</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span> >></a></div>
                 
                 <div style="clear:both"></div>
             </div>
