@@ -312,7 +312,7 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
         }
 
         /**
-         * Return whether a transaction was created by this aspect,
+         * @return Return whether a transaction was created by this aspect,
          * or whether we just have a placeholder to keep ThreadLocal stack integrity.
          */
         public boolean hasTransaction() {

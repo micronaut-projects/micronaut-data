@@ -43,6 +43,7 @@ import io.micronaut.transaction.exceptions.TransactionUsageException;
  * @see #isCompleted()
  * @see #getSavepointManager()
  * @see DefaultTransactionStatus
+ * @param <T> The connection type
  */
 public abstract class AbstractTransactionStatus<T> implements TransactionStatus<T> {
 

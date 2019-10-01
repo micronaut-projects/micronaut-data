@@ -72,6 +72,7 @@ public class DefaultTransactionStatus<T> extends AbstractTransactionStatus<T> {
      * Create a new {@code DefaultTransactionStatus} instance.
      * @param transaction underlying transaction object that can hold state
      * for the internal transaction implementation
+     * @param connectionSupplier  The connection supplier
      * @param newTransaction if the transaction is new, otherwise participating
      * in an existing transaction
      * @param newSynchronization if a new transaction synchronization has been

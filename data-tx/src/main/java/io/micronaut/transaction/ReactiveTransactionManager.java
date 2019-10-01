@@ -54,7 +54,6 @@ public interface ReactiveTransactionManager extends TransactionManager {
      * @see TransactionDefinition#getIsolationLevel
      * @see TransactionDefinition#getTimeout
      * @see TransactionDefinition#isReadOnly
-     * @return A publisher that emits a reactive transaction
      */
     Publisher<ReactiveTransaction> getReactiveTransaction(@Nullable TransactionDefinition definition)
             throws TransactionException;
@@ -84,6 +83,7 @@ public interface ReactiveTransactionManager extends TransactionManager {
      * (typically caused by fundamental resource failures)
      * @throws IllegalTransactionStateException if the given transaction
      * is already completed (that is, committed or rolled back)
+     * @throws TransactionException if an exception occurs commiting the transaction
      * @see ReactiveTransaction#setRollbackOnly
      * @return  A publisher that just completes
      */
@@ -104,6 +104,7 @@ public interface ReactiveTransactionManager extends TransactionManager {
      * (typically caused by fundamental resource failures)
      * @throws io.micronaut.transaction.exceptions.IllegalTransactionStateException if the given transaction
      * is already completed (that is, committed or rolled back)
+     * @throws TransactionException if an exception occurs commiting the transaction
      * @return A publisher that just completes
      */
     Publisher<Void> rollback(ReactiveTransaction transaction) throws TransactionException;
