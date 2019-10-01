@@ -3,7 +3,6 @@ package io.micronaut.transaction.jdbc
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.event.StartupEvent
-import io.micronaut.runtime.event.annotation.EventListener
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -22,6 +21,9 @@ class TransactionAnnotationSpec extends Specification {
     @Inject BeanDefinitionRegistry registry
 
     void "test transactional annotation handling"() {
+        given:
+        testService.init()
+        
         when:"an insert is performed in a transaction"
         testService.insertTransctionally()
 
@@ -51,8 +53,7 @@ class TransactionAnnotationSpec extends Specification {
         @Inject Connection connection
 
         @Transactional
-        @EventListener
-        void init(StartupEvent startupEvent) {
+        void init() {
                 connection.prepareStatement("drop table book if exists").execute()
                 connection.prepareStatement("create table book (id bigint not null auto_increment, pages integer not null, title varchar(255), primary key (id))").execute()
 

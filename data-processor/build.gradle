@@ -1,6 +1,6 @@
 dependencies {
-	implementation project(":data-model")
-	implementation "io.micronaut:micronaut-inject:$micronautVersion"
+	compile project(":data-model")
+	compile "io.micronaut:micronaut-inject:$micronautVersion"
 
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 	testCompile "io.projectreactor:reactor-core:3.3.0.RELEASE"
