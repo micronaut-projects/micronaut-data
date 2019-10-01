@@ -118,17 +118,254 @@
 </ul>
 </li>
 <li class="blockList">
-<h2 title="Package">Package&nbsp;io.micronaut.data.transaction.exceptions</h2>
+<h2 title="Package">Package&nbsp;io.micronaut.transaction.exceptions</h2>
 <ul class="blockList">
-<li class="blockList"><a name="io.micronaut.data.transaction.exceptions.NoTransactionException">
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.CannotCreateTransactionException">
 <!--   -->
 </a>
-<h3>Class <a href="io/micronaut/data/transaction/exceptions/NoTransactionException.html" title="class in io.micronaut.data.transaction.exceptions">io.micronaut.data.transaction.exceptions.NoTransactionException</a> extends <a href="io/micronaut/data/transaction/exceptions/TransactionException.html" title="class in io.micronaut.data.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+<h3>Class <a href="io/micronaut/transaction/exceptions/CannotCreateTransactionException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.CannotCreateTransactionException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
 </li>
-<li class="blockList"><a name="io.micronaut.data.transaction.exceptions.TransactionException">
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.HeuristicCompletionException">
 <!--   -->
 </a>
-<h3>Class <a href="io/micronaut/data/transaction/exceptions/TransactionException.html" title="class in io.micronaut.data.transaction.exceptions">io.micronaut.data.transaction.exceptions.TransactionException</a> extends <a href="io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a> implements Serializable</h3>
+<h3>Class <a href="io/micronaut/transaction/exceptions/HeuristicCompletionException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.HeuristicCompletionException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockListLast">
+<h4>outcomeState</h4>
+<pre>io.micronaut.transaction.exceptions.HeuristicCompletionException.State outcomeState</pre>
+<div class="block">The outcome state of the transaction: have some or all resources been committed?</div>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.IllegalTransactionStateException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/IllegalTransactionStateException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.IllegalTransactionStateException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionUsageException.html" title="class in io.micronaut.transaction.exceptions">TransactionUsageException</a> implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.InvalidTimeoutException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/InvalidTimeoutException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.InvalidTimeoutException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionUsageException.html" title="class in io.micronaut.transaction.exceptions">TransactionUsageException</a> implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockListLast">
+<h4>timeout</h4>
+<pre>java.time.Duration timeout</pre>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/NestedTransactionNotSupportedException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException</a> extends <a href="io/micronaut/transaction/exceptions/CannotCreateTransactionException.html" title="class in io.micronaut.transaction.exceptions">CannotCreateTransactionException</a> implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.NoTransactionException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/NoTransactionException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.NoTransactionException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.TransactionException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionException</a> extends java.lang.RuntimeException implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/TransactionSuspensionNotSupportedException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException</a> extends <a href="io/micronaut/transaction/exceptions/CannotCreateTransactionException.html" title="class in io.micronaut.transaction.exceptions">CannotCreateTransactionException</a> implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.TransactionSystemException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/TransactionSystemException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionSystemException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockListLast">
+<h4>applicationException</h4>
+<pre>java.lang.Throwable applicationException</pre>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.TransactionTimedOutException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/TransactionTimedOutException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionTimedOutException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.TransactionUsageException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/TransactionUsageException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.TransactionUsageException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.exceptions.UnexpectedRollbackException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/exceptions/UnexpectedRollbackException.html" title="class in io.micronaut.transaction.exceptions">io.micronaut.transaction.exceptions.UnexpectedRollbackException</a> extends <a href="io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a> implements Serializable</h3>
+</li>
+</ul>
+</li>
+<li class="blockList">
+<h2 title="Package">Package&nbsp;io.micronaut.transaction.interceptor</h2>
+<ul class="blockList">
+<li class="blockList"><a name="io.micronaut.transaction.interceptor.DefaultTransactionAttribute">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/interceptor/DefaultTransactionAttribute.html" title="class in io.micronaut.transaction.interceptor">io.micronaut.transaction.interceptor.DefaultTransactionAttribute</a> extends <a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">DefaultTransactionDefinition</a> implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockList">
+<h4>qualifier</h4>
+<pre>java.lang.String qualifier</pre>
+</li>
+<li class="blockListLast">
+<h4>noRollbackFor</h4>
+<pre>java.util.Set&lt;E&gt; noRollbackFor</pre>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="blockList">
+<h2 title="Package">Package&nbsp;io.micronaut.transaction.jdbc</h2>
+<ul class="blockList">
+<li class="blockList"><a name="io.micronaut.transaction.jdbc.DataSourceTransactionManager">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">io.micronaut.transaction.jdbc.DataSourceTransactionManager</a> extends <a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt; implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockList">
+<h4>dataSource</h4>
+<pre>javax.sql.DataSource dataSource</pre>
+</li>
+<li class="blockListLast">
+<h4>enforceReadOnly</h4>
+<pre>boolean enforceReadOnly</pre>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="blockList">
+<h2 title="Package">Package&nbsp;io.micronaut.transaction.jdbc.exceptions</h2>
+<ul class="blockList">
+<li class="blockList"><a name="io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/jdbc/exceptions/CannotGetJdbcConnectionException.html" title="class in io.micronaut.transaction.jdbc.exceptions">io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException</a> extends java.lang.RuntimeException implements Serializable</h3>
+</li>
+</ul>
+</li>
+<li class="blockList">
+<h2 title="Package">Package&nbsp;io.micronaut.transaction.support</h2>
+<ul class="blockList">
+<li class="blockList"><a name="io.micronaut.transaction.support.AbstractSynchronousTransactionManager">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractSynchronousTransactionManager</a> extends java.lang.Object implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialization Methods</h3>
+<ul class="blockList">
+<li class="blockListLast">
+<h4>readObject</h4>
+<pre>private&nbsp;void&nbsp;readObject(java.io.ObjectInputStream&nbsp;ois)
+                 throws java.io.IOException,
+                        java.lang.ClassNotFoundException</pre>
+<dl>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code>java.io.IOException</code></dd>
+<dd><code>java.lang.ClassNotFoundException</code></dd>
+</dl>
+</li>
+</ul>
+</li>
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockList">
+<h4>transactionSynchronization</h4>
+<pre>io.micronaut.transaction.support.AbstractSynchronousTransactionManager.Synchronization transactionSynchronization</pre>
+</li>
+<li class="blockList">
+<h4>defaultTimeout</h4>
+<pre>java.time.Duration defaultTimeout</pre>
+</li>
+<li class="blockList">
+<h4>nestedTransactionAllowed</h4>
+<pre>boolean nestedTransactionAllowed</pre>
+</li>
+<li class="blockList">
+<h4>validateExistingTransaction</h4>
+<pre>boolean validateExistingTransaction</pre>
+</li>
+<li class="blockList">
+<h4>globalRollbackOnParticipationFailure</h4>
+<pre>boolean globalRollbackOnParticipationFailure</pre>
+</li>
+<li class="blockList">
+<h4>failEarlyOnGlobalRollbackOnly</h4>
+<pre>boolean failEarlyOnGlobalRollbackOnly</pre>
+</li>
+<li class="blockListLast">
+<h4>rollbackOnCommitFailure</h4>
+<pre>boolean rollbackOnCommitFailure</pre>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="blockList"><a name="io.micronaut.transaction.support.DefaultTransactionDefinition">
+<!--   -->
+</a>
+<h3>Class <a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.DefaultTransactionDefinition</a> extends java.lang.Object implements Serializable</h3>
+<ul class="blockList">
+<li class="blockList">
+<h3>Serialized Fields</h3>
+<ul class="blockList">
+<li class="blockList">
+<h4>propagationBehavior</h4>
+<pre><a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Propagation</a> propagationBehavior</pre>
+</li>
+<li class="blockList">
+<h4>isolationLevel</h4>
+<pre><a href="io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a> isolationLevel</pre>
+</li>
+<li class="blockList">
+<h4>timeout</h4>
+<pre>java.time.Duration timeout</pre>
+</li>
+<li class="blockList">
+<h4>readOnly</h4>
+<pre>boolean readOnly</pre>
+</li>
+<li class="blockListLast">
+<h4>name</h4>
+<pre>java.lang.String name</pre>
+</li>
+</ul>
+</li>
+</ul>
 </li>
 </ul>
 </li>

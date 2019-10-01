@@ -56,5 +56,11 @@ io.micronaut.data.runtime.spring
 io.micronaut.data.tck.entities
 io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.repositories
-io.micronaut.data.transaction
-io.micronaut.data.transaction.exceptions
+io.micronaut.transaction
+io.micronaut.transaction.exceptions
+io.micronaut.transaction.interceptor
+io.micronaut.transaction.interceptor.annotation
+io.micronaut.transaction.jdbc
+io.micronaut.transaction.jdbc.exceptions
+io.micronaut.transaction.support
+io.micronaut.transaction.test
