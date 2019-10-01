@@ -41,7 +41,7 @@ import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
-import io.micronaut.data.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
@@ -151,7 +151,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public <T, R> R findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            Connection connection = status.getResource();
+            Connection connection = status.getConnection();
             try (PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
@@ -241,7 +241,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             try {
-                Connection connection = status.getResource();
+                Connection connection = status.getConnection();
                 PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true);
                 ResultSet rs = ps.executeQuery();
                 return rs.next();
@@ -257,7 +257,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
-            Connection connection = status.getResource();
+            Connection connection = status.getConnection();
             return findStream(preparedQuery, connection);
         });
     }
@@ -373,7 +373,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         return transactionOperations.executeRead(status -> {
-            Connection connection = status.getResource();
+            Connection connection = status.getConnection();
             return findStream(preparedQuery, connection).collect(Collectors.toList());
         });
     }
@@ -384,7 +384,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         //noinspection ConstantConditions
         return transactionOperations.executeWrite(status -> {
             try {
-                Connection connection = status.getResource();
+                Connection connection = status.getConnection();
                 try (PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false)) {
                     return Optional.of(ps.executeUpdate());
                 }
@@ -406,7 +406,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         //noinspection ConstantConditions
         return transactionOperations.executeWrite((status) -> {
             try {
-                Connection connection = status.getResource();
+                Connection connection = status.getConnection();
                 T entity = operation.getEntity();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
@@ -628,8 +628,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         } else {
             //noinspection ConstantConditions
             return transactionOperations.executeWrite((status) -> {
-                Connection connection = status.getResource();
-                List<T> results = new ArrayList<>();
+                Connection connection = status.getConnection();
+                List<T> results = new ArrayList<>(10);
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
 

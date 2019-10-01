@@ -1,15 +1,14 @@
 package io.micronaut.data.jdbc.runtime.spring;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.transaction.TransactionCallback;
-import io.micronaut.data.transaction.TransactionOperations;
-import io.micronaut.data.transaction.TransactionStatus;
-import io.micronaut.data.transaction.exceptions.NoTransactionException;
+import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.NoTransactionException;
+import io.micronaut.transaction.exceptions.TransactionException;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -18,6 +17,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.function.Function;
 
 /**
  * Default implementation of {@link TransactionOperations} that uses Spring managed transactions.
@@ -47,24 +47,14 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
         this.readTransactionTemplate = new TransactionTemplate(transactionManager, transactionDefinition);
     }
 
-    @Nullable
     @Override
-    public <R> R executeWrite(@NonNull TransactionCallback<Connection, R> callback) {
-        //noinspection Duplicates
-        return writeTransactionTemplate.execute((status) -> callback.apply(new JdbcTransactionStatus(status)));
+    public <R> R executeRead(@NonNull Function<TransactionStatus<Connection>, R> callback) {
+        return writeTransactionTemplate.execute(status -> callback.apply(new JdbcTransactionStatus(status)));
     }
 
-    @Nullable
     @Override
-    public <R> R executeRead(@NonNull TransactionCallback<Connection, R> callback) {
-        return readTransactionTemplate.execute((status) -> {
-            Connection connection = DataSourceUtils.getConnection(dataSource);
-            try {
-                return callback.apply(new JdbcTransactionStatus(status));
-            } finally {
-                DataSourceUtils.releaseConnection(connection, dataSource);
-            }
-        });
+    public <R> R executeWrite(@NonNull Function<TransactionStatus<Connection>, R> callback) {
+        return readTransactionTemplate.execute(status -> callback.apply(new JdbcTransactionStatus(status)));
     }
 
     @NonNull
@@ -94,12 +84,6 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
             this.springStatus = springStatus;
         }
 
-        @NonNull
-        @Override
-        public Connection getResource() {
-            return getConnection();
-        }
-
         @Override
         public boolean isNewTransaction() {
             return springStatus.isNewTransaction();
@@ -118,6 +102,43 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
         @Override
         public boolean isCompleted() {
             return springStatus.isCompleted();
+        }
+
+        @Override
+        public boolean hasSavepoint() {
+            return springStatus.hasSavepoint();
+        }
+
+        @Override
+        public void flush() {
+            springStatus.flush();
+        }
+
+        @NonNull
+        @Override
+        public Object getTransaction() {
+            return springStatus;
+        }
+
+        @NonNull
+        @Override
+        public Connection getConnection() {
+            return SpringJdbcTransactionOperations.this.getConnection();
+        }
+
+        @Override
+        public Object createSavepoint() throws TransactionException {
+            return springStatus.createSavepoint();
+        }
+
+        @Override
+        public void rollbackToSavepoint(Object savepoint) throws TransactionException {
+            springStatus.rollbackToSavepoint(savepoint);
+        }
+
+        @Override
+        public void releaseSavepoint(Object savepoint) throws TransactionException {
+            springStatus.releaseSavepoint(savepoint);
         }
     }
 }
