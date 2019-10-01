@@ -1,19 +1,20 @@
 package io.micronaut.data.hibernate.runtime.spring;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.transaction.TransactionCallback;
-import io.micronaut.data.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.TransactionException;
 import org.hibernate.SessionFactory;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
+import java.util.function.Function;
 
 /**
  * Adds Spring Transaction management capability to Micronaut Data.
@@ -42,20 +43,18 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
         this.readTransactionTemplate = new TransactionTemplate(hibernateTransactionManager, transactionDefinition);
     }
 
-    @Nullable
     @Override
-    public <R> R executeWrite(@NonNull TransactionCallback<EntityManager, R> callback) {
+    public <R> R executeRead(@NonNull Function<TransactionStatus<EntityManager>, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
-        return writeTransactionTemplate.execute(status ->
+        return readTransactionTemplate.execute(status ->
                 callback.apply(new JpaTransactionStatus(status))
         );
     }
 
-    @Nullable
     @Override
-    public <R> R executeRead(@NonNull TransactionCallback<EntityManager, R> callback) {
+    public <R> R executeWrite(@NonNull Function<TransactionStatus<EntityManager>, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
-        return readTransactionTemplate.execute(status ->
+        return writeTransactionTemplate.execute(status ->
                 callback.apply(new JpaTransactionStatus(status))
         );
     }
@@ -69,18 +68,12 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     /**
      * Internal transaction status.
      */
-    private final class JpaTransactionStatus implements io.micronaut.data.transaction.TransactionStatus<EntityManager> {
+    private final class JpaTransactionStatus implements TransactionStatus<EntityManager> {
 
         private final org.springframework.transaction.TransactionStatus springStatus;
 
         JpaTransactionStatus(org.springframework.transaction.TransactionStatus springStatus) {
             this.springStatus = springStatus;
-        }
-
-        @NonNull
-        @Override
-        public EntityManager getResource() {
-            return sessionFactory.getCurrentSession();
         }
 
         @Override
@@ -101,6 +94,43 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
         @Override
         public boolean isCompleted() {
             return springStatus.isCompleted();
+        }
+
+        @Override
+        public boolean hasSavepoint() {
+            return springStatus.hasSavepoint();
+        }
+
+        @Override
+        public void flush() {
+            springStatus.flush();
+        }
+
+        @NonNull
+        @Override
+        public Object getTransaction() {
+            return springStatus;
+        }
+
+        @NonNull
+        @Override
+        public EntityManager getConnection() {
+            return sessionFactory.getCurrentSession();
+        }
+
+        @Override
+        public Object createSavepoint() throws TransactionException {
+            return springStatus.createSavepoint();
+        }
+
+        @Override
+        public void rollbackToSavepoint(Object savepoint) throws TransactionException {
+            springStatus.rollbackToSavepoint(savepoint);
+        }
+
+        @Override
+        public void releaseSavepoint(Object savepoint) throws TransactionException {
+            springStatus.releaseSavepoint(savepoint);
         }
     }
 }

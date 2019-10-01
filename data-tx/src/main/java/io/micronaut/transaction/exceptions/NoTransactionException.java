@@ -1,4 +1,4 @@
-package io.micronaut.data.transaction.exceptions;
+package io.micronaut.transaction.exceptions;
 
 /**
  * Exception that occurs if no transaction is present.

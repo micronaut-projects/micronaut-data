@@ -39,7 +39,7 @@ import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
-import io.micronaut.data.transaction.TransactionOperations;
+import io.micronaut.transaction.TransactionOperations;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;

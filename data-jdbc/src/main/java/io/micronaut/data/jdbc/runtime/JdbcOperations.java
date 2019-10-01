@@ -28,7 +28,7 @@ public interface JdbcOperations {
      * if no transaction is present.
      *
      * @return The current connection for the active transaction.
-     * @throws io.micronaut.data.transaction.exceptions.NoTransactionException if no transaction is present.
+     * @throws io.micronaut.transaction.exceptions.NoTransactionException if no transaction is present.
      */
     @NonNull Connection getConnection();
 

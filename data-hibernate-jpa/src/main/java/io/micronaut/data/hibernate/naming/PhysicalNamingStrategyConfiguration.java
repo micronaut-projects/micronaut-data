@@ -8,6 +8,7 @@ import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.cfg.AvailableSettings;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 /**
  * Applies the configured {@link PhysicalNamingStrategy}.
@@ -20,7 +21,12 @@ import javax.inject.Singleton;
 class PhysicalNamingStrategyConfiguration implements BeanCreatedEventListener<JpaConfiguration> {
     private final PhysicalNamingStrategy physicalNamingStrategy;
 
+    /**
+     * Default constructor.
+     * @param physicalNamingStrategy The naming strategy
+     */
     public PhysicalNamingStrategyConfiguration(PhysicalNamingStrategy physicalNamingStrategy) {
+        Objects.requireNonNull(physicalNamingStrategy, "PhysicalNamingStrategy cannot be null");
         this.physicalNamingStrategy = physicalNamingStrategy;
     }
 

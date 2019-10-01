@@ -1,6 +1,4 @@
-package io.micronaut.data.transaction.exceptions;
-
-import io.micronaut.data.exceptions.DataAccessException;
+package io.micronaut.transaction.exceptions;
 
 /**
  * Generic transaction exception super class.
@@ -8,7 +6,7 @@ import io.micronaut.data.exceptions.DataAccessException;
  * @author graemerocher
  * @since 1.0.0
  */
-public class TransactionException extends DataAccessException {
+public class TransactionException extends RuntimeException {
     /**
      * @param message The message
      */
