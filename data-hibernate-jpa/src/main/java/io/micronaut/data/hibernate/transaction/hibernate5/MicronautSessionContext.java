@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate.transaction.hibernate5;
 
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.jpa.transaction.EntityManagerHolder;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.hibernate.FlushMode;
@@ -37,6 +38,7 @@ import org.hibernate.engine.spi.SessionFactoryImplementor;
  * @since 4.2
  */
 @SuppressWarnings("serial")
+@TypeHint(MicronautSessionContext.class)
 public final class MicronautSessionContext implements CurrentSessionContext {
 
     private final SessionFactoryImplementor sessionFactory;

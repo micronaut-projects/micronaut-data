@@ -21,7 +21,6 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataAccessResourceFailureException;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -43,7 +42,6 @@ import org.hibernate.resource.transaction.spi.TransactionStatus;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -70,7 +68,7 @@ import java.util.Objects;
  * and services which use plain JDBC (without being aware of Hibernate)!
  * Application code needs to stick to the same simple Connection lookup pattern as
  * with {@link io.micronaut.transaction.jdbc.DataSourceTransactionManager}
- * (i.e. {@link org.springframework.jdbc.datasource.DataSourceUtils#getConnection}.
+ * (i.e. {@link DataSourceUtils#getConnection}.
  *
  * <p>This transaction manager supports nested transactions via JDBC 3.0 Savepoints.
  * The {@link #setNestedTransactionAllowed} "nestedTransactionAllowed"} flag defaults
@@ -92,7 +90,7 @@ import java.util.Objects;
  */
 @SuppressWarnings("serial")
 @EachBean(SessionFactory.class)
-@Requires(missing = org.springframework.orm.hibernate5.HibernateTransactionManager.class)
+@Requires(missingClasses = "org.springframework.orm.hibernate5.HibernateTransactionManager")
 @Replaces(DataSourceTransactionManager.class)
 public class HibernateTransactionManager extends AbstractSynchronousTransactionManager<EntityManager>
         implements ResourceTransactionManager<EntityManagerFactory, EntityManager> {
@@ -446,14 +444,6 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
         } catch (org.hibernate.TransactionException ex) {
             // assumably from commit call to the underlying JDBC connection
             throw new TransactionSystemException("Could not commit Hibernate transaction", ex);
-        } catch (HibernateException ex) {
-            // assumably failed to flush changes to database
-            throw convertHibernateAccessException(ex);
-        } catch (PersistenceException ex) {
-            if (ex.getCause() instanceof HibernateException) {
-                throw convertHibernateAccessException((HibernateException) ex.getCause());
-            }
-            throw ex;
         }
     }
 
@@ -471,14 +461,6 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
             hibTx.rollback();
         } catch (org.hibernate.TransactionException ex) {
             throw new TransactionSystemException("Could not roll back Hibernate transaction", ex);
-        } catch (HibernateException ex) {
-            // Shouldn't really happen, as a rollback doesn't cause a flush.
-            throw convertHibernateAccessException(ex);
-        } catch (PersistenceException ex) {
-            if (ex.getCause() instanceof HibernateException) {
-                throw convertHibernateAccessException((HibernateException) ex.getCause());
-            }
-            throw ex;
         } finally {
             if (!txObject.isNewSession() && !this.hibernateManagedSession) {
                 // Clear all pending inserts/updates/deletes in the Session.
@@ -600,19 +582,6 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
         return ((SessionImplementor) session).getJdbcCoordinator().getLogicalConnection().isPhysicallyConnected();
     }
 
-
-    /**
-     * Convert the given HibernateException to an appropriate exception
-     * from the {@code org.springframework.dao} hierarchy.
-     * <p>Will automatically apply a specified SQLExceptionTranslator to a
-     * Hibernate JDBCException, else rely on Hibernate's default translation.
-     * @param ex the HibernateException that occurred
-     * @return a corresponding DataAccessException
-     */
-    protected DataAccessException convertHibernateAccessException(HibernateException ex) {
-        throw ex;
-    }
-
     @NonNull
     @Override
     public EntityManager getConnection() {
@@ -704,16 +673,7 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
 
         @Override
         public void flush() {
-            try {
-                getSessionHolder().getSession().flush();
-            } catch (HibernateException ex) {
-                throw convertHibernateAccessException(ex);
-            } catch (PersistenceException ex) {
-                if (ex.getCause() instanceof HibernateException) {
-                    throw convertHibernateAccessException((HibernateException) ex.getCause());
-                }
-                throw ex;
-            }
+            getSessionHolder().getSession().flush();
         }
     }
 

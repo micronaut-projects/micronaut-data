@@ -7,7 +7,6 @@ import io.micronaut.data.hibernate.transaction.hibernate5.MicronautSessionContex
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cfg.AvailableSettings;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
 
 import javax.sql.DataSource;
 import java.util.LinkedHashMap;
@@ -48,7 +47,7 @@ public class DataEntityManagerFactoryBean {
     @Replaces(
             factory = io.micronaut.configuration.hibernate.jpa.EntityManagerFactoryBean.class,
             bean = StandardServiceRegistry.class)
-    @Requires(missing = HibernateTransactionManager.class)
+    @Requires(missingClasses = "org.springframework.orm.hibernate5.HibernateTransactionManager")
     protected StandardServiceRegistry hibernateStandardServiceRegistry(
             @Parameter String dataSourceName,
             DataSource dataSource) {
