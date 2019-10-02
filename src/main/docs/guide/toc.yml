@@ -20,7 +20,9 @@ querying:
   reactive: Reactive Queries
 dataUpdates:
   title: Updating Data
-  transactions: Transactions
+  transactions:
+    title: Transactions
+    transactionalEvents: Transactional Events
   batchUpdates: Batch Updates
   batchDeletes: Batch Deletes
   timestamps: Entity Timestamps
