@@ -133,6 +133,7 @@
 <li><a href="io/micronaut/data/tck/jdbc/entities/package-tree.html">io.micronaut.data.tck.jdbc.entities</a>, </li>
 <li><a href="io/micronaut/data/tck/repositories/package-tree.html">io.micronaut.data.tck.repositories</a>, </li>
 <li><a href="io/micronaut/transaction/package-tree.html">io.micronaut.transaction</a>, </li>
+<li><a href="io/micronaut/transaction/annotation/package-tree.html">io.micronaut.transaction.annotation</a>, </li>
 <li><a href="io/micronaut/transaction/exceptions/package-tree.html">io.micronaut.transaction.exceptions</a>, </li>
 <li><a href="io/micronaut/transaction/interceptor/package-tree.html">io.micronaut.transaction.interceptor</a>, </li>
 <li><a href="io/micronaut/transaction/interceptor/annotation/package-tree.html">io.micronaut.transaction.interceptor.annotation</a>, </li>
@@ -550,6 +551,7 @@
 <li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringLastModifiedDateMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringLastModifiedDateMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringPersistenceConstructorMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringPersistenceConstructorMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringPersistentAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringPersistentAnnotationMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
+<li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringTransactionalEventListenerMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringTransactionalEventListenerMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringTransactionalMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringTransactionalMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringTransientMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringTransientMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.spring.<a href="io/micronaut/data/processor/mappers/spring/SpringVersionMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringVersionMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
@@ -598,6 +600,7 @@
 </li>
 </ul>
 </li>
+<li type="circle">io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionalEventInterceptor</span></a> (implements io.micronaut.aop.MethodInterceptor&lt;T,R&gt;)</li>
 <li type="circle">io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionalInterceptor</span></a> (implements io.micronaut.aop.MethodInterceptor&lt;T,R&gt;)</li>
 <li type="circle">io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionalInterceptor.TransactionInfo</span></a></li>
 <li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">TransactionSynchronizationAdapter</span></a> (implements io.micronaut.core.order.Ordered, io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>)
@@ -976,6 +979,8 @@
 <li type="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Query</span></a> (implements java.lang.annotation.Annotation)</li>
 <li type="circle">io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/AutoPopulated.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">AutoPopulated</span></a> (implements java.lang.annotation.Annotation)</li>
 <li type="circle">io.micronaut.transaction.interceptor.annotation.<a href="io/micronaut/transaction/interceptor/annotation/TransactionalAdvice.html" title="annotation in io.micronaut.transaction.interceptor.annotation"><span class="typeNameLink">TransactionalAdvice</span></a> (implements java.lang.annotation.Annotation)</li>
+<li type="circle">io.micronaut.transaction.interceptor.annotation.<a href="io/micronaut/transaction/interceptor/annotation/TransactionalEventAdvice.html" title="annotation in io.micronaut.transaction.interceptor.annotation"><span class="typeNameLink">TransactionalEventAdvice</span></a> (implements java.lang.annotation.Annotation)</li>
+<li type="circle">io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/TransactionalEventListener.html" title="annotation in io.micronaut.transaction.annotation"><span class="typeNameLink">TransactionalEventListener</span></a> (implements java.lang.annotation.Annotation)</li>
 </ul>
 <h2 title="Enum Hierarchy">Enum Hierarchy</h2>
 <ul>
@@ -994,6 +999,8 @@
 <li type="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Pet.PetType.html" title="enum in io.micronaut.data.tck.entities"><span class="typeNameLink">Pet.PetType</span></a></li>
 <li type="circle">io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Propagation.html" title="enum in io.micronaut.transaction"><span class="typeNameLink">TransactionDefinition.Propagation</span></a></li>
 <li type="circle">io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction"><span class="typeNameLink">TransactionDefinition.Isolation</span></a></li>
+<li type="circle">io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/TransactionalEventListener.TransactionPhase.html" title="enum in io.micronaut.transaction.annotation"><span class="typeNameLink">TransactionalEventListener.TransactionPhase</span></a></li>
+<li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support"><span class="typeNameLink">TransactionSynchronization.Status</span></a></li>
 </ul>
 </li>
 </ul>

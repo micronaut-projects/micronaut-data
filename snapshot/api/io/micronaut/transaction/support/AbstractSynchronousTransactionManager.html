@@ -348,8 +348,8 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
 </tr>
 <tr id="i16" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#invokeAfterCompletion-java.util.List-int-">invokeAfterCompletion</a></span>(java.util.List&lt;<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&gt;&nbsp;synchronizations,
-                     int&nbsp;completionStatus)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#invokeAfterCompletion-java.util.List-io.micronaut.transaction.support.TransactionSynchronization.Status-">invokeAfterCompletion</a></span>(java.util.List&lt;<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&gt;&nbsp;synchronizations,
+                     <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;completionStatus)</code>
 <div class="block">Actually invoke the <code>afterCompletion</code> methods of the
  given Spring TransactionSynchronization objects.</div>
 </td>
@@ -1203,14 +1203,14 @@ protected final&nbsp;<a href="../../../../io/micronaut/transaction/support/Abstr
 </dl>
 </li>
 </ul>
-<a name="invokeAfterCompletion-java.util.List-int-">
+<a name="invokeAfterCompletion-java.util.List-io.micronaut.transaction.support.TransactionSynchronization.Status-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>invokeAfterCompletion</h4>
 <pre>protected final&nbsp;void&nbsp;invokeAfterCompletion(java.util.List&lt;<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&gt;&nbsp;synchronizations,
-                                           int&nbsp;completionStatus)</pre>
+                                           <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;completionStatus)</pre>
 <div class="block">Actually invoke the <code>afterCompletion</code> methods of the
  given Spring TransactionSynchronization objects.
  <p>To be called by this abstract manager itself, or by special implementations
@@ -1222,9 +1222,9 @@ protected final&nbsp;<a href="../../../../io/micronaut/transaction/support/Abstr
  constants in the TransactionSynchronization interface</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#registerAfterCompletionWithExistingTransaction-java.lang.Object-java.util.List-"><code>registerAfterCompletionWithExistingTransaction(Object, java.util.List)</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_COMMITTED"><code>TransactionSynchronization.STATUS_COMMITTED</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_ROLLED_BACK"><code>TransactionSynchronization.STATUS_ROLLED_BACK</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_UNKNOWN"><code>TransactionSynchronization.STATUS_UNKNOWN</code></a></dd>
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#COMMITTED"><code>TransactionSynchronization.Status.COMMITTED</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#ROLLED_BACK"><code>TransactionSynchronization.Status.ROLLED_BACK</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#UNKNOWN"><code>TransactionSynchronization.Status.UNKNOWN</code></a></dd>
 </dl>
 </li>
 </ul>
@@ -1551,9 +1551,9 @@ protected final&nbsp;<a href="../../../../io/micronaut/transaction/support/Abstr
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../../../../io/micronaut/transaction/exceptions/TransactionException.html" title="class in io.micronaut.transaction.exceptions">TransactionException</a></code> - in case of system errors</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#invokeAfterCompletion-java.util.List-int-"><code>invokeAfterCompletion(java.util.List, int)</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-int-"><code>TransactionSynchronization.afterCompletion(int)</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_UNKNOWN"><code>TransactionSynchronization.STATUS_UNKNOWN</code></a></dd>
+<dd><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#invokeAfterCompletion-java.util.List-io.micronaut.transaction.support.TransactionSynchronization.Status-"><code>invokeAfterCompletion(List, TransactionSynchronization.Status)</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-"><code>TransactionSynchronization.afterCompletion(TransactionSynchronization.Status)</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#UNKNOWN"><code>TransactionSynchronization.Status.UNKNOWN</code></a></dd>
 </dl>
 </li>
 </ul>

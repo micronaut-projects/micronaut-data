@@ -60,6 +60,7 @@ io.micronaut.data.tck.entities
 io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.repositories
 io.micronaut.transaction
+io.micronaut.transaction.annotation
 io.micronaut.transaction.exceptions
 io.micronaut.transaction.interceptor
 io.micronaut.transaction.interceptor.annotation

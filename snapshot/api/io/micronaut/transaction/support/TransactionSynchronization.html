@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../io/micronaut/transaction/support/SmartTransactionObject.html" title="interface in io.micronaut.transaction.support"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/transaction/support/TransactionSynchronization.html" target="_top">Frames</a></li>
@@ -72,14 +72,14 @@ var activeTableTab = "activeTableTab";
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
-<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>
@@ -134,34 +134,22 @@ extends java.io.Flushable</pre>
 <div class="summary">
 <ul class="blockList">
 <li class="blockList">
-<!-- =========== FIELD SUMMARY =========== -->
+<!-- ======== NESTED CLASS SUMMARY ======== -->
 <ul class="blockList">
-<li class="blockList"><a name="field.summary">
+<li class="blockList"><a name="nested.class.summary">
 <!--   -->
 </a>
-<h3>Field Summary</h3>
-<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Field Summary table, listing fields, and an explanation">
-<caption><span>Fields</span><span class="tabEnd">&nbsp;</span></caption>
+<h3>Nested Class Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Nested Class Summary table, listing nested classes, and an explanation">
+<caption><span>Nested Classes</span><span class="tabEnd">&nbsp;</span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
-<th class="colLast" scope="col">Field and Description</th>
+<th class="colLast" scope="col">Interface and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><code>static int</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_COMMITTED">STATUS_COMMITTED</a></span></code>
-<div class="block">Completion status in case of proper commit.</div>
-</td>
-</tr>
-<tr class="rowColor">
-<td class="colFirst"><code>static int</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_ROLLED_BACK">STATUS_ROLLED_BACK</a></span></code>
-<div class="block">Completion status in case of proper rollback.</div>
-</td>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><code>static int</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_UNKNOWN">STATUS_UNKNOWN</a></span></code>
-<div class="block">Completion status in case of heuristic mixed completion or system errors.</div>
+<td class="colFirst"><code>static class&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a></span></code>
+<div class="block">Transaction synchronization status.</div>
 </td>
 </tr>
 </table>
@@ -187,7 +175,7 @@ extends java.io.Flushable</pre>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>default void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-int-">afterCompletion</a></span>(int&nbsp;status)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-">afterCompletion</a></span>(<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code>
 <div class="block">Invoked after transaction commit/rollback.</div>
 </td>
 </tr>
@@ -231,56 +219,6 @@ extends java.io.Flushable</pre>
 <div class="details">
 <ul class="blockList">
 <li class="blockList">
-<!-- ============ FIELD DETAIL =========== -->
-<ul class="blockList">
-<li class="blockList"><a name="field.detail">
-<!--   -->
-</a>
-<h3>Field Detail</h3>
-<a name="STATUS_COMMITTED">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>STATUS_COMMITTED</h4>
-<pre>static final&nbsp;int STATUS_COMMITTED</pre>
-<div class="block">Completion status in case of proper commit.</div>
-<dl>
-<dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../constant-values.html#io.micronaut.transaction.support.TransactionSynchronization.STATUS_COMMITTED">Constant Field Values</a></dd>
-</dl>
-</li>
-</ul>
-<a name="STATUS_ROLLED_BACK">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>STATUS_ROLLED_BACK</h4>
-<pre>static final&nbsp;int STATUS_ROLLED_BACK</pre>
-<div class="block">Completion status in case of proper rollback.</div>
-<dl>
-<dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../constant-values.html#io.micronaut.transaction.support.TransactionSynchronization.STATUS_ROLLED_BACK">Constant Field Values</a></dd>
-</dl>
-</li>
-</ul>
-<a name="STATUS_UNKNOWN">
-<!--   -->
-</a>
-<ul class="blockListLast">
-<li class="blockList">
-<h4>STATUS_UNKNOWN</h4>
-<pre>static final&nbsp;int STATUS_UNKNOWN</pre>
-<div class="block">Completion status in case of heuristic mixed completion or system errors.</div>
-<dl>
-<dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../constant-values.html#io.micronaut.transaction.support.TransactionSynchronization.STATUS_UNKNOWN">Constant Field Values</a></dd>
-</dl>
-</li>
-</ul>
-</li>
-</ul>
 <!-- ============ METHOD DETAIL ========== -->
 <ul class="blockList">
 <li class="blockList"><a name="method.detail">
@@ -378,7 +316,7 @@ extends java.io.Flushable</pre>
  (note: do not throw TransactionException subclasses here!)</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#beforeCommit-boolean-"><code>beforeCommit(boolean)</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-int-"><code>afterCompletion(int)</code></a></dd>
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-"><code>afterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)</code></a></dd>
 </dl>
 </li>
 </ul>
@@ -407,13 +345,14 @@ extends java.io.Flushable</pre>
 </dl>
 </li>
 </ul>
-<a name="afterCompletion-int-">
+<a name="afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>afterCompletion</h4>
-<pre>default&nbsp;void&nbsp;afterCompletion(int&nbsp;status)</pre>
+<pre>default&nbsp;void&nbsp;afterCompletion(@NonNull
+                             <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</pre>
 <div class="block">Invoked after transaction commit/rollback.
  Can perform resource cleanup <i>after</i> transaction completion.
  <p><b>NOTE:</b> The transaction will have been committed or rolled back already,
@@ -430,9 +369,9 @@ extends java.io.Flushable</pre>
 <dd><code>java.lang.RuntimeException</code> - in case of errors; will be <b>logged but not propagated</b>
  (note: do not throw TransactionException subclasses here!)</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_COMMITTED"><code>STATUS_COMMITTED</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_ROLLED_BACK"><code>STATUS_ROLLED_BACK</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_UNKNOWN"><code>STATUS_UNKNOWN</code></a>, 
+<dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#COMMITTED"><code>TransactionSynchronization.Status.COMMITTED</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#ROLLED_BACK"><code>TransactionSynchronization.Status.ROLLED_BACK</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#UNKNOWN"><code>TransactionSynchronization.Status.UNKNOWN</code></a>, 
 <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#beforeCompletion--"><code>beforeCompletion()</code></a></dd>
 </dl>
 </li>
@@ -465,7 +404,7 @@ extends java.io.Flushable</pre>
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../io/micronaut/transaction/support/SmartTransactionObject.html" title="interface in io.micronaut.transaction.support"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/transaction/support/TransactionSynchronization.html" target="_top">Frames</a></li>
@@ -489,14 +428,14 @@ extends java.io.Flushable</pre>
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
-<li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
-<li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
 <li>Constr&nbsp;|&nbsp;</li>
 <li><a href="#method.detail">Method</a></li>
 </ul>

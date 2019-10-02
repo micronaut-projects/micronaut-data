@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -129,7 +129,7 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>22.01.2004</dd>
 <dt><span class="simpleTagLabel">Author:</span></dt>
-<dd>Juergen Hoeller</dd>
+<dd>Juergen Hoeller, graemerocher</dd>
 </dl>
 </li>
 </ul>
@@ -137,19 +137,27 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
 <div class="summary">
 <ul class="blockList">
 <li class="blockList">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<ul class="blockList">
+<li class="blockList"><a name="nested.class.summary">
+<!--   -->
+</a>
+<h3>Nested Class Summary</h3>
+<ul class="blockList">
+<li class="blockList"><a name="nested.classes.inherited.from.class.io.micronaut.transaction.support.TransactionSynchronization">
+<!--   -->
+</a>
+<h3>Nested classes/interfaces inherited from interface&nbsp;io.micronaut.transaction.support.<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></h3>
+<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a></code></li>
+</ul>
+</li>
+</ul>
 <!-- =========== FIELD SUMMARY =========== -->
 <ul class="blockList">
 <li class="blockList"><a name="field.summary">
 <!--   -->
 </a>
 <h3>Field Summary</h3>
-<ul class="blockList">
-<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.transaction.support.TransactionSynchronization">
-<!--   -->
-</a>
-<h3>Fields inherited from interface&nbsp;io.micronaut.transaction.support.<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></h3>
-<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_COMMITTED">STATUS_COMMITTED</a>, <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_ROLLED_BACK">STATUS_ROLLED_BACK</a>, <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_UNKNOWN">STATUS_UNKNOWN</a></code></li>
-</ul>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.io.micronaut.core.order.Ordered">
 <!--   -->
@@ -196,7 +204,7 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationAdapter.html#afterCompletion-int-">afterCompletion</a></span>(int&nbsp;status)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationAdapter.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-">afterCompletion</a></span>(<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</code>
 <div class="block">Invoked after transaction commit/rollback.</div>
 </td>
 </tr>
@@ -387,7 +395,7 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
 <dd><code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#beforeCompletion--">beforeCompletion</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></code></dd>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#beforeCommit-boolean-"><code>TransactionSynchronization.beforeCommit(boolean)</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-int-"><code>TransactionSynchronization.afterCompletion(int)</code></a></dd>
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-"><code>TransactionSynchronization.afterCompletion(io.micronaut.transaction.support.TransactionSynchronization.Status)</code></a></dd>
 </dl>
 </li>
 </ul>
@@ -416,14 +424,15 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
 </dl>
 </li>
 </ul>
-<a name="afterCompletion-int-">
+<a name="afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>afterCompletion</h4>
-<pre>public&nbsp;void&nbsp;afterCompletion(int&nbsp;status)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-int-">TransactionSynchronization</a></code></span></div>
+<pre>public&nbsp;void&nbsp;afterCompletion(@NonNull
+                            <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;status)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-">TransactionSynchronization</a></code></span></div>
 <div class="block">Invoked after transaction commit/rollback.
  Can perform resource cleanup <i>after</i> transaction completion.
  <p><b>NOTE:</b> The transaction will have been committed or rolled back already,
@@ -435,13 +444,13 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
  for any transactional operation that is called from here.</b></div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-int-">afterCompletion</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#afterCompletion-io.micronaut.transaction.support.TransactionSynchronization.Status-">afterCompletion</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>status</code> - completion status according to the <code>STATUS_*</code> constants</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_COMMITTED"><code>TransactionSynchronization.STATUS_COMMITTED</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_ROLLED_BACK"><code>TransactionSynchronization.STATUS_ROLLED_BACK</code></a>, 
-<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#STATUS_UNKNOWN"><code>TransactionSynchronization.STATUS_UNKNOWN</code></a>, 
+<dd><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#COMMITTED"><code>TransactionSynchronization.Status.COMMITTED</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#ROLLED_BACK"><code>TransactionSynchronization.Status.ROLLED_BACK</code></a>, 
+<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html#UNKNOWN"><code>TransactionSynchronization.Status.UNKNOWN</code></a>, 
 <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html#beforeCompletion--"><code>TransactionSynchronization.beforeCompletion()</code></a></dd>
 </dl>
 </li>
@@ -473,7 +482,7 @@ implements <a href="../../../../io/micronaut/transaction/support/TransactionSync
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
