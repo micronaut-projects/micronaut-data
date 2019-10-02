@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>6.1 Transactions 1.0.0.BUILD-SNAPSHOT</title>
+    <title>6.1.1 Transactional Events 1.0.0.BUILD-SNAPSHOT</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -85,54 +85,14 @@ function addJsClass() {
 
 
                 <div class="project">
-                    <h1>6.1 Transactions</h1>
+                    <h1>6.1.1 Transactional Events</h1>
 
                     <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
                 </div>
 
                 
-                <div id="table-of-content">
-                    <h2>Table of Contents</h2>
-                    
-                    <div class="toc-item" style="margin-left:0px"><a href="#transactionalEvents"><strong>6.1</strong><span>Transactional Events</span></a>
-                    </div>
-                    
-                </div>
-                
 
                 
-
-<h2 id="transactions">6.1 Transactions</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the <code>javax.transaction.Transactional</code> annotation.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-If you prefer Spring-managed transactions you can add a dependency on either <code>spring-orm</code> or <code>spring-jdbc</code> as well as <code>micronaut-spring</code> and Spring-managed transactions will be used instead.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
-</div>
-<div class="paragraph">
-<p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
-</div>
-
 
 <h2 id="transactionalEvents">6.1.1 Transactional Events</h2>
 

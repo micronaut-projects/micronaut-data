@@ -80,7 +80,6 @@
 <li><a href="io/micronaut/data/hibernate/operations/package-tree.html">io.micronaut.data.hibernate.operations</a>, </li>
 <li><a href="io/micronaut/data/hibernate/runtime/package-tree.html">io.micronaut.data.hibernate.runtime</a>, </li>
 <li><a href="io/micronaut/data/hibernate/runtime/spring/package-tree.html">io.micronaut.data.hibernate.runtime.spring</a>, </li>
-<li><a href="io/micronaut/data/hibernate/transaction/hibernate5/package-tree.html">io.micronaut.data.hibernate.transaction.hibernate5</a>, </li>
 <li><a href="io/micronaut/data/intercept/package-tree.html">io.micronaut.data.intercept</a>, </li>
 <li><a href="io/micronaut/data/intercept/annotation/package-tree.html">io.micronaut.data.intercept.annotation</a>, </li>
 <li><a href="io/micronaut/data/intercept/async/package-tree.html">io.micronaut.data.intercept.async</a>, </li>
@@ -95,7 +94,6 @@
 <li><a href="io/micronaut/data/jpa/operations/package-tree.html">io.micronaut.data.jpa.operations</a>, </li>
 <li><a href="io/micronaut/data/jpa/repository/package-tree.html">io.micronaut.data.jpa.repository</a>, </li>
 <li><a href="io/micronaut/data/jpa/repository/intercept/package-tree.html">io.micronaut.data.jpa.repository.intercept</a>, </li>
-<li><a href="io/micronaut/data/jpa/transaction/package-tree.html">io.micronaut.data.jpa.transaction</a>, </li>
 <li><a href="io/micronaut/data/model/package-tree.html">io.micronaut.data.model</a>, </li>
 <li><a href="io/micronaut/data/model/naming/package-tree.html">io.micronaut.data.model.naming</a>, </li>
 <li><a href="io/micronaut/data/model/query/package-tree.html">io.micronaut.data.model.query</a>, </li>
@@ -135,10 +133,12 @@
 <li><a href="io/micronaut/transaction/package-tree.html">io.micronaut.transaction</a>, </li>
 <li><a href="io/micronaut/transaction/annotation/package-tree.html">io.micronaut.transaction.annotation</a>, </li>
 <li><a href="io/micronaut/transaction/exceptions/package-tree.html">io.micronaut.transaction.exceptions</a>, </li>
+<li><a href="io/micronaut/transaction/hibernate5/package-tree.html">io.micronaut.transaction.hibernate5</a>, </li>
 <li><a href="io/micronaut/transaction/interceptor/package-tree.html">io.micronaut.transaction.interceptor</a>, </li>
 <li><a href="io/micronaut/transaction/interceptor/annotation/package-tree.html">io.micronaut.transaction.interceptor.annotation</a>, </li>
 <li><a href="io/micronaut/transaction/jdbc/package-tree.html">io.micronaut.transaction.jdbc</a>, </li>
 <li><a href="io/micronaut/transaction/jdbc/exceptions/package-tree.html">io.micronaut.transaction.jdbc.exceptions</a>, </li>
+<li><a href="io/micronaut/transaction/jpa/package-tree.html">io.micronaut.transaction.jpa</a>, </li>
 <li><a href="io/micronaut/transaction/support/package-tree.html">io.micronaut.transaction.support</a>, </li>
 <li><a href="io/micronaut/transaction/test/package-tree.html">io.micronaut.transaction.test</a></li>
 </ul>
@@ -262,7 +262,7 @@
 <li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">AbstractSynchronousTransactionManager</span></a>&lt;T&gt; (implements java.io.Serializable, io.micronaut.transaction.<a href="io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;T&gt;)
 <ul>
 <li type="circle">io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">DataSourceTransactionManager</span></a> (implements io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,T&gt;)</li>
-<li type="circle">io.micronaut.data.hibernate.transaction.hibernate5.<a href="io/micronaut/data/hibernate/transaction/hibernate5/HibernateTransactionManager.html" title="class in io.micronaut.data.hibernate.transaction.hibernate5"><span class="typeNameLink">HibernateTransactionManager</span></a> (implements io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,T&gt;)</li>
+<li type="circle">io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate5"><span class="typeNameLink">HibernateTransactionManager</span></a> (implements io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;R,T&gt;)</li>
 </ul>
 </li>
 <li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.SuspendedResourcesHolder.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">AbstractSynchronousTransactionManager.SuspendedResourcesHolder</span></a></li>
@@ -393,7 +393,7 @@
 </li>
 <li type="circle">io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Meal</span></a></li>
 <li type="circle">io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders"><span class="typeNameLink">MethodMatchInfo</span></a></li>
-<li type="circle">io.micronaut.data.hibernate.transaction.hibernate5.<a href="io/micronaut/data/hibernate/transaction/hibernate5/MicronautSessionContext.html" title="class in io.micronaut.data.hibernate.transaction.hibernate5"><span class="typeNameLink">MicronautSessionContext</span></a> (implements org.hibernate.context.spi.CurrentSessionContext)</li>
+<li type="circle">io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate5"><span class="typeNameLink">MicronautSessionContext</span></a> (implements org.hibernate.context.spi.CurrentSessionContext)</li>
 <li type="circle">io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategies.html" title="class in io.micronaut.data.model.naming"><span class="typeNameLink">NamingStrategies</span></a></li>
 <li type="circle">io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategies.KebabCase.html" title="class in io.micronaut.data.model.naming"><span class="typeNameLink">NamingStrategies.KebabCase</span></a> (implements io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>)</li>
 <li type="circle">io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategies.LowerCase.html" title="class in io.micronaut.data.model.naming"><span class="typeNameLink">NamingStrategies.LowerCase</span></a> (implements io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>)</li>
@@ -527,9 +527,9 @@
 <li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ResourceHolderSupport.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">ResourceHolderSupport</span></a> (implements io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/ResourceHolder.html" title="interface in io.micronaut.transaction.support">ResourceHolder</a>)
 <ul>
 <li type="circle">io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/ConnectionHolder.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">ConnectionHolder</span></a></li>
-<li type="circle">io.micronaut.data.jpa.transaction.<a href="io/micronaut/data/jpa/transaction/EntityManagerHolder.html" title="class in io.micronaut.data.jpa.transaction"><span class="typeNameLink">EntityManagerHolder</span></a>
+<li type="circle">io.micronaut.transaction.jpa.<a href="io/micronaut/transaction/jpa/EntityManagerHolder.html" title="class in io.micronaut.transaction.jpa"><span class="typeNameLink">EntityManagerHolder</span></a>
 <ul>
-<li type="circle">io.micronaut.data.hibernate.transaction.hibernate5.<a href="io/micronaut/data/hibernate/transaction/hibernate5/SessionHolder.html" title="class in io.micronaut.data.hibernate.transaction.hibernate5"><span class="typeNameLink">SessionHolder</span></a></li>
+<li type="circle">io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/SessionHolder.html" title="class in io.micronaut.transaction.hibernate5"><span class="typeNameLink">SessionHolder</span></a></li>
 </ul>
 </li>
 </ul>
@@ -538,8 +538,8 @@
 <li type="circle">io.micronaut.data.model.query.factory.<a href="io/micronaut/data/model/query/factory/Restrictions.html" title="class in io.micronaut.data.model.query.factory"><span class="typeNameLink">Restrictions</span></a></li>
 <li type="circle">io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">RuntimePersistentProperty</span></a>&lt;T&gt; (implements io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>)</li>
 <li type="circle">io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/SchemaGenerator.html" title="class in io.micronaut.data.jdbc.config"><span class="typeNameLink">SchemaGenerator</span></a></li>
-<li type="circle">io.micronaut.data.hibernate.transaction.hibernate5.<a href="io/micronaut/data/hibernate/transaction/hibernate5/SessionFactoryUtils.html" title="class in io.micronaut.data.hibernate.transaction.hibernate5"><span class="typeNameLink">SessionFactoryUtils</span></a></li>
-<li type="circle">io.micronaut.data.hibernate.transaction.hibernate5.<a href="io/micronaut/data/hibernate/transaction/hibernate5/SessionSynchronization.html" title="class in io.micronaut.data.hibernate.transaction.hibernate5"><span class="typeNameLink">SessionSynchronization</span></a> (implements io.micronaut.core.order.Ordered, io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>)</li>
+<li type="circle">io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/SessionFactoryUtils.html" title="class in io.micronaut.transaction.hibernate5"><span class="typeNameLink">SessionFactoryUtils</span></a></li>
+<li type="circle">io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/SessionSynchronization.html" title="class in io.micronaut.transaction.hibernate5"><span class="typeNameLink">SessionSynchronization</span></a> (implements io.micronaut.core.order.Ordered, io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>)</li>
 <li type="circle">io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/SimpleConnectionHandle.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">SimpleConnectionHandle</span></a> (implements io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/ConnectionHandle.html" title="interface in io.micronaut.transaction.jdbc">ConnectionHandle</a>)</li>
 <li type="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model"><span class="typeNameLink">Sort.Order</span></a></li>
 <li type="circle">io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model"><span class="typeNameLink">SourcePersistentProperty</span></a> (implements io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>, io.micronaut.inject.ast.TypedElement)</li>
@@ -605,7 +605,7 @@
 <li type="circle">io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionalInterceptor.TransactionInfo</span></a></li>
 <li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">TransactionSynchronizationAdapter</span></a> (implements io.micronaut.core.order.Ordered, io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>)
 <ul>
-<li type="circle">io.micronaut.data.hibernate.transaction.hibernate5.<a href="io/micronaut/data/hibernate/transaction/hibernate5/FlushSynchronization.html" title="class in io.micronaut.data.hibernate.transaction.hibernate5"><span class="typeNameLink">FlushSynchronization</span></a></li>
+<li type="circle">io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/FlushSynchronization.html" title="class in io.micronaut.transaction.hibernate5"><span class="typeNameLink">FlushSynchronization</span></a></li>
 </ul>
 </li>
 <li type="circle">io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support"><span class="typeNameLink">TransactionSynchronizationManager</span></a></li>

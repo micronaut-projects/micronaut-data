@@ -124,6 +124,8 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-transactions"><a href="#transactions"><strong>6.1</strong><span>Transactions</span></a></div>
         
+        <div class="toc-item" style="margin-left:20px" id="toc-item-transactionalEvents"><a href="#transactionalEvents"><strong>6.1.1</strong><span>Transactional Events</span></a></div>
+        
         <div class="toc-item" style="margin-left:10px" id="toc-item-batchUpdates"><a href="#batchUpdates"><strong>6.2</strong><span>Batch Updates</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-batchDeletes"><a href="#batchDeletes"><strong>6.3</strong><span>Batch Deletes</span></a></div>
@@ -2408,26 +2410,181 @@ Assertions.assertEquals(
 
 
 <div class="paragraph">
-<p>Micronaut Data will automatically manage transactions for you. The underlying implementation delegates to the Spring transaction manager, however you can use any of the following annotations to declare your transaction semantics without directly depending on Spring APIs:</p>
+<p>Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the <code>javax.transaction.Transactional</code> annotation.</p>
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>javax.transaction.Transactional</code></p>
-</li>
-<li>
-<p><code>org.springframework.transaction.annotation.Transactional</code></p>
-</li>
-<li>
-<p><code>io.micronaut.spring.tx.annotation.Transactional</code></p>
-</li>
-</ul>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+If you prefer Spring-managed transactions you can add a dependency on either <code>spring-orm</code> or <code>spring-jdbc</code> as well as <code>micronaut-spring</code> and Spring-managed transactions will be used instead.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
 </div>
 <div class="paragraph">
 <p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
+</div>
+
+
+<h2 id="transactionalEvents">6.1.1 Transactional Events</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions/transactionalEvents.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can write event listeners that are transaction aware using the <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The following demonstrates an example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.transaction.annotation.TransactionalEventListener;
+import javax.inject.Singleton;
+import javax.transaction.Transactional;
+
+@Singleton
+public class BookManager {
+    private final BookRepository bookRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { <b class="conum">(1)</b>
+        this.bookRepository = bookRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    @Transactional
+    void saveBook(String title, int pages) {
+        final Book book = new Book(title, pages);
+        bookRepository.save(book);
+        eventPublisher.publishEvent(new NewBookEvent(book)); <b class="conum">(2)</b>
+    }
+
+    @TransactionalEventListener
+    void onNewBook(NewBookEvent event) {
+        System.out.println("book = " + event.book); <b class="conum">(3)</b>
+    }
+
+    static class NewBookEvent {
+        final Book book;
+
+        public NewBookEvent(Book book) {
+            this.book = book;
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.transaction.annotation.TransactionalEventListener
+import javax.inject.Singleton
+import javax.transaction.Transactional
+
+@Singleton
+class BookManager {
+    private final BookRepository bookRepository
+    private final ApplicationEventPublisher eventPublisher
+
+    BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { <b class="conum">(1)</b>
+        this.bookRepository = bookRepository
+        this.eventPublisher = eventPublisher
+    }
+
+    @Transactional
+    void saveBook(String title, int pages) {
+        final Book book = new Book(title, pages)
+        bookRepository.save(book)
+        eventPublisher.publishEvent(new NewBookEvent(book)) <b class="conum">(2)</b>
+    }
+
+    @TransactionalEventListener
+    void onNewBook(NewBookEvent event) {
+        println("book = $event.book") <b class="conum">(3)</b>
+    }
+
+    static class NewBookEvent {
+        final Book book
+
+        NewBookEvent(Book book) {
+            this.book = book
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.transaction.annotation.TransactionalEventListener
+import javax.inject.Singleton
+import javax.transaction.Transactional
+
+@Singleton
+open class BookManager(
+        private val bookRepository: BookRepository, private val eventPublisher: ApplicationEventPublisher) { <b class="conum">(1)</b>
+
+    @Transactional
+    open fun saveBook(title: String, pages: Int) {
+        val book = Book(0, title, pages)
+        bookRepository.save(book)
+        eventPublisher.publishEvent(NewBookEvent(book)) <b class="conum">(2)</b>
+    }
+
+    @TransactionalEventListener
+    open fun onNewBook(event: NewBookEvent) {
+        println("book = ${event.book}") <b class="conum">(3)</b>
+    }
+
+    class NewBookEvent(val book: Book)
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>BookManager</code> class receives an instance of <code>ApplicationEventPublisher</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>When the event is published if there is a running transaction then it will only trigger the listener once the transaction is committed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The listener itself is annotated with <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a></td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+You can set the value of the <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a> annotation to bind the listener to a particular transaction phase.
+</td>
+</tr>
+</table>
 </div>
 
 
