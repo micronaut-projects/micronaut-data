@@ -5,7 +5,9 @@ io.micronaut.data.exceptions
 io.micronaut.data.hibernate.event
 io.micronaut.data.hibernate.naming
 io.micronaut.data.hibernate.operations
+io.micronaut.data.hibernate.runtime
 io.micronaut.data.hibernate.runtime.spring
+io.micronaut.data.hibernate.transaction.hibernate5
 io.micronaut.data.intercept
 io.micronaut.data.intercept.annotation
 io.micronaut.data.intercept.async
@@ -20,6 +22,7 @@ io.micronaut.data.jpa.annotation
 io.micronaut.data.jpa.operations
 io.micronaut.data.jpa.repository
 io.micronaut.data.jpa.repository.intercept
+io.micronaut.data.jpa.transaction
 io.micronaut.data.model
 io.micronaut.data.model.naming
 io.micronaut.data.model.query
