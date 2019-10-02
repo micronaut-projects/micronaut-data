@@ -821,14 +821,14 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
                 }
             } catch (UnexpectedRollbackException ex) {
                 // can only be caused by doCommit
-                triggerAfterCompletion(status, TransactionSynchronization.STATUS_ROLLED_BACK);
+                triggerAfterCompletion(status, TransactionSynchronization.Status.ROLLED_BACK);
                 throw ex;
             } catch (TransactionException ex) {
                 // can only be caused by doCommit
                 if (isRollbackOnCommitFailure()) {
                     doRollbackOnCommitException(status, ex);
                 } else {
-                    triggerAfterCompletion(status, TransactionSynchronization.STATUS_UNKNOWN);
+                    triggerAfterCompletion(status, TransactionSynchronization.Status.UNKNOWN);
                 }
                 throw ex;
             } catch (RuntimeException | Error ex) {
@@ -844,7 +844,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
             try {
                 triggerAfterCommit(status);
             } finally {
-                triggerAfterCompletion(status, TransactionSynchronization.STATUS_COMMITTED);
+                triggerAfterCompletion(status, TransactionSynchronization.Status.COMMITTED);
             }
 
         } finally {
@@ -915,11 +915,11 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
                     }
                 }
             } catch (RuntimeException | Error ex) {
-                triggerAfterCompletion(status, TransactionSynchronization.STATUS_UNKNOWN);
+                triggerAfterCompletion(status, TransactionSynchronization.Status.UNKNOWN);
                 throw ex;
             }
 
-            triggerAfterCompletion(status, TransactionSynchronization.STATUS_ROLLED_BACK);
+            triggerAfterCompletion(status, TransactionSynchronization.Status.ROLLED_BACK);
 
             // Raise UnexpectedRollbackException if we had a global rollback-only marker
             if (unexpectedRollback) {
@@ -953,10 +953,10 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
             }
         } catch (RuntimeException | Error rbex) {
             logger.error("Commit exception overridden by rollback exception", ex);
-            triggerAfterCompletion(status, TransactionSynchronization.STATUS_UNKNOWN);
+            triggerAfterCompletion(status, TransactionSynchronization.Status.UNKNOWN);
             throw rbex;
         }
-        triggerAfterCompletion(status, TransactionSynchronization.STATUS_ROLLED_BACK);
+        triggerAfterCompletion(status, TransactionSynchronization.Status.ROLLED_BACK);
     }
 
 
@@ -1004,7 +1004,7 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @param status object representing the transaction
      * @param completionStatus completion status according to TransactionSynchronization constants
      */
-    private void triggerAfterCompletion(DefaultTransactionStatus status, int completionStatus) {
+    private void triggerAfterCompletion(DefaultTransactionStatus status, TransactionSynchronization.Status completionStatus) {
         if (status.isNewSynchronization()) {
             List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
             TransactionSynchronizationManager.clearSynchronization();
@@ -1033,11 +1033,11 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @param completionStatus the completion status according to the
      * constants in the TransactionSynchronization interface
      * @see #registerAfterCompletionWithExistingTransaction(Object, java.util.List)
-     * @see TransactionSynchronization#STATUS_COMMITTED
-     * @see TransactionSynchronization#STATUS_ROLLED_BACK
-     * @see TransactionSynchronization#STATUS_UNKNOWN
+     * @see io.micronaut.transaction.support.TransactionSynchronization.Status#COMMITTED
+     * @see io.micronaut.transaction.support.TransactionSynchronization.Status#ROLLED_BACK
+     * @see io.micronaut.transaction.support.TransactionSynchronization.Status#UNKNOWN
      */
-    protected final void invokeAfterCompletion(List<TransactionSynchronization> synchronizations, int completionStatus) {
+    protected final void invokeAfterCompletion(List<TransactionSynchronization> synchronizations, TransactionSynchronization.Status completionStatus) {
         TransactionSynchronizationUtils.invokeAfterCompletion(synchronizations, completionStatus);
     }
 
@@ -1284,16 +1284,16 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      * @param transaction transaction object returned by {@code doGetTransaction}
      * @param synchronizations a List of TransactionSynchronization objects
      * @throws TransactionException in case of system errors
-     * @see #invokeAfterCompletion(java.util.List, int)
-     * @see TransactionSynchronization#afterCompletion(int)
-     * @see TransactionSynchronization#STATUS_UNKNOWN
+     * @see #invokeAfterCompletion(List, TransactionSynchronization.Status)
+     * @see TransactionSynchronization#afterCompletion(TransactionSynchronization.Status)
+     * @see io.micronaut.transaction.support.TransactionSynchronization.Status#UNKNOWN
      */
     protected void registerAfterCompletionWithExistingTransaction(
             Object transaction, List<TransactionSynchronization> synchronizations) throws TransactionException {
 
         logger.debug("Cannot register Spring after-completion synchronization with existing transaction - " +
                 "processing Spring after-completion callbacks immediately, with outcome status 'unknown'");
-        invokeAfterCompletion(synchronizations, TransactionSynchronization.STATUS_UNKNOWN);
+        invokeAfterCompletion(synchronizations, TransactionSynchronization.Status.UNKNOWN);
     }
 
     /**

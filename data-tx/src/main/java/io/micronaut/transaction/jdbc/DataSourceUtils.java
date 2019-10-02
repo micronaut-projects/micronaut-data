@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.jdbc;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException;
@@ -491,7 +492,7 @@ public abstract class DataSourceUtils {
         }
 
         @Override
-        public void afterCompletion(int status) {
+        public void afterCompletion(@NonNull Status status) {
             // If we haven't closed the Connection in beforeCompletion,
             // close it now. The holder might have been used for other
             // cleanup in the meantime, for example by a Hibernate Session.

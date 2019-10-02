@@ -2,8 +2,9 @@ package io.micronaut.transaction.jdbc
 
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.annotation.Property
-import io.micronaut.context.event.StartupEvent
+import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.transaction.annotation.TransactionalEventListener
 import spock.lang.Specification
 import spock.lang.Stepwise
 
@@ -25,17 +26,20 @@ class TransactionAnnotationSpec extends Specification {
         testService.init()
         
         when:"an insert is performed in a transaction"
-        testService.insertTransctionally()
+        testService.insertWithTransaction()
 
         then:"The insert worked"
+        testService.lastEvent?.title == "The Stand"
         testService.readTransactionally() == 1
 
         when:"A transaction is rolled back"
+        testService.lastEvent = null
         testService.insertAndRollback()
 
         then:
         def e = thrown(RuntimeException)
         e.message == 'Bad things happened'
+        testService.lastEvent == null
         testService.readTransactionally() == 1
 
 
@@ -45,12 +49,15 @@ class TransactionAnnotationSpec extends Specification {
         then:
         def e2 = thrown(Exception)
         e2.message == 'Bad things happened'
+        testService.lastEvent == null
         testService.readTransactionally() == 1
     }
 
     @Singleton
     static class TestService {
         @Inject Connection connection
+        @Inject ApplicationEventPublisher eventPublisher
+        NewBookEvent lastEvent
 
         @Transactional
         void init() {
@@ -60,10 +67,11 @@ class TransactionAnnotationSpec extends Specification {
         }
 
          @Transactional
-        void insertTransctionally() {
+        void insertWithTransaction() {
             def ps1 = connection.prepareStatement("insert into book (pages, title) values(100, 'The Stand')")
             ps1.execute()
             ps1.close()
+            eventPublisher.publishEvent(new NewBookEvent("The Stand"))
         }
 
         @Transactional
@@ -71,6 +79,7 @@ class TransactionAnnotationSpec extends Specification {
             def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
             ps1.execute()
             ps1.close()
+            eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new RuntimeException("Bad things happened")
         }
 
@@ -80,6 +89,7 @@ class TransactionAnnotationSpec extends Specification {
             def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
             ps1.execute()
             ps1.close()
+            eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new Exception("Bad things happened")
         }
 
@@ -96,6 +106,19 @@ class TransactionAnnotationSpec extends Specification {
                 rs.close()
             }
 
+        }
+
+        @TransactionalEventListener
+        void afterCommit(NewBookEvent event) {
+            lastEvent = event
+        }
+    }
+
+    static class NewBookEvent {
+        final String title
+
+        NewBookEvent(String title) {
+            this.title = title
         }
     }
 }

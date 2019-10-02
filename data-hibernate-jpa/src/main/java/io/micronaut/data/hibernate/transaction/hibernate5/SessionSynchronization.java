@@ -127,9 +127,9 @@ public class SessionSynchronization implements TransactionSynchronization, Order
     }
 
     @Override
-    public void afterCompletion(int status) {
+    public void afterCompletion(@NonNull Status status) {
         try {
-            if (status != STATUS_COMMITTED) {
+            if (status != Status.COMMITTED) {
                 // Clear all pending inserts/updates/deletes in the Session.
                 // Necessary for pre-bound Sessions, to avoid inconsistent state.
                 this.sessionHolder.getSession().clear();
@@ -142,5 +142,4 @@ public class SessionSynchronization implements TransactionSynchronization, Order
             }
         }
     }
-
 }

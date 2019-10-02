@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.support;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.order.Ordered;
 
 /**
@@ -27,6 +28,7 @@ import io.micronaut.core.order.Ordered;
  * late execution; return a lower value for earlier execution.
  *
  * @author Juergen Hoeller
+ * @author graemerocher
  * @since 22.01.2004
  */
 public abstract class TransactionSynchronizationAdapter implements TransactionSynchronization, Ordered {
@@ -61,7 +63,6 @@ public abstract class TransactionSynchronizationAdapter implements TransactionSy
     }
 
     @Override
-    public void afterCompletion(int status) {
+    public void afterCompletion(@NonNull Status status) {
     }
-
 }

@@ -22,3 +22,4 @@ io.micronaut.data.processor.mappers.spring.SpringPersistenceConstructorMapper
 io.micronaut.data.processor.mappers.spring.SpringPersistentAnnotationMapper
 io.micronaut.data.processor.mappers.spring.SpringTransientMapper
 io.micronaut.data.processor.mappers.spring.SpringVersionMapper
+io.micronaut.data.processor.mappers.spring.SpringTransactionalEventListenerMapper

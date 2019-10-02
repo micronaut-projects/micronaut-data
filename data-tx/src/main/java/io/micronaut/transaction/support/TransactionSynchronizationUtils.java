@@ -15,6 +15,7 @@
  */
 package io.micronaut.transaction.support;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.aop.InterceptedProxy;
 import io.micronaut.core.annotation.Internal;
@@ -135,12 +136,12 @@ public abstract class TransactionSynchronizationUtils {
      * @param completionStatus the completion status according to the
      * constants in the TransactionSynchronization interface
      * @see TransactionSynchronizationManager#getSynchronizations()
-     * @see TransactionSynchronization#afterCompletion(int)
-     * @see TransactionSynchronization#STATUS_COMMITTED
-     * @see TransactionSynchronization#STATUS_ROLLED_BACK
-     * @see TransactionSynchronization#STATUS_UNKNOWN
+     * @see TransactionSynchronization#afterCompletion(TransactionSynchronization.Status)
+     * @see TransactionSynchronization.Status#COMMITTED
+     * @see TransactionSynchronization.Status#ROLLED_BACK
+     * @see TransactionSynchronization.Status#UNKNOWN
      */
-    public static void triggerAfterCompletion(int completionStatus) {
+    public static void triggerAfterCompletion(@NonNull TransactionSynchronization.Status completionStatus) {
         List<TransactionSynchronization> synchronizations = TransactionSynchronizationManager.getSynchronizations();
         invokeAfterCompletion(synchronizations, completionStatus);
     }
@@ -151,13 +152,13 @@ public abstract class TransactionSynchronizationUtils {
      * @param synchronizations a List of TransactionSynchronization objects
      * @param completionStatus the completion status according to the
      * constants in the TransactionSynchronization interface
-     * @see TransactionSynchronization#afterCompletion(int)
-     * @see TransactionSynchronization#STATUS_COMMITTED
-     * @see TransactionSynchronization#STATUS_ROLLED_BACK
-     * @see TransactionSynchronization#STATUS_UNKNOWN
+     * @see TransactionSynchronization.Status#afterCompletion(TransactionSynchronization.Status)
+     * @see TransactionSynchronization.Status#COMMITTED
+     * @see TransactionSynchronization.Status#ROLLED_BACK
+     * @see TransactionSynchronization.Status#UNKNOWN
      */
     public static void invokeAfterCompletion(@Nullable List<TransactionSynchronization> synchronizations,
-                                             int completionStatus) {
+                                             @NonNull TransactionSynchronization.Status completionStatus) {
 
         if (synchronizations != null) {
             for (TransactionSynchronization synchronization : synchronizations) {

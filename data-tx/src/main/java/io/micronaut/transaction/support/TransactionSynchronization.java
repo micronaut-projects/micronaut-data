@@ -15,6 +15,8 @@
  */
 package io.micronaut.transaction.support;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.io.Flushable;
 
 /**
@@ -36,15 +38,17 @@ import java.io.Flushable;
  */
 public interface TransactionSynchronization extends Flushable {
 
-    /** Completion status in case of proper commit. */
-    int STATUS_COMMITTED = 0;
-
-    /** Completion status in case of proper rollback. */
-    int STATUS_ROLLED_BACK = 1;
-
-    /** Completion status in case of heuristic mixed completion or system errors. */
-    int STATUS_UNKNOWN = 2;
-
+    /**
+     * Transaction synchronization status.
+     */
+    enum Status {
+        /** Completion status in case of proper commit. */
+        COMMITTED,
+        /** Completion status in case of proper rollback. */
+        ROLLED_BACK,
+        /** Completion status in case of heuristic mixed completion or system errors. */
+        UNKNOWN
+    }
 
     /**
      * Suspend this synchronization.
@@ -133,12 +137,12 @@ public interface TransactionSynchronization extends Flushable {
      * @param status completion status according to the {@code STATUS_*} constants
      * @throws RuntimeException in case of errors; will be <b>logged but not propagated</b>
      * (note: do not throw TransactionException subclasses here!)
-     * @see #STATUS_COMMITTED
-     * @see #STATUS_ROLLED_BACK
-     * @see #STATUS_UNKNOWN
+     * @see Status#COMMITTED
+     * @see Status#ROLLED_BACK
+     * @see Status#UNKNOWN
      * @see #beforeCompletion
      */
-    default void afterCompletion(int status) {
+    default void afterCompletion(@NonNull Status status) {
     }
 
 }
