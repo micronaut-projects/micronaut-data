@@ -11,7 +11,7 @@ license {
     }
     ext.year = '2017-2019'
 
-    exclude "**/transaction/*"
+    exclude "**/transaction/**"
     exclude '**/*.txt'
     exclude '**/*.html'
     exclude '**/*.xml'

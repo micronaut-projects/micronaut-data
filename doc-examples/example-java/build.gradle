@@ -18,7 +18,6 @@ dependencies {
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-runtime"
-    implementation "io.micronaut.configuration:micronaut-hibernate-jpa"
     implementation "io.micronaut.configuration:micronaut-jdbc-tomcat"
     implementation "io.micronaut:micronaut-http-server-netty"
     runtime "ch.qos.logback:logback-classic:1.2.3"

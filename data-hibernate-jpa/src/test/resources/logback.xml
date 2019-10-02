@@ -11,6 +11,7 @@
     <root level="error">
         <appender-ref ref="STDOUT" />
     </root>
-    <logger name="org.hibernate.SQL" level="TRACE"/>
-    <logger name="org.hibernate.type" level="TRACE"/>
+    <logger name="io.micronaut.context" level="TRACE" />
+<!--    <logger name="org.hibernate.SQL" level="TRACE"/>-->
+<!--    <logger name="org.hibernate.type" level="TRACE"/>-->
 </configuration>
