@@ -12,6 +12,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.interceptor.annotation.TransactionalAdvice;
 import org.slf4j.Logger;
@@ -94,6 +95,28 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
         return retVal;
     }
 
+    @Nullable
+    private static TransactionInfo currentTransactionInfo() throws NoTransactionException {
+        return TRANSACTION_INFO_HOLDER.get();
+    }
+
+    /**
+     * Return the transaction status of the current method invocation.
+     * Mainly intended for code that wants to set the current transaction
+     * rollback-only but not throw an application exception.
+     * @throws NoTransactionException if the transaction info cannot be found,
+     * because the method was invoked outside an AOP invocation context
+     *
+     * @return The current status
+     */
+    public static TransactionStatus currentTransactionStatus() throws NoTransactionException {
+        TransactionInfo info = currentTransactionInfo();
+        if (info == null) {
+            throw new NoTransactionException("No transaction aspect-managed TransactionStatus in scope");
+        }
+        return info.transactionStatus;
+    }
+    
     /**
      * Create a transaction if necessary based on the given TransactionAttribute.
      * <p>Allows callers to perform custom TransactionAttribute lookups through
