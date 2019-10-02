@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.transaction.hibernate5;
+package io.micronaut.transaction.hibernate5;
 
 import io.micronaut.core.annotation.TypeHint;
-import io.micronaut.data.jpa.transaction.EntityManagerHolder;
+import io.micronaut.transaction.jpa.EntityManagerHolder;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.hibernate.FlushMode;
 import org.hibernate.HibernateException;

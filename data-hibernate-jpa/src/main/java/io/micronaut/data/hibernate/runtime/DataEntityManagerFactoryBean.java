@@ -18,7 +18,7 @@ package io.micronaut.data.hibernate.runtime;
 import io.micronaut.configuration.hibernate.jpa.JpaConfiguration;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.*;
-import io.micronaut.data.hibernate.transaction.hibernate5.MicronautSessionContext;
+import io.micronaut.transaction.hibernate5.MicronautSessionContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cfg.AvailableSettings;

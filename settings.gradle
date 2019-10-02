@@ -10,6 +10,7 @@ include 'data-tck'
 
 // implementations
 include 'data-hibernate-jpa'
+include 'data-tx-hibernate'
 include 'data-jdbc'
 
 // documentation samples

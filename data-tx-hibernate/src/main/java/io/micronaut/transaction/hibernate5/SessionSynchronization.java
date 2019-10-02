@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.transaction.hibernate5;
+package io.micronaut.transaction.hibernate5;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.order.Ordered;
-import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.transaction.exceptions.TransactionException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import io.micronaut.transaction.support.TransactionSynchronizationManager;
 import org.hibernate.FlushMode;
@@ -91,7 +91,7 @@ public class SessionSynchronization implements TransactionSynchronization, Order
     }
 
     @Override
-    public void beforeCommit(boolean readOnly) throws DataAccessException {
+    public void beforeCommit(boolean readOnly) throws TransactionException {
         if (!readOnly) {
             Session session = getCurrentSession();
             // Read-write transaction -> flush the Hibernate Session.

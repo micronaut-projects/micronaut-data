@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.micronaut.data.hibernate.transaction.hibernate5;
+package io.micronaut.transaction.hibernate5;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;

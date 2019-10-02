@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.transaction.hibernate5;
+package io.micronaut.transaction.hibernate5;
 
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.transaction.jdbc.DataSourceUtils;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import javax.persistence.NoResultException;
-import javax.persistence.PersistenceException;
 
 /**
  * Helper class featuring methods for Hibernate Session handling.
@@ -36,6 +31,7 @@ import javax.persistence.PersistenceException;
  * Can also be used directly in application code.
  *
  * @author Juergen Hoeller
+ * @author graemerocher
  * @since 4.2
  * @see HibernateTransactionManager
  */
@@ -53,29 +49,19 @@ public abstract class SessionFactoryUtils {
     private static final Logger LOG = LoggerFactory.getLogger(SessionFactoryUtils.class);
 
     /**
-     * Trigger a flush on the given Hibernate Session, converting regular
-     * {@link HibernateException} instances as well as Hibernate 5.2's
-     * {@link PersistenceException} wrappers accordingly.
+     * Trigger a flush on the given Hibernate Session.
+     *
      * @param session the Hibernate Session to flush
      * @param synch whether this flush is triggered by transaction synchronization
-     * @throws DataAccessException in case of flush failures
      * @since 4.3.2
      */
-    static void flush(Session session, boolean synch) throws DataAccessException {
+    static void flush(Session session, boolean synch) {
         if (synch) {
             LOG.debug("Flushing Hibernate Session on transaction synchronization");
         } else {
             LOG.debug("Flushing Hibernate Session on explicit request");
         }
-        try {
-            session.flush();
-        } catch (PersistenceException ex) {
-            if (ex.getCause() instanceof NoResultException) {
-                throw new EmptyResultException();
-            }
-            throw ex;
-        }
-
+        session.flush();
     }
 
     /**

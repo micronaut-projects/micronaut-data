@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.transaction.hibernate5;
+package io.micronaut.transaction.hibernate5;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.jpa.transaction.EntityManagerHolder;
+import io.micronaut.transaction.jpa.EntityManagerHolder;
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
 import org.hibernate.Transaction;

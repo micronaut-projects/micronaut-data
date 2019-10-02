@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.hibernate.transaction.hibernate5;
+package io.micronaut.transaction.hibernate5;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -21,7 +21,6 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.data.exceptions.DataAccessResourceFailureException;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
@@ -238,16 +237,11 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
             }
             txObject.setSessionHolder(sessionHolder);
         } else if (this.hibernateManagedSession) {
-            try {
-                Session session = sessionFactory.getCurrentSession();
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Found Hibernate-managed Session [" + session + "] for Spring-managed transaction");
-                }
-                txObject.setExistingSession(session);
-            } catch (HibernateException ex) {
-                throw new DataAccessResourceFailureException(
-                        "Could not obtain Hibernate-managed Session for managed transaction", ex);
+            Session session = sessionFactory.getCurrentSession();
+            if (logger.isDebugEnabled()) {
+                logger.debug("Found Hibernate-managed Session [" + session + "] for Spring-managed transaction");
             }
+            txObject.setExistingSession(session);
         }
 
         ConnectionHolder conHolder = (ConnectionHolder)
