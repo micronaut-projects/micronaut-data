@@ -3,6 +3,7 @@ rootProject.name = 'data'
 include 'data-model'
 include 'data-processor'
 include 'data-runtime'
+include 'data-spring'
 include 'data-tx'
 
 // Test Compatibility Kit

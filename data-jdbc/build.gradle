@@ -6,7 +6,6 @@ dependencies {
     compile project(":data-tx")
     compile "io.micronaut:micronaut-jdbc:$micronautVersion"
     compileOnly project(":data-hibernate-jpa")
-    compileOnly "org.springframework:spring-jdbc:5.2.0.RELEASE"
     testCompile project(":data-tck")
 
     testCompile 'jakarta.persistence:jakarta.persistence-api:2.2.3'

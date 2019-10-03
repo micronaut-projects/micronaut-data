@@ -48,7 +48,7 @@ class SortDelegate implements Sort {
     @NonNull
     @Override
     public Sort order(@NonNull String propertyName) {
-        this.sort = this.sort.and(new org.springframework.data.domain.Sort(org.springframework.data.domain.Sort.Direction.ASC, propertyName));
+        this.sort = this.sort.and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, propertyName));
         return this;
     }
 
@@ -66,7 +66,7 @@ class SortDelegate implements Sort {
     }
 
     private org.springframework.data.domain.Sort toSpringSort(org.springframework.data.domain.Sort.Direction direction, String property) {
-        return new org.springframework.data.domain.Sort(
+        return org.springframework.data.domain.Sort.by(
                 direction,
                 property
         );

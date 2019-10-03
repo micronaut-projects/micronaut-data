@@ -1,6 +1,12 @@
-Micronaut Data is able to compile existing Spring Data repository interfaces if you add the `spring-data-commons` dependency to your compilation classpath:
+Micronaut Data features general Spring support that is provided through the `micronaut-data-spring` dependency:
 
-dependency:org.springframework.data:spring-data-commons[version="2.1.8.RELEASE"]
+dependency:io.micronaut.data:micronaut-data-spring[version="{version}"]
+
+In addition to this dependency you will need either `spring-orm` (for Hibernate) or `spring-jdbc` (for JDBC) on your classpath to enable support for Spring-based transaction management:
+
+dependency:org.springframework:spring-orm[version="5.2.0.RELEASE"]
+
+You can then compile existing Spring Data repository interfaces and use Spring annotations such as `org.springframework.transaction.annotation.Transactional` in your application.
 
 You can extend from existing Spring Data interfaces such as `CrudRepository`, `PagingAndSortingRepository` and so on.
 

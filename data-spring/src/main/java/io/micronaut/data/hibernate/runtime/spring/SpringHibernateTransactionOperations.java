@@ -17,9 +17,11 @@ package io.micronaut.data.hibernate.runtime.spring;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.jdbc.runtime.spring.SpringJdbcTransactionOperations;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
@@ -43,6 +45,7 @@ import java.time.Duration;
 @Requires(classes = HibernateTransactionManager.class)
 @EachBean(HibernateTransactionManager.class)
 @Internal
+@Replaces(SpringJdbcTransactionOperations.class)
 public class SpringHibernateTransactionOperations implements TransactionOperations<EntityManager> {
 
     private final TransactionTemplate writeTransactionTemplate;

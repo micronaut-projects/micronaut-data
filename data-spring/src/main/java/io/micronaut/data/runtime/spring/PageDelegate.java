@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -199,7 +200,7 @@ class PageDelegate<T> implements Page<T> {
         private final io.micronaut.data.model.Sort delegate;
 
         SortDelegate(io.micronaut.data.model.Sort delegate) {
-            super(Direction.ASC, "temp"); // not used in reality
+            super(Collections.emptyList()); // not used in reality
             this.delegate = delegate;
         }
 
