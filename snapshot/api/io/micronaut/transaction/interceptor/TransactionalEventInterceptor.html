@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10};
+var methods = {"i0":10,"i1":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -183,6 +183,10 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>int</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html#getOrder--">getOrder</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept</a></span>(io.micronaut.aop.MethodInvocationContext&lt;java.lang.Object,java.lang.Object&gt;&nbsp;context)</code>&nbsp;</td>
 </tr>
@@ -200,13 +204,6 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.aop.MethodInterceptor</h3>
 <code>intercept</code></li>
-</ul>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.order.Ordered">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.core.order.Ordered</h3>
-<code>getOrder</code></li>
 </ul>
 </li>
 </ul>
@@ -239,6 +236,19 @@ implements io.micronaut.aop.MethodInterceptor&lt;java.lang.Object,java.lang.Obje
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getOrder--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getOrder</h4>
+<pre>public&nbsp;int&nbsp;getOrder()</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>getOrder</code>&nbsp;in interface&nbsp;<code>io.micronaut.core.order.Ordered</code></dd>
+</dl>
+</li>
+</ul>
 <a name="intercept-io.micronaut.aop.MethodInvocationContext-">
 <!--   -->
 </a>
