@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -139,17 +139,24 @@ var activeTableTab = "activeTableTab";
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionOperations.html#executeRead-java.util.function.Function-">executeRead</a></span>(java.util.function.Function&lt;<a href="../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;,R&gt;&nbsp;callback)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute</a></span>(<a href="../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+       <a href="../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,R&gt;&nbsp;callback)</code>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite</a></span>(java.util.function.Function&lt;<a href="../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;,R&gt;&nbsp;callback)</code>
-<div class="block">Execute a default transaction within the context of the function.</div>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead</a></span>(<a href="../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,R&gt;&nbsp;callback)</code>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite</a></span>(<a href="../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,R&gt;&nbsp;callback)</code>
+<div class="block">Execute a default transaction within the context of the function.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionOperations.html#getConnection--">getConnection</a></span>()</code>
 <div class="block">Obtains the connection for the current transaction.</div>
@@ -188,14 +195,36 @@ var activeTableTab = "activeTableTab";
 </dl>
 </li>
 </ul>
-<a name="executeRead-java.util.function.Function-">
+<a name="execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>execute</h4>
+<pre>&lt;R&gt;&nbsp;R&nbsp;execute(@NonNull
+              <a href="../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+              @NonNull
+              <a href="../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,R&gt;&nbsp;callback)</pre>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>R</code> - The result</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dd><code>callback</code> - The call back</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The result</dd>
+</dl>
+</li>
+</ul>
+<a name="executeRead-io.micronaut.transaction.TransactionCallback-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>executeRead</h4>
 <pre>&lt;R&gt;&nbsp;R&nbsp;executeRead(@NonNull
-                  java.util.function.Function&lt;<a href="../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;,R&gt;&nbsp;callback)</pre>
+                  <a href="../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,R&gt;&nbsp;callback)</pre>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
@@ -207,14 +236,14 @@ var activeTableTab = "activeTableTab";
 </dl>
 </li>
 </ul>
-<a name="executeWrite-java.util.function.Function-">
+<a name="executeWrite-io.micronaut.transaction.TransactionCallback-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>executeWrite</h4>
 <pre>&lt;R&gt;&nbsp;R&nbsp;executeWrite(@NonNull
-                   java.util.function.Function&lt;<a href="../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>&gt;,R&gt;&nbsp;callback)</pre>
+                   <a href="../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../io/micronaut/transaction/TransactionOperations.html" title="type parameter in TransactionOperations">T</a>,R&gt;&nbsp;callback)</pre>
 <div class="block">Execute a default transaction within the context of the function.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>

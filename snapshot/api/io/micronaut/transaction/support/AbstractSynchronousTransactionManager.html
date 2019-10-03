@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":6,"i3":10,"i4":6,"i5":6,"i6":10,"i7":6,"i8":10,"i9":10,"i10":10,"i11":10,"i12":6,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10,"i39":10,"i40":10,"i41":10};
+var methods = {"i0":10,"i1":10,"i2":6,"i3":10,"i4":6,"i5":6,"i6":10,"i7":6,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":6,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10,"i39":10,"i40":10,"i41":10,"i42":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -310,43 +310,50 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
 </tr>
 <tr id="i10" class="altColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeRead-java.util.function.Function-">executeRead</a></span>(java.util.function.Function&lt;<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;,R&gt;&nbsp;callback)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute</a></span>(<a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+       <a href="../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>,R&gt;&nbsp;callback)</code>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </td>
 </tr>
 <tr id="i11" class="rowColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeWrite-java.util.function.Function-">executeWrite</a></span>(java.util.function.Function&lt;<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;,R&gt;&nbsp;callback)</code>
-<div class="block">Execute a default transaction within the context of the function.</div>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead</a></span>(<a href="../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>,R&gt;&nbsp;callback)</code>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
 </td>
 </tr>
 <tr id="i12" class="altColor">
+<td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite</a></span>(<a href="../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>,R&gt;&nbsp;callback)</code>
+<div class="block">Execute a default transaction within the context of the function.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>protected abstract <a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getConnection-java.lang.Object-">getConnection</a></span>(java.lang.Object&nbsp;transaction)</code>
 <div class="block">The connection for the given transaction object.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>java.time.Duration</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getDefaultTimeout--">getDefaultTimeout</a></span>()</code>
 <div class="block">Return the default timeout that this transaction manager should apply
  if there is no timeout specified at the transaction level, in seconds.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getTransaction-io.micronaut.transaction.TransactionDefinition-">getTransaction</a></span>(<a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code>
 <div class="block">This implementation handles propagation behavior.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>io.micronaut.transaction.support.AbstractSynchronousTransactionManager.Synchronization</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getTransactionSynchronization--">getTransactionSynchronization</a></span>()</code>
 <div class="block">Return if this transaction manager should activate the thread-bound
  transaction synchronization support.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#invokeAfterCompletion-java.util.List-io.micronaut.transaction.support.TransactionSynchronization.Status-">invokeAfterCompletion</a></span>(java.util.List&lt;<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&gt;&nbsp;synchronizations,
                      <a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.Status.html" title="enum in io.micronaut.transaction.support">TransactionSynchronization.Status</a>&nbsp;completionStatus)</code>
@@ -354,37 +361,37 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
  given Spring TransactionSynchronization objects.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isExistingTransaction-java.lang.Object-">isExistingTransaction</a></span>(java.lang.Object&nbsp;transaction)</code>
 <div class="block">Check if the given transaction object indicates an existing transaction
  (that is, a transaction which has already started).</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isFailEarlyOnGlobalRollbackOnly--">isFailEarlyOnGlobalRollbackOnly</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isGlobalRollbackOnParticipationFailure--">isGlobalRollbackOnParticipationFailure</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isNestedTransactionAllowed--">isNestedTransactionAllowed</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isRollbackOnCommitFailure--">isRollbackOnCommitFailure</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isValidateExistingTransaction--">isValidateExistingTransaction</a></span>()</code>
 <div class="block">Return whether existing transactions should be validated before participating
  in them.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#newTransactionStatus-io.micronaut.transaction.TransactionDefinition-java.lang.Object-boolean-boolean-boolean-java.lang.Object-">newTransactionStatus</a></span>(<a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
                     java.lang.Object&nbsp;transaction,
@@ -395,21 +402,21 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
 <div class="block">Create a TransactionStatus instance for the given arguments.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#prepareForCommit-io.micronaut.transaction.support.DefaultTransactionStatus-">prepareForCommit</a></span>(<a href="../../../../io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a>&nbsp;status)</code>
 <div class="block">Make preparations for commit, to be performed before the
  <code>beforeCommit</code> synchronization callbacks occur.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#prepareSynchronization-io.micronaut.transaction.support.DefaultTransactionStatus-io.micronaut.transaction.TransactionDefinition-">prepareSynchronization</a></span>(<a href="../../../../io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a>&nbsp;status,
                       <a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code>
 <div class="block">Initialize transaction synchronization as appropriate.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#prepareTransactionStatus-io.micronaut.transaction.TransactionDefinition-java.lang.Object-boolean-boolean-boolean-java.lang.Object-">prepareTransactionStatus</a></span>(<a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
                         java.lang.Object&nbsp;transaction,
@@ -421,101 +428,101 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
  also initializing transaction synchronization as appropriate.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#registerAfterCompletionWithExistingTransaction-java.lang.Object-java.util.List-">registerAfterCompletionWithExistingTransaction</a></span>(java.lang.Object&nbsp;transaction,
                                               java.util.List&lt;<a href="../../../../io/micronaut/transaction/support/TransactionSynchronization.html" title="interface in io.micronaut.transaction.support">TransactionSynchronization</a>&gt;&nbsp;synchronizations)</code>
 <div class="block">Register the given list of transaction synchronizations with the existing transaction.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#resume-java.lang.Object-io.micronaut.transaction.support.AbstractSynchronousTransactionManager.SuspendedResourcesHolder-">resume</a></span>(java.lang.Object&nbsp;transaction,
       <a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.SuspendedResourcesHolder.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager.SuspendedResourcesHolder</a>&nbsp;resourcesHolder)</code>
 <div class="block">Resume the given transaction.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#rollback-io.micronaut.transaction.TransactionStatus-">rollback</a></span>(<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&nbsp;status)</code>
 <div class="block">This implementation of rollback handles participating in existing
  transactions.</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setDefaultTimeout-java.time.Duration-">setDefaultTimeout</a></span>(java.time.Duration&nbsp;defaultTimeout)</code>
 <div class="block">Specify the default timeout that this transaction manager should apply
  if there is no timeout specified at the transaction level, in seconds.</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setFailEarlyOnGlobalRollbackOnly-boolean-">setFailEarlyOnGlobalRollbackOnly</a></span>(boolean&nbsp;failEarlyOnGlobalRollbackOnly)</code>
 <div class="block">Set whether to fail early in case of the transaction being globally marked
  as rollback-only.</div>
 </td>
 </tr>
-<tr id="i32" class="altColor">
+<tr id="i33" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setGlobalRollbackOnParticipationFailure-boolean-">setGlobalRollbackOnParticipationFailure</a></span>(boolean&nbsp;globalRollbackOnParticipationFailure)</code>
 <div class="block">Set whether to globally mark an existing transaction as rollback-only
  after a participating transaction failed.</div>
 </td>
 </tr>
-<tr id="i33" class="rowColor">
+<tr id="i34" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setNestedTransactionAllowed-boolean-">setNestedTransactionAllowed</a></span>(boolean&nbsp;nestedTransactionAllowed)</code>
 <div class="block">Set whether nested transactions are allowed.</div>
 </td>
 </tr>
-<tr id="i34" class="altColor">
+<tr id="i35" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setRollbackOnCommitFailure-boolean-">setRollbackOnCommitFailure</a></span>(boolean&nbsp;rollbackOnCommitFailure)</code>
 <div class="block">Set whether <code>doRollback</code> should be performed on failure of the
  <code>doCommit</code> call.</div>
 </td>
 </tr>
-<tr id="i35" class="rowColor">
+<tr id="i36" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setTransactionSynchronization-io.micronaut.transaction.support.AbstractSynchronousTransactionManager.Synchronization-">setTransactionSynchronization</a></span>(io.micronaut.transaction.support.AbstractSynchronousTransactionManager.Synchronization&nbsp;transactionSynchronization)</code>
 <div class="block">Set when this transaction manager should activate the thread-bound
  transaction synchronization support.</div>
 </td>
 </tr>
-<tr id="i36" class="altColor">
+<tr id="i37" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setValidateExistingTransaction-boolean-">setValidateExistingTransaction</a></span>(boolean&nbsp;validateExistingTransaction)</code>
 <div class="block">Set whether existing transactions should be validated before participating
  in them.</div>
 </td>
 </tr>
-<tr id="i37" class="rowColor">
+<tr id="i38" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#shouldCommitOnGlobalRollbackOnly--">shouldCommitOnGlobalRollbackOnly</a></span>()</code>
 <div class="block">Return whether to call <code>doCommit</code> on a transaction that has been
  marked as rollback-only in a global fashion.</div>
 </td>
 </tr>
-<tr id="i38" class="altColor">
+<tr id="i39" class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.SuspendedResourcesHolder.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager.SuspendedResourcesHolder</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#suspend-java.lang.Object-">suspend</a></span>(java.lang.Object&nbsp;transaction)</code>
 <div class="block">Suspend the given transaction.</div>
 </td>
 </tr>
-<tr id="i39" class="rowColor">
+<tr id="i40" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#triggerBeforeCommit-io.micronaut.transaction.support.DefaultTransactionStatus-">triggerBeforeCommit</a></span>(<a href="../../../../io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a>&nbsp;status)</code>
 <div class="block">Trigger <code>beforeCommit</code> callbacks.</div>
 </td>
 </tr>
-<tr id="i40" class="altColor">
+<tr id="i41" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#triggerBeforeCompletion-io.micronaut.transaction.support.DefaultTransactionStatus-">triggerBeforeCompletion</a></span>(<a href="../../../../io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support">DefaultTransactionStatus</a>&nbsp;status)</code>
 <div class="block">Trigger <code>beforeCompletion</code> callbacks.</div>
 </td>
 </tr>
-<tr id="i41" class="rowColor">
+<tr id="i42" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#useSavepointForNestedTransaction--">useSavepointForNestedTransaction</a></span>()</code>
 <div class="block">Return whether to use a savepoint for a nested transaction.</div>
@@ -584,19 +591,44 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="executeRead-java.util.function.Function-">
+<a name="execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>execute</h4>
+<pre>public&nbsp;&lt;R&gt;&nbsp;R&nbsp;execute(@NonNull
+                     <a href="../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+                     @NonNull
+                     <a href="../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>,R&gt;&nbsp;callback)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">TransactionOperations</a></code></span></div>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;</code></dd>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>R</code> - The result</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>definition</code> - The transaction definition</dd>
+<dd><code>callback</code> - The call back</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The result</dd>
+</dl>
+</li>
+</ul>
+<a name="executeRead-io.micronaut.transaction.TransactionCallback-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>executeRead</h4>
 <pre>public&nbsp;&lt;R&gt;&nbsp;R&nbsp;executeRead(@NonNull
-                         java.util.function.Function&lt;<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;,R&gt;&nbsp;callback)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-java.util.function.Function-">TransactionOperations</a></code></span></div>
+                         <a href="../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>,R&gt;&nbsp;callback)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">TransactionOperations</a></code></span></div>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-java.util.function.Function-">executeRead</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;</code></dd>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>R</code> - The result</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -606,19 +638,19 @@ implements <a href="../../../../io/micronaut/transaction/SynchronousTransactionM
 </dl>
 </li>
 </ul>
-<a name="executeWrite-java.util.function.Function-">
+<a name="executeWrite-io.micronaut.transaction.TransactionCallback-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>executeWrite</h4>
 <pre>public&nbsp;&lt;R&gt;&nbsp;R&nbsp;executeWrite(@NonNull
-                          java.util.function.Function&lt;<a href="../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;,R&gt;&nbsp;callback)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-java.util.function.Function-">TransactionOperations</a></code></span></div>
+                          <a href="../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>,R&gt;&nbsp;callback)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">TransactionOperations</a></code></span></div>
 <div class="block">Execute a default transaction within the context of the function.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;<a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="type parameter in AbstractSynchronousTransactionManager">T</a>&gt;</code></dd>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>R</code> - The result</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>

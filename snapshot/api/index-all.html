@@ -286,6 +286,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.Sum.html#apply-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.data.model.query.QueryModel-">apply(MethodMatchContext, QueryModel)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.Sum.html" title="class in io.micronaut.data.processor.visitors.finders">ProjectionMethodExpression.Sum</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionCallback.html#apply-io.micronaut.transaction.TransactionStatus-">apply(TransactionStatus&lt;T&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#applyJoin-io.micronaut.data.model.query.JoinPath-">applyJoin(JoinPath)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>
 <div class="block">Applies a join for the given association.</div>
@@ -595,6 +597,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/PreparedStatementCallback.html#call-java.sql.PreparedStatement-">call(PreparedStatement)</a></span> - Method in interface io.micronaut.data.jdbc.runtime.<a href="io/micronaut/data/jdbc/runtime/PreparedStatementCallback.html" title="interface in io.micronaut.data.jdbc.runtime">PreparedStatementCallback</a></dt>
 <dd>
 <div class="block">Subclasses should implement this method to allow generic exception handling.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionCallback.html#call-io.micronaut.transaction.TransactionStatus-">call(TransactionStatus&lt;T&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a></dt>
+<dd>
+<div class="block">Code that runs within the context of a transaction will implement this method.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/exceptions/CannotCreateTransactionException.html" title="class in io.micronaut.transaction.exceptions"><span class="typeNameLink">CannotCreateTransactionException</span></a> - Exception in <a href="io/micronaut/transaction/exceptions/package-summary.html">io.micronaut.transaction.exceptions</a></dt>
 <dd>
@@ -2179,19 +2185,29 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/event/EventIntegrator.html#EventIntegrator--">EventIntegrator()</a></span> - Constructor for class io.micronaut.data.hibernate.event.<a href="io/micronaut/data/hibernate/event/EventIntegrator.html" title="class in io.micronaut.data.hibernate.event">EventIntegrator</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute(TransactionDefinition, TransactionCallback&lt;EntityManager, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#execute-io.micronaut.data.jdbc.runtime.ConnectionCallback-">execute(ConnectionCallback&lt;R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html#execute-io.micronaut.data.jdbc.runtime.ConnectionCallback-">execute(ConnectionCallback&lt;R&gt;)</a></span> - Method in interface io.micronaut.data.jdbc.runtime.<a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime">JdbcOperations</a></dt>
 <dd>
 <div class="block">Execute the given operation with the given callback.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#executeRead-java.util.function.Function-">executeRead(Function&lt;TransactionStatus&lt;EntityManager&gt;, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute(TransactionDefinition, TransactionCallback&lt;Connection, R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.runtime.spring.<a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeRead-java.util.function.Function-">executeRead(Function&lt;TransactionStatus&lt;Connection&gt;, R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.runtime.spring.<a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute(TransactionDefinition, TransactionCallback&lt;T, R&gt;)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeRead-java.util.function.Function-">executeRead(Function&lt;TransactionStatus&lt;T&gt;, R&gt;)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute(TransactionDefinition, TransactionCallback&lt;T, R&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></dt>
+<dd>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead(TransactionCallback&lt;EntityManager, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionOperations.html#executeRead-java.util.function.Function-">executeRead(Function&lt;TransactionStatus&lt;T&gt;, R&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead(TransactionCallback&lt;Connection, R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.runtime.spring.<a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead(TransactionCallback&lt;T, R&gt;)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead(TransactionCallback&lt;T, R&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></dt>
 <dd>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </dd>
@@ -2215,13 +2231,13 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#executeUpdate-io.micronaut.data.model.runtime.PreparedQuery-">executeUpdate(PreparedQuery&lt;?, Number&gt;)</a></span> - Method in class io.micronaut.data.runtime.operations.<a href="io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorReactiveOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite(Function&lt;TransactionStatus&lt;EntityManager&gt;, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite(TransactionCallback&lt;EntityManager, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite(Function&lt;TransactionStatus&lt;Connection&gt;, R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.runtime.spring.<a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite(TransactionCallback&lt;Connection, R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.runtime.spring.<a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeWrite-java.util.function.Function-">executeWrite(Function&lt;TransactionStatus&lt;T&gt;, R&gt;)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite(TransactionCallback&lt;T, R&gt;)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite(Function&lt;TransactionStatus&lt;T&gt;, R&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite(TransactionCallback&lt;T, R&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></dt>
 <dd>
 <div class="block">Execute a default transaction within the context of the function.</div>
 </dd>
@@ -8430,6 +8446,10 @@
 <dt><a href="io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionAttribute</span></a> - Interface in <a href="io/micronaut/transaction/interceptor/package-summary.html">io.micronaut.transaction.interceptor</a></dt>
 <dd>
 <div class="block">This interface adds a <code>rollbackOn</code> specification to <a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>TransactionDefinition</code></a>.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction"><span class="typeNameLink">TransactionCallback</span></a>&lt;<a href="io/micronaut/transaction/TransactionCallback.html" title="type parameter in TransactionCallback">T</a>,<a href="io/micronaut/transaction/TransactionCallback.html" title="type parameter in TransactionCallback">R</a>&gt; - Interface in <a href="io/micronaut/transaction/package-summary.html">io.micronaut.transaction</a></dt>
+<dd>
+<div class="block">A functional interface for running code that runs within the context of a transaction.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction"><span class="typeNameLink">TransactionDefinition</span></a> - Interface in <a href="io/micronaut/transaction/package-summary.html">io.micronaut.transaction</a></dt>
 <dd>

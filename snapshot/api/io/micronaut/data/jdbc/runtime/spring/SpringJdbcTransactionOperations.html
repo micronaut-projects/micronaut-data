@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -165,17 +165,24 @@ implements <a href="../../../../../../io/micronaut/transaction/TransactionOperat
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeRead-java.util.function.Function-">executeRead</a></span>(java.util.function.Function&lt;<a href="../../../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;java.sql.Connection&gt;,R&gt;&nbsp;callback)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute</a></span>(<a href="../../../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+       <a href="../../../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;java.sql.Connection,R&gt;&nbsp;callback)</code>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite</a></span>(java.util.function.Function&lt;<a href="../../../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;java.sql.Connection&gt;,R&gt;&nbsp;callback)</code>
-<div class="block">Execute a default transaction within the context of the function.</div>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead</a></span>(<a href="../../../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;java.sql.Connection,R&gt;&nbsp;callback)</code>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite</a></span>(<a href="../../../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;java.sql.Connection,R&gt;&nbsp;callback)</code>
+<div class="block">Execute a default transaction within the context of the function.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.sql.Connection</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html#getConnection--">getConnection</a></span>()</code>
 <div class="block">Obtains the connection for the current transaction.</div>
@@ -225,19 +232,19 @@ implements <a href="../../../../../../io/micronaut/transaction/TransactionOperat
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="executeRead-java.util.function.Function-">
+<a name="executeRead-io.micronaut.transaction.TransactionCallback-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>executeRead</h4>
 <pre>public&nbsp;&lt;R&gt;&nbsp;R&nbsp;executeRead(@NonNull
-                         java.util.function.Function&lt;<a href="../../../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;java.sql.Connection&gt;,R&gt;&nbsp;callback)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-java.util.function.Function-">TransactionOperations</a></code></span></div>
+                         <a href="../../../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;java.sql.Connection,R&gt;&nbsp;callback)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">TransactionOperations</a></code></span></div>
 <div class="block">Execute a read-only transaction within the context of the function.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-java.util.function.Function-">executeRead</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
+<dd><code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeRead-io.micronaut.transaction.TransactionCallback-">executeRead</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>R</code> - The result</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -247,22 +254,47 @@ implements <a href="../../../../../../io/micronaut/transaction/TransactionOperat
 </dl>
 </li>
 </ul>
-<a name="executeWrite-java.util.function.Function-">
+<a name="executeWrite-io.micronaut.transaction.TransactionCallback-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>executeWrite</h4>
 <pre>public&nbsp;&lt;R&gt;&nbsp;R&nbsp;executeWrite(@NonNull
-                          java.util.function.Function&lt;<a href="../../../../../../io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;java.sql.Connection&gt;,R&gt;&nbsp;callback)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-java.util.function.Function-">TransactionOperations</a></code></span></div>
+                          <a href="../../../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;java.sql.Connection,R&gt;&nbsp;callback)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">TransactionOperations</a></code></span></div>
 <div class="block">Execute a default transaction within the context of the function.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-java.util.function.Function-">executeWrite</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
+<dd><code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#executeWrite-io.micronaut.transaction.TransactionCallback-">executeWrite</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>R</code> - The result</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>callback</code> - The call back</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The result</dd>
+</dl>
+</li>
+</ul>
+<a name="execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>execute</h4>
+<pre>public&nbsp;&lt;R&gt;&nbsp;R&nbsp;execute(@NonNull
+                     <a href="../../../../../../io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+                     @NonNull
+                     <a href="../../../../../../io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a>&lt;java.sql.Connection,R&gt;&nbsp;callback)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">TransactionOperations</a></code></span></div>
+<div class="block">Execute a read-only transaction within the context of the function.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>R</code> - The result</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>definition</code> - The transaction definition</dd>
 <dd><code>callback</code> - The call back</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The result</dd>
