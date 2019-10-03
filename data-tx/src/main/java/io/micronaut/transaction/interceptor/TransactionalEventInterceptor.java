@@ -16,6 +16,7 @@
 package io.micronaut.transaction.interceptor;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.transaction.annotation.TransactionalEventListener;
@@ -37,6 +38,11 @@ import javax.inject.Singleton;
 @Singleton
 public class TransactionalEventInterceptor implements MethodInterceptor<Object, Object> {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionalEventListener.class);
+
+    @Override
+    public int getOrder() {
+        return InterceptPhase.TRANSACTION.getPosition() - 10;
+    }
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
