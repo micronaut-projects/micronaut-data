@@ -21,6 +21,7 @@ import java.util.function.Function;
 class ProductRepositorySpec {
 
     @Inject ProductRepository productRepository;
+    @Inject ProductManager productManager;
 
     @BeforeAll
     void setupTest() {
@@ -85,5 +86,16 @@ class ProductRepositorySpec {
                 total
         );
         // end::reactive[]
+    }
+
+    @Test
+    void testProgrammaticTransactions() {
+        Manufacturer apple = productRepository.saveManufacturer("Apple");
+        final Product watch = productManager.save("Watch", apple);
+
+        Assertions.assertEquals(
+                watch.getName(),
+                productManager.find("Watch").getName()
+        );
     }
 }

@@ -20,6 +20,8 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.transaction.TransactionCallback;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
@@ -29,7 +31,8 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.persistence.EntityManager;
-import java.util.function.Function;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.time.Duration;
 
 /**
  * Adds Spring Transaction management capability to Micronaut Data.
@@ -45,6 +48,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
     private final SessionFactory sessionFactory;
+    private final HibernateTransactionManager transactionManager;
 
     /**
      * Default constructor.
@@ -52,6 +56,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
      */
     protected SpringHibernateTransactionOperations(HibernateTransactionManager hibernateTransactionManager) {
         this.sessionFactory = hibernateTransactionManager.getSessionFactory();
+        this.transactionManager = hibernateTransactionManager;
         this.writeTransactionTemplate = new TransactionTemplate(hibernateTransactionManager);
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setReadOnly(true);
@@ -59,18 +64,32 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     }
 
     @Override
-    public <R> R executeRead(@NonNull Function<TransactionStatus<EntityManager>, R> callback) {
+    public <R> R executeRead(@NonNull TransactionCallback<EntityManager, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
-        return readTransactionTemplate.execute(status ->
-                callback.apply(new JpaTransactionStatus(status))
+        return readTransactionTemplate.execute(status -> {
+                    try {
+                        return callback.call(new JpaTransactionStatus(status));
+                    } catch (RuntimeException | Error ex) {
+                        throw ex;
+                    } catch (Exception e) {
+                        throw new UndeclaredThrowableException(e, "TransactionCallback threw undeclared checked exception");
+                    }
+                }
         );
     }
 
     @Override
-    public <R> R executeWrite(@NonNull Function<TransactionStatus<EntityManager>, R> callback) {
+    public <R> R executeWrite(@NonNull TransactionCallback<EntityManager, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
-        return writeTransactionTemplate.execute(status ->
-                callback.apply(new JpaTransactionStatus(status))
+        return writeTransactionTemplate.execute(status -> {
+                    try {
+                        return callback.call(new JpaTransactionStatus(status));
+                    } catch (RuntimeException | Error ex) {
+                        throw ex;
+                    } catch (Exception e) {
+                        throw new UndeclaredThrowableException(e, "TransactionCallback threw undeclared checked exception");
+                    }
+                }
         );
     }
 
@@ -78,6 +97,33 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     @Override
     public EntityManager getConnection() {
         return sessionFactory.getCurrentSession();
+    }
+
+    @Override
+    public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<EntityManager, R> callback) {
+        ArgumentUtils.requireNonNull("callback", callback);
+        ArgumentUtils.requireNonNull("definition", definition);
+
+        final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setReadOnly(definition.isReadOnly());
+        def.setIsolationLevel(definition.getIsolationLevel().getCode());
+        def.setPropagationBehavior(definition.getPropagationBehavior().ordinal());
+        def.setName(definition.getName());
+        final Duration timeout = definition.getTimeout();
+        if (!timeout.isNegative()) {
+            def.setTimeout((int) timeout.getSeconds());
+        }
+        TransactionTemplate template = new TransactionTemplate(transactionManager, def);
+        return template.execute(status -> {
+                    try {
+                        return callback.call(new JpaTransactionStatus(status));
+                    } catch (RuntimeException | Error ex) {
+                        throw ex;
+                    } catch (Exception e) {
+                        throw new UndeclaredThrowableException(e, "TransactionCallback threw undeclared checked exception");
+                    }
+                }
+        );
     }
 
     /**

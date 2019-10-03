@@ -1,0 +1,23 @@
+You can use the api:transaction.SynchronousTransactionManager[] API to perform programmatic transactions.
+
+The following demonstrates an example:
+
+snippet::example.ProductManager[project-base="doc-examples/example", source="main", indent="0"]
+
+<1> The constructor is injected with the api:transaction.SynchronousTransactionManager[] and a transaction-aware `EntityManager`
+<2> The `save` method uses the `executeWrite` method to execute a write transaction within the context of the passed lambda.
+<3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda.
+
+Note that if you are using Micronaut Data JDBC then instead of an `EntityManager` you should inject a transaction-aware JDBC `Connection` object.
+
+The following presents an example:
+
+snippet::example.ProductManager[project-base="doc-examples/jdbc-example", source="main", indent="0"]
+
+<1> The constructor is injected with the api:transaction.SynchronousTransactionManager[] and a transaction-aware `Connection`
+<2> The `save` method uses the `executeWrite` method to execute a write transaction within the context of the passed lambda.
+<3> The `find` method uses the `executeRead` method to execute a read-only transaction within the context of the passed lambda.
+
+Note that it is important that you always use the injected connection as Micronaut Data makes available a transaction-aware implementation that uses the connection associated with the underlying transaction.
+
+If a transaction is not active when using this connection then a api:transaction.exceptions.NoTransactionException[] will be thrown indicating you should either provide a programmatic transaction or use `@Transactional`.

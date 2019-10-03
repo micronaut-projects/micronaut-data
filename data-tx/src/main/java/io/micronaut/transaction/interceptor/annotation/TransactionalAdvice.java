@@ -12,10 +12,12 @@ import java.lang.annotation.*;
  * Meta annotation that other transactional annotations like Spring's and {@code javax.transaction.Transaction} map
  * to such as to enable transactional advice. Shouldn't be used directly.
  *
+ * <p>This annotation is declared with a target of {@link ElementType#ANNOTATION_TYPE} so that is used only as a meta-annotation. In actual code you would use {@code javax.transaction.Transaction}</p>
+ *
  * @author graemerocher
  * @since 1.0
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented

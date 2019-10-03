@@ -33,7 +33,7 @@ internal class ProductRepositorySpec {
     fun testJoinSpec() {
         val list = productRepository.list()
         assertTrue(
-            list.all { it.manufacturer.name == "Apple" }
+            list.all { it.manufacturer?.name == "Apple" }
         )
     }
 
@@ -42,7 +42,7 @@ internal class ProductRepositorySpec {
     fun testAsync() {
         // tag::async[]
         val total = productRepository.findByNameContains("o")
-                .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer.name) }
+                .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer?.name) }
                 .get(1000, TimeUnit.SECONDS)
 
         Assertions.assertEquals(
@@ -58,7 +58,7 @@ internal class ProductRepositorySpec {
         // tag::reactive[]
         val total = productRepository.queryByNameContains("o")
                 .flatMap { product ->
-                    productRepository.countDistinctByManufacturerName(product.manufacturer.name)
+                    productRepository.countDistinctByManufacturerName(product.manufacturer?.name)
                             .toMaybe()
                 }
                 .defaultIfEmpty(0L)

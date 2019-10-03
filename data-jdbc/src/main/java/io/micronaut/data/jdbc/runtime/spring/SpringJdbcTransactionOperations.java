@@ -19,7 +19,10 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.transaction.TransactionCallback;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -30,9 +33,10 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.function.Function;
+import java.time.Duration;
 
 /**
  * Default implementation of {@link TransactionOperations} that uses Spring managed transactions.
@@ -48,6 +52,7 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
     private final DataSource dataSource;
+    private final DataSourceTransactionManager transactionManager;
 
     /**
      * Default constructor.
@@ -56,6 +61,7 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
     protected SpringJdbcTransactionOperations(
             DataSourceTransactionManager transactionManager) {
         this.dataSource = transactionManager.getDataSource();
+        this.transactionManager = transactionManager;
         this.writeTransactionTemplate = new TransactionTemplate(transactionManager);
         DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
         transactionDefinition.setReadOnly(true);
@@ -63,13 +69,60 @@ public class SpringJdbcTransactionOperations implements TransactionOperations<Co
     }
 
     @Override
-    public <R> R executeRead(@NonNull Function<TransactionStatus<Connection>, R> callback) {
-        return writeTransactionTemplate.execute(status -> callback.apply(new JdbcTransactionStatus(status)));
+    public <R> R executeRead(@NonNull TransactionCallback<Connection, R> callback) {
+        ArgumentUtils.requireNonNull("callback", callback);
+        return readTransactionTemplate.execute(status -> {
+                    try {
+                        return callback.call(new JdbcTransactionStatus(status));
+                    } catch (RuntimeException | Error ex) {
+                        throw ex;
+                    } catch (Exception e) {
+                        throw new UndeclaredThrowableException(e, "TransactionCallback threw undeclared checked exception");
+                    }
+                }
+        );
     }
 
     @Override
-    public <R> R executeWrite(@NonNull Function<TransactionStatus<Connection>, R> callback) {
-        return readTransactionTemplate.execute(status -> callback.apply(new JdbcTransactionStatus(status)));
+    public <R> R executeWrite(@NonNull TransactionCallback<Connection, R> callback) {
+        ArgumentUtils.requireNonNull("callback", callback);
+        return writeTransactionTemplate.execute(status -> {
+                    try {
+                        return callback.call(new JdbcTransactionStatus(status));
+                    } catch (RuntimeException | Error ex) {
+                        throw ex;
+                    } catch (Exception e) {
+                        throw new UndeclaredThrowableException(e, "TransactionCallback threw undeclared checked exception");
+                    }
+                }
+        );
+    }
+
+    @Override
+    public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<Connection, R> callback) {
+        ArgumentUtils.requireNonNull("callback", callback);
+        ArgumentUtils.requireNonNull("definition", definition);
+
+        final DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setReadOnly(definition.isReadOnly());
+        def.setIsolationLevel(definition.getIsolationLevel().getCode());
+        def.setPropagationBehavior(definition.getPropagationBehavior().ordinal());
+        def.setName(definition.getName());
+        final Duration timeout = definition.getTimeout();
+        if (!timeout.isNegative()) {
+            def.setTimeout((int) timeout.getSeconds());
+        }
+        TransactionTemplate template = new TransactionTemplate(transactionManager, def);
+        return template.execute(status -> {
+                    try {
+                        return callback.call(new JdbcTransactionStatus(status));
+                    } catch (RuntimeException | Error ex) {
+                        throw ex;
+                    } catch (Exception e) {
+                        throw new UndeclaredThrowableException(e, "TransactionCallback threw undeclared checked exception");
+                    }
+                }
+        );
     }
 
     @NonNull

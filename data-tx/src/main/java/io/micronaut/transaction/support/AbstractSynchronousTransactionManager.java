@@ -24,11 +24,11 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.transaction.SynchronousTransactionManager;
+import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.*;
@@ -128,12 +128,13 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
     private boolean rollbackOnCommitFailure = false;
 
     @Override
-    public <R> R executeRead(@NonNull Function<TransactionStatus<T>, R> callback)  {
+    public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<T, R> callback) {
+        Objects.requireNonNull(definition, "Definition should not be null");
         Objects.requireNonNull(callback, "Callback should not be null");
-        TransactionStatus<T> status = getTransaction(TransactionDefinition.READ_ONLY);
+        TransactionStatus<T> status = getTransaction(definition);
         R result;
         try {
-            result = callback.apply(status);
+            result = callback.call(status);
         } catch (RuntimeException | Error ex) {
             // Transactional code threw application exception -> rollback
             rollbackOnException(status, ex);
@@ -148,12 +149,32 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
     }
 
     @Override
-    public <R> R executeWrite(@NonNull Function<TransactionStatus<T>, R> callback) {
+    public <R> R executeRead(@NonNull TransactionCallback<T, R> callback)  {
+        Objects.requireNonNull(callback, "Callback should not be null");
+        TransactionStatus<T> status = getTransaction(TransactionDefinition.READ_ONLY);
+        R result;
+        try {
+            result = callback.call(status);
+        } catch (RuntimeException | Error ex) {
+            // Transactional code threw application exception -> rollback
+            rollbackOnException(status, ex);
+            throw ex;
+        } catch (Throwable ex) {
+            // Transactional code threw unexpected exception -> rollback
+            rollbackOnException(status, ex);
+            throw new UndeclaredThrowableException(ex, "TransactionCallback threw undeclared checked exception");
+        }
+        commit(status);
+        return result;
+    }
+
+    @Override
+    public <R> R executeWrite(@NonNull TransactionCallback<T, R> callback) {
         Objects.requireNonNull(callback, "Callback should not be null");
         TransactionStatus<T> status = getTransaction(TransactionDefinition.DEFAULT);
         R result;
         try {
-            result = callback.apply(status);
+            result = callback.call(status);
         } catch (RuntimeException | Error ex) {
             // Transactional code threw application exception -> rollback
             rollbackOnException(status, ex);

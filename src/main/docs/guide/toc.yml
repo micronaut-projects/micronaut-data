@@ -22,6 +22,7 @@ dataUpdates:
   title: Updating Data
   transactions:
     title: Transactions
+    programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
   batchUpdates: Batch Updates
   batchDeletes: Batch Deletes
