@@ -2420,7 +2420,7 @@ Assertions.assertEquals(
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-If you prefer Spring-managed transactions you can add a dependency on either <code>spring-orm</code> or <code>spring-jdbc</code> as well as <code>micronaut-spring</code> and Spring-managed transactions will be used instead.
+If you prefer Spring-managed transactions you can add the <code>micronaut-data-spring</code> dependency and Spring-managed transactions will be used instead. See the section on <a href="#spring">Spring Support</a> for more information.
 </td>
 </tr>
 </table>
@@ -3157,24 +3157,47 @@ You can add additional method candidates by creating a library that depends on <
 
 
 <div class="paragraph">
-<p>Micronaut Data is able to compile existing Spring Data repository interfaces if you add the <code>spring-data-commons</code> dependency to your compilation classpath:</p>
+<p>Micronaut Data features general Spring support that is provided through the <code>micronaut-data-spring</code> dependency:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework.data:spring-data-commons:2.1.8.RELEASE'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
-    &lt;groupId&gt;org.springframework.data&lt;/groupId&gt;
-    &lt;artifactId&gt;spring-data-commons&lt;/artifactId&gt;
-    &lt;version&gt;2.1.8.RELEASE&lt;/version&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
 </p>
+</div>
+<div class="paragraph">
+<p>In addition to this dependency you will need either <code>spring-orm</code> (for Hibernate) or <code>spring-jdbc</code> (for JDBC) on your classpath to enable support for Spring-based transaction management:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-orm&lt;/artifactId&gt;
+    &lt;version&gt;5.2.0.RELEASE&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>You can then compile existing Spring Data repository interfaces and use Spring annotations such as <code>org.springframework.transaction.annotation.Transactional</code> in your application.</p>
 </div>
 <div class="paragraph">
 <p>You can extend from existing Spring Data interfaces such as <code>CrudRepository</code>, <code>PagingAndSortingRepository</code> and so on.</p>

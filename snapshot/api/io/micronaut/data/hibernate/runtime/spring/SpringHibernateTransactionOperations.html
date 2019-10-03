@@ -114,6 +114,7 @@ var activeTableTab = "activeTableTab";
 <pre>@Requires(classes=org.springframework.orm.hibernate5.HibernateTransactionManager.class)
  @EachBean(value=org.springframework.orm.hibernate5.HibernateTransactionManager.class)
  @Internal
+ @Replaces(value=<a href="../../../../../../io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations.class</a>)
 public class <span class="typeNameLabel">SpringHibernateTransactionOperations</span>
 extends java.lang.Object
 implements <a href="../../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;javax.persistence.EntityManager&gt;</pre>
