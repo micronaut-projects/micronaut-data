@@ -7,6 +7,6 @@ import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Sale
 
 @JdbcRepository(dialect = Dialect.MYSQL)
-interface MySqlSaleRepository extends CrudRepository<Sale, Long> {
+public interface MySqlSaleRepository extends CrudRepository<Sale, Long> {
     void updateData(@Id Long id, Map<String, String> data);
 }
