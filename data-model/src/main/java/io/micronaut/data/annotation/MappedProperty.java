@@ -16,7 +16,6 @@
 package io.micronaut.data.annotation;
 
 import io.micronaut.context.annotation.AliasFor;
-import io.micronaut.core.convert.TypeConverter;
 import io.micronaut.data.model.DataType;
 
 import java.lang.annotation.*;

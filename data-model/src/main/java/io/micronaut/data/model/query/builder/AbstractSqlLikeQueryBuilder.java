@@ -1090,6 +1090,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
 
+            queryState.addParameterType(propertyName, prop.getDataType());
             String currentAlias = queryState.getCurrentAlias();
             if (currentAlias != null) {
                 queryString.append(currentAlias).append(DOT);
@@ -1100,12 +1101,22 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             queryString.append(columnName).append('=');
             Placeholder param = queryState.newParameter();
-            queryString.append(prop.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse(param.name));
+            appendUpdateSetParameter(queryString, prop, param);
             parameters.put(param.key, prop.getName());
             if (iterator.hasNext()) {
                 queryString.append(COMMA);
             }
         }
+    }
+
+    /**
+     * Appends the SET=? call to the query string.
+     * @param queryString The query string
+     * @param prop The property
+     * @param param the parameter
+     */
+    protected void appendUpdateSetParameter(StringBuilder queryString, PersistentProperty prop, Placeholder param) {
+        queryString.append(prop.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse(param.name));
     }
 
     private static void appendPropertyComparison(StringBuilder q, String alias, String propertyName, String otherProperty, String operator) {

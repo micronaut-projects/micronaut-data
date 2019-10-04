@@ -34,6 +34,8 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.http.codec.MediaTypeCodec;
+
 import java.util.*;
 
 /**
@@ -50,17 +52,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final ResultReader<RS, String> resultReader;
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
+    private final MediaTypeCodec jsonCodec;
     private boolean callNext = true;
 
     /**
      * Default constructor.
      * @param entity The entity
      * @param resultReader The result reader
+     * @param jsonCodec The json codec
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader) {
-        this(entity, resultReader, Collections.emptySet());
+            @NonNull ResultReader<RS, String> resultReader,
+            @Nullable MediaTypeCodec jsonCodec) {
+        this(entity, resultReader, Collections.emptySet(), jsonCodec);
     }
 
     /**
@@ -68,12 +73,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param prefix The prefix to startup from.
      * @param entity The entity
      * @param resultReader The result reader
+     * @param jsonCodec The JSON codec
      */
     public SqlResultEntityTypeMapper(
             String prefix,
             @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader) {
-        this(entity, resultReader, Collections.emptySet(), prefix);
+            @NonNull ResultReader<RS, String> resultReader,
+            @Nullable MediaTypeCodec jsonCodec) {
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonCodec);
     }
 
     /**
@@ -81,12 +88,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @param entity The entity
      * @param resultReader The result reader
      * @param joinPaths The join paths
+     * @param jsonCodec The JSON codec
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
-            @Nullable Set<JoinPath> joinPaths) {
-        this(entity, resultReader, joinPaths, null);
+            @Nullable Set<JoinPath> joinPaths,
+            @Nullable MediaTypeCodec jsonCodec) {
+        this(entity, resultReader, joinPaths, null, jsonCodec);
     }
 
     /**
@@ -99,10 +108,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
-            String startingPrefix) {
+            String startingPrefix,
+            @Nullable MediaTypeCodec jsonCodec) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
+        this.jsonCodec = jsonCodec;
         this.resultReader = resultReader;
         if (CollectionUtils.isNotEmpty(joinPaths)) {
             this.joinPaths = new HashMap<>(joinPaths.size());
@@ -369,7 +380,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (propertyType.isInstance(v)) {
             property.set(entity, v);
         } else {
-            property.set(entity, resultReader.convertRequired(v, propertyType));
+            if (dataType == DataType.JSON && jsonCodec != null) {
+                property.set(entity, jsonCodec.decode(property.asArgument(), v.toString()));
+            } else {
+                property.set(entity, resultReader.convertRequired(v, propertyType));
+            }
         }
     }
 

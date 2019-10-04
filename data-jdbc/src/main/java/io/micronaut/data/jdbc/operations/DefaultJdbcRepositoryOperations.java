@@ -56,6 +56,7 @@ import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -105,13 +106,15 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param transactionOperations The JDBC operations for the data source
      * @param executorService       The executor service
      * @param beanContext           The bean context
+     * @param codecs                The codecs
      */
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               DataSource dataSource,
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
-                                              BeanContext beanContext) {
-        super(new ColumnNameResultSetReader(), new ColumnIndexResultSetReader(), new JdbcQueryStatement());
+                                              BeanContext beanContext,
+                                              List<MediaTypeCodec> codecs) {
+        super(new ColumnNameResultSetReader(), new ColumnIndexResultSetReader(), new JdbcQueryStatement(), codecs);
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
@@ -178,7 +181,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                     persistentEntity,
                                     columnNameResultSetReader,
-                                    preparedQuery.getJoinFetchPaths()
+                                    preparedQuery.getJoinFetchPaths(),
+                                    jsonCodec
                             );
                             R result = mapper.map(rs, resultType);
                             if (preparedQuery.hasResultConsumer()) {
@@ -233,7 +237,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 TypeMapper<ResultSet, E> mapper = new SqlResultEntityTypeMapper<>(
                         prefix,
                         entity,
-                        columnNameResultSetReader
+                        columnNameResultSetReader,
+                        jsonCodec
                 );
                 return mapper.map(rs, type);
             }
@@ -315,7 +320,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 mapper = new SqlResultEntityTypeMapper<>(
                         getEntity(resultType),
                         columnNameResultSetReader,
-                        preparedQuery.getJoinFetchPaths()
+                        preparedQuery.getJoinFetchPaths(),
+                        jsonCodec
                 );
             }
             spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
@@ -743,7 +749,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return new SqlResultEntityTypeMapper<>(
                 prefix,
                 getEntity(type),
-                columnNameResultSetReader
+                columnNameResultSetReader,
+                jsonCodec
         ).map(resultSet, type);
     }
 
@@ -761,7 +768,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     public <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
         ArgumentUtils.requireNonNull("resultSet", resultSet);
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
-        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader);
+        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader, jsonCodec);
         Iterable<T> iterable = () -> new Iterator<T>() {
             boolean nextCalled = false;
 

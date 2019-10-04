@@ -21,6 +21,29 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 
 class SqlParameterBindingSpec extends AbstractDataSpec {
 
+    void "test update binding respects data type"() {
+        given:
+        def repository = buildRepository('test.SaleRepository', """
+import io.micronaut.data.tck.entities.Sale;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+
+import java.util.Map;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+interface SaleRepository extends CrudRepository<Sale, Long> {
+
+    void updateData(@Id Long id, Map<String, String> data);
+}
+
+""")
+        def method = repository.getRequiredMethod("updateData", Long, Map)
+
+        expect:"The repository compiles"
+        repository != null
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS) == ['JSON', 'LONG'] as String[]
+    }
+
     void "test compile repository"() {
         given:
         def repository = buildRepository('test.ProjectRepository', """

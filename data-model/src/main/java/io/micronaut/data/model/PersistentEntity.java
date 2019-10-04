@@ -131,6 +131,7 @@ public interface PersistentEntity extends PersistentElement {
     /**
      * @return The simple name without the package of entity
      */
+    @NonNull
     default String getSimpleName() {
         return NameUtils.getSimpleName(getName());
     }

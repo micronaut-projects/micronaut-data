@@ -34,10 +34,22 @@ import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Restaurant
+import io.micronaut.data.tck.entities.Sale
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends Specification {
+
+    void "test encode update with JSON and MySQL"() {
+        when:"A update is encoded"
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        QueryModel q = QueryModel.from(entity)
+        QueryBuilder encoder = new SqlQueryBuilder(Dialect.MYSQL)
+        def encoded = encoder.buildUpdate(q, ['data'])
+
+        then:"The update query is correct"
+        encoded.query == 'UPDATE sale SET data=CONVERT(? USING UTF8MB4)'
+    }
 
     void "test build queries with schema"() {
         when:"A select is encoded"

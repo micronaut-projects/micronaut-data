@@ -4,6 +4,7 @@ dependencies {
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     compile project(":data-runtime")
     compile project(":data-tx")
+    compile "io.micronaut:micronaut-http:$micronautVersion"
     compile "io.micronaut:micronaut-jdbc:$micronautVersion"
     compileOnly project(":data-hibernate-jpa")
     testCompile project(":data-tck")
@@ -15,7 +16,7 @@ dependencies {
     testCompile "org.codehaus.groovy:groovy-sql:$groovyVersion"
     testCompile project(":data-processor")
     testCompile "io.micronaut:micronaut-validation:$micronautVersion"
-    testRuntime "com.h2database:h2"
+    testRuntime "com.h2database:h2:1.4.199"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
     testCompile "org.testcontainers:spock:1.12.2"
     testCompile "org.testcontainers:mysql:1.12.2"

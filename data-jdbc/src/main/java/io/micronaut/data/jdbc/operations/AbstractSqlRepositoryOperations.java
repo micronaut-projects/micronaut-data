@@ -37,9 +37,12 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.http.MediaType;
+import io.micronaut.http.codec.MediaTypeCodec;
 import org.slf4j.Logger;
 
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -65,6 +68,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final Map<Class, Dialect> dialects = new HashMap<>(10);
     protected final Map<Dialect, SqlQueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
+    protected final MediaTypeCodec jsonCodec;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
@@ -76,14 +80,21 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param columnNameResultSetReader  The column name result reader
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
+     * @param codecs                     The media type codecs
      */
     protected AbstractSqlRepositoryOperations(
             ResultReader<RS, String> columnNameResultSetReader,
             ResultReader<RS, Integer> columnIndexResultSetReader,
-            QueryStatement<PS, Integer> preparedStatementWriter) {
+            QueryStatement<PS, Integer> preparedStatementWriter,
+            List<MediaTypeCodec> codecs) {
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
+        this.jsonCodec = resolveJsonCodec(codecs);
+    }
+
+    private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
+        return CollectionUtils.isNotEmpty(codecs) ? codecs.stream().filter(c -> c.getMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE)).findFirst().orElse(null) : null;
     }
 
     @NonNull
@@ -219,6 +230,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     } else {
                         if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                             DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+                        }
+                        if (type == DataType.JSON && jsonCodec != null) {
+                            value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                         }
                         preparedStatementWriter.setDynamic(
                                 stmt,
@@ -365,24 +379,34 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param value The value
      */
     protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value) {
-        if (dataType == DataType.ENTITY && value != null) {
-            RuntimePersistentProperty<Object> idReader = getIdReader(value);
-            Object id = idReader.getProperty().get(value);
-            if (id == null) {
-                throw new DataAccessException("Supplied entity is a transient instance: " + value);
-            }
-            value = id;
-            preparedStatementWriter.setDynamic(
-                    preparedStatement,
-                    index,
-                    idReader.getDataType(),
-                    value);
-        } else {
-            preparedStatementWriter.setDynamic(
-                    preparedStatement,
-                    index,
-                    dataType,
-                    value);
+        switch (dataType) {
+            case JSON:
+                if (value != null && jsonCodec != null) {
+                    value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
+                }
+                preparedStatementWriter.setDynamic(
+                        preparedStatement,
+                        index,
+                        dataType,
+                        value);
+            break;
+            case ENTITY:
+                if (value != null) {
+                    RuntimePersistentProperty<Object> idReader = getIdReader(value);
+                    Object id = idReader.getProperty().get(value);
+                    if (id == null) {
+                        throw new DataAccessException("Supplied entity is a transient instance: " + value);
+                    }
+                    value = id;
+                    dataType = idReader.getDataType();
+                }
+                // intentional fall through
+            default:
+                preparedStatementWriter.setDynamic(
+                        preparedStatement,
+                        index,
+                        dataType,
+                        value);
         }
     }
 

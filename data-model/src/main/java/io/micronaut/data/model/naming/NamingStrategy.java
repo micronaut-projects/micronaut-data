@@ -18,6 +18,7 @@ package io.micronaut.data.model.naming;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.Association;
@@ -58,6 +59,7 @@ public interface NamingStrategy {
     default @NonNull String mappedName(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class)
+                .filter(StringUtils::isNotEmpty)
                 .orElseGet(() -> mappedName(entity.getSimpleName()));
     }
 
@@ -87,6 +89,7 @@ public interface NamingStrategy {
             }
         } else {
             return property.getAnnotationMetadata().stringValue(MappedProperty.class)
+                    .map(s -> StringUtils.isEmpty(s) ? defaultNameSupplier.get() : s)
                     .orElseGet(defaultNameSupplier);
         }
     }

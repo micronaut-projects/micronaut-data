@@ -615,7 +615,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private boolean addWriteExpression(List<String> values, PersistentProperty property) {
-        return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
+        if (property.getDataType() == DataType.JSON && dialect == Dialect.POSTGRES) {
+            return values.add("to_json(?::json)");
+        } else {
+            return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
+        }
     }
 
     @NonNull
@@ -683,6 +687,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return schema + '.' + tableName;
         }
         return tableName;
+    }
+
+    @Override
+    protected void appendUpdateSetParameter(StringBuilder queryString, PersistentProperty prop, Placeholder param) {
+        // to_json(?::json)
+        if (prop.getDataType() == DataType.JSON) {
+            switch (dialect) {
+                case MYSQL:
+                    queryString.append("CONVERT(? USING UTF8MB4)");
+                    break;
+                case POSTGRES:
+                    queryString.append("to_json(?::json)");
+                    break;
+                default:
+                    super.appendUpdateSetParameter(queryString, prop, param);
+            }
+        } else {
+            super.appendUpdateSetParameter(queryString, prop, param);
+        }
     }
 
     @Override
