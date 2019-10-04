@@ -17,6 +17,6 @@ import java.sql.Connection;
 @EachBean(DataSource.class)
 @ConnectionAdvice
 @Internal
-public interface InterceptedConnection extends Connection {
+public interface TransactionalConnection extends Connection {
 
 }

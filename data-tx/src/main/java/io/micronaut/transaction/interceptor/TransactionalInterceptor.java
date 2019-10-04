@@ -2,6 +2,7 @@ package io.micronaut.transaction.interceptor;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
@@ -63,6 +64,11 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      */
     public TransactionalInterceptor(@NonNull BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
+    }
+
+    @Override
+    public int getOrder() {
+        return InterceptPhase.TRANSACTION.getPosition();
     }
 
     @Override

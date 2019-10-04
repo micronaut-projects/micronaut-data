@@ -9,7 +9,7 @@ import io.micronaut.transaction.interceptor.TransactionalInterceptor;
 import java.lang.annotation.*;
 
 /**
- * Meta annotation that other transactional annotations like Spring's and {@code javax.transaction.Transaction} map
+ * Meta annotation that other transactional annotations like Spring's and {@code javax.transaction.Transactional} map
  * to such as to enable transactional advice. Shouldn't be used directly.
  *
  * <p>This annotation is declared with a target of {@link ElementType#ANNOTATION_TYPE} so that is used only as a meta-annotation. In actual code you would use {@code javax.transaction.Transaction}</p>
@@ -17,10 +17,8 @@ import java.lang.annotation.*;
  * @author graemerocher
  * @since 1.0
  */
-@Target(ElementType.ANNOTATION_TYPE)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-@Inherited
-@Documented
 @Around
 @Type(TransactionalInterceptor.class)
 @Internal

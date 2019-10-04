@@ -14,7 +14,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Considered internal and not for explicit usage.
  *
  * @see ConnectionInterceptor
- * @see InterceptedConnection
+ * @see TransactionalConnection
  */
 @Retention(RUNTIME)
 @Scope
