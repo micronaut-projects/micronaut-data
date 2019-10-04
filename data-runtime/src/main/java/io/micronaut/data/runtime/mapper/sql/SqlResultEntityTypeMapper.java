@@ -304,7 +304,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             dataType
                     );
 
-                    convertAndSet(entity, rpp, property, v, dataType);
+                    if (v != null) {
+                        convertAndSet(entity, rpp, property, v, dataType);
+                    }
                 }
             }
 
