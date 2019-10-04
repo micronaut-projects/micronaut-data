@@ -15,7 +15,7 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.interceptor.annotation.TransactionalAdvice;
+import io.micronaut.transaction.annotation.TransactionalAdvice;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

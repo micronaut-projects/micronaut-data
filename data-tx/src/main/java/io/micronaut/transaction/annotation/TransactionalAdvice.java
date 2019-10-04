@@ -1,4 +1,4 @@
-package io.micronaut.transaction.interceptor.annotation;
+package io.micronaut.transaction.annotation;
 
 import io.micronaut.aop.Around;
 import io.micronaut.context.annotation.Type;

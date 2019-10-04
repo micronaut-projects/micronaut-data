@@ -42,7 +42,7 @@ public class JtaTransactionalMapper implements NamedAnnotationMapper {
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         final boolean springManagement = visitorContext.getClassElement("io.micronaut.spring.tx.annotation.Transactional").isPresent();
         AnnotationValueBuilder<Annotation> builder =
-                AnnotationValue.builder(springManagement ? "io.micronaut.spring.tx.annotation.Transactional" : "io.micronaut.transaction.interceptor.annotation.TransactionalAdvice");
+                AnnotationValue.builder(springManagement ? "io.micronaut.spring.tx.annotation.Transactional" : "io.micronaut.transaction.annotation.TransactionalAdvice");
         annotation.getValue(String.class).ifPresent(type ->
                     builder.member("propagation", type)
         );

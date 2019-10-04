@@ -17,7 +17,6 @@ package io.micronaut.transaction.annotation;
 
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.transaction.TransactionDefinition;
-import io.micronaut.transaction.interceptor.annotation.TransactionalAdvice;
 
 import java.lang.annotation.*;
 
