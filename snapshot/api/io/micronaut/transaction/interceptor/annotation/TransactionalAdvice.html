@@ -91,15 +91,13 @@
 <li class="blockList">
 <hr>
 <br>
-<pre>@Target(value=ANNOTATION_TYPE)
+<pre>@Target(value={ANNOTATION_TYPE,METHOD,TYPE})
  @Retention(value=RUNTIME)
- @Inherited
- @Documented
  @Around
  @Type(value=<a href="../../../../../io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.class</a>)
  @Internal
 public @interface <span class="memberNameLabel">TransactionalAdvice</span></pre>
-<div class="block">Meta annotation that other transactional annotations like Spring's and <code>javax.transaction.Transaction</code> map
+<div class="block">Meta annotation that other transactional annotations like Spring's and <code>javax.transaction.Transactional</code> map
  to such as to enable transactional advice. Shouldn't be used directly.
 
  <p>This annotation is declared with a target of <code>ElementType.ANNOTATION_TYPE</code> so that is used only as a meta-annotation. In actual code you would use <code>javax.transaction.Transaction</code></p></div>

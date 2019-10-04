@@ -3489,6 +3489,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html#getOrder--">getOrder()</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalEventInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalEventInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#getOrder--">getOrder()</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/TransactionSynchronizationAdapter.html#getOrder--">getOrder()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationAdapter.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationAdapter</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Pageable.html#getOrderBy--">getOrderBy()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
@@ -4488,11 +4490,6 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/ConnectionInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;Connection, Object&gt;)</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/ConnectionInterceptor.html" title="class in io.micronaut.transaction.jdbc">ConnectionInterceptor</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/transaction/jdbc/InterceptedConnection.html" title="interface in io.micronaut.transaction.jdbc"><span class="typeNameLink">InterceptedConnection</span></a> - Interface in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
-<dd>
-<div class="block">Allows injecting a <code>Connection</code> instance as a bean with any methods invoked
- on the connection being delegated to connection bound to the current transaction.</div>
-</dd>
 <dt><a href="io/micronaut/transaction/exceptions/InvalidIsolationLevelException.html" title="class in io.micronaut.transaction.exceptions"><span class="typeNameLink">InvalidIsolationLevelException</span></a> - Exception in <a href="io/micronaut/transaction/exceptions/package-summary.html">io.micronaut.transaction.exceptions</a></dt>
 <dd>
 <div class="block">Exception that gets thrown when an invalid isolation level is specified,
@@ -8415,8 +8412,13 @@
 </dd>
 <dt><a href="io/micronaut/transaction/interceptor/annotation/TransactionalAdvice.html" title="annotation in io.micronaut.transaction.interceptor.annotation"><span class="typeNameLink">TransactionalAdvice</span></a> - Annotation Type in <a href="io/micronaut/transaction/interceptor/annotation/package-summary.html">io.micronaut.transaction.interceptor.annotation</a></dt>
 <dd>
-<div class="block">Meta annotation that other transactional annotations like Spring's and <code>javax.transaction.Transaction</code> map
+<div class="block">Meta annotation that other transactional annotations like Spring's and <code>javax.transaction.Transactional</code> map
  to such as to enable transactional advice.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/TransactionalConnection.html" title="interface in io.micronaut.transaction.jdbc"><span class="typeNameLink">TransactionalConnection</span></a> - Interface in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
+<dd>
+<div class="block">Allows injecting a <code>Connection</code> instance as a bean with any methods invoked
+ on the connection being delegated to connection bound to the current transaction.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/interceptor/annotation/TransactionalEventAdvice.html" title="annotation in io.micronaut.transaction.interceptor.annotation"><span class="typeNameLink">TransactionalEventAdvice</span></a> - Annotation Type in <a href="io/micronaut/transaction/interceptor/annotation/package-summary.html">io.micronaut.transaction.interceptor.annotation</a></dt>
 <dd>
