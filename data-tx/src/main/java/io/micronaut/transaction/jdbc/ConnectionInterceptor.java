@@ -29,7 +29,7 @@ public final class ConnectionInterceptor implements MethodInterceptor<Connection
      * @param qualifier The qualifier
      */
     @Internal
-    ConnectionInterceptor(BeanContext beanContext, Qualifier qualifier) {
+    ConnectionInterceptor(BeanContext beanContext, Qualifier<DataSource> qualifier) {
         this.dataSource = beanContext.getBean(DataSource.class, qualifier);
     }
 
