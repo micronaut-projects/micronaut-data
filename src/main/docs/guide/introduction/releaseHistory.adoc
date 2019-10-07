@@ -1,0 +1,14 @@
+==== 1.0.0.M3
+
+* Spring for Transaction Management Now Optional
+* Support for `@TransactionalEventListener`
+* Support for `javax.transaction.Transactional` usage without Spring
+* Bug Fixes and Improvements
+
+==== 1.0.0.M2
+
+* Bug Fixes and Improvements
+
+==== 1.0.0.M1
+
+ * Initial Milestone Release
