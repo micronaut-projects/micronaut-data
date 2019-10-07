@@ -123,12 +123,15 @@ public class DefaultQuery implements QueryModel {
         Association[] associations = new Association[elements.length];
         for (int i = 0; i < elements.length; i++) {
             PersistentProperty property = entity.getPropertyByName(elements[i]);
+            if (property == null) {
+                final PersistentProperty identity = entity.getIdentity();
+                if (identity != null && elements[i].equals(identity.getName())) {
+                    property = identity;
+                }
+            }
             if (property instanceof Association) {
                 Association a = (Association) property;
                 entity = a.getAssociatedEntity();
-                if (entity == null) {
-                    throw new IllegalArgumentException("Invalid association path. Element [" + elements[i] + "] references an associated entity that doesn't exist.");
-                }
                 associations[i] = a;
             } else {
                 throw new IllegalArgumentException("Invalid association path. Element [" + elements[i] + "] is not an association.");

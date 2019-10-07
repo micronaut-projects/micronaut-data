@@ -795,17 +795,24 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 joinPath = queryModel.join(associationPath, association, Join.Type.DEFAULT, null);
             }
 
-            String alias = queryState.applyJoin(joinPath);
+            final boolean isEmbedded = association instanceof Embedded;
+            String alias = isEmbedded ? queryState.getCurrentAlias() : queryState.applyJoin(joinPath);
 
             try {
                 queryState.setEntity(associatedEntity);
                 queryState.setCurrentAlias(alias);
+                if (isEmbedded) {
+                    queryState.setCurrentEmbedded((Embedded) association);
+                }
                 buildWhereClauseForCriterion(
                         queryState,
                         associationCriteria,
                         associationCriteriaList
                 );
             } finally {
+                if (isEmbedded) {
+                    queryState.setCurrentEmbedded(null);
+                }
                 queryState.setCurrentAlias(currentName);
                 queryState.setEntity(currentEntity);
             }
@@ -960,7 +967,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
                 boolean computePropertyPaths = computePropertyPaths();
                 if (computePropertyPaths) {
-                    String columnName = getColumnName(property);
+                    String columnName;
+                    final Embedded currentEmbedded = queryState.getCurrentEmbedded();
+                    if (currentEmbedded != null) {
+                        columnName = computeEmbeddedName(
+                                currentEmbedded,
+                                path,
+                                property
+                        );
+                    } else {
+                        columnName = getColumnName(property);
+                    }
                     if (queryState.shouldEscape()) {
                         columnName = quote(columnName);
                     }
@@ -1360,6 +1377,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final boolean escape;
         private String currentAlias;
         private PersistentEntity entity;
+        private Embedded currentEmbedded;
 
         private QueryState(QueryModel query, boolean allowJoins) {
             this.allowJoins = allowJoins;
@@ -1384,6 +1402,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          */
         public void setCurrentAlias(@Nullable String currentAlias) {
             this.currentAlias = currentAlias;
+        }
+
+        /**
+         * @return The current embedded property
+         */
+        @Nullable
+        public Embedded getCurrentEmbedded() {
+            return currentEmbedded;
+        }
+
+        /**
+         * @param currentEmbedded The current embedded
+         */
+        public void setCurrentEmbedded(@Nullable Embedded currentEmbedded) {
+            this.currentEmbedded = currentEmbedded;
         }
 
         /**

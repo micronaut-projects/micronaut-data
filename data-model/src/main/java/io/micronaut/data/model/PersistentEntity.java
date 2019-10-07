@@ -202,7 +202,20 @@ public interface PersistentEntity extends PersistentElement {
                             b.append(".");
                         }
                     } else {
-                        return Optional.empty();
+                        PersistentProperty identity = currentEntity.getIdentity();
+                        if (identity != null && identity.getName().equals(name)) {
+                            sp = identity;
+                            if (sp instanceof Association) {
+                                currentEntity = ((Association) sp).getAssociatedEntity();
+                                b.append(name);
+                                if (i.hasNext()) {
+                                    b.append(".");
+                                }
+                            }
+                        }
+                        if (sp == null) {
+                            return Optional.empty();
+                        }
                     }
                 } else {
                     return Optional.empty();
@@ -257,6 +270,9 @@ public interface PersistentEntity extends PersistentElement {
                     PersistentProperty identity = startingEntity.getIdentity();
                     if (identity != null && identity.getName().equals(token)) {
                         prop = identity;
+                        if (prop instanceof Association) {
+                            startingEntity = ((Association) prop).getAssociatedEntity();
+                        }
                     } else {
                         return Optional.empty();
                     }
