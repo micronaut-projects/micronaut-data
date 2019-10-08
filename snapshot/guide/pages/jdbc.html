@@ -128,6 +128,9 @@ function addJsClass() {
                     <div class="toc-item" style="margin-left:10px"><a href="#columnTransformer"><strong>9.4.7</strong><span>Using @ColumnTransformer</span></a>
                     </div>
                     
+                    <div class="toc-item" style="margin-left:10px"><a href="#sqlJsonType"><strong>9.4.8</strong><span>JSON Column Support</span></a>
+                    </div>
+                    
                     <div class="toc-item" style="margin-left:0px"><a href="#jdbcJoinQueries"><strong>9.5</strong><span>JDBC Join Queries</span></a>
                     </div>
                     
@@ -1643,6 +1646,41 @@ private String name;</code></pre>
 </div>
 <div class="paragraph">
 <p>With this any place any <code>INSERT</code> or <code>UPDATE</code> statement generated will include the above <code>write</code> entry.</p>
+</div>
+
+
+<h2 id="sqlJsonType">9.1.4.8 JSON Column Support</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlJsonType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can declare a field of a class as a JSON type using the <a href="../api/io/micronaut/data/annotations/TypeDef.html">@TypeDef</a> annotation as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeDef(type = DataType.JSON)
+private Map&lt;String, String&gt; data;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above will map to a column called <code>data</code>. Depending on the underling database the column type will be adjusted. For example for Postgres which features native JSON support the column type will be <code>JSONB</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To allow JSON to be serialized and deserialized in entity properties you must have Jackson and the <code>micronaut-runtime</code> module your classpath.
+</td>
+</tr>
+</table>
 </div>
 
 

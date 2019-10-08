@@ -98,7 +98,7 @@ var activeTableTab = "activeTableTab";
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
-<li><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</li>
+<li><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">io.micronaut.transaction.support.AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</li>
 <li>
 <ul class="inheritance">
 <li>io.micronaut.transaction.hibernate5.HibernateTransactionManager</li>
@@ -112,7 +112,7 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <dl>
 <dt>All Implemented Interfaces:</dt>
-<dd><a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;javax.persistence.EntityManagerFactory,javax.persistence.EntityManager&gt;, <a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;, <a href="../../../../io/micronaut/transaction/TransactionManager.html" title="interface in io.micronaut.transaction">TransactionManager</a>, <a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;javax.persistence.EntityManager&gt;, java.io.Serializable</dd>
+<dd><a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;javax.persistence.EntityManagerFactory,java.sql.Connection&gt;, <a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager</a>&lt;java.sql.Connection&gt;, <a href="../../../../io/micronaut/transaction/TransactionManager.html" title="interface in io.micronaut.transaction">TransactionManager</a>, <a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;, java.io.Serializable</dd>
 </dl>
 <hr>
 <br>
@@ -120,8 +120,8 @@ var activeTableTab = "activeTableTab";
  @Requires(missingClasses="org.springframework.orm.hibernate5.HibernateTransactionManager")
  @Replaces(value=<a href="../../../../io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager.class</a>)
 public class <span class="typeNameLabel">HibernateTransactionManager</span>
-extends <a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;
-implements <a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;javax.persistence.EntityManagerFactory,javax.persistence.EntityManager&gt;</pre>
+extends <a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;
+implements <a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;javax.persistence.EntityManagerFactory,java.sql.Connection&gt;</pre>
 <div class="block"><a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction"><code>SynchronousTransactionManager</code></a>
  implementation for a single Hibernate <code>SessionFactory</code>.
  Binds a Hibernate Session from the specified factory to the thread,
@@ -276,13 +276,13 @@ implements <a href="../../../../io/micronaut/transaction/support/ResourceTransac
 </td>
 </tr>
 <tr id="i9" class="rowColor">
-<td class="colFirst"><code>javax.persistence.EntityManager</code></td>
+<td class="colFirst"><code>java.sql.Connection</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#getConnection--">getConnection</a></span>()</code>
 <div class="block">Obtains the connection for the current transaction.</div>
 </td>
 </tr>
 <tr id="i10" class="altColor">
-<td class="colFirst"><code>protected javax.persistence.EntityManager</code></td>
+<td class="colFirst"><code>protected java.sql.Connection</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#getConnection-java.lang.Object-">getConnection</a></span>(java.lang.Object&nbsp;transaction)</code>
 <div class="block">The connection for the given transaction object.</div>
 </td>
@@ -563,7 +563,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  <a href="../../../../io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support"><code>TransactionSynchronizationManager</code></a>'s resource bindings per thread.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html#getResourceFactory--">getResourceFactory</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;javax.persistence.EntityManagerFactory,javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html#getResourceFactory--">getResourceFactory</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/support/ResourceTransactionManager.html" title="interface in io.micronaut.transaction.support">ResourceTransactionManager</a>&lt;javax.persistence.EntityManagerFactory,java.sql.Connection&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the target resource factory (never <code>null</code>)</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
@@ -578,12 +578,12 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>getConnection</h4>
-<pre>protected&nbsp;javax.persistence.EntityManager&nbsp;getConnection(java.lang.Object&nbsp;transaction)</pre>
+<pre>protected&nbsp;java.sql.Connection&nbsp;getConnection(java.lang.Object&nbsp;transaction)</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getConnection-java.lang.Object-">AbstractSynchronousTransactionManager</a></code></span></div>
 <div class="block">The connection for the given transaction object.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getConnection-java.lang.Object-">getConnection</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getConnection-java.lang.Object-">getConnection</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>transaction</code> - The transaction</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -613,7 +613,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  returned transaction object.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doGetTransaction--">doGetTransaction</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doGetTransaction--">doGetTransaction</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>the current transaction object</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
@@ -643,7 +643,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  Subclasses are of course encouraged to provide such support.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isExistingTransaction-java.lang.Object-">isExistingTransaction</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isExistingTransaction-java.lang.Object-">isExistingTransaction</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>transaction</code> - transaction object returned by doGetTransaction</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -675,7 +675,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  to detect this and start an appropriate nested transaction.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doBegin-java.lang.Object-io.micronaut.transaction.TransactionDefinition-">doBegin</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doBegin-java.lang.Object-io.micronaut.transaction.TransactionDefinition-">doBegin</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>transaction</code> - transaction object returned by <code>doGetTransaction</code></dd>
 <dd><code>definition</code> - a TransactionDefinition instance, describing propagation
@@ -697,7 +697,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  assuming that transaction suspension is generally not supported.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doSuspend-java.lang.Object-">doSuspend</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doSuspend-java.lang.Object-">doSuspend</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>transaction</code> - transaction object returned by <code>doGetTransaction</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -724,7 +724,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  assuming that transaction suspension is generally not supported.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doResume-java.lang.Object-java.lang.Object-">doResume</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doResume-java.lang.Object-java.lang.Object-">doResume</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>transaction</code> - transaction object returned by <code>doGetTransaction</code></dd>
 <dd><code>suspendedResources</code> - the object that holds suspended resources,
@@ -749,7 +749,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  contained in the passed-in status.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doCommit-io.micronaut.transaction.support.DefaultTransactionStatus-">doCommit</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doCommit-io.micronaut.transaction.support.DefaultTransactionStatus-">doCommit</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>status</code> - the status representation of the transaction</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
@@ -771,7 +771,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  will be performed on the transaction object contained in the passed-in status.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doRollback-io.micronaut.transaction.support.DefaultTransactionStatus-">doRollback</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doRollback-io.micronaut.transaction.support.DefaultTransactionStatus-">doRollback</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>status</code> - the status representation of the transaction</dd>
 <dt><span class="seeLabel">See Also:</span></dt>
@@ -794,7 +794,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  supported. Subclasses are of course encouraged to provide such support.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doSetRollbackOnly-io.micronaut.transaction.support.DefaultTransactionStatus-">doSetRollbackOnly</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doSetRollbackOnly-io.micronaut.transaction.support.DefaultTransactionStatus-">doSetRollbackOnly</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>status</code> - the status representation of the transaction</dd>
 </dl>
@@ -814,7 +814,7 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
  <p>Should not throw any exceptions but just issue warnings on errors.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doCleanupAfterCompletion-java.lang.Object-">doCleanupAfterCompletion</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doCleanupAfterCompletion-java.lang.Object-">doCleanupAfterCompletion</a></code>&nbsp;in class&nbsp;<code><a href="../../../../io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>transaction</code> - transaction object returned by <code>doGetTransaction</code></dd>
 </dl>
@@ -887,12 +887,12 @@ public&nbsp;org.hibernate.Interceptor&nbsp;getEntityInterceptor()</pre>
 <li class="blockList">
 <h4>getConnection</h4>
 <pre>@NonNull
-public&nbsp;javax.persistence.EntityManager&nbsp;getConnection()</pre>
+public&nbsp;java.sql.Connection&nbsp;getConnection()</pre>
 <div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#getConnection--">TransactionOperations</a></code></span></div>
 <div class="block">Obtains the connection for the current transaction.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#getConnection--">getConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;javax.persistence.EntityManager&gt;</code></dd>
+<dd><code><a href="../../../../io/micronaut/transaction/TransactionOperations.html#getConnection--">getConnection</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The connection</dd>
 </dl>
