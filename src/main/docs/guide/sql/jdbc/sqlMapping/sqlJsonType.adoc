@@ -1,0 +1,11 @@
+You can declare a field of a class as a JSON type using the ann:data.annotations.TypeDef[] annotation as follows:
+
+[source,java]
+----
+@TypeDef(type = DataType.JSON)
+private Map<String, String> data;
+----
+
+The above will map to a column called `data`. Depending on the underling database the column type will be adjusted. For example for Postgres which features native JSON support the column type will be `JSONB`.
+
+NOTE: To allow JSON to be serialized and deserialized in entity properties you must have Jackson and the `micronaut-runtime` module your classpath.

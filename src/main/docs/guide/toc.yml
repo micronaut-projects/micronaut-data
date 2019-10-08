@@ -50,6 +50,7 @@ sql:
       sqlNaming: SQL Naming Strategies
       sqlAssociations: Association Fetching
       columnTransformer: Using @ColumnTransformer
+      sqlJsonType: JSON Column Support
     jdbcJoinQueries: JDBC Join Queries
     jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
