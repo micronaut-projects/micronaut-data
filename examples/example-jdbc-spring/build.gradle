@@ -18,7 +18,7 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0.M2"
+    micronautDataVersion = "1.0.0.M3"
     micronautVersion = "1.2.3"
 }
 
@@ -36,7 +36,7 @@ dependencies {
     annotationProcessor "io.micronaut.data:micronaut-data-processor:$micronautDataVersion"
 
     compileOnly "com.oracle.substratevm:svm"
-    compile("org.springframework.data:spring-data-commons:2.1.8.RELEASE")
+    compile("org.springframework.data:spring-data-commons:2.2.0.RELEASE")
     compile("org.springframework.boot:spring-boot-starter-web")
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"

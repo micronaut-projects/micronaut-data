@@ -19,7 +19,6 @@ version "0.1"
 group "example.jpa"
 
 repositories {
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
     maven { url "https://jcenter.bintray.com" }
 }
 
@@ -29,7 +28,7 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0.BUILD-SNAPSHOT"
+    micronautDataVersion = "1.0.0.M3"
     micronautVersion = "1.2.3"
 }
 
