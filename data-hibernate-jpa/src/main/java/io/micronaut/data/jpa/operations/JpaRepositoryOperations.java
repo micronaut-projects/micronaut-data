@@ -16,8 +16,7 @@
 package io.micronaut.data.jpa.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.operations.RepositoryOperations;
-
+import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
@@ -27,7 +26,7 @@ import javax.persistence.EntityManagerFactory;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface JpaRepositoryOperations extends RepositoryOperations {
+public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
 
     /**
      * @return The currrent entity manager

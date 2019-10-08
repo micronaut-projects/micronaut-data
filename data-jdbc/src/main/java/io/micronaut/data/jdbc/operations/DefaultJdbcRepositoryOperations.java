@@ -20,7 +20,6 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
@@ -85,7 +84,6 @@ import java.util.stream.StreamSupport;
  * @since 1.0.0
  */
 @EachBean(DataSource.class)
-@Requires(missingBeans = io.micronaut.data.hibernate.operations.HibernateJpaOperations.class)
 public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperations<ResultSet, PreparedStatement> implements
         JdbcRepositoryOperations,
         AsyncCapableRepository,

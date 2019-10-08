@@ -91,8 +91,8 @@ import java.util.Objects;
 @EachBean(SessionFactory.class)
 @Requires(missingClasses = "org.springframework.orm.hibernate5.HibernateTransactionManager")
 @Replaces(DataSourceTransactionManager.class)
-public class HibernateTransactionManager extends AbstractSynchronousTransactionManager<EntityManager>
-        implements ResourceTransactionManager<EntityManagerFactory, EntityManager> {
+public class HibernateTransactionManager extends AbstractSynchronousTransactionManager<Connection>
+        implements ResourceTransactionManager<EntityManagerFactory, Connection> {
 
     @NonNull
     private final SessionFactory sessionFactory;
@@ -219,8 +219,9 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
     }
 
     @Override
-    protected EntityManager getConnection(Object transaction) {
-        return ((HibernateTransactionObject) transaction).getSessionHolder().getSession();
+    protected Connection getConnection(Object transaction) {
+        final Session session = ((HibernateTransactionObject) transaction).getSessionHolder().getSession();
+        return ((SessionImplementor) session).connection();
     }
 
     @Override
@@ -578,8 +579,9 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
 
     @NonNull
     @Override
-    public EntityManager getConnection() {
-        return sessionFactory.getCurrentSession();
+    public Connection getConnection() {
+        final Session currentSession = sessionFactory.getCurrentSession();
+        return ((SessionImplementor) currentSession).connection();
     }
 
 

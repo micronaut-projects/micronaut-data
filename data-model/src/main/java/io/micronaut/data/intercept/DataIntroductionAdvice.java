@@ -28,6 +28,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -66,7 +67,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
         if (dataInterceptor == null) {
             String dataSourceName = context.stringValue(Repository.class).orElse(null);
             Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
-                    .orElse(RepositoryOperations.class);
+                    .orElse(PrimaryRepositoryOperations.class);
             Class<?> interceptorType = context
                     .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
                     .orElse(null);
