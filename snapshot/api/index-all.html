@@ -368,11 +368,6 @@
 <dd>
 <div class="block">Asynchronous operations for reading data from a backing implementations.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert"><span class="typeNameLink">AttributeConverter</span></a>&lt;<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="type parameter in AttributeConverter">X</a>,<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="type parameter in AttributeConverter">Y</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/convert/package-summary.html">io.micronaut.data.model.runtime.convert</a></dt>
-<dd>
-<div class="block">Interface roughly equivalent to JPA's <code>AttributeConverter</code> without being specific to
- any database type.</div>
-</dd>
 <dt><a href="io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Author</span></a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Author.html#Author--">Author()</a></span> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a></dt>
@@ -832,16 +827,6 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/ResultReader.html#convertRequired-java.lang.Object-java.lang.Class-">convertRequired(Object, Class&lt;T&gt;)</a></span> - Method in interface io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a></dt>
 <dd>
 <div class="block">Convert the value to the given type.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html#convertToEntityAttribute-Y-io.micronaut.data.model.runtime.RuntimePersistentProperty-">convertToEntityAttribute(Y, RuntimePersistentProperty&lt;X&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a></dt>
-<dd>
-<div class="block">Converts the data stored in the database to a value that can
- be written to the entity attribute.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html#convertToNativeValue-X-io.micronaut.data.model.runtime.RuntimePersistentProperty-">convertToNativeValue(X, RuntimePersistentProperty&lt;X&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert">AttributeConverter</a></dt>
-<dd>
-<div class="block">Converts the value stored in the entity attribute into a native value that can
- be persisted to the target database.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#count-io.micronaut.data.model.runtime.PagedQuery-">count(PagedQuery&lt;T&gt;)</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
 <dd>&nbsp;</dd>
@@ -4661,8 +4646,6 @@
 <dd>
 <div class="block">Runtime implementation of the model that uses <code>Introspected</code> bean metadata.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/runtime/convert/package-summary.html">io.micronaut.data.model.runtime.convert</a> - package io.micronaut.data.model.runtime.convert</dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/operations/package-summary.html">io.micronaut.data.operations</a> - package io.micronaut.data.operations</dt>
 <dd>
 <div class="block">Runtime interfaces for implementations to implement.</div>
