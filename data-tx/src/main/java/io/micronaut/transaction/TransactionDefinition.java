@@ -161,7 +161,6 @@ public interface TransactionDefinition {
          * @see java.sql.Connection#TRANSACTION_READ_UNCOMMITTED
          */
         READ_UNCOMMITTED(1),
-        READ_COMMITTED(2),
         /**
          * Indicates that dirty reads are prevented; non-repeatable reads and
          * phantom reads can occur.
@@ -169,7 +168,7 @@ public interface TransactionDefinition {
          * with uncommitted changes in it.
          * @see java.sql.Connection#TRANSACTION_READ_COMMITTED
          */
-        REPEATABLE_READ(4),
+        READ_COMMITTED(2),
         /**
          * Indicates that dirty reads and non-repeatable reads are prevented;
          * phantom reads can occur.
@@ -178,6 +177,18 @@ public interface TransactionDefinition {
          * a second transaction alters the row, and the first transaction re-reads the row,
          * getting different values the second time (a "non-repeatable read").
          * @see java.sql.Connection#TRANSACTION_REPEATABLE_READ
+         */
+        REPEATABLE_READ(4),
+        /**
+         * Indicates that dirty reads, non-repeatable reads and phantom reads
+         * are prevented.
+         * <p>This level includes the prohibitions in {@link Isolation#REPEATABLE_READ}
+         * and further prohibits the situation where one transaction reads all rows that
+         * satisfy a {@code WHERE} condition, a second transaction inserts a row
+         * that satisfies that {@code WHERE} condition, and the first transaction
+         * re-reads for the same condition, retrieving the additional "phantom" row
+         * in the second read.
+         * @see java.sql.Connection#TRANSACTION_SERIALIZABLE
          */
         SERIALIZABLE(8);
 
