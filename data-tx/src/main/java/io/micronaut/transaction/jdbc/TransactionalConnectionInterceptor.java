@@ -19,7 +19,7 @@ import java.sql.Connection;
  * @since 1.0
  */
 @Singleton
-public final class ConnectionInterceptor implements MethodInterceptor<Connection, Object> {
+public final class TransactionalConnectionInterceptor implements MethodInterceptor<Connection, Object> {
 
     private final DataSource dataSource;
 
@@ -29,7 +29,7 @@ public final class ConnectionInterceptor implements MethodInterceptor<Connection
      * @param qualifier The qualifier
      */
     @Internal
-    ConnectionInterceptor(BeanContext beanContext, Qualifier<DataSource> qualifier) {
+    TransactionalConnectionInterceptor(BeanContext beanContext, Qualifier<DataSource> qualifier) {
         this.dataSource = beanContext.getBean(DataSource.class, qualifier);
     }
 

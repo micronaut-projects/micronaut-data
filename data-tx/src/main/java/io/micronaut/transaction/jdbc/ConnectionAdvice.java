@@ -11,12 +11,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * An introduction advice annotation used to create a transaction aware connection.
  * Considered internal and not for explicit usage.
  *
- * @see ConnectionInterceptor
+ * @see TransactionalConnectionInterceptor
  * @see TransactionalConnection
  */
 @Retention(RUNTIME)
 @Introduction
-@Type(ConnectionInterceptor.class)
+@Type(TransactionalConnectionInterceptor.class)
 @Internal
 @interface ConnectionAdvice {
 }
