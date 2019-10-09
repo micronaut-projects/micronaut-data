@@ -27,7 +27,6 @@ package io.micronaut.transaction;
  * @author graemerocher
  * @since 1.0
  * @see SynchronousTransactionManager
- * @see ReactiveTransactionManager
  */
 public interface TransactionManager {
 
