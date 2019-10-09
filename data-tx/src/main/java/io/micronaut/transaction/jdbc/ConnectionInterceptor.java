@@ -39,7 +39,7 @@ public final class ConnectionInterceptor implements MethodInterceptor<Connection
         try {
             connection = DataSourceUtils.getConnection(dataSource, false);
         } catch (CannotGetJdbcConnectionException e) {
-            throw new NoTransactionException("No current transaction present. Consider declaring @Transactional on the surrounding method");
+            throw new NoTransactionException("No current transaction present. Consider declaring @Transactional on the surrounding method", e);
         }
         return context.getExecutableMethod().invoke(connection, context.getParameterValues());
     }
