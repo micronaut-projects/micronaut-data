@@ -18,5 +18,5 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Introduction
 @Type(TransactionalConnectionInterceptor.class)
 @Internal
-@interface ConnectionAdvice {
+@interface TransactionalConnectionAdvice {
 }

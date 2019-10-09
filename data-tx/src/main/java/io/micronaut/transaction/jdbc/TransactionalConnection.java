@@ -15,7 +15,7 @@ import java.sql.Connection;
  * @since 1.0
  */
 @EachBean(DataSource.class)
-@ConnectionAdvice
+@TransactionalConnectionAdvice
 @Internal
 public interface TransactionalConnection extends Connection {
 
