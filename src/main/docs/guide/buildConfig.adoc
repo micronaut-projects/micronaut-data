@@ -41,10 +41,25 @@ datasources:
     dialect: H2
 ----
 
-Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa` module:
+Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa`  and `micronaut-hibernate-jpa` module:
 
 dependency:io.micronaut.data:micronaut-data-hibernate-jpa[]
+compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.2.1", {
+        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
+    }
+And add the following configuration in `application.yml`   
 
+[source,yaml]
+----
+jpa:
+  default:
+    properties:
+      hibernate:
+        bytecode:
+          provider: none
+        hbm2ddl:
+          auto: update
+----              
 Or if you wish to use SQL then the `micronaut-data-jdbc` module:
 
 dependency:io.micronaut.data:micronaut-data-jdbc[]
