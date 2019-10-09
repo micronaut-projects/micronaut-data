@@ -788,10 +788,6 @@
 <div class="block">Create a new ConnectionHolder for the given JDBC Connection,
  wrapping it with a <a href="io/micronaut/transaction/jdbc/SimpleConnectionHandle.html" title="class in io.micronaut.transaction.jdbc"><code>SimpleConnectionHandle</code></a>.</div>
 </dd>
-<dt><a href="io/micronaut/transaction/jdbc/ConnectionInterceptor.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">ConnectionInterceptor</span></a> - Class in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
-<dd>
-<div class="block">An interceptor that allows injecting a <code>Connection</code> that acts a proxy to lookup the connection for the current transaction.</div>
-</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.Containing.html#Containing-java.lang.String-">Containing(String)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.Containing.html" title="class in io.micronaut.data.processor.visitors.finders">CriterionMethodExpression.Containing</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
@@ -4502,7 +4498,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/ConnectionInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;Connection, Object&gt;)</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/ConnectionInterceptor.html" title="class in io.micronaut.transaction.jdbc">ConnectionInterceptor</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/TransactionalConnectionInterceptor.html#intercept-io.micronaut.aop.MethodInvocationContext-">intercept(MethodInvocationContext&lt;Connection, Object&gt;)</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/TransactionalConnectionInterceptor.html" title="class in io.micronaut.transaction.jdbc">TransactionalConnectionInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/exceptions/InvalidIsolationLevelException.html" title="class in io.micronaut.transaction.exceptions"><span class="typeNameLink">InvalidIsolationLevelException</span></a> - Exception in <a href="io/micronaut/transaction/exceptions/package-summary.html">io.micronaut.transaction.exceptions</a></dt>
 <dd>
@@ -8452,6 +8448,10 @@
 <dd>
 <div class="block">Allows injecting a <code>Connection</code> instance as a bean with any methods invoked
  on the connection being delegated to connection bound to the current transaction.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/jdbc/TransactionalConnectionInterceptor.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">TransactionalConnectionInterceptor</span></a> - Class in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
+<dd>
+<div class="block">An interceptor that allows injecting a <code>Connection</code> that acts a proxy to lookup the connection for the current transaction.</div>
 </dd>
 <dt><a href="io/micronaut/transaction/interceptor/annotation/TransactionalEventAdvice.html" title="annotation in io.micronaut.transaction.interceptor.annotation"><span class="typeNameLink">TransactionalEventAdvice</span></a> - Annotation Type in <a href="io/micronaut/transaction/interceptor/annotation/package-summary.html">io.micronaut.transaction.interceptor.annotation</a></dt>
 <dd>
