@@ -6,6 +6,8 @@ import javax.inject.Singleton;
 
 import io.micronaut.core.annotation.TypeHint;
 
+import org.hibernate.dialect.PostgreSQL10Dialect;
+import org.postgresql.Driver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +21,10 @@ import io.micronaut.runtime.Micronaut;
 import io.micronaut.runtime.event.annotation.EventListener;
 
 @Singleton
-@TypeHint(typeNames = {
-    "example.domain.Pet$PetType",
-    "org.h2.Driver",     
-    "org.h2.mvstore.db.MVTableEngine", 
-    "org.hibernate.dialect.H2Dialect"
+@TypeHint( {
+    PetType.class,
+    PostgreSQL10Dialect.class,
+    Driver.class
 })
 public class Application {
     private static final Logger LOG = LoggerFactory.getLogger(Application.class);
