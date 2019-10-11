@@ -1,0 +1,44 @@
+Getting your project ready for a native GraalVM build is JDBC driver dependent.
+
+Generally you need to add a `@TypeHint(...)` declaration to your `Application` class that tells GraalVM what is the class that represents the JDBC driver and you need to add the driver to the class that are initialized at build time with the `--initialize-at-build-time=DRIVER_CLASS_NAME` flag which you can add to the `native-image.properties` file found in `src/main/resources/META-INF/native-image` for a project that was created with `mn create-app my-app --features graal-native-image`.
+
+NOTE: MySQL is as of this time unsupported in native image due to https://bugs.mysql.com/bug.php?id=91968[this issue].
+
+==== Configuration for H2
+
+The changes for H2 are:
+
+.`@TypeHint` Declaring in Application Class
+[source,java]
+----
+@TypeHint(typeNames = {"org.h2.Driver", "org.h2.mvstore.db.MVTableEngine"})
+----
+
+.`--initialize-at-build-time` modification
+[source,bash]
+----
+--initialize-at-build-time=org.h2.Driver
+----
+
+==== Configuration for Postgres
+
+The changes for Postgres are:
+
+.`@TypeHint` Declaring in Application Class
+[source,java]
+----
+@TypeHint(org.postgresql.Driver.class)
+----
+
+.`--initialize-at-build-time` modification
+[source,bash]
+----
+--initialize-at-build-time=org.postgresql.Driver,org.postgresql.util.SharedTimer
+----
+
+==== Configuration for MariaDB
+
+==== Configuration for Oracle
+
+==== Configuration for SQL Server
+

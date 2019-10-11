@@ -30,8 +30,6 @@ dataUpdates:
   timestamps: Entity Timestamps
 howItWorks:
   title: How Micronaut Data Works
-spring:
-  title: Spring Data Support
 sql:
   title: Micronaut Data with SQL
   jdbc:
@@ -54,4 +52,11 @@ sql:
     jdbcJoinQueries: JDBC Join Queries
     jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
+graal:
+  title: Going Native with GraalVM
+  graalJDBC: JDBC and Native Builds
+  graalJPA: JPA and Native Builds
+spring:
+  title: Spring Data Support
+
 
