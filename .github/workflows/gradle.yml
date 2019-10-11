@@ -20,11 +20,11 @@ jobs:
         java-version: ${{ matrix.java }}   
     - name: Build with Gradle
       run: ./gradlew build docs
-    - name: Publish to Sonatype OSS
+    - name: Publish to JFrog OSS
       if: success() && github.event_name == 'push' && matrix.java == '1.8'
       env:
-         SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-         SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+         BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+         BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
       run: ./gradlew publish 
     - name: Publish to Github Pages
       if: success() && github.event_name == 'push' && matrix.java == '1.8'
