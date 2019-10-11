@@ -8,37 +8,39 @@ NOTE: MySQL is as of this time unsupported in native image due to https://bugs.m
 
 The changes for H2 are:
 
-.`@TypeHint` Declaring in Application Class
+.`@TypeHint` Declaration in Application Class
 [source,java]
 ----
 @TypeHint(typeNames = {"org.h2.Driver", "org.h2.mvstore.db.MVTableEngine"})
 ----
 
-.`--initialize-at-build-time` modification
+.GraalVM Flags
 [source,bash]
 ----
---initialize-at-build-time=org.h2.Driver
+--report-unsupported-elements-at-runtime --initialize-at-build-time=org.h2.Driver
 ----
 
 ==== Configuration for Postgres
 
 The changes for Postgres are:
 
-.`@TypeHint` Declaring in Application Class
+.`@TypeHint` Declaration in Application Class
 [source,java]
 ----
 @TypeHint(org.postgresql.Driver.class)
 ----
 
-.`--initialize-at-build-time` modification
+.GraalVM Flags
 [source,bash]
 ----
 --initialize-at-build-time=org.postgresql.Driver,org.postgresql.util.SharedTimer
 ----
 
-==== Configuration for MariaDB
+//==== Configuration for MariaDB
 
 ==== Configuration for Oracle
+
+
 
 ==== Configuration for SQL Server
 
