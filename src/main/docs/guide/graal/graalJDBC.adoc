@@ -40,7 +40,20 @@ The changes for Postgres are:
 
 ==== Configuration for Oracle
 
+The changes for Oracle are:
 
+.`@TypeHint` Declaration in Application Class
+[source,java]
+----
+@TypeHint(oracle.jdbc.OracleDriver.class)
+----
+
+.GraalVM Flags
+[source,bash]
+----
+--initialize-at-run-time=java.sql.DriverManager
+----
 
 ==== Configuration for SQL Server
 
+TODO
