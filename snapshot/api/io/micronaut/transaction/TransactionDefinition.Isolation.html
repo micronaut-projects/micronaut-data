@@ -146,7 +146,10 @@ extends java.lang.Enum&lt;<a href="../../../io/micronaut/transaction/Transaction
 </td>
 </tr>
 <tr class="rowColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html#READ_COMMITTED">READ_COMMITTED</a></span></code>&nbsp;</td>
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html#READ_COMMITTED">READ_COMMITTED</a></span></code>
+<div class="block">Indicates that dirty reads are prevented; non-repeatable reads and
+ phantom reads can occur.</div>
+</td>
 </tr>
 <tr class="altColor">
 <td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html#READ_UNCOMMITTED">READ_UNCOMMITTED</a></span></code>
@@ -156,14 +159,14 @@ extends java.lang.Enum&lt;<a href="../../../io/micronaut/transaction/Transaction
 </tr>
 <tr class="rowColor">
 <td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html#REPEATABLE_READ">REPEATABLE_READ</a></span></code>
-<div class="block">Indicates that dirty reads are prevented; non-repeatable reads and
+<div class="block">Indicates that dirty reads and non-repeatable reads are prevented;
  phantom reads can occur.</div>
 </td>
 </tr>
 <tr class="altColor">
 <td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html#SERIALIZABLE">SERIALIZABLE</a></span></code>
-<div class="block">Indicates that dirty reads and non-repeatable reads are prevented;
- phantom reads can occur.</div>
+<div class="block">Indicates that dirty reads, non-repeatable reads and phantom reads
+ are prevented.</div>
 </td>
 </tr>
 </table>
@@ -274,15 +277,6 @@ the order they are declared.</div>
 <li class="blockList">
 <h4>READ_COMMITTED</h4>
 <pre>public static final&nbsp;<a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a> READ_COMMITTED</pre>
-</li>
-</ul>
-<a name="REPEATABLE_READ">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>REPEATABLE_READ</h4>
-<pre>public static final&nbsp;<a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a> REPEATABLE_READ</pre>
 <div class="block">Indicates that dirty reads are prevented; non-repeatable reads and
  phantom reads can occur.
  <p>This level only prohibits a transaction from reading a row
@@ -293,13 +287,13 @@ the order they are declared.</div>
 </dl>
 </li>
 </ul>
-<a name="SERIALIZABLE">
+<a name="REPEATABLE_READ">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
-<h4>SERIALIZABLE</h4>
-<pre>public static final&nbsp;<a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a> SERIALIZABLE</pre>
+<h4>REPEATABLE_READ</h4>
+<pre>public static final&nbsp;<a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a> REPEATABLE_READ</pre>
 <div class="block">Indicates that dirty reads and non-repeatable reads are prevented;
  phantom reads can occur.
  <p>This level prohibits a transaction from reading a row with uncommitted changes
@@ -309,6 +303,27 @@ the order they are declared.</div>
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><code>Connection.TRANSACTION_REPEATABLE_READ</code></dd>
+</dl>
+</li>
+</ul>
+<a name="SERIALIZABLE">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>SERIALIZABLE</h4>
+<pre>public static final&nbsp;<a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html" title="enum in io.micronaut.transaction">TransactionDefinition.Isolation</a> SERIALIZABLE</pre>
+<div class="block">Indicates that dirty reads, non-repeatable reads and phantom reads
+ are prevented.
+ <p>This level includes the prohibitions in <a href="../../../io/micronaut/transaction/TransactionDefinition.Isolation.html#REPEATABLE_READ"><code>REPEATABLE_READ</code></a>
+ and further prohibits the situation where one transaction reads all rows that
+ satisfy a <code>WHERE</code> condition, a second transaction inserts a row
+ that satisfies that <code>WHERE</code> condition, and the first transaction
+ re-reads for the same condition, retrieving the additional "phantom" row
+ in the second read.</div>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><code>Connection.TRANSACTION_SERIALIZABLE</code></dd>
 </dl>
 </li>
 </ul>
