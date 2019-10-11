@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>6.3 Batch Deletes 1.0.0.BUILD-SNAPSHOT</title>
+    <title>9.2 JPA and Native Builds 1.0.0.BUILD-SNAPSHOT</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -77,18 +77,18 @@ function addJsClass() {
             <div id="main" class="corner-all">
 
                 
-                    <div class="toc-item prev-left"><a href="../../guide/querying.html">&lt;&lt; <strong>5</strong><span>Writing Queries</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/sql.html">&lt;&lt; <strong>8</strong><span>Micronaut Data with SQL</span></a></div>
                 
 
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
 
                 
-                    <div class="toc-item next-right"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../../guide/spring.html"><strong>10</strong><span>Spring Data Support</span> >></a></div>
                 
 
 
                 <div class="project">
-                    <h1>6.3 Batch Deletes</h1>
+                    <h1>9.2 JPA and Native Builds</h1>
 
                     <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
                 </div>
@@ -97,76 +97,42 @@ function addJsClass() {
 
                 
 
-<h2 id="batchDeletes">6.3 Batch Deletes</h2>
+<h2 id="graalJPA">9.2 JPA and Native Builds</h2>
 
 <div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/batchDeletes.adoc"'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal/graalJPA.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Batch deletes can be performed in a number of ways. To delete everything (use with care!) you can use <code>deleteAll</code>:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">void deleteAll();</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">void deleteAll()</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">override fun deleteAll()</code></pre>
-</div>
+<p>If you are using JPA then in addition to the above configuration you should add modify your <code>@TypeHint</code> declaration to include a reference to the Hibernate dialect associated with the database you are using.</p>
 </div>
 <div class="paragraph">
-<p>To delete by ID or by the value of a property you can specify a parameter that matches a property of an entity:</p>
+<p>For example for Postgres:</p>
 </div>
-<div class="listingblock multi-language-sample">
+<div class="listingblock">
+<div class="title">Postgres Dialect Config</div>
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">void delete(String title);</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">void delete(String title)</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun delete(title: String)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Finally, you can also use the <code>deleteBy*</code> pattern (the method must start with <code>delete</code>, <code>remove</code>, <code>erase</code> or <code>eliminate</code>) and any finder expression, for example:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">void deleteByTitleLike(String title);</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">void deleteByTitleLike(String title)</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun deleteByTitleLike(title: String)</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import org.hibernate.dialect.PostgreSQL10Dialect;
+import org.postgresql.Driver;
+
+...
+
+@TypeHint( {
+    PostgreSQL10Dialect.class,
+    Driver.class
+})</code></pre>
 </div>
 </div>
 
 
                 <div style="clear:both;margin-top:15px;"></div>
                 
-                    <div class="toc-item prev-left"><a href="../../guide/querying.html">&lt;&lt; <strong>5</strong><span>Writing Queries</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/sql.html">&lt;&lt; <strong>8</strong><span>Micronaut Data with SQL</span></a></div>
                 
-                    <div class="toc-item next-right"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span> >></a></div>
+                    <div class="toc-item next-right"><a href="../../guide/spring.html"><strong>10</strong><span>Spring Data Support</span> >></a></div>
                 
                 <div style="clear:both"></div>
             </div>
