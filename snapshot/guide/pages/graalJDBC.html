@@ -157,7 +157,7 @@ The <code>--report-unsupported-elements-at-runtime</code> flag is needed for H2 
 <div class="sect3">
 <h4 id="_configuration_for_postgres">Configuration for Postgres</h4>
 <div class="paragraph">
-<p>The changes for Postgres are:</p>
+<p>The changes for Postgres JDBC Driver (<code>org.postgresql:postgresql:42.2.8</code> or above) are:</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
@@ -175,12 +175,14 @@ The <code>--report-unsupported-elements-at-runtime</code> flag is needed for H2 
 <div class="sect3">
 <h4 id="_configuration_for_oracle">Configuration for Oracle</h4>
 <div class="paragraph">
-<p>The changes for Oracle are:</p>
+<p>The changes for Oracle JDBC driver (<code>com.oracle.ojdbc:ojdbc8:19.3.0.0</code> or above) are:</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeHint(oracle.jdbc.OracleDriver.class)</code></pre>
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeHint(
+    typeNames = {"oracle.jdbc.OracleDriver","oracle.jdbc.driver.T4CDriverExtension"},
+    accessType = {AccessType.ALL_DECLARED_METHODS, AccessType.ALL_DECLARED_CONSTRUCTORS})</code></pre>
 </div>
 </div>
 <div class="listingblock">
@@ -193,7 +195,7 @@ The <code>--report-unsupported-elements-at-runtime</code> flag is needed for H2 
 <div class="sect3">
 <h4 id="_configuration_for_microsoft_sql_server">Configuration for Microsoft SQL Server</h4>
 <div class="paragraph">
-<p>The changes for SQL Server are:</p>
+<p>The changes for SQL Server JDBC Driver (<code>com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8</code> or above) are:</p>
 </div>
 <div class="listingblock">
 <div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
