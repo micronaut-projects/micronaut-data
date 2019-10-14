@@ -13,6 +13,7 @@ dependencies {
         exclude group:'org.springframework', module:'spring-expression'
         exclude group:'org.javassist', module:'javassist'
         exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-validator'
+        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
     }
 
     testCompile project(":data-tck")
