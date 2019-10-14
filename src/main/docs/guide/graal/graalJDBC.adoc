@@ -58,7 +58,7 @@ The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0`) are:
 
 ==== Configuration for Microsoft SQL Server
 
-The changes for SQL Server are:
+The changes for SQL Server JDBC Driver (`com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8`) are:
 
 .`@TypeHint` Declaration in Application Class
 [source,java]
