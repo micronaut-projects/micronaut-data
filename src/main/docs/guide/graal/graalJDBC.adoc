@@ -54,3 +54,20 @@ The changes for Oracle are:
 --initialize-at-run-time=java.sql.DriverManager
 ----
 
+==== Configuration for Microsoft SQL Server
+
+The changes for SQL Server are:
+
+.`@TypeHint` Declaration in Application Class
+[source,java]
+----
+@TypeHint(typeNames = "com.microsoft.sqlserver.jdbc.SQLServerDriver")
+----
+
+.GraalVM Flags
+[source,bash]
+----
+-H:IncludeResourceBundles=com.microsoft.sqlserver.jdbc.SQLServerResource \
+--initialize-at-build-time=com.microsoft.sqlserver.jdbc.SQLServerResource \
+--initialize-at-run-time=java.sql.DriverManager
+----
