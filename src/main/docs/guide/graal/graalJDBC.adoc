@@ -24,7 +24,7 @@ NOTE: The `--report-unsupported-elements-at-runtime` flag is needed for H2 if yo
 
 ==== Configuration for Postgres
 
-The changes for Postgres are:
+The changes for Postgres JDBC Driver (`org.postgresql:postgresql:42.2.8` or above) are:
 
 .`@TypeHint` Declaration in Application Class
 [source,java]
@@ -40,7 +40,7 @@ The changes for Postgres are:
 
 ==== Configuration for Oracle
 
-The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0`) are:
+The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0` or above) are:
 
 .`@TypeHint` Declaration in Application Class
 [source,java]
@@ -58,7 +58,7 @@ The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0`) are:
 
 ==== Configuration for Microsoft SQL Server
 
-The changes for SQL Server JDBC Driver (`com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8`) are:
+The changes for SQL Server JDBC Driver (`com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8` or above) are:
 
 .`@TypeHint` Declaration in Application Class
 [source,java]
