@@ -20,6 +20,8 @@ The changes for H2 are:
 --report-unsupported-elements-at-runtime --initialize-at-build-time=org.h2.Driver
 ----
 
+NOTE: The `--report-unsupported-elements-at-runtime` flag is needed for H2 if you use the embedded H2 server otherwise can be omitted.
+
 ==== Configuration for Postgres
 
 The changes for Postgres are:
@@ -35,8 +37,6 @@ The changes for Postgres are:
 ----
 --initialize-at-build-time=org.postgresql.Driver,org.postgresql.util.SharedTimer
 ----
-
-//==== Configuration for MariaDB
 
 ==== Configuration for Oracle
 
@@ -54,6 +54,3 @@ The changes for Oracle are:
 --initialize-at-run-time=java.sql.DriverManager
 ----
 
-==== Configuration for SQL Server
-
-TODO
