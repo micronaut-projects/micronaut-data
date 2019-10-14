@@ -40,12 +40,14 @@ The changes for Postgres are:
 
 ==== Configuration for Oracle
 
-The changes for Oracle are:
+The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0`) are:
 
 .`@TypeHint` Declaration in Application Class
 [source,java]
 ----
-@TypeHint(oracle.jdbc.OracleDriver.class)
+@TypeHint(
+    typeNames = {"oracle.jdbc.OracleDriver","oracle.jdbc.driver.T4CDriverExtension"},
+    accessType = {AccessType.ALL_DECLARED_METHODS, AccessType.ALL_DECLARED_CONSTRUCTORS})
 ----
 
 .GraalVM Flags
