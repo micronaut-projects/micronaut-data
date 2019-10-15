@@ -4,7 +4,7 @@
   <artifactId>example</artifactId>
   <version>0.1</version>
   <properties>
-    <micronaut.version>1.2.0</micronaut.version>
+    <micronaut.version>1.2.4</micronaut.version>
     <micronaut.data.version>1.0.0.M3</micronaut.data.version>
     <jdk.version>1.8</jdk.version>
     <maven.compiler.target>${jdk.version}</maven.compiler.target>
@@ -57,7 +57,7 @@
     </dependency>
     <dependency>
         <groupId>io.micronaut.configuration</groupId>
-        <artifactId>micronaut-jdbc-tomcat</artifactId>
+        <artifactId>micronaut-jdbc-hikari</artifactId>
         <scope>runtime</scope>
     </dependency>    
     <dependency>

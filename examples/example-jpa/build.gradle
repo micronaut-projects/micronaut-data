@@ -29,7 +29,7 @@ configurations {
 
 ext {
     micronautDataVersion = "1.0.0.M3"
-    micronautVersion = "1.2.3"
+    micronautVersion = "1.2.4"
 }
 
 dependencies {
@@ -49,14 +49,11 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
-        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa'
-    }
-    compile "io.micronaut.configuration:micronaut-hibernate-jpa:1.2.1", {
         exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
     }
     runtime "ch.qos.logback:logback-classic:1.2.3"
     runtime "com.h2database:h2"
-    runtime "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    runtime "io.micronaut.configuration:micronaut-jdbc-hikari"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testCompile "org.junit.jupiter:junit-jupiter-api"
