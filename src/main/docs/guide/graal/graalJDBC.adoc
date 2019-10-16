@@ -1,5 +1,7 @@
 Getting your project ready for a native GraalVM build is JDBC driver dependent.
 
+WARNING: GraalVM substrate remains an evolving and experimental feature of GraalVM, hence support for GraalVM substrate in Micronaut Data is also regarded as experimental and evolving.
+
 Generally you need to add a `@TypeHint(...)` declaration to your `Application` class that tells GraalVM what is the class that represents the JDBC driver and you need to add the driver to the class that are initialized at build time with the `--initialize-at-build-time=DRIVER_CLASS_NAME` flag which you can add to the `native-image.properties` file found in `src/main/resources/META-INF/native-image` for a project that was created with `mn create-app my-app --features graal-native-image`.
 
 NOTE: MySQL is as of this time unsupported in native image due to https://bugs.mysql.com/bug.php?id=91968[this issue].
