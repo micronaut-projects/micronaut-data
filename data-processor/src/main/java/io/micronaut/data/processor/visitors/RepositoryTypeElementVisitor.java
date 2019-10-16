@@ -254,21 +254,30 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                             } else {
 
+                                final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
+                                        currentRepository.getAnnotationMetadata(),
+                                        matchContext.getAnnotationMetadata()
+                                );
                                 try {
                                     switch (methodInfo.getOperationType()) {
                                         case DELETE:
-                                            encodedQuery = queryEncoder.buildDelete(queryObject);
+                                            encodedQuery = queryEncoder.buildDelete(annotationMetadataHierarchy, queryObject);
                                             break;
                                         case UPDATE:
                                             encodedQuery = queryEncoder
                                                     .buildUpdate(
+                                                            annotationMetadataHierarchy,
                                                             queryObject,
                                                             methodInfo.getUpdateProperties());
                                             break;
                                         case INSERT:
                                             // TODO
                                         default:
-                                            encodedQuery = queryEncoder.buildQuery(queryObject);
+
+                                            encodedQuery = queryEncoder.buildQuery(
+                                                    annotationMetadataHierarchy,
+                                                    queryObject
+                                            );
                                     }
 
                                 } catch (Exception e) {

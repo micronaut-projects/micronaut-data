@@ -22,6 +22,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -29,6 +30,7 @@ import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
+import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -152,12 +154,16 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         if (query != null) {
             return buildInfo(matchContext, queryResultType, query);
         } else {
-            if (matchContext.supportsImplicitQueries()) {
+            if (matchContext.supportsImplicitQueries() && hasNoWhereDeclaration(matchContext)) {
                 return buildInfo(matchContext, queryResultType, null);
             } else {
                 return buildInfo(matchContext, queryResultType, QueryModel.from(rootEntity));
             }
         }
+    }
+
+    public boolean hasNoWhereDeclaration(@NonNull MethodMatchContext matchContext) {
+        return !new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement()).hasAnnotation(Where.class);
     }
 
     private static Pattern computePattern(String[] prefixes) {

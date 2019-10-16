@@ -58,7 +58,17 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildQuery(@NonNull QueryModel query);
+    default QueryResult buildQuery(@NonNull QueryModel query) {
+        return buildQuery(AnnotationMetadata.EMPTY_METADATA, query);
+    }
+
+    /**
+     * Encode the given query for the passed annotation metadata and query.
+     * @param annotationMetadata The annotation metadata
+     * @param query The query model
+     * @return The query result
+     */
+    QueryResult buildQuery(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -68,7 +78,19 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildUpdate(@NonNull QueryModel query, List<String> propertiesToUpdate);
+    default QueryResult buildUpdate(@NonNull QueryModel query, @NonNull List<String> propertiesToUpdate) {
+        return buildUpdate(AnnotationMetadata.EMPTY_METADATA, query, propertiesToUpdate);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param query The query
+     * @param propertiesToUpdate The property names to update
+     * @return The encoded query
+     */
+    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull List<String> propertiesToUpdate);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -77,7 +99,18 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildDelete(@NonNull QueryModel query);
+    default QueryResult buildDelete(@NonNull QueryModel query) {
+        return buildDelete(AnnotationMetadata.EMPTY_METADATA, query);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param query The query
+     * @return The encoded query
+     */
+    QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query);
 
     /**
      * Encode the given query into the encoded query instance.
