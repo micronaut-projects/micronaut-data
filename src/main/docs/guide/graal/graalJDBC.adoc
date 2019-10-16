@@ -40,21 +40,7 @@ The changes for Postgres JDBC Driver (`org.postgresql:postgresql:42.2.8` or abov
 
 ==== Configuration for Oracle
 
-The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0` or above) are:
-
-.`@TypeHint` Declaration in Application Class
-[source,java]
-----
-@TypeHint(
-    typeNames = {"oracle.jdbc.OracleDriver","oracle.jdbc.driver.T4CDriverExtension"},
-    accessType = {AccessType.ALL_DECLARED_METHODS, AccessType.ALL_DECLARED_CONSTRUCTORS})
-----
-
-.GraalVM Flags
-[source,bash]
-----
---initialize-at-run-time=java.sql.DriverManager
-----
+The changes for Oracle JDBC driver (`com.oracle.ojdbc:ojdbc8:19.3.0.0` or above) are quite extensive and are documented in https://github.com/oracle/graal/issues/1748#issuecomment-542353582[this Github issue].
 
 ==== Configuration for Microsoft SQL Server
 
