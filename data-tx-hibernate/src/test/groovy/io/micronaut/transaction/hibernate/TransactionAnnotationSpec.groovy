@@ -1,8 +1,9 @@
-package io.micronaut.transaction.jdbc
+package io.micronaut.transaction.hibernate
 
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.test.annotation.MicronautTest
 import io.micronaut.transaction.annotation.TransactionalEventListener
 import spock.lang.Specification
@@ -10,11 +11,12 @@ import spock.lang.Stepwise
 
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.persistence.EntityManager
 import javax.transaction.Transactional
-import java.sql.Connection
 
-@MicronautTest(transactional = false)
+@MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
+@Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise
 class TransactionAnnotationSpec extends Specification {
 
@@ -22,9 +24,7 @@ class TransactionAnnotationSpec extends Specification {
     @Inject BeanDefinitionRegistry registry
 
     void "test transactional annotation handling"() {
-        given:
-        testService.init()
-        
+
         when:"an insert is performed in a transaction"
         testService.insertWithTransaction()
 
@@ -55,38 +55,27 @@ class TransactionAnnotationSpec extends Specification {
 
         when:"Test that connections are never exhausted"
         int i = 0
-        200.times { i += testService.readTransactionally() }
+        300.times { i += testService.readTransactionally() }
 
         then:"We're ok at it completed"
-        i == 200
+        i == 300
     }
 
     @Singleton
     static class TestService {
-        @Inject Connection connection
+        @Inject EntityManager entityManager
         @Inject ApplicationEventPublisher eventPublisher
         NewBookEvent lastEvent
 
         @Transactional
-        void init() {
-                connection.prepareStatement("drop table book if exists").execute()
-                connection.prepareStatement("create table book (id bigint not null auto_increment, pages integer not null, title varchar(255), primary key (id))").execute()
-
-        }
-
-         @Transactional
         void insertWithTransaction() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(100, 'The Stand')")
-            ps1.execute()
-            ps1.close()
+            entityManager.persist(new Book(title:"The Stand", totalPages: 1000))
             eventPublisher.publishEvent(new NewBookEvent("The Stand"))
         }
 
         @Transactional
         void insertAndRollback() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
-            ps1.execute()
-            ps1.close()
+            entityManager.persist(new Book(title:"The Shining", totalPages: 500))
             eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new RuntimeException("Bad things happened")
         }
@@ -94,9 +83,7 @@ class TransactionAnnotationSpec extends Specification {
 
         @Transactional
         void insertAndRollbackChecked() {
-            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
-            ps1.execute()
-            ps1.close()
+            entityManager.persist(new Book(title:"The Shining", totalPages: 500))
             eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new Exception("Bad things happened")
         }
@@ -104,16 +91,8 @@ class TransactionAnnotationSpec extends Specification {
 
         @Transactional
         int readTransactionally() {
-            def ps2 = connection.prepareStatement("select count(*) as count from book")
-            def rs = ps2.executeQuery()
-            try {
-                rs.next()
-                rs.getInt("count")
-            } finally {
-                ps2.close()
-                rs.close()
-            }
-
+            return entityManager.createQuery("select count(book) as count from Book book", Long.class)
+                    .singleResult.intValue()
         }
 
         @TransactionalEventListener

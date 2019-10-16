@@ -8,4 +8,14 @@ dependencies {
         exclude group: 'org.javassist', module: 'javassist'
         exclude group: 'org.jboss:jandex', module: 'jar'
     }
+
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    testAnnotationProcessor project(":data-processor")
+    testImplementation project(":data-processor")
+
+    testCompile project(":data-tck")
+    testRuntime "com.h2database:h2"
+    testRuntime project(":data-hibernate-jpa")
+    testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
+
 }
