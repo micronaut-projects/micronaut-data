@@ -18,6 +18,7 @@ package io.micronaut.data.model.query.builder;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
@@ -32,8 +33,8 @@ import io.micronaut.data.model.query.QueryParameter;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -489,7 +490,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         appendOrder(query, queryState);
-        return QueryResult.of(queryState.getQuery().toString(), parameters, queryState.getParameterTypes());
+        return QueryResult.of(
+                queryState.getQuery().toString(),
+                parameters,
+                queryState.getParameterTypes(),
+                queryState.getAdditionalRequiredParameters()
+        );
     }
 
     /**
@@ -838,6 +844,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             buildWhereClauseForCriterion(queryState, criteria, criterionList);
             String whereStr = whereClause.toString();
             final String additionalWhere = buildAdditionalWhereString(annotationMetadata);
+
+            Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(additionalWhere);
+
+            while (matcher.find()) {
+                String name = matcher.group(2);
+                queryState.addRequiredParameters(name);
+                final Placeholder ph = queryState.newParameter();
+                queryState.getParameters().put(ph.getKey(), ph.getName());
+            }
             if (!whereStr.equals(WHERE_CLAUSE + OPEN_BRACKET)) {
                 final StringBuilder queryBuilder = queryState.getQuery();
                 queryBuilder.append(whereStr);
@@ -1268,7 +1283,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         buildUpdateStatement(queryState, propertiesToUpdate);
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
-        return QueryResult.of(queryString.toString(), queryState.getParameters(), queryState.getParameterTypes());
+        return QueryResult.of(
+                queryString.toString(),
+                queryState.getParameters(),
+                queryState.getParameterTypes(),
+                queryState.getAdditionalRequiredParameters()
+        );
     }
 
     @Override
@@ -1292,7 +1312,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     .append(currentAlias);
         }
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
-        return QueryResult.of(queryString.toString(), queryState.getParameters(), queryState.getParameterTypes());
+        return QueryResult.of(
+                queryString.toString(),
+                queryState.getParameters(),
+                queryState.getParameterTypes(),
+                queryState.getAdditionalRequiredParameters()
+        );
     }
 
     /**
@@ -1351,7 +1376,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
         }
 
-        return QueryResult.of(buff.toString(), Collections.emptyMap(), Collections.emptyMap());
+        return QueryResult.of(
+                buff.toString(),
+                Collections.emptyMap(),
+                Collections.emptyMap(),
+                Collections.emptySet()
+        );
     }
 
     /**
@@ -1389,6 +1419,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * The state of the query.
      */
+    @Internal
     protected final class QueryState {
         private final Map<String, String> appliedJoinPaths = new HashMap<>();
         private final AtomicInteger position = new AtomicInteger(0);
@@ -1402,6 +1433,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private String currentAlias;
         private PersistentEntity entity;
         private Embedded currentEmbedded;
+        private Set<String> additionalRequiredParameters;
 
         private QueryState(QueryModel query, boolean allowJoins) {
             this.allowJoins = allowJoins;
@@ -1480,6 +1512,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          */
         public void addParameterType(@NonNull String name, @NonNull DataType dataType) {
             this.parameterTypes.put(name, dataType);
+        }
+
+        /**
+         * Add a required parameter.
+         * @param name The name
+         */
+        public void addRequiredParameters(@NonNull String name) {
+            if (additionalRequiredParameters == null) {
+                additionalRequiredParameters = new HashSet<>(5);
+            }
+            additionalRequiredParameters.add(name);
         }
 
         /**
@@ -1563,8 +1606,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @param associationPath The assocation path.
          * @return The alias
          */
-        public @NonNull
-        String computeAlias(String associationPath) {
+        public @NonNull String computeAlias(String associationPath) {
             String name = getCurrentAlias() + DOT + associationPath;
             if (appliedJoinPaths.containsKey(name)) {
                 return appliedJoinPaths.get(name);
@@ -1585,6 +1627,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          */
         public boolean shouldEscape() {
             return escape;
+        }
+
+        /**
+         * The additional required parameters.
+         * @return The parameters
+         */
+        public @Nullable Set<String> getAdditionalRequiredParameters() {
+            return this.additionalRequiredParameters;
         }
     }
 

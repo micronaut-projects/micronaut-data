@@ -610,7 +610,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return QueryResult.of(
                 builder.toString(),
                 parameters,
-                parameterTypes
+                parameterTypes,
+                Collections.emptySet()
         );
     }
 
@@ -662,7 +663,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return QueryResult.of(
                 builder.toString(),
                 Collections.emptyMap(),
-                Collections.emptyMap()
+                Collections.emptyMap(),
+                Collections.emptySet()
         );
     }
 

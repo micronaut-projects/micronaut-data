@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * @since 1.0.0
  */
 @Internal
-public class AnnotationMetadataHierarchy implements AnnotationMetadata {
+public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     private final AnnotationMetadata[] hierarchy;
 
     /**
@@ -55,10 +55,9 @@ public class AnnotationMetadataHierarchy implements AnnotationMetadata {
     @Nonnull
     @Override
     public String[] stringValues(@Nonnull Class<? extends Annotation> annotation, @Nonnull String member) {
-        final String[] values = Arrays.stream(hierarchy)
+        return Arrays.stream(hierarchy)
                 .flatMap(am -> Stream.of(am.stringValues(annotation, member)))
                 .toArray(String[]::new);
-        return values;
     }
 
     @Override

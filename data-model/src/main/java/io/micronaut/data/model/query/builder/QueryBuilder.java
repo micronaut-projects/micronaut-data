@@ -32,6 +32,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * An interface capable of encoding a query into a string and a set of named parameters.
@@ -41,6 +42,11 @@ import java.util.List;
  */
 @Introspected
 public interface QueryBuilder {
+
+    /**
+     * A pattern used to find variables in a query string.
+     */
+    Pattern VARIABLE_PATTERN = Pattern.compile("(:([a-zA-Z0-9]+))");
 
     /**
      * Builds an insert statement for the given entity.
@@ -137,9 +143,6 @@ public interface QueryBuilder {
      * @return The query builder
      */
     static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
-        if (annotationMetadata == null) {
-            return new JpaQueryBuilder();
-        }
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
                 DataMethod.META_MEMBER_QUERY_BUILDER
