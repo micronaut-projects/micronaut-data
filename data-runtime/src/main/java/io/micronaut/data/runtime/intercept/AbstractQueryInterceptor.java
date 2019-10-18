@@ -401,11 +401,19 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         for (PersistentProperty prop : persistentProperties) {
             if (!prop.isReadOnly() && !prop.isGenerated()) {
                 String propName = prop.getName();
-                Object v = parameterValues.get(propName);
-                if (v == null && !prop.isOptional()) {
-                    throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
+                if (parameterValues.containsKey(propName)) {
+
+                    Object v = parameterValues.get(propName);
+                    if (v == null && !prop.isOptional()) {
+                        throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
+                    }
+                    wrapper.setProperty(propName, v);
+                } else if (!prop.isOptional()) {
+                    final Optional<Object> p = wrapper.getProperty(propName, Object.class);
+                    if (!p.isPresent()) {
+                        throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
+                    }
                 }
-                wrapper.setProperty(propName, v);
             }
         }
         return instance;
