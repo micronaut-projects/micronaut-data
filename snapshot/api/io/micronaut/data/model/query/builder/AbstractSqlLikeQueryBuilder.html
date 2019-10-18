@@ -251,6 +251,13 @@ implements <a href="../../../../../../io/micronaut/data/model/query/builder/Quer
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#WHERE_CLAUSE">WHERE_CLAUSE</a></span></code>&nbsp;</td>
 </tr>
 </table>
+<ul class="blockList">
+<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.data.model.query.builder.QueryBuilder">
+<!--   -->
+</a>
+<h3>Fields inherited from interface&nbsp;io.micronaut.data.model.query.builder.<a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></h3>
+<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#VARIABLE_PATTERN">VARIABLE_PATTERN</a></code></li>
+</ul>
 </li>
 </ul>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
@@ -305,7 +312,8 @@ implements <a href="../../../../../../io/micronaut/data/model/query/builder/Quer
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildDelete-io.micronaut.data.model.query.QueryModel-">buildDelete</a></span>(<a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildDelete-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildDelete</a></span>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+           <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code>
 <div class="block">Encode the given query into the encoded query instance.</div>
 </td>
 </tr>
@@ -328,13 +336,15 @@ implements <a href="../../../../../../io/micronaut/data/model/query/builder/Quer
 </tr>
 <tr id="i6" class="altColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildQuery-io.micronaut.data.model.query.QueryModel-">buildQuery</a></span>(<a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code>
-<div class="block">Encode the given query into the encoded query instance.</div>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildQuery-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildQuery</a></span>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+          <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code>
+<div class="block">Encode the given query for the passed annotation metadata and query.</div>
 </td>
 </tr>
 <tr id="i7" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildUpdate-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a></span>(<a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildUpdate-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a></span>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+           <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
            java.util.List&lt;java.lang.String&gt;&nbsp;propertiesToUpdate)</code>
 <div class="block">Encode the given query into the encoded query instance.</div>
 </td>
@@ -445,7 +455,7 @@ implements <a href="../../../../../../io/micronaut/data/model/query/builder/Quer
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.query.builder.<a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></h3>
-<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildInsert-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.PersistentEntity-">buildInsert</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildPagination-io.micronaut.data.model.Pageable-">buildPagination</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#newQueryBuilder-io.micronaut.core.annotation.AnnotationMetadata-">newQueryBuilder</a></code></li>
+<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildDelete-io.micronaut.data.model.query.QueryModel-">buildDelete</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildInsert-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.PersistentEntity-">buildInsert</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildPagination-io.micronaut.data.model.Pageable-">buildPagination</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildQuery-io.micronaut.data.model.query.QueryModel-">buildQuery</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildUpdate-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a>, <a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#newQueryBuilder-io.micronaut.core.annotation.AnnotationMetadata-">newQueryBuilder</a></code></li>
 </ul>
 </li>
 </ul>
@@ -720,24 +730,26 @@ implements <a href="../../../../../../io/micronaut/data/model/query/builder/Quer
 </dl>
 </li>
 </ul>
-<a name="buildQuery-io.micronaut.data.model.query.QueryModel-">
+<a name="buildQuery-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>buildQuery</h4>
-<pre>@NonNull
-public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;buildQuery(@NonNull
-                                       <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildQuery-io.micronaut.data.model.query.QueryModel-">QueryBuilder</a></code></span></div>
-<div class="block">Encode the given query into the encoded query instance.</div>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;buildQuery(@NonNull
+                              io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                              @NonNull
+                              <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildQuery-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">QueryBuilder</a></code></span></div>
+<div class="block">Encode the given query for the passed annotation metadata and query.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildQuery-io.micronaut.data.model.query.QueryModel-">buildQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></dd>
+<dd><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildQuery-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildQuery</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>query</code> - The query</dd>
+<dd><code>annotationMetadata</code> - The annotation metadata</dd>
+<dd><code>query</code> - The query model</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The encoded query</dd>
+<dd>The query result</dd>
 </dl>
 </li>
 </ul>
@@ -975,22 +987,25 @@ protected&nbsp;java.lang.String&nbsp;getPathOnlyAliasName(<a href="../../../../.
 </dl>
 </li>
 </ul>
-<a name="buildUpdate-io.micronaut.data.model.query.QueryModel-java.util.List-">
+<a name="buildUpdate-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-java.util.List-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>buildUpdate</h4>
-<pre>@NonNull
-public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;buildUpdate(@NonNull
-                                        <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
-                                        java.util.List&lt;java.lang.String&gt;&nbsp;propertiesToUpdate)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildUpdate-io.micronaut.data.model.query.QueryModel-java.util.List-">QueryBuilder</a></code></span></div>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;buildUpdate(@NonNull
+                               io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                               @NonNull
+                               <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
+                               @NonNull
+                               java.util.List&lt;java.lang.String&gt;&nbsp;propertiesToUpdate)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildUpdate-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-java.util.List-">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildUpdate-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></dd>
+<dd><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildUpdate-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>query</code> - The query</dd>
 <dd><code>propertiesToUpdate</code> - The property names to update</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -998,21 +1013,23 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/Que
 </dl>
 </li>
 </ul>
-<a name="buildDelete-io.micronaut.data.model.query.QueryModel-">
+<a name="buildDelete-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>buildDelete</h4>
-<pre>@NonNull
-public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;buildDelete(@NonNull
-                                        <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildDelete-io.micronaut.data.model.query.QueryModel-">QueryBuilder</a></code></span></div>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;buildDelete(@NonNull
+                               io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                               @NonNull
+                               <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildDelete-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">QueryBuilder</a></code></span></div>
 <div class="block">Encode the given query into the encoded query instance.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildDelete-io.micronaut.data.model.query.QueryModel-">buildDelete</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></dd>
+<dd><code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#buildDelete-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildDelete</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>annotationMetadata</code> - The annotation metadata</dd>
 <dd><code>query</code> - The query</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The encoded query</dd>
