@@ -33,6 +33,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.factory.Projections;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -60,7 +61,6 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
-    private static final Pattern VARIABLE_PATTERN = Pattern.compile("(:([a-zA-Z0-9]+))");
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
     protected final Pattern pattern;
 
@@ -424,7 +424,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         boolean namedParameters = matchContext.getRepositoryClass()
                 .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
         if (namedParameters) {
-            Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+            Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(queryString);
 
             while (matcher.find()) {
                 String name = matcher.group(2);
@@ -439,7 +439,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 }
             }
         } else {
-            Matcher matcher = VARIABLE_PATTERN.matcher(queryString);
+            Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(queryString);
 
             int index = 1;
             while (matcher.find()) {

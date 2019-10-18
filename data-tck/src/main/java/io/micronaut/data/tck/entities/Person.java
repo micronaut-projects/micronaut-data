@@ -28,6 +28,7 @@ public class Person {
 
     private String name;
     private int age;
+    private boolean enabled = true;
 
     public Long getId() {
         return id;
@@ -51,6 +52,14 @@ public class Person {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override

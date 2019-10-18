@@ -32,6 +32,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * An interface capable of encoding a query into a string and a set of named parameters.
@@ -41,6 +42,11 @@ import java.util.List;
  */
 @Introspected
 public interface QueryBuilder {
+
+    /**
+     * A pattern used to find variables in a query string.
+     */
+    Pattern VARIABLE_PATTERN = Pattern.compile("(:([a-zA-Z0-9]+))");
 
     /**
      * Builds an insert statement for the given entity.
@@ -58,7 +64,17 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildQuery(@NonNull QueryModel query);
+    default QueryResult buildQuery(@NonNull QueryModel query) {
+        return buildQuery(AnnotationMetadata.EMPTY_METADATA, query);
+    }
+
+    /**
+     * Encode the given query for the passed annotation metadata and query.
+     * @param annotationMetadata The annotation metadata
+     * @param query The query model
+     * @return The query result
+     */
+    QueryResult buildQuery(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -68,7 +84,19 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildUpdate(@NonNull QueryModel query, List<String> propertiesToUpdate);
+    default QueryResult buildUpdate(@NonNull QueryModel query, @NonNull List<String> propertiesToUpdate) {
+        return buildUpdate(AnnotationMetadata.EMPTY_METADATA, query, propertiesToUpdate);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param query The query
+     * @param propertiesToUpdate The property names to update
+     * @return The encoded query
+     */
+    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull List<String> propertiesToUpdate);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -77,7 +105,18 @@ public interface QueryBuilder {
      * @return The encoded query
      */
     @NonNull
-    QueryResult buildDelete(@NonNull QueryModel query);
+    default QueryResult buildDelete(@NonNull QueryModel query) {
+        return buildDelete(AnnotationMetadata.EMPTY_METADATA, query);
+    }
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param query The query
+     * @return The encoded query
+     */
+    QueryResult buildDelete(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query);
 
     /**
      * Encode the given query into the encoded query instance.
@@ -104,9 +143,6 @@ public interface QueryBuilder {
      * @return The query builder
      */
     static @NonNull QueryBuilder newQueryBuilder(@NonNull AnnotationMetadata annotationMetadata) {
-        if (annotationMetadata == null) {
-            return new JpaQueryBuilder();
-        }
         return annotationMetadata.stringValue(
                 RepositoryConfiguration.class,
                 DataMethod.META_MEMBER_QUERY_BUILDER

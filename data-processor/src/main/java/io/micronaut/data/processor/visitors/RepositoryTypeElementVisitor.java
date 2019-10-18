@@ -254,21 +254,30 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                             } else {
 
+                                final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
+                                        currentRepository.getAnnotationMetadata(),
+                                        matchContext.getAnnotationMetadata()
+                                );
                                 try {
                                     switch (methodInfo.getOperationType()) {
                                         case DELETE:
-                                            encodedQuery = queryEncoder.buildDelete(queryObject);
+                                            encodedQuery = queryEncoder.buildDelete(annotationMetadataHierarchy, queryObject);
                                             break;
                                         case UPDATE:
                                             encodedQuery = queryEncoder
                                                     .buildUpdate(
+                                                            annotationMetadataHierarchy,
                                                             queryObject,
                                                             methodInfo.getUpdateProperties());
                                             break;
                                         case INSERT:
                                             // TODO
                                         default:
-                                            encodedQuery = queryEncoder.buildQuery(queryObject);
+
+                                            encodedQuery = queryEncoder.buildQuery(
+                                                    annotationMetadataHierarchy,
+                                                    queryObject
+                                            );
                                     }
 
                                 } catch (Exception e) {
@@ -279,6 +288,20 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                 parameterBinding = encodedQuery.getParameters();
                                 parameterTypes = encodedQuery.getParameterTypes();
+                                final Set<String> requiredParams = encodedQuery.getAdditionalRequiredParameters();
+                                if (CollectionUtils.isNotEmpty(requiredParams)) {
+                                    for (String requiredParam : requiredParams) {
+                                        final boolean hasNoParameter = Arrays.stream(parameters)
+                                                .noneMatch(p ->
+                                                        p.stringValue(Parameter.class)
+                                                                .orElse(p.getName())
+                                                                .equals(requiredParam)
+                                                );
+                                        if (hasNoParameter) {
+                                            methodMatchContext.fail("A @Where(..) definition requires a parameter called [" + requiredParam + "] which is not present in the method signature.");
+                                        }
+                                    }
+                                }
 
                                 if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
                                     genericReturnType = genericReturnType.getFirstTypeArgument().orElse(entity.getType());

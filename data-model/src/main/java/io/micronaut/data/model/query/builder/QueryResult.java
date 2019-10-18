@@ -23,6 +23,7 @@ import io.micronaut.data.model.DataType;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Used to represent a built query that is computed at compilation time.
@@ -51,16 +52,26 @@ public interface QueryResult {
     @NonNull Map<String, DataType> getParameterTypes();
 
     /**
+     * Returns the names of additional required parameters for this query.
+     * @return The additional required parameters, if any
+     */
+    default Set<String> getAdditionalRequiredParameters() {
+        return Collections.emptySet();
+    }
+
+    /**
      * Creates a new encoded query.
      * @param query The query
      * @param parameters The parameters
      * @param parameterTypes  The parameter types
+     * @param additionalRequiredParameters Names of the additional required parameters to execute the query
      * @return The query
      */
     static @NonNull QueryResult of(
             @NonNull String query,
             @Nullable Map<String, String> parameters,
-            @Nullable Map<String, DataType> parameterTypes) {
+            @Nullable Map<String, DataType> parameterTypes,
+            @Nullable Set<String> additionalRequiredParameters) {
         ArgumentUtils.requireNonNull("query", query);
         return new QueryResult() {
             @NonNull
@@ -79,6 +90,11 @@ public interface QueryResult {
             @Override
             public Map<String, DataType> getParameterTypes() {
                 return parameterTypes != null ? Collections.unmodifiableMap(parameterTypes) : Collections.emptyMap();
+            }
+
+            @Override
+            public Set<String> getAdditionalRequiredParameters() {
+                return additionalRequiredParameters != null ? additionalRequiredParameters : Collections.emptySet();
             }
         };
     }
