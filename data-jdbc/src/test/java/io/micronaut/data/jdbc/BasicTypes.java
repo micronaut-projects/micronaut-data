@@ -64,7 +64,7 @@ public class BasicTypes {
     private LocalDateTime localDateTime = LocalDateTime.now();
     private Instant instant = Instant.now();
     private UUID uuid = UUID.randomUUID();
-    private BigDecimal bigDecimal = new BigDecimal("100");
+    private BigDecimal bigDecimal = new BigDecimal(Long.MAX_VALUE + "000");
     private TimeZone timeZone = TimeZone.getTimeZone("GMT");
     private Charset charset = StandardCharsets.UTF_8;
 
