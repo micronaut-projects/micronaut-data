@@ -13,7 +13,7 @@ import io.micronaut.data.tck.entities.Person;
 @Where("person_.age > 18")
 @Repository
 interface TestRepository extends CrudRepository<Person, Long> {
-
+    int countByNameLike(String name);
 }
 ''')
         expect:
@@ -23,5 +23,12 @@ interface TestRepository extends CrudRepository<Person, Long> {
             .stringValue(Query).get() == "SELECT person_ FROM $Person.name AS person_ WHERE (person_.id = :p1 AND (person_.age > 18))"
         repository.getRequiredMethod("deleteById", Long)
                 .stringValue(Query).get() == "DELETE $Person.name  AS person_ WHERE (person_.id = :p1 AND (person_.age > 18))"
+        repository.getRequiredMethod("deleteAll")
+                .stringValue(Query).get() == "DELETE $Person.name  AS person_ WHERE (person_.age > 18)"
+        repository.getRequiredMethod("count")
+                .stringValue(Query).get() == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.age > 18)"
+
+        repository.getRequiredMethod("countByNameLike", String)
+            .stringValue(Query).get() == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (person_.age > 18))"
     }
 }
