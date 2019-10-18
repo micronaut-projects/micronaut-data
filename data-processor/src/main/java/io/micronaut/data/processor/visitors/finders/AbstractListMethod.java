@@ -162,7 +162,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         }
     }
 
-    public boolean hasNoWhereDeclaration(@NonNull MethodMatchContext matchContext) {
+    private boolean hasNoWhereDeclaration(@NonNull MethodMatchContext matchContext) {
         return !new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement()).hasAnnotation(Where.class);
     }
 
