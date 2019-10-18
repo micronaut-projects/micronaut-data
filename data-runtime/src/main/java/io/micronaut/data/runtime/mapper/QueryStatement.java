@@ -118,7 +118,7 @@ public interface QueryStatement<PS, IDX> {
                 }
             case BIGDECIMAL:
                 if (value instanceof BigDecimal) {
-                    setBigDecimal(statement, index, (BigDecimal) value);
+                    return setBigDecimal(statement, index, (BigDecimal) value);
                 } else if (value instanceof Number) {
                     return setBigDecimal(statement, index, new BigDecimal(((Number) value).doubleValue()));
                 } else {
