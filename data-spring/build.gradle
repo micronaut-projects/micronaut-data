@@ -19,7 +19,7 @@ dependencies {
     testCompile project(":data-hibernate-jpa")
     testCompile project(":data-tck")
     testRuntime "com.h2database:h2"
-    testRuntime group:'io.micronaut.configuration', name:'micronaut-hibernate-jpa-spring', version:'1.2.2'
+    testRuntime group:'io.micronaut.configuration', name:'micronaut-hibernate-jpa-spring', version:'1.2.3'
     testRuntime "org.springframework:spring-orm:5.2.0.RELEASE"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
 }
