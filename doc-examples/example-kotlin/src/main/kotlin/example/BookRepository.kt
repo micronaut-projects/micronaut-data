@@ -74,6 +74,10 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun updateByTitle(title: String, pages: Int)
     // end::update2[]
 
+    // tag::update3[]
+    fun updatePages(@Id id: Long?, pages: Int)
+    // end::update3[]
+
     // tag::deleteall[]
     override fun deleteAll()
     // end::deleteall[]
