@@ -12,7 +12,7 @@ snippet::example.BookRepository[project-base="doc-examples/example", source="mai
 
 In this case, when update of whole entity is intended, you must specify parameters for all properties other than those that are declared as `@Nullable` or as a `@GeneratedValue`, if you do not a compilation error will occur.
 
-For parital updates, you must define a method that features a parameter annotated with ann:data.annotation.Id[] and parameters for properties to be updated.
+For partial updates, you must define a method that features a parameter annotated with ann:data.annotation.Id[] and parameters for the properties to be updated.
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="update", indent="0"]
 
