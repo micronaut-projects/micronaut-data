@@ -163,7 +163,9 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
     }
 
     private boolean hasNoWhereDeclaration(@NonNull MethodMatchContext matchContext) {
-        return !new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement()).hasAnnotation(Where.class);
+        final boolean repositoryHasWhere = new AnnotationMetadataHierarchy(matchContext.getRepositoryClass(), matchContext.getMethodElement()).hasAnnotation(Where.class);
+        final boolean entityHasWhere = matchContext.getRootEntity().hasAnnotation(Where.class);
+        return !repositoryHasWhere && !entityHasWhere;
     }
 
     private static Pattern computePattern(String[] prefixes) {

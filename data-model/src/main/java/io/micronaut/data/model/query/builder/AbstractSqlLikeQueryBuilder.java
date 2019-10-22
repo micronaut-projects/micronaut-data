@@ -485,7 +485,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryState.applyJoin(joinPath);
         }
         Map<String, String> parameters = null;
-        if (!criteria.isEmpty() || annotationMetadata.hasStereotype(WhereSpecifications.class)) {
+        if (!criteria.isEmpty() || annotationMetadata.hasStereotype(WhereSpecifications.class) || queryState.getEntity().getAnnotationMetadata().hasStereotype(WhereSpecifications.class)) {
             parameters = buildWhereClause(annotationMetadata, criteria, queryState);
         }
 
@@ -843,8 +843,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             whereClause.append(OPEN_BRACKET);
             buildWhereClauseForCriterion(queryState, criteria, criterionList);
             String whereStr = whereClause.toString();
-            final String additionalWhere = buildAdditionalWhereString(annotationMetadata);
-
+            final String additionalWhere = buildAdditionalWhereString(queryState.getEntity(), annotationMetadata);
             Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(additionalWhere);
 
             while (matcher.find()) {
@@ -862,7 +861,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 queryBuilder.append(CLOSE_BRACKET);
             }
         } else {
-            final String additionalWhereString = buildAdditionalWhereString(annotationMetadata);
+            final String additionalWhereString = buildAdditionalWhereString(queryState.getEntity(), annotationMetadata);
             if (StringUtils.isNotEmpty(additionalWhereString)) {
                 final StringBuilder whereClause = queryState.getWhereClause();
                 whereClause.append(WHERE_CLAUSE)
@@ -875,12 +874,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return queryState.getParameters();
     }
 
-    private String buildAdditionalWhereString(AnnotationMetadata annotationMetadata) {
+    private String buildAdditionalWhereString(PersistentEntity entity, AnnotationMetadata annotationMetadata) {
+        final String whereStr = resolveWhereForAnnotationMetadata(annotationMetadata);
+        if (StringUtils.isNotEmpty(whereStr)) {
+            return whereStr;
+        } else {
+            return resolveWhereForAnnotationMetadata(entity.getAnnotationMetadata());
+        }
+    }
+
+    private String resolveWhereForAnnotationMetadata(AnnotationMetadata annotationMetadata) {
         return annotationMetadata.getAnnotationValuesByType(Where.class)
-                        .stream()
-                        .map(av -> av.stringValue().orElse(null))
-                        .filter(StringUtils::isNotEmpty)
-                        .collect(Collectors.joining(LOGICAL_AND));
+                .stream()
+                .map(av -> av.stringValue().orElse(null))
+                .filter(StringUtils::isNotEmpty)
+                .collect(Collectors.joining(LOGICAL_AND));
     }
 
     private void appendOrder(QueryModel query, QueryState queryState) {

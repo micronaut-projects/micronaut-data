@@ -1,0 +1,19 @@
+You can use the ann:data.annotation.Where[] annotation to modify compile time generated query with additional query criterion.
+
+A common use case for this is to implement soft delete. For example considering the following `User` entity which declares an `enabled` property:
+
+snippet::example.User[project-base="doc-examples/jdbc-example", source="main"]
+
+<1> The ann:data.annotation.Where[] annotation is used to declare that all queries should include `enabled = true`.
+<2> An `enabled` property exists on the entity
+
+You can then easily modify the `delete` operations to instead issue an update. For example, consider the following repository implementation:
+
+snippet::example.UserRepository[project-base="doc-examples/jdbc-example", source="main"]
+
+<1> The interface extends api:data.repository.CrudRepository[]
+<2> The `deleteById` is overridden to perform a soft delete by setting `enabled` to false.
+<3> An additional method is added to return disabled entities if needed using an explicit query.
+
+All other queries performed on the entity will include `enabled = true` in the query statement.
+

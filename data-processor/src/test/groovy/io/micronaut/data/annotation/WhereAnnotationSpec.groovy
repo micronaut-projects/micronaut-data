@@ -5,6 +5,56 @@ import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Person
 
 class WhereAnnotationSpec extends AbstractDataSpec {
+
+    void "test @Where on entity"() {
+        given:
+        def repository = buildRepository('test.TestRepository', '''
+
+@Repository
+interface TestRepository extends CrudRepository<User, Long> {
+    int countByIdGreaterThan(Long id);
+}
+
+@MappedEntity
+@Where("enabled = true")
+class User {
+    @Id
+    private Long id;
+    private boolean enabled;
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }        
+}
+''')
+        expect:
+        repository.getRequiredMethod("findAll")
+                .stringValue(Query).get() == 'SELECT user_ FROM test.User AS user_ WHERE (enabled = true)'
+        repository.getRequiredMethod("findById", Long)
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.id = :p1 AND (enabled = true))"
+        repository.getRequiredMethod("deleteById", Long)
+                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.id = :p1 AND (enabled = true))"
+        repository.getRequiredMethod("deleteAll")
+                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (enabled = true)"
+        repository.getRequiredMethod("count")
+                .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (enabled = true)"
+
+        repository.getRequiredMethod("countByIdGreaterThan", Long)
+                .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (user_.id > :p1 AND (enabled = true))"
+    }
+
     void "test parameterized @Where declaration - fails compile"() {
         when:"A parameterized @Where is missing an argument definition"
         buildRepository('test.TestRepository', '''

@@ -16,6 +16,7 @@ querying:
   dto: DTO Projections
   joinQueries: Join Queries
   explicitQueries: Explicit Queries
+  whereAnnotation: Modifying Queries with @Where
   nativeQueries: Native Queries
   async: Asynchronous Queries
   reactive: Reactive Queries
