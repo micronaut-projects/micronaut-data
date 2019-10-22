@@ -2459,7 +2459,40 @@ Assertions.assertEquals(
 </div>
 </div>
 <div class="paragraph">
-<p>In this case you must specify parameters for all properties other than those that are declared as <code>@Nullable</code> or as a <code>@GeneratedValue</code>, if you do not a compilation error will occur.</p>
+<p>In this case, when update of whole entity is intended, you must specify parameters for all properties other than those that are declared as <code>@Nullable</code> or as a <code>@GeneratedValue</code>, if you do not a compilation error will occur.</p>
+</div>
+<div class="paragraph">
+<p>For partial updates, you must define a method that features a parameter annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a> and parameters for the properties to be updated.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">void update(@Id Long id, int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">void update(@Id Long id, int pages)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(@Id id: Long?, pages: Int)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">void updatePages(@Id Long id, int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">void updatePages(@Id Long id, int pages)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun updatePages(@Id id: Long?, pages: Int)</code></pre>
+</div>
 </div>
 
 
