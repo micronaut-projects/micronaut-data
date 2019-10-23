@@ -785,6 +785,42 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected String formatStartsWith() {
+        if (dialect == Dialect.ORACLE) {
+            return " LIKE '%' || ";
+        } else {
+            return super.formatStartsWith();
+        }
+    }
+
+    @Override
+    protected String formEndsWithEnd() {
+        if (dialect == Dialect.ORACLE) {
+            return " ";
+        } else {
+            return super.formEndsWithEnd();
+        }
+    }
+
+    @Override
+    protected String formatEndsWith() {
+        if (dialect == Dialect.ORACLE) {
+            return " || '%'";
+        } else {
+            return super.formatEndsWith();
+        }
+    }
+
+    @Override
+    protected String formatStartsWithBeginning() {
+        if (dialect == Dialect.ORACLE) {
+            return " LIKE ";
+        } else {
+            return super.formatStartsWithBeginning();
+        }
+    }
+
+    @Override
     protected void appendUpdateSetParameter(StringBuilder queryString, PersistentProperty prop, Placeholder param) {
         // to_json(?::json)
         if (prop.getDataType() == DataType.JSON) {

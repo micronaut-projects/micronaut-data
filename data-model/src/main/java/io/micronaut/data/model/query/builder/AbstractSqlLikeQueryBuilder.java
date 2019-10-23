@@ -345,17 +345,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         queryHandlers.put(QueryModel.StartsWith.class, (queryState, criterion) -> {
             QueryModel.StartsWith eq = (QueryModel.StartsWith) criterion;
-            appendLikeComparison(queryState, eq, " LIKE CONCAT(", ",'%')");
+            appendLikeComparison(queryState, eq, formatStartsWithBeginning(), formatEndsWith());
         });
 
         queryHandlers.put(QueryModel.Contains.class, (queryState, criterion) -> {
             QueryModel.Contains eq = (QueryModel.Contains) criterion;
-            appendLikeComparison(queryState, eq, " LIKE CONCAT('%',", ",'%')");
+            appendLikeComparison(queryState, eq, formatStartsWith(), formatEndsWith());
         });
 
         queryHandlers.put(QueryModel.EndsWith.class, (queryState, criterion) -> {
             QueryModel.EndsWith eq = (QueryModel.EndsWith) criterion;
-            appendLikeComparison(queryState, eq, " LIKE CONCAT('%',", ")");
+            appendLikeComparison(queryState, eq, formatStartsWith(), formEndsWithEnd());
         });
 
         queryHandlers.put(QueryModel.In.class, (queryState, criterion) -> {
@@ -388,6 +388,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             String comparisonExpression = " NOT IN (";
             handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
         });
+    }
+
+    /**
+     * @return Formats end of an ends with expression
+     */
+    protected String formEndsWithEnd() {
+        return ")";
+    }
+
+    /**
+     * @return Formats the beginning of an starts with expression
+     */
+    protected String formatStartsWithBeginning() {
+        return " LIKE CONCAT(";
+    }
+
+    /**
+     * @return Formats the ends with expression.
+     */
+    protected String formatEndsWith() {
+        return ",'%')";
+    }
+
+    /**
+     * @return Formats the starts with expression.
+     */
+    protected String formatStartsWith() {
+        return " LIKE CONCAT('%',";
     }
 
     private void appendEmptyExpression(QueryState queryState, String charSequencePrefix, String charSequenceSuffix, String listSuffix, String name) {

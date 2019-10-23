@@ -48,7 +48,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildUpdate(q, ['data'])
 
         then:"The update query is correct"
-        encoded.query == 'UPDATE sale SET data=CONVERT(? USING UTF8MB4)'
+        encoded.query == 'UPDATE `sale` SET `data`=CONVERT(? USING UTF8MB4)'
     }
 
     void "test build queries with schema"() {
@@ -59,7 +59,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         then:"The select includes the schema in the table name reference"
-        encoded.query == 'SELECT car_.id,car_.name FROM ford.cars car_'
+        encoded.query == 'SELECT car_.`id`,car_.`name` FROM `ford.cars` car_'
     }
 
     void "test select embedded"() {
@@ -70,7 +70,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query.startsWith('SELECT restaurant_.id,restaurant_.name,restaurant_.address_street,restaurant_.address_zip_code FROM')
+        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code` FROM')
 
     }
 
@@ -84,7 +84,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query == 'SELECT book_.id,book_.author_id,book_.title,book_.total_pages,book_.publisher_id,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM book book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.id = ?)'
+        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_author_.id AS _author_id,book_author_.name AS _author_name,book_author_.nick_name AS _author_nick_name FROM `book` book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.`id` = ?)'
 
     }
 
@@ -99,7 +99,7 @@ class SqlQueryBuilderSpec extends Specification {
 
         expect:
         encodedQuery != null
-        encodedQuery.query == "DELETE  FROM person  WHERE (id = ?)"
+        encodedQuery.query == "DELETE  FROM `person`  WHERE (`id` = ?)"
 
     }
 
@@ -134,7 +134,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO person (name,age,enabled) VALUES (?,?,?)'
+        result.query == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
         result.parameters.equals(name: '1', age: '2', enabled: '3')
     }
 
@@ -145,7 +145,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO restaurant (name,address_street,address_zip_code) VALUES (?,?,?)'
+        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code") VALUES (?,?,?)'
         result.parameters.equals(name: '1', 'address.street': '2', 'address.zipCode': '3')
     }
 
@@ -156,7 +156,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE restaurant (id BIGINT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL,address_street VARCHAR(255) NOT NULL,address_zip_code VARCHAR(255) NOT NULL);'
+        result == 'CREATE TABLE "restaurant" ("id" BIGINT AUTO_INCREMENT PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL);'
     }
 
     void "test encode insert statement - custom mapping strategy"() {
@@ -166,7 +166,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO CountryRegion (name,countryId) VALUES (?,?)'
+        result.query == 'INSERT INTO "CountryRegion" ("name","countryId") VALUES (?,?)'
     }
 
     void "test encode insert statement - custom mapping"() {
@@ -176,7 +176,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO T_CITY (C_NAME,country_region_id) VALUES (?,?)'
+        result.query == 'INSERT INTO "T_CITY" ("C_NAME","country_region_id") VALUES (?,?)'
     }
 
 
@@ -187,7 +187,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO person_assigned_id (name,age,enabled,id) VALUES (?,?,?,?)'
+        result.query == 'INSERT INTO "person_assigned_id" ("name","age","enabled","id") VALUES (?,?,?,?)'
         result.parameters.equals(name: '1', age: '2', enabled: '3', id: '4')
     }
 
@@ -203,7 +203,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildQuery(query)
 
         expect:
-        result.query == "SELECT $columns FROM book book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_author_.nick_name = ?)"
+        result.query == "SELECT $columns FROM \"book\" book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_author_.\"nick_name\" = ?)"
     }
 
     @Unroll
@@ -223,7 +223,7 @@ class SqlQueryBuilderSpec extends Specification {
         encodedQuery != null
         mappedName == 'some_id'
         encodedQuery.query ==
-                "SELECT $columns FROM person person_ WHERE (person_.${mappedName} $operator ?)"
+                "SELECT $columns FROM \"person\" person_ WHERE (person_.\"${mappedName}\" $operator ?)"
         encodedQuery.parameters == ['1': 'test']
 
         where:
@@ -251,7 +251,7 @@ class SqlQueryBuilderSpec extends Specification {
         expect:
         encodedQuery != null
         encodedQuery.query ==
-                "SELECT ${projection.toUpperCase()}($aliasName.$property) FROM person $aliasName WHERE ($aliasName.$property $operator ?)"
+                "SELECT ${projection.toUpperCase()}($aliasName.\"$property\") FROM \"person\" $aliasName WHERE ($aliasName.\"$property\" $operator ?)"
         encodedQuery.parameters == ['1': 'test']
 
         where:
