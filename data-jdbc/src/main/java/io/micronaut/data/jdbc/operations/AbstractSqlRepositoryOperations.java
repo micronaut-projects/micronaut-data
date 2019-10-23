@@ -488,11 +488,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
          * @return The identity
          */
         public @Nullable
-        BeanProperty<T, Object> getIdentity() {
+        BeanProperty<T, Object> getIdentityProperty() {
             if (identity != null) {
                 return identity.getProperty();
             }
             return null;
+        }
+
+        /**
+         * @return The runtime persistent property.
+         */
+        RuntimePersistentProperty getIdentity() {
+            return identity;
         }
 
         /**

@@ -429,7 +429,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 T entity = operation.getEntity();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
-                BeanProperty<T, Object> identity = insert.getIdentity();
+                BeanProperty<T, Object> identity = insert.getIdentityProperty();
                 final boolean hasGeneratedID = generateId && identity != null;
 
                 if (QUERY_LOG.isDebugEnabled()) {
@@ -437,14 +437,14 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
 
                 PreparedStatement stmt;
-                if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
+                if (hasGeneratedID && (insert.getDialect() == Dialect.ORACLE || insert.getDialect() == Dialect.SQL_SERVER)) {
                     stmt = connection
-                            .prepareStatement(insertSql, new String[] { identity.getName() });
+                            .prepareStatement(insertSql, new String[] { insert.getIdentity().getPersistedName() });
                 } else {
                     stmt = connection
                             .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
                 }
-                
+
                 setInsertParameters(insert, entity, stmt);
                 stmt.executeUpdate();
                 if (hasGeneratedID) {
@@ -661,7 +661,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 List<T> results = new ArrayList<>(10);
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
-                BeanProperty<T, Object> identity = insert.getIdentity();
+                BeanProperty<T, Object> identity = insert.getIdentityProperty();
                 final boolean hasGeneratedID = generateId && identity != null;
 
                 try {

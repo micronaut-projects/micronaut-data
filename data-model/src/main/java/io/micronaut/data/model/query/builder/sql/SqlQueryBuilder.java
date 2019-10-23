@@ -284,10 +284,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (isSequence) {
                 final String createSequenceStatement = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition")
                         .orElseGet(() -> {
+                            final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
                             final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
-                            String createSequenceStmt = "CREATE SEQUENCE " + sequenceName + " MINVALUE 1 START WITH 1";
+                            String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
+                            if (isSqlServer) {
+                                createSequenceStmt += " AS BIGINT";
+                            }
+
+                            createSequenceStmt += " MINVALUE 1 START WITH 1";
                             if (dialect == Dialect.ORACLE) {
                                 createSequenceStmt += " NOCACHE NOCYCLE";
+                            } else {
+                                if (isSqlServer) {
+                                    createSequenceStmt += " INCREMENT BY 1";
+                                }
                             }
                             return createSequenceStmt;
                         });
@@ -332,10 +342,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     break;
                 case SQL_SERVER:
-                    if (prop == identity) {
-                        column += " PRIMARY KEY";
+                    if (type == SEQUENCE) {
+                        if (prop == identity) {
+                            column += " PRIMARY KEY NOT NULL";
+                        }
+                    } else {
+                        if (prop == identity) {
+                            column += " PRIMARY KEY";
+                        }
+                        column += " IDENTITY(1,1) NOT NULL";
                     }
-                    column += " IDENTITY(1,1) NOT NULL";
                     break;
                 case ORACLE:
                     // for Oracle we use sequences so just add NOT NULL
@@ -659,12 +675,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     builder.append(columnName);
                     if (isSequence) {
-                        final String sequenceName = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
-                                .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
+                        final String sequenceName = resolveSequenceName(identity, unescapedTableName);
                         if (dialect == Dialect.ORACLE) {
                             values.add(quote(sequenceName) + ".nextval");
                         } else if (dialect == Dialect.POSTGRES) {
                             values.add("nextval('" + sequenceName + "')");
+                        } else if (dialect == Dialect.SQL_SERVER) {
+                            values.add("NEXT VALUE FOR " + quote(sequenceName));
                         }
                     } else {
                         addWriteExpression(values, identity);
@@ -684,6 +701,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 parameterTypes,
                 Collections.emptySet()
         );
+    }
+
+    private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {
+        return identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
+                                    .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
     }
 
     private boolean addWriteExpression(List<String> values, PersistentProperty property) {

@@ -15,27 +15,13 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
-import io.micronaut.data.jdbc.sqlserver.MSNoseRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.repositories.AuthorRepository
-import io.micronaut.data.tck.repositories.BookDtoRepository
-import io.micronaut.data.tck.repositories.BookRepository
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CompanyRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.FaceRepository
-import io.micronaut.data.tck.repositories.NoseRepository
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import org.testcontainers.containers.PostgreSQLContainer
 import spock.lang.AutoCleanup
