@@ -76,17 +76,17 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
 
     @Override
     CountryRepository getCountryRepository() {
-        return context.getBean(H2CountryRepository)
+        return context.getBean(PostgresCountryRepository)
     }
 
     @Override
     CityRepository getCityRepository() {
-        return context.getBean(H2CityRepository)
+        return context.getBean(PostgresCityRepository)
     }
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(PostgresRegionRepository)
     }
 
     @Override

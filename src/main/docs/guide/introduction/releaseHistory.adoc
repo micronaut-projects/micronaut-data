@@ -1,3 +1,9 @@
+==== 1.0.0.RC1
+
+* Support for Soft Delete and query customization with <<whereAnnotation,@Where>>.
+* Support for Sequences for ID generation in Oracle, Postgres and SQL Server
+* Automatic quoting/escaping of identifiers for generated queries
+
 ==== 1.0.0.M3
 
 * Spring for Transaction Management Now Optional

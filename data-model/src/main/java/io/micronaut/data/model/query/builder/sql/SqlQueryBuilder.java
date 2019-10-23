@@ -35,6 +35,7 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import static io.micronaut.data.annotation.GeneratedValue.Type.*;
 
 import java.sql.Blob;
 import java.sql.Clob;
@@ -59,6 +60,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     private static final String ANN_JOIN_TABLE = "io.micronaut.data.jdbc.annotation.JoinTable";
     private static final String BLANK_SPACE = " ";
+    private static final String SEQ_SUFFIX = "_seq";
 
     private Dialect dialect = Dialect.ANSI;
 
@@ -275,16 +277,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         if (identity != null && identity.isGenerated()) {
-            GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
-                    .enumValue("value", GeneratedValue.Type.class)
+             GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
+                    .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
                     .orElseGet(this::selectAutoStrategy);
             boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE || dialect == Dialect.ORACLE;
             if (isSequence) {
                 final String createSequenceStatement = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition")
                         .orElseGet(() -> {
-                            final String sequenceName = quote(unescapedTableName + "_seq");
-                            return "CREATE SEQUENCE " + sequenceName + " MINVALUE 1 START WITH 1 NOCACHE NOCYCLE";
-
+                            final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
+                            String createSequenceStmt = "CREATE SEQUENCE " + sequenceName + " MINVALUE 1 START WITH 1";
+                            if (dialect == Dialect.ORACLE) {
+                                createSequenceStmt += " NOCACHE NOCYCLE";
+                            }
+                            return createSequenceStmt;
                         });
                 createStatements.add(createSequenceStatement);
             }
@@ -300,9 +305,31 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private String addGeneratedStatementToColumn(PersistentProperty identity, PersistentProperty prop, String column) {
         if (prop.isGenerated()) {
+            GeneratedValue.Type type = prop.getAnnotationMetadata().enumValue(GeneratedValue.class, GeneratedValue.Type.class)
+                    .orElse(AUTO);
+
+            if (type == AUTO) {
+                if (dialect == Dialect.ORACLE) {
+                    type = SEQUENCE;
+                } else {
+                    type = IDENTITY;
+                }
+            }
             switch (dialect) {
                 case POSTGRES:
-                    column += " GENERATED ALWAYS AS IDENTITY";
+                    if (type == SEQUENCE) {
+                        if (prop == identity) {
+                            column += " PRIMARY KEY NOT NULL";
+                        } else {
+                            column += " NOT NULL";
+                        }
+                    } else {
+                        if (prop == identity) {
+                            column += " GENERATED ALWAYS AS IDENTITY";
+                        } else {
+                            column += " NOT NULL";
+                        }
+                    }
                     break;
                 case SQL_SERVER:
                     if (prop == identity) {
@@ -315,10 +342,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     // then alter the table for sequences
                     if (prop == identity) {
                         column += " PRIMARY KEY NOT NULL";
+                    } else {
+                        column += " NOT NULL";
                     }
                 break;
                 default:
-                    // TODO: handle more dialects
                     column += " AUTO_INCREMENT";
                     if (prop == identity) {
                         column += " PRIMARY KEY";
@@ -632,8 +660,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     builder.append(columnName);
                     if (isSequence) {
                         final String sequenceName = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
-                                .orElseGet(() -> quote(unescapedTableName + "_seq"));
-                        values.add(sequenceName + ".nextval");
+                                .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
+                        if (dialect == Dialect.ORACLE) {
+                            values.add(quote(sequenceName) + ".nextval");
+                        } else if (dialect == Dialect.POSTGRES) {
+                            values.add("nextval('" + sequenceName + "')");
+                        }
                     } else {
                         addWriteExpression(values, identity);
                         parameters.put(identity.getName(), String.valueOf(values.size()));
@@ -878,8 +910,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case SQL_SERVER:
                 return '[' + persistedName + ']';
             case ORACLE:
-                // Oracle bizarrely requires quoted identifiers to be in upper case
+                // Oracle requires quoted identifiers to be in upper case
                 return '"' + persistedName.toUpperCase(Locale.ENGLISH) + '"';
+            case POSTGRES:
+                // Postgres requires quoted identifiers to be in lower case
+                return '"' + persistedName.toLowerCase(Locale.ENGLISH) + '"';
             default:
                 return '"' + persistedName + '"';
         }
