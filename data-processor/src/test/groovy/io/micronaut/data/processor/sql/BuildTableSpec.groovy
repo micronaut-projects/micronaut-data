@@ -20,11 +20,13 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Requires
+import spock.lang.Unroll
 
 @Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
 
-    void "test build create table for JSON type"() {
+    @Unroll
+    void "test build create table for JSON type for dialect #dialect"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
 import java.util.Map;
@@ -64,10 +66,11 @@ class Test {
 
         where:
         dialect          | statement
-        Dialect.H2       | 'CREATE TABLE test (id BIGINT AUTO_INCREMENT PRIMARY KEY,json JSON NOT NULL);'
-        Dialect.MYSQL    | 'CREATE TABLE test (id BIGINT AUTO_INCREMENT PRIMARY KEY,json JSON NOT NULL);'
-        Dialect.POSTGRES | 'CREATE TABLE test (id BIGINT GENERATED ALWAYS AS IDENTITY,json JSONB NOT NULL);'
-        Dialect.ORACLE   | 'CREATE TABLE test (id BIGINT AUTO_INCREMENT PRIMARY KEY,json CLOB NOT NULL);'
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`json` JSON NOT NULL);'
+        Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`json` JSON NOT NULL);'
+        Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
+        Dialect.ORACLE   | '''CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE
+CREATE TABLE "TEST" ("ID" NUMBER(19) PRIMARY KEY NOT NULL,"JSON" CLOB NOT NULL)'''
     }
 
     void "test custom column definition"() {
@@ -109,6 +112,6 @@ class Test {
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE test (id BIGINT AUTO_INCREMENT PRIMARY KEY,date_created TIMESTAMP WITH TIME ZONE);'
+        sql == 'CREATE TABLE "test" ("id" BIGINT AUTO_INCREMENT PRIMARY KEY,"date_created" TIMESTAMP WITH TIME ZONE);'
     }
 }

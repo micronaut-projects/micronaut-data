@@ -96,6 +96,11 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected String quote(String persistedName) {
+        return persistedName;
+    }
+
+    @Override
     public String getAliasName(PersistentEntity entity) {
         return entity.getDecapitalizedName() + "_";
     }

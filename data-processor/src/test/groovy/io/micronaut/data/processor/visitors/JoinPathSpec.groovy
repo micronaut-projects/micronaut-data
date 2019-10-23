@@ -79,7 +79,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
 
         where:
         method             | returnType | arguments      | suffix
-        "findByBooksTitle" | "Author"   | "String title" | "JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_books_.title = ?)"
+        "findByBooksTitle" | "Author"   | "String title" | "JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_books_.\"title\" = ?)"
     }
 
 
@@ -150,7 +150,7 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         method                           | joinPaths                 | whereClause
-        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (region_.name = ?)"
+        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (region_.\"name\" = ?)"
 
     }
 
@@ -193,10 +193,10 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         method                           | joinPaths                 | whereClause
-        "findByCountryRegionName"        | ["countryRegion.country"] | "WHERE (city_country_region_.name = ?)"
-        "findByCountryRegionCountryName" | []                        | "WHERE (city_country_region_country_.name = ?)"
-        "findByCountryRegionName"        | []                        | "WHERE (city_country_region_.name = ?)"
-        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (city_country_region_.name = ?)"
+        "findByCountryRegionName"        | ["countryRegion.country"] | "WHERE (city_country_region_.\"name\" = ?)"
+        "findByCountryRegionCountryName" | []                        | "WHERE (city_country_region_country_.\"name\" = ?)"
+        "findByCountryRegionName"        | []                        | "WHERE (city_country_region_.\"name\" = ?)"
+        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (city_country_region_.\"name\" = ?)"
 
     }
 

@@ -89,7 +89,7 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE project (department_id INT NOT NULL,project_id_project_id INT NOT NULL,name VARCHAR(255) NOT NULL, PRIMARY KEY(department_id,project_id_project_id));'
+        sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id_project_id" INT NOT NULL,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id_project_id"));'
     }
 
     void "test build insert"() {
@@ -100,7 +100,7 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
         def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         then:
-        sql == 'INSERT INTO project (name,department_id,project_id_project_id) VALUES (?,?,?)'
+        sql == 'INSERT INTO "project" ("name","department_id","project_id_project_id") VALUES (?,?,?)'
     }
 
     void "test build query"() {
@@ -130,7 +130,7 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
         def sql = builder.buildQuery(model).query
 
         then:
-        sql.startsWith('SELECT project_.department_id, project_.project_id_project_id')
+        sql.startsWith('SELECT project_."department_id", project_."project_id_project_id"')
 
         when:"an id project ins used"
         model = QueryModel.from(entity)
@@ -140,6 +140,6 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
         sql = builder.buildQuery(model).query
 
         then:
-        sql.startsWith('SELECT project_.department_id, project_.project_id_project_id')
+        sql.startsWith('SELECT project_."department_id", project_."project_id_project_id"')
     }
 }

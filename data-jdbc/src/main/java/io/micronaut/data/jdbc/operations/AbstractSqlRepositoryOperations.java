@@ -269,10 +269,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             Map<String, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata);
             // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
-            boolean supportsBatch = annotationMetadata.findAnnotation(Repository.class)
-                    .flatMap(av -> av.enumValue("dialect", Dialect.class)
-                            .map(dialect -> dialect != Dialect.SQL_SERVER)).orElse(true);
-            return new StoredInsert<>(insertStatement, persistentEntity, parameterBinding, supportsBatch);
+            final Dialect dialect = annotationMetadata.enumValue(Repository.class, "dialect", Dialect.class)
+                    .orElse(Dialect.ANSI);
+            boolean supportsBatch = dialect != Dialect.SQL_SERVER;
+            return new StoredInsert<>(insertStatement, persistentEntity, parameterBinding, supportsBatch, dialect);
         });
     }
 
@@ -422,26 +422,36 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         private final String sql;
         private final boolean supportsBatch;
         private final RuntimePersistentEntity<T> persistentEntity;
+        private final Dialect dialect;
 
         /**
          * Default constructor.
-         *
-         * @param sql              The SQL INSERT
+         *  @param sql              The SQL INSERT
          * @param persistentEntity The entity
          * @param parameterBinding The parameter binding
          * @param supportsBatch    Whether batch insert is supported
+         * @param dialect The dialect
          */
         StoredInsert(
                 String sql,
                 RuntimePersistentEntity<T> persistentEntity,
                 Map<String, Integer> parameterBinding,
-                boolean supportsBatch) {
+                boolean supportsBatch,
+                Dialect dialect) {
             this.sql = sql;
             this.persistentEntity = persistentEntity;
             this.parameterBinding = parameterBinding;
             this.identity = persistentEntity.getIdentity();
             this.generateId = identity != null && identity.isGenerated();
             this.supportsBatch = supportsBatch;
+            this.dialect = dialect;
+        }
+
+        /**
+         * @return The dialect
+         */
+        public @NonNull Dialect getDialect() {
+            return dialect;
         }
 
         /**

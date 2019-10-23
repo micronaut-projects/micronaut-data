@@ -64,7 +64,7 @@ class Project {
         def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         expect:
-        sql == 'INSERT INTO project (name,org,project_id_department_id,project_id_project_id) VALUES (UPPER(?),?,?,?)'
+        sql == 'INSERT INTO "project" ("name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?)'
 
     }
 
@@ -75,7 +75,7 @@ class Project {
         def sql = builder.buildUpdate(QueryModel.from(entity), Collections.singletonList("name")).query
 
         expect:
-        sql == 'UPDATE project SET name=UPPER(?)'
+        sql == 'UPDATE "project" SET "name"=UPPER(?)'
 
     }
 
@@ -86,6 +86,6 @@ class Project {
         def sql = builder.buildQuery(QueryModel.from(entity)).query
 
         expect:
-        sql == 'SELECT project_.project_id_department_id,project_.project_id_project_id,project_.name,UPPER(org) AS org FROM project project_'
+        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",project_."name",UPPER(org) AS org FROM "project" project_'
     }
 }

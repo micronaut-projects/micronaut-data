@@ -99,7 +99,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull String buildBatchCreateTableStatement (@NonNull PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining(System.getProperty("line.separator")));
     }
 
     /**
@@ -155,7 +155,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
-        String tableName = getTableName(entity);
+        final String unescapedTableName = getTableName(entity);
+        String tableName = unescapedTableName;
         boolean escape = shouldEscape(entity);
         if (escape) {
             tableName = quote(tableName);
@@ -199,8 +200,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 joinTableBuilder.append(addTypeToColumn(identity, false, joinColumnNames[0], true))
                         .append(',')
                         .append(addTypeToColumn(associatedId, false, joinColumnNames[1], true));
-                joinTableBuilder.append(");");
-
+                joinTableBuilder.append(")");
+                if (dialect != Dialect.ORACLE) {
+                    joinTableBuilder.append(';');
+                }
                 createStatements.add(joinTableBuilder.toString());
             }
         }
@@ -265,7 +268,27 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
             builder.append(", PRIMARY KEY(").append(String.join(",", primaryKeyColumns)).append(')');
         }
-        builder.append(");");
+        if (dialect == Dialect.ORACLE) {
+            builder.append(")");
+        } else {
+            builder.append(");");
+        }
+
+        if (identity != null && identity.isGenerated()) {
+            GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
+                    .enumValue("value", GeneratedValue.Type.class)
+                    .orElseGet(this::selectAutoStrategy);
+            boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE || dialect == Dialect.ORACLE;
+            if (isSequence) {
+                final String createSequenceStatement = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition")
+                        .orElseGet(() -> {
+                            final String sequenceName = quote(unescapedTableName + "_seq");
+                            return "CREATE SEQUENCE " + sequenceName + " MINVALUE 1 START WITH 1 NOCACHE NOCYCLE";
+
+                        });
+                createStatements.add(createSequenceStatement);
+            }
+        }
         createStatements.add(builder.toString());
         return createStatements.toArray(new String[0]);
     }
@@ -287,6 +310,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     column += " IDENTITY(1,1) NOT NULL";
                     break;
+                case ORACLE:
+                    // for Oracle we use sequences so just add NOT NULL
+                    // then alter the table for sequences
+                    if (prop == identity) {
+                        column += " PRIMARY KEY NOT NULL";
+                    }
+                break;
                 default:
                     // TODO: handle more dialects
                     column += " AUTO_INCREMENT";
@@ -483,7 +513,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         StringBuilder builder = new StringBuilder("INSERT INTO ");
-        String tableName = getTableName(entity);
+        final String unescapedTableName = getTableName(entity);
+        String tableName = unescapedTableName;
         boolean escape = shouldEscape(entity);
         if (escape) {
             tableName = quote(tableName);
@@ -553,11 +584,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
             boolean assignedOrSequence = false;
             Optional<AnnotationValue<GeneratedValue>> generated = identity.findAnnotation(GeneratedValue.class);
+            boolean isSequence = false;
             if (generated.isPresent()) {
                 GeneratedValue.Type idGeneratorType = generated
                         .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
                         .orElseGet(this::selectAutoStrategy);
-                if (idGeneratorType == GeneratedValue.Type.SEQUENCE) {
+                if (idGeneratorType == GeneratedValue.Type.SEQUENCE || dialect == Dialect.ORACLE) {
+                    isSequence = true;
                     assignedOrSequence = true;
                 }
             } else {
@@ -597,8 +630,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         columnName = quote(columnName);
                     }
                     builder.append(columnName);
-                    addWriteExpression(values, identity);
-                    parameters.put(identity.getName(), String.valueOf(values.size()));
+                    if (isSequence) {
+                        final String sequenceName = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
+                                .orElseGet(() -> quote(unescapedTableName + "_seq"));
+                        values.add(sequenceName + ".nextval");
+                    } else {
+                        addWriteExpression(values, identity);
+                        parameters.put(identity.getName(), String.valueOf(values.size()));
+                    }
                 }
             }
         }
@@ -838,6 +877,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 return '`' + persistedName + '`';
             case SQL_SERVER:
                 return '[' + persistedName + ']';
+            case ORACLE:
+                // Oracle bizarrely requires quoted identifiers to be in upper case
+                return '"' + persistedName.toUpperCase(Locale.ENGLISH) + '"';
             default:
                 return '"' + persistedName + '"';
         }
@@ -895,7 +937,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case BOOLEAN:
-                if (dialect == Dialect.SQL_SERVER) {
+                if (dialect == Dialect.ORACLE) {
+                    column += " NUMBER(3)";
+                } else if (dialect == Dialect.SQL_SERVER) {
                     column += " BIT NOT NULL";
                 } else {
                     column += " BOOLEAN";
@@ -905,7 +949,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case TIMESTAMP:
-                if (dialect == Dialect.SQL_SERVER) {
+                if (dialect == Dialect.ORACLE) {
+                    column += " DATE";
+                    if (required) {
+                        column += " NOT NULL";
+                    }
+                } else if (dialect == Dialect.SQL_SERVER) {
                     // sql server timestamp is an internal type, use datetime instead
                     column += " DATETIME";
                     if (required) {
@@ -928,14 +977,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case LONG:
-                column += " BIGINT";
+                if (dialect == Dialect.ORACLE) {
+                    column += " NUMBER(19)";
+                } else {
+                    column += " BIGINT";
+                }
                 if (required) {
                     column += " NOT NULL";
                 }
                 break;
             case CHARACTER:
             case INTEGER:
-                if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.ORACLE) {
+                    column += " NUMBER(10)";
+                } else if (dialect == Dialect.POSTGRES) {
                     column += " INTEGER";
                 } else {
                     column += " INT";
@@ -945,13 +1000,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case BIGDECIMAL:
-                column += " DECIMAL";
+                if (dialect == Dialect.ORACLE) {
+                    column += " FLOAT(126)";
+                } else {
+                    column += " DECIMAL";
+                }
                 if (required) {
                     column += " NOT NULL";
                 }
                 break;
             case FLOAT:
-                if (dialect == Dialect.POSTGRES || dialect == Dialect.SQL_SERVER) {
+                if (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER) {
+                    column += " FLOAT(53)";
+                } else if (dialect == Dialect.POSTGRES) {
                     column += " REAL";
                 } else {
                     column += " FLOAT";
@@ -965,6 +1026,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     column += " BYTEA";
                 } else if (dialect == Dialect.SQL_SERVER) {
                     column += " VARBINARY(MAX)";
+                } else if (dialect == Dialect.ORACLE) {
+                    column += " CLOB";
                 } else {
                     column += " BLOB";
                 }
@@ -974,7 +1037,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 break;
             case DOUBLE:
                 if (dialect == Dialect.ORACLE) {
-                    column += " NUMBER";
+                    column += " FLOAT(23)";
                 } else if (dialect == Dialect.MYSQL || dialect == Dialect.H2) {
                     column += " DOUBLE";
                 } else {
@@ -986,7 +1049,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 break;
             case SHORT:
             case BYTE:
-                if (dialect == Dialect.POSTGRES) {
+                if (dialect == Dialect.ORACLE) {
+                    column += " NUMBER(5)";
+                } else if (dialect == Dialect.POSTGRES) {
                     column += " SMALLINT";
                 } else {
                     column += " TINYINT";

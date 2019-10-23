@@ -36,6 +36,20 @@ public @interface GeneratedValue {
     Type value() default Type.AUTO;
 
     /**
+     * In the case of sequence generators if you wish to define statement that creates the sequence,
+     * you can do so here.
+     *
+     * @return The sequence definition
+     */
+    String definition() default "";
+
+    /**
+     * In the case of sequence generators if you wish to alter the name of the sequence generator do so with this member.
+     * @return The name to use to reference the sequence generator
+     */
+    String ref() default "";
+
+    /**
      * The type of generation.
      */
     enum Type {

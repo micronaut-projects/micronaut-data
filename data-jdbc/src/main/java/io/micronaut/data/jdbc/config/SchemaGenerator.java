@@ -137,14 +137,14 @@ public class SchemaGenerator {
                                             String[] sql = builder.buildCreateTableStatements(entity);
                                             for (String stmt : sql) {
                                                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                                    DataSettings.QUERY_LOG.debug("Creating Table: \n{}", stmt);
+                                                    DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
                                                 }
                                                 try {
                                                     PreparedStatement ps = connection.prepareStatement(stmt);
                                                     ps.executeUpdate();
                                                 } catch (SQLException e) {
                                                     if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                                        DataSettings.QUERY_LOG.warn("Create Table Failed: " + e.getMessage());
+                                                        DataSettings.QUERY_LOG.warn("CREATE Statement Failed: " + e.getMessage());
                                                     }
                                                 }
                                             }

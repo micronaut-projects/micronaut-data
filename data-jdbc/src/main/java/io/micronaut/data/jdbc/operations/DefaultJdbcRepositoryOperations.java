@@ -429,15 +429,25 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 T entity = operation.getEntity();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
+                BeanProperty<T, Object> identity = insert.getIdentity();
+                final boolean hasGeneratedID = generateId && identity != null;
+
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
                 }
-                PreparedStatement stmt = connection
-                        .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+
+                PreparedStatement stmt;
+                if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
+                    stmt = connection
+                            .prepareStatement(insertSql, new String[] { identity.getName() });
+                } else {
+                    stmt = connection
+                            .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                }
+                
                 setInsertParameters(insert, entity, stmt);
                 stmt.executeUpdate();
-                BeanProperty<T, Object> identity = insert.getIdentity();
-                if (generateId && identity != null) {
+                if (hasGeneratedID) {
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         long id = generatedKeys.getLong(1);
@@ -651,10 +661,18 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 List<T> results = new ArrayList<>(10);
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
+                BeanProperty<T, Object> identity = insert.getIdentity();
+                final boolean hasGeneratedID = generateId && identity != null;
 
                 try {
-                    PreparedStatement stmt = connection
-                            .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    PreparedStatement stmt;
+                    if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
+                        stmt = connection
+                                .prepareStatement(insertSql, new String[] { identity.getName() });
+                    } else {
+                        stmt = connection
+                                .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    }
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
                     }
@@ -664,8 +682,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         results.add(entity);
                     }
                     stmt.executeBatch();
-                    BeanProperty<T, Object> identity = insert.getIdentity();
-                    if (generateId && identity != null) {
+
+
+                    if (hasGeneratedID) {
                         Iterator<T> resultIterator = results.iterator();
                         ResultSet generatedKeys = stmt.getGeneratedKeys();
                         while (resultIterator.hasNext()) {

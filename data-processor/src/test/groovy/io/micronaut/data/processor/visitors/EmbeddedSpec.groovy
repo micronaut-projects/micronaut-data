@@ -56,7 +56,7 @@ interface LikeRepository extends CrudRepository<Like, LikeId> {
         expect:
         repository != null
         repository.getRequiredMethod("countByLikeIdImageIdentifier", UUID).stringValue(Query).get() ==
-            'SELECT COUNT(*) FROM likes like_ WHERE (like_.like_id_image_identifier = ?)'
+            'SELECT COUNT(*) FROM "likes" like_ WHERE (like_."like_id_image_identifier" = ?)'
     }
 
 }

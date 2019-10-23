@@ -43,6 +43,6 @@ interface MyInterface extends CrudRepository<Person, Long> {
         expect:
         beanDefinition.getRequiredMethod("save", Person)
             .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
-            .orElse(null) == 'INSERT INTO person (name,age,enabled) VALUES (?,?,?)'
+            .orElse(null) == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
     }
 }
