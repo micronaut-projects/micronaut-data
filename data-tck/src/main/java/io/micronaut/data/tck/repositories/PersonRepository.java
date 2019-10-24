@@ -42,6 +42,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     void updatePerson(@Id Long id, @Parameter("name") String name);
 
+    long updateByName(String name, int age);
+
     List<Person> list(Pageable pageable);
 
     int count(String name);

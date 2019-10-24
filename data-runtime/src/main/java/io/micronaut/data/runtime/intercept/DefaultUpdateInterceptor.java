@@ -17,6 +17,9 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -28,7 +31,7 @@ import io.micronaut.data.model.runtime.PreparedQuery;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boolean> implements UpdateInterceptor<T> {
+public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Object> implements UpdateInterceptor<T> {
 
     /**
      * Default constructor.
@@ -39,9 +42,23 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Boo
     }
 
     @Override
-    public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Boolean> context) {
+    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
         Number number = operations.executeUpdate(preparedQuery).orElse(null);
-        return number == null || number.longValue() < 0;
+        final Argument<Object> returnType = context.getReturnType().asArgument();
+        final Class<Object> type = ReflectionUtils.getWrapperType(returnType.getType());
+        if (Number.class.isAssignableFrom(type)) {
+            if (type.isInstance(number)) {
+                return number;
+            } else {
+                return ConversionService.SHARED.
+                        convert(number, returnType)
+                        .orElse(0);
+            }
+        } else if (Boolean.class.isAssignableFrom(type)) {
+            return number == null || number.longValue() < 0;
+        } else {
+            return null;
+        }
     }
 }

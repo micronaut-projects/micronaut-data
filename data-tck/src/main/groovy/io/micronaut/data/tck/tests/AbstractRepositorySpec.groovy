@@ -175,6 +175,13 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"the person is updated"
         personRepository.findByName("Fred") == null
         personRepository.findByName("Jack") != null
+
+        when:"an update is issued that returns a number"
+        def updated = personRepository.updateByName("Jack", 20)
+
+        then:"The result is correct"
+        updated == 1
+        personRepository.findByName("Jack").age == 20
     }
 
     void "test delete all"() {

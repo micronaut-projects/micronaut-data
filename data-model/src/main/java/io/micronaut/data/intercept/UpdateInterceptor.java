@@ -22,5 +22,5 @@ package io.micronaut.data.intercept;
  * @since 1.0
  * @param <T>
  */
-public interface UpdateInterceptor<T> extends DataInterceptor<T, Boolean> {
+public interface UpdateInterceptor<T> extends DataInterceptor<T, Object> {
 }
