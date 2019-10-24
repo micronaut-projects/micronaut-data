@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":17,"i1":17,"i2":17,"i3":6,"i4":18,"i5":18,"i6":6,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":17};
+var methods = {"i0":17,"i1":17,"i2":17,"i3":17,"i4":6,"i5":18,"i6":18,"i7":6,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -196,61 +196,67 @@ extends <a href="../../../../io/micronaut/data/model/Sort.html" title="interface
 </td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>static <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#from-io.micronaut.data.model.Sort-">from</a></span>(<a href="../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code>
+<div class="block">Creates a new <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#getNumber--">getNumber</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#getOffset--">getOffset</a></span>()</code>
 <div class="block">Offset in the requested collection.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>default java.util.List&lt;<a href="../../../../io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#getOrderBy--">getOrderBy</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#getSize--">getSize</a></span>()</code>
 <div class="block">Maximum size of the page to be returned.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#getSort--">getSort</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#isSorted--">isSorted</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#next--">next</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#order-io.micronaut.data.model.Sort.Order-">order</a></span>(<a href="../../../../io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&nbsp;order)</code>
 <div class="block">Adds an order object.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#order-java.lang.String-">order</a></span>(java.lang.String&nbsp;propertyName)</code>
 <div class="block">Orders by the specified property name (defaults to ascending).</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#order-java.lang.String-io.micronaut.data.model.Sort.Order.Direction-">order</a></span>(java.lang.String&nbsp;propertyName,
      <a href="../../../../io/micronaut/data/model/Sort.Order.Direction.html" title="enum in io.micronaut.data.model">Sort.Order.Direction</a>&nbsp;direction)</code>
 <div class="block">Orders by the specified property name and direction.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#previous--">previous</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>static <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Pageable.html#unpaged--">unpaged</a></span>()</code>&nbsp;</td>
 </tr>
@@ -260,7 +266,7 @@ extends <a href="../../../../io/micronaut/data/model/Sort.html" title="interface
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.<a href="../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></h3>
-<code><a href="../../../../io/micronaut/data/model/Sort.html#of-java.util.List-">of</a>, <a href="../../../../io/micronaut/data/model/Sort.html#unsorted--">unsorted</a></code></li>
+<code><a href="../../../../io/micronaut/data/model/Sort.html#of-java.util.List-">of</a>, <a href="../../../../io/micronaut/data/model/Sort.html#of-io.micronaut.data.model.Sort.Order...-">of</a>, <a href="../../../../io/micronaut/data/model/Sort.html#unsorted--">unsorted</a></code></li>
 </ul>
 </li>
 </ul>
@@ -526,6 +532,23 @@ static&nbsp;<a href="../../../../io/micronaut/data/model/Pageable.html" title="i
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>page</code> - The page</dd>
 <dd><code>size</code> - the size</dd>
+<dd><code>sort</code> - the sort</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The pageable</dd>
+</dl>
+</li>
+</ul>
+<a name="from-io.micronaut.data.model.Sort-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>from</h4>
+<pre>@NonNull
+static&nbsp;<a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;from(<a href="../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</pre>
+<div class="block">Creates a new <a href="../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model"><code>Pageable</code></a> at the given offset.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>sort</code> - the sort</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The pageable</dd>
