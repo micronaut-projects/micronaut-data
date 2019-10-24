@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
@@ -76,7 +77,7 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
 
         Set<String> requiredProps = rootEntity.getPersistentProperties()
                 .stream()
-                .filter(pp -> !pp.isOptional() && !pp.isReadOnly() && !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent())
+                .filter(this::isRequiredProperty)
                 .map(PersistentProperty::getName)
                 .collect(Collectors.toSet());
         ParameterElement[] parameterElements = rootEntity.getClassElement().getPrimaryConstructor().map(MethodElement::getParameters).orElse(null);
@@ -139,6 +140,10 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
         );
     }
 
+    private boolean isRequiredProperty(SourcePersistentProperty pp) {
+        return pp.isRequired() &&
+                !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent();
+    }
 
 
     /**

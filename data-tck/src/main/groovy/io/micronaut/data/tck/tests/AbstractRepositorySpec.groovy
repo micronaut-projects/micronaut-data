@@ -17,7 +17,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
-import io.micronaut.data.tck.entities.Author
+import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.City
@@ -472,7 +472,10 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test date created and last updated"() {
         when:
         def company = new Company("Apple", new URL("http://apple.com"))
+        def google = new Company("Google", new URL("http://google.com"))
         companyRepository.save(company)
+        sleep(1000)
+        companyRepository.save(google)
         def dateCreated = company.dateCreated
 
         GregorianCalendar calendar = getYearMonthDay(dateCreated)
@@ -493,6 +496,15 @@ abstract class AbstractRepositorySpec extends Specification {
         retrieved.dateCreated.time == company2.dateCreated.time
         company2.name == 'Changed'
         company2.lastUpdated.toEpochMilli() > company2.dateCreated.time
+
+        when:"Sorting by date created"
+        def results = companyRepository.findAll(Sort.of(
+                Sort.Order.desc("name")
+        )).toList()
+
+        then:"no error occurs"
+        results.size() == 2
+        results.first().name == 'Google'
     }
 
 

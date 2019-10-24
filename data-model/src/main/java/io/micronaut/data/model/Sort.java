@@ -21,8 +21,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -97,6 +99,19 @@ public interface Sort {
             return UNSORTED;
         }
         return new DefaultSort(orderList);
+    }
+
+    /**
+     * Creates a sort from an array orders.
+     * @param orders The orders
+     * @return The orders
+     */
+    static @NonNull Sort of(Order... orders) {
+        if (ArrayUtils.isEmpty(orders)) {
+            return UNSORTED;
+        } else {
+            return new DefaultSort(Arrays.asList(orders));
+        }
     }
 
     /**

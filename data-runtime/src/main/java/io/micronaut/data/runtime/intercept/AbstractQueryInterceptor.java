@@ -238,6 +238,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 int pageIndex = context.intValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_PAGE_INDEX).orElse(0);
                 if (max > 0) {
                     pageable = Pageable.from(pageIndex, max, sort);
+                } else {
+                    pageable = Pageable.from(sort);
                 }
             } else {
                 int max = context.intValue(PREDATOR_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1);
@@ -408,7 +410,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                         throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");
                     }
                     wrapper.setProperty(propName, v);
-                } else if (!prop.isOptional()) {
+                } else if (prop.isRequired()) {
                     final Optional<Object> p = wrapper.getProperty(propName, Object.class);
                     if (!p.isPresent()) {
                         throw new IllegalArgumentException("Argument [" + propName + "] cannot be null");

@@ -90,4 +90,11 @@ public class Company {
     public void setUrl(URL url) {
         this.url = url;
     }
+
+    @Override
+    public String toString() {
+        return "Company{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

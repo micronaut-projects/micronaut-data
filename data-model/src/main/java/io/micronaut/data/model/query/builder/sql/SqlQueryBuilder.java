@@ -723,46 +723,55 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @NonNull
     @Override
     public QueryResult buildPagination(@NonNull Pageable pageable) {
-        StringBuilder builder = new StringBuilder(" ");
         int size = pageable.getSize();
-        long from = pageable.getOffset();
-        switch (dialect) {
-            case H2:
-            case MYSQL:
-                if (from == 0) {
-                    builder.append("LIMIT ").append(size);
-                } else {
-                    builder.append("LIMIT ").append(from).append(',').append(size);
-                }
-            break;
-            case POSTGRES:
-                builder.append("LIMIT ").append(size).append(" ");
-                if (from != 0) {
-                    builder.append("OFFSET ").append(from);
-                }
-            break;
+        if (size > 0) {
+            StringBuilder builder = new StringBuilder(" ");
+            long from = pageable.getOffset();
+            switch (dialect) {
+                case H2:
+                case MYSQL:
+                    if (from == 0) {
+                        builder.append("LIMIT ").append(size);
+                    } else {
+                        builder.append("LIMIT ").append(from).append(',').append(size);
+                    }
+                    break;
+                case POSTGRES:
+                    builder.append("LIMIT ").append(size).append(" ");
+                    if (from != 0) {
+                        builder.append("OFFSET ").append(from);
+                    }
+                    break;
 
-            case SQL_SERVER:
-                // SQL server requires OFFSET always
-                if (from == 0) {
-                    builder.append("OFFSET ").append(0).append(" ROWS ");
-                }
-                // intentional fall through
-            case ANSI:
-            case ORACLE:
-            default:
-                if (from != 0) {
-                    builder.append("OFFSET ").append(from).append(" ROWS ");
-                }
-                builder.append("FETCH NEXT ").append(size).append(" ROWS ONLY ");
-            break;
+                case SQL_SERVER:
+                    // SQL server requires OFFSET always
+                    if (from == 0) {
+                        builder.append("OFFSET ").append(0).append(" ROWS ");
+                    }
+                    // intentional fall through
+                case ANSI:
+                case ORACLE:
+                default:
+                    if (from != 0) {
+                        builder.append("OFFSET ").append(from).append(" ROWS ");
+                    }
+                    builder.append("FETCH NEXT ").append(size).append(" ROWS ONLY ");
+                    break;
+            }
+            return QueryResult.of(
+                    builder.toString(),
+                    Collections.emptyMap(),
+                    Collections.emptyMap(),
+                    Collections.emptySet()
+            );
+        } else {
+            return QueryResult.of(
+                    "",
+                    Collections.emptyMap(),
+                    Collections.emptyMap(),
+                    Collections.emptySet()
+            );
         }
-        return QueryResult.of(
-                builder.toString(),
-                Collections.emptyMap(),
-                Collections.emptyMap(),
-                Collections.emptySet()
-        );
     }
 
     @Override

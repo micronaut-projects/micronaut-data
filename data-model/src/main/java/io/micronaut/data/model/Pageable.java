@@ -172,6 +172,35 @@ public interface Pageable extends Sort {
     }
 
     /**
+     * Creates a new {@link Pageable} at the given offset.
+     * @param sort the sort
+     * @return The pageable
+     */
+    static @NonNull Pageable from(Sort sort) {
+        if (sort == null) {
+            return UNPAGED;
+        } else {
+            return new Pageable() {
+                @Override
+                public int getNumber() {
+                    return 0;
+                }
+
+                @Override
+                public int getSize() {
+                    return 0;
+                }
+
+                @NonNull
+                @Override
+                public Sort getSort() {
+                    return sort;
+                }
+            };
+        }
+    }
+
+    /**
      * @return A new instance without paging data.
      */
     static @NonNull Pageable unpaged() {
