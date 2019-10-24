@@ -19,13 +19,13 @@ jobs:
       with:
         java-version: ${{ matrix.java }}   
     - name: Build with Gradle
-      run: ./gradlew build docs
+      run: ./gradlew check --parallel --continue
     - name: Publish to JFrog OSS
       if: success() && github.event_name == 'push' && matrix.java == '1.8'
       env:
          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-      run: ./gradlew publish 
+      run: ./gradlew publish docs
     - name: Publish to Github Pages
       if: success() && github.event_name == 'push' && matrix.java == '1.8'
       uses: micronaut-projects/github-pages-deploy-action@master
