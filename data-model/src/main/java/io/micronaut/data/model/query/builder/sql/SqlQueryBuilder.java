@@ -443,9 +443,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     PersistentEntity associatedEntity = association.getAssociatedEntity();
                     List<PersistentProperty> associatedProperties = getPropertiesThatAreColumns(associatedEntity);
-                    PersistentProperty identity = associatedEntity.getIdentity();
-                    if (identity != null) {
-                        associatedProperties.add(0, identity);
+                    if (association.isForeignKey()) {
+                        // in the case of a foreign key association the ID is not in the table
+                        // so we need to retrieve it
+                        PersistentProperty identity = associatedEntity.getIdentity();
+                        if (identity != null) {
+                            associatedProperties.add(0, identity);
+                        }
                     }
                     if (CollectionUtils.isNotEmpty(associatedProperties)) {
                         queryBuffer.append(COMMA);
@@ -455,7 +459,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String columnNames = associatedProperties.stream()
                                 .map(p -> {
                                     String columnName = getColumnName(p);
-                                    return aliasName + DOT + columnName + AS_CLAUSE + joinPathAlias + columnName;
+                                    return aliasName + DOT + quote(columnName) + AS_CLAUSE + joinPathAlias + columnName ;
                                 })
                                 .collect(Collectors.joining(","));
                         queryBuffer.append(columnNames);
@@ -845,7 +849,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             JoinPath joinPath,
             String joinType,
             StringBuilder target,
-            Map<String, String> appliedJoinPaths) {
+            Map<String, String> appliedJoinPaths,
+            QueryState queryState) {
         Association[] associationPath = joinPath.getAssociationPath();
         String[] joinAliases;
         if (ArrayUtils.isEmpty(associationPath)) {
@@ -863,12 +868,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 alias = existingAlias;
             } else {
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
-                joinAliases[i] = getAliasName(new JoinPath(
-                        pathSoFar.toString(),
-                        Arrays.copyOfRange(associationPath, 0, i + 1),
-                        joinPath.getJoinType(),
-                        joinPath.getAlias().orElse(null))
-                );
+                int finalI = i;
+                JoinPath joinPathToUse = queryState.getQueryModel().getJoinPath(pathSoFar.toString())
+                          .orElseGet(() ->
+                                  new JoinPath(
+                                          pathSoFar.toString(),
+                                          Arrays.copyOfRange(associationPath, 0, finalI + 1),
+                                          joinPath.getJoinType(),
+                                          joinPath.getAlias().orElse(null))
+                          );
+                joinAliases[i] = getAliasName(joinPathToUse);
                 PersistentProperty identity = associatedEntity.getIdentity();
                 if (identity == null) {
                     throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
@@ -1043,7 +1052,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 break;
             case TIMESTAMP:
                 if (dialect == Dialect.ORACLE) {
-                    column += " DATE";
+                    column += " TIMESTAMP";
                     if (required) {
                         column += " NOT NULL";
                     }
@@ -1120,7 +1129,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 } else if (dialect == Dialect.SQL_SERVER) {
                     column += " VARBINARY(MAX)";
                 } else if (dialect == Dialect.ORACLE) {
-                    column += " CLOB";
+                    column += " BLOB";
                 } else {
                     column += " BLOB";
                 }

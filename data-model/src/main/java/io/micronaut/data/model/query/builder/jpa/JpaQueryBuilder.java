@@ -106,7 +106,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder target, Map<String, String> appliedJoinPaths) {
+    protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder target, Map<String, String> appliedJoinPaths, QueryState queryState) {
         Association association = joinPath.getAssociation();
         String joinAlias = getAliasName(joinPath);
         target.append(joinType)

@@ -573,7 +573,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected String getPathOnlyAliasName(JoinPath joinPath) {
         return joinPath.getAlias().orElseGet(() -> {
                     String p = joinPath.getPath().replace('.', '_');
-                    return '_' + NamingStrategy.DEFAULT.mappedName(p) + "_";
+                    return NamingStrategy.DEFAULT.mappedName(p) + "_";
         });
     }
 
@@ -585,9 +585,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param joinType         The join type string
      * @param stringBuilder    The target builder
      * @param appliedJoinPaths The applied joins paths
+     * @param queryState       The query state
      * @return An array representing the aliases for each join association in the specified join path
      */
-    protected abstract String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder stringBuilder, Map<String, String> appliedJoinPaths);
+    protected abstract String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder stringBuilder, Map<String, String> appliedJoinPaths, QueryState queryState);
 
     /**
      * Get the column name for the given property.
@@ -1617,7 +1618,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 String joinType = resolveJoinType(jt);
 
 
-                String[] associationAlias = buildJoin(alias, joinPath, joinType, stringBuilder, appliedJoinPaths);
+                String[] associationAlias = buildJoin(
+                        alias,
+                        joinPath,
+                        joinType,
+                        stringBuilder,
+                        appliedJoinPaths,
+                        this);
                 Association[] associationArray = joinPath.getAssociationPath();
                 associationPath = null;
                 for (int i = 0; i < associationAlias.length; i++) {

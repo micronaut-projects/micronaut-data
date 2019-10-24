@@ -119,7 +119,7 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
         if (joinPaths) {
             joinAnn = joinPaths.collect() {
                 """
-@Join(value="$it", alias="region_")
+@Join(value="$it.key", alias="$it.value")
 """
             }.join('')
         }
@@ -144,13 +144,44 @@ interface MyInterface extends GenericRepository<City, Long> {
         String queryStr = ann.value()
 
         expect:
-        queryStr.contains('region_.id AS region_id,region_.name AS region_name')
         queryStr.endsWith(whereClause)
         queryStr.contains('INNER JOIN')
 
         where:
-        method                           | joinPaths                 | whereClause
-        "findByCountryRegionName"        | ["countryRegion"]         | "WHERE (region_.\"name\" = ?)"
+        method                           | joinPaths               | whereClause
+        "findByCountryRegionName"        | ["countryRegion": 'r_'] | "WHERE (r_.\"name\" = ?)"
+        "findByCountryRegionCountryName" | ["countryRegion": 'r_', 'countryRegion.country':'c_'] | "WHERE (c_.\"name\" = ?)"
+
+    }
+
+    @Unroll
+    void "test 2 join annotations with custom overlapping aliases"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import java.util.List;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+interface MyInterface extends GenericRepository<City, Long> {
+
+    @Join(value = "countryRegion", alias = "r_")
+    @Join(value = "countryRegion.country", alias = "c_")
+    List<City> getByCountryRegionCountryName(String name);
+}
+"""
+        )
+
+        def execMethod = repository.findPossibleMethods("getByCountryRegionCountryName")
+                .findFirst()
+                .get()
+        def ann = execMethod
+                .synthesize(Query)
+        String queryStr = ann.value()
+
+        expect:
+        queryStr.contains('INNER JOIN CountryRegion r_ ON city_.country_region_id=r_.id INNER JOIN country c_ ON r_.countryId=c_.uuid')
 
     }
 

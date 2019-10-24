@@ -17,4 +17,6 @@ Note that the ann:data.annotation.Join[] annotation is repeatable and hence can 
 
 Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the `alias` member of the ann:data.annotation.Join[] annotation.
 
+WARNING: Some databases like Oracle limit the length of alias names in SQL queries so another reason you may want to set custom aliases is to avoid exceeding the alias name length restriction in Oracle.
+
 If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.

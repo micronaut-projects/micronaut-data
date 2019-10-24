@@ -38,6 +38,7 @@ import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 
@@ -344,67 +345,6 @@ abstract class AbstractRepositorySpec extends Specification {
         authors.size() == 3
     }
 
-    void "test find by name"() {
-        when:
-        Person p = personRepository.getByName("Fred")
-
-        then:
-        thrown(EmptyResultException)
-        personRepository.findByName("Fred") == null // declares nullable
-        !personRepository.findOptionalByName("Fred").isPresent()
-
-        when:
-        personRepository.save(new Person(name: "Fred"))
-        personRepository.saveAll([new Person(name: "Bob"), new Person(name: "Fredrick")])
-        p = personRepository.findByName("Bob")
-
-        then:
-        p != null
-        p.name == "Bob"
-        personRepository.findOptionalByName("Bob").isPresent()
-
-        when:
-        def results = personRepository.findAllByName("Bob")
-
-        then:
-        results.size() == 1
-        results[0].name == 'Bob'
-
-        when:
-        results = personRepository.findAllByNameLike("Fred%", Pageable.from(0, 10))
-
-        then:
-        results.size() == 2
-
-    }
-
-
-    void "test date created and last updated"() {
-        when:
-        def company = new Company("Apple", new URL("http://apple.com"))
-        companyRepository.save(company)
-        def dateCreated = company.dateCreated
-
-        GregorianCalendar calendar = getYearMonthDay(dateCreated)
-        def retrieved = companyRepository.findById(company.myId).get()
-
-        then:
-        company.myId != null
-        dateCreated != null
-        company.lastUpdated.toEpochMilli().toString().startsWith(company.dateCreated.getTime().toString())
-        retrieved.dateCreated == calendar.time
-
-        when:
-        companyRepository.update(company.myId, "Changed")
-        def company2 = companyRepository.findById(company.myId).orElse(null)
-
-        then:
-        company.dateCreated.time == dateCreated.time
-        retrieved.dateCreated.time == company2.dateCreated.time
-        company2.name == 'Changed'
-        company2.lastUpdated.toEpochMilli() > company2.dateCreated.time
-    }
-
     void "test query across multiple associations"() {
         given:"TODO: Figure out why this join fails on mysql"
         def specName = specificationContext.currentSpec.name
@@ -481,6 +421,74 @@ abstract class AbstractRepositorySpec extends Specification {
         results[1].countryRegion.country.uuid == spain.uuid
         results[1].countryRegion.country.name == "Spain"
     }
+
+    void "test find by name"() {
+        when:
+        Person p = personRepository.getByName("Fred")
+
+        then:
+        thrown(EmptyResultException)
+        personRepository.findByName("Fred") == null // declares nullable
+        !personRepository.findOptionalByName("Fred").isPresent()
+
+        when:
+        personRepository.save(new Person(name: "Fred"))
+        personRepository.saveAll([new Person(name: "Bob"), new Person(name: "Fredrick")])
+        p = personRepository.findByName("Bob")
+
+        then:
+        p != null
+        p.name == "Bob"
+        personRepository.findOptionalByName("Bob").isPresent()
+
+        when:
+        def results = personRepository.findAllByName("Bob")
+
+        then:
+        results.size() == 1
+        results[0].name == 'Bob'
+
+        if (isOracle()) {
+            // Oracle 11g doesn't support pagination
+            return
+        }
+
+        when:
+        results = personRepository.findAllByNameLike("Fred%", Pageable.from(0, 10))
+
+        then:
+        results.size() == 2
+
+    }
+
+
+    void "test date created and last updated"() {
+        when:
+        def company = new Company("Apple", new URL("http://apple.com"))
+        companyRepository.save(company)
+        def dateCreated = company.dateCreated
+
+        GregorianCalendar calendar = getYearMonthDay(dateCreated)
+        def retrieved = companyRepository.findById(company.myId).get()
+
+        then:
+        company.myId != null
+        dateCreated != null
+        company.lastUpdated.toEpochMilli().toString().startsWith(company.dateCreated.getTime().toString())
+        getYearMonthDay(retrieved.dateCreated) == calendar
+
+        when:
+        companyRepository.update(company.myId, "Changed")
+        def company2 = companyRepository.findById(company.myId).orElse(null)
+
+        then:
+        company.dateCreated.time == dateCreated.time
+        retrieved.dateCreated.time == company2.dateCreated.time
+        company2.name == 'Changed'
+        company2.lastUpdated.toEpochMilli() > company2.dateCreated.time
+    }
+
+
 
     void "test one-to-one mappedBy"() {
         when:"when a one-to-one mapped by is saved"

@@ -25,10 +25,10 @@ public interface CityRepository extends CrudRepository<City, Long> {
 
     int countByCountryRegionCountryName(String name);
 
-    @Join("countryRegion")
+    @Join(value = "countryRegion", alias = "cr")
     List<City> findByCountryRegionCountryName(String name);
 
-    @Join("countryRegion")
-    @Join("countryRegion.country")
+    @Join(value = "countryRegion", alias = "cr")
+    @Join(value = "countryRegion.country", alias = "c")
     List<City> getByCountryRegionCountryName(String name);
 }

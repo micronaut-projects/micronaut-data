@@ -1,23 +1,18 @@
 package io.micronaut.data.jdbc.oraclexe
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
+import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import org.testcontainers.containers.OracleContainer
 import spock.lang.AutoCleanup
-import spock.lang.Ignore
 import spock.lang.Shared
 
-@Ignore("Currently we support Oracle 12c syntax, but the newest version of Oracle XE is 11g")
-// there is currently no containerized version of Oracle that can
-// be used with test containers
 class OracleXERepositorySpec extends AbstractRepositorySpec {
 
     @Shared
@@ -59,17 +54,17 @@ class OracleXERepositorySpec extends AbstractRepositorySpec {
 
     @Override
     CountryRepository getCountryRepository() {
-        return context.getBean(H2CountryRepository)
+        return context.getBean(OracleXECountryRepository)
     }
 
     @Override
     CityRepository getCityRepository() {
-        return context.getBean(H2CityRepository)
+        return context.getBean(OracleXECityRepository)
     }
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(OracleXERegionRepository)
     }
 
     @Override
@@ -104,6 +99,59 @@ class OracleXERepositorySpec extends AbstractRepositorySpec {
         bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
         // book without an author
         bookRepository.setupData()
+    }
+
+    void "test save and fetch author with no books"() {
+
+        given:
+        def author = new Author(name: "Some Dude")
+        authorRepository.save(author)
+
+        author = authorRepository.queryByName("Some Dude")
+
+        expect:
+        author.books.size() == 0
+
+        cleanup:
+        authorRepository.deleteById(author.id)
+    }
+
+
+    void "test save and retrieve basic types"() {
+        when: "we save a new book"
+        def basicTypesRepo = context.getBean(OracleXEBasicTypesRepository)
+        def book = basicTypesRepo.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        book.myId != null
+
+        when:"A book is found"
+        def retrievedBook = basicTypesRepo.findById(book.myId).orElse(null)
+
+        then:"The book is correct"
+        retrievedBook.uuid == book.uuid
+        retrievedBook.bigDecimal == book.bigDecimal
+        retrievedBook.byteArray == book.byteArray
+        retrievedBook.charSequence == book.charSequence
+        retrievedBook.charset == book.charset
+        retrievedBook.primitiveBoolean == book.primitiveBoolean
+        retrievedBook.primitiveByte == book.primitiveByte
+        retrievedBook.primitiveChar == book.primitiveChar
+        retrievedBook.primitiveDouble == book.primitiveDouble
+        retrievedBook.primitiveFloat == book.primitiveFloat
+        retrievedBook.primitiveInteger == book.primitiveInteger
+        retrievedBook.primitiveLong == book.primitiveLong
+        retrievedBook.primitiveShort == book.primitiveShort
+        retrievedBook.wrapperBoolean == book.wrapperBoolean
+        retrievedBook.wrapperByte == book.wrapperByte
+        retrievedBook.wrapperChar == book.wrapperChar
+        retrievedBook.wrapperDouble == book.wrapperDouble
+        retrievedBook.wrapperFloat == book.wrapperFloat
+        retrievedBook.wrapperInteger == book.wrapperInteger
+        retrievedBook.wrapperLong == book.wrapperLong
+        retrievedBook.uri == book.uri
+        retrievedBook.url == book.url
+
     }
 
 }
