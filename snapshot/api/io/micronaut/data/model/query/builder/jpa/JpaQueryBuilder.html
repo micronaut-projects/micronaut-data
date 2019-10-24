@@ -223,11 +223,12 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String[]</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-">buildJoin</a></span>(java.lang.String&nbsp;alias,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">buildJoin</a></span>(java.lang.String&nbsp;alias,
          <a href="../../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath,
          java.lang.String&nbsp;joinType,
          java.lang.StringBuilder&nbsp;target,
-         java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;appliedJoinPaths)</code>
+         java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;appliedJoinPaths,
+         <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState)</code>
 <div class="block">Build a join expression for the given alias, association, join type and builder.</div>
 </td>
 </tr>
@@ -383,7 +384,7 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 </dl>
 </li>
 </ul>
-<a name="buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-">
+<a name="buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -393,18 +394,20 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
                                        <a href="../../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath,
                                        java.lang.String&nbsp;joinType,
                                        java.lang.StringBuilder&nbsp;target,
-                                       java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;appliedJoinPaths)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-">AbstractSqlLikeQueryBuilder</a></code></span></div>
+                                       java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;appliedJoinPaths,
+                                       <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">AbstractSqlLikeQueryBuilder</a></code></span></div>
 <div class="block">Build a join expression for the given alias, association, join type and builder.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-">buildJoin</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildJoin-java.lang.String-io.micronaut.data.model.query.JoinPath-java.lang.String-java.lang.StringBuilder-java.util.Map-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">buildJoin</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>alias</code> - The alias</dd>
 <dd><code>joinPath</code> - The join path</dd>
 <dd><code>joinType</code> - The join type string</dd>
 <dd><code>target</code> - The target builder</dd>
 <dd><code>appliedJoinPaths</code> - The applied joins paths</dd>
+<dd><code>queryState</code> - The query state</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>An array representing the aliases for each join association in the specified join path</dd>
 </dl>
