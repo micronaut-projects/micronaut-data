@@ -35,9 +35,12 @@ create table "user_"
     void "test sequence generation with default nextval"() {
         when:
         User user = userRepository.save("Fred")
+        User user2 = userRepository.save("Bob")
 
         then:
         user.id
+        user.id > 0
+        user.id != user2.id
         user.id == userRepository.findById(user.id).id
     }
 
