@@ -62,7 +62,6 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract void init()
 
     def setupSpec() {
-        getBookRepository().deleteAll()
         init()
         setupData()
     }
@@ -72,6 +71,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     protected void setupData() {
+        bookRepository.deleteAll()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
                 new Person(name: "James")
