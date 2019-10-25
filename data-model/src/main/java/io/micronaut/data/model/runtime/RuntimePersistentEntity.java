@@ -154,12 +154,12 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     @NonNull
     @Override
-    public Collection<Association> getAssociations() {
+    public Collection<RuntimeAssociation<T>> getAssociations() {
         return persistentProperties
                 .values()
                 .stream()
                 .filter(bp -> bp.getAnnotationMetadata().hasStereotype(Relation.class))
-                .map(p -> (Association) p)
+                .map(p -> ((RuntimeAssociation<T>) p))
                 .collect(Collectors.toList());
     }
 

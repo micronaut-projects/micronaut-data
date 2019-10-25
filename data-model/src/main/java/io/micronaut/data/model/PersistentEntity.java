@@ -97,7 +97,7 @@ public interface PersistentEntity extends PersistentElement {
      * @return A list of associations
      */
     @NonNull
-    Collection<Association> getAssociations();
+    Collection<? extends Association> getAssociations();
 
     /**
      * A list of embedded associations for this entity. This is typically

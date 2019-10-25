@@ -71,6 +71,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final MediaTypeCodec jsonCodec;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
+    private final Map<Class, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
 

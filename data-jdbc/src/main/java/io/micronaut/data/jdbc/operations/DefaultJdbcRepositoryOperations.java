@@ -25,6 +25,7 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -34,11 +35,9 @@ import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
@@ -460,6 +459,36 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         throw new DataAccessException("ID failed to generate. No result returned.");
                     }
                 }
+                final RuntimePersistentEntity<T> persistentEntity = (RuntimePersistentEntity<T>) getEntity(entity.getClass());
+                for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
+                    if (association.doesCascade(Relation.Cascade.PERSIST)) {
+                        final Relation.Kind kind = association.getKind();
+                        switch (kind) {
+                            case ONE_TO_ONE:
+                                // in the case of an one-to-one we ensure the inverse side set
+                                final Object associated = association.getProperty().get(entity);
+                                if (association.isForeignKey()) {
+                                    association.getInverseSide().ifPresent(inverse -> {
+                                        final BeanProperty property = inverse.getProperty();
+                                        property.set(associated, entity);
+                                    });
+                                }
+                            // intentional fall through
+                            case MANY_TO_ONE:
+                                // get the insert operation
+                                final Class<?> repositoryType = operation.getRepositoryType();
+                                StoredInsert<?> storedInsert = resolveEntityInsert(repositoryType, persistentEntity);
+
+                                break;
+                            case ONE_TO_MANY:
+                            case MANY_TO_MANY:
+
+
+                            default:
+                                // no-op
+                        }
+                    }
+                }
                 return entity;
             } catch (SQLException e) {
                 throw new DataAccessException("SQL Error executing INSERT: " + e.getMessage(), e);
@@ -510,7 +539,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (pageable != Pageable.UNPAGED) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 Sort sort = pageable.getSort();
-                Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+                final Class<?> repositoryType = preparedQuery.getRepositoryType();
+                Dialect dialect = dialects.getOrDefault(repositoryType, Dialect.ANSI);
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
                     query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
@@ -640,6 +670,12 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     @Override
                     public Class<T> getRootEntity() {
                         return operation.getRootEntity();
+                    }
+
+                    @NonNull
+                    @Override
+                    public Class<?> getRepositoryType() {
+                        return operation.getRepositoryType();
                     }
 
                     @Override

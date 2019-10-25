@@ -16,6 +16,7 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;
 
@@ -48,7 +49,7 @@ public interface Association extends PersistentProperty {
      *
      * @return The association.
      */
-    default Optional<Association> getInverseSide() {
+    default Optional<? extends Association> getInverseSide() {
         return getAnnotationMetadata()
                 .stringValue(Relation.class, "mappedBy")
                 .flatMap(s -> {
@@ -70,17 +71,6 @@ public interface Association extends PersistentProperty {
     }
 
     /**
-     * @return The cascade handling
-     */
-    default @NonNull Relation.Cascade getCascade() {
-        return getAnnotationMetadata().enumValue(
-                Relation.class,
-                "cascade",
-                Relation.Cascade.class
-        ).orElse(Relation.Cascade.NONE);
-    }
-
-    /**
      * @return The relationship kind
      */
     default @NonNull Relation.Kind getKind() {
@@ -95,5 +85,24 @@ public interface Association extends PersistentProperty {
     default boolean isForeignKey() {
         Relation.Kind kind = getKind();
         return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY || (kind == Relation.Kind.ONE_TO_ONE && getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent());
+    }
+
+    /**
+     * Whether this association cascades the given types.
+     * @param types The types
+     * @return True if it does, false otherwise.
+     */
+    default boolean doesCascade(Relation.Cascade... types) {
+        if (ArrayUtils.isNotEmpty(types)) {
+            final String[] cascades = getAnnotationMetadata().stringValues(Relation.class, "cascade");
+            for (String cascade : cascades) {
+                for (Relation.Cascade type : types) {
+                    if (type.name().equals(cascade)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

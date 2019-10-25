@@ -22,6 +22,8 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 
+import java.util.Optional;
+
 /**
  * A runtime representation of {@link Association}.
  *
@@ -29,7 +31,7 @@ import io.micronaut.data.model.Association;
  * @since 1.0
  * @param <T> the owning type
  */
-class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Association {
+public class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Association {
 
     private final Relation.Kind kind;
     private final String aliasName;
@@ -67,6 +69,12 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
     @Override
     public boolean isRequired() {
         return !isForeignKey() && super.isRequired();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Optional<RuntimeAssociation<?>> getInverseSide() {
+        return (Optional<RuntimeAssociation<?>>) Association.super.getInverseSide();
     }
 
     @NonNull
