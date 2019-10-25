@@ -1,4 +1,4 @@
-==== 1.0.0.RC1
+==== 1.0.0.M4
 
 * Support for Soft Delete and query customization with <<whereAnnotation,@Where>>.
 * Support for Sequences for ID generation in Oracle, Postgres and SQL Server
