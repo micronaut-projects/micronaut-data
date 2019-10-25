@@ -19,6 +19,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;
 
+import java.util.Optional;
+
 /**
  * A property that represents an association.
  *
@@ -40,6 +42,32 @@ public interface Association extends PersistentProperty {
      */
     @NonNull
     PersistentEntity getAssociatedEntity();
+
+    /**
+     * Retrieves the inverse side of the association. If there is one.
+     *
+     * @return The association.
+     */
+    default Optional<Association> getInverseSide() {
+        return getAnnotationMetadata()
+                .stringValue(Relation.class, "mappedBy")
+                .flatMap(s -> {
+                    final PersistentProperty inverse =
+                            getAssociatedEntity().getPropertyByName(s);
+                    if (inverse instanceof Association) {
+                        return Optional.of((Association) inverse);
+                    }
+                    return Optional.empty();
+                });
+    }
+
+    /**
+     * Whether the relationship is bidirectional.
+     * @return True if it is bidirectional.
+     */
+    default boolean isBidirectional() {
+        return getInverseSide().isPresent();
+    }
 
     /**
      * @return The cascade handling

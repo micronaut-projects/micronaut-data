@@ -912,7 +912,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(joinAliases[i])
                                 .append(DOT)
                                 .append(getColumnName(mappedProp));
-                        alias = joinAliases[i];
                     } else {
                         target.append(joinType);
 
