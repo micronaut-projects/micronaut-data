@@ -62,6 +62,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract void init()
 
     def setupSpec() {
+        getBookRepository().deleteAll()
         init()
         setupData()
     }

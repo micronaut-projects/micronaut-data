@@ -28,6 +28,7 @@ abstract class AbstractQuerySpec extends Specification {
     }
 
     def setupSpec() {
+        bookRepository.deleteAll()
         init()
         bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
         // blank title
