@@ -57,6 +57,11 @@ class SourceAssociation extends SourcePersistentProperty implements Association 
     }
 
     @Override
+    public boolean isRequired() {
+        return !isForeignKey() && super.isRequired();
+    }
+
+    @Override
     @NonNull
     public PersistentEntity getAssociatedEntity() {
         ClassElement type = getType();

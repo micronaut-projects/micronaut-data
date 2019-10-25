@@ -64,6 +64,11 @@ class RuntimeAssociation<T> extends RuntimePersistentProperty<T> implements Asso
         return kind;
     }
 
+    @Override
+    public boolean isRequired() {
+        return !isForeignKey() && super.isRequired();
+    }
+
     @NonNull
     @Override
     public RuntimePersistentEntity<?> getAssociatedEntity() {

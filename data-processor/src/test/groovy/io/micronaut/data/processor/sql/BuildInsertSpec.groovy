@@ -21,6 +21,7 @@ import io.micronaut.data.model.entities.Person
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import spock.lang.PendingFeature
 
 class BuildInsertSpec extends AbstractDataSpec {
 
@@ -44,5 +45,59 @@ interface MyInterface extends CrudRepository<Person, Long> {
         beanDefinition.getRequiredMethod("save", Person)
             .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
             .orElse(null) == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
+    }
+
+    void "test build SQL insert statement for entity with no ID"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.TestShelfBookRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.tck.entities.Shelf;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.ShelfBook;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+interface TestShelfBookRepository extends io.micronaut.data.tck.repositories.ShelfBookRepository {
+
+}
+""")
+
+        expect:
+        beanDefinition.findPossibleMethods("save")
+                .findFirst().get()
+                .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
+                .orElse(null) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
+    }
+
+
+    @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")
+    void "test build SQL insert statement for repo with no super interface"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.TestBookPageRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.tck.entities.Shelf;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.ShelfBook;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+interface TestBookPageRepository extends io.micronaut.data.tck.repositories.BookPageRepository {
+
+}
+""")
+
+        expect:
+        beanDefinition.findPossibleMethods("save")
+                .findFirst().get()
+                .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
+                .orElse(null) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
     }
 }

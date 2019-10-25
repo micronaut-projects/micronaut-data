@@ -19,6 +19,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.tck.entities.City
+import io.micronaut.inject.ExecutableMethod
 import spock.lang.Unroll
 
 class JoinPathSpec extends AbstractDataSpec {
@@ -313,5 +314,27 @@ interface MyInterface extends GenericRepository<City, Long> {
         joinPath        | method                           | returnType | arguments     | whereClause
         "countryRegion" | "findByCountryRegionCountryName" | "City"     | "String name" | "WHERE (city_country_region_.country.name = :p1)"
         "countryRegion" | "findByCountryRegionName"        | "City"     | "String name" | "WHERE (city_country_region_.name = :p1)"
+    }
+
+    void "test nested to-many joins results in the correct query"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+interface MyInterface extends io.micronaut.data.tck.repositories.ShelfRepository {
+
+}
+"""
+        )
+
+        def method = repository.findPossibleMethods("findById").findFirst().get()
+        def query = method.stringValue(Query).get()
+
+        expect:
+        query.contains('LEFT JOIN book_page p_book_page_ ON b_.id=p_book_page_.book_id ')
+        query.contains('LEFT JOIN shelf_book b_shelf_book_ ON shelf_.id=b_shelf_book_.shelf_id ')
+        query.contains('LEFT JOIN page p_ ON p_book_page_.page_id=p_.id ')
     }
 }

@@ -43,6 +43,9 @@ public final class OneToOneMapper implements NamedAnnotationMapper {
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         AnnotationValueBuilder<Relation> builder = AnnotationValue.builder(Relation.class).value(Relation.Kind.ONE_TO_ONE);
+        annotation.enumValue("cascade", Relation.Cascade.class).ifPresent(c ->
+                builder.member("cascade", c)
+        );
         annotation.stringValue("mappedBy").ifPresent(s -> builder.member("mappedBy", s));
         AnnotationValue<Relation> ann = builder.build();
         boolean nullable = annotation.booleanValue("optional").orElse(true);

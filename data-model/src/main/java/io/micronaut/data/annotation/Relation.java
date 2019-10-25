@@ -39,6 +39,34 @@ public @interface Relation {
     String mappedBy() default "";
 
     /**
+     * How to cascade insert/delete operations to the associated entity. Default is none.
+     * @return The cascade handling
+     */
+    Cascade[] cascade() default Cascade.NONE;
+
+    /**
+     * Cascade type handling for different associations.
+     */
+    enum Cascade {
+        /**
+         * Cascade all operations.
+         */
+        ALL,
+        /**
+         * Cascade insert operations.
+         */
+        PERSIST,
+        /**
+         * Cascade delete operations.
+         */
+        REMOVE,
+        /**
+         * Don't cascade.
+         */
+        NONE
+    }
+
+    /**
      * The relation kind.
      */
     enum Kind {

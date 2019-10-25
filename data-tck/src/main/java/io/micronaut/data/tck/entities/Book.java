@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class Book {
@@ -30,6 +31,17 @@ public class Book {
 
     @ManyToOne
     private Publisher publisher;
+
+    @OneToMany
+    private List<Page> pages;
+
+    public List<Page> getPages() {
+        return pages;
+    }
+
+    public void setPages(List<Page> pages) {
+        this.pages = pages;
+    }
 
     public Author getAuthor() {
         return author;

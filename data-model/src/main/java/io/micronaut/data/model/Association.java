@@ -15,11 +15,9 @@
  */
 package io.micronaut.data.model;
 
-
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;
-
 
 /**
  * A property that represents an association.
@@ -42,6 +40,17 @@ public interface Association extends PersistentProperty {
      */
     @NonNull
     PersistentEntity getAssociatedEntity();
+
+    /**
+     * @return The cascade handling
+     */
+    default @NonNull Relation.Cascade getCascade() {
+        return getAnnotationMetadata().enumValue(
+                Relation.class,
+                "cascade",
+                Relation.Cascade.class
+        ).orElse(Relation.Cascade.NONE);
+    }
 
     /**
      * @return The relationship kind

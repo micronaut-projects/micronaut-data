@@ -17,6 +17,7 @@ package io.micronaut.data.processor.mappers.jpa;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -42,8 +43,14 @@ public class ManyToOneMapper implements NamedAnnotationMapper {
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
 
-        AnnotationValue<Relation> ann = AnnotationValue.builder(Relation.class)
-                .value(Relation.Kind.MANY_TO_ONE)
+        final AnnotationValueBuilder<Relation> relationBuilder = AnnotationValue.builder(Relation.class)
+                .value(Relation.Kind.MANY_TO_ONE);
+
+        annotation.enumValue("cascade", Relation.Cascade.class).ifPresent(c ->
+            relationBuilder.member("cascade", c)
+        );
+
+        AnnotationValue<Relation> ann = relationBuilder
                 .build();
         boolean nullable = annotation.booleanValue("optional").orElse(true);
         if (nullable) {

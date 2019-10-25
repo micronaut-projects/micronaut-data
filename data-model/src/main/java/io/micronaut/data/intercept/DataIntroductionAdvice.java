@@ -79,7 +79,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 return childInterceptor.intercept(key, context);
 
             } else {
-                throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again.");
+                throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
             }
         } else {
             return dataInterceptor.intercept(key, context);

@@ -894,7 +894,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 if (association.isForeignKey()) {
                     String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-                    if (mappedBy != null) {
+                    if (StringUtils.isNotEmpty(mappedBy)) {
                         PersistentProperty mappedProp = associatedEntity.getPropertyByName(mappedBy);
                         if (mappedProp == null) {
                             throw new MappingException("Foreign key association with mappedBy references a property that doesn't exist [" + mappedBy + "] of entity: " + associatedEntity.getName());
@@ -964,8 +964,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             .append(joinAliases[i])
                             .append(DOT)
                             .append(getColumnName(identity));
-                    alias = joinAliases[i];
                 }
+                alias = joinAliases[i];
             }
             pathSoFar.append(DOT);
         }
