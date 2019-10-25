@@ -1,8 +1,9 @@
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Entity;
 
-@Entity
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity
 public class ShelfBook {
 
     private Shelf shelf;

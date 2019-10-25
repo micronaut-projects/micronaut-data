@@ -1,10 +1,14 @@
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Entity;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
 
-@Entity
+@MappedEntity
 public class BookPage {
+    @Id
     private Book book;
+
+    @Id
     private Page page;
 
     public Book getBook() {
