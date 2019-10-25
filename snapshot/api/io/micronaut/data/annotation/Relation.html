@@ -42,7 +42,7 @@
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../io/micronaut/data/annotation/QueryHint.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../io/micronaut/data/annotation/Relation.Kind.html" title="enum in io.micronaut.data.annotation"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/data/annotation/Relation.html" target="_top">Frames</a></li>
@@ -141,6 +141,12 @@ public @interface <span class="memberNameLabel">Relation</span></pre>
 <th class="colLast" scope="col">Optional Element and Description</th>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code><a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>[]</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/Relation.html#cascade--">cascade</a></span></code>
+<div class="block">How to cascade insert/delete operations to the associated entity.</div>
+</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/Relation.html#mappedBy--">mappedBy</a></span></code>&nbsp;</td>
 </tr>
@@ -179,7 +185,7 @@ public @interface <span class="memberNameLabel">Relation</span></pre>
 <li class="blockList"><a name="mappedBy--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>mappedBy</h4>
 <pre>public abstract&nbsp;java.lang.String&nbsp;mappedBy</pre>
@@ -190,6 +196,27 @@ public @interface <span class="memberNameLabel">Relation</span></pre>
 <dl>
 <dt>Default:</dt>
 <dd>""</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="cascade--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>cascade</h4>
+<pre>public abstract&nbsp;<a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>[]&nbsp;cascade</pre>
+<div class="block">How to cascade insert/delete operations to the associated entity. Default is none.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The cascade handling</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>io.micronaut.data.annotation.Relation.Cascade.NONE</dd>
 </dl>
 </li>
 </ul>
@@ -221,7 +248,7 @@ public @interface <span class="memberNameLabel">Relation</span></pre>
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../io/micronaut/data/annotation/QueryHint.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../io/micronaut/data/annotation/Relation.Kind.html" title="enum in io.micronaut.data.annotation"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../index.html?io/micronaut/data/annotation/Relation.html" target="_top">Frames</a></li>

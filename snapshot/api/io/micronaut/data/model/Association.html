@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":18,"i3":18};
+var methods = {"i0":18,"i1":6,"i2":18,"i3":18,"i4":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -160,10 +160,14 @@ extends <a href="../../../../io/micronaut/data/model/PersistentProperty.html" ti
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>default <a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getCascade--">getCascade</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/annotation/Relation.Kind.html" title="enum in io.micronaut.data.annotation">Relation.Kind</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getKind--">getKind</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#isForeignKey--">isForeignKey</a></span>()</code>&nbsp;</td>
 </tr>
@@ -235,6 +239,20 @@ extends <a href="../../../../io/micronaut/data/model/PersistentProperty.html" ti
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The associated entity</dd>
+</dl>
+</li>
+</ul>
+<a name="getCascade--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getCascade</h4>
+<pre>@NonNull
+default&nbsp;<a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>&nbsp;getCascade()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The cascade handling</dd>
 </dl>
 </li>
 </ul>
