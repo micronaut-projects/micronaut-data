@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>9.1.4 Mapping Entities 1.0.0.M3</title>
+    <title>8.1.4 Mapping Entities 1.0.0.M4</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -50,10 +50,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>8</strong><span>Spring Data Support</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>9</strong><span>Micronaut Data with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>10</strong><span>Spring Data Support</span></a>
                         </div>
                         
                     </div>
@@ -74,43 +77,48 @@ function addJsClass() {
             <div id="main" class="corner-all">
 
                 
-                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>8</strong><span>Spring Data Support</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/howItWorks.html">&lt;&lt; <strong>7</strong><span>How Micronaut Data Works</span></a></div>
                 
 
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
 
                 
+                    <div class="toc-item next-right"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span> >></a></div>
+                
 
 
                 <div class="project">
-                    <h1>9.1.4 Mapping Entities</h1>
+                    <h1>8.1.4 Mapping Entities</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M3</p>
+                    <p><strong>Version:</strong> 1.0.0.M4</p>
                 </div>
 
                 
                 <div id="table-of-content">
                     <h2>Table of Contents</h2>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlAnnotations"><strong>9.1</strong><span>SQL Annotations</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlAnnotations"><strong>8.1</strong><span>SQL Annotations</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlIdGenerator"><strong>9.2</strong><span>ID Generation</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlIdGenerator"><strong>8.2</strong><span>ID Generation</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlCompositeId"><strong>9.3</strong><span>Composite Primary Keys</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlCompositeId"><strong>8.3</strong><span>Composite Primary Keys</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlConstructorArguments"><strong>9.4</strong><span>Constructor Arguments</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlConstructorArguments"><strong>8.4</strong><span>Constructor Arguments</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlNaming"><strong>9.5</strong><span>SQL Naming Strategies</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlNaming"><strong>8.5</strong><span>SQL Naming Strategies</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#sqlAssociations"><strong>9.6</strong><span>Association Fetching</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlAssociations"><strong>8.6</strong><span>Association Fetching</span></a>
                     </div>
                     
-                    <div class="toc-item" style="margin-left:0px"><a href="#columnTransformer"><strong>9.7</strong><span>Using @ColumnTransformer</span></a>
+                    <div class="toc-item" style="margin-left:0px"><a href="#columnTransformer"><strong>8.7</strong><span>Using @ColumnTransformer</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#sqlJsonType"><strong>8.8</strong><span>JSON Column Support</span></a>
                     </div>
                     
                 </div>
@@ -118,7 +126,7 @@ function addJsClass() {
 
                 
 
-<h2 id="sqlMapping">9.1.4 Mapping Entities</h2>
+<h2 id="sqlMapping">8.1.4 Mapping Entities</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping.adoc"'>
@@ -203,7 +211,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlAnnotations">9.1.4.1 SQL Annotations</h2>
+<h2 id="sqlAnnotations">8.1.4.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
@@ -313,7 +321,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlIdGenerator">9.1.4.2 ID Generation</h2>
+<h2 id="sqlIdGenerator">8.1.4.2 ID Generation</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlIdGenerator.adoc"'>
@@ -336,7 +344,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlCompositeId">9.1.4.3 Composite Primary Keys</h2>
+<h2 id="sqlCompositeId">8.1.4.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlCompositeId.adoc"'>
@@ -516,7 +524,7 @@ To alter the column mappings for the ID you use <code>@Column</code> in the <cod
 </div>
 
 
-<h2 id="sqlConstructorArguments">9.1.4.4 Constructor Arguments</h2>
+<h2 id="sqlConstructorArguments">8.1.4.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlConstructorArguments.adoc"'>
@@ -608,7 +616,7 @@ data class Manufacturer(
 </div>
 
 
-<h2 id="sqlNaming">9.1.4.5 SQL Naming Strategies</h2>
+<h2 id="sqlNaming">8.1.4.5 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlNaming.adoc"'>
@@ -657,7 +665,7 @@ public class CountryRegion {
 </div>
 
 
-<h2 id="sqlAssociations">9.1.4.6 Association Fetching</h2>
+<h2 id="sqlAssociations">8.1.4.6 Association Fetching</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociations.adoc"'>
@@ -773,7 +781,7 @@ data class Product(
 </div>
 
 
-<h2 id="columnTransformer">9.1.4.7 Using @ColumnTransformer</h2>
+<h2 id="columnTransformer">8.1.4.7 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/columnTransformer.adoc"'>
@@ -822,9 +830,46 @@ private String name;</code></pre>
 </div>
 
 
+<h2 id="sqlJsonType">8.1.4.8 JSON Column Support</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlJsonType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can declare a field of a class as a JSON type using the <a href="../api/io/micronaut/data/annotations/TypeDef.html">@TypeDef</a> annotation as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeDef(type = DataType.JSON)
+private Map&lt;String, String&gt; data;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above will map to a column called <code>data</code>. Depending on the underling database the column type will be adjusted. For example for Postgres which features native JSON support the column type will be <code>JSONB</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To allow JSON to be serialized and deserialized in entity properties you must have Jackson and the <code>micronaut-runtime</code> module your classpath.
+</td>
+</tr>
+</table>
+</div>
+
+
                 <div style="clear:both;margin-top:15px;"></div>
                 
-                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>8</strong><span>Spring Data Support</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/howItWorks.html">&lt;&lt; <strong>7</strong><span>How Micronaut Data Works</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span> >></a></div>
                 
                 <div style="clear:both"></div>
             </div>

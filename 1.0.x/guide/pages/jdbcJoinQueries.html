@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>9.1.5 JDBC Join Queries 1.0.0.M3</title>
+    <title>8.1.5 JDBC Join Queries 1.0.0.M4</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -50,10 +50,13 @@ function addJsClass() {
                         <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>8</strong><span>Spring Data Support</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
                         </div>
                         
-                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>9</strong><span>Micronaut Data with SQL</span></a>
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>10</strong><span>Spring Data Support</span></a>
                         </div>
                         
                     </div>
@@ -74,25 +77,27 @@ function addJsClass() {
             <div id="main" class="corner-all">
 
                 
-                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>8</strong><span>Spring Data Support</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/howItWorks.html">&lt;&lt; <strong>7</strong><span>How Micronaut Data Works</span></a></div>
                 
 
                 <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
 
                 
+                    <div class="toc-item next-right"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span> >></a></div>
+                
 
 
                 <div class="project">
-                    <h1>9.1.5 JDBC Join Queries</h1>
+                    <h1>8.1.5 JDBC Join Queries</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M3</p>
+                    <p><strong>Version:</strong> 1.0.0.M4</p>
                 </div>
 
                 
 
                 
 
-<h2 id="jdbcJoinQueries">9.1.5 JDBC Join Queries</h2>
+<h2 id="jdbcJoinQueries">8.1.5 JDBC Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcJoinQueries.adoc"'>
@@ -232,6 +237,18 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 <div class="paragraph">
 <p>Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Some databases like Oracle limit the length of alias names in SQL queries so another reason you may want to set custom aliases is to avoid exceeding the alias name length restriction in Oracle.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
 </div>
@@ -239,7 +256,9 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 
                 <div style="clear:both;margin-top:15px;"></div>
                 
-                    <div class="toc-item prev-left"><a href="../../guide/spring.html">&lt;&lt; <strong>8</strong><span>Spring Data Support</span></a></div>
+                    <div class="toc-item prev-left"><a href="../../guide/howItWorks.html">&lt;&lt; <strong>7</strong><span>How Micronaut Data Works</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span> >></a></div>
                 
                 <div style="clear:both"></div>
             </div>

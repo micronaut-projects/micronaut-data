@@ -57,9 +57,11 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#howItWorks"><strong>7</strong><span>How Micronaut Data Works</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>8</strong><span>Spring Data Support</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#sql"><strong>9</strong><span>Micronaut Data with SQL</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
+                                
+                                <div class="toc-item" style="margin-left:0"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
                                 
                             </div>
                         </div>
@@ -116,11 +118,13 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-explicitQueries"><a href="#explicitQueries"><strong>5.7</strong><span>Explicit Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-nativeQueries"><a href="#nativeQueries"><strong>5.8</strong><span>Native Queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-whereAnnotation"><a href="#whereAnnotation"><strong>5.8</strong><span>Modifying Queries with @Where</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-async"><a href="#async"><strong>5.9</strong><span>Asynchronous Queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-nativeQueries"><a href="#nativeQueries"><strong>5.9</strong><span>Native Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-reactive"><a href="#reactive"><strong>5.10</strong><span>Reactive Queries</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-async"><a href="#async"><strong>5.10</strong><span>Asynchronous Queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-reactive"><a href="#reactive"><strong>5.11</strong><span>Reactive Queries</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-dataUpdates"><a href="#dataUpdates"><strong>6</strong><span>Updating Data</span></a></div>
         
@@ -138,41 +142,49 @@
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>7</strong><span>How Micronaut Data Works</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>8</strong><span>Spring Data Support</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-sql"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-sql"><a href="#sql"><strong>9</strong><span>Micronaut Data with SQL</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-jdbc"><a href="#jdbc"><strong>8.1</strong><span>Micronaut Data JDBC</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-jdbc"><a href="#jdbc"><strong>9.1</strong><span>Micronaut Data JDBC</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcQuickStart"><a href="#jdbcQuickStart"><strong>8.1.1</strong><span>JDBC Quick Start</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcQuickStart"><a href="#jdbcQuickStart"><strong>9.1.1</strong><span>JDBC Quick Start</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcConfiguration"><a href="#jdbcConfiguration"><strong>8.1.2</strong><span>JDBC Configuration</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcConfiguration"><a href="#jdbcConfiguration"><strong>9.1.2</strong><span>JDBC Configuration</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcRepositories"><a href="#jdbcRepositories"><strong>8.1.3</strong><span>JDBC Repositories</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcRepositories"><a href="#jdbcRepositories"><strong>9.1.3</strong><span>JDBC Repositories</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlInserts"><a href="#sqlInserts"><strong>8.1.3.1</strong><span>Inserts and Updates</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlInserts"><a href="#sqlInserts"><strong>9.1.3.1</strong><span>Inserts and Updates</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlMapping"><a href="#sqlMapping"><strong>8.1.4</strong><span>Mapping Entities</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-sqlMapping"><a href="#sqlMapping"><strong>9.1.4</strong><span>Mapping Entities</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlAnnotations"><a href="#sqlAnnotations"><strong>8.1.4.1</strong><span>SQL Annotations</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlAnnotations"><a href="#sqlAnnotations"><strong>9.1.4.1</strong><span>SQL Annotations</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlIdGenerator"><a href="#sqlIdGenerator"><strong>8.1.4.2</strong><span>ID Generation</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlIdGenerator"><a href="#sqlIdGenerator"><strong>9.1.4.2</strong><span>ID Generation</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlCompositeId"><a href="#sqlCompositeId"><strong>8.1.4.3</strong><span>Composite Primary Keys</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlCompositeId"><a href="#sqlCompositeId"><strong>9.1.4.3</strong><span>Composite Primary Keys</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlConstructorArguments"><a href="#sqlConstructorArguments"><strong>8.1.4.4</strong><span>Constructor Arguments</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlConstructorArguments"><a href="#sqlConstructorArguments"><strong>9.1.4.4</strong><span>Constructor Arguments</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlNaming"><a href="#sqlNaming"><strong>8.1.4.5</strong><span>SQL Naming Strategies</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlNaming"><a href="#sqlNaming"><strong>9.1.4.5</strong><span>SQL Naming Strategies</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlAssociations"><a href="#sqlAssociations"><strong>8.1.4.6</strong><span>Association Fetching</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlAssociations"><a href="#sqlAssociations"><strong>9.1.4.6</strong><span>Association Fetching</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-columnTransformer"><a href="#columnTransformer"><strong>8.1.4.7</strong><span>Using @ColumnTransformer</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-columnTransformer"><a href="#columnTransformer"><strong>9.1.4.7</strong><span>Using @ColumnTransformer</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>8.1.4.8</strong><span>JSON Column Support</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcJoinQueries"><a href="#jdbcJoinQueries"><strong>9.1.5</strong><span>JDBC Join Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcJoinQueries"><a href="#jdbcJoinQueries"><strong>8.1.5</strong><span>JDBC Join Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcDataTypes"><a href="#jdbcDataTypes"><strong>9.1.6</strong><span>JDBC Data Types</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcDataTypes"><a href="#jdbcDataTypes"><strong>8.1.6</strong><span>JDBC Data Types</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcNativeQueries"><a href="#jdbcNativeQueries"><strong>9.1.7</strong><span>Explicit JDBC Queries</span></a></div>
+        <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcNativeQueries"><a href="#jdbcNativeQueries"><strong>8.1.7</strong><span>Explicit JDBC Queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-graalJDBC"><a href="#graalJDBC"><strong>9.1</strong><span>JDBC and Native Builds</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-graalJPA"><a href="#graalJPA"><strong>9.2</strong><span>JPA and Native Builds</span></a></div>
+        
+        <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
         
         </div>
     </div>
@@ -182,7 +194,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 1.0.0.M3</p>
+        <p><strong>Version:</strong> 1.0.0.M4</p>
     </div>
     
 
@@ -390,6 +402,22 @@ fun testAnnotationMetadata() {
 
 
 <div class="sect3">
+<h4 id="_1_0_0_m4">1.0.0.M4</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Support for Soft Delete and query customization with <a href="#whereAnnotation">@Where</a>.</p>
+</li>
+<li>
+<p>Support for Sequences for ID generation in Oracle, Postgres and SQL Server</p>
+</li>
+<li>
+<p>Automatic quoting/escaping of identifiers for generated queries</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
 <h4 id="_1_0_0_m3">1.0.0.M3</h4>
 <div class="ulist">
 <ul>
@@ -445,7 +473,7 @@ fun testAnnotationMetadata() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M3'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M4'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -454,7 +482,7 @@ fun testAnnotationMetadata() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M3&lt;/version&gt;
+        &lt;version&gt;1.0.0.M4&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -479,7 +507,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M3'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M4'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -487,7 +515,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M3&lt;/version&gt;
+    &lt;version&gt;1.0.0.M4&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -794,7 +822,7 @@ bookRepository.save(book)</code></pre>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M3'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M4'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -803,7 +831,7 @@ bookRepository.save(book)</code></pre>
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M3&lt;/version&gt;
+        &lt;version&gt;1.0.0.M4&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -2147,7 +2175,216 @@ Currently Micronaut Data does not parse the JPA-QL AST and perform any further t
 </div>
 
 
-<h2 id="nativeQueries">5.8 Native Queries</h2>
+<h2 id="whereAnnotation">5.8 Modifying Queries with @Where</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/whereAnnotation.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can use the <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> annotation to modify compile time generated query with additional query criterion.</p>
+</div>
+<div class="paragraph">
+<p>A common use case for this is to implement soft delete. For example considering the following <code>User</code> entity which declares an <code>enabled</code> property:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.*;
+
+@MappedEntity
+@Where("enabled = true") <b class="conum">(1)</b>
+public class User {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private String name;
+    private boolean enabled = true; <b class="conum">(2)</b>
+
+    public User(String name) {
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.EqualsAndHashCode
+import io.micronaut.data.annotation.*
+
+@MappedEntity
+@Where("enabled = true") <b class="conum">(1)</b>
+@EqualsAndHashCode(includes = "name")
+class User {
+    @GeneratedValue
+    @Id
+    Long id
+    String name
+    boolean enabled = true <b class="conum">(2)</b>
+
+    User(String name) {
+        this.name = name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Where
+import javax.persistence.Entity
+import javax.persistence.GeneratedValue
+import javax.persistence.Id
+
+
+@Entity
+@Where("enabled = true") <b class="conum">(1)</b>
+data class User(
+    @GeneratedValue
+    @Id
+    var id: Long,
+    val name: String,
+    val enabled: Boolean <b class="conum">(2)</b>
+)</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> annotation is used to declare that all queries should include <code>enabled = true</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>An <code>enabled</code> property exists on the entity</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can then easily modify the <code>delete</code> operations to instead issue an update. For example, consider the following repository implementation:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+public interface UserRepository extends CrudRepository&lt;User, Long&gt; { <b class="conum">(1)</b>
+
+    @Override
+    @Query("UPDATE user SET enabled = false WHERE id = :id") <b class="conum">(2)</b>
+    void deleteById(@NonNull @NotNull Long id);
+
+    @Query("SELECT * FROM user WHERE enabled = false") <b class="conum">(3)</b>
+    List&lt;User&gt; findDisabled();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import edu.umd.cs.findbugs.annotations.NonNull
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
+
+import javax.validation.constraints.NotNull
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRepository extends CrudRepository&lt;User, Long&gt; { <b class="conum">(1)</b>
+
+    @Override
+    @Query("UPDATE user SET enabled = false WHERE id = :id") <b class="conum">(2)</b>
+    void deleteById(@NonNull @NotNull Long id)
+
+    @Query("SELECT * FROM user WHERE enabled = false") <b class="conum">(3)</b>
+    List&lt;User&gt; findDisabled()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
+import javax.validation.constraints.NotNull
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRepository : CrudRepository&lt;User, Long&gt; { <b class="conum">(1)</b>
+
+    @Query("UPDATE user SET enabled = false WHERE id = :id") <b class="conum">(2)</b>
+    override fun deleteById(@NotNull id: Long)
+
+    @Query("SELECT * FROM user WHERE enabled = false") <b class="conum">(3)</b>
+    fun findDisabled(): List&lt;User&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The interface extends <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>deleteById</code> is overridden to perform a soft delete by setting <code>enabled</code> to false.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>An additional method is added to return disabled entities if needed using an explicit query.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>All other queries performed on the entity will include <code>enabled = true</code> in the query statement.</p>
+</div>
+
+
+<h2 id="nativeQueries">5.9 Native Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/nativeQueries.adoc"'>
@@ -2196,7 +2433,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </div>
 
 
-<h2 id="async">5.9 Asynchronous Queries</h2>
+<h2 id="async">5.10 Asynchronous Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/async.adoc"'>
@@ -2299,7 +2536,7 @@ In the case of JPA each operation will run with its own transaction and session,
 </div>
 
 
-<h2 id="reactive">5.10 Reactive Queries</h2>
+<h2 id="reactive">5.11 Reactive Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/reactive.adoc"'>
@@ -2449,7 +2686,40 @@ Assertions.assertEquals(
 </div>
 </div>
 <div class="paragraph">
-<p>In this case you must specify parameters for all properties other than those that are declared as <code>@Nullable</code> or as a <code>@GeneratedValue</code>, if you do not a compilation error will occur.</p>
+<p>In this case, when update of whole entity is intended, you must specify parameters for all properties other than those that are declared as <code>@Nullable</code> or as a <code>@GeneratedValue</code>, if you do not a compilation error will occur.</p>
+</div>
+<div class="paragraph">
+<p>For partial updates, you must define a method that features a parameter annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a> and parameters for the properties to be updated.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">void update(@Id Long id, int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">void update(@Id Long id, int pages)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(@Id id: Long?, pages: Int)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">void updatePages(@Id Long id, int pages);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">void updatePages(@Id Long id, int pages)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun updatePages(@Id id: Long?, pages: Int)</code></pre>
+</div>
 </div>
 
 
@@ -3199,89 +3469,7 @@ You can add additional method candidates by creating a library that depends on <
 </div>
 
 
-<h1 id="spring">8 Spring Data Support</h1>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/spring.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>Micronaut Data features general Spring support that is provided through the <code>micronaut-data-spring</code> dependency:</p>
-</div>
-<div class="paragraph">
-<p>        <div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.M3'</span></code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
-    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
-    &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M3&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</p>
-</div>
-<div class="paragraph">
-<p>In addition to this dependency you will need either <code>spring-orm</code> (for Hibernate) or <code>spring-jdbc</code> (for JDBC) on your classpath to enable support for Spring-based transaction management:</p>
-</div>
-<div class="paragraph">
-<p>        <div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
-    &lt;groupId&gt;org.springframework&lt;/groupId&gt;
-    &lt;artifactId&gt;spring-orm&lt;/artifactId&gt;
-    &lt;version&gt;5.2.0.RELEASE&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</p>
-</div>
-<div class="paragraph">
-<p>You can then compile existing Spring Data repository interfaces and use Spring annotations such as <code>org.springframework.transaction.annotation.Transactional</code> in your application.</p>
-</div>
-<div class="paragraph">
-<p>You can extend from existing Spring Data interfaces such as <code>CrudRepository</code>, <code>PagingAndSortingRepository</code> and so on.</p>
-</div>
-<div class="paragraph">
-<p>The following Spring Data types are also supported:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a></p>
-</li>
-<li>
-<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Sort.html">Sort</a></p>
-</li>
-<li>
-<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Slice.html">Page</a></p>
-</li>
-<li>
-<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/PageRequest.html">PageRequest</a></p>
-</li>
-<li>
-<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/CrudRepository.html">CrudRepository</a></p>
-</li>
-<li>
-<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html">PagingAndSortingRepository</a></p>
-</li>
-</ul>
-</div>
-
-
-<h1 id="sql">9 Micronaut Data with SQL</h1>
+<h1 id="sql">8 Micronaut Data with SQL</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql.adoc"'>
@@ -3295,7 +3483,7 @@ You can add additional method candidates by creating a library that depends on <
 </div>
 
 
-<h2 id="jdbc">9.1 Micronaut Data JDBC</h2>
+<h2 id="jdbc">8.1 Micronaut Data JDBC</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc.adoc"'>
@@ -3349,7 +3537,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 </div>
 
 
-<h2 id="jdbcQuickStart">9.1.1 JDBC Quick Start</h2>
+<h2 id="jdbcQuickStart">8.1.1 JDBC Quick Start</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcQuickStart.adoc"'>
@@ -3364,7 +3552,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M3'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M4'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3373,7 +3561,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M3&lt;/version&gt;
+        &lt;version&gt;1.0.0.M4&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -3398,7 +3586,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M3'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M4'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3406,7 +3594,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M3&lt;/version&gt;
+    &lt;version&gt;1.0.0.M4&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -3803,7 +3991,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 
 
-<h2 id="jdbcConfiguration">9.1.2 JDBC Configuration</h2>
+<h2 id="jdbcConfiguration">8.1.2 JDBC Configuration</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcConfiguration.adoc"'>
@@ -3887,7 +4075,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 
 
-<h2 id="jdbcRepositories">9.1.3 JDBC Repositories</h2>
+<h2 id="jdbcRepositories">8.1.3 JDBC Repositories</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories.adoc"'>
@@ -4048,7 +4236,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 </div>
 
 
-<h2 id="sqlInserts">9.1.3.1 Inserts and Updates</h2>
+<h2 id="sqlInserts">8.1.3.1 Inserts and Updates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/sqlInserts.adoc"'>
@@ -4095,7 +4283,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 
 
-<h2 id="sqlMapping">9.1.4 Mapping Entities</h2>
+<h2 id="sqlMapping">8.1.4 Mapping Entities</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping.adoc"'>
@@ -4180,7 +4368,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlAnnotations">9.1.4.1 SQL Annotations</h2>
+<h2 id="sqlAnnotations">8.1.4.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
@@ -4290,7 +4478,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlIdGenerator">9.1.4.2 ID Generation</h2>
+<h2 id="sqlIdGenerator">8.1.4.2 ID Generation</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlIdGenerator.adoc"'>
@@ -4313,7 +4501,7 @@ public class Country {
 </div>
 
 
-<h2 id="sqlCompositeId">9.1.4.3 Composite Primary Keys</h2>
+<h2 id="sqlCompositeId">8.1.4.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlCompositeId.adoc"'>
@@ -4493,7 +4681,7 @@ To alter the column mappings for the ID you use <code>@Column</code> in the <cod
 </div>
 
 
-<h2 id="sqlConstructorArguments">9.1.4.4 Constructor Arguments</h2>
+<h2 id="sqlConstructorArguments">8.1.4.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlConstructorArguments.adoc"'>
@@ -4585,7 +4773,7 @@ data class Manufacturer(
 </div>
 
 
-<h2 id="sqlNaming">9.1.4.5 SQL Naming Strategies</h2>
+<h2 id="sqlNaming">8.1.4.5 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlNaming.adoc"'>
@@ -4634,7 +4822,7 @@ public class CountryRegion {
 </div>
 
 
-<h2 id="sqlAssociations">9.1.4.6 Association Fetching</h2>
+<h2 id="sqlAssociations">8.1.4.6 Association Fetching</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociations.adoc"'>
@@ -4750,7 +4938,7 @@ data class Product(
 </div>
 
 
-<h2 id="columnTransformer">9.1.4.7 Using @ColumnTransformer</h2>
+<h2 id="columnTransformer">8.1.4.7 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/columnTransformer.adoc"'>
@@ -4799,7 +4987,42 @@ private String name;</code></pre>
 </div>
 
 
-<h2 id="jdbcJoinQueries">9.1.5 JDBC Join Queries</h2>
+<h2 id="sqlJsonType">8.1.4.8 JSON Column Support</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlJsonType.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can declare a field of a class as a JSON type using the <a href="../api/io/micronaut/data/annotations/TypeDef.html">@TypeDef</a> annotation as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeDef(type = DataType.JSON)
+private Map&lt;String, String&gt; data;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above will map to a column called <code>data</code>. Depending on the underling database the column type will be adjusted. For example for Postgres which features native JSON support the column type will be <code>JSONB</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+To allow JSON to be serialized and deserialized in entity properties you must have Jackson and the <code>micronaut-runtime</code> module your classpath.
+</td>
+</tr>
+</table>
+</div>
+
+
+<h2 id="jdbcJoinQueries">8.1.5 JDBC Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcJoinQueries.adoc"'>
@@ -4939,12 +5162,24 @@ interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
 <div class="paragraph">
 <p>Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation.</p>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Some databases like Oracle limit the length of alias names in SQL queries so another reason you may want to set custom aliases is to avoid exceeding the alias name length restriction in Oracle.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
 </div>
 
 
-<h2 id="jdbcDataTypes">9.1.6 JDBC Data Types</h2>
+<h2 id="jdbcDataTypes">8.1.6 JDBC Data Types</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcDataTypes.adoc"'>
@@ -5240,7 +5475,7 @@ class QuantityConverters {
 </div>
 
 
-<h2 id="jdbcNativeQueries">9.1.7 Explicit JDBC Queries</h2>
+<h2 id="jdbcNativeQueries">8.1.7 Explicit JDBC Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcNativeQueries.adoc"'>
@@ -5323,6 +5558,254 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <div class="paragraph">
 <p>In the above example the query uses an alias called <code>m_</code> to query the <code>manufacturer</code> table via an <code>INNER JOIN</code>. Since the returned <code>Product</code> entity features a <code>manufacturer</code> association it may be nice to materialize this object as well. The <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is used to specify which alias to materialize the <code>Manufacturer</code> instance from.</p>
 </div>
+</div>
+
+
+<h1 id="graal">9 Going Native with GraalVM</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports GraalVM native images for both the JPA and JDBC implementations.</p>
+</div>
+<div class="paragraph">
+<p>Before you can build a native image however there are a couple of few changes you need to make to your project to allow a native build.</p>
+</div>
+<div class="paragraph">
+<p>The following sections describe the changes you need to make.</p>
+</div>
+
+
+<h2 id="graalJDBC">9.1 JDBC and Native Builds</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal/graalJDBC.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Getting your project ready for a native GraalVM build is JDBC driver dependent.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+GraalVM substrate remains an evolving and experimental feature of GraalVM, hence support for GraalVM substrate in Micronaut Data is also regarded as experimental and evolving.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Generally you need to add a <code>@TypeHint(&#8230;&#8203;)</code> declaration to your <code>Application</code> class that tells GraalVM what is the class that represents the JDBC driver and you need to add the driver to the class that are initialized at build time with the <code>--initialize-at-build-time=DRIVER_CLASS_NAME</code> flag which you can add to the <code>native-image.properties</code> file found in <code>src/main/resources/META-INF/native-image</code> for a project that was created with <code>mn create-app my-app --features graal-native-image</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+MySQL is as of this time unsupported in native image due to <a href="https://bugs.mysql.com/bug.php?id=91968">this issue</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_configuration_for_h2">Configuration for H2</h4>
+<div class="paragraph">
+<p>The changes for H2 are:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeHint(typeNames = {"org.h2.Driver", "org.h2.mvstore.db.MVTableEngine"})</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">GraalVM Flags</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">--report-unsupported-elements-at-runtime --initialize-at-build-time=org.h2.Driver</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The <code>--report-unsupported-elements-at-runtime</code> flag is needed for H2 if you use the embedded H2 server otherwise can be omitted.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_configuration_for_postgres">Configuration for Postgres</h4>
+<div class="paragraph">
+<p>The changes for Postgres JDBC Driver (<code>org.postgresql:postgresql:42.2.8</code> or above) are:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeHint(org.postgresql.Driver.class)</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">GraalVM Flags</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">--initialize-at-build-time=org.postgresql.Driver,org.postgresql.util.SharedTimer</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_configuration_for_oracle">Configuration for Oracle</h4>
+<div class="paragraph">
+<p>The changes for Oracle JDBC driver (<code>com.oracle.ojdbc:ojdbc8:19.3.0.0</code> or above) are quite extensive and are documented in <a href="https://github.com/oracle/graal/issues/1748#issuecomment-542353582">this Github issue</a>.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_configuration_for_microsoft_sql_server">Configuration for Microsoft SQL Server</h4>
+<div class="paragraph">
+<p>The changes for SQL Server JDBC Driver (<code>com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8</code> or above) are:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeHint(typeNames = "com.microsoft.sqlserver.jdbc.SQLServerDriver")</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">GraalVM Flags</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">-H:IncludeResourceBundles=com.microsoft.sqlserver.jdbc.SQLServerResource \
+--initialize-at-build-time=com.microsoft.sqlserver.jdbc.SQLServerResource \
+--initialize-at-run-time=java.sql.DriverManager</code></pre>
+</div>
+</div>
+</div>
+
+
+<h2 id="graalJPA">9.2 JPA and Native Builds</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal/graalJPA.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>If you are using JPA then in addition to the above configuration you should add modify your <code>@TypeHint</code> declaration to include a reference to the Hibernate dialect associated with the database you are using.</p>
+</div>
+<div class="paragraph">
+<p>For example for Postgres:</p>
+</div>
+<div class="listingblock">
+<div class="title">Postgres Dialect Config</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">import org.hibernate.dialect.PostgreSQL10Dialect;
+import org.postgresql.Driver;
+
+...
+
+@TypeHint( {
+    PostgreSQL10Dialect.class,
+    Driver.class
+})</code></pre>
+</div>
+</div>
+
+
+<h1 id="spring">10 Spring Data Support</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/spring.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data features general Spring support that is provided through the <code>micronaut-data-spring</code> dependency:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.M4'</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.M4&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>In addition to this dependency you will need either <code>spring-orm</code> (for Hibernate) or <code>spring-jdbc</code> (for JDBC) on your classpath to enable support for Spring-based transaction management:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-orm&lt;/artifactId&gt;
+    &lt;version&gt;5.2.0.RELEASE&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>You can then compile existing Spring Data repository interfaces and use Spring annotations such as <code>org.springframework.transaction.annotation.Transactional</code> in your application.</p>
+</div>
+<div class="paragraph">
+<p>You can extend from existing Spring Data interfaces such as <code>CrudRepository</code>, <code>PagingAndSortingRepository</code> and so on.</p>
+</div>
+<div class="paragraph">
+<p>The following Spring Data types are also supported:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a></p>
+</li>
+<li>
+<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Sort.html">Sort</a></p>
+</li>
+<li>
+<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Slice.html">Page</a></p>
+</li>
+<li>
+<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/PageRequest.html">PageRequest</a></p>
+</li>
+<li>
+<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/CrudRepository.html">CrudRepository</a></p>
+</li>
+<li>
+<p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html">PagingAndSortingRepository</a></p>
+</li>
+</ul>
 </div>
 
     </div>

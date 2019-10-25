@@ -29,7 +29,6 @@ io.micronaut.data.model.query.builder.jpa
 io.micronaut.data.model.query.builder.sql
 io.micronaut.data.model.query.factory
 io.micronaut.data.model.runtime
-io.micronaut.data.model.runtime.convert
 io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive
