@@ -22,7 +22,7 @@ dependencies {
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
     testCompile "org.testcontainers:spock:1.12.2"
     testCompile "org.testcontainers:mysql:1.12.2"
-    testCompile "org.testcontainers:mariadb:1.12.2"
+    testCompile "org.testcontainers:mariadb:1.12.3"
     testCompile "org.testcontainers:postgresql:1.12.2"
     testCompile "org.testcontainers:mssqlserver:1.12.2"
     testCompile "org.testcontainers:oracle-xe:1.12.2"
