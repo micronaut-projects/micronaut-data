@@ -96,8 +96,12 @@ public interface Association extends PersistentProperty {
         if (ArrayUtils.isNotEmpty(types)) {
             final String[] cascades = getAnnotationMetadata().stringValues(Relation.class, "cascade");
             for (String cascade : cascades) {
+                if (cascade.equals("ALL")) {
+                    return true;
+                }
                 for (Relation.Cascade type : types) {
-                    if (type.name().equals(cascade)) {
+                    final String n = type.name();
+                    if (n.equals(cascade)) {
                         return true;
                     }
                 }

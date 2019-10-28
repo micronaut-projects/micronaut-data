@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query.builder.sql;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
@@ -557,7 +556,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return joinType;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         StringBuilder builder = new StringBuilder("INSERT INTO ");

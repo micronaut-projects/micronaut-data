@@ -37,7 +37,6 @@ import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.QueryBuilder;
-import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
@@ -421,11 +420,22 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
+        final Class<?> repositoryType = operation.getRepositoryType();
+        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        T entity = operation.getEntity();
+        return persistOne(annotationMetadata, repositoryType, insert, entity, new HashSet(5));
+    }
+
+    private <T> T persistOne(
+            AnnotationMetadata annotationMetadata,
+            Class<?> repositoryType,
+            StoredInsert<T> insert,
+            T entity,
+            Set persisted) {
         //noinspection ConstantConditions
         return transactionOperations.executeWrite((status) -> {
             try {
                 Connection connection = status.getConnection();
-                T entity = operation.getEntity();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
                 BeanProperty<T, Object> identity = insert.getIdentityProperty();
@@ -446,6 +456,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                 setInsertParameters(insert, entity, stmt);
                 stmt.executeUpdate();
+                persisted.add(entity);
                 if (hasGeneratedID) {
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
@@ -463,29 +474,98 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
                     if (association.doesCascade(Relation.Cascade.PERSIST)) {
                         final Relation.Kind kind = association.getKind();
+                        final RuntimePersistentEntity<?> associatedEntity =
+                                association.getAssociatedEntity();
+                        final Class<?> associationType = associatedEntity.getIntrospection().getBeanType();
+                        final RuntimePersistentProperty<?> associatedId = associatedEntity.getIdentity();
                         switch (kind) {
                             case ONE_TO_ONE:
+                            case MANY_TO_ONE:
                                 // in the case of an one-to-one we ensure the inverse side set
                                 final Object associated = association.getProperty().get(entity);
+                                if (associated == null || persisted.contains(associated)) {
+                                    continue;
+                                }
                                 if (association.isForeignKey()) {
                                     association.getInverseSide().ifPresent(inverse -> {
                                         final BeanProperty property = inverse.getProperty();
                                         property.set(associated, entity);
                                     });
                                 }
-                            // intentional fall through
-                            case MANY_TO_ONE:
+
                                 // get the insert operation
-                                final Class<?> repositoryType = operation.getRepositoryType();
-                                StoredInsert<?> storedInsert = resolveEntityInsert(repositoryType, persistentEntity);
+                                StoredInsert associatedInsert = resolveEntityInsert(
+                                        annotationMetadata,
+                                        repositoryType,
+                                        associationType,
+                                        associatedEntity
+                                );
+
+                                if (associatedId != null) {
+                                    final BeanProperty bp = associatedId.getProperty();
+                                    final Object id = bp.get(associated);
+                                    if (id != null) {
+                                        continue;
+                                    }
+                                }
+
+                                persistOne(
+                                        annotationMetadata,
+                                        repositoryType,
+                                        associatedInsert,
+                                        associated,
+                                        persisted
+                                );
 
                                 break;
                             case ONE_TO_MANY:
                             case MANY_TO_MANY:
-
-
                             default:
-                                // no-op
+                                final Object many = association.getProperty().get(entity);
+                                final RuntimeAssociation<?> inverse
+                                        = association.getInverseSide().orElse(null);
+                                associatedInsert  = resolveEntityInsert(
+                                        annotationMetadata,
+                                        repositoryType,
+                                        associationType,
+                                        associatedEntity
+                                );
+                                if (many instanceof Iterable) {
+                                    Iterable entities = (Iterable) many;
+                                    List toPersist = new ArrayList(15);
+                                    for (Object o : entities) {
+                                        if (o == null || persisted.contains(o)) {
+                                            continue;
+                                        }
+
+                                        if (inverse != null) {
+                                            if (inverse.getKind() == Relation.Kind.MANY_TO_ONE) {
+                                                final BeanProperty property = inverse.getProperty();
+                                                property.set(o, entity);
+                                            }
+                                        }
+                                        if (associatedId != null) {
+                                            final BeanProperty bp = associatedId.getProperty();
+                                            final Object id = bp.get(o);
+                                            if (id == null) {
+                                                toPersist.add(o);
+                                            }
+                                        }
+                                    }
+                                    if (associatedInsert.doesSupportBatch()) {
+                                        persistInBatch(toPersist, associatedInsert, persisted);
+                                    } else {
+                                        for (Object o : toPersist) {
+                                            persistOne(
+                                                    annotationMetadata,
+                                                    repositoryType,
+                                                    associatedInsert,
+                                                    o,
+                                                    persisted
+                                            );
+                                        }
+                                    }
+                                }
                         }
                     }
                 }
@@ -494,7 +574,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 throw new DataAccessException("SQL Error executing INSERT: " + e.getMessage(), e);
             }
         });
-
     }
 
     private <T, R> PreparedStatement prepareStatement(
@@ -692,57 +771,64 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return results;
         } else {
             //noinspection ConstantConditions
-            return transactionOperations.executeWrite((status) -> {
-                Connection connection = status.getConnection();
-                List<T> results = new ArrayList<>(10);
-                boolean generateId = insert.isGenerateId();
-                String insertSql = insert.getSql();
-                BeanProperty<T, Object> identity = insert.getIdentityProperty();
-                final boolean hasGeneratedID = generateId && identity != null;
+            return persistInBatch(operation, insert, new HashSet(10));
+        }
+    }
 
-                try {
-                    PreparedStatement stmt;
-                    if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
-                        stmt = connection
-                                .prepareStatement(insertSql, new String[] { identity.getName() });
-                    } else {
-                        stmt = connection
-                                .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                    }
-                    if (QUERY_LOG.isDebugEnabled()) {
-                        QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
-                    }
-                    for (T entity : operation) {
-                        setInsertParameters(insert, entity, stmt);
-                        stmt.addBatch();
-                        results.add(entity);
-                    }
-                    stmt.executeBatch();
+    private <T> Iterable<T> persistInBatch(
+            @NonNull Iterable<T> entities,
+            StoredInsert<T> insert,
+            Set persisted) {
+        return transactionOperations.executeWrite((status) -> {
+            Connection connection = status.getConnection();
+            List<T> results = new ArrayList<>(10);
+            boolean generateId = insert.isGenerateId();
+            String insertSql = insert.getSql();
+            BeanProperty<T, Object> identity = insert.getIdentityProperty();
+            final boolean hasGeneratedID = generateId && identity != null;
+
+            try {
+                PreparedStatement stmt;
+                if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
+                    stmt = connection
+                            .prepareStatement(insertSql, new String[] { identity.getName() });
+                } else {
+                    stmt = connection
+                            .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                }
+                if (QUERY_LOG.isDebugEnabled()) {
+                    QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
+                }
+                for (T entity : entities) {
+                    setInsertParameters(insert, entity, stmt);
+                    stmt.addBatch();
+                    results.add(entity);
+                }
+                stmt.executeBatch();
 
 
-                    if (hasGeneratedID) {
-                        Iterator<T> resultIterator = results.iterator();
-                        ResultSet generatedKeys = stmt.getGeneratedKeys();
-                        while (resultIterator.hasNext()) {
-                            T entity = resultIterator.next();
-                            if (!generatedKeys.next()) {
-                                throw new DataAccessException("Failed to generate ID for entity: " + entity);
+                if (hasGeneratedID) {
+                    Iterator<T> resultIterator = results.iterator();
+                    ResultSet generatedKeys = stmt.getGeneratedKeys();
+                    while (resultIterator.hasNext()) {
+                        T entity = resultIterator.next();
+                        if (!generatedKeys.next()) {
+                            throw new DataAccessException("Failed to generate ID for entity: " + entity);
+                        } else {
+                            long id = generatedKeys.getLong(1);
+                            if (identity.getType().isInstance(id)) {
+                                identity.set(entity, id);
                             } else {
-                                long id = generatedKeys.getLong(1);
-                                if (identity.getType().isInstance(id)) {
-                                    identity.set(entity, id);
-                                } else {
-                                    identity.convertAndSet(entity, id);
-                                }
+                                identity.convertAndSet(entity, id);
                             }
                         }
                     }
-                    return results;
-                } catch (SQLException e) {
-                    throw new DataAccessException("SQL error executing INSERT: " + e.getMessage(), e);
                 }
-            });
-        }
+                return results;
+            } catch (SQLException e) {
+                throw new DataAccessException("SQL error executing INSERT: " + e.getMessage(), e);
+            }
+        });
     }
 
     @Override
