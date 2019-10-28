@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -32,8 +33,8 @@ public class Book {
     @ManyToOne
     private Publisher publisher;
 
-    @OneToMany
-    private List<Page> pages;
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Page> pages = new ArrayList<>();
 
     public List<Page> getPages() {
         return pages;

@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Shelf
 import io.micronaut.data.tck.repositories.BookPageRepository
 import io.micronaut.data.tck.repositories.PageRepository
@@ -34,21 +35,21 @@ class H2UnidirectionalToManyJoinSpec extends Specification {
     void "test unidirectional join"() {
         given:
         Shelf shelf = new Shelf(shelfName: "Some Shelf")
-        shelf.books.add(new Book(title: "The Stand", totalPages: 1000))
-        shelf.books.add(new Book(title: "The Shining", totalPages: 600))
+        def b1 = new Book(title: "The Stand", totalPages: 1000)
+        b1.pages.add(new Page(num: 10))
+        b1.pages.add(new Page(num: 20))
+        def b2 = new Book(title: "The Shining", totalPages: 600)
+        shelf.books.add(b1)
+        shelf.books.add(b2)
 
         when:
         shelf = shelfRepository.save(shelf)
 
         then:
+        b1.pages.every { it.id != null }
         shelf.books.every { it.id != null }
 
         when:
-        def p10 = pageRepository.save(10)
-        def p20 = pageRepository.save(20)
-        bookPageRepository.save(shelf.books[0], p10)
-        bookPageRepository.save(shelf.books[0], p20)
-
         shelf = shelfRepository.findById(shelf.id).orElse(null)
 
         then:
