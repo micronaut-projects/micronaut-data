@@ -32,6 +32,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.EntityOperation;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -75,6 +76,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
+    private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
 
@@ -447,6 +449,25 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     dialect != Dialect.SQL_SERVER,
                     dialect
             );
+        });
+    }
+
+    /**
+     * Builds a join table insert.
+     * @param repositoryType The repository type
+     * @param persistentEntity  The entity
+     * @param association The association
+     * @param <T> The entity generic type
+     * @return The insert statement
+     */
+    protected <T> String resolveAssociationInsert(
+            Class repositoryType,
+            RuntimePersistentEntity<T> persistentEntity,
+            RuntimeAssociation<T> association) {
+        return associationInserts.computeIfAbsent(association, association1 -> {
+            final Dialect dialect = dialects.getOrDefault(repositoryType, Dialect.ANSI);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+            return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
         });
     }
 

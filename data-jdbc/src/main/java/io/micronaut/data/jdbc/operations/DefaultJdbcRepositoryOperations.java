@@ -470,102 +470,147 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         throw new DataAccessException("ID failed to generate. No result returned.");
                     }
                 }
-                final RuntimePersistentEntity<T> persistentEntity = (RuntimePersistentEntity<T>) getEntity(entity.getClass());
-                for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
-                    if (association.doesCascade(Relation.Cascade.PERSIST)) {
-                        final Relation.Kind kind = association.getKind();
-                        final RuntimePersistentEntity<?> associatedEntity =
-                                association.getAssociatedEntity();
-                        final Class<?> associationType = associatedEntity.getIntrospection().getBeanType();
-                        final RuntimePersistentProperty<?> associatedId = associatedEntity.getIdentity();
-                        switch (kind) {
-                            case ONE_TO_ONE:
-                            case MANY_TO_ONE:
-                                // in the case of an one-to-one we ensure the inverse side set
-                                final Object associated = association.getProperty().get(entity);
-                                if (associated == null || persisted.contains(associated)) {
-                                    continue;
-                                }
-                                if (association.isForeignKey()) {
-                                    association.getInverseSide().ifPresent(inverse -> {
-                                        final BeanProperty property = inverse.getProperty();
-                                        property.set(associated, entity);
-                                    });
-                                }
+                if (identity != null) {
 
-                                // get the insert operation
-                                StoredInsert associatedInsert = resolveEntityInsert(
-                                        annotationMetadata,
-                                        repositoryType,
-                                        associationType,
-                                        associatedEntity
-                                );
-
-                                if (associatedId != null) {
-                                    final BeanProperty bp = associatedId.getProperty();
-                                    final Object id = bp.get(associated);
-                                    if (id != null) {
+                    final RuntimePersistentEntity<T> persistentEntity = (RuntimePersistentEntity<T>) getEntity(entity.getClass());
+                    for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
+                        if (association.doesCascade(Relation.Cascade.PERSIST)) {
+                            final Relation.Kind kind = association.getKind();
+                            final RuntimePersistentEntity<?> associatedEntity =
+                                    association.getAssociatedEntity();
+                            final Class<?> associationType = associatedEntity.getIntrospection().getBeanType();
+                            final RuntimePersistentProperty<?> associatedId = associatedEntity.getIdentity();
+                            final BeanProperty associatedIdProperty = associatedId.getProperty();
+                            switch (kind) {
+                                case ONE_TO_ONE:
+                                case MANY_TO_ONE:
+                                    // in the case of an one-to-one we ensure the inverse side set
+                                    final Object associated = association.getProperty().get(entity);
+                                    if (associated == null || persisted.contains(associated)) {
                                         continue;
                                     }
-                                }
+                                    if (association.isForeignKey()) {
+                                        association.getInverseSide().ifPresent(inverse -> {
+                                            final BeanProperty property = inverse.getProperty();
+                                            property.set(associated, entity);
+                                        });
+                                    }
 
-                                persistOne(
-                                        annotationMetadata,
-                                        repositoryType,
-                                        associatedInsert,
-                                        associated,
-                                        persisted
-                                );
+                                    // get the insert operation
+                                    StoredInsert associatedInsert = resolveEntityInsert(
+                                            annotationMetadata,
+                                            repositoryType,
+                                            associationType,
+                                            associatedEntity
+                                    );
 
-                                break;
-                            case ONE_TO_MANY:
-                            case MANY_TO_MANY:
-                            default:
-                                final Object many = association.getProperty().get(entity);
-                                final RuntimeAssociation<?> inverse
-                                        = association.getInverseSide().orElse(null);
-                                associatedInsert  = resolveEntityInsert(
-                                        annotationMetadata,
-                                        repositoryType,
-                                        associationType,
-                                        associatedEntity
-                                );
-                                if (many instanceof Iterable) {
-                                    Iterable entities = (Iterable) many;
-                                    List toPersist = new ArrayList(15);
-                                    for (Object o : entities) {
-                                        if (o == null || persisted.contains(o)) {
+                                    if (associatedId != null) {
+                                        final Object id = associatedIdProperty.get(associated);
+                                        if (id != null) {
                                             continue;
                                         }
+                                    }
 
-                                        if (inverse != null) {
-                                            if (inverse.getKind() == Relation.Kind.MANY_TO_ONE) {
-                                                final BeanProperty property = inverse.getProperty();
-                                                property.set(o, entity);
+                                    persistOne(
+                                            annotationMetadata,
+                                            repositoryType,
+                                            associatedInsert,
+                                            associated,
+                                            persisted
+                                    );
+
+                                    break;
+                                case ONE_TO_MANY:
+                                case MANY_TO_MANY:
+                                default:
+                                    final Object many = association.getProperty().get(entity);
+                                    final RuntimeAssociation<?> inverse
+                                            = association.getInverseSide().orElse(null);
+                                    associatedInsert  = resolveEntityInsert(
+                                            annotationMetadata,
+                                            repositoryType,
+                                            associationType,
+                                            associatedEntity
+                                    );
+                                    if (many instanceof Iterable) {
+                                        Iterable entities = (Iterable) many;
+                                        List toPersist = new ArrayList(15);
+                                        for (Object o : entities) {
+                                            if (o == null || persisted.contains(o)) {
+                                                continue;
+                                            }
+
+                                            if (inverse != null) {
+                                                if (inverse.getKind() == Relation.Kind.MANY_TO_ONE) {
+                                                    final BeanProperty property = inverse.getProperty();
+                                                    property.set(o, entity);
+                                                }
+                                            }
+                                            if (associatedId != null) {
+                                                final BeanProperty bp = associatedIdProperty;
+                                                final Object id = bp.get(o);
+                                                if (id == null) {
+                                                    toPersist.add(o);
+                                                }
                                             }
                                         }
-                                        if (associatedId != null) {
-                                            final BeanProperty bp = associatedId.getProperty();
-                                            final Object id = bp.get(o);
-                                            if (id == null) {
-                                                toPersist.add(o);
+                                        final Iterable batchResult;
+                                        if (insert.doesSupportBatch()) {
+                                            batchResult =
+                                                    persistInBatch(toPersist, associatedInsert, persisted);
+                                        } else {
+                                            final ArrayList<Object> arrayList = new ArrayList<>(toPersist);
+                                            for (Object o : toPersist) {
+                                                arrayList.add(persistOne(
+                                                        annotationMetadata,
+                                                        repositoryType,
+                                                        associatedInsert,
+                                                        o,
+                                                        persisted
+                                                ));
                                             }
+                                            batchResult = arrayList;
                                         }
-                                    }
-                                    if (associatedInsert.doesSupportBatch()) {
-                                        persistInBatch(toPersist, associatedInsert, persisted);
-                                    } else {
-                                        for (Object o : toPersist) {
-                                            persistOne(
-                                                    annotationMetadata,
+
+                                        if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
+                                            String associationInsert = resolveAssociationInsert(
                                                     repositoryType,
-                                                    associatedInsert,
-                                                    o,
-                                                    persisted
+                                                    persistentEntity,
+                                                    association
                                             );
+
+
+                                            try (PreparedStatement ps =
+                                                         connection.prepareStatement(associationInsert)) {
+                                                if (QUERY_LOG.isDebugEnabled()) {
+                                                    QUERY_LOG.debug("Executing SQL Insert: {}", associationInsert);
+                                                }
+                                                final Object parentId = identity.get(entity);
+                                                for (Object o : batchResult) {
+                                                    final Object childId = associatedIdProperty.get(o);
+                                                    if (QUERY_LOG.isTraceEnabled()) {
+                                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", 1, parentId);
+                                                    }
+                                                    preparedStatementWriter.setDynamic(
+                                                            ps,
+                                                            1,
+                                                            persistentEntity.getIdentity().getDataType(),
+                                                            parentId);
+                                                    if (QUERY_LOG.isTraceEnabled()) {
+                                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", 2, childId);
+                                                    }
+                                                    preparedStatementWriter.setDynamic(
+                                                            ps,
+                                                            2,
+                                                            associatedId.getDataType(),
+                                                            childId);
+                                                    ps.addBatch();
+                                                }
+                                                ps.executeBatch();
+                                            }
                                         }
                                     }
-                                }
+                            }
                         }
                     }
                 }
