@@ -30,4 +30,5 @@ public interface InsertOperation<E> extends EntityOperation<E> {
      * @return The entity to insert.
      */
     @NonNull E getEntity();
+
 }

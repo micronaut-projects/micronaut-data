@@ -1,9 +1,7 @@
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -13,8 +11,8 @@ public class Shelf {
     private Long id;
     private String shelfName;
 
-    @OneToMany
-    private List<Book> books;
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Book> books = new ArrayList<>();
 
     public Long getId() {
         return id;

@@ -49,7 +49,7 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
             Object o = parameterValues[0];
             if (context.hasAnnotation(Query.class)) {
                 PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-                operations.executeUpdate(preparedQuery).orElse(0);
+                operations.executeDelete(preparedQuery).orElse(0);
                 return null;
             } else {
 

@@ -48,7 +48,7 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
         Argument<Number> resultType = context.getReturnType().asArgument();
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            Number result = operations.executeUpdate(preparedQuery).orElse(0);
+            Number result = operations.executeDelete(preparedQuery).orElse(0);
             return convertIfNecessary(resultType, result);
         } else {
             Object[] parameterValues = context.getParameterValues();

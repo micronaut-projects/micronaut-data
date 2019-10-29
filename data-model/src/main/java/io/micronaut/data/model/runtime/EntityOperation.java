@@ -31,4 +31,10 @@ public interface EntityOperation<E> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Class<E> getRootEntity();
+
+    /**
+     * @return The repository type.
+     */
+    @NonNull
+    Class<?> getRepositoryType();
 }

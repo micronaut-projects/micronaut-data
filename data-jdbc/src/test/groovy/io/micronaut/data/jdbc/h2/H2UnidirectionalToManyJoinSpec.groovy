@@ -1,13 +1,9 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.repositories.BookPageRepository
-import io.micronaut.data.tck.repositories.PageRepository
-import io.micronaut.data.tck.repositories.ShelfBookRepository
-import io.micronaut.data.tck.repositories.ShelfRepository
+import io.micronaut.data.tck.entities.Page
+import io.micronaut.data.tck.entities.Shelf
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 
@@ -32,20 +28,25 @@ class H2UnidirectionalToManyJoinSpec extends Specification {
 
     void "test unidirectional join"() {
         given:
-        def shelf = shelfRepository.save("Some Shelf")
-        def b1 = bookRepository.save(new Book(title: "The Stand", totalPages: 1000))
-        def b2 = bookRepository.save(new Book(title: "The Shining", totalPages: 600))
+        Shelf shelf = new Shelf(shelfName: "Some Shelf")
+        def b1 = new Book(title: "The Stand", totalPages: 1000)
+        b1.pages.add(new Page(num: 10))
+        b1.pages.add(new Page(num: 20))
+        def b2 = new Book(title: "The Shining", totalPages: 600)
+        shelf.books.add(b1)
+        shelf.books.add(b2)
 
-        shelfBookRepository.save(shelf, b1)
-        shelfBookRepository.save(shelf, b2)
-        def p10 = pageRepository.save(10)
-        def p20 = pageRepository.save(20)
-        bookPageRepository.save(b1, p10)
-        bookPageRepository.save(b2, p20)
+        when:
+        shelf = shelfRepository.save(shelf)
 
+        then:
+        b1.pages.every { it.id != null }
+        shelf.books.every { it.id != null }
+
+        when:
         shelf = shelfRepository.findById(shelf.id).orElse(null)
 
-        expect:
+        then:
         shelf != null
         shelf.shelfName == 'Some Shelf'
         // left join causes single result since each

@@ -28,9 +28,11 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.EntityOperation;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -45,7 +47,9 @@ import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -71,6 +75,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final MediaTypeCodec jsonCodec;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
+    private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
+    private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
 
@@ -407,6 +413,92 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         index,
                         dataType,
                         value);
+        }
+    }
+
+    /**
+     * Resolves a stored insert for the given entity.
+     * @param annotationMetadata  The repository annotation metadata
+     * @param repositoryType  The repository type
+     * @param rootEntity The root entity
+     * @param persistentEntity The persistent entity
+     * @param <T> The generic type
+     * @return The insert
+     */
+    protected @NonNull <T> StoredInsert<T> resolveEntityInsert(
+            AnnotationMetadata annotationMetadata,
+            Class<?> repositoryType,
+            @NonNull Class<?> rootEntity,
+            @NonNull RuntimePersistentEntity<?> persistentEntity) {
+
+        //noinspection unchecked
+        return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
+            final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.H2);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+            final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
+
+            final String sql = queryResult.getQuery();
+            final Map<String, String> parameters = queryResult.getParameters();
+            return new StoredInsert<>(
+                    sql,
+                    persistentEntity,
+                    parameters.entrySet().stream().collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            entry -> Integer.valueOf(entry.getValue())
+                    )),
+                    dialect != Dialect.SQL_SERVER,
+                    dialect
+            );
+        });
+    }
+
+    /**
+     * Builds a join table insert.
+     * @param repositoryType The repository type
+     * @param persistentEntity  The entity
+     * @param association The association
+     * @param <T> The entity generic type
+     * @return The insert statement
+     */
+    protected <T> String resolveAssociationInsert(
+            Class repositoryType,
+            RuntimePersistentEntity<T> persistentEntity,
+            RuntimeAssociation<T> association) {
+        return associationInserts.computeIfAbsent(association, association1 -> {
+            final Dialect dialect = dialects.getOrDefault(repositoryType, Dialect.ANSI);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+            return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
+        });
+    }
+
+    /**
+     * Used to cache queries for entities.
+     */
+    private class QueryKey {
+        final Class repositoryType;
+        final Class entityType;
+
+        QueryKey(Class repositoryType, Class entityType) {
+            this.repositoryType = repositoryType;
+            this.entityType = entityType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            QueryKey queryKey = (QueryKey) o;
+            return repositoryType.equals(queryKey.repositoryType) &&
+                    entityType.equals(queryKey.entityType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(repositoryType, entityType);
         }
     }
 

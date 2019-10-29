@@ -478,7 +478,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return The paged query
      */
     protected <E> BatchOperation<E> getBatchOperation(@NonNull MethodInvocationContext context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
-        return new DefaultBatchOperation<>(context.getExecutableMethod(), rootEntity, iterable);
+        return new DefaultBatchOperation<>(context, rootEntity, iterable);
     }
 
     /**
@@ -500,7 +500,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return The paged query
      */
     protected <E> BatchOperation<E> getBatchOperation(@NonNull MethodInvocationContext context, @NonNull Class<E> rootEntity) {
-        return new AllBatchOperation<>(context.getExecutableMethod(), rootEntity);
+        return new AllBatchOperation<>(context, rootEntity);
     }
 
     /**
@@ -512,7 +512,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     @SuppressWarnings("unchecked")
     protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext context) {
         E o = (E) getRequiredEntity(context);
-        return new DefaultInsertOperation<>(context.getExecutableMethod(), o);
+        return new DefaultInsertOperation<>(context, o);
     }
 
     /**
@@ -523,7 +523,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @return The paged query
      */
     protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext context, E entity) {
-        return new DefaultInsertOperation<>(context.getExecutableMethod(), entity);
+        return new DefaultInsertOperation<>(context, entity);
     }
 
     /**
@@ -545,10 +545,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      */
     private final class DefaultInsertOperation<E> implements InsertOperation<E> {
-        private final ExecutableMethod<?, ?> method;
+        private final MethodInvocationContext<?, ?> method;
         private final E entity;
 
-        DefaultInsertOperation(ExecutableMethod<?, ?> method, E entity) {
+        DefaultInsertOperation(MethodInvocationContext<?, ?> method, E entity) {
             this.method = method;
             this.entity = entity;
         }
@@ -557,6 +557,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public Class<E> getRootEntity() {
             return (Class<E>) entity.getClass();
+        }
+
+        @NonNull
+        @Override
+        public Class<?> getRepositoryType() {
+            return method.getTarget().getClass();
         }
 
         @Override
@@ -581,11 +587,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      */
     private final class DefaultBatchOperation<E> implements BatchOperation<E> {
-        private final ExecutableMethod<?, ?> method;
+        private final MethodInvocationContext<?, ?> method;
         private final @NonNull Class<E> rootEntity;
         private final Iterable<E> iterable;
 
-        public DefaultBatchOperation(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
+        public DefaultBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
             this.method = method;
             this.rootEntity = rootEntity;
             this.iterable = iterable;
@@ -595,6 +601,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public Class<E> getRootEntity() {
             return rootEntity;
+        }
+
+        @NonNull
+        @Override
+        public Class<?> getRepositoryType() {
+            return method.getTarget().getClass();
         }
 
         @Nonnull
@@ -620,10 +632,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      */
     private final class AllBatchOperation<E> implements BatchOperation<E> {
-        private final ExecutableMethod<?, ?> method;
+        private final MethodInvocationContext<?, ?> method;
         private final @NonNull Class<E> rootEntity;
 
-        public AllBatchOperation(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity) {
+        public AllBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
             this.method = method;
             this.rootEntity = rootEntity;
         }
@@ -637,6 +649,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public Class<E> getRootEntity() {
             return rootEntity;
+        }
+
+        @NonNull
+        @Override
+        public Class<?> getRepositoryType() {
+            return method.getTarget().getClass();
         }
 
         @Nonnull

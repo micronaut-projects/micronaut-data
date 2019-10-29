@@ -51,6 +51,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      * The position of the visitor.
      */
     public static final int POSITION = 100;
+
     private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
         @Override

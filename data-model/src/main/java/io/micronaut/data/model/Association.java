@@ -16,8 +16,11 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;
+
+import java.util.Optional;
 
 /**
  * A property that represents an association.
@@ -42,14 +45,29 @@ public interface Association extends PersistentProperty {
     PersistentEntity getAssociatedEntity();
 
     /**
-     * @return The cascade handling
+     * Retrieves the inverse side of the association. If there is one.
+     *
+     * @return The association.
      */
-    default @NonNull Relation.Cascade getCascade() {
-        return getAnnotationMetadata().enumValue(
-                Relation.class,
-                "cascade",
-                Relation.Cascade.class
-        ).orElse(Relation.Cascade.NONE);
+    default Optional<? extends Association> getInverseSide() {
+        return getAnnotationMetadata()
+                .stringValue(Relation.class, "mappedBy")
+                .flatMap(s -> {
+                    final PersistentProperty inverse =
+                            getAssociatedEntity().getPropertyByName(s);
+                    if (inverse instanceof Association) {
+                        return Optional.of((Association) inverse);
+                    }
+                    return Optional.empty();
+                });
+    }
+
+    /**
+     * Whether the relationship is bidirectional.
+     * @return True if it is bidirectional.
+     */
+    default boolean isBidirectional() {
+        return getInverseSide().isPresent();
     }
 
     /**
@@ -67,5 +85,28 @@ public interface Association extends PersistentProperty {
     default boolean isForeignKey() {
         Relation.Kind kind = getKind();
         return kind == Relation.Kind.ONE_TO_MANY || kind == Relation.Kind.MANY_TO_MANY || (kind == Relation.Kind.ONE_TO_ONE && getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent());
+    }
+
+    /**
+     * Whether this association cascades the given types.
+     * @param types The types
+     * @return True if it does, false otherwise.
+     */
+    default boolean doesCascade(Relation.Cascade... types) {
+        if (ArrayUtils.isNotEmpty(types)) {
+            final String[] cascades = getAnnotationMetadata().stringValues(Relation.class, "cascade");
+            for (String cascade : cascades) {
+                if (cascade.equals("ALL")) {
+                    return true;
+                }
+                for (Relation.Cascade type : types) {
+                    final String n = type.name();
+                    if (n.equals(cascade)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

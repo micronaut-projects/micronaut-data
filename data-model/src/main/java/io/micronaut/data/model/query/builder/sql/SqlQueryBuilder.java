@@ -16,7 +16,6 @@
 package io.micronaut.data.model.query.builder.sql;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Creator;
@@ -61,6 +60,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String ANN_JOIN_TABLE = "io.micronaut.data.jdbc.annotation.JoinTable";
     private static final String BLANK_SPACE = " ";
     private static final String SEQ_SUFFIX = "_seq";
+    private static final String INSERT_INTO = "INSERT INTO ";
 
     private Dialect dialect = Dialect.ANSI;
 
@@ -145,6 +145,53 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
         dropStatements.add(sql);
         return dropStatements.toArray(new String[0]);
+    }
+
+    /**
+     * Builds a join table insert statement for a given entity and association.
+     * @param entity The entity
+     * @param association The association
+     * @return The join table insert statement
+     */
+    public @NonNull String buildJoinTableInsert(
+            @NonNull PersistentEntity entity,
+            @NonNull Association association) {
+        final AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
+        if (!isForeignKeyWithJoinTable(association)) {
+            throw new IllegalArgumentException("Join table inserts can only be built for foreign key associations that are mapped with a join table.");
+        } else {
+            NamingStrategy namingStrategy = entity.getNamingStrategy();
+            String joinTableName = associationMetadata
+                    .stringValue(ANN_JOIN_TABLE, "name")
+                    .orElseGet(() ->
+                            namingStrategy.mappedName(association)
+                    );
+
+            final PersistentEntity associatedEntity = association.getAssociatedEntity();
+            final String[] joinColumns = resolveJoinTableColumns(
+                    entity,
+                    associatedEntity,
+                    association,
+                    entity.getIdentity(),
+                    associatedEntity.getIdentity(),
+                    namingStrategy);
+
+            final String columnStrs =
+                    Arrays.stream(joinColumns).map(this::quote).collect(Collectors.joining(","));
+            return INSERT_INTO + quote(joinTableName) +
+                    " (" + columnStrs + ") VALUES (?, ?)";
+        }
+    }
+
+    /**
+     * Is the given association a foreign key reference that requires a join table.
+     * @param association The association.
+     * @return True if it is.
+     */
+    public static boolean isForeignKeyWithJoinTable(@NonNull Association association) {
+        return association.isForeignKey() &&
+                !association.getAnnotationMetadata()
+                        .stringValue(Relation.class, "mappedBy").isPresent();
     }
 
     /**
@@ -410,7 +457,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return props.stream().filter(p -> {
                 if (p instanceof Association) {
                     Association a = (Association) p;
-                    return a.isForeignKey() && !a.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").isPresent();
+                    return isForeignKeyWithJoinTable(a);
                 }
                 return false;
             }).map(p -> (Association) p).collect(Collectors.toList());
@@ -557,10 +604,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return joinType;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
-        StringBuilder builder = new StringBuilder("INSERT INTO ");
+        StringBuilder builder = new StringBuilder(INSERT_INTO);
         final String unescapedTableName = getTableName(entity);
         String tableName = unescapedTableName;
         boolean escape = shouldEscape(entity);
@@ -912,7 +959,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(joinAliases[i])
                                 .append(DOT)
                                 .append(getColumnName(mappedProp));
-                        alias = joinAliases[i];
                     } else {
                         target.append(joinType);
 
