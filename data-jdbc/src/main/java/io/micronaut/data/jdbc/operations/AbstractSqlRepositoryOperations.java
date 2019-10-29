@@ -433,7 +433,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
-            final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.H2);
+            final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.ANSI);
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 

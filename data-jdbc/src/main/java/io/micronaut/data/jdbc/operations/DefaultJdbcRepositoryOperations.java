@@ -123,7 +123,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
             String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
             if (targetDs.equalsIgnoreCase(dataSourceName)) {
-                Dialect dialect = beanDefinition.findAnnotation(JdbcRepository.class).flatMap(av -> av.enumValue("dialect", Dialect.class)).orElse(Dialect.ANSI);
+                Dialect dialect = beanDefinition.enumValue(JdbcRepository.class, "dialect", Dialect.class).orElseGet(() -> beanDefinition.enumValue(JdbcRepository.class, "dialectName", Dialect.class).orElse(Dialect.ANSI));
                 dialects.put(beanDefinition.getBeanType(), dialect);
                 QueryBuilder qb = queryBuilders.get(dialect);
                 if (qb == null) {
