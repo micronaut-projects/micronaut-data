@@ -28,7 +28,7 @@ dependencies {
     testCompile "org.testcontainers:oracle-xe:1.12.3"
     testCompile 'mysql:mysql-connector-java:8.0.18'
     testCompile 'org.postgresql:postgresql:42.2.8'
-    testCompile 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
+    testCompile 'com.microsoft.sqlserver:mssql-jdbc:8.1.0.jre13-preview'
 }
 
 //compileTestJava.options.fork = true
