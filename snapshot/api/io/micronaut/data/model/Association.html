@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":18,"i3":18,"i4":18};
+var methods = {"i0":18,"i1":18,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -105,6 +105,10 @@ var activeTableTab = "activeTableTab";
 <dt>All Known Subinterfaces:</dt>
 <dd><a href="../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a></dd>
 </dl>
+<dl>
+<dt>All Known Implementing Classes:</dt>
+<dd><a href="../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime">RuntimeAssociation</a></dd>
+</dl>
 <hr>
 <br>
 <pre>public interface <span class="typeNameLabel">Association</span>
@@ -150,24 +154,38 @@ extends <a href="../../../../io/micronaut/data/model/PersistentProperty.html" ti
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#doesCascade-io.micronaut.data.annotation.Relation.Cascade...-">doesCascade</a></span>(<a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>...&nbsp;types)</code>
+<div class="block">Whether this association cascades the given types.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getAliasName--">getAliasName</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getAssociatedEntity--">getAssociatedEntity</a></span>()</code>
 <div class="block">The associated entity if any.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
-<td class="colFirst"><code>default <a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getCascade--">getCascade</a></span>()</code>&nbsp;</td>
-</tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>default java.util.Optional&lt;? extends <a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getInverseSide--">getInverseSide</a></span>()</code>
+<div class="block">Retrieves the inverse side of the association.</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/annotation/Relation.Kind.html" title="enum in io.micronaut.data.annotation">Relation.Kind</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#getKind--">getKind</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#isBidirectional--">isBidirectional</a></span>()</code>
+<div class="block">Whether the relationship is bidirectional.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/Association.html#isForeignKey--">isForeignKey</a></span>()</code>&nbsp;</td>
 </tr>
@@ -242,17 +260,31 @@ extends <a href="../../../../io/micronaut/data/model/PersistentProperty.html" ti
 </dl>
 </li>
 </ul>
-<a name="getCascade--">
+<a name="getInverseSide--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>getCascade</h4>
-<pre>@NonNull
-default&nbsp;<a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>&nbsp;getCascade()</pre>
+<h4>getInverseSide</h4>
+<pre>default&nbsp;java.util.Optional&lt;? extends <a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;getInverseSide()</pre>
+<div class="block">Retrieves the inverse side of the association. If there is one.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The cascade handling</dd>
+<dd>The association.</dd>
+</dl>
+</li>
+</ul>
+<a name="isBidirectional--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isBidirectional</h4>
+<pre>default&nbsp;boolean&nbsp;isBidirectional()</pre>
+<div class="block">Whether the relationship is bidirectional.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it is bidirectional.</dd>
 </dl>
 </li>
 </ul>
@@ -273,13 +305,29 @@ default&nbsp;<a href="../../../../io/micronaut/data/annotation/Relation.Kind.htm
 <a name="isForeignKey--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>isForeignKey</h4>
 <pre>default&nbsp;boolean&nbsp;isForeignKey()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Whether the association is a foreign key association</dd>
+</dl>
+</li>
+</ul>
+<a name="doesCascade-io.micronaut.data.annotation.Relation.Cascade...-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>doesCascade</h4>
+<pre>default&nbsp;boolean&nbsp;doesCascade(<a href="../../../../io/micronaut/data/annotation/Relation.Cascade.html" title="enum in io.micronaut.data.annotation">Relation.Cascade</a>...&nbsp;types)</pre>
+<div class="block">Whether this association cascades the given types.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>types</code> - The types</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if it does, false otherwise.</dd>
 </dl>
 </li>
 </ul>

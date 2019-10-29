@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":17,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":18,"i10":18,"i11":18,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":17,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":6,"i20":6,"i21":18,"i22":6,"i23":6,"i24":6,"i25":6,"i26":6,"i27":6,"i28":6,"i29":6,"i30":6,"i31":6,"i32":6,"i33":6,"i34":6,"i35":6,"i36":6,"i37":6,"i38":18,"i39":18,"i40":6,"i41":6,"i42":6,"i43":6,"i44":6,"i45":6,"i46":6,"i47":6,"i48":6,"i49":6,"i50":6,"i51":6,"i52":6,"i53":6,"i54":6,"i55":6,"i56":6,"i57":6,"i58":6,"i59":6,"i60":6,"i61":6,"i62":6,"i63":6,"i64":6,"i65":6,"i66":6,"i67":6};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -558,65 +558,252 @@ extends <a href="../../../../../io/micronaut/data/model/query/Criteria.html" tit
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#allEq-java.util.Map-">allEq</a></span>(java.util.Map&lt;java.lang.String,<a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&gt;&nbsp;propertyValues)</code>
+<div class="block">Apply an "equals" constraint to each property in the key set of a <tt>Map</tt>.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#and-io.micronaut.data.model.query.Criteria-">and</a></span>(<a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</code>
+<div class="block">Creates a logical conjunction.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#between-java.lang.String-io.micronaut.data.model.query.QueryParameter-io.micronaut.data.model.query.QueryParameter-">between</a></span>(java.lang.String&nbsp;propertyName,
+       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;start,
+       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;finish)</code>
+<div class="block">Restricts the results by the given property value range (inclusive).</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#contains-java.lang.String-io.micronaut.data.model.query.QueryParameter-">contains</a></span>(java.lang.String&nbsp;propertyName,
+        <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Restricts the property match to strings containing with the given value.</div>
+</td>
+</tr>
+<tr id="i5" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#endsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">endsWith</a></span>(java.lang.String&nbsp;propertyName,
+        <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Restricts the property match to strings ending with the given value.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#eq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">eq</a></span>(java.lang.String&nbsp;propertyName,
+  <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates an "equals" Criterion based on the specified property name and value.</div>
+</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#eqAll-java.lang.String-io.micronaut.data.model.query.Criteria-">eqAll</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is equals to all the given returned values.</div>
+</td>
+</tr>
+<tr id="i8" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#eqProperty-java.lang.String-java.lang.String-">eqProperty</a></span>(java.lang.String&nbsp;propertyName,
+          java.lang.String&nbsp;otherPropertyName)</code>
+<div class="block">Constrains a property to be equal to a specified other property.</div>
+</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>static <a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#from-io.micronaut.data.model.PersistentEntity-">from</a></span>(<a href="../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code>
 <div class="block">Creates a query from the given entity.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i10" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#ge-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ge</a></span>(java.lang.String&nbsp;property,
+  <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
+</td>
+</tr>
+<tr id="i11" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#geAll-java.lang.String-io.micronaut.data.model.query.Criteria-">geAll</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than or equals to all the given returned values.</div>
+</td>
+</tr>
+<tr id="i12" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#geProperty-java.lang.String-java.lang.String-">geProperty</a></span>(java.lang.String&nbsp;propertyName,
+          java.lang.String&nbsp;otherPropertyName)</code>
+<div class="block">Constrains a property to be greater than or equal to a specified other property.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#geSome-java.lang.String-io.micronaut.data.model.query.Criteria-">geSome</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than or equal to some of the given values.</div>
+</td>
+</tr>
+<tr id="i14" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.Junction.html" title="class in io.micronaut.data.model.query">QueryModel.Junction</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getCriteria--">getCriteria</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>java.util.Optional&lt;<a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getJoinPath-java.lang.String-">getJoinPath</a></span>(java.lang.String&nbsp;path)</code>
 <div class="block">Obtain the join type for the given association.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>java.util.Collection&lt;<a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getJoinPaths--">getJoinPaths</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getMax--">getMax</a></span>()</code>
 <div class="block">Get the pageSize results to return.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getOffset--">getOffset</a></span>()</code>
 <div class="block">Get the offset of the query.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getPersistentEntity--">getPersistentEntity</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>java.util.List&lt;<a href="../../../../../io/micronaut/data/model/query/QueryModel.Projection.html" title="class in io.micronaut.data.model.query">QueryModel.Projection</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getProjections--">getProjections</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#getSort--">getSort</a></span>()</code>
 <div class="block">The sort to apply.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i22" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#gt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">gt</a></span>(java.lang.String&nbsp;property,
+  <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
+</td>
+</tr>
+<tr id="i23" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#gtAll-java.lang.String-io.micronaut.data.model.query.Criteria-">gtAll</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than all the given returned values.</div>
+</td>
+</tr>
+<tr id="i24" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#gte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">gte</a></span>(java.lang.String&nbsp;property,
+   <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
+</td>
+</tr>
+<tr id="i25" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#gtProperty-java.lang.String-java.lang.String-">gtProperty</a></span>(java.lang.String&nbsp;propertyName,
+          java.lang.String&nbsp;otherPropertyName)</code>
+<div class="block">Constrains a property to be greater than a specified other property.</div>
+</td>
+</tr>
+<tr id="i26" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#gtSome-java.lang.String-io.micronaut.data.model.query.Criteria-">gtSome</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than some of the given values.</div>
+</td>
+</tr>
+<tr id="i27" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#idEq-io.micronaut.data.model.query.QueryParameter-">idEq</a></span>(<a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates an "equals" Criterion based on the specified property name and value.</div>
+</td>
+</tr>
+<tr id="i28" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#idEquals-io.micronaut.data.model.query.QueryParameter-">idEquals</a></span>(<a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates a criterion that restricts the id to the given value.</div>
+</td>
+</tr>
+<tr id="i29" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#ilike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ilike</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates an ilike Criterion based on the specified property name and value.</div>
+</td>
+</tr>
+<tr id="i30" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#inList-java.lang.String-io.micronaut.data.model.query.QueryModel-">inList</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</code>
+<div class="block">Creates an "in" Criterion using a subquery.</div>
+</td>
+</tr>
+<tr id="i31" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#inList-java.lang.String-io.micronaut.data.model.query.QueryParameter-">inList</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates an "in" Criterion based on the specified property name and list of values.</div>
+</td>
+</tr>
+<tr id="i32" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#isEmpty-java.lang.String-">isEmpty</a></span>(java.lang.String&nbsp;propertyName)</code>
+<div class="block">Creates a criterion that asserts the given property is empty (such as a blank string).</div>
+</td>
+</tr>
+<tr id="i33" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#isFalse-java.lang.String-">isFalse</a></span>(java.lang.String&nbsp;propertyName)</code>
+<div class="block">Creates a criterion that asserts the given property is false.</div>
+</td>
+</tr>
+<tr id="i34" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#isNotEmpty-java.lang.String-">isNotEmpty</a></span>(java.lang.String&nbsp;propertyName)</code>
+<div class="block">Creates a criterion that asserts the given property is not empty.</div>
+</td>
+</tr>
+<tr id="i35" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#isNotNull-java.lang.String-">isNotNull</a></span>(java.lang.String&nbsp;propertyName)</code>
+<div class="block">Creates a criterion that asserts the given property is not null.</div>
+</td>
+</tr>
+<tr id="i36" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#isNull-java.lang.String-">isNull</a></span>(java.lang.String&nbsp;propertyName)</code>
+<div class="block">Creates a criterion that asserts the given property is null.</div>
+</td>
+</tr>
+<tr id="i37" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#isTrue-java.lang.String-">isTrue</a></span>(java.lang.String&nbsp;propertyName)</code>
+<div class="block">Creates a criterion that asserts the given property is true.</div>
+</td>
+</tr>
+<tr id="i38" class="altColor">
 <td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#join-io.micronaut.data.model.Association-">join</a></span>(<a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</code>
 <div class="block">Join on the given association.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i39" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#join-io.micronaut.data.model.Association-io.micronaut.data.annotation.Join.Type-">join</a></span>(<a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
     <a href="../../../../../io/micronaut/data/annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType)</code>
 <div class="block">Join on the given association.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i40" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#join-java.lang.String-io.micronaut.data.model.Association-io.micronaut.data.annotation.Join.Type-java.lang.String-">join</a></span>(java.lang.String&nbsp;path,
     <a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
@@ -625,36 +812,188 @@ extends <a href="../../../../../io/micronaut/data/model/query/Criteria.html" tit
 <div class="block">Join on the given association.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i41" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#le-java.lang.String-io.micronaut.data.model.query.QueryParameter-">le</a></span>(java.lang.String&nbsp;property,
+  <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Used to restrict a value to be less than or equal to the given value.</div>
+</td>
+</tr>
+<tr id="i42" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#leAll-java.lang.String-io.micronaut.data.model.query.Criteria-">leAll</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is less than or equal to all the given returned values.</div>
+</td>
+</tr>
+<tr id="i43" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#leProperty-java.lang.String-java.lang.String-">leProperty</a></span>(java.lang.String&nbsp;propertyName,
+          java.lang.String&nbsp;otherPropertyName)</code>
+<div class="block">Constrains a property to be less than or equal to a specified other property.</div>
+</td>
+</tr>
+<tr id="i44" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#leSome-java.lang.String-io.micronaut.data.model.query.Criteria-">leSome</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is less than or equal to some of the given values.</div>
+</td>
+</tr>
+<tr id="i45" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#like-java.lang.String-io.micronaut.data.model.query.QueryParameter-">like</a></span>(java.lang.String&nbsp;propertyName,
+    <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates a like Criterion based on the specified property name and value.</div>
+</td>
+</tr>
+<tr id="i46" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#lt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lt</a></span>(java.lang.String&nbsp;property,
+  <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Used to restrict a value to be less than or equal to the given value.</div>
+</td>
+</tr>
+<tr id="i47" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#ltAll-java.lang.String-io.micronaut.data.model.query.Criteria-">ltAll</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is less than all the given returned values.</div>
+</td>
+</tr>
+<tr id="i48" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#lte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lte</a></span>(java.lang.String&nbsp;property,
+   <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Used to restrict a value to be less than or equal to the given value.</div>
+</td>
+</tr>
+<tr id="i49" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#ltProperty-java.lang.String-java.lang.String-">ltProperty</a></span>(java.lang.String&nbsp;propertyName,
+          java.lang.String&nbsp;otherPropertyName)</code>
+<div class="block">Constrains a property to be less than a specified other property.</div>
+</td>
+</tr>
+<tr id="i50" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#ltSome-java.lang.String-io.micronaut.data.model.query.Criteria-">ltSome</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
+<div class="block">Creates a subquery criterion that ensures the given property is less than some of the given values.</div>
+</td>
+</tr>
+<tr id="i51" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#max-int-">max</a></span>(int&nbsp;max)</code>
 <div class="block">Limits the maximum result.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i52" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#ne-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ne</a></span>(java.lang.String&nbsp;propertyName,
+  <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates a "not equals" Criterion based on the specified property name and value.</div>
+</td>
+</tr>
+<tr id="i53" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#neProperty-java.lang.String-java.lang.String-">neProperty</a></span>(java.lang.String&nbsp;propertyName,
+          java.lang.String&nbsp;otherPropertyName)</code>
+<div class="block">Constrains a property to be not equal to a specified other property.</div>
+</td>
+</tr>
+<tr id="i54" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#not-io.micronaut.data.model.query.Criteria-">not</a></span>(<a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</code>
+<div class="block">Creates a logical negation.</div>
+</td>
+</tr>
+<tr id="i55" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#notIn-java.lang.String-io.micronaut.data.model.query.QueryModel-">notIn</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</code>
+<div class="block">Creates a negated "in" Criterion using a subquery.</div>
+</td>
+</tr>
+<tr id="i56" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#offset-long-">offset</a></span>(long&nbsp;offset)</code>
 <div class="block">Sets the offset.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i57" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#or-io.micronaut.data.model.query.Criteria-">or</a></span>(<a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</code>
+<div class="block">Creates a logical disjunction.</div>
+</td>
+</tr>
+<tr id="i58" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/ProjectionList.html" title="interface in io.micronaut.data.model.query">ProjectionList</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#projections--">projections</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i59" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#rlike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">rlike</a></span>(java.lang.String&nbsp;propertyName,
+     <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Creates an rlike Criterion based on the specified property name and value.</div>
+</td>
+</tr>
+<tr id="i60" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sizeEq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeEq</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
+<div class="block">Creates a Criterion that constrains a collection property by size.</div>
+</td>
+</tr>
+<tr id="i61" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sizeGe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGe</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
+<div class="block">Creates a Criterion that constrains a collection property to be greater than or equal to the given size.</div>
+</td>
+</tr>
+<tr id="i62" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sizeGt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGt</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
+<div class="block">Creates a Criterion that constrains a collection property to be greater than the given size.</div>
+</td>
+</tr>
+<tr id="i63" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sizeLe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLe</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
+<div class="block">Creates a Criterion that constrains a collection property to be less than or equal to the given size.</div>
+</td>
+</tr>
+<tr id="i64" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sizeLt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLt</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
+<div class="block">Creates a Criterion that constrains a collection property to be less than to the given size.</div>
+</td>
+</tr>
+<tr id="i65" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sizeNe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeNe</a></span>(java.lang.String&nbsp;propertyName,
+      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
+<div class="block">Creates a Criterion that constrains a collection property to be not equal to the given size.</div>
+</td>
+</tr>
+<tr id="i66" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#sort-io.micronaut.data.model.Sort-">sort</a></span>(<a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code>
 <div class="block">Apply the given sort.</div>
 </td>
 </tr>
+<tr id="i67" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#startsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">startsWith</a></span>(java.lang.String&nbsp;propertyName,
+          <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
+<div class="block">Restricts the property match to strings starting with the given value.</div>
+</td>
+</tr>
 </table>
-<ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.query.Criteria">
-<!--   -->
-</a>
-<h3>Methods inherited from interface&nbsp;io.micronaut.data.model.query.<a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></h3>
-<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#allEq-java.util.Map-">allEq</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#and-io.micronaut.data.model.query.Criteria-">and</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#between-java.lang.String-io.micronaut.data.model.query.QueryParameter-io.micronaut.data.model.query.QueryParameter-">between</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#contains-java.lang.String-io.micronaut.data.model.query.QueryParameter-">contains</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#endsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">endsWith</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#eq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">eq</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#eqAll-java.lang.String-io.micronaut.data.model.query.Criteria-">eqAll</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#eqProperty-java.lang.String-java.lang.String-">eqProperty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#ge-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ge</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#geAll-java.lang.String-io.micronaut.data.model.query.Criteria-">geAll</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#geProperty-java.lang.String-java.lang.String-">geProperty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#geSome-java.lang.String-io.micronaut.data.model.query.Criteria-">geSome</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#gt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">gt</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtAll-java.lang.String-io.micronaut.data.model.query.Criteria-">gtAll</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#gte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">gte</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtProperty-java.lang.String-java.lang.String-">gtProperty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtSome-java.lang.String-io.micronaut.data.model.query.Criteria-">gtSome</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#idEq-io.micronaut.data.model.query.QueryParameter-">idEq</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#idEquals-io.micronaut.data.model.query.QueryParameter-">idEquals</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#ilike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ilike</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#inList-java.lang.String-io.micronaut.data.model.query.QueryModel-">inList</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#inList-java.lang.String-io.micronaut.data.model.query.QueryParameter-">inList</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#isEmpty-java.lang.String-">isEmpty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#isFalse-java.lang.String-">isFalse</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNotEmpty-java.lang.String-">isNotEmpty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNotNull-java.lang.String-">isNotNull</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNull-java.lang.String-">isNull</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#isTrue-java.lang.String-">isTrue</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#le-java.lang.String-io.micronaut.data.model.query.QueryParameter-">le</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#leAll-java.lang.String-io.micronaut.data.model.query.Criteria-">leAll</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#leProperty-java.lang.String-java.lang.String-">leProperty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#leSome-java.lang.String-io.micronaut.data.model.query.Criteria-">leSome</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#like-java.lang.String-io.micronaut.data.model.query.QueryParameter-">like</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#lt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lt</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltAll-java.lang.String-io.micronaut.data.model.query.Criteria-">ltAll</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#lte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lte</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltProperty-java.lang.String-java.lang.String-">ltProperty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltSome-java.lang.String-io.micronaut.data.model.query.Criteria-">ltSome</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#ne-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ne</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#neProperty-java.lang.String-java.lang.String-">neProperty</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#not-io.micronaut.data.model.query.Criteria-">not</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#notIn-java.lang.String-io.micronaut.data.model.query.QueryModel-">notIn</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#or-io.micronaut.data.model.query.Criteria-">or</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#rlike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">rlike</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeEq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeEq</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeGe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGe</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeGt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGt</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeLe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLe</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeLt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLt</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeNe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeNe</a>, <a href="../../../../../io/micronaut/data/model/query/Criteria.html#startsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">startsWith</a></code></li>
-</ul>
 </li>
 </ul>
 </li>
@@ -669,6 +1008,1191 @@ extends <a href="../../../../../io/micronaut/data/model/query/Criteria.html" tit
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="idEquals-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>idEquals</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;idEquals(<a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#idEquals-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that restricts the id to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#idEquals-io.micronaut.data.model.query.QueryParameter-">idEquals</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="isEmpty-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isEmpty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;isEmpty(@NonNull
+                            java.lang.String&nbsp;propertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isEmpty-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that asserts the given property is empty (such as a blank string).</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isEmpty-java.lang.String-">isEmpty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="isNotEmpty-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isNotEmpty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;isNotEmpty(@NonNull
+                               java.lang.String&nbsp;propertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNotEmpty-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that asserts the given property is not empty.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNotEmpty-java.lang.String-">isNotEmpty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="isNull-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isNull</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;isNull(@NonNull
+                           java.lang.String&nbsp;propertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNull-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that asserts the given property is null.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNull-java.lang.String-">isNull</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="isTrue-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isTrue</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;isTrue(@NonNull
+                           java.lang.String&nbsp;propertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isTrue-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that asserts the given property is true.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isTrue-java.lang.String-">isTrue</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="isFalse-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isFalse</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;isFalse(@NonNull
+                            java.lang.String&nbsp;propertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isFalse-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that asserts the given property is false.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isFalse-java.lang.String-">isFalse</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="isNotNull-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isNotNull</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;isNotNull(java.lang.String&nbsp;propertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNotNull-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Creates a criterion that asserts the given property is not null.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#isNotNull-java.lang.String-">isNotNull</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="eq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>eq</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;eq(java.lang.String&nbsp;propertyName,
+                       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#eq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates an "equals" Criterion based on the specified property name and value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#eq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">eq</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="idEq-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>idEq</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;idEq(<a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#idEq-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates an "equals" Criterion based on the specified property name and value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#idEq-io.micronaut.data.model.query.QueryParameter-">idEq</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="ne-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ne</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;ne(@NonNull
+                       java.lang.String&nbsp;propertyName,
+                       @NonNull
+                       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ne-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a "not equals" Criterion based on the specified property name and value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ne-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ne</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="between-java.lang.String-io.micronaut.data.model.query.QueryParameter-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>between</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;between(@NonNull
+                            java.lang.String&nbsp;propertyName,
+                            @NonNull
+                            <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;start,
+                            @NonNull
+                            <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;finish)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#between-java.lang.String-io.micronaut.data.model.query.QueryParameter-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Restricts the results by the given property value range (inclusive).</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#between-java.lang.String-io.micronaut.data.model.query.QueryParameter-io.micronaut.data.model.query.QueryParameter-">between</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>start</code> - The start of the range</dd>
+<dd><code>finish</code> - The end of the range</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="gte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>gte</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;gte(@NonNull
+                        java.lang.String&nbsp;property,
+                        @NonNull
+                        <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">gte</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The Criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="ge-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ge</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;ge(@NonNull
+                       java.lang.String&nbsp;property,
+                       @NonNull
+                       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ge-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ge-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ge</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The Criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="gt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>gt</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;gt(@NonNull
+                       java.lang.String&nbsp;property,
+                       @NonNull
+                       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Used to restrict a value to be greater than or equal to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">gt</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The Criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="lte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>lte</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;lte(@NonNull
+                        java.lang.String&nbsp;property,
+                        @NonNull
+                        <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#lte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Used to restrict a value to be less than or equal to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#lte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lte</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The Criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="le-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>le</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;le(@NonNull
+                       java.lang.String&nbsp;property,
+                       @NonNull
+                       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#le-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Used to restrict a value to be less than or equal to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#le-java.lang.String-io.micronaut.data.model.query.QueryParameter-">le</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The Criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="lt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>lt</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;lt(@NonNull
+                       java.lang.String&nbsp;property,
+                       @NonNull
+                       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#lt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Used to restrict a value to be less than or equal to the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#lt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lt</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>property</code> - The property</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The Criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="like-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>like</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;like(@NonNull
+                         java.lang.String&nbsp;propertyName,
+                         @NonNull
+                         <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#like-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a like Criterion based on the specified property name and value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#like-java.lang.String-io.micronaut.data.model.query.QueryParameter-">like</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="startsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>startsWith</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;startsWith(@NonNull
+                               java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#startsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Restricts the property match to strings starting with the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#startsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">startsWith</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="endsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>endsWith</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;endsWith(@NonNull
+                             java.lang.String&nbsp;propertyName,
+                             @NonNull
+                             <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#endsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Restricts the property match to strings ending with the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#endsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">endsWith</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="contains-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>contains</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;contains(@NonNull
+                             java.lang.String&nbsp;propertyName,
+                             @NonNull
+                             <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#contains-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Restricts the property match to strings containing with the given value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#contains-java.lang.String-io.micronaut.data.model.query.QueryParameter-">contains</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="ilike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ilike</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;ilike(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ilike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates an ilike Criterion based on the specified property name and value. Unlike a like condition, ilike is case insensitive.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ilike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ilike</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="rlike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>rlike</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;rlike(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#rlike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates an rlike Criterion based on the specified property name and value.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#rlike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">rlike</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="and-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>and</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;and(@NonNull
+                        <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#and-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a logical conjunction.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#and-io.micronaut.data.model.query.Criteria-">and</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>other</code> - The other criteria</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="or-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>or</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;or(@NonNull
+                       <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#or-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a logical disjunction.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#or-io.micronaut.data.model.query.Criteria-">or</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>other</code> - The other criteria</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="not-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>not</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;not(@NonNull
+                        <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#not-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a logical negation.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#not-io.micronaut.data.model.query.Criteria-">not</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>other</code> - The other criteria</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="inList-java.lang.String-io.micronaut.data.model.query.QueryModel-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>inList</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;inList(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#inList-java.lang.String-io.micronaut.data.model.query.QueryModel-">Criteria</a></code></span></div>
+<div class="block">Creates an "in" Criterion using a subquery.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#inList-java.lang.String-io.micronaut.data.model.query.QueryModel-">inList</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>subquery</code> - The subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="inList-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>inList</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;inList(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#inList-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates an "in" Criterion based on the specified property name and list of values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#inList-java.lang.String-io.micronaut.data.model.query.QueryParameter-">inList</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>parameter</code> - The parameter that provides the value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="notIn-java.lang.String-io.micronaut.data.model.query.QueryModel-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>notIn</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;notIn(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#notIn-java.lang.String-io.micronaut.data.model.query.QueryModel-">Criteria</a></code></span></div>
+<div class="block">Creates a negated "in" Criterion using a subquery.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#notIn-java.lang.String-io.micronaut.data.model.query.QueryModel-">notIn</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>subquery</code> - The subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeEq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeEq</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;sizeEq(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeEq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a Criterion that constrains a collection property by size.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeEq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeEq</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>size</code> - The size to constrain by</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeGt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeGt</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;sizeGt(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeGt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a Criterion that constrains a collection property to be greater than the given size.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeGt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGt</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>size</code> - The size to constrain by</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeGe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeGe</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;sizeGe(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeGe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a Criterion that constrains a collection property to be greater than or equal to the given size.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeGe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGe</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>size</code> - The size to constrain by</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeLe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeLe</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;sizeLe(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeLe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a Criterion that constrains a collection property to be less than or equal to the given size.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeLe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLe</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>size</code> - The size to constrain by</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeLt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeLt</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;sizeLt(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeLt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a Criterion that constrains a collection property to be less than to the given size.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeLt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLt</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>size</code> - The size to constrain by</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="sizeNe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>sizeNe</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;sizeNe(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeNe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">Criteria</a></code></span></div>
+<div class="block">Creates a Criterion that constrains a collection property to be not equal to the given size.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#sizeNe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeNe</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>size</code> - The size to constrain by</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="eqProperty-java.lang.String-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>eqProperty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;eqProperty(@NonNull
+                               java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               java.lang.String&nbsp;otherPropertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#eqProperty-java.lang.String-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Constrains a property to be equal to a specified other property.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#eqProperty-java.lang.String-java.lang.String-">eqProperty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property</dd>
+<dd><code>otherPropertyName</code> - The other property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="neProperty-java.lang.String-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>neProperty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;neProperty(@NonNull
+                               java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               java.lang.String&nbsp;otherPropertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#neProperty-java.lang.String-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Constrains a property to be not equal to a specified other property.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#neProperty-java.lang.String-java.lang.String-">neProperty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property</dd>
+<dd><code>otherPropertyName</code> - The other property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="gtProperty-java.lang.String-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>gtProperty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;gtProperty(@NonNull
+                               java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               java.lang.String&nbsp;otherPropertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtProperty-java.lang.String-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Constrains a property to be greater than a specified other property.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtProperty-java.lang.String-java.lang.String-">gtProperty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property</dd>
+<dd><code>otherPropertyName</code> - The other property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="geProperty-java.lang.String-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>geProperty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;geProperty(@NonNull
+                               java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               java.lang.String&nbsp;otherPropertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#geProperty-java.lang.String-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Constrains a property to be greater than or equal to a specified other property.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#geProperty-java.lang.String-java.lang.String-">geProperty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property</dd>
+<dd><code>otherPropertyName</code> - The other property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="ltProperty-java.lang.String-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ltProperty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;ltProperty(@NonNull
+                               java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               java.lang.String&nbsp;otherPropertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltProperty-java.lang.String-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Constrains a property to be less than a specified other property.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltProperty-java.lang.String-java.lang.String-">ltProperty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property</dd>
+<dd><code>otherPropertyName</code> - The other property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="leProperty-java.lang.String-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>leProperty</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;leProperty(java.lang.String&nbsp;propertyName,
+                               @NonNull
+                               java.lang.String&nbsp;otherPropertyName)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#leProperty-java.lang.String-java.lang.String-">Criteria</a></code></span></div>
+<div class="block">Constrains a property to be less than or equal to a specified other property.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#leProperty-java.lang.String-java.lang.String-">leProperty</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property</dd>
+<dd><code>otherPropertyName</code> - The other property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criteria</dd>
+</dl>
+</li>
+</ul>
+<a name="allEq-java.util.Map-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>allEq</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;allEq(@NonNull
+                          java.util.Map&lt;java.lang.String,<a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&gt;&nbsp;propertyValues)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#allEq-java.util.Map-">Criteria</a></code></span></div>
+<div class="block">Apply an "equals" constraint to each property in the key set of a <tt>Map</tt>.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#allEq-java.util.Map-">allEq</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyValues</code> - a map from property names to values</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>Criterion</dd>
+</dl>
+</li>
+</ul>
+<a name="eqAll-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>eqAll</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;eqAll(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#eqAll-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is equals to all the given returned values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#eqAll-java.lang.String-io.micronaut.data.model.query.Criteria-">eqAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - A subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="gtAll-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>gtAll</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;gtAll(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtAll-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than all the given returned values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtAll-java.lang.String-io.micronaut.data.model.query.Criteria-">gtAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - A subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="ltAll-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ltAll</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;ltAll(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltAll-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is less than all the given returned values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltAll-java.lang.String-io.micronaut.data.model.query.Criteria-">ltAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - A subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="geAll-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>geAll</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;geAll(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#geAll-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than or equals to all the given returned values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#geAll-java.lang.String-io.micronaut.data.model.query.Criteria-">geAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - A subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="leAll-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>leAll</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;leAll(@NonNull
+                          java.lang.String&nbsp;propertyName,
+                          @NonNull
+                          <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#leAll-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is less than or equal to all the given returned values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#leAll-java.lang.String-io.micronaut.data.model.query.Criteria-">leAll</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - A subquery</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This criterion instance</dd>
+</dl>
+</li>
+</ul>
+<a name="gtSome-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>gtSome</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;gtSome(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtSome-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than some of the given values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#gtSome-java.lang.String-io.micronaut.data.model.query.Criteria-">gtSome</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - The property value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This Criteria instance</dd>
+</dl>
+</li>
+</ul>
+<a name="geSome-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>geSome</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;geSome(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#geSome-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is greater than or equal to some of the given values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#geSome-java.lang.String-io.micronaut.data.model.query.Criteria-">geSome</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - The property value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This Criteria instance</dd>
+</dl>
+</li>
+</ul>
+<a name="ltSome-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ltSome</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;ltSome(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltSome-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is less than some of the given values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#ltSome-java.lang.String-io.micronaut.data.model.query.Criteria-">ltSome</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - The property value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This Criteria instance</dd>
+</dl>
+</li>
+</ul>
+<a name="leSome-java.lang.String-io.micronaut.data.model.query.Criteria-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>leSome</h4>
+<pre>@NonNull
+<a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;leSome(@NonNull
+                           java.lang.String&nbsp;propertyName,
+                           @NonNull
+                           <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#leSome-java.lang.String-io.micronaut.data.model.query.Criteria-">Criteria</a></code></span></div>
+<div class="block">Creates a subquery criterion that ensures the given property is less than or equal to some of the given values.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/Criteria.html#leSome-java.lang.String-io.micronaut.data.model.query.Criteria-">leSome</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>propertyName</code> - The property name</dd>
+<dd><code>propertyValue</code> - The property value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>This Criteria instance</dd>
+</dl>
+</li>
+</ul>
 <a name="getJoinPaths--">
 <!--   -->
 </a>

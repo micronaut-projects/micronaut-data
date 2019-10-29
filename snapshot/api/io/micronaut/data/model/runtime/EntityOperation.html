@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6};
+var methods = {"i0":6,"i1":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -148,6 +148,10 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRepositoryType--">getRepositoryType</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">The root entity type.</div>
@@ -192,7 +196,7 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 <a name="getRootEntity--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getRootEntity</h4>
 <pre>@NonNull
@@ -201,6 +205,20 @@ java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/Entit
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The root entity type</dd>
+</dl>
+</li>
+</ul>
+<a name="getRepositoryType--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getRepositoryType</h4>
+<pre>@NonNull
+java.lang.Class&lt;?&gt;&nbsp;getRepositoryType()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The repository type.</dd>
 </dl>
 </li>
 </ul>
