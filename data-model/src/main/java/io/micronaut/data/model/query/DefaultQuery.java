@@ -293,61 +293,61 @@ public class DefaultQuery implements QueryModel {
 
     @NonNull
     @Override
-    public Criteria eqAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel eqAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria gtAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel gtAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria ltAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel ltAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria geAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel geAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria leAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel leAll(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria gtSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel gtSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria geSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel geSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria ltSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel ltSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria leSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
+    public QueryModel leSome(@NonNull String propertyName, @NonNull Criteria propertyValue) {
         return null;
     }
 
     @NonNull
     @Override
-    public Criteria idEquals(QueryParameter parameter) {
+    public QueryModel idEquals(QueryParameter parameter) {
         return null;
     }
 
@@ -389,14 +389,14 @@ public class DefaultQuery implements QueryModel {
 
     @NonNull
     @Override
-    public Criteria isTrue(@NonNull String propertyName) {
+    public QueryModel isTrue(@NonNull String propertyName) {
         criteria.add(Restrictions.isTrue(propertyName));
         return this;
     }
 
     @NonNull
     @Override
-    public Criteria isFalse(@NonNull String propertyName) {
+    public QueryModel isFalse(@NonNull String propertyName) {
         criteria.add(Restrictions.isFalse(propertyName));
         return this;
     }
@@ -428,7 +428,7 @@ public class DefaultQuery implements QueryModel {
 
     @NonNull
     @Override
-    public Criteria ne(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel ne(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.ne(propertyName, parameter));
         return this;
     }
@@ -519,21 +519,21 @@ public class DefaultQuery implements QueryModel {
 
     @NonNull
     @Override
-    public Criteria startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.startsWith(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public Criteria endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.endsWith(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public Criteria contains(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel contains(@NonNull String propertyName, @NonNull QueryParameter parameter) {
         criteria.add(Restrictions.contains(propertyName, parameter));
         return this;
     }
@@ -554,21 +554,21 @@ public class DefaultQuery implements QueryModel {
 
     @NonNull
     @Override
-    public Criteria and(@NonNull Criteria other) {
+    public QueryModel and(@NonNull Criteria other) {
         // TODO
         return this;
     }
 
     @NonNull
     @Override
-    public Criteria or(@NonNull Criteria other) {
+    public QueryModel or(@NonNull Criteria other) {
         // TODO
         return this;
     }
 
     @NonNull
     @Override
-    public Criteria not(@NonNull Criteria other) {
+    public QueryModel not(@NonNull Criteria other) {
         // TODO
         return this;
     }
