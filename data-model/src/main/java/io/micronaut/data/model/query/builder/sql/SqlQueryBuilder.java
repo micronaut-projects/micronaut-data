@@ -61,6 +61,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String BLANK_SPACE = " ";
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
+    private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
 
     private Dialect dialect = Dialect.ANSI;
 
@@ -71,8 +72,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Creator
     public SqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         if (annotationMetadata != null) {
-            this.dialect = annotationMetadata.findAnnotation(Repository.class)
-                                            .flatMap(av -> av.enumValue("dialect", Dialect.class))
+            this.dialect = annotationMetadata.enumValue(JDBC_REPO_ANNOTATION, "dialect", Dialect.class)
                                             .orElse(Dialect.ANSI);
         }
     }
