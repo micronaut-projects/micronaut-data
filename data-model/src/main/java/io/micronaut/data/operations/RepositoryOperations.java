@@ -155,6 +155,18 @@ public interface RepositoryOperations {
     );
 
     /**
+     * Executes a delete for the given query and parameter values. If it is possible to
+     * return the number of objects deleted, then do so.
+     * @param preparedQuery The prepared query
+     * @return An optional number with the count of the number of records updated
+     */
+    default @NonNull Optional<Number> executeDelete(
+            @NonNull PreparedQuery<?, Number> preparedQuery
+    ) {
+        return executeUpdate(preparedQuery);
+    }
+
+    /**
      * Deletes all the entities of the given type.
      * @param operation The operation
      * @param <T> The generic type

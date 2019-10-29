@@ -23,10 +23,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Main interface for constructing queries at either compilation or runtime.
@@ -35,6 +32,210 @@ import java.util.Optional;
  * @since 1.0
  */
 public interface QueryModel extends Criteria {
+
+    @NonNull
+    @Override
+    QueryModel idEquals(QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel isEmpty(@NonNull String propertyName);
+
+    @NonNull
+    @Override
+    QueryModel isNotEmpty(@NonNull String propertyName);
+
+    @NonNull
+    @Override
+    QueryModel isNull(@NonNull String propertyName);
+
+    @NonNull
+    @Override
+    QueryModel isTrue(@NonNull String propertyName);
+
+    @NonNull
+    @Override
+    QueryModel isFalse(@NonNull String propertyName);
+
+    @NonNull
+    @Override
+    QueryModel isNotNull(String propertyName);
+
+    @NonNull
+    @Override
+    QueryModel eq(String propertyName, QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel idEq(QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel ne(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel between(@NonNull String propertyName, @NonNull QueryParameter start, @NonNull QueryParameter finish);
+
+    @NonNull
+    @Override
+    QueryModel gte(@NonNull String property, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel ge(@NonNull String property, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel gt(@NonNull String property, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel lte(@NonNull String property, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel le(@NonNull String property, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel lt(@NonNull String property, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel like(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel contains(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel ilike(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel rlike(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel and(@NonNull Criteria other);
+
+    @NonNull
+    @Override
+    QueryModel or(@NonNull Criteria other);
+
+    @NonNull
+    @Override
+    QueryModel not(@NonNull Criteria other);
+
+    @NonNull
+    @Override
+    QueryModel inList(@NonNull String propertyName, @NonNull QueryModel subquery);
+
+    @NonNull
+    @Override
+    QueryModel inList(@NonNull String propertyName, @NonNull QueryParameter parameter);
+
+    @NonNull
+    @Override
+    QueryModel notIn(@NonNull String propertyName, @NonNull QueryModel subquery);
+
+    @NonNull
+    @Override
+    QueryModel sizeEq(@NonNull String propertyName, @NonNull QueryParameter size);
+
+    @NonNull
+    @Override
+    QueryModel sizeGt(@NonNull String propertyName, @NonNull QueryParameter size);
+
+    @NonNull
+    @Override
+    QueryModel sizeGe(@NonNull String propertyName, @NonNull QueryParameter size);
+
+    @NonNull
+    @Override
+    QueryModel sizeLe(@NonNull String propertyName, @NonNull QueryParameter size);
+
+    @NonNull
+    @Override
+    QueryModel sizeLt(@NonNull String propertyName, @NonNull QueryParameter size);
+
+    @NonNull
+    @Override
+    QueryModel sizeNe(@NonNull String propertyName, @NonNull QueryParameter size);
+
+    @NonNull
+    @Override
+    QueryModel eqProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
+
+    @NonNull
+    @Override
+    QueryModel neProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
+
+    @NonNull
+    @Override
+    QueryModel gtProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
+
+    @NonNull
+    @Override
+    QueryModel geProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
+
+    @NonNull
+    @Override
+    QueryModel ltProperty(@NonNull String propertyName, @NonNull String otherPropertyName);
+
+    @NonNull
+    @Override
+    QueryModel leProperty(String propertyName, @NonNull String otherPropertyName);
+
+    @NonNull
+    @Override
+    QueryModel allEq(@NonNull Map<String, QueryParameter> propertyValues);
+
+    @NonNull
+    @Override
+    QueryModel eqAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel gtAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel ltAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel geAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel leAll(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel gtSome(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel geSome(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel ltSome(@NonNull String propertyName, @NonNull Criteria propertyValue);
+
+    @NonNull
+    @Override
+    QueryModel leSome(@NonNull String propertyName, @NonNull Criteria propertyValue);
 
     /**
      * @return The join paths.

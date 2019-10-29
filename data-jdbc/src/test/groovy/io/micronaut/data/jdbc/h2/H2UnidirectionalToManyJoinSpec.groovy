@@ -1,15 +1,9 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Shelf
-import io.micronaut.data.tck.repositories.BookPageRepository
-import io.micronaut.data.tck.repositories.PageRepository
-import io.micronaut.data.tck.repositories.ShelfBookRepository
-import io.micronaut.data.tck.repositories.ShelfRepository
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 
