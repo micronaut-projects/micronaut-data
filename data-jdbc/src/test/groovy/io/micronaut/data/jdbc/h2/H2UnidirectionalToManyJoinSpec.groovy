@@ -28,6 +28,7 @@ class H2UnidirectionalToManyJoinSpec extends Specification {
 
     void "test unidirectional join"() {
         given:
+        bookRepository.deleteAll()
         Shelf shelf = new Shelf(shelfName: "Some Shelf")
         def b1 = new Book(title: "The Stand", totalPages: 1000)
         b1.pages.add(new Page(num: 10))
