@@ -45,7 +45,7 @@ public @interface Relation {
     Cascade[] cascade() default Cascade.NONE;
 
     /**
-     * Cascade type handling for different associations.
+     * Cascade type handling for different associations. Cascading delete is not yet supported.
      */
     enum Cascade {
         /**
@@ -56,11 +56,7 @@ public @interface Relation {
          * Cascade insert operations.
          */
         PERSIST,
-        /**
-         * Cascade delete operations.
-         */
-        REMOVE,
-        /**
+         /**
          * Don't cascade.
          */
         NONE
