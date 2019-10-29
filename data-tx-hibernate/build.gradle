@@ -3,7 +3,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
     compile project(":data-tx")
     compileOnly "org.springframework:spring-orm:5.1.9.RELEASE"
-    compile "org.hibernate:hibernate-core:5.4.7.Final", {
+    compile "org.hibernate:hibernate-core:5.4.8.Final", {
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
         exclude group: 'org.jboss:jandex', module: 'jar'
