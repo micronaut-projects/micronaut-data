@@ -52,7 +52,7 @@ class H2UnidirectionalToManyJoinSpec extends Specification {
         shelf.shelfName == 'Some Shelf'
         // left join causes single result since each
         // book only has a single page
-        shelf.books.size() == 1
+        !shelf.books.isEmpty()
     }
 
 }
