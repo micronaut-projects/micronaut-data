@@ -31,5 +31,7 @@ public interface BookDtoRepository extends GenericRepository<Book, Long> {
 
     Page<BookDto> searchByTitleLike(String title, Pageable pageable);
 
+    Page<BookDto> queryAll(Pageable pageable);
+
     Stream<BookDto> findStream(String title);
 }

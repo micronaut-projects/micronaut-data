@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.data.exceptions.EmptyResultException
+import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Book
@@ -272,12 +273,14 @@ abstract class AbstractRepositorySpec extends Specification {
 
         when:"paged result check"
         def result = bookDtoRepository.searchByTitleLike("The%", Pageable.from(0))
+        def all = bookDtoRepository.queryAll(Pageable.from(0))
 
         then:"the result is correct"
         result.totalSize == 3
         result.size == 10
         result.content.every { it instanceof BookDto }
         result.content.every { it.title.startsWith("The")}
+        all.content.every { it instanceof BookDto && it.title }
 
         when:"Stream is used"
         def dto = bookDtoRepository.findStream("The Stand").findFirst().get()

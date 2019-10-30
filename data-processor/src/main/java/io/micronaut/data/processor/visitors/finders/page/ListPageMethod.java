@@ -47,11 +47,7 @@ public class ListPageMethod extends ListMethod {
             matchContext.fail("Method must accept an argument that is a Pageable");
             return null;
         }
-        return new MethodMatchInfo(
-                queryResultType,
-                query,
-                FindPageInterceptor.class
-        );
+        return super.buildInfo(matchContext, queryResultType, query);
     }
 
     @Override

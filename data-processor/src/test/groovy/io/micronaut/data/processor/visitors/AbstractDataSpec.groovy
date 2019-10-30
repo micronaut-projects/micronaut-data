@@ -115,6 +115,35 @@ class $name {
 """
     }
 
+    /**
+     * Build an entity for the given name and properties
+     * @param name The name
+     * @param properties The properties
+     * @return
+     */
+    String dto(String name, Map<String, Class> properties) {
+        String props = properties.collect {
+            String propertyName = NameUtils.capitalize(it.key)
+            """
+    public $it.value.name get$propertyName() {
+        return $it.key;
+    }
+    
+    public void set$propertyName($it.value.name $it.key) {
+        this.$it.key = $it.key;
+    }"""
+        }.join("")
+
+        return """
+@io.micronaut.core.annotation.Introspected
+class $name {
+    ${properties.collect { 'private ' + it.value.name + ' ' + it.key + ';' }.join("\n")}
+
+    $props
+}
+"""
+    }
+
     @SupportedAnnotationTypes("*")
     static class MyTypeElementVisitorProcessor extends TypeElementVisitorProcessor {
         @Override

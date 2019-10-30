@@ -72,8 +72,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Creator
     public SqlQueryBuilder(AnnotationMetadata annotationMetadata) {
         if (annotationMetadata != null) {
-            this.dialect = annotationMetadata.enumValue(JDBC_REPO_ANNOTATION, "dialect", Dialect.class)
-                                            .orElse(Dialect.ANSI);
+            this.dialect = annotationMetadata
+                    .enumValue(JDBC_REPO_ANNOTATION, "dialect", Dialect.class)
+                    .orElseGet(() ->
+                        annotationMetadata
+                                .enumValue(JDBC_REPO_ANNOTATION, "dialectName", Dialect.class)
+                                .orElse(Dialect.ANSI)
+                    );
+
         }
     }
 
