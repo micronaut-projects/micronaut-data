@@ -92,7 +92,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         } else {
             ClassElement idType = identity.getType();
             ClassElement idParameterType = idParameter.getType();
-            if (idType.equals(idParameterType)) {
+            if (!idType.equals(idParameterType)) {
                 matchContext.fail("ID type of method [" + idParameterType.getName() + "] does not match ID type of entity: " + idType.getName());
             }
         }
