@@ -93,7 +93,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 String orderDefGroup = matcher.group(2);
                 if (StringUtils.isNotEmpty(orderDefGroup)) {
                     String[] orderDefItems = orderDefGroup.split("And");
-                    for(String orderDef : orderDefItems){
+                    for (String orderDef : orderDefItems) {
                         String prop = NameUtils.decapitalize(orderDef);
                         if (prop.endsWith("Desc")) {
                             orders.add(Sort.Order.desc(prop.substring(0, prop.length() - 4)));
