@@ -24,7 +24,7 @@ dependencies {
     testCompile "org.testcontainers:mysql:1.12.3"
     testCompile "org.testcontainers:mariadb:1.12.3"
     testCompile "org.testcontainers:postgresql:1.12.2"
-    testCompile "org.testcontainers:mssqlserver:1.12.2"
+    testCompile "org.testcontainers:mssqlserver:1.12.3"
     testCompile "org.testcontainers:oracle-xe:1.12.3"
     testCompile 'mysql:mysql-connector-java:8.0.18'
     testCompile 'org.postgresql:postgresql:42.2.8'
