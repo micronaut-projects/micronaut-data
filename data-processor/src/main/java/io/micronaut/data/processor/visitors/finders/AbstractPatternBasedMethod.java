@@ -88,17 +88,20 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
             Matcher matcher = ORDER_BY_PATTERN.matcher(querySequence);
             StringBuffer buffer = new StringBuffer();
-            while (matcher.find()) {
+            if (matcher.find()) {
                 matcher.appendReplacement(buffer, "$1");
-                String orderDef = matcher.group(2);
-                if (StringUtils.isNotEmpty(orderDef)) {
-                    String prop = NameUtils.decapitalize(orderDef);
-                    if (prop.endsWith("Desc")) {
-                        orders.add(Sort.Order.desc(prop.substring(0, prop.length() - 4)));
-                    } else if (prop.endsWith("Asc")) {
-                        orders.add(Sort.Order.asc(prop.substring(0, prop.length() - 3)));
-                    } else {
-                        orders.add(Sort.Order.asc(prop));
+                String orderDefGroup = matcher.group(2);
+                if (StringUtils.isNotEmpty(orderDefGroup)) {
+                    String[] orderDefItems = orderDefGroup.split("And");
+                    for(String orderDef : orderDefItems){
+                        String prop = NameUtils.decapitalize(orderDef);
+                        if (prop.endsWith("Desc")) {
+                            orders.add(Sort.Order.desc(prop.substring(0, prop.length() - 4)));
+                        } else if (prop.endsWith("Asc")) {
+                            orders.add(Sort.Order.asc(prop.substring(0, prop.length() - 3)));
+                        } else {
+                            orders.add(Sort.Order.asc(prop));
+                        }
                     }
                 }
             }
