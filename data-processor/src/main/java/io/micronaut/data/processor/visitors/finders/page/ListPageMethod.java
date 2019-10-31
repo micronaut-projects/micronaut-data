@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors.finders.page;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
