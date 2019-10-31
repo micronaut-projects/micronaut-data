@@ -41,9 +41,21 @@ datasources:
     dialect: H2
 ----
 
-Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa` module:
+Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa`  and `micronaut-hibernate-jpa` module:
 
 dependency:io.micronaut.data:micronaut-data-hibernate-jpa[]
+
+And add the following configuration in `application.yml`   
+
+[source,yaml]
+----
+jpa:
+  default:
+    entity-scan:
+        packages: 'example.domain'
+----    
+
+Where `jpa.default.entity-scan.packages` references the root package where your `@Entity` classes are located.
 
 Or if you wish to use SQL then the `micronaut-data-jdbc` module:
 
