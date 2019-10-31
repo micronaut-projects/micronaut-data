@@ -223,7 +223,7 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </div>
 </div>
 <div class="paragraph">
-<p>Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the <code>micronaut-data-hibernate-jpa</code> module:</p>
+<p>Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the <code>micronaut-data-hibernate-jpa</code>  and <code>micronaut-hibernate-jpa</code> module:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -240,6 +240,20 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </div>
 </div>
 </p>
+</div>
+<div class="paragraph">
+<p>And add the following configuration in <code>application.yml</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">jpa:
+  default:
+    entity-scan:
+        packages: 'example.domain'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Where <code>jpa.default.entity-scan.packages</code> references the root package where your <code>@Entity</code> classes are located.</p>
 </div>
 <div class="paragraph">
 <p>Or if you wish to use SQL then the <code>micronaut-data-jdbc</code> module:</p>
