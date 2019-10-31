@@ -46,6 +46,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
         where:
         method                         | arguments     | query
         "findByNameOrderByDateCreated" | "String name" | "SELECT company_ FROM $Company.name AS company_ WHERE (company_.name = :p1) ORDER BY company_.dateCreated ASC"
+        "findByNameOrderByDateCreatedAndName" | "String name" | "SELECT company_ FROM $Company.name AS company_ WHERE (company_.name = :p1) ORDER BY company_.dateCreated ASC,company_.name ASC"
     }
 
     void "test order by date created - sql"() {
@@ -76,5 +77,6 @@ interface MyInterface extends GenericRepository<Company, Long> {
         where:
         method                         | arguments     | query
         "findByNameOrderByDateCreated" | "String name" | "ORDER BY company_.date_created ASC"
+        "findByNameOrderByDateCreatedAndName" | "String name" | "ORDER BY company_.date_created ASC,company_.name ASC"
     }
 }
