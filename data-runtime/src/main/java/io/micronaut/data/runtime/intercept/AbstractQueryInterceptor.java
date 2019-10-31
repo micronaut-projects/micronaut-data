@@ -518,6 +518,18 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Get the batch operation for the given context.
      * @param context The context
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    @SuppressWarnings("unchecked")
+    protected <E> UpdateOperation<E> getUpdateOperation(@NonNull MethodInvocationContext context) {
+        E o = (E) getRequiredEntity(context);
+        return new DefaultUpdateOperation<>(context, o);
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param context The context
      * @param entity The entity
      * @param <E> The entity type
      * @return The paged query
@@ -549,6 +561,48 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final E entity;
 
         DefaultInsertOperation(MethodInvocationContext<?, ?> method, E entity) {
+            this.method = method;
+            this.entity = entity;
+        }
+
+        @NonNull
+        @Override
+        public Class<E> getRootEntity() {
+            return (Class<E>) entity.getClass();
+        }
+
+        @NonNull
+        @Override
+        public Class<?> getRepositoryType() {
+            return method.getTarget().getClass();
+        }
+
+        @Override
+        public E getEntity() {
+            return entity;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return method.getMethodName();
+        }
+
+        @Override
+        public AnnotationMetadata getAnnotationMetadata() {
+            return method.getAnnotationMetadata();
+        }
+    }
+
+    /**
+     * Default implementation of {@link UpdateOperation}.
+     * @param <E> The entity type
+     */
+    private final class DefaultUpdateOperation<E> implements UpdateOperation<E> {
+        private final MethodInvocationContext<?, ?> method;
+        private final E entity;
+
+        DefaultUpdateOperation(MethodInvocationContext<?, ?> method, E entity) {
             this.method = method;
             this.entity = entity;
         }

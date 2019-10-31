@@ -25,6 +25,7 @@ import io.micronaut.data.intercept.SaveOneInterceptor;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
@@ -132,11 +133,25 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
             }
         }
 
-        return new MethodMatchInfo(
-                returnType,
-                null,
-                pickSaveInterceptor(matchContext.getReturnType())
-        );
+        final Class<? extends DataInterceptor> interceptor =
+                pickSaveInterceptor(matchContext.getReturnType());
+        if (matchContext.supportsImplicitQueries()) {
+            return new MethodMatchInfo(
+                    returnType,
+                    null,
+                    interceptor,
+                    MethodMatchInfo.OperationType.INSERT
+            );
+        } else {
+            return new MethodMatchInfo(
+                    returnType,
+                    QueryModel.from(matchContext.getRootEntity()),
+                    interceptor,
+                    MethodMatchInfo.OperationType.INSERT
+            );
+        }
+
+
     }
 
     private boolean isRequiredProperty(SourcePersistentProperty pp) {

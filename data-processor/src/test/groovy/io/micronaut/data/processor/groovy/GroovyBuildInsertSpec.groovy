@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.groovy
 
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
@@ -29,7 +30,7 @@ interface TestShelfBookRepository extends io.micronaut.data.tck.repositories.She
         expect:
         beanDefinition.findPossibleMethods("save")
                 .findFirst().get()
-                .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
+                .stringValue(Query)
                 .orElse(null) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
     }
 }

@@ -18,10 +18,8 @@ package io.micronaut.data.operations.async;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.runtime.PagedQuery;
-import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.*;
+
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -125,6 +123,14 @@ public interface AsyncRepositoryOperations {
      * @return A completion stage that emits the entity
      */
     @NonNull <T> CompletionStage<T> persist(@NonNull InsertOperation<T> operation);
+
+    /**
+     * Updates the entity returning a possibly new entity.
+     * @param operation The entity operation
+     * @param <T> The generic type
+     * @return A completion stage that emits the entity
+     */
+    @NonNull <T> CompletionStage<T> update(@NonNull UpdateOperation<T> operation);
 
     /**
      * Persist all the given entities.

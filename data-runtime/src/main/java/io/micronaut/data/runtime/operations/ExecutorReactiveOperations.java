@@ -18,13 +18,10 @@ package io.micronaut.data.runtime.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.PreparedQuery;
 import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
 
@@ -141,6 +138,14 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     public <T> Publisher<T> persist(@NonNull InsertOperation<T> entity) {
         return Publishers.fromCompletableFuture(() ->
                 asyncOperations.persist(entity)
+        );
+    }
+
+    @NonNull
+    @Override
+    public <T> Publisher<T> update(@NonNull UpdateOperation<T> operation) {
+        return Publishers.fromCompletableFuture(() ->
+                asyncOperations.update(operation)
         );
     }
 

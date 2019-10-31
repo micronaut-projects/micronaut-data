@@ -196,8 +196,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                     String idType = resolveIdType(entity);
 
-
-
                     MethodMatchContext methodMatchContext = new MethodMatchContext(
                             currentRepository,
                             entity,
@@ -233,6 +231,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         Map<String, String> parameterBinding = null;
                         Map<String, DataType> parameterTypes = Collections.emptyMap();
                         boolean rawCount = false;
+                        boolean encodeEntityParameters = false;
+                        boolean supportsImplicitQueries = matchContext.supportsImplicitQueries();
                         if (queryObject != null) {
                             if (queryObject instanceof RawQuery) {
                                 RawQuery rawQuery = (RawQuery) queryObject;
@@ -269,9 +269,18 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                             annotationMetadataHierarchy,
                                                             queryObject,
                                                             methodInfo.getUpdateProperties());
+
+                                            final boolean isEntityArgument = parameters.length == 1 && parameters[0].getGenericType().getName().equals(entity.getName());
+                                            if (isEntityArgument) {
+                                                encodeEntityParameters = true;
+                                            }
                                             break;
                                         case INSERT:
-                                            // TODO
+                                            encodedQuery = queryEncoder
+                                                    .buildInsert(annotationMetadataHierarchy, entity);
+                                            encodeEntityParameters = true;
+                                        break;
+                                        case QUERY:
                                         default:
 
                                             encodedQuery = queryEncoder.buildQuery(
@@ -337,24 +346,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             QueryResult finalPreparedCount1 = preparedCount;
                             boolean finalRawCount = rawCount;
                             Map<String, DataType> finalParameterTypes = parameterTypes;
+                            boolean finalEncodeEntityParameters = encodeEntityParameters;
                             element.annotate(DataMethod.class, annotationBuilder -> {
-
-                                if (runtimeInterceptor.getSimpleName().startsWith("Save")) {
-                                    try {
-                                        QueryResult queryResult = queryEncoder.buildInsert(currentRepository.getAnnotationMetadata(), entity);
-                                        if (queryResult != null) {
-                                            Map<String, String> qp = queryResult.getParameters();
-                                            addParameterTypeDefinitions(methodMatchContext, qp, parameters, annotationBuilder, queryResult.getParameterTypes());
-
-                                            AnnotationValue<?>[] annotationValues = parameterBindingToAnnotationValues(qp);
-                                            annotationBuilder.member(DataMethod.META_MEMBER_INSERT_STMT, queryResult.getQuery());
-                                            annotationBuilder.member(DataMethod.META_MEMBER_INSERT_BINDING, annotationValues);
-                                        }
-                                    } catch (Exception e) {
-                                        context.fail("Error building insert statement", element);
-                                        failing = true;
-                                    }
-                                }
                                 annotationBuilder.member(DataMethod.META_MEMBER_ROOT_ENTITY, new AnnotationClassValue<>(entity.getName()));
 
                                 // include the roles
@@ -378,9 +371,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     annotationBuilder.member(DataMethod.META_MEMBER_ID_TYPE, idType);
                                 }
                                 annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
-                                boolean supportsImplicitQueries = matchContext.supportsImplicitQueries();
+
                                 if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
-                                    if (!supportsImplicitQueries) {
+                                    if (!supportsImplicitQueries && !finalEncodeEntityParameters) {
                                         addParameterTypeDefinitions(
                                                 methodMatchContext,
                                                 finalParameterBinding,
@@ -390,7 +383,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         );
                                     }
 
-                                    if (finalRawCount) {
+                                    if (finalEncodeEntityParameters) {
+                                        annotationBuilder.member(
+                                                DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths",
+                                                finalParameterBinding.keySet().toArray(new String[0])
+                                        );
+                                    } else if (finalRawCount) {
                                         parameterBindingToIndex(
                                                 annotationBuilder,
                                                 parameters,
@@ -628,6 +626,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new DeleteMethod(),
                 new CountByMethod(),
                 new UpdateMethod(),
+                new UpdateEntityMethod(),
                 new UpdateByMethod(),
                 new ListSliceMethod(),
                 new FindSliceByMethod(),

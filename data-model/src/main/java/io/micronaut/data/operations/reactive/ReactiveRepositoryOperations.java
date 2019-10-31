@@ -18,10 +18,7 @@ package io.micronaut.data.operations.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.runtime.PagedQuery;
-import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.*;
 import org.reactivestreams.Publisher;
 
 import java.io.Serializable;
@@ -126,6 +123,15 @@ public interface ReactiveRepositoryOperations {
      */
     @SingleResult
     @NonNull <T> Publisher<T> persist(@NonNull InsertOperation<T> operation);
+
+    /**
+     * Updates the entity returning a possibly new entity.
+     * @param operation The entity operation
+     * @param <T> The generic type
+     * @return A publisher that emits the entity
+     */
+    @SingleResult
+    @NonNull <T> Publisher<T> update(@NonNull UpdateOperation<T> operation);
 
     /**
      * Persist all the given entities.

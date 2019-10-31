@@ -34,8 +34,8 @@ import java.util.Optional;
 @Blocking
 public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
-     * Saves the given valid entity, returning a possibly new entity representing the saved state.
-     *
+     * Saves the given valid entity, returning a possibly new entity representing the saved state. Note that certain implementations may not be able to detect whether a save or update should be performed and may always perform an insert. The {@link #update(Object)} method can be used in this case to explicitly request an update.
+      *
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
@@ -43,6 +43,17 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      */
     @NonNull
     <S extends E> S save(@Valid @NotNull @NonNull S entity);
+
+    /**
+     * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
+     *
+     * @param entity The entity to save. Must not be {@literal null}.
+     * @return The saved entity will never be {@literal null}.
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @param <S> The generic type
+     */
+    @NonNull
+    <S extends E> S update(@Valid @NotNull @NonNull S entity);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.

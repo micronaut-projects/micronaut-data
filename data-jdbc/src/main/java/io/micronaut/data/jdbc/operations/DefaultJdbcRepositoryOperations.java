@@ -25,9 +25,13 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
@@ -417,6 +421,53 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @Override
     public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
         throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
+    }
+
+    @NonNull
+    @Override
+    public <T> T update(@NonNull UpdateOperation<T> operation) {
+        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        final String query = annotationMetadata.stringValue(Query.class).orElse(null);
+        final T entity = operation.getEntity();
+        Objects.requireNonNull(entity, "Passed entity cannot be null");
+        if (StringUtils.isNotEmpty(query) && ArrayUtils.isNotEmpty(params)) {
+            final RuntimePersistentEntity<T> persistentEntity =
+                    (RuntimePersistentEntity<T>) getEntity(entity.getClass());
+            return transactionOperations.executeWrite(status -> {
+                try {
+                    Connection connection = status.getConnection();
+                    if (QUERY_LOG.isDebugEnabled()) {
+                        QUERY_LOG.debug("Executing SQL UPDATE: {}", query);
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement(query)) {
+                        for (int i = 0; i < params.length; i++) {
+                            String propertyName = params[i];
+                            final RuntimePersistentProperty<T> pp =
+                                    persistentEntity.getPropertyByName(propertyName);
+                            if (pp == null) {
+                                throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
+                            }
+                            final Object newValue = pp.getProperty().get(entity);
+                            if (QUERY_LOG.isTraceEnabled()) {
+                                QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
+                            }
+                            preparedStatementWriter.setDynamic(
+                                    ps,
+                                    i + 1,
+                                    pp.getDataType(),
+                                    newValue
+                            );
+                        }
+                        ps.executeUpdate();
+                        return entity;
+                    }
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+                }
+            });
+        }
+        return entity;
     }
 
     @NonNull

@@ -1,27 +1,14 @@
-/*
- * Copyright 2017-2019 original authors
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.SaveEntityInterceptor;
-import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
+import io.micronaut.data.intercept.UpdateEntityInterceptor;
+import io.micronaut.data.intercept.async.UpdateEntityAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -34,26 +21,29 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
 /**
- * A save method for saving a single entity.
+ * Handles {@link io.micronaut.data.repository.CrudRepository#update(Object)}.
  *
  * @author graemerocher
  * @since 1.0.0
  */
-public class SaveEntityMethod extends AbstractPatternBasedMethod implements MethodCandidate {
+public class UpdateEntityMethod extends AbstractPatternBasedMethod implements MethodCandidate {
 
-    public static final Pattern METHOD_PATTERN = Pattern.compile("^((save|persist|store|insert)(\\S*?))$");
+    public static final Pattern METHOD_PATTERN = Pattern.compile("^((update)(\\S*?))$");
 
     /**
      * The default constructor.
      */
-    public SaveEntityMethod() {
+    public UpdateEntityMethod() {
         super(METHOD_PATTERN);
+    }
+
+    @Override
+    public int getOrder() {
+        return DEFAULT_POSITION - 100;
     }
 
     @Override
@@ -75,15 +65,34 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
                     returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
                 }
-
                 if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(returnType, null, interceptor, MethodMatchInfo.OperationType.INSERT);
+                    return new MethodMatchInfo(returnType, null, interceptor, MethodMatchInfo.OperationType.UPDATE);
                 } else {
-                    return new MethodMatchInfo(returnType,
-                            QueryModel.from(matchContext.getRootEntity()),
-                            interceptor,
-                            MethodMatchInfo.OperationType.INSERT
-                    );
+                    final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                    final QueryModel queryModel = QueryModel.from(rootEntity)
+                            .idEq(new QueryParameter(TypeRole.ID));
+                    String[] updateProperties = rootEntity.getPersistentProperties()
+                            .stream().filter(p ->
+                                    !((p instanceof Association) && ((Association) p).isForeignKey()))
+                            .map(PersistentProperty::getName)
+                            .toArray(String[]::new);
+                    if (ArrayUtils.isEmpty(updateProperties)) {
+                        return new MethodMatchInfo(
+                                returnType,
+                                null,
+                                interceptor,
+                                MethodMatchInfo.OperationType.UPDATE
+                        );
+                    } else {
+                        return new MethodMatchInfo(
+                                returnType,
+                                queryModel,
+                                interceptor,
+                                MethodMatchInfo.OperationType.UPDATE,
+                                updateProperties
+                        );
+                    }
+
                 }
             }
         }
@@ -118,13 +127,14 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
     private static @NonNull Class<? extends DataInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
         Class<? extends DataInterceptor> interceptor;
         if (TypeUtils.isFutureType(returnType)) {
-            interceptor = SaveEntityAsyncInterceptor.class;
+            interceptor = UpdateEntityAsyncInterceptor.class;
         } else if (TypeUtils.isReactiveOrFuture(returnType)) {
-            interceptor = SaveEntityReactiveInterceptor.class;
+            interceptor = UpdateEntityReactiveInterceptor.class;
         } else {
-            interceptor = SaveEntityInterceptor.class;
+            interceptor = UpdateEntityInterceptor.class;
         }
         return interceptor;
     }
 
 }
+

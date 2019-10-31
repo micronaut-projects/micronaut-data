@@ -4,7 +4,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.processor.visitors.AbstractDataSpec
-import io.micronaut.inject.ExecutableMethod
 
 class BuildQuerySpec extends AbstractDataSpec {
 

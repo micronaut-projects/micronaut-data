@@ -116,9 +116,10 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
-        return transactionOperations.executeRead(status ->
-                getCurrentSession().byId(type).load(id)
-        );
+        return transactionOperations.executeRead(status -> {
+            final Session session = (Session) status.getConnection();
+            return session.byId(type).load(id);
+        });
     }
 
     @Nullable
@@ -128,7 +129,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             Class<R> resultType = preparedQuery.getResultType();
             String query = preparedQuery.getQuery();
 
-            Session currentSession = getCurrentSession();
+            Session currentSession = (Session) status.getConnection();
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
                 if (preparedQuery.isNative()) {
@@ -243,7 +244,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
-            Session currentSession = getCurrentSession();
+            Session entityManager = (Session) status.getConnection();
             String queryStr = preparedQuery.getQuery();
             Pageable pageable = preparedQuery.getPageable();
             if (pageable != Pageable.UNPAGED) {
@@ -256,15 +257,15 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Query<Tuple> q;
 
                 if (preparedQuery.isNative()) {
-                    q = currentSession
+                    q = entityManager
                             .createNativeQuery(queryStr, Tuple.class);
 
                 } else {
-                    q = currentSession
+                    q = entityManager
                             .createQuery(queryStr, Tuple.class);
                 }
 
-                bindPreparedQuery(q, preparedQuery, currentSession, queryStr);
+                bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
                 return q.stream()
                         .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()))
                         .collect(Collectors.toList());
@@ -272,14 +273,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 Query<R> q;
                 if (preparedQuery.isNative()) {
-                    q = currentSession
+                    q = entityManager
                             .createNativeQuery(queryStr, wrapperType);
 
                 } else {
-                    q = currentSession
+                    q = entityManager
                             .createQuery(queryStr, wrapperType);
                 }
-                bindPreparedQuery(q, preparedQuery, currentSession, queryStr);
+                bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
                 return q.list();
             }
         });
@@ -322,8 +323,23 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             T entity = operation.getEntity();
-            Session session = getCurrentSession();
-            session.persist(entity);
+            EntityManager entityManager = status.getConnection();
+            entityManager.persist(entity);
+            flushIfNecessary(
+                    entityManager,
+                    operation.getAnnotationMetadata()
+            );
+            return entity;
+        });
+    }
+
+    @NonNull
+    @Override
+    public <T> T update(@NonNull UpdateOperation<T> operation) {
+        return transactionOperations.executeWrite(status -> {
+            T entity = operation.getEntity();
+            EntityManager session = status.getConnection();
+            entity = session.merge(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
         });
@@ -335,12 +351,13 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             if (operation != null) {
-                Session session = getCurrentSession();
+                EntityManager entityManager = status.getConnection();
                 for (T entity : operation) {
-                    session.persist(entity);
+                    entityManager.persist(entity);
                 }
-                AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-                flushIfNecessary(session, annotationMetadata);
+                AnnotationMetadata annotationMetadata =
+                        operation.getAnnotationMetadata();
+                flushIfNecessary(entityManager, annotationMetadata);
                 return operation;
             } else {
                 return Collections.emptyList();
@@ -348,11 +365,13 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         });
     }
 
-    private void flushIfNecessary(Session session, AnnotationMetadata annotationMetadata) {
+    private void flushIfNecessary(
+            EntityManager entityManager,
+            AnnotationMetadata annotationMetadata) {
         if (annotationMetadata.hasAnnotation(QueryHint.class)) {
             FlushModeType flushModeType = getFlushModeType(annotationMetadata);
             if (flushModeType == FlushModeType.AUTO) {
-                session.flush();
+                entityManager.flush();
             }
         }
     }

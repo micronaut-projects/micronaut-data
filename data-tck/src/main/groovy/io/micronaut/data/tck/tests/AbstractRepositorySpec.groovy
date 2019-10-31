@@ -184,6 +184,16 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"The result is correct"
         updated == 1
         personRepository.findByName("Jack").age == 20
+
+        when:"A whole entity is updated"
+        def jack = personRepository.findByName("Jack")
+        jack.setName("Jeffrey")
+        jack.setAge(30)
+        personRepository.update(jack)
+
+        then:
+        personRepository.findByName("Jack") == null
+        personRepository.findByName("Jeffrey").age == 30
     }
 
     void "test delete all"() {

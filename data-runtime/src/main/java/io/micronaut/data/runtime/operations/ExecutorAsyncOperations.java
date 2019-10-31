@@ -17,17 +17,15 @@ package io.micronaut.data.runtime.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.PreparedQuery;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 /**
@@ -145,6 +143,14 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
     public <T> CompletableFuture<T> persist(@NonNull InsertOperation<T> entity) {
         return CompletableFuture.supplyAsync(() ->
                 datastore.persist(entity), executor
+        );
+    }
+
+    @NonNull
+    @Override
+    public <T> CompletableFuture<T> update(@NonNull UpdateOperation<T> operation) {
+        return CompletableFuture.supplyAsync(() ->
+                datastore.update(operation), executor
         );
     }
 
