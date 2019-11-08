@@ -386,7 +386,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     if (finalEncodeEntityParameters) {
                                         annotationBuilder.member(
                                                 DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths",
-                                                finalParameterBinding.keySet().toArray(new String[0])
+                                                finalParameterBinding.values().toArray(new String[0])
                                         );
                                     } else if (finalRawCount) {
                                         parameterBindingToIndex(

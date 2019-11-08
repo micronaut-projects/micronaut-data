@@ -15,18 +15,15 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.SaveEntityInterceptor;
 import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.QueryParameter;
-import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -34,8 +31,6 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 

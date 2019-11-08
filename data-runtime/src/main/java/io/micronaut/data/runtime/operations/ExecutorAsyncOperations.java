@@ -25,7 +25,6 @@ import io.micronaut.data.model.Page;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
 /**
