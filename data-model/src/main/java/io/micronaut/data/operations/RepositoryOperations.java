@@ -137,6 +137,15 @@ public interface RepositoryOperations {
     @NonNull <T> T persist(@NonNull InsertOperation<T> operation);
 
     /**
+     * Updates the entity for the given operation.
+     *
+     * @param operation The operation
+     * @param <T> The generic type
+     * @return The operation
+     */
+    @NonNull <T> T update(@NonNull UpdateOperation<T> operation);
+
+    /**
      * Persist all the given entities.
      * @param operation The operation
      * @param <T> The generic type

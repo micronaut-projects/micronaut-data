@@ -43,16 +43,6 @@ public @interface DataMethod {
     String META_MEMBER_COUNT_QUERY = "countQuery";
 
     /**
-     * The member that holds the insert statement.
-     */
-    String META_MEMBER_INSERT_STMT = "insertStatement";
-
-    /**
-     * The member that holds the insert statement.
-     */
-    String META_MEMBER_INSERT_BINDING = "insertBinding";
-
-    /**
      * The member that holds the count parameters.
      */
     String META_MEMBER_COUNT_PARAMETERS = "countParameters";
@@ -81,6 +71,11 @@ public @interface DataMethod {
      * The member name that holds parameter binding.
      */
     String META_MEMBER_PARAMETER_BINDING = "parameterBinding";
+
+    /**
+     * The member name that holds parameter binding paths.
+     */
+    String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
 
     /**
      * The ID type.

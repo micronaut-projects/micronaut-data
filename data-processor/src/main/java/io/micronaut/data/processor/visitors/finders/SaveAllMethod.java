@@ -21,6 +21,7 @@ import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.SaveAllInterceptor;
 import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
+import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -75,10 +76,20 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
             interceptor = SaveAllInterceptor.class;
         }
 
-        return new MethodMatchInfo(
-                null,
-                null,
-                interceptor
-        );
+        if (matchContext.supportsImplicitQueries()) {
+            return new MethodMatchInfo(
+                    null,
+                    null,
+                    interceptor,
+                    MethodMatchInfo.OperationType.INSERT
+            );
+        } else {
+            return new MethodMatchInfo(
+                    null,
+                    QueryModel.from(matchContext.getRootEntity()),
+                    interceptor,
+                    MethodMatchInfo.OperationType.INSERT
+            );
+        }
     }
 }

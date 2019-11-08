@@ -135,7 +135,7 @@ class SqlQueryBuilderSpec extends Specification {
 
         expect:
         result.query == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
-        result.parameters.equals(name: '1', age: '2', enabled: '3')
+        result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled')
     }
 
     void "test encode insert statement for embedded"() {
@@ -146,7 +146,7 @@ class SqlQueryBuilderSpec extends Specification {
 
         expect:
         result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code") VALUES (?,?,?)'
-        result.parameters.equals(name: '1', 'address.street': '2', 'address.zipCode': '3')
+        result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode')
     }
 
     void "test encode create statement for embedded"() {
@@ -188,7 +188,7 @@ class SqlQueryBuilderSpec extends Specification {
 
         expect:
         result.query == 'INSERT INTO "person_assigned_id" ("name","age","enabled","id") VALUES (?,?,?,?)'
-        result.parameters.equals(name: '1', age: '2', enabled: '3', id: '4')
+        result.parameters.equals('1':'name', '2': 'age', '3': 'enabled', '4': 'id')
     }
 
     void "test encode query with join"() {

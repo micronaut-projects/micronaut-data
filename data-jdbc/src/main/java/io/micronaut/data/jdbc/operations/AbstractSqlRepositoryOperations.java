@@ -17,11 +17,11 @@ package io.micronaut.data.jdbc.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -48,7 +48,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -130,25 +129,26 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
         Date now = null;
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
-        for (Map.Entry<String, Integer> entry : insert.getParameterBinding().entrySet()) {
-            String propName = entry.getKey();
-            RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(propName);
+        final String[] parameterBinding = insert.getParameterBinding();
+        for (int i = 0; i < parameterBinding.length; i++) {
+            String path = parameterBinding[i];
+            RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(path);
             if (prop == null) {
-                int i = propName.indexOf('.');
-                if (i > -1) {
+                int j = path.indexOf('.');
+                if (j > -1) {
                     RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
-                            persistentEntity.getPropertyByPath(propName).orElse(null);
+                            persistentEntity.getPropertyByPath(path).orElse(null);
                     if (embeddedProp != null) {
 
                         // embedded case
-                        prop = persistentEntity.getPropertyByName(propName.substring(0, i));
+                        prop = persistentEntity.getPropertyByName(path.substring(0, j));
                         if (prop instanceof Association) {
                             Association assoc = (Association) prop;
                             if (assoc.getKind() == Relation.Kind.EMBEDDED) {
 
                                 Object value = prop.getProperty().get(entity);
                                 Object embeddedValue = embeddedProp.getProperty().get(value);
-                                int index = entry.getValue();
+                                int index = i + 1;
                                 preparedStatementWriter.setDynamic(
                                         stmt,
                                         index,
@@ -163,7 +163,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 DataType type = prop.getDataType();
                 BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
                 Object value = beanProperty.get(entity);
-                int index = entry.getValue();
+                int index = i + 1;
                 if (prop instanceof Association) {
                     Association association = (Association) prop;
                     if (!association.isForeignKey()) {
@@ -248,7 +248,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     }
                 }
             }
-
         }
     }
 
@@ -263,16 +262,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final <T> StoredInsert resolveInsert(@NonNull EntityOperation<T> operation) {
         return storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
             AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            String insertStatement = annotationMetadata.stringValue(
-                    DataMethod.class,
-                    DataMethod.META_MEMBER_INSERT_STMT
-            ).orElse(null);
+            String insertStatement = annotationMetadata.stringValue(Query.class).orElse(null);
             if (insertStatement == null) {
                 throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository and is annotated with @JdbcRepository");
             }
 
             RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-            Map<String, Integer> parameterBinding = buildSqlParameterBinding(annotationMetadata);
+            String[] parameterBinding = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
             // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
             final Dialect dialect = annotationMetadata.enumValue(Repository.class, "dialect", Dialect.class)
                     .orElse(Dialect.ANSI);
@@ -309,19 +305,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         if (annotation == null) {
             return Collections.emptyMap();
         }
-        List<AnnotationValue<Property>> parameterData = annotation.getAnnotations(DataMethod.META_MEMBER_INSERT_BINDING,
-                Property.class);
+        String[] parameterData = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
         Map<String, Integer> parameterValues;
-        if (CollectionUtils.isNotEmpty(parameterData)) {
-            parameterValues = new HashMap<>(parameterData.size());
-            for (AnnotationValue<Property> annotationValue : parameterData) {
-                String name = annotationValue.stringValue("name").orElse(null);
-                Integer argument = annotationValue.intValue("value").orElseThrow(() ->
-                    new IllegalArgumentException("Query indices should be stored as integers")
-                );
-                if (name != null) {
-                    parameterValues.put(name, argument);
-                }
+        if (ArrayUtils.isNotEmpty(parameterData)) {
+            parameterValues = new HashMap<>(parameterData.length);
+            for (int i = 0; i < parameterData.length; i++) {
+                String p = parameterData[i];
+                parameterValues.put(p, i + 1);
             }
         } else {
             parameterValues = Collections.emptyMap();
@@ -441,10 +431,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             return new StoredInsert<>(
                     sql,
                     persistentEntity,
-                    parameters.entrySet().stream().collect(Collectors.toMap(
-                            Map.Entry::getKey,
-                            entry -> Integer.valueOf(entry.getValue())
-                    )),
+                    parameters.keySet().toArray(new String[0]),
                     dialect != Dialect.SQL_SERVER,
                     dialect
             );
@@ -507,7 +494,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T> The entity type
      */
     protected final class StoredInsert<T> {
-        private final Map<String, Integer> parameterBinding;
+        private final String[] parameterBinding;
         private final RuntimePersistentProperty identity;
         private final boolean generateId;
         private final String sql;
@@ -526,7 +513,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         StoredInsert(
                 String sql,
                 RuntimePersistentEntity<T> persistentEntity,
-                Map<String, Integer> parameterBinding,
+                String[] parameterBinding,
                 boolean supportsBatch,
                 Dialect dialect) {
             this.sql = sql;
@@ -571,7 +558,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
          * @return The parameter binding
          */
         public @NonNull
-        Map<String, Integer> getParameterBinding() {
+        String[] getParameterBinding() {
             return parameterBinding;
         }
 

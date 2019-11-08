@@ -640,7 +640,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             for (PersistentProperty embeddedProp : embeddedProps) {
                                 String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                                 addWriteExpression(values, prop);
-                                parameters.put(prop.getName() + "." + embeddedProp.getName(), String.valueOf(values.size()));
+                                parameters.put(String.valueOf(values.size()), prop.getName() + "." + embeddedProp.getName());
                                 if (explicitColumn != null) {
                                     if (escape) {
                                         explicitColumn = quote(explicitColumn);
@@ -658,7 +658,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         } else if (!association.isForeignKey()) {
                             parameterTypes.put(prop.getName(), prop.getDataType());
                             addWriteExpression(values, prop);
-                            parameters.put(prop.getName(), String.valueOf(values.size()));
+                            parameters.put(String.valueOf(values.size()), prop.getName());
                             String columnName = getColumnName(prop);
                             if (escape) {
                                 columnName = quote(columnName);
@@ -668,7 +668,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     } else {
                         parameterTypes.put(prop.getName(), prop.getDataType());
                         addWriteExpression(values, prop);
-                        parameters.put(prop.getName(), String.valueOf(values.size()));
+                        parameters.put(String.valueOf(values.size()), prop.getName());
                         String columnName = getColumnName(prop);
                         if (escape) {
                             columnName = quote(columnName);
@@ -708,7 +708,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     for (PersistentProperty embeddedProp : embeddedProps) {
                         String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                         addWriteExpression(values, embeddedProp);
-                        parameters.put(identity.getName() + "." + embeddedProp.getName(), String.valueOf(values.size()));
+                        parameters.put(String.valueOf(values.size()), identity.getName() + "." + embeddedProp.getName());
                         if (explicitColumn != null) {
                             if (escape) {
                                 explicitColumn = quote(explicitColumn);
@@ -742,7 +742,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                     } else {
                         addWriteExpression(values, identity);
-                        parameters.put(identity.getName(), String.valueOf(values.size()));
+                        parameters.put(String.valueOf(values.size()), identity.getName());
                     }
                 }
             }

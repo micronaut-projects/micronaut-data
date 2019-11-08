@@ -15,11 +15,12 @@
  */
 package io.micronaut.data.processor.sql
 
-
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
+import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.PendingFeature
 
@@ -36,15 +37,19 @@ import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 interface MyInterface extends CrudRepository<Person, Long> {
 }
 """)
 
+        def method = beanDefinition.getRequiredMethod("save", Person)
+
         expect:
-        beanDefinition.getRequiredMethod("save", Person)
-            .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
+        method
+            .stringValue(Query)
             .orElse(null) == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
+                ['name', 'age', 'enabled'] as String[]
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")
@@ -61,7 +66,7 @@ import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
-@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 interface TestBookPageRepository extends io.micronaut.data.tck.repositories.BookPageRepository {
 
 }
@@ -70,7 +75,7 @@ interface TestBookPageRepository extends io.micronaut.data.tck.repositories.Book
         expect:
         beanDefinition.findPossibleMethods("save")
                 .findFirst().get()
-                .stringValue(DataMethod.class, DataMethod.META_MEMBER_INSERT_STMT)
+                .stringValue(Query)
                 .orElse(null) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
     }
 }
