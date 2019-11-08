@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":18,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":18,"i13":18,"i14":6,"i15":6};
+var methods = {"i0":6,"i1":6,"i2":18,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":18,"i13":18,"i14":6,"i15":6,"i16":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -228,6 +228,12 @@ var activeTableTab = "activeTableTab";
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#persistAll-io.micronaut.data.model.runtime.BatchOperation-">persistAll</a></span>(<a href="../../../../io/micronaut/data/model/runtime/BatchOperation.html" title="interface in io.micronaut.data.model.runtime">BatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
+</td>
+</tr>
+<tr id="i16" class="altColor">
+<td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/operations/RepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
+<div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
 </table>
@@ -460,6 +466,26 @@ default&nbsp;&lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime
 &lt;T&gt;&nbsp;T&nbsp;persist(@NonNull
                        <a href="../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</pre>
 <div class="block">Persist the operation returning a possibly new entity.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>operation</code> - The operation</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The operation</dd>
+</dl>
+</li>
+</ul>
+<a name="update-io.micronaut.data.model.runtime.UpdateOperation-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>update</h4>
+<pre>@NonNull
+&lt;T&gt;&nbsp;T&nbsp;update(@NonNull
+                      <a href="../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+<div class="block">Updates the entity for the given operation.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>T</code> - The generic type</dd>

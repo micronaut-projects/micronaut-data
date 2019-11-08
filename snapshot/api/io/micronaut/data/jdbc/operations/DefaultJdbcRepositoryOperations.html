@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -348,6 +348,12 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </td>
 </tr>
+<tr id="i24" class="altColor">
+<td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
+<div class="block">Updates the entity for the given operation.</div>
+</td>
+</tr>
 </table>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">
@@ -594,6 +600,29 @@ public&nbsp;java.util.Optional&lt;java.lang.Number&gt;&nbsp;executeUpdate(@NonNu
 <dd><code>operation</code> - The operation</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The number of entities deleted</dd>
+</dl>
+</li>
+</ul>
+<a name="update-io.micronaut.data.model.runtime.UpdateOperation-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>update</h4>
+<pre>@NonNull
+public&nbsp;&lt;T&gt;&nbsp;T&nbsp;update(@NonNull
+                             <a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">RepositoryOperations</a></code></span></div>
+<div class="block">Updates the entity for the given operation.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code></dd>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>operation</code> - The operation</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The operation</dd>
 </dl>
 </li>
 </ul>
