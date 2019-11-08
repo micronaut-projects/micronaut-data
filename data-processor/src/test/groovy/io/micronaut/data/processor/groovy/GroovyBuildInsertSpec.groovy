@@ -8,6 +8,7 @@ import spock.lang.PendingFeature
 
 class GroovyBuildInsertSpec extends AbstractGroovyBeanDefinitionSpec {
 
+    @PendingFeature(reason = "Groovy currently has problems when it comes to reading the AST of existing compile classes. This test fails because the annotation metadata of compiled classes is not represented in the Groovy AST")
     void "test build SQL insert statement for entity with no ID"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.TestShelfBookRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
