@@ -922,7 +922,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 <p>By default when saving an entity with a method like <code>save(MyEntity)</code> a SQL <code>INSERT</code> is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
 </div>
 <div class="paragraph">
-<p>If you wish to update an entity you should instead define an appropriate <code>update</code> method, for example:</p>
+<p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
