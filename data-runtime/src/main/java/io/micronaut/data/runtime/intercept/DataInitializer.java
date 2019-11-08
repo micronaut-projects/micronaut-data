@@ -47,16 +47,16 @@ class DataInitializer {
                 new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
         );
         conversionService.addConverter(Date.class, LocalDateTime.class, date ->
-                date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()
         );
         conversionService.addConverter(Date.class, OffsetDateTime.class, date ->
-                date.toInstant().atZone(ZoneId.systemDefault()).toOffsetDateTime()
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toOffsetDateTime()
         );
         conversionService.addConverter(Date.class, LocalDate.class, date ->
-                date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate()
         );
-        conversionService.addConverter(Date.class, Instant.class,
-                Date::toInstant
+        conversionService.addConverter(Date.class, Instant.class, date ->
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toInstant()
         );
         conversionService.addConverter(ChronoLocalDate.class, Date.class, localDate ->
                 new Date(localDate.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
@@ -71,7 +71,6 @@ class DataInitializer {
         conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime ->
                 new Timestamp(offsetDateTime.toInstant().toEpochMilli())
         );
-        conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, offsetDateTime ->
-                offsetDateTime.toLocalDateTime());
+        conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, OffsetDateTime::toLocalDateTime);
     }
 }
