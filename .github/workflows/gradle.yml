@@ -14,6 +14,12 @@ jobs:
         java: ['1.8', '11.0.4']
     steps:
     - uses: actions/checkout@v1
+    - uses: actions/cache@v1
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
@@ -34,9 +40,3 @@ jobs:
         BASE_BRANCH: master 
         BRANCH: gh-pages 
         FOLDER: build/docs
-    - uses: actions/cache@v1
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
