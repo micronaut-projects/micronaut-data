@@ -34,3 +34,9 @@ jobs:
         BASE_BRANCH: master 
         BRANCH: gh-pages 
         FOLDER: build/docs
+    - uses: actions/cache@v1
+      with:
+        path: ~/.gradle/caches
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
