@@ -1,7 +1,7 @@
 plugins {
     id "application"
     id "java"
-    id "me.champeau.gradle.jmh" version "0.5.0-rc-1"
+    id "me.champeau.gradle.jmh" version "0.5.0"
 }
 
 version "0.1"
@@ -36,7 +36,7 @@ dependencies {
     testRuntime "org.junit.jupiter:junit-jupiter-engine"
 
     jmh 'org.openjdk.jmh:jmh-core:1.21'
-    jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.21'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.22'
 }
 
 test.classpath += configurations.developmentOnly
