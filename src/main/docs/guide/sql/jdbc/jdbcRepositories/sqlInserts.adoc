@@ -4,7 +4,7 @@ Since there is no session, features like dirty checking are not supported. This 
 
 By default when saving an entity with a method like `save(MyEntity)` a SQL `INSERT` is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.
 
-If you wish to update an entity you should instead define an appropriate `update` method, for example:
+If you wish to update an entity you should instead either use `update(MyEntity)` or even better define an appropriate `update` method to update only the data you want to update, for example:
 
 snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main" tags="update", indent="0"]
 

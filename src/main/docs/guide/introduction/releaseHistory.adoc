@@ -1,6 +1,7 @@
 ==== 1.0.0.M5
 
 * Support for explicit entity updates with the `update` method
+* Support for cascading inserts in JDBC
 
 ==== 1.0.0.M4
 
