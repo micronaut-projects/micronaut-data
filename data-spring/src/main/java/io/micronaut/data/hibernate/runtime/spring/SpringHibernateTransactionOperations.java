@@ -28,12 +28,13 @@ import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionException;
 import org.hibernate.SessionFactory;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import javax.persistence.EntityManager;
 import java.lang.reflect.UndeclaredThrowableException;
+import java.sql.Connection;
 import java.time.Duration;
 
 /**
@@ -46,7 +47,7 @@ import java.time.Duration;
 @EachBean(HibernateTransactionManager.class)
 @Internal
 @Replaces(SpringJdbcTransactionOperations.class)
-public class SpringHibernateTransactionOperations implements TransactionOperations<EntityManager> {
+public class SpringHibernateTransactionOperations implements TransactionOperations<Connection> {
 
     private final TransactionTemplate writeTransactionTemplate;
     private final TransactionTemplate readTransactionTemplate;
@@ -67,7 +68,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     }
 
     @Override
-    public <R> R executeRead(@NonNull TransactionCallback<EntityManager, R> callback) {
+    public <R> R executeRead(@NonNull TransactionCallback<Connection, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
         return readTransactionTemplate.execute(status -> {
                     try {
@@ -82,7 +83,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     }
 
     @Override
-    public <R> R executeWrite(@NonNull TransactionCallback<EntityManager, R> callback) {
+    public <R> R executeWrite(@NonNull TransactionCallback<Connection, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
         return writeTransactionTemplate.execute(status -> {
                     try {
@@ -98,12 +99,13 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
 
     @NonNull
     @Override
-    public EntityManager getConnection() {
-        return sessionFactory.getCurrentSession();
+    public Connection getConnection() {
+        final SessionImplementor session = (SessionImplementor) sessionFactory.getCurrentSession();
+        return session.connection();
     }
 
     @Override
-    public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<EntityManager, R> callback) {
+    public <R> R execute(@NonNull TransactionDefinition definition, @NonNull TransactionCallback<Connection, R> callback) {
         ArgumentUtils.requireNonNull("callback", callback);
         ArgumentUtils.requireNonNull("definition", definition);
 
@@ -132,7 +134,7 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
     /**
      * Internal transaction status.
      */
-    private final class JpaTransactionStatus implements TransactionStatus<EntityManager> {
+    private final class JpaTransactionStatus implements TransactionStatus<Connection> {
 
         private final org.springframework.transaction.TransactionStatus springStatus;
 
@@ -178,8 +180,9 @@ public class SpringHibernateTransactionOperations implements TransactionOperatio
 
         @NonNull
         @Override
-        public EntityManager getConnection() {
-            return sessionFactory.getCurrentSession();
+        public Connection getConnection() {
+            final SessionImplementor session = (SessionImplementor) sessionFactory.getCurrentSession();
+            return session.connection();
         }
 
         @Override

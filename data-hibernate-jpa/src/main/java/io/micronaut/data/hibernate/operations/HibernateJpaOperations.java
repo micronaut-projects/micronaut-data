@@ -54,6 +54,7 @@ import javax.persistence.FlushModeType;
 import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
+import java.sql.Connection;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -78,7 +79,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     private static final String ENTITY_GRAPH_LOAD = "javax.persistence.loadgraph";
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private final SessionFactory sessionFactory;
-    private final TransactionOperations<EntityManager> transactionOperations;
+    private final TransactionOperations<Connection> transactionOperations;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
 
@@ -91,7 +92,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
      */
     protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
-            @NonNull @Parameter TransactionOperations<EntityManager> transactionOperations,
+            @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
             @Named("io") @Nullable ExecutorService executorService) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
         this.sessionFactory = sessionFactory;
@@ -117,7 +118,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
         return transactionOperations.executeRead(status -> {
-            final Session session = (Session) status.getConnection();
+            final Session session = sessionFactory.getCurrentSession();
             return session.byId(type).load(id);
         });
     }
@@ -129,7 +130,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             Class<R> resultType = preparedQuery.getResultType();
             String query = preparedQuery.getQuery();
 
-            Session currentSession = (Session) status.getConnection();
+            Session currentSession = sessionFactory.getCurrentSession();
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
                 if (preparedQuery.isNative()) {
@@ -244,7 +245,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T, R> Iterable<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
-            Session entityManager = (Session) status.getConnection();
+            Session entityManager = sessionFactory.getCurrentSession();
             String queryStr = preparedQuery.getQuery();
             Pageable pageable = preparedQuery.getPageable();
             if (pageable != Pageable.UNPAGED) {
@@ -323,7 +324,8 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T> T persist(@NonNull InsertOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             T entity = operation.getEntity();
-            EntityManager entityManager = status.getConnection();
+
+            EntityManager entityManager = sessionFactory.getCurrentSession();
             entityManager.persist(entity);
             flushIfNecessary(
                     entityManager,
@@ -338,7 +340,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T> T update(@NonNull UpdateOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             T entity = operation.getEntity();
-            EntityManager session = status.getConnection();
+            EntityManager session = sessionFactory.getCurrentSession();
             entity = session.merge(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
@@ -351,7 +353,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             if (operation != null) {
-                EntityManager entityManager = status.getConnection();
+                EntityManager entityManager = sessionFactory.getCurrentSession();
                 for (T entity : operation) {
                     entityManager.persist(entity);
                 }

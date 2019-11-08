@@ -431,7 +431,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             return new StoredInsert<>(
                     sql,
                     persistentEntity,
-                    parameters.keySet().toArray(new String[0]),
+                    parameters.values().toArray(new String[0]),
                     dialect != Dialect.SQL_SERVER,
                     dialect
             );
