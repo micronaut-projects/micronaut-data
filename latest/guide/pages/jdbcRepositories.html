@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>8.1.3 JDBC Repositories 1.0.0.M4</title>
+    <title>8.1.3 JDBC Repositories 1.0.0.M5</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -90,7 +90,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>8.1.3 JDBC Repositories</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M4</p>
+                    <p><strong>Version:</strong> 1.0.0.M5</p>
                 </div>
 
                 
@@ -285,7 +285,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 <p>By default when saving an entity with a method like <code>save(MyEntity)</code> a SQL <code>INSERT</code> is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
 </div>
 <div class="paragraph">
-<p>If you wish to update an entity you should instead define an appropriate <code>update</code> method, for example:</p>
+<p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">

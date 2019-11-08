@@ -194,7 +194,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 1.0.0.M4</p>
+        <p><strong>Version:</strong> 1.0.0.M5</p>
     </div>
     
 
@@ -402,6 +402,19 @@ fun testAnnotationMetadata() {
 
 
 <div class="sect3">
+<h4 id="_1_0_0_m5">1.0.0.M5</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Support for explicit entity updates with the <code>update</code> method</p>
+</li>
+<li>
+<p>Support for cascading inserts in JDBC</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
 <h4 id="_1_0_0_m4">1.0.0.M4</h4>
 <div class="ulist">
 <ul>
@@ -473,7 +486,7 @@ fun testAnnotationMetadata() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M4'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -482,7 +495,7 @@ fun testAnnotationMetadata() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M4&lt;/version&gt;
+        &lt;version&gt;1.0.0.M5&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -507,7 +520,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M4'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M5'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -515,7 +528,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M4&lt;/version&gt;
+    &lt;version&gt;1.0.0.M5&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -822,7 +835,7 @@ bookRepository.save(book)</code></pre>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M4'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -831,7 +844,7 @@ bookRepository.save(book)</code></pre>
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M4&lt;/version&gt;
+        &lt;version&gt;1.0.0.M5&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -917,7 +930,7 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </div>
 </div>
 <div class="paragraph">
-<p>Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the <code>micronaut-data-hibernate-jpa</code> module:</p>
+<p>Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the <code>micronaut-data-hibernate-jpa</code>  and <code>micronaut-hibernate-jpa</code> module:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
@@ -934,6 +947,20 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </div>
 </div>
 </p>
+</div>
+<div class="paragraph">
+<p>And add the following configuration in <code>application.yml</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">jpa:
+  default:
+    entity-scan:
+        packages: 'example.domain'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Where <code>jpa.default.entity-scan.packages</code> references the root package where your <code>@Entity</code> classes are located.</p>
 </div>
 <div class="paragraph">
 <p>Or if you wish to use SQL then the <code>micronaut-data-jdbc</code> module:</p>
@@ -3552,7 +3579,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M4'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3561,7 +3588,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M4&lt;/version&gt;
+        &lt;version&gt;1.0.0.M5&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -3586,7 +3613,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M4'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M5'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3594,7 +3621,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M4&lt;/version&gt;
+    &lt;version&gt;1.0.0.M5&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -4255,7 +4282,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 <p>By default when saving an entity with a method like <code>save(MyEntity)</code> a SQL <code>INSERT</code> is always performed since Micronaut Data has no way to know whether the entity is associated to a particular session.</p>
 </div>
 <div class="paragraph">
-<p>If you wish to update an entity you should instead define an appropriate <code>update</code> method, for example:</p>
+<p>If you wish to update an entity you should instead either use <code>update(MyEntity)</code> or even better define an appropriate <code>update</code> method to update only the data you want to update, for example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -5742,7 +5769,7 @@ import org.postgresql.Driver;
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.M4'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.M5'</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5750,7 +5777,7 @@ import org.postgresql.Driver;
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M4&lt;/version&gt;
+    &lt;version&gt;1.0.0.M5&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
