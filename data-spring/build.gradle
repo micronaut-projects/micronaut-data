@@ -3,7 +3,7 @@ dependencies {
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     compile project(":data-runtime")
     compile 'org.springframework.data:spring-data-commons:2.2.1.RELEASE'
-    compile "org.springframework:spring-jdbc:5.2.0.RELEASE"
+    compile "org.springframework:spring-jdbc:5.2.1.RELEASE"
     compile group:'io.micronaut', name:'micronaut-spring', version: micronautVersion
     compileOnly "org.springframework:spring-orm:5.2.1.RELEASE"
     compileOnly "org.hibernate:hibernate-core:5.4.8.Final", {
