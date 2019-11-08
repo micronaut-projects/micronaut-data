@@ -23,3 +23,18 @@ See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-
 ## Examples
 
 Examples can be found in the [examples](https://github.com/micronaut-projects/micronaut-data/tree/master/examples) directory.
+
+## Snapshots and Releases
+
+Snaphots are automatically published to JFrog OSS using [Github Actions](https://github.com/micronaut-projects/micronaut-data/actions).
+
+See the documentation in the [Micronaut Docs](https://docs.micronaut.io/latest/guide/index.html#usingsnapshots) for how to configure your build to use snapshots.
+
+Releases are published to JCenter and Maven Central via [Github Actions](https://github.com/micronaut-projects/micronaut-data/actions).
+
+A release is performed with the following steps:
+
+* Change the version specified by `projectVersion` in `gradle.properties` to a semantic, unreleased version. Example `1.0.0`
+* Commit the change. Example: `git commit -m "Release Version 1.0.0"`
+* Tag the release where the tag starts with `v`. Example: `git tag v1.0.0`
+* Push the commit and the tag: `git push && git push --tags`
