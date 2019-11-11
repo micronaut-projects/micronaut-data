@@ -147,7 +147,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             if (assoc.getKind() == Relation.Kind.EMBEDDED) {
 
                                 Object value = prop.getProperty().get(entity);
-                                Object embeddedValue = embeddedProp.getProperty().get(value);
+                                Object embeddedValue = value != null ? embeddedProp.getProperty().get(value) : null;
                                 int index = i + 1;
                                 preparedStatementWriter.setDynamic(
                                         stmt,
