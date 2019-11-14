@@ -72,5 +72,6 @@ class DataInitializer {
                 new Timestamp(offsetDateTime.toInstant().toEpochMilli())
         );
         conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, OffsetDateTime::toLocalDateTime);
+        conversionService.addConverter(OffsetDateTime.class, LocalDate.class, OffsetDateTime::toLocalDate);
     }
 }
