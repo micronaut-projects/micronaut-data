@@ -39,7 +39,7 @@ class AutoTimestampSpec extends Specification {
 
     void "test java.util.Date date created and last updated"() {
         when:
-        def company = new Company("Apple", new URL("http://apple.com"))
+        def company = new Company("Apple", new URL("https://apple.com"))
         companyRepo.save(company)
         def dateCreated = company.dateCreated
 

@@ -37,12 +37,14 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
 import org.slf4j.Logger;
 
+import javax.validation.constraints.NotNull;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -77,6 +79,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
+    private final DateTimeProvider dateTimeProvider;
 
     /**
      * Default constructor.
@@ -85,16 +88,19 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
+     * @param dateTimeProvider           The injected dateTimeProvider instance
      */
     protected AbstractSqlRepositoryOperations(
             ResultReader<RS, String> columnNameResultSetReader,
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
-            List<MediaTypeCodec> codecs) {
+            List<MediaTypeCodec> codecs,
+            @NotNull DateTimeProvider dateTimeProvider) {
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
+        this.dateTimeProvider = dateTimeProvider;
     }
 
     private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
@@ -127,7 +133,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T>    The entity type
      */
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
-        Date now = null;
+        Object now = null;
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
         for (int i = 0; i < parameterBinding.length; i++) {
@@ -194,7 +200,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 } else if (!prop.isGenerated()) {
                     if (beanProperty.hasStereotype(AutoPopulated.class)) {
                         if (beanProperty.hasAnnotation(DateCreated.class)) {
-                            now = now != null ? now : new Date();
+                            now = now != null ? now : dateTimeProvider.getNow();
+                            now = now != null ? now : dateTimeProvider.getNow();
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                 DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
                             }
@@ -206,7 +213,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             );
                             beanProperty.convertAndSet(entity, now);
                         } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                            now = now != null ? now : new Date();
+                            now = now != null ? now : dateTimeProvider.getNow();
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                 DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
                             }

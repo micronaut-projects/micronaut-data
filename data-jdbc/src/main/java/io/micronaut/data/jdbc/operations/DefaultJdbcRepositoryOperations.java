@@ -51,6 +51,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -110,14 +111,16 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param executorService       The executor service
      * @param beanContext           The bean context
      * @param codecs                The codecs
+     * @param dateTimeProvider      The dateTimeProvider
      */
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               DataSource dataSource,
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
-                                              List<MediaTypeCodec> codecs) {
-        super(new ColumnNameResultSetReader(), new ColumnIndexResultSetReader(), new JdbcQueryStatement(), codecs);
+                                              List<MediaTypeCodec> codecs,
+                                              @NonNull DateTimeProvider dateTimeProvider) {
+        super(new ColumnNameResultSetReader(), new ColumnIndexResultSetReader(), new JdbcQueryStatement(), codecs, dateTimeProvider);
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;

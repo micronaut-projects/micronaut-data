@@ -23,6 +23,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.runtime.date.DateTimeProvider;
 import org.hibernate.boot.Metadata;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
@@ -36,7 +37,7 @@ import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 import org.hibernate.tuple.entity.EntityMetamodel;
 
 import javax.inject.Singleton;
-import java.time.OffsetDateTime;
+import javax.validation.constraints.NotNull;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,6 +51,18 @@ import java.util.Map;
 @Primary
 @Singleton
 public class EventIntegrator implements Integrator {
+
+    private final DateTimeProvider dateTimeProvider;
+
+    /**
+     * Constructor.
+     *
+     * @param dateTimeProvider dependency that will provide the time.
+     */
+    public EventIntegrator(@NotNull DateTimeProvider dateTimeProvider) {
+        this.dateTimeProvider = dateTimeProvider;
+    }
+
     @Override
     public void integrate(
             Metadata metadata,
@@ -119,11 +132,11 @@ public class EventIntegrator implements Integrator {
             Object[] state,
             boolean isInsert) {
         Object entity = event.getEntity();
-        OffsetDateTime now = null;
+        Object now = null;
         if (isInsert) {
             BeanProperty dateCreatedProp = dateCreated.get(entity.getClass());
             if (dateCreatedProp != null) {
-                now = OffsetDateTime.now();
+                now = dateTimeProvider.getNow();
                 conversionService.convert(now, dateCreatedProp.getType()).ifPresent(o -> {
                             dateCreatedProp.set(entity, o);
                             EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
@@ -137,7 +150,7 @@ public class EventIntegrator implements Integrator {
 
         BeanProperty lastUpdatedProp = lastUpdates.get(entity.getClass());
         if (lastUpdatedProp != null) {
-            now = now != null ? now : OffsetDateTime.now();
+            now = now != null ? now : dateTimeProvider.getNow();
             conversionService.convert(now, lastUpdatedProp.getType()).ifPresent(o -> {
                         lastUpdatedProp.set(entity, o);
                         EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
