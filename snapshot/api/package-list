@@ -46,6 +46,7 @@ io.micronaut.data.repository
 io.micronaut.data.repository.async
 io.micronaut.data.repository.reactive
 io.micronaut.data.runtime.config
+io.micronaut.data.runtime.date
 io.micronaut.data.runtime.http
 io.micronaut.data.runtime.intercept
 io.micronaut.data.runtime.intercept.async

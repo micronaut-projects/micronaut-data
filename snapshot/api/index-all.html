@@ -146,7 +146,7 @@
 <dd>
 <div class="block">Abstract SQL repository implementation not specifically bound to JDBC.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#AbstractSqlRepositoryOperations-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-">AbstractSqlRepositoryOperations(ResultReader&lt;RS, String&gt;, ResultReader&lt;RS, Integer&gt;, QueryStatement&lt;PS, Integer&gt;, List&lt;MediaTypeCodec&gt;)</a></span> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#AbstractSqlRepositoryOperations-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">AbstractSqlRepositoryOperations(ResultReader&lt;RS, String&gt;, ResultReader&lt;RS, Integer&gt;, QueryStatement&lt;PS, Integer&gt;, List&lt;MediaTypeCodec&gt;, DateTimeProvider)</a></span> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -1198,6 +1198,12 @@
 <dd>
 <div class="block">A repository interface for performing CRUD (Create, Read, Update, Delete).</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/date/CurrentDateTimeProvider.html" title="class in io.micronaut.data.runtime.date"><span class="typeNameLink">CurrentDateTimeProvider</span></a> - Class in <a href="io/micronaut/data/runtime/date/package-summary.html">io.micronaut.data.runtime.date</a></dt>
+<dd>
+<div class="block">Default implementation of <a href="io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date"><code>DateTimeProvider</code></a>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/date/CurrentDateTimeProvider.html#CurrentDateTimeProvider--">CurrentDateTimeProvider()</a></span> - Constructor for class io.micronaut.data.runtime.date.<a href="io/micronaut/data/runtime/date/CurrentDateTimeProvider.html" title="class in io.micronaut.data.runtime.date">CurrentDateTimeProvider</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/hibernate5/MicronautSessionContext.html#currentSession--">currentSession()</a></span> - Method in class io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/MicronautSessionContext.html" title="class in io.micronaut.transaction.hibernate5">MicronautSessionContext</a></dt>
 <dd>
 <div class="block">Retrieve the Spring-managed Session for the current thread, if any.</div>
@@ -1306,6 +1312,11 @@
 <dt><a href="io/micronaut/data/annotation/DateCreated.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">DateCreated</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">Can be applied to date type to indicate the property should be populated when it is first inserted.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date"><span class="typeNameLink">DateTimeProvider</span></a>&lt;<a href="io/micronaut/data/runtime/date/DateTimeProvider.html" title="type parameter in DateTimeProvider">T</a>&gt; - Interface in <a href="io/micronaut/data/runtime/date/package-summary.html">io.micronaut.data.runtime.date</a></dt>
+<dd>
+<div class="block">Used by Micronaut Data to assign a time stamp to entity fields labeled with <a href="io/micronaut/data/annotation/DateCreated.html" title="annotation in io.micronaut.data.annotation"><code>DateCreated</code></a> or
+ <a href="io/micronaut/data/annotation/DateUpdated.html" title="annotation in io.micronaut.data.annotation"><code>DateUpdated</code></a>.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/DateUpdated.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">DateUpdated</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
@@ -1571,7 +1582,7 @@
 <dd>
 <div class="block">Implementation of <a href="io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><code>JdbcRepositoryOperations</code></a>.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-">DefaultJdbcRepositoryOperations(String, DataSource, TransactionOperations&lt;Connection&gt;, ExecutorService, BeanContext, List&lt;MediaTypeCodec&gt;)</a></span> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">DefaultJdbcRepositoryOperations(String, DataSource, TransactionOperations&lt;Connection&gt;, ExecutorService, BeanContext, List&lt;MediaTypeCodec&gt;, DateTimeProvider)</a></span> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -2273,8 +2284,10 @@
 <dd>
 <div class="block">Integrates event handling.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/event/EventIntegrator.html#EventIntegrator--">EventIntegrator()</a></span> - Constructor for class io.micronaut.data.hibernate.event.<a href="io/micronaut/data/hibernate/event/EventIntegrator.html" title="class in io.micronaut.data.hibernate.event">EventIntegrator</a></dt>
-<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/event/EventIntegrator.html#EventIntegrator-io.micronaut.data.runtime.date.DateTimeProvider-">EventIntegrator(DateTimeProvider)</a></span> - Constructor for class io.micronaut.data.hibernate.event.<a href="io/micronaut/data/hibernate/event/EventIntegrator.html" title="class in io.micronaut.data.hibernate.event">EventIntegrator</a></dt>
+<dd>
+<div class="block">Constructor.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html#execute-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.TransactionCallback-">execute(TransactionDefinition, TransactionCallback&lt;Connection, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.runtime.spring.<a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#execute-io.micronaut.data.jdbc.runtime.ConnectionCallback-">execute(ConnectionCallback&lt;R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
@@ -3621,6 +3634,12 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Face.html#getNose--">getNose()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Face.html" title="class in io.micronaut.data.tck.entities">Face</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/date/CurrentDateTimeProvider.html#getNow--">getNow()</a></span> - Method in class io.micronaut.data.runtime.date.<a href="io/micronaut/data/runtime/date/CurrentDateTimeProvider.html" title="class in io.micronaut.data.runtime.date">CurrentDateTimeProvider</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/date/DateTimeProvider.html#getNow--">getNow()</a></span> - Method in interface io.micronaut.data.runtime.date.<a href="io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a></dt>
+<dd>
+<div class="block">Returns the time to be used for the timestamp.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Page.html#getNum--">getNum()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Page.html" title="class in io.micronaut.data.tck.entities">Page</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Pageable.html#getNumber--">getNumber()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
@@ -4928,6 +4947,8 @@
 <dd>
 <div class="block">Runtime configuration support classes.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/date/package-summary.html">io.micronaut.data.runtime.date</a> - package io.micronaut.data.runtime.date</dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/http/package-summary.html">io.micronaut.data.runtime.http</a> - package io.micronaut.data.runtime.http</dt>
 <dd>
 <div class="block">HTTP Binding support classes.</div>

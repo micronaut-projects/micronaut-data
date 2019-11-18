@@ -177,12 +177,13 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-">DefaultJdbcRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">DefaultJdbcRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
                                javax.sql.DataSource&nbsp;dataSource,
                                <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
                                java.util.concurrent.ExecutorService&nbsp;executorService,
                                io.micronaut.context.BeanContext&nbsp;beanContext,
-                               java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs)</code>
+                               java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
+                               <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider)</code>
 <div class="block">Default constructor.</div>
 </td>
 </tr>
@@ -397,7 +398,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-">
+<a name="DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -411,7 +412,9 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
                                           @Named(value="io") @Nullable
                                           java.util.concurrent.ExecutorService&nbsp;executorService,
                                           io.micronaut.context.BeanContext&nbsp;beanContext,
-                                          java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs)</pre>
+                                          java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
+                                          @NonNull
+                                          <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -421,6 +424,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <dd><code>executorService</code> - The executor service</dd>
 <dd><code>beanContext</code> - The bean context</dd>
 <dd><code>codecs</code> - The codecs</dd>
+<dd><code>dateTimeProvider</code> - The dateTimeProvider</dd>
 </dl>
 </li>
 </ul>
