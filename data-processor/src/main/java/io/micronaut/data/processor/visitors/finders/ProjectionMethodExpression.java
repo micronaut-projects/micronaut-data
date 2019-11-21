@@ -114,7 +114,7 @@ public abstract class ProjectionMethodExpression {
             @NonNull String projectionDefinition
     ) {
         int len = getClass().getSimpleName().length();
-        if (projectionDefinition.length() >= len) {
+        if (projectionDefinition.length() >= len && !getClass().equals(Property.class)) {
             String remaining = projectionDefinition.substring(len);
             return initProjection(matchContext, NameUtils.decapitalize(remaining));
         } else {

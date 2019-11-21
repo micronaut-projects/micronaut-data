@@ -34,4 +34,6 @@ class Person {
     Long someId
 
     boolean enabled = true
+
+    String publicId
 }

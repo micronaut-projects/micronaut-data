@@ -65,7 +65,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "existsByName" | "Single<Boolean>"       | "String name"           | ExistsByReactiveInterceptor
         "findById"     | "Single<Person>"        | "Long id"               | FindByIdReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"         | SaveEntityReactiveInterceptor
-        "save"         | "Single<Person>"        | "String name"           | SaveOneReactiveInterceptor
+        "save"         | "Single<Person>"        | "String name, String publicId"  | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities" | SaveAllReactiveInterceptor
         "updateByName" | "Single<Number>"       | "String name, int age"  | UpdateReactiveInterceptor
         "update"       | "Completable"       | "@Id Long id, int age"  | UpdateReactiveInterceptor

@@ -136,7 +136,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "existsByName" | "CompletionStage<Boolean>"       | "String name"           | ExistsByAsyncInterceptor   | Boolean
         "findById"     | "CompletionStage<Person>"        | "Long id"               | FindByIdAsyncInterceptor   | Person
         "save"         | "CompletionStage<Person>"        | "Person person"         | SaveEntityAsyncInterceptor | Person
-        "save"         | "CompletionStage<Person>"        | "String name"           | SaveOneAsyncInterceptor    | Person
+        "save"         | "CompletionStage<Person>"        | "String name, String publicId"           | SaveOneAsyncInterceptor    | Person
         "save"         | "CompletionStage<List<Person>>"  | "List<Person> entities" | SaveAllAsyncInterceptor    | void.class
         "updateByName" | "CompletionStage<Long>"          | "String name, int age"  | UpdateAsyncInterceptor     | Person
         "update"       | "CompletionStage<Void>"          | "@Id Long id, int age"  | UpdateAsyncInterceptor     | Void

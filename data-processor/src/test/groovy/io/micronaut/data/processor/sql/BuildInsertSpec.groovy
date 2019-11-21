@@ -47,9 +47,9 @@ interface MyInterface extends CrudRepository<Person, Long> {
         expect:
         method
             .stringValue(Query)
-            .orElse(null) == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
+            .orElse(null) == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
         method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
-                ['name', 'age', 'enabled'] as String[]
+                ['name', 'age', 'enabled', 'publicId'] as String[]
     }
 
     @PendingFeature(reason = "Bug in Micronaut core. Fixed by https://github.com/micronaut-projects/micronaut-core/commit/f6a488677d587be309d5b0abd8925c9a098cfdf9")

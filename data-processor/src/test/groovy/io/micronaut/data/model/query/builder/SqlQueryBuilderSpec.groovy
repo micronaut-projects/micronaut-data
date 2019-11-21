@@ -134,8 +134,8 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO "person" ("name","age","enabled") VALUES (?,?,?)'
-        result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled')
+        result.query == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
+        result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled', '4': "publicId")
     }
 
     void "test encode insert statement for embedded"() {
