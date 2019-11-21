@@ -39,13 +39,13 @@ import io.micronaut.data.repository.GenericRepository;
 @Repository
 interface MyInterface extends GenericRepository<Person, Long> {
 
-    Person save(String name, int age);
+    Person save(String name, int age, String publicId);
     
 }
 """)
 
         when: "save method is retrieved"
-        def updateMethod = beanDefinition.getRequiredMethod("save", String, int.class)
+        def updateMethod = beanDefinition.getRequiredMethod("save", String, int.class, String)
         def updateAnn = updateMethod.synthesize(DataMethod)
 
         then: "It was correctly compiled"
