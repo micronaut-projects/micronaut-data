@@ -61,3 +61,26 @@ The changes for SQL Server JDBC Driver (`com.microsoft.sqlserver:mssql-jdbc:7.2.
 --initialize-at-build-time=com.microsoft.sqlserver.jdbc.SQLServerResource \
 --initialize-at-run-time=java.sql.DriverManager
 ----
+
+==== Configuration for MariaDB
+
+The changes for MariaDB driver (`org.mariadb.jdbc:mariadb-java-client:2.5.2` or above) are:
+
+.`@TypeHint` Declaration in Application Class
+[source,java]
+----
+@TypeHint(value = {
+        org.mariadb.jdbc.util.Options.class,
+        org.mariadb.jdbc.Driver.class
+},
+accessType = TypeHint.AccessType.ALL_PUBLIC)
+----
+
+
+.GraalVM Flags
+[source,properties]
+----
+--initialize-at-build-time=org.mariadb \
+--initialize-at-run-time=org.mariadb.jdbc.credential.aws,org.mariadb.jdbc.internal.failover.impl.MastersSlavesListener,org.mariadb.jdbc.internal.com.send.authentication.SendPamAuthPacket
+----
+
