@@ -172,9 +172,9 @@ public interface PersistentEntity extends PersistentElement {
             Iterator<String> i = path.iterator();
             StringBuilder b = new StringBuilder();
             PersistentEntity currentEntity = this;
+            String name = null;
             while (i.hasNext()) {
-
-                String name = i.next();
+                name = name == null ? i.next() : name + NameUtils.capitalize(i.next());
                 PersistentProperty sp = currentEntity.getPropertyByName(name);
                 if (sp == null) {
                     PersistentProperty identity = currentEntity.getIdentity();
@@ -189,40 +189,12 @@ public interface PersistentEntity extends PersistentElement {
                     }
                     if (sp instanceof Association) {
                         currentEntity = ((Association) sp).getAssociatedEntity();
+                        name = null;
                     }
-                } else if (i.hasNext()) {
-                    name = name + NameUtils.capitalize(i.next());
-                    sp = currentEntity.getPropertyByName(name);
-                    if (sp != null) {
-                        if (sp instanceof Association) {
-                            currentEntity = ((Association) sp).getAssociatedEntity();
-                        }
-                        b.append(name);
-                        if (i.hasNext()) {
-                            b.append(".");
-                        }
-                    } else {
-                        PersistentProperty identity = currentEntity.getIdentity();
-                        if (identity != null && identity.getName().equals(name)) {
-                            sp = identity;
-                            if (sp instanceof Association) {
-                                currentEntity = ((Association) sp).getAssociatedEntity();
-                                b.append(name);
-                                if (i.hasNext()) {
-                                    b.append(".");
-                                }
-                            }
-                        }
-                        if (sp == null) {
-                            return Optional.empty();
-                        }
-                    }
-                } else {
-                    return Optional.empty();
                 }
             }
 
-            return Optional.of(b.toString());
+            return b.length() == 0 || b.charAt(b.length() - 1) == '.' ? Optional.empty() : Optional.of(b.toString());
 
         }
         return Optional.empty();

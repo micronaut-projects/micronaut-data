@@ -3,11 +3,11 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.processor.visitors.AbstractDataSpec
-import io.micronaut.inject.ExecutableMethod
+import spock.lang.Unroll
 
 class BuildUpdateSpec extends AbstractDataSpec {
-
-    void "test build insert with datasource set"() {
+    @Unroll
+    void "test build update with datasource set"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -15,19 +15,22 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface MovieRepository extends CrudRepository<Movie, Integer> {
+    void updateById(int id, String theLongName, String title);
 }
 
-${entity('Movie', [title: String])}
+${entity('Movie', [title: String, theLongName: String])}
 """)
-        def method = repository.findPossibleMethods("update")
-                .findFirst().get()
-        def query = method
-                .stringValue(Query)
-                .get()
-        expect:
-        query == 'UPDATE `movie` SET `title`=? WHERE (`id` = ?)'
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) ==
-                ['title', 'id']
+        def method = repository.findPossibleMethods(methodName).findFirst().get()
 
+        expect:
+        method.stringValue(Query).get() == query
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
+
+
+        where:
+        methodName               | query                                                               | bindingPaths                                   | binding
+        'update'                 | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)'   | ['title', 'theLongName', 'id'] as String[]     | [] as String[]
+        'updateById'             | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)'   | ['','',''] as String[]                         | ['1', '2', '0'] as String[]
     }
 }

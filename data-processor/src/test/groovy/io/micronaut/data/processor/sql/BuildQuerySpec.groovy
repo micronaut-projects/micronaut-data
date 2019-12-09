@@ -4,10 +4,11 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import spock.lang.Unroll
 
 class BuildQuerySpec extends AbstractDataSpec {
-
-    void "test build insert with datasource set"() {
+    @Unroll
+    void "test build query with datasource set"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -17,16 +18,22 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     Optional<Movie> findByTitle(String title);
+    Optional<String> findTheLongNameById(int id);
+    Optional<Movie> findByTheLongName(String theLongName);
 }
 
-${entity('Movie', [title: String])}
+${entity('Movie', [title: String, theLongName: String])}
 """)
-        def query = repository.getRequiredMethod("findByTitle", String)
-                .stringValue(Query)
-                .get()
-        expect:
-        query == 'SELECT movie_.`id`,movie_.`title` FROM `movie` movie_ WHERE (movie_.`title` = ?)'
+        def method = repository.getRequiredMethod(methodName, arguments)
 
+        expect:
+        method.stringValue(Query).get() == query
+
+        where:
+        methodName               | arguments              | query
+        'findByTitle'            |String.class            |'SELECT movie_.`id`,movie_.`title`,movie_.`the_long_name` FROM `movie` movie_ WHERE (movie_.`title` = ?)'
+        'findTheLongNameById'    |int.class               |'SELECT movie_.`the_long_name` FROM `movie` movie_ WHERE (movie_.`id` = ?)'
+        'findByTheLongName'      |String.class            |'SELECT movie_.`id`,movie_.`title`,movie_.`the_long_name` FROM `movie` movie_ WHERE (movie_.`the_long_name` = ?)'
     }
 
     void "test build DTO projection with pageable"() {
