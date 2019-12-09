@@ -27,6 +27,9 @@ class LocalDateSpec extends Specification {
         ))).first().name == "Bob"
         repository.findAll(Pageable.from(Sort.of(
                 Sort.Order.desc("createdDate")
-        ))).content.size() == 2
+        ))).content*.createdDate != null
+        repository.findAll(Pageable.from(Sort.of(
+                Sort.Order.desc("createdDate")
+        ))).first().name == "Fred"
     }
 }
