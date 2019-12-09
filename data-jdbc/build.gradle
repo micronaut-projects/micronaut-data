@@ -17,7 +17,7 @@ dependencies {
     testCompile project(":data-processor")
     testCompile "io.micronaut:micronaut-validation:$micronautVersion"
     testRuntime "com.h2database:h2:1.4.200"
-    testRuntime 'org.mariadb.jdbc:mariadb-java-client:2.5.1'
+    testRuntime 'org.mariadb.jdbc:mariadb-java-client:2.5.2'
     testRuntime "com.oracle.ojdbc:ojdbc8:19.3.0.0"
     testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
     testCompile "org.testcontainers:spock:1.12.4"
