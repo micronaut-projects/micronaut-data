@@ -1079,7 +1079,6 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
@@ -1090,7 +1089,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 
     private final EntityManager entityManager
 
-    AbstractBookRepository(@CurrentSession EntityManager entityManager) {
+    AbstractBookRepository(EntityManager entityManager) {
         this.entityManager = entityManager
     }
 
@@ -1106,14 +1105,13 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
 import javax.persistence.EntityManager
 
 @Repository
-abstract class AbstractBookRepository(@param:CurrentSession private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
+abstract class AbstractBookRepository(private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
 
     fun findByTitle(title: String): List&lt;Book&gt; {
         return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book::class.java)
