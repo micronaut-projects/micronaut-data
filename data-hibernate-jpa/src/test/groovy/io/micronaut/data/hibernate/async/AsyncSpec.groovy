@@ -16,6 +16,7 @@
 package io.micronaut.data.hibernate.async
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.annotation.MicronautTest
@@ -47,6 +48,18 @@ class AsyncSpec extends Specification {
         p.name == 'Fred'
         asyncCrudRepository.existsById(p.id).get()
         asyncCrudRepository.count().get() == 1
+
+        when:"An entity is not found"
+        def notThere = asyncCrudRepository.findById(1000L)
+                .exceptionally({ Throwable t ->
+                    if (t.cause instanceof EmptyResultException) {
+                        return null
+                    }
+                    throw t
+                }).get()
+
+        then:"An exception is thrown"
+        notThere == null
 
         when:"another entity is saved and all entities are listed"
         def result = asyncCrudRepository.saveAll([new Person(name: "Bob", age: 20), new Person(name: "Chuck", age: 30)])

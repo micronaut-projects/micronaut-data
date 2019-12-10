@@ -59,8 +59,9 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Retrieves an entity by its id.
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
-     * @return the entity with the given id or {@literal Optional#empty()} if none found
+     * @return the entity with the given id or emits an {@link io.micronaut.data.exceptions.EmptyResultException} if it the entity is not found
      * @throws javax.validation.ConstraintViolationException if the id is {@literal null}.
+     * @throws io.micronaut.data.exceptions.EmptyResultException if no entity exists for the ID
      */
     @NonNull
     CompletableFuture<E> findById(@NotNull @NonNull ID id);
