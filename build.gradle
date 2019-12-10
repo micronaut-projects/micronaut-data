@@ -56,7 +56,7 @@ subprojects { Project subproject ->
         apply plugin: "io.spring.nohttp"
     }
     apply plugin:"groovy"
-    apply plugin:"java"
+    apply plugin:"java-library"
 
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
@@ -155,7 +155,7 @@ subprojects { Project subproject ->
     }
 }
 
-apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v1.0.3/gradle/docs.gradle"
+apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v${micronautDocsVersion}/gradle/docs.gradle"
 
 allprojects {
     apply plugin: 'idea'

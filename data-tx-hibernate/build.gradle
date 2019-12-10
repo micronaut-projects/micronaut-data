@@ -1,9 +1,11 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
-    compile project(":data-tx")
+    implementation project(":data-tx")
+    implementation "com.github.spotbugs:spotbugs-annotations:3.1.12"
+    implementation "io.micronaut:micronaut-inject:$micronautVersion"
     compileOnly "org.springframework:spring-orm:5.2.2.RELEASE"
-    compile "org.hibernate:hibernate-core:5.4.10.Final", {
+    implementation "org.hibernate:hibernate-core:5.4.10.Final", {
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
         exclude group: 'org.jboss:jandex', module: 'jar'
@@ -13,9 +15,9 @@ dependencies {
     testAnnotationProcessor project(":data-processor")
     testImplementation project(":data-processor")
 
-    testCompile project(":data-tck")
-    testRuntime "com.h2database:h2"
-    testRuntime project(":data-hibernate-jpa")
-    testRuntime "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testImplementation project(":data-tck")
+    testRuntimeOnly "com.h2database:h2"
+    testRuntimeOnly project(":data-hibernate-jpa")
+    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
 
 }

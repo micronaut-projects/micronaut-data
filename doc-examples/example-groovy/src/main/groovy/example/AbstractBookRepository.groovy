@@ -1,6 +1,5 @@
 package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
@@ -11,7 +10,7 @@ abstract class AbstractBookRepository implements CrudRepository<Book, Long> {
 
     private final EntityManager entityManager
 
-    AbstractBookRepository(@CurrentSession EntityManager entityManager) {
+    AbstractBookRepository(EntityManager entityManager) {
         this.entityManager = entityManager
     }
 

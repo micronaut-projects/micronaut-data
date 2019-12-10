@@ -44,7 +44,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
 import org.slf4j.Logger;
 
-import javax.validation.constraints.NotNull;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -95,7 +94,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
-            @NotNull DateTimeProvider dateTimeProvider) {
+            @NonNull DateTimeProvider dateTimeProvider) {
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
