@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.h2
 
-
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
@@ -40,6 +40,10 @@ import javax.sql.DataSource
 @Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
 @Property(name = "datasources.default.dialect", value = "H2")
 class H2RepositorySpec extends AbstractRepositorySpec {
+
+    @Inject
+    @Shared
+    ApplicationContext context
 
     @Inject
     @Shared
@@ -140,6 +144,11 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     }
 
     void init() {
+    }
+
+    void "test repositories are singleton"() {
+        expect:
+        pr.is(context.getBean(H2PersonRepository))
     }
 
     void "test CRUD with custom schema and catalog"() {

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
@@ -35,6 +36,10 @@ class CrudRepositorySpec extends Specification {
     @Shared
     PersonCrudRepository crudRepository
 
+    @Inject
+    @Shared
+    ApplicationContext context
+
     def setupSpec() {
         crudRepository.saveAll([
                 new Person(name: "Jeff"),
@@ -49,7 +54,9 @@ class CrudRepositorySpec extends Specification {
 
         then:"the instance is persisted"
         person.id != null
+        crudRepository.is(context.getBean(PersonCrudRepository))
         crudRepository.findById(person.id).isPresent()
+        !crudRepository.findById(1000L).isPresent()
         crudRepository.get(person.id).name == 'Fred'
         crudRepository.existsById(person.id)
         crudRepository.count() == 3

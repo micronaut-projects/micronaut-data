@@ -19,6 +19,7 @@ import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.DataIntroductionAdvice;
 
+import javax.inject.Singleton;
 import java.lang.annotation.*;
 
 /**
@@ -33,6 +34,7 @@ import java.lang.annotation.*;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
 @Type(DataIntroductionAdvice.class)
+@Singleton
 public @interface Repository {
     /**
      * The name of the underlying datasource connection name. In a multiple data source scenario this will
