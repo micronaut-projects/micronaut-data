@@ -143,8 +143,7 @@ function addJsClass() {
                 
 
                 
-
-<h1 id="querying">5 Writing Queries</h1>
+<h1 id="querying"><a class="anchor" href="#querying"></a>5 Writing Queries</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying.adoc"'>
@@ -321,8 +320,7 @@ More details about the batch update variants of these methods is covered in the 
 <p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical <code>AND</code>.</p>
 </div>
 
-
-<h2 id="criteria">5.1 Query Criteria</h2>
+<h2 id="criteria"><a class="anchor" href="#criteria"></a>5.1 Query Criteria</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/criteria.adoc"'>
@@ -515,8 +513,7 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 <p>You can also negate any of the aforementioned expressions by adding <code>Not</code> prior the name of the expression (example <code>NotTrue</code> or <code>NotContain</code>).</p>
 </div>
 
-
-<h2 id="pagination">5.2 Pagination</h2>
+<h2 id="pagination"><a class="anchor" href="#pagination"></a>5.2 Pagination</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/pagination.adoc"'>
@@ -639,8 +636,7 @@ val page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))</code></p
 <p>A <a href="../api/io/micronaut/data/model/Slice.html">Slice</a> is the same as a <a href="../api/io/micronaut/data/model/Page.html">Page</a> but results in one less query as it excludes the total number of pages calculation.</p>
 </div>
 
-
-<h2 id="ordering">5.3 Ordering</h2>
+<h2 id="ordering"><a class="anchor" href="#ordering"></a>5.3 Ordering</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/ordering.adoc"'>
@@ -677,8 +673,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 <p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order.</p>
 </div>
 
-
-<h2 id="projections">5.4 Query Projections</h2>
+<h2 id="projections"><a class="anchor" href="#projections"></a>5.4 Query Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/projections.adoc"'>
@@ -801,8 +796,7 @@ If the projected property type and the return generic type do not match up then 
 <p>The above query will return the first 3 results for the given query expression.</p>
 </div>
 
-
-<h2 id="dto">5.5 DTO Projections</h2>
+<h2 id="dto"><a class="anchor" href="#dto"></a>5.5 DTO Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/dto.adoc"'>
@@ -898,8 +892,7 @@ data class BookDTO(
 <p>Micronaut Data will optimize the query to only select the necessary properties from the database.</p>
 </div>
 
-
-<h2 id="joinQueries">5.6 Join Queries</h2>
+<h2 id="joinQueries"><a class="anchor" href="#joinQueries"></a>5.6 Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/joinQueries.adoc"'>
@@ -1167,8 +1160,7 @@ override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 </div>
 
-
-<h2 id="explicitQueries">5.7 Explicit Queries</h2>
+<h2 id="explicitQueries"><a class="anchor" href="#explicitQueries"></a>5.7 Explicit Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/explicitQueries.adoc"'>
@@ -1217,8 +1209,7 @@ Currently Micronaut Data does not parse the JPA-QL AST and perform any further t
 <p>Note that if the method returns a <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination then you must additionally specify a query that performs the equivalent count using the <code>countQuery</code> member of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation.</p>
 </div>
 
-
-<h2 id="whereAnnotation">5.8 Modifying Queries with @Where</h2>
+<h2 id="whereAnnotation"><a class="anchor" href="#whereAnnotation"></a>5.8 Modifying Queries with @Where</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/whereAnnotation.adoc"'>
@@ -1426,8 +1417,7 @@ interface UserRepository : CrudRepository&lt;User, Long&gt; { <b class="conum">(
 <p>All other queries performed on the entity will include <code>enabled = true</code> in the query statement.</p>
 </div>
 
-
-<h2 id="nativeQueries">5.9 Native Queries</h2>
+<h2 id="nativeQueries"><a class="anchor" href="#nativeQueries"></a>5.9 Native Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/nativeQueries.adoc"'>
@@ -1475,8 +1465,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </table>
 </div>
 
-
-<h2 id="async">5.10 Asynchronous Queries</h2>
+<h2 id="async"><a class="anchor" href="#async"></a>5.10 Asynchronous Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/async.adoc"'>
@@ -1578,8 +1567,7 @@ In the case of JPA each operation will run with its own transaction and session,
 </table>
 </div>
 
-
-<h2 id="reactive">5.11 Reactive Queries</h2>
+<h2 id="reactive"><a class="anchor" href="#reactive"></a>5.11 Reactive Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/reactive.adoc"'>

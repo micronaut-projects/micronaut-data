@@ -127,6 +127,7 @@ function postProcessCodeBlocks() {
                 if (sampleCollection[0].previousElementSibling == null ||
                     !sampleCollection[0].previousElementSibling.classList.contains("multi-language-selector")) {
 
+                    
                     var languageSelectorFragment = document.createDocumentFragment();
                     var multiLanguageSelectorElement = document.createElement("div");
                     multiLanguageSelectorElement.classList.add("multi-language-selector");
@@ -151,6 +152,11 @@ function postProcessCodeBlocks() {
                             }
 
                             switchSampleLanguage(isLang(optionId) ? optionId : initPreferredLanguage(), isBuild(optionId) ? optionId : initPreferredBuild());
+                            
+                            // scroll to multi-lange selector. Offset the scroll a little bit to focus. 
+                            optionEl.scrollIntoView();
+                            var offset = 150;
+                            window.scrollBy(0, -offset);
                         });
                         multiLanguageSelectorElement.appendChild(optionEl);
                     });
