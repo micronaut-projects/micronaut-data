@@ -1,9 +1,11 @@
 var BUILD_MAVEN = "maven";
 var BUILD_GRADLE = "gradle";
+var BUILD_GRADLE_GROOVY = "gradle-groovy";
+var BUILD_GRADLE_KOTLIN = "gradle-kotlin";
 var LANG_JAVA = "java";
 var LANG_GROOVY = "groovy";
 var LANG_KOTLIN = "kotlin";
-var MICRONAUT_SUPPORTED_BUILDS = [BUILD_MAVEN, BUILD_GRADLE];
+var MICRONAUT_SUPPORTED_BUILDS = [BUILD_GRADLE, BUILD_GRADLE_GROOVY, BUILD_GRADLE_KOTLIN, BUILD_MAVEN];
 var MICRONAUT_SUPPORTED_LANGS = [LANG_JAVA, LANG_GROOVY, LANG_KOTLIN];
 var DEFAULT_SUPPORTED_LANG = LANG_JAVA;
 var DEFAULT_BUILD = BUILD_GRADLE;
@@ -50,14 +52,25 @@ function postProcessCodeBlocks() {
     // Ensure preferred build is valid, defaulting to GRADLE
     function initPreferredBuild() {
         var build = window.localStorage.getItem(LOCALSTORAGE_KEY_BUILD);
-        if (MICRONAUT_SUPPORTED_LANGS.indexOf(build) === -1) {
+        if (MICRONAUT_SUPPORTED_BUILDS.indexOf(build) === -1) {
             window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, DEFAULT_BUILD);
             build = DEFAULT_BUILD;
         }
         return build;
     }
 
-    function capitalizeFirstLetter(string) {
+    // This makes the dash separated sub-langs display better
+    function makeTitleForSnippetSelector(string) {
+        var langSlices = string.split("-");
+        var title = capitalizeWord(langSlices[0]);
+        if(langSlices.length == 2) {
+            title += " (" + capitalizeWord(langSlices[1]) + ")";
+        }
+        return title;
+    }
+
+    function capitalizeWord(string) {
+        if (typeof string !== 'string') return '';
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
@@ -69,6 +82,13 @@ function postProcessCodeBlocks() {
                 sampleEl.classList.add("hidden");
             } else {
                 sampleEl.classList.remove("hidden");
+            }
+            // This block corrects highlighting issues with our dash-separated languages (like gradle-groovy and gradle-kotlin)
+            if(codeEl.classList.contains("language-" + BUILD_GRADLE_GROOVY) || codeEl.classList.contains("language-" + BUILD_GRADLE_KOTLIN)) {
+                codeEl.classList.remove('language-' + BUILD_GRADLE_GROOVY);
+                codeEl.classList.remove('language-' + BUILD_GRADLE_KOTLIN);
+                codeEl.classList.add('language-' + BUILD_GRADLE);
+                hljs.highlightBlock(codeEl);
             }
         }
     }
@@ -127,7 +147,6 @@ function postProcessCodeBlocks() {
                 if (sampleCollection[0].previousElementSibling == null ||
                     !sampleCollection[0].previousElementSibling.classList.contains("multi-language-selector")) {
 
-                    
                     var languageSelectorFragment = document.createDocumentFragment();
                     var multiLanguageSelectorElement = document.createElement("div");
                     multiLanguageSelectorElement.classList.add("multi-language-selector");
@@ -140,20 +159,22 @@ function postProcessCodeBlocks() {
                         optionEl.setAttribute("role", "button");
                         optionEl.classList.add("language-option");
 
-                        optionEl.innerText = capitalizeFirstLetter(sampleLanguage);
+                        optionEl.innerText = makeTitleForSnippetSelector(sampleLanguage);
 
                         optionEl.addEventListener("click", function updatePreferredLanguage(evt) {
                             var optionId = optionEl.getAttribute("data-lang");
-                            if (isBuild(optionId)) {
+                            var isOptionBuild = isBuild(optionId);
+                            var isOptionLang = isLang(optionId);
+                            if (isOptionBuild) {
                                 window.localStorage.setItem(LOCALSTORAGE_KEY_BUILD, optionId);
                             }
-                            if (isLang(optionId)) {
+                            if (isOptionLang) {
                                 window.localStorage.setItem(LOCALSTORAGE_KEY_LANG, optionId);
                             }
 
-                            switchSampleLanguage(isLang(optionId) ? optionId : initPreferredLanguage(), isBuild(optionId) ? optionId : initPreferredBuild());
-                            
-                            // scroll to multi-lange selector. Offset the scroll a little bit to focus. 
+                            switchSampleLanguage(isOptionLang ? optionId : initPreferredLanguage(), isOptionBuild ? optionId : initPreferredBuild());
+
+                            // scroll to multi-lange selector. Offset the scroll a little bit to focus.
                             optionEl.scrollIntoView();
                             var offset = 150;
                             window.scrollBy(0, -offset);
