@@ -29,4 +29,8 @@ import java.lang.annotation.*;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.FIELD})
 @Documented
 public @interface AutoPopulated {
+    /**
+     * @return Whether the property can be updated following an insert
+     */
+    boolean updateable() default true;
 }

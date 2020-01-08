@@ -43,6 +43,7 @@ import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Stepwise
 
+import java.time.Instant
 import java.time.LocalDate
 
 @Stepwise
@@ -509,7 +510,16 @@ abstract class AbstractRepositorySpec extends Specification {
         company.dateCreated.time == dateCreated.time
         retrieved.dateCreated.time == company2.dateCreated.time
         company2.name == 'Changed'
-        company2.lastUpdated.toEpochMilli() > company2.dateCreated.time
+        def lastUpdated = company2.lastUpdated
+        lastUpdated.toEpochMilli() > company2.dateCreated.time
+
+        when:"batch updating with the entity"
+        company2.name = "Changed Again"
+        sleep(500)
+        companyRepository.update(company2)
+
+        then:
+        company2.lastUpdated > lastUpdated
 
         when:"Sorting by date created"
         def results = companyRepository.findAll(Sort.of(

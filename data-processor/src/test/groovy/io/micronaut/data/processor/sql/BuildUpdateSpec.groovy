@@ -29,8 +29,32 @@ ${entity('Movie', [title: String, theLongName: String])}
 
 
         where:
-        methodName               | query                                                               | bindingPaths                                   | binding
-        'update'                 | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)'   | ['title', 'theLongName', 'id'] as String[]     | [] as String[]
-        'updateById'             | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)'   | ['','',''] as String[]                         | ['1', '2', '0'] as String[]
+        methodName   | query                                                             | bindingPaths                               | binding
+        'update'     | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | [] as String[]
+        'updateById' | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)' | ['', '', ''] as String[]                   | ['1', '2', '0'] as String[]
+    }
+
+    @Unroll
+    void "test build update with custom ID"() {
+        given:
+        def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Company;
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface CompanyRepository extends CrudRepository<Company, Long> {
+}
+""")
+        def method = repository.findPossibleMethods(methodName).findFirst().get()
+
+        expect:
+        method.stringValue(Query).get() == query
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
+
+
+        where:
+        methodName   | query                                                                                         | bindingPaths                               | binding
+        'update'     | 'UPDATE `company` SET `last_updated`=?,`name`=?,`url`=? WHERE (`my_id` = ?)' | ['lastUpdated', 'name', 'url', 'myId'] as String[] | [] as String[]
     }
 }

@@ -3,6 +3,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -14,6 +15,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -56,7 +58,6 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
-        VisitorContext visitorContext = matchContext.getVisitorContext();
         ParameterElement[] parameters = matchContext.getParameters();
         if (ArrayUtils.isNotEmpty(parameters)) {
             if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
@@ -69,11 +70,20 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     return new MethodMatchInfo(returnType, null, interceptor, MethodMatchInfo.OperationType.UPDATE);
                 } else {
                     final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+                    final String idName;
+                    final SourcePersistentProperty identity = rootEntity.getIdentity();
+                    if (identity != null) {
+                        idName = identity.getName();
+                    } else {
+                        idName = TypeRole.ID;
+                    }
                     final QueryModel queryModel = QueryModel.from(rootEntity)
-                            .idEq(new QueryParameter(TypeRole.ID));
+                            .idEq(new QueryParameter(idName));
                     String[] updateProperties = rootEntity.getPersistentProperties()
                             .stream().filter(p ->
-                                    !((p instanceof Association) && ((Association) p).isForeignKey()))
+                                    !((p instanceof Association) && ((Association) p).isForeignKey()) &&
+                                            p.booleanValue(AutoPopulated.class, "updateable").orElse(true)
+                            )
                             .map(PersistentProperty::getName)
                             .toArray(String[]::new);
                     if (ArrayUtils.isEmpty(updateProperties)) {
@@ -96,10 +106,7 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                 }
             }
         }
-        visitorContext.fail(
-                "Cannot implement save method for specified arguments and return type",
-                matchContext.getMethodElement()
-        );
+        matchContext.fail("Cannot implement update method for specified arguments and return type");
         return null;
     }
 

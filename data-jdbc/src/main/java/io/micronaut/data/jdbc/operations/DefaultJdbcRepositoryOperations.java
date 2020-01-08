@@ -27,6 +27,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
@@ -51,6 +52,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
@@ -451,7 +453,14 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             if (pp == null) {
                                 throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                             }
-                            final Object newValue = pp.getProperty().get(entity);
+                            final Object newValue;
+                            final BeanProperty<T, ?> beanProperty = pp.getProperty();
+                            if (beanProperty.hasAnnotation(DateUpdated.class)) {
+                                newValue = dateTimeProvider.getNow();
+                                beanProperty.convertAndSet(entity, newValue);
+                            } else {
+                                newValue = beanProperty.get(entity);
+                            }
                             if (QUERY_LOG.isTraceEnabled()) {
                                 QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
                             }

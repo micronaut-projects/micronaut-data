@@ -26,6 +26,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD})
 @Documented
-@AutoPopulated
+@AutoPopulated(updateable = false)
 public @interface DateCreated {
 }

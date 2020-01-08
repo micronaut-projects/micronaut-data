@@ -72,13 +72,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final Map<Class, Dialect> dialects = new HashMap<>(10);
     protected final Map<Dialect, SqlQueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
     protected final MediaTypeCodec jsonCodec;
+    protected final DateTimeProvider dateTimeProvider;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
-    private final DateTimeProvider dateTimeProvider;
 
     /**
      * Default constructor.
@@ -199,7 +199,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 } else if (!prop.isGenerated()) {
                     if (beanProperty.hasStereotype(AutoPopulated.class)) {
                         if (beanProperty.hasAnnotation(DateCreated.class)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
                             now = now != null ? now : dateTimeProvider.getNow();
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                 DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
