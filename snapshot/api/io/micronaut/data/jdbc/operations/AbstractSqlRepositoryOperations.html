@@ -178,34 +178,38 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#columnNameResultSetReader">columnNameResultSetReader</a></span></code>&nbsp;</td>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#dateTimeProvider">dateTimeProvider</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>protected static <a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#dialects">dialects</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>protected static java.util.regex.Pattern</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#IN_EXPRESSION_PATTERN">IN_EXPRESSION_PATTERN</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>protected io.micronaut.http.codec.MediaTypeCodec</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#jsonCodec">jsonCodec</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>protected static java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#NOT_TRUE_EXPRESSION">NOT_TRUE_EXPRESSION</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,java.lang.Integer&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>protected static org.slf4j.Logger</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>protected java.util.Map&lt;<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>,<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a></span></code>&nbsp;</td>
 </tr>
@@ -437,10 +441,19 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <a name="jsonCodec">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>jsonCodec</h4>
 <pre>protected final&nbsp;io.micronaut.http.codec.MediaTypeCodec jsonCodec</pre>
+</li>
+</ul>
+<a name="dateTimeProvider">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>dateTimeProvider</h4>
+<pre>protected final&nbsp;<a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a> dateTimeProvider</pre>
 </li>
 </ul>
 </li>
