@@ -39,7 +39,7 @@
         </div>
         <div class="navLinks">
             <ul>
-                    <li><select style='margin-top: 10px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M5/guide/index.html'>1.0.0.M5</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M4/guide/index.html'>1.0.0.M4</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M3/guide/index.html'>1.0.0.M3</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M2/guide/index.html'>1.0.0.M2</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M1/guide/index.html'>1.0.0.M1</option></select></li><li><div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
+                    <li><div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
                             <a href="../guide/index.html" class="button">Table of contents</a>
                             <div id="nav-summary-childs" style="display:none;">
                                 
@@ -194,7 +194,7 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 1.0.0.BUILD-SNAPSHOT</p>
+        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option selected='selected' value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>1.0.0.BUILD-SNAPSHOT</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M5/guide/index.html'>1.0.0.M5</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M4/guide/index.html'>1.0.0.M4</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M3/guide/index.html'>1.0.0.M3</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M2/guide/index.html'>1.0.0.M2</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M1/guide/index.html'>1.0.0.M1</option></select></p>
     </div>
     
 <h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
@@ -483,7 +483,12 @@ fun testAnnotationMetadata() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -517,7 +522,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -831,7 +841,12 @@ bookRepository.save(book)</code></pre>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -876,7 +891,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -896,7 +916,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-tomcat'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-tomcat'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"io.micronaut.configuration:micronaut-jdbc-tomcat")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -931,7 +956,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -964,7 +994,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3549,7 +3584,12 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3583,7 +3623,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3603,7 +3648,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3623,7 +3673,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"io.micronaut.configuration:micronaut-jdbc-hikari")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3671,7 +3726,12 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">provided(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5743,7 +5803,12 @@ import org.postgresql.Driver;
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5763,7 +5828,12 @@ import org.postgresql.Driver;
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"org.springframework:spring-orm:5.2.0.RELEASE")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
