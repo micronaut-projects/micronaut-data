@@ -60,7 +60,7 @@ subprojects { Project subproject ->
 
     sourceCompatibility = '1.8'
     targetCompatibility = '1.8'
-    apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-build/02a1aab7ec29ae19e6c9464ee9ea9676ea697a21/publishing.gradle"
+    apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-build/v${micronautBuildVersion}/publishing.gradle"
 
 
     jar {
@@ -107,9 +107,6 @@ subprojects { Project subproject ->
 
         documentation "org.codehaus.groovy:groovy-templates:$groovyVersion"
         documentation "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
-
-        testImplementation "cglib:cglib-nodep:3.3.0"
-        testImplementation "org.objenesis:objenesis:3.1"
 
         testImplementation("org.spockframework:spock-core:${spockVersion}") {
             exclude module:'groovy-all'

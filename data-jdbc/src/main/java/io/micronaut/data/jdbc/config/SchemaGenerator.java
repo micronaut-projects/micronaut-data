@@ -83,7 +83,7 @@ public class SchemaGenerator {
                 PersistentEntity[] entities = introspections.stream()
                         // filter out inner / internal classes
                         .filter(i -> !i.getBeanType().getName().contains("$"))
-                        .map(PersistentEntity::of).toArray(PersistentEntity[]::new);
+                        .map(PersistentEntity ::of).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
                     DataSource dataSource = beanLocator.getBean(DataSource.class, Qualifiers.byName(name));
                     try {
