@@ -48,5 +48,6 @@ class H2NullableConstructorSpec extends Specification {
         plant.id
         plant.name == "Orange"
         plant.nursery == null
+        plant.maxHeight == null
     }
 }

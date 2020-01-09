@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.math.BigDecimal;
@@ -31,6 +33,18 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnIndexResultSetReader implements ResultReader<ResultSet, Integer> {
+
+    @Nullable
+    @Override
+    public Object readDynamic(@NonNull ResultSet resultSet, @NonNull Integer index, @NonNull DataType dataType) {
+        Object val = ResultReader.super.readDynamic(resultSet, index, dataType);
+
+        try {
+            return resultSet.wasNull() ? null : val;
+        } catch (SQLException e) {
+            throw exceptionForColumn(index, e);
+        }
+    }
 
     @Override
     public Timestamp readTimestamp(ResultSet resultSet, Integer index) {

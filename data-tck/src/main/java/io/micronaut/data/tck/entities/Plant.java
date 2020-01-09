@@ -30,6 +30,8 @@ public class Plant {
     private final String name;
     @Nullable
     private final Nursery nursery;
+    @Nullable
+    private Integer maxHeight;
 
     public Plant(String name, @Nullable Nursery nursery) {
         this.name = name;
@@ -51,5 +53,13 @@ public class Plant {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Integer getMaxHeight() {
+        return maxHeight;
+    }
+
+    public void setMaxHeight(Integer maxHeight) {
+        this.maxHeight = maxHeight;
     }
 }

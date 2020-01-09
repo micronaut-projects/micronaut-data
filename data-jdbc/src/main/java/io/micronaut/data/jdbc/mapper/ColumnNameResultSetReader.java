@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.jdbc.mapper;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.math.BigDecimal;
@@ -34,6 +36,18 @@ import java.util.Date;
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
     private final ConversionService<?> conversionService = ConversionService.SHARED;
+
+    @Nullable
+    @Override
+    public Object readDynamic(@NonNull ResultSet resultSet, @NonNull String index, @NonNull DataType dataType) {
+        Object val = ResultReader.super.readDynamic(resultSet, index, dataType);
+
+        try {
+            return resultSet.wasNull() ? null : val;
+        } catch (SQLException e) {
+            throw exceptionForColumn(index, e);
+        }
+    }
 
     @Override
     public boolean next(ResultSet resultSet) {
