@@ -1023,7 +1023,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
                 }
                 for (T entity : entities) {
-                    if (persisted.contains(entities)) {
+                    if (persisted.contains(entity)) {
                         continue;
                     }
                     setInsertParameters(insert, entity, stmt);
