@@ -18,6 +18,8 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
@@ -50,6 +52,15 @@ public class UpdateByMethod extends DynamicFinder {
         return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement);
     }
 
+    @Override
+    protected boolean hasQueryAnnotation(@NonNull MethodElement methodElement) {
+        final String str = methodElement.stringValue(Query.class).orElse(null);
+        if (StringUtils.isNotEmpty(str)) {
+            return str.trim().toLowerCase(Locale.ENGLISH).startsWith("update");
+        }
+        return false;
+    }
+
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(
@@ -64,43 +75,49 @@ public class UpdateByMethod extends DynamicFinder {
             matchContext.fail("Projections are not supported on batch updates");
             return null;
         }
-        List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
-        if (CollectionUtils.isEmpty(criterionList)) {
-            matchContext.fail("Cannot implement batch update operation that doesn't perform a query");
-            return null;
-        }
-        Set<String> queryParameters = new HashSet<>();
-        for (QueryModel.Criterion criterion : criterionList) {
-            if (criterion instanceof QueryModel.PropertyCriterion) {
-                QueryModel.PropertyCriterion pc = (QueryModel.PropertyCriterion) criterion;
-                Object v = pc.getValue();
-                if (v instanceof QueryParameter) {
-                    queryParameters.add(((QueryParameter) v).getName());
-                }
-            }
-        }
-        List<Element> updateParameters = Arrays.stream(matchContext.getParameters()).filter(p -> !queryParameters.contains(p.getName()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(updateParameters)) {
-            matchContext.fail("At least one parameter required to update");
-            return null;
-        }
-        Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
-        if (element instanceof PropertyElement) {
-            updateParameters.add(element);
-        }
-        SourcePersistentEntity entity = matchContext.getRootEntity();
-        String[] updateProperties = new String[updateParameters.size()];
-        for (int i = 0; i < updateProperties.length; i++) {
-            Element parameter = updateParameters.get(i);
-            String parameterName = parameter.stringValue(Parameter.class).orElse(parameter.getName());
-            Optional<String> path = entity.getPath(parameterName);
-            if (path.isPresent()) {
-                updateProperties[i] = path.get();
-            } else {
-                matchContext.fail("Cannot perform batch update for non-existent property: " + parameterName);
+        String[] updateProperties;
+        if (!(query instanceof RawQuery)) {
+
+            List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
+            if (CollectionUtils.isEmpty(criterionList)) {
+                matchContext.fail("Cannot implement batch update operation that doesn't perform a query");
                 return null;
             }
+            Set<String> queryParameters = new HashSet<>();
+            for (QueryModel.Criterion criterion : criterionList) {
+                if (criterion instanceof QueryModel.PropertyCriterion) {
+                    QueryModel.PropertyCriterion pc = (QueryModel.PropertyCriterion) criterion;
+                    Object v = pc.getValue();
+                    if (v instanceof QueryParameter) {
+                        queryParameters.add(((QueryParameter) v).getName());
+                    }
+                }
+            }
+            List<Element> updateParameters = Arrays.stream(matchContext.getParameters()).filter(p -> !queryParameters.contains(p.getName()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(updateParameters)) {
+                matchContext.fail("At least one parameter required to update");
+                return null;
+            }
+            Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
+            if (element instanceof PropertyElement) {
+                updateParameters.add(element);
+            }
+            SourcePersistentEntity entity = matchContext.getRootEntity();
+            updateProperties = new String[updateParameters.size()];
+            for (int i = 0; i < updateProperties.length; i++) {
+                Element parameter = updateParameters.get(i);
+                String parameterName = parameter.stringValue(Parameter.class).orElse(parameter.getName());
+                Optional<String> path = entity.getPath(parameterName);
+                if (path.isPresent()) {
+                    updateProperties[i] = path.get();
+                } else {
+                    matchContext.fail("Cannot perform batch update for non-existent property: " + parameterName);
+                    return null;
+                }
+            }
+        } else {
+            updateProperties = StringUtils.EMPTY_STRING_ARRAY;
         }
         return new MethodMatchInfo(
                 queryResultType,

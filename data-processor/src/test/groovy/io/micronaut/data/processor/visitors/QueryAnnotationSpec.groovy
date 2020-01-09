@@ -18,9 +18,12 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.intercept.DeleteAllInterceptor
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.FindPageInterceptor
+import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Person
@@ -28,10 +31,85 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import spock.lang.PendingFeature
+import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
-class QueryAnnotationSpec extends AbstractTypeElementSpec {
+class QueryAnnotationSpec extends AbstractDataSpec {
+
+    @Unroll
+    void "test @Query with update statement #methodName"() {
+        given:
+        def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@Repository(value = "secondary")
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface MovieRepository extends GenericRepository<Movie, Long> {
+    @Query("$query")
+    void deleteById(Long id);
+    
+    @Query("$query")
+    void updateById(Long id);
+    
+    @Query(value="WITH task AS (" + 
+                "SELECT test_id FROM test where foo != :key LIMIT 1 FOR UPDATE SKIP LOCKED" +
+           ")" + 
+                "UPDATE test SET foo = :key FROM task WHERE test.test_id = task.test_id" +
+                "RETURNING test.*", readOnly=false)
+    String nextTask(String key);
+}
+
+${entity('Movie', [title: String, enabled: Boolean])}
+
+""")
+        def method = repository.getRequiredMethod(methodName, *arguments)
+        def queryStr = method
+                .stringValue(Query)
+                .get()
+        def dataMethod = method.synthesize(DataMethod)
+
+        expect:
+        queryStr != null
+        dataMethod.interceptor() == interceptor
+
+        where:
+        methodName   | arguments      | query                                            | interceptor
+        'deleteById' | [Long.class]   | 'UPDATE User SET enabled = false WHERE id = :id' | DeleteAllInterceptor
+        'updateById' | [Long.class]   | 'UPDATE User SET enabled = false WHERE id = :id' | UpdateInterceptor
+        'nextTask'   | [String.class] | 'UPDATE User SET enabled = false WHERE id = :id' | UpdateInterceptor
+    }
+
+    @PendingFeature(reason = "Micronaut Core currently visits methods that are overridden. This is a bug and once fixed in core this can be removed.")
+    void "test @Query with update statement - override"() {
+        given:
+        def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@Repository(value = "secondary")
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface MovieRepository extends CrudRepository<Movie, Long> {
+    @Query("UPDATE User SET enabled = false WHERE id = :id")
+    @Override
+    void deleteById(Long id);
+}
+
+${entity('Movie', [title: String, enabled: Boolean])}
+
+""")
+        def method = repository.getRequiredMethod("deleteById", Long)
+        def query = method
+                .stringValue(Query)
+                .get()
+
+
+        expect:
+        query == 'UPDATE User SET enabled = false WHERE id = :id'
+    }
+
     void "test build CRUD repository with no named parameter support"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """

@@ -15,12 +15,17 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+
+import java.util.Locale;
 
 /**
  * Dynamic finder for support for delete operations.
@@ -42,6 +47,15 @@ public class DeleteByMethod extends DynamicFinder {
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement); // void return
+    }
+
+    @Override
+    protected boolean hasQueryAnnotation(@NonNull MethodElement methodElement) {
+        final String str = methodElement.stringValue(Query.class).orElse(null);
+        if (StringUtils.isNotEmpty(str)) {
+            return str.trim().toLowerCase(Locale.ENGLISH).startsWith("delete");
+        }
+        return false;
     }
 
     @Nullable

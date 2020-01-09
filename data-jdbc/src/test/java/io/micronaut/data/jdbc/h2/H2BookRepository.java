@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
@@ -32,6 +33,7 @@ import java.util.Set;
 @JdbcRepository(dialect = Dialect.H2)
 public abstract class H2BookRepository extends io.micronaut.data.tck.repositories.BookRepository {
     private final JdbcOperations jdbcOperations;
+
     public H2BookRepository(JdbcOperations jdbcOperations, H2AuthorRepository authorRepository) {
         super(authorRepository);
         this.jdbcOperations = jdbcOperations;
@@ -59,6 +61,12 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
             newBook(dw, "The Border", 700)
         ));
     }
+
+    @Query("UPDATE book SET total_pages = :pages WHERE title = :title")
+    abstract Long setPages(int pages, String title);
+
+    @Query("DELETE book WHERE title = :title")
+    abstract Long wipeOutBook(String title);
 
     @Join(value = "author", alias = "auth")
     abstract Book queryByTitle(String title);

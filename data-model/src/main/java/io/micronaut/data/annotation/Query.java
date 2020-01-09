@@ -42,4 +42,9 @@ public @interface Query {
      * @return Whether the query is a native query
      */
     boolean nativeQuery() default false;
+
+    /**
+     * @return Whether the transactional handling should by default be read-only
+     */
+    boolean readOnly() default true;
 }

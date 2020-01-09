@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.tests.AbstractQuerySpec
@@ -54,5 +55,33 @@ class H2QuerySpec extends AbstractQuerySpec {
     @Override
     H2AuthorRepository getAuthorRepository() {
         return ar
+    }
+
+    void "test explicit @Query update methods"() {
+        when:
+        def r = br.setPages(800, "The Border")
+
+        then:
+        br.findByTitle("The Border").totalPages == 800
+        r == 1
+
+        when:
+        def king = ar.findByName("Stephen King")
+        br.save(new Book(author: king, title: "Whatever", totalPages: 200))
+
+        then:
+        br.findByTitle("Whatever") != null
+
+        when:
+        r = br.wipeOutBook("Whatever")
+
+        then:
+        r == 1
+
+        when:
+        br.findByTitle("Whatever")
+
+        then:
+        thrown(EmptyResultException)
     }
 }

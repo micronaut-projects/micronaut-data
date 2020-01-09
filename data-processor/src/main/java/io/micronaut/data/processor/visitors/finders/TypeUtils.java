@@ -23,6 +23,7 @@ import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Slice;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import org.reactivestreams.Publisher;
@@ -130,6 +131,7 @@ public class TypeUtils {
         }
         return type.isAssignable(Iterable.class) ||
                 type.isAssignable(Stream.class) ||
+                type.isAssignable(Slice.class) ||
                 isReactiveType(type) ||
                 type.isAssignable(Optional.class) ||
                 isFutureType(type);

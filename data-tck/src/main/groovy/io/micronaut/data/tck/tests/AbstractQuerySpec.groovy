@@ -54,4 +54,5 @@ abstract class AbstractQuerySpec extends Specification {
         authorRepository.findByNameEndsWith("w").name == "Don Winslow"
         authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
     }
+
 }

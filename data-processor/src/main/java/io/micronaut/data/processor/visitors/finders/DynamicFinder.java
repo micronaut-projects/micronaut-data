@@ -113,7 +113,16 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         String methodName = methodElement.getName();
-        return methodElement.hasAnnotation(Query.class) || pattern.matcher(methodName.subSequence(0, methodName.length())).find();
+        return hasQueryAnnotation(methodElement) || pattern.matcher(methodName.subSequence(0, methodName.length())).find();
+    }
+
+    /**
+     * Method that checks for the presence of the query annotation.
+     * @param methodElement The method element
+     * @return True if a query annotation is present
+     */
+    protected boolean hasQueryAnnotation(@NonNull MethodElement methodElement) {
+        return methodElement.hasAnnotation(Query.class);
     }
 
     @Override
@@ -125,9 +134,17 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             if (rawQuery == null) {
                 return null;
             }
+            ClassElement genericReturnType = methodElement.getGenericReturnType();
+            if (TypeUtils.isContainerType(genericReturnType)) {
+                genericReturnType = genericReturnType.getFirstTypeArgument().orElse(genericReturnType);
+            }
+            // reactive types double nested
+            if (TypeUtils.isContainerType(genericReturnType)) {
+                genericReturnType = genericReturnType.getFirstTypeArgument().orElse(genericReturnType);
+            }
             return buildInfo(
                     matchContext,
-                    matchContext.getRootEntity().getClassElement(),
+                    genericReturnType,
                     rawQuery
             );
         }

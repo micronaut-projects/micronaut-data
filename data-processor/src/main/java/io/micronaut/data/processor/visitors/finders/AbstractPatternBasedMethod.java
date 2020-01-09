@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.async.annotation.SingleResult;
@@ -153,7 +154,30 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                                 FindByIdInterceptor.class
                         );
                     } else {
-                        return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                        if (query instanceof RawQuery) {
+                            final AnnotationMetadata annotationMetadata = matchContext.getAnnotationMetadata();
+                            final boolean readOnly = annotationMetadata
+                                    .booleanValue(Query.class, "readOnly").orElse(true);
+                            if (readOnly) {
+                                String q = annotationMetadata.stringValue(Query.class).orElse(null);
+                                if (q != null) {
+                                    q = q.trim().toLowerCase(Locale.ENGLISH);
+                                    if (q.startsWith("update")) {
+                                        return new MethodMatchInfo(queryResultType, query, UpdateInterceptor.class);
+                                    } else if (q.startsWith("delete")) {
+                                        return new MethodMatchInfo(queryResultType, query, DeleteAllInterceptor.class);
+                                    } else {
+                                        return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                                    }
+                                } else {
+                                    return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                                }
+                            } else {
+                                return new MethodMatchInfo(queryResultType, query, UpdateInterceptor.class);
+                            }
+                        } else {
+                            return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                        }
                     }
                 } else {
                     if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
