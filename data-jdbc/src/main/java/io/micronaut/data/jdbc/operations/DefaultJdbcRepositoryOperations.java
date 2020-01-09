@@ -40,10 +40,7 @@ import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -52,7 +49,6 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
@@ -74,7 +70,6 @@ import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.sql.*;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -435,6 +430,12 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
         final String query = annotationMetadata.stringValue(Query.class).orElse(null);
         final T entity = operation.getEntity();
+        final Set persisted = new HashSet(10);
+        final Class<?> repositoryType = operation.getRepositoryType();
+        return updateOne(repositoryType, annotationMetadata, query, params, entity, persisted);
+    }
+
+    private <T> T updateOne(Class<?> repositoryType, AnnotationMetadata annotationMetadata, String query, String[] params, T entity, Set persisted) {
         Objects.requireNonNull(entity, "Passed entity cannot be null");
         if (StringUtils.isNotEmpty(query) && ArrayUtils.isNotEmpty(params)) {
             final RuntimePersistentEntity<T> persistentEntity =
@@ -461,15 +462,93 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             } else {
                                 newValue = beanProperty.get(entity);
                             }
-                            if (QUERY_LOG.isTraceEnabled()) {
-                                QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
+                            final DataType dataType = pp.getDataType();
+                            if (dataType == DataType.ENTITY && newValue != null && pp instanceof Association) {
+                                final RuntimePersistentProperty<Object> idReader = getIdReader(newValue);
+                                final Association association = (Association) pp;
+                                final BeanProperty<Object, ?> idReaderProperty = idReader.getProperty();
+                                final Object id = idReaderProperty.get(newValue);
+                                if (QUERY_LOG.isTraceEnabled()) {
+                                    QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, id);
+                                }
+                                if (id != null) {
+
+                                    preparedStatementWriter.setDynamic(
+                                            ps,
+                                            i + 1,
+                                            idReader.getDataType(),
+                                            id
+                                    );
+                                    if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
+                                        final Relation.Kind kind = association.getKind();
+                                        final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
+                                        switch (kind) {
+                                            case ONE_TO_ONE:
+                                            case MANY_TO_ONE:
+                                                persisted.add(newValue);
+                                                final StoredInsert<Object> updateStatement = resolveEntityUpdate(
+                                                        annotationMetadata,
+                                                        repositoryType,
+                                                        associatedEntity.getIntrospection().getBeanType(),
+                                                        associatedEntity
+                                                );
+                                                updateOne(
+                                                        repositoryType,
+                                                        annotationMetadata,
+                                                        updateStatement.getSql(),
+                                                        updateStatement.getParameterBinding(),
+                                                        newValue,
+                                                        persisted
+                                                );
+                                                break;
+                                            case MANY_TO_MANY:
+                                            case ONE_TO_MANY:
+                                                // TODO: handle cascading updates to collections?
+
+                                            case EMBEDDED:
+                                            default:
+                                                // TODO: embedded type updates
+                                        }
+                                    }
+                                } else {
+                                    if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
+                                        final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
+
+                                        StoredInsert associatedInsert = resolveEntityInsert(
+                                                annotationMetadata,
+                                                repositoryType,
+                                                associatedEntity.getIntrospection().getBeanType(),
+                                                associatedEntity
+                                        );
+                                        persistOne(
+                                                annotationMetadata,
+                                                repositoryType,
+                                                associatedInsert,
+                                                newValue,
+                                                persisted
+                                        );
+                                        final Object assignedId = idReaderProperty.get(newValue);
+                                        if (assignedId != null) {
+                                            preparedStatementWriter.setDynamic(
+                                                    ps,
+                                                    i + 1,
+                                                    idReader.getDataType(),
+                                                    assignedId
+                                            );
+                                        }
+                                    }
+                                }
+                            } else {
+                                if (QUERY_LOG.isTraceEnabled()) {
+                                    QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
+                                }
+                                preparedStatementWriter.setDynamic(
+                                        ps,
+                                        i + 1,
+                                        dataType,
+                                        newValue
+                                );
                             }
-                            preparedStatementWriter.setDynamic(
-                                    ps,
-                                    i + 1,
-                                    pp.getDataType(),
-                                    newValue
-                            );
                         }
                         ps.executeUpdate();
                         return entity;
@@ -794,7 +873,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (lastUpdatedType == null) {
                             throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
                         }
-                        Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
+                        Object timestamp = ConversionService.SHARED.convert(dateTimeProvider.getNow(), lastUpdatedType).orElse(null);
                         if (timestamp == null) {
                             throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
                         }

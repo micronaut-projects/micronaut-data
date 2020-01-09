@@ -61,4 +61,35 @@ class H2ValidationSpec extends Specification {
         def e = thrown(ConstraintViolationException)
         e.message.contains('currentBloodGlucose: must be less than or equal to 999')
     }
+
+    void "test update invalid objects"() {
+        when:
+        Meal meal = new Meal(100)
+        mealRepository.save(meal)
+
+        Food food = new Food("test", 100, 100, meal)
+        food = foodRepository.save(food)
+        def retrieved = foodRepository.findById(food.id).orElse(null)
+
+        then:
+        retrieved.key == food.key
+        retrieved.carbohydrates == food.carbohydrates
+
+        when:"An invalid value is updated"
+        retrieved.meal.currentBloodGlucose = 10000
+        mealRepository.update(retrieved.meal)
+
+        then:"An exception occurs"
+        def e = thrown(ConstraintViolationException)
+        e.message.contains('currentBloodGlucose: must be less than or equal to 999')
+
+        when:"A valid value is set"
+        retrieved.meal.currentBloodGlucose = 101
+        foodRepository.update(retrieved)
+        retrieved = foodRepository.findById(food.id).orElse(null)
+
+        then:"it is saved and cascaded to correctly"
+        retrieved.meal.currentBloodGlucose == 101
+
+    }
 }

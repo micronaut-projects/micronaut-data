@@ -51,7 +51,7 @@ public class Food {
     @DateUpdated
     private Date updatedOn;
 
-    @Relation(Relation.Kind.MANY_TO_ONE)
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
     private Meal meal;
 
     public Food(

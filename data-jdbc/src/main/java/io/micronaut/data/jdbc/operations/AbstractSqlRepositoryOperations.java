@@ -27,6 +27,8 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -49,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -76,6 +79,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
+    private final Map<QueryKey, StoredInsert> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
@@ -430,6 +434,61 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.ANSI);
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
+
+            final String sql = queryResult.getQuery();
+            final Map<String, String> parameters = queryResult.getParameters();
+            return new StoredInsert<>(
+                    sql,
+                    persistentEntity,
+                    parameters.values().toArray(new String[0]),
+                    dialect != Dialect.SQL_SERVER,
+                    dialect
+            );
+        });
+    }
+
+    /**
+     * Resolves a stored update for the given entity.
+     * @param annotationMetadata  The repository annotation metadata
+     * @param repositoryType  The repository type
+     * @param rootEntity The root entity
+     * @param persistentEntity The persistent entity
+     * @param <T> The generic type
+     * @return The insert
+     */
+    protected @NonNull <T> StoredInsert<T> resolveEntityUpdate(
+            AnnotationMetadata annotationMetadata,
+            Class<?> repositoryType,
+            @NonNull Class<?> rootEntity,
+            @NonNull RuntimePersistentEntity<?> persistentEntity) {
+
+        final QueryKey key = new QueryKey(repositoryType, rootEntity);
+        //noinspection unchecked
+        return entityUpdates.computeIfAbsent(key, (queryKey) -> {
+            final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.ANSI);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+
+            final String idName;
+            final PersistentProperty identity = persistentEntity.getIdentity();
+            if (identity != null) {
+                idName = identity.getName();
+            } else {
+                idName = TypeRole.ID;
+            }
+            final QueryModel queryModel = QueryModel.from(persistentEntity)
+                    .idEq(new QueryParameter(idName));
+            List<String> updateProperties = persistentEntity.getPersistentProperties()
+                    .stream().filter(p ->
+                            !((p instanceof Association) && ((Association) p).isForeignKey()) &&
+                                    p.getAnnotationMetadata().booleanValue(AutoPopulated.class, "updateable").orElse(true)
+                    )
+                    .map(PersistentProperty::getName)
+                    .collect(Collectors.toList());
+            final QueryResult queryResult = queryBuilder.buildUpdate(
+                    annotationMetadata,
+                    queryModel,
+                    updateProperties
+            );
 
             final String sql = queryResult.getQuery();
             final Map<String, String> parameters = queryResult.getParameters();
