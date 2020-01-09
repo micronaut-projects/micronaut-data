@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -290,12 +290,21 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 </td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code>protected &lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a>&lt;T&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#resolveEntityUpdate-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-">resolveEntityUpdate</a></span>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                   java.lang.Class&lt;?&gt;&nbsp;repositoryType,
+                   java.lang.Class&lt;?&gt;&nbsp;rootEntity,
+                   <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</code>
+<div class="block">Resolves a stored update for the given entity.</div>
+</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#resolveInsert-io.micronaut.data.model.runtime.EntityOperation-">resolveInsert</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Resolve the INSERT for the given <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime"><code>EntityOperation</code></a>.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#setInsertParameters-io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations.StoredInsert-T-PS-">setInsertParameters</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a>&lt;T&gt;&nbsp;insert,
                    T&nbsp;entity,
@@ -303,7 +312,7 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <div class="block">Sets the insert parameters for the given insert, entity and statement.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#setStatementParameter-PS-int-io.micronaut.data.model.DataType-java.lang.Object-">setStatementParameter</a></span>(<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;preparedStatement,
                      int&nbsp;index,
@@ -312,13 +321,13 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <div class="block">Set the parameter value on the given statement.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>protected int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#sizeOf-java.lang.Object-">sizeOf</a></span>(java.lang.Object&nbsp;value)</code>
 <div class="block">Compute the size of the given object.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#sortById-io.micronaut.data.model.runtime.RuntimePersistentEntity-">sortById</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity)</code>
 <div class="block">Build a sort for ID for the given entity.</div>
@@ -670,6 +679,33 @@ protected&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/jdbc/ope
                                                                                            @NonNull
                                                                                            <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</pre>
 <div class="block">Resolves a stored insert for the given entity.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>annotationMetadata</code> - The repository annotation metadata</dd>
+<dd><code>repositoryType</code> - The repository type</dd>
+<dd><code>rootEntity</code> - The root entity</dd>
+<dd><code>persistentEntity</code> - The persistent entity</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The insert</dd>
+</dl>
+</li>
+</ul>
+<a name="resolveEntityUpdate-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>resolveEntityUpdate</h4>
+<pre>@NonNull
+protected&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a>&lt;T&gt;&nbsp;resolveEntityUpdate(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
+                                                                                           java.lang.Class&lt;?&gt;&nbsp;repositoryType,
+                                                                                           @NonNull
+                                                                                           java.lang.Class&lt;?&gt;&nbsp;rootEntity,
+                                                                                           @NonNull
+                                                                                           <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;?&gt;&nbsp;persistentEntity)</pre>
+<div class="block">Resolves a stored update for the given entity.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>T</code> - The generic type</dd>
