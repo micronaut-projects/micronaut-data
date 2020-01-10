@@ -52,6 +52,7 @@ public class Food {
     private Date updatedOn;
 
     @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
+    @MappedProperty("fk_meal_id")
     private Meal meal;
 
     public Food(

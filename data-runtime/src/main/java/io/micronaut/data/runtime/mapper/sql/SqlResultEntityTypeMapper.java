@@ -264,26 +264,31 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
                             args[i] = associated;
                         } else {
-
-                            String columnName = resolveColumnName(
-                                    prop,
-                                    prefix,
-                                    isEmbedded,
-                                    hasPrefix
-                            );
-                            Object v = resultReader.readDynamic(
-                                    rs,
-                                    columnName,
-                                    prop.getDataType()
-                            );
-                            if (v == null) {
-                                if (!prop.isOptional()) {
-                                    throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
-                                } else {
-                                    args[i] = null;
-                                    continue;
+                            Object v;
+                            if (resolveId != null && identity != null && identity.equals(prop)) {
+                                v = resolveId;
+                            } else {
+                                String columnName = resolveColumnName(
+                                        prop,
+                                        prefix,
+                                        isEmbedded,
+                                        hasPrefix
+                                );
+                                v = resultReader.readDynamic(
+                                        rs,
+                                        columnName,
+                                        prop.getDataType()
+                                );
+                                if (v == null) {
+                                    if (!prop.isOptional()) {
+                                        throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
+                                    } else {
+                                        args[i] = null;
+                                        continue;
+                                    }
                                 }
                             }
+
                             Class<?> t = prop.getType();
                             if (!t.isInstance(v)) {
                                 args[i] = resultReader.convertRequired(v, t);
