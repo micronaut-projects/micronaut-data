@@ -69,23 +69,39 @@ public @interface Relation {
         /**
          * One to many association.
          */
-        ONE_TO_MANY,
+        ONE_TO_MANY(false),
         /**
          * One to one association.
          */
-        ONE_TO_ONE,
+        ONE_TO_ONE(true),
         /**
          * Many to many association.
          */
-        MANY_TO_MANY,
+        MANY_TO_MANY(false),
         /**
          * Embedded association.
          */
-        EMBEDDED,
+        EMBEDDED(true),
 
         /**
          * Many to one association.
          */
-        MANY_TO_ONE
+        MANY_TO_ONE(true);
+
+        private final boolean singleEnded;
+
+        /**
+         * @param singleEnded Whether the association is single ended
+         */
+        Kind(boolean singleEnded) {
+            this.singleEnded = singleEnded;
+        }
+
+        /**
+         * @return Whether the association is single ended
+         */
+        public boolean isSingleEnded() {
+            return singleEnded;
+        }
     }
 }

@@ -84,7 +84,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_.`id` = ?)'
+        encoded.query == 'SELECT book_.`id`,book_.`author_id`,book_.`title`,book_.`total_pages`,book_.`publisher_id`,book_author_.`name` AS author_name,book_author_.`nick_name` AS author_nick_name FROM `book` book_ INNER JOIN author book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
 
     }
 
@@ -203,7 +203,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildQuery(query)
 
         expect:
-        result.query == "SELECT $columns FROM \"book\" book_ INNER JOIN author book_author_ ON book_.author_id=book_author_.id WHERE (book_author_.\"nick_name\" = ?)"
+        result.query == "SELECT $columns FROM \"book\" book_ INNER JOIN author book_author_ ON book_.\"author_id\"=book_author_.\"id\" WHERE (book_author_.\"nick_name\" = ?)"
     }
 
     @Unroll

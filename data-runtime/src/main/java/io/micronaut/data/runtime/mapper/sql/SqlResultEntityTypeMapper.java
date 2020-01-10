@@ -256,7 +256,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                             prop.getDataType()
                                     );
                                 }
-                                if (kind == Relation.Kind.MANY_TO_ONE || kind == Relation.Kind.ONE_TO_ONE) {
+                                if (kind.isSingleEnded()) {
 
                                     associated = readAssociation(
                                             parent,
@@ -320,17 +320,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
                 RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
                 if (persistentProperty.isReadOnly()) {
-                    if (persistentProperty.isConstructorArgument()) {
-                        if (persistentProperty instanceof Association) {
-                            Association a = (Association) persistentProperty;
-                            final Relation.Kind kind = a.getKind();
-                            switch (kind) {
-                                case ONE_TO_MANY:
-                                case MANY_TO_MANY:
-                                    break;
-                                default:
-                                    continue;
-                            }
+                    continue;
+                } else if (persistentProperty.isConstructorArgument()) {
+                    if (persistentProperty instanceof Association) {
+                        Association a = (Association) persistentProperty;
+                        final Relation.Kind kind = a.getKind();
+                        if (kind.isSingleEnded()) {
+                            continue;
                         }
                     } else {
                         continue;

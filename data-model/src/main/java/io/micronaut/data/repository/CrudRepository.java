@@ -17,6 +17,7 @@ package io.micronaut.data.repository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Blocking;
+import io.micronaut.validation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -32,6 +33,7 @@ import java.util.Optional;
  * @param <ID> The ID type
  */
 @Blocking
+@Validated
 public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * Saves the given valid entity, returning a possibly new entity representing the saved state. Note that certain implementations may not be able to detect whether a save or update should be performed and may always perform an insert. The {@link #update(Object)} method can be used in this case to explicitly request an update.
