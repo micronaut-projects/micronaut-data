@@ -1,7 +1,7 @@
 dependencies {
 	api project(":data-model")
 	api "com.github.spotbugs:spotbugs-annotations:3.1.12"
-	implementation "io.micronaut:micronaut-inject:$micronautVersion"
+	compileOnly "io.micronaut:micronaut-inject:$micronautVersion"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 	testImplementation "io.projectreactor:reactor-core:3.3.1.RELEASE"
 	testImplementation "io.micronaut:micronaut-inject-groovy"
