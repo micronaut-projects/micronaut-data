@@ -8,9 +8,32 @@ import spock.lang.Unroll
 
 class BuildQuerySpec extends AbstractDataSpec {
 
+    void "test join query on collection with custom ID name"() {
+        given:
+        def repository = buildRepository('test.MealRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Meal;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface MealRepository extends CrudRepository<Meal, UUID> {
+    @Join("foods")
+    Meal searchById(UUID uuid);
+}
+""")
+
+        def query = repository.getRequiredMethod("searchById", UUID)
+                .stringValue(Query).get()
+
+        expect:"The query contains the correct join"
+        query.contains('ON meal_.`mid`=meal_foods_.`fk_meal_id` WHERE (meal_.`mid` = ?)')
+
+    }
+
     void "test join query with custom foreign key"() {
         given:
-        def repository = buildRepository('test.FaceRepository', """
+        def repository = buildRepository('test.FoodRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Food;
@@ -19,7 +42,7 @@ import java.util.UUID;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
-interface FaceRepository extends CrudRepository<Food, UUID> {
+interface FoodRepository extends CrudRepository<Food, UUID> {
     
     @Join("meal")
     Optional<Food> queryById(UUID uuid);
@@ -30,7 +53,7 @@ interface FaceRepository extends CrudRepository<Food, UUID> {
                 .stringValue(Query).get()
 
         expect:
-        query == 'SELECT food_.`id`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on FROM `food` food_ INNER JOIN meal food_meal_ ON food_.fk_meal_id=food_meal_.id WHERE (food_.`id` = ?)'
+        query == 'SELECT food_.`fid`,food_.`key`,food_.`carbohydrates`,food_.`portion_grams`,food_.`created_on`,food_.`updated_on`,food_.`fk_meal_id`,food_meal_.`current_blood_glucose` AS meal_current_blood_glucose,food_meal_.`created_on` AS meal_created_on,food_meal_.`updated_on` AS meal_updated_on FROM `food` food_ INNER JOIN meal food_meal_ ON food_.`fk_meal_id`=food_meal_.`mid` WHERE (food_.`fid` = ?)'
 
     }
 

@@ -17,7 +17,6 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.model.DataType;
 
 import javax.annotation.Nullable;
 import javax.persistence.Id;
@@ -31,7 +30,7 @@ public class Food {
 
     @Id
     @AutoPopulated
-    private UUID id;
+    private UUID fid;
 
     @Size(max=36)
     @NotNull
@@ -68,14 +67,14 @@ public class Food {
 
     @Creator
     public Food(
-            UUID id,
+            UUID fid,
             @Size(max = 36) @NotNull String key,
             @Size(max = 9999) @NotNull int carbohydrates,
             @Size(max = 9999) @NotNull int portionGrams,
             Date createdOn,
             Date updatedOn,
             @Nullable Meal meal) {
-        this.id = id;
+        this.fid = fid;
         this.key = key;
         this.carbohydrates = carbohydrates;
         this.portionGrams = portionGrams;
@@ -84,12 +83,12 @@ public class Food {
         this.meal = meal;
     }
 
-    public UUID getId() {
-        return id;
+    public UUID getFid() {
+        return fid;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setFid(UUID fid) {
+        this.fid = fid;
     }
 
     public String getKey() {

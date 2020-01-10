@@ -235,8 +235,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             boolean isInverse = parent != null && isAssociation &&
                                     association.getOwner() == constructorAssociation.getAssociatedEntity();
                             Object associated;
+                            final Relation.Kind kind = constructorAssociation.getKind();
                             if (isInverse) {
-                                associated = parent;
+                                if (kind == Relation.Kind.MANY_TO_ONE || kind == Relation.Kind.ONE_TO_ONE) {
+                                    associated = parent;
+                                    args[i] = associated;
+                                }
                             } else {
                                 Object resolvedId = null;
                                 if (!constructorAssociation.isForeignKey() && !(constructorAssociation instanceof Embedded)) {
@@ -252,17 +256,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                             prop.getDataType()
                                     );
                                 }
-                                associated = readAssociation(
-                                        parent,
-                                        hasPrefix ? prefix : "",
-                                        (hasPath ? path : ""), rs,
-                                        constructorAssociation,
-                                        resolvedId,
-                                        hasPrefix
-                                );
+                                if (kind == Relation.Kind.MANY_TO_ONE || kind == Relation.Kind.ONE_TO_ONE) {
+
+                                    associated = readAssociation(
+                                            parent,
+                                            hasPrefix ? prefix : "",
+                                            (hasPath ? path : ""), rs,
+                                            constructorAssociation,
+                                            resolvedId,
+                                            hasPrefix
+                                    );
+                                    args[i] = associated;
+                                }
                             }
 
-                            args[i] = associated;
                         } else {
                             Object v;
                             if (resolveId != null && identity != null && identity.equals(prop)) {
@@ -312,8 +319,22 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             Map<Association, List> toManyJoins = null;
             for (PersistentProperty persistentProperty : persistentEntity.getPersistentProperties()) {
                 RuntimePersistentProperty rpp = (RuntimePersistentProperty) persistentProperty;
-                    if (persistentProperty.isReadOnly() || persistentProperty.isConstructorArgument()) {
-                    continue;
+                if (persistentProperty.isReadOnly()) {
+                    if (persistentProperty.isConstructorArgument()) {
+                        if (persistentProperty instanceof Association) {
+                            Association a = (Association) persistentProperty;
+                            final Relation.Kind kind = a.getKind();
+                            switch (kind) {
+                                case ONE_TO_MANY:
+                                case MANY_TO_MANY:
+                                    break;
+                                default:
+                                    continue;
+                            }
+                        }
+                    } else {
+                        continue;
+                    }
                 }
                 BeanProperty property = rpp.getProperty();
                 if (persistentProperty instanceof Association) {

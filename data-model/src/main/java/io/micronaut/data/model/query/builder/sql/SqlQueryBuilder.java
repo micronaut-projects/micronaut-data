@@ -947,12 +947,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 if (association.isForeignKey()) {
                     String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+                    final PersistentEntity associationOwner = association.getOwner();
                     if (StringUtils.isNotEmpty(mappedBy)) {
                         PersistentProperty mappedProp = associatedEntity.getPropertyByName(mappedBy);
                         if (mappedProp == null) {
                             throw new MappingException("Foreign key association with mappedBy references a property that doesn't exist [" + mappedBy + "] of entity: " + associatedEntity.getName());
                         }
 
+                        final PersistentProperty associatedId = associationOwner.getIdentity();
+                        if (associatedId == null) {
+                            throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
+                        }
+                        final boolean escape = shouldEscape(associationOwner);
                         target.append(joinType)
                                 .append(getTableName(associatedEntity))
                                 .append(SPACE)
@@ -960,22 +966,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(" ON ")
                                 .append(alias)
                                 .append(DOT)
-                                .append(getColumnName(identity))
+                                .append(escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId))
                                 .append('=')
                                 .append(joinAliases[i])
                                 .append(DOT)
-                                .append(getColumnName(mappedProp));
+                                .append(escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
                     } else {
                         target.append(joinType);
-
-                        PersistentEntity entity = association.getOwner();
-                        NamingStrategy namingStrategy = entity.getNamingStrategy();
+                        final boolean escape = shouldEscape(associationOwner);
+                        NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
                         String joinTableName = association.getAnnotationMetadata()
                                 .stringValue(ANN_JOIN_TABLE, "name")
                                 .orElseGet(() ->
                                         namingStrategy.mappedName(association)
                                 );
-                        String[] joinColumnNames = resolveJoinTableColumns(entity, associatedEntity, association, identity, associatedEntity.getIdentity(), namingStrategy);
+                        String[] joinColumnNames = resolveJoinTableColumns(associationOwner, associatedEntity, association, identity, associatedEntity.getIdentity(), namingStrategy);
                         String joinTableAlias = joinAliases[i] + joinTableName + "_";
                         String associatedTableName = getTableName(associatedEntity);
                         target.append(joinTableName)
@@ -984,7 +989,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                               .append(" ON ")
                               .append(alias)
                               .append(DOT)
-                              .append(getColumnName(identity))
+                              .append(escape ? quote(getColumnName(identity)) : getColumnName(identity))
                               .append('=')
                               .append(joinTableAlias)
                               .append(DOT)
@@ -1001,9 +1006,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                               .append('=')
                               .append(joinAliases[i])
                               .append(DOT)
-                              .append(getColumnName(associatedEntity.getIdentity()));
+                              .append(escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
                     }
                 } else {
+                    final PersistentEntity associationOwner = association.getOwner();
+                    final boolean escape = shouldEscape(associationOwner);
                     target.append(joinType)
                             .append(getTableName(associatedEntity))
                             .append(SPACE)
@@ -1011,11 +1018,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             .append(" ON ")
                             .append(alias)
                             .append(DOT)
-                            .append(getColumnName(association))
+                            .append(escape ? quote(getColumnName(association)) : getColumnName(association))
                             .append('=')
                             .append(joinAliases[i])
                             .append(DOT)
-                            .append(getColumnName(identity));
+                            .append(escape ? quote(getColumnName(identity)) : getColumnName(identity));
                 }
                 alias = joinAliases[i];
             }

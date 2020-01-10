@@ -46,11 +46,12 @@ class H2ValidationSpec extends Specification {
 
         Food food = new Food("test", 100, 100, meal)
         food = foodRepository.save(food)
-        def retrieved = foodRepository.findById(food.id).orElse(null)
+        def retrieved = foodRepository.findById(food.fid).orElse(null)
 
         expect:
         retrieved.key == food.key
         retrieved.carbohydrates == food.carbohydrates
+        mealRepository.searchById(meal.mid).foods.size() == 1
     }
 
     void "test save invalid objects"() {
@@ -69,7 +70,7 @@ class H2ValidationSpec extends Specification {
 
         Food food = new Food("test", 100, 100, meal)
         food = foodRepository.save(food)
-        def retrieved = foodRepository.findById(food.id).orElse(null)
+        def retrieved = foodRepository.findById(food.fid).orElse(null)
 
         then:
         retrieved.key == food.key
@@ -86,7 +87,7 @@ class H2ValidationSpec extends Specification {
         when:"A valid value is set"
         retrieved.meal.currentBloodGlucose = 101
         foodRepository.update(retrieved)
-        retrieved = foodRepository.findById(food.id).orElse(null)
+        retrieved = foodRepository.findById(food.fid).orElse(null)
 
         then:"it is saved and cascaded to correctly"
         retrieved.meal.currentBloodGlucose == 101

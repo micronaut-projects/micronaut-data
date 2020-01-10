@@ -33,7 +33,7 @@ public class Meal {
 
     @Id
     @AutoPopulated
-    private UUID id;
+    private UUID mid;
 
     @NotNull
     @Max(999)
@@ -58,12 +58,12 @@ public class Meal {
 
     @Creator
     public Meal(
-            UUID id,
+            UUID mid,
             @NotNull @Max(999) int currentBloodGlucose,
             Date createdOn,
             Date updatedOn,
             @Nullable Set<Food> foods) {
-        this.id = id;
+        this.mid = mid;
         this.currentBloodGlucose = currentBloodGlucose;
         this.createdOn = createdOn;
         this.updatedOn = updatedOn;
@@ -74,12 +74,12 @@ public class Meal {
         this.currentBloodGlucose = currentBloodGlucose;
     }
 
-    public UUID getId() {
-        return id;
+    public UUID getMid() {
+        return mid;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public void setMid(UUID mid) {
+        this.mid = mid;
     }
 
     public int getCurrentBloodGlucose() {

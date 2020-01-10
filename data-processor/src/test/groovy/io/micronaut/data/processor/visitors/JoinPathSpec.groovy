@@ -80,7 +80,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
 
         where:
         method             | returnType | arguments      | suffix
-        "findByBooksTitle" | "Author"   | "String title" | "JOIN book author_books_ ON author_.id=author_books_.author_id WHERE (author_books_.\"title\" = ?)"
+        "findByBooksTitle" | "Author"   | "String title" | "JOIN book author_books_ ON author_.\"id\"=author_books_.\"author_id\" WHERE (author_books_.\"title\" = ?)"
     }
 
 
@@ -110,7 +110,7 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
 
         where:
         method             | returnType      | arguments     | joinTableExpression
-        "findByCitiesName" | "CountryRegion" | "String name" | "INNER JOIN countryRegionCity country_region_cities_countryRegionCity_ ON country_region_.id=country_region_cities_countryRegionCity_.countryRegionId  INNER JOIN T_CITY country_region_cities_ ON country_region_cities_countryRegionCity_.cityId=country_region_cities_.id"
+        "findByCitiesName" | "CountryRegion" | "String name" | "INNER JOIN countryRegionCity country_region_cities_countryRegionCity_ ON country_region_.\"id\"=country_region_cities_countryRegionCity_.countryRegionId  INNER JOIN T_CITY country_region_cities_ ON country_region_cities_countryRegionCity_.cityId=country_region_cities_.\"id\" WHERE (country_region_cities_.\"C_NAME\" = ?)"
     }
 
     @Unroll
@@ -182,7 +182,7 @@ interface MyInterface extends GenericRepository<City, Long> {
         String queryStr = ann.value()
 
         expect:
-        queryStr.contains('INNER JOIN CountryRegion r_ ON city_.country_region_id=r_.id INNER JOIN country c_ ON r_.countryId=c_.uuid')
+        queryStr.contains('INNER JOIN CountryRegion r_ ON city_."country_region_id"=r_."id" INNER JOIN country c_ ON r_."countryId"=c_."uuid"')
 
     }
 
@@ -271,12 +271,12 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         method                           | joinCount | joinPaths                                  | joinExpression
-        "findByCountryRegionCountryName" | 2         | ["countryRegion"]                          | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
-        "findByCountryRegionCountryName" | 2         | ["countryRegion", "countryRegion.country"] | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
-        "findByCountryRegionName"        | 2         | ["countryRegion.country"]                  | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
-        "findByCountryRegionCountryName" | 2         | []                                         | 'ON city_country_region_.countryId=city_country_region_country_.uuid'
-        "findByCountryRegionName"        | 1         | []                                         | 'ON city_.country_region_id=city_country_region_.id'
-        "findByCountryRegionName"        | 1         | ["countryRegion"]                          | 'ON city_.country_region_id=city_country_region_.id'
+        "findByCountryRegionCountryName" | 2         | ["countryRegion"]                          | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
+        "findByCountryRegionCountryName" | 2         | ["countryRegion", "countryRegion.country"] | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
+        "findByCountryRegionName"        | 2         | ["countryRegion.country"]                  | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
+        "findByCountryRegionCountryName" | 2         | []                                         | 'ON city_country_region_."countryId"=city_country_region_country_."uuid"'
+        "findByCountryRegionName"        | 1         | []                                         | 'ON city_."country_region_id"=city_country_region_."id"'
+        "findByCountryRegionName"        | 1         | ["countryRegion"]                          | 'ON city_."country_region_id"=city_country_region_."id"'
 
     }
 
@@ -333,8 +333,8 @@ interface MyInterface extends io.micronaut.data.tck.repositories.ShelfRepository
         def query = method.stringValue(Query).get()
 
         expect:
-        query.contains('LEFT JOIN book_page p_book_page_ ON b_.id=p_book_page_.book_id ')
-        query.contains('LEFT JOIN shelf_book b_shelf_book_ ON shelf_.id=b_shelf_book_.shelf_id ')
-        query.contains('LEFT JOIN page p_ ON p_book_page_.page_id=p_.id ')
+        query.contains('LEFT JOIN book_page p_book_page_ ON b_."id"=p_book_page_.book_id ')
+        query.contains('LEFT JOIN shelf_book b_shelf_book_ ON shelf_."id"=b_shelf_book_.shelf_id ')
+        query.contains('LEFT JOIN page p_ ON p_book_page_.page_id=p_."id" ')
     }
 }
