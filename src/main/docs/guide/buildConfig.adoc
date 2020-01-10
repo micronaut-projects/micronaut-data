@@ -41,7 +41,7 @@ datasources:
     dialect: H2
 ----
 
-Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa`  and `micronaut-hibernate-jpa` module:
+Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the `micronaut-data-hibernate-jpa`:
 
 dependency:io.micronaut.data:micronaut-data-hibernate-jpa[]
 
