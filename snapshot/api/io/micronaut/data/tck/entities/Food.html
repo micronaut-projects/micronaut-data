@@ -134,7 +134,7 @@ extends java.lang.Object</pre>
     <a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&nbsp;meal)</code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/entities/Food.html#Food-java.util.UUID-java.lang.String-int-int-java.util.Date-java.util.Date-io.micronaut.data.tck.entities.Meal-">Food</a></span>(java.util.UUID&nbsp;id,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/entities/Food.html#Food-java.util.UUID-java.lang.String-int-int-java.util.Date-java.util.Date-io.micronaut.data.tck.entities.Meal-">Food</a></span>(java.util.UUID&nbsp;fid,
     @Size(max=36) @NotNull java.lang.String&nbsp;key,
     @Size(max=9999) @NotNull int&nbsp;carbohydrates,
     @Size(max=9999) @NotNull int&nbsp;portionGrams,
@@ -167,7 +167,7 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>java.util.UUID</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/entities/Food.html#getId--">getId</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/entities/Food.html#getFid--">getFid</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
@@ -195,7 +195,7 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i9" class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/entities/Food.html#setId-java.util.UUID-">setId</a></span>(java.util.UUID&nbsp;id)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/entities/Food.html#setFid-java.util.UUID-">setFid</a></span>(java.util.UUID&nbsp;fid)</code>&nbsp;</td>
 </tr>
 <tr id="i10" class="altColor">
 <td class="colFirst"><code>void</code></td>
@@ -258,7 +258,7 @@ extends java.lang.Object</pre>
 <li class="blockList">
 <h4>Food</h4>
 <pre>@Creator
-public&nbsp;Food(java.util.UUID&nbsp;id,
+public&nbsp;Food(java.util.UUID&nbsp;fid,
                      @Size(max=36) @NotNull
                      @Size(max=36) @NotNull java.lang.String&nbsp;key,
                      @Size(max=9999) @NotNull
@@ -279,22 +279,22 @@ public&nbsp;Food(java.util.UUID&nbsp;id,
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="getId--">
+<a name="getFid--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>getId</h4>
-<pre>public&nbsp;java.util.UUID&nbsp;getId()</pre>
+<h4>getFid</h4>
+<pre>public&nbsp;java.util.UUID&nbsp;getFid()</pre>
 </li>
 </ul>
-<a name="setId-java.util.UUID-">
+<a name="setFid-java.util.UUID-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>setId</h4>
-<pre>public&nbsp;void&nbsp;setId(java.util.UUID&nbsp;id)</pre>
+<h4>setFid</h4>
+<pre>public&nbsp;void&nbsp;setFid(java.util.UUID&nbsp;fid)</pre>
 </li>
 </ul>
 <a name="getKey--">
