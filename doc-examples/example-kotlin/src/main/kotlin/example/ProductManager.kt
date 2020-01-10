@@ -1,13 +1,14 @@
 package example
 
 import io.micronaut.transaction.SynchronousTransactionManager
+import java.sql.Connection
 import javax.inject.Singleton
 import javax.persistence.EntityManager
 
 @Singleton
 class ProductManager(
         private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager<EntityManager>) // <1>
+        private val transactionManager: SynchronousTransactionManager<Connection>) // <1>
 {
 
     fun save(name: String, manufacturer: Manufacturer): Product {

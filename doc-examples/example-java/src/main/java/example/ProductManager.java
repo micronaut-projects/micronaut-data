@@ -3,16 +3,17 @@ package example;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
+import java.sql.Connection;
 
 @Singleton
 public class ProductManager {
 
     private final EntityManager entityManager;
-    private final SynchronousTransactionManager<EntityManager> transactionManager;
+    private final SynchronousTransactionManager<Connection> transactionManager;
 
     public ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager<EntityManager> transactionManager) { // <1>
+            SynchronousTransactionManager<Connection> transactionManager) { // <1>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
