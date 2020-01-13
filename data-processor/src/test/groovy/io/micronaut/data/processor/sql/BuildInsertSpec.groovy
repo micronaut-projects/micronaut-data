@@ -26,6 +26,57 @@ import spock.lang.PendingFeature
 
 class BuildInsertSpec extends AbstractDataSpec {
 
+    void "test build SQL insert statement with custom name and escaping"() {
+        given:
+        BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.DataType;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+interface MyInterface extends CrudRepository<TableRatings, Long> {
+}
+
+@MappedEntity(value = "T-Table-Ratings", escape = true)
+class TableRatings {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @MappedProperty(value = "T-Rating", type = DataType.INTEGER)
+    private final int rating;
+
+    public TableRatings(int rating) {
+        this.rating = rating;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public int getRating() {
+        return rating;
+    }
+}
+
+""")
+
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
+
+        expect:
+        method
+                .stringValue(Query)
+                .orElse(null) == 'INSERT INTO "T-Table-Ratings" ("T-Rating") VALUES (?)'
+    }
+
     void "test build SQL insert statement"() {
         given:
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """

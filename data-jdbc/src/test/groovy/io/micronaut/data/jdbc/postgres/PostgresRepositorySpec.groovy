@@ -162,7 +162,8 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
 
         when:
         a5 = carRepo.findById(a5.id).orElse(null)
-
+        carRepo.getById(a5.id).parts.size() == 0
+        
         then:
         a5.id
         a5.name == 'A5'

@@ -42,6 +42,10 @@ abstract class AbstractPageSpec extends Specification {
         personRepository.saveAll(people)
     }
 
+    def cleanupSpec() {
+        personRepository.deleteAll()
+    }
+
     void "test sort"() {
         when:"Sorted results are returned"
         def results = personRepository.listTop10(

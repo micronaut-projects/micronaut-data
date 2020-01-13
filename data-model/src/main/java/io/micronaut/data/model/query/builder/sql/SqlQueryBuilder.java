@@ -210,12 +210,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Experimental
     public @NonNull String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
-        final String unescapedTableName = getTableName(entity);
-        String tableName = unescapedTableName;
+        final String unescapedTableName = getUnescapedTableName(entity);
+        String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
-        if (escape) {
-            tableName = quote(tableName);
-        }
         StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
 
         ArrayList<PersistentProperty> props = new ArrayList<>(entity.getPersistentProperties());
@@ -614,12 +611,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public QueryResult buildInsert(AnnotationMetadata repositoryMetadata, PersistentEntity entity) {
         StringBuilder builder = new StringBuilder(INSERT_INTO);
-        final String unescapedTableName = getTableName(entity);
-        String tableName = unescapedTableName;
+        final String unescapedTableName = getUnescapedTableName(entity);
+        String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
-        if (escape) {
-            tableName = quote(tableName);
-        }
         builder.append(tableName);
         builder.append(" (");
 
@@ -842,12 +836,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     public String getTableName(PersistentEntity entity) {
+        boolean escape = shouldEscape(entity);
         String tableName = entity.getPersistedName();
         String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null);
         if (StringUtils.isNotEmpty(schema)) {
-            return schema + '.' + tableName;
+            if (escape) {
+                return quote(schema) + '.' + quote(tableName);
+            } else {
+                return schema + '.' + tableName;
+            }
+        } else {
+            return escape ? quote(tableName) : tableName;
         }
-        return tableName;
     }
 
     @Override

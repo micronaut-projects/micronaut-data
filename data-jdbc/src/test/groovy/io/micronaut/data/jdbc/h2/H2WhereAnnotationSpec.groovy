@@ -3,6 +3,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
+import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -14,7 +15,11 @@ import javax.inject.Inject
 class H2WhereAnnotationSpec extends Specification {
 
     @Inject
-    H2EnabledPersonRepository personRepository
+    @Shared H2EnabledPersonRepository personRepository
+
+    void setupSpec() {
+        personRepository.deleteAll()
+    }
 
     void "test return only enabled people"() {
         given:

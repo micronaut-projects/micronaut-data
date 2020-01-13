@@ -19,6 +19,7 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.City
@@ -73,6 +74,7 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     protected void setupData() {
+        authorRepository.deleteAll()
         bookRepository.deleteAll()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
@@ -232,6 +234,9 @@ abstract class AbstractRepositorySpec extends Specification {
 
 
     void "test string comparison methods"() {
+        given:
+        def authors = authorRepository.findByNameContains("e")
+        authors.each { println it.name }
         expect:
         authorRepository.countByNameContains("e") == 2
         authorRepository.findByNameStartsWith("S").name == "Stephen King"

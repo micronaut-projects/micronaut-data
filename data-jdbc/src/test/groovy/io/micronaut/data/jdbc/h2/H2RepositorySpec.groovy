@@ -165,6 +165,7 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         then:
         a5.id
         a5.name == 'A5'
+        carRepo.getById(a5.id).parts.size() == 0
 
         when:"an update happens"
         carRepo.update(a5.id, "A6")
@@ -186,6 +187,8 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         then:"It was deleted"
         !carRepo.findById(a5.id).isPresent()
     }
+
+
 
     void "test manual joining on many ended association"() {
         when:

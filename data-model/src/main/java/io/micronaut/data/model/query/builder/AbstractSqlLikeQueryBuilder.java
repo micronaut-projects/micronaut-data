@@ -535,6 +535,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected abstract String getTableName(PersistentEntity entity);
 
     /**
+     * Get the table name for the given entity.
+     *
+     * @param entity The entity
+     * @return The table name
+     */
+    protected String getUnescapedTableName(PersistentEntity entity) {
+        return entity.getPersistedName();
+    }
+
+    /**
      * Get an alias name for the given entity.
      *
      * @param entity The entity
@@ -619,7 +629,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private void buildSelectClause(QueryModel query, QueryState queryState) {
         String logicalName = queryState.getCurrentAlias();
         PersistentEntity entity = queryState.getEntity();
-        boolean escape = shouldEscape(entity);
         StringBuilder queryString = queryState.getQuery();
         buildSelect(
                 queryState,
@@ -630,9 +639,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         );
 
         String tableName = getTableName(entity);
-        if (escape) {
-            tableName = quote(tableName);
-        }
         queryString.append(FROM_CLAUSE)
                 .append(tableName)
                 .append(getTableAsKeyword())
@@ -1309,9 +1315,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         String currentAlias = queryState.getCurrentAlias();
         String tableName = getTableName(entity);
-        if (queryState.escape) {
-            tableName = quote(tableName);
-        }
         queryString.append(UPDATE_CLAUSE)
                 .append(tableName);
         if (currentAlias != null) {
@@ -1340,9 +1343,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         StringBuilder buffer = appendDeleteClause(queryString);
         String tableName = getTableName(entity);
-        if (queryState.escape) {
-            tableName = quote(tableName);
-        }
         buffer.append(tableName).append(SPACE);
         if (currentAlias != null) {
             buffer.append(getTableAsKeyword())

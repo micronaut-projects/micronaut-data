@@ -15,8 +15,12 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Car;
 
 public interface CarRepository extends CrudRepository<Car, Long> {
+
+    @Join(value = "parts", type = Join.Type.LEFT)
+    Car getById(Long id);
 }

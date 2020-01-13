@@ -16,10 +16,9 @@
 package io.micronaut.data.tck.entities;
 
 import javax.annotation.Nullable;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "cars", schema = "ford", catalog = "ford_cat")
@@ -30,6 +29,9 @@ public class Car {
 
     @Nullable
     private String name;
+
+    @OneToMany(mappedBy = "car")
+    private Set<CarPart> parts = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -45,5 +47,13 @@ public class Car {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Set<CarPart> getParts() {
+        return parts;
+    }
+
+    public void setParts(Set<CarPart> parts) {
+        this.parts = parts;
     }
 }
