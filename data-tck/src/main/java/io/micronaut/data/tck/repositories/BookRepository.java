@@ -15,8 +15,11 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 
@@ -24,7 +27,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
-public abstract class BookRepository implements CrudRepository<Book, Long> {
+public abstract class BookRepository implements PageableRepository<Book, Long> {
+
+    @NonNull
+    @Override
+    @Join("author")
+    public abstract Page<Book> findAll(@NonNull Pageable pageable);
 
     protected final AuthorRepository authorRepository;
 

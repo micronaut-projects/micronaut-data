@@ -1401,7 +1401,31 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
                 aliasName = getAliasName(new JoinPath(property, new Association[]{association}, Join.Type.DEFAULT, null));
             } else {
-                aliasName = getAliasName(entity);
+                final int j = property.indexOf('.');
+                if (j > -1) {
+                    final String associationName = property.substring(0, j);
+                    final PersistentProperty assProp = entity.getPropertyByName(associationName);
+                    if (assProp instanceof Association) {
+                        Association association = (Association) assProp;
+                        persistentProperty = association.getAssociatedEntity().getPropertyByName(property.substring(j + 1));
+                        if (persistentProperty != null) {
+                            aliasName = getAliasName(
+                                    new JoinPath(
+                                            associationName,
+                                            new Association[]{ association },
+                                            Join.Type.DEFAULT,
+                                            null
+                                    )
+                            );
+                        } else {
+                            throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
+                        }
+                    } else {
+                        throw new IllegalArgumentException("Cannot sort on non-existent property path: " + property);
+                    }
+                } else {
+                    aliasName = getAliasName(entity);
+                }
             }
             buff.append(aliasName)
                     .append(DOT)

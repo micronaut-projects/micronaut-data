@@ -232,6 +232,15 @@ abstract class AbstractRepositorySpec extends Specification {
         isOracle() || bookRepository.countByTitleIsNotEmpty() == 7
     }
 
+    void "test order by association"() {
+        when:"Sorting by an assocation"
+        def page = bookRepository.findAll(Pageable.from(Sort.of(
+                Sort.Order.desc("author.name")
+        )))
+
+        then:
+        page.content
+    }
 
     void "test string comparison methods"() {
         given:
