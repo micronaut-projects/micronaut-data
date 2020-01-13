@@ -423,6 +423,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             }
                         }
                         currentId = nextId(identity, rs);
+
                     }
 
                     if (currentId != null) {
@@ -465,7 +466,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * @return The ID
      */
     Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet) {
-        return resultReader.readNextDynamic(resultSet, identity.getPersistedName(), identity.getDataType());
+        Object id = resultReader.readNextDynamic(resultSet, identity.getPersistedName(), identity.getDataType());
+        if (id != null) {
+            final Class<?> isType = identity.getType();
+            if (!isType.isInstance(id)) {
+                id = resultReader.convertRequired(id, isType);
+            }
+        }
+        return id;
     }
 
     private Object convertAndSet(
