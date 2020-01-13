@@ -5,7 +5,7 @@ dependencies {
     api "io.micronaut:micronaut-inject:$micronautVersion"
     api "io.micronaut:micronaut-validation:$micronautVersion"
     api "io.micronaut:micronaut-aop:$micronautVersion"
-    api "io.reactivex.rxjava2:rxjava:2.2.16"
+    api "io.reactivex.rxjava2:rxjava:2.2.17"
     testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
     compileOnly "com.fasterxml.jackson.core:jackson-annotations"
     testImplementation "com.fasterxml.jackson.core:jackson-databind"
