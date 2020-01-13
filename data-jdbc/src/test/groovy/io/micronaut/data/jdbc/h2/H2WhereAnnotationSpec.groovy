@@ -21,6 +21,10 @@ class H2WhereAnnotationSpec extends Specification {
         personRepository.deleteAll()
     }
 
+    void cleanupSpec() {
+        personRepository.deleteAll()
+    }
+
     void "test return only enabled people"() {
         given:
         personRepository.saveAll([

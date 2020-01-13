@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public interface BookDtoRepository extends GenericRepository<Book, Long> {
+
+
     List<BookDto> findByTitleLike(String title);
 
     BookDto findOneByTitle(String title);

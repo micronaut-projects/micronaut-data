@@ -162,4 +162,12 @@ public interface QueryBuilder {
                     return new JpaQueryBuilder();
                 })).orElse(new JpaQueryBuilder());
     }
+
+    /**
+     * Whether projections should be aliased.
+     * @return True if they should
+     */
+    default boolean shouldAliasProjections() {
+        return true;
+    }
 }

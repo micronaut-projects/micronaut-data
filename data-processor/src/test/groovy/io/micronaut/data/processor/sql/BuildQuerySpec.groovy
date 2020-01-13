@@ -110,7 +110,7 @@ ${dto('MovieTitle', [title: String])}
 
         expect:
         method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
-        query == 'SELECT movie_.`title` AS title FROM `movie` movie_'
+        query == 'SELECT movie_.`title` FROM `movie` movie_'
 
     }
 

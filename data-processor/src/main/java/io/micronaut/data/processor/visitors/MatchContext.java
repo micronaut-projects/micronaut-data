@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -44,10 +45,12 @@ public class MatchContext implements AnnotationMetadataProvider {
     @NonNull
     protected final ParameterElement[] parameters;
     private final ClassElement repositoryClass;
+    private final QueryBuilder queryBuilder;
     private boolean failing = false;
 
     /**
      * Default constructor.
+     * @param queryBuilder The query builder
      * @param repositoryClass The repository class
      * @param visitorContext The visitor context
      * @param methodElement The method element
@@ -56,18 +59,27 @@ public class MatchContext implements AnnotationMetadataProvider {
      * @param parameters The parameters
      */
     MatchContext(
+            @NonNull QueryBuilder queryBuilder,
             @NonNull ClassElement repositoryClass,
             @NonNull VisitorContext visitorContext,
             @NonNull MethodElement methodElement,
             @NonNull Map<String, String> typeRoles,
             @NonNull ClassElement returnType,
             @NonNull ParameterElement[] parameters) {
+        this.queryBuilder = queryBuilder;
         this.repositoryClass = repositoryClass;
         this.visitorContext = visitorContext;
         this.methodElement = methodElement;
         this.typeRoles = typeRoles;
         this.returnType = returnType;
         this.parameters = parameters;
+    }
+
+    /**
+     * @return The active query builder
+     */
+    public QueryBuilder getQueryBuilder() {
+        return queryBuilder;
     }
 
     @Override

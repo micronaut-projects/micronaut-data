@@ -97,6 +97,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         this.dialect = dialect;
     }
 
+    @Override
+    public boolean shouldAliasProjections() {
+        return false;
+    }
+
     /**
      * Builds a batch create tables statement. Designed for testing and not production usage. For production a
      *  SQL migration tool such as Flyway or Liquibase is recommended.

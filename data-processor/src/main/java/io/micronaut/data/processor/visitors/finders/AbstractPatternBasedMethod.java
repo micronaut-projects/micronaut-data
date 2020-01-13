@@ -369,7 +369,12 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 return true;
             }
             // add an alias projection for each property
-            query.projections().add(Projections.property(propertyName).aliased());
+            final QueryBuilder queryBuilder = matchContext.getQueryBuilder();
+            if (queryBuilder.shouldAliasProjections()) {
+                query.projections().add(Projections.property(propertyName).aliased());
+            } else {
+                query.projections().add(Projections.property(propertyName));
+            }
         }
         return false;
     }

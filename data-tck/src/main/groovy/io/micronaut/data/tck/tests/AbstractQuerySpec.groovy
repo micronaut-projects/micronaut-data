@@ -37,6 +37,11 @@ abstract class AbstractQuerySpec extends Specification {
         bookRepository.setupData()
     }
 
+    def cleanupSpec() {
+        bookRepository.deleteAll()
+        authorRepository.deleteAll()
+    }
+
     void "test is null or empty"() {
         expect:
         bookRepository.count() == 8

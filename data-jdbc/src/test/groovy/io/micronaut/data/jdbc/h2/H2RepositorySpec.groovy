@@ -235,4 +235,13 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         book.author != null
         book.author.name == "Stephen King"
     }
+
+    void "test @Query with DTO"() {
+        given:
+        def book = dto.findByTitleWithQuery("The Stand")
+
+        expect:
+        book.isPresent()
+        book.get().title == "The Stand"
+    }
 }

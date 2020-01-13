@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
@@ -45,6 +46,7 @@ public class MethodMatchContext extends MatchContext {
 
     /**
      * Creates the context.
+     * @param queryBuilder The query builder
      * @param repositoryClass The repository class
      * @param entity The entity
      * @param visitorContext The visitor context
@@ -56,6 +58,7 @@ public class MethodMatchContext extends MatchContext {
      * @param entityResolver function used to resolve entities
      */
     MethodMatchContext(
+            @NonNull QueryBuilder queryBuilder,
             @NonNull ClassElement repositoryClass,
             @NonNull SourcePersistentEntity entity,
             @NonNull VisitorContext visitorContext,
@@ -65,7 +68,7 @@ public class MethodMatchContext extends MatchContext {
             @NonNull Map<String, String> typeRoles,
             @NonNull ParameterElement[] parameters,
             @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        super(repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters);
+        super(queryBuilder, repositoryClass, visitorContext, methodElement, typeRoles, returnType, parameters);
         this.entity = entity;
         this.parametersInRole = Collections.unmodifiableMap(parametersInRole);
         this.entityResolver = entityResolver;

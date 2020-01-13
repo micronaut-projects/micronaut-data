@@ -35,6 +35,10 @@ class EscapeIdentifiersSpec extends Specification{
     @Shared
     H2TableRatingsRepository repository
 
+    def cleanupSpec() {
+        repository.deleteAll()
+    }
+
     void "test save one"() {
         when:"one is saved"
         def ratings = new TableRatings(10)

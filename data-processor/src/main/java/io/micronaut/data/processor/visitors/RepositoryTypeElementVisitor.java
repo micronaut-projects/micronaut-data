@@ -177,6 +177,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
 
             MatchContext matchContext = new MatchContext(
+                    queryEncoder,
                     currentRepository,
                     context,
                     element,
@@ -197,6 +198,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     String idType = resolveIdType(entity);
 
                     MethodMatchContext methodMatchContext = new MethodMatchContext(
+                            queryEncoder,
                             currentRepository,
                             entity,
                             context,

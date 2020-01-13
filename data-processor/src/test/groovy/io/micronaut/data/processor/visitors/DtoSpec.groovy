@@ -74,6 +74,9 @@ interface MyInterface extends GenericRepository<Person, Long> {
     Page<PersonDto> searchByNameLike(String title, Pageable pageable);
     
     java.util.stream.Stream<PersonDto> queryByNameLike(String title, Pageable pageable);
+    
+    @Query("select * from person p where p.name = :name")
+    Optional<PersonDto> findByNameWithQuery(String name);
 }
 
 @Introspected
@@ -112,5 +115,11 @@ class PersonDto {
         and:
         def streamMethod = repository.getRequiredMethod("queryByNameLike", String, Pageable)
         streamMethod.synthesize(DataMethod).resultType().simpleName == "PersonDto"
+
+        and:
+        def queryMethod = repository.getRequiredMethod("findByNameWithQuery", String)
+        queryMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+
     }
+
 }

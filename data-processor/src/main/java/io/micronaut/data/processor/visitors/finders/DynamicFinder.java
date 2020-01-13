@@ -17,11 +17,13 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.Association;
@@ -141,6 +143,9 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             // reactive types double nested
             if (TypeUtils.isContainerType(genericReturnType)) {
                 genericReturnType = genericReturnType.getFirstTypeArgument().orElse(genericReturnType);
+            }
+            if (!genericReturnType.hasAnnotation(MappedEntity.class) && genericReturnType.hasAnnotation(Introspected.class)) {
+                genericReturnType = matchContext.getRootEntity().getType();
             }
             return buildInfo(
                     matchContext,
