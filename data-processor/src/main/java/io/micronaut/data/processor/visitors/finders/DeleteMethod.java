@@ -23,6 +23,7 @@ import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -97,7 +98,7 @@ public class DeleteMethod extends AbstractListMethod {
                         return null;
                     }
                     QueryParameter queryParameter = new QueryParameter(parameters[0].getName());
-                    if (interceptor.getSimpleName().startsWith("DeleteAll")) {
+                    if (interceptor.getSimpleName().startsWith("DeleteAll") && !(identity instanceof Embedded)) {
                         queryModel.inList(identity.getName(), queryParameter);
                     } else {
                         queryModel.idEq(queryParameter);

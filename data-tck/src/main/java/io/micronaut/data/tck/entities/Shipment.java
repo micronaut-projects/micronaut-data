@@ -13,37 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.embedded;
+package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Creator;
-import io.micronaut.data.annotation.EmbeddedId;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.model.DataType;
-
+import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.Objects;
 
-@MappedEntity(value = "Table1")
-public class EmbeddedIdExample {
+@Entity
+@Table(name= "Shipment1")
+public class Shipment {
 
     @Creator
-    public EmbeddedIdExample(EmbeddedIdExampleId tableId, String field) {
-        this.tableId = tableId;
+    public Shipment(ShipmentId shipmentId, String field) {
+        this.shipmentId = shipmentId;
         this.field = field;
     }
 
-    @EmbeddedId
-    private EmbeddedIdExampleId tableId;
-
-    @MappedProperty(value = "field", type = DataType.STRING)
-    private String field;
-
-    public EmbeddedIdExampleId getTableId() {
-        return tableId;
+    // for hibernate
+    public Shipment() {
     }
 
-    public void setTableId(EmbeddedIdExampleId tableId) {
-        this.tableId = tableId;
+    @EmbeddedId
+    private ShipmentId shipmentId;
+
+    @Column(name = "field")
+    private String field;
+
+    public ShipmentId getShipmentId() {
+        return shipmentId;
+    }
+
+    public void setShipmentId(ShipmentId shipmentId) {
+        this.shipmentId = shipmentId;
     }
 
     public String getField() {
@@ -56,8 +60,8 @@ public class EmbeddedIdExample {
 
     @Override
     public String toString() {
-        return "Table{" +
-                "tableId=" + tableId +
+        return "Shipment{" +
+                "shipmentId=" + shipmentId +
                 ", field='" + field + '\'' +
                 '}';
     }
@@ -66,13 +70,13 @@ public class EmbeddedIdExample {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EmbeddedIdExample table = (EmbeddedIdExample) o;
-        return Objects.equals(tableId, table.tableId) &&
+        Shipment table = (Shipment) o;
+        return Objects.equals(shipmentId, table.shipmentId) &&
                 Objects.equals(field, table.field);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(tableId, field);
+        return Objects.hash(shipmentId, field);
     }
 }

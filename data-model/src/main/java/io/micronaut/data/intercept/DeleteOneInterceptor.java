@@ -22,5 +22,5 @@ package io.micronaut.data.intercept;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface DeleteOneInterceptor<T> extends DataInterceptor<T, Void> {
+public interface DeleteOneInterceptor<T> extends DataInterceptor<T, Object> {
 }

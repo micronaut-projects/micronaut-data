@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
@@ -913,7 +914,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (j > -1) {
                             String subProp = propertyPath.substring(j + 1);
                             value = queryParameters[Integer.valueOf(propertyPath.substring(0, j))];
-                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Object.class);
+                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
                         } else {
                             throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
                         }

@@ -13,42 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.embedded;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.annotation.Embeddable;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.model.DataType;
-
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
-public class EmbeddedIdExampleId implements Serializable {
+public class ShipmentId implements Serializable {
 
-    @MappedProperty(value = "p", type = DataType.STRING)
-    private final String p;
+    @Column(name= "sp_country")
+    private final String country;
 
-    @MappedProperty(value = "t", type = DataType.STRING)
-    private final String t;
+    @Column(name= "sp_city")
+    private final String city;
 
-    public EmbeddedIdExampleId(String p, String t) {
-        this.p = p;
-        this.t = t;
+    public ShipmentId(String country, String city) {
+        this.country = country;
+        this.city = city;
     }
 
-    public String getP() {
-        return p;
+    public String getCountry() {
+        return country;
     }
 
-    public String getT() {
-        return t;
+    public String getCity() {
+        return city;
     }
 
     @Override
     public String toString() {
         return "TableId{" +
-                "p='" + p + '\'' +
-                ", t='" + t + '\'' +
+                "p='" + country + '\'' +
+                ", t='" + city + '\'' +
                 '}';
     }
 
@@ -56,13 +54,13 @@ public class EmbeddedIdExampleId implements Serializable {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        EmbeddedIdExampleId tableId = (EmbeddedIdExampleId) o;
-        return Objects.equals(p, tableId.p) &&
-                Objects.equals(t, tableId.t);
+        ShipmentId tableId = (ShipmentId) o;
+        return Objects.equals(country, tableId.country) &&
+                Objects.equals(city, tableId.city);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(p, t);
+        return Objects.hash(country, city);
     }
 }
