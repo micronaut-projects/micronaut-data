@@ -102,6 +102,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return false;
     }
 
+    @Override
+    protected boolean isExpandEmbedded() {
+        return true;
+    }
+
     /**
      * Builds a batch create tables statement. Designed for testing and not production usage. For production a
      *  SQL migration tool such as Flyway or Liquibase is recommended.
@@ -291,7 +296,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         column = quote(column);
                     }
 
-                    boolean required = embeddedProperty.isRequired() || prop.getAnnotationMetadata().hasStereotype(Id.class);
+                    boolean required;
+                    if (prop.isOptional()) {
+                        required = false;
+                    } else {
+                        required = embeddedProperty.isRequired() || prop.getAnnotationMetadata().hasStereotype(Id.class);
+                    }
                     column = addTypeToColumn(embeddedProperty, embeddedProperty instanceof Association, column, required);
                     column = addGeneratedStatementToColumn(identity, prop, column);
                     columns.add(column);
@@ -634,6 +644,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     if (prop instanceof Association) {
                         Association association = (Association) prop;
                         if (association instanceof Embedded) {
+                            Embedded embedded = (Embedded) association;
                             PersistentEntity embeddedEntity = association.getAssociatedEntity();
                             Collection<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                             for (PersistentProperty embeddedProp : embeddedProps) {
@@ -647,7 +658,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                     columnNames.add(explicitColumn);
                                 } else {
                                     NamingStrategy namingStrategy = entity.getNamingStrategy();
-                                    String columnName = namingStrategy.mappedName(prop.getName() + embeddedProp.getCapitilizedName());
+                                    String columnName = namingStrategy.mappedName(
+                                            embedded,
+                                            embeddedProp
+                                    );
                                     if (escape) {
                                         columnName = quote(columnName);
                                     }

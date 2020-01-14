@@ -1186,7 +1186,50 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
 
             if (prop instanceof Association) {
-                if (((Association) prop).isForeignKey()) {
+                if (prop instanceof Embedded) {
+                    if (isExpandEmbedded()) {
+
+                        Embedded embedded = (Embedded) prop;
+                        final String embeddedName = embedded.getName();
+                        final Collection<? extends PersistentProperty> embeddedProps = embedded.getAssociatedEntity().getPersistentProperties();
+
+
+                        final Iterator<? extends PersistentProperty> eIter = embeddedProps.iterator();
+                        while (eIter.hasNext()) {
+                            final PersistentProperty embeddedProp = eIter.next();
+                            String propertyPath = embeddedName + '.' + embeddedProp.getName();
+                            queryState.addParameterType(propertyPath, embeddedProp.getDataType());
+
+                            String currentAlias = queryState.getCurrentAlias();
+                            if (currentAlias != null) {
+                                queryString.append(currentAlias).append(DOT);
+                            }
+
+                            String columnName = embeddedProp.getAnnotationMetadata().stringValue(
+                                    MappedProperty.class
+                            ).orElseGet(() ->
+                                    queryState.getEntity().getNamingStrategy()
+                                        .mappedName(embedded, embeddedProp)
+                            );
+                            if (queryState.escape) {
+                                columnName = quote(columnName);
+                            }
+
+                            queryString.append(columnName).append('=');
+                            Placeholder param = queryState.newParameter();
+                            appendUpdateSetParameter(queryString, prop, param);
+                            parameters.put(param.key, propertyPath);
+                            if (eIter.hasNext()) {
+                                queryString.append(COMMA);
+                            }
+
+                        }
+                        if (iterator.hasNext()) {
+                            queryString.append(COMMA);
+                        }
+                        continue;
+                    }
+                } else if (((Association) prop).isForeignKey()) {
                     throw new IllegalArgumentException("Foreign key associations cannot be updated as part of a batch update statement");
                 }
             }
@@ -1208,6 +1251,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 queryString.append(COMMA);
             }
         }
+    }
+
+    /**
+     * Should embedded queries by expanded by the implementation.
+     * @return True if they should
+     */
+    protected boolean isExpandEmbedded() {
+        return false;
     }
 
     /**

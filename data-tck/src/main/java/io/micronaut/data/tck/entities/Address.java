@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Embeddable;
+import io.micronaut.data.annotation.Embeddable;
 
 @Embeddable
 public class Address {

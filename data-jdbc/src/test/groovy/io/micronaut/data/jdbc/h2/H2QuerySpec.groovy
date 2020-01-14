@@ -45,6 +45,12 @@ class H2QuerySpec extends AbstractQuerySpec {
 
     @Override
     void init() {
+        ar.deleteAll()
+        br.deleteAll()
+    }
+
+    def cleanupSpec() {
+        br.deleteAll()
     }
 
     @Override

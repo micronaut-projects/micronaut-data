@@ -15,15 +15,30 @@
  */
 package io.micronaut.data.processor.sql
 
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.Restaurant
 import spock.lang.Requires
 import spock.lang.Unroll
 
 @Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
+
+    void "test build create table table statement for nullable embeddable"() {
+        given:
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
+        def entity = PersistentEntity.of(Restaurant)
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        expect:"@Nullable @Embedded doesn't include NOT NULL declaration"
+        sql.contains("\"hq_address_street\" VARCHAR(255),")
+
+        and:"regular @Embedded does include NOT NULL declaration"
+        sql.contains("\"address_street\" VARCHAR(255) NOT NULL,")
+    }
 
     @Unroll
     void "test build create table for JSON type for dialect #dialect"() {

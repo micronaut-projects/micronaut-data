@@ -70,7 +70,7 @@ class SqlQueryBuilderSpec extends Specification {
         def encoded = encoder.buildQuery(q)
 
         expect:
-        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code` FROM')
+        encoded.query.startsWith('SELECT restaurant_.`id`,restaurant_.`name`,restaurant_.`address_street`,restaurant_.`address_zip_code`,restaurant_.`hq_address_street`,restaurant_.`hq_address_zip_code` FROM')
 
     }
 
@@ -145,8 +145,8 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
 
         expect:
-        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code") VALUES (?,?,?)'
-        result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode')
+        result.query == 'INSERT INTO "restaurant" ("name","address_street","address_zip_code","hq_address_street","hq_address_zip_code") VALUES (?,?,?,?,?)'
+        result.parameters.equals('1': 'name', '2':'address.street', '3':'address.zipCode', '4':'hqAddress.street', '5':'hqAddress.zipCode')
     }
 
     void "test encode create statement for embedded"() {
@@ -156,7 +156,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE "restaurant" ("id" BIGINT AUTO_INCREMENT PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL);'
+        result == 'CREATE TABLE "restaurant" ("id" BIGINT AUTO_INCREMENT PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hq_address_street" VARCHAR(255),"hq_address_zip_code" VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {

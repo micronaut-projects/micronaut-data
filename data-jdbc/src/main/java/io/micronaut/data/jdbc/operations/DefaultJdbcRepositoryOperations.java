@@ -449,105 +449,135 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     try (PreparedStatement ps = connection.prepareStatement(query)) {
                         for (int i = 0; i < params.length; i++) {
                             String propertyName = params[i];
-                            final RuntimePersistentProperty<T> pp =
+                            RuntimePersistentProperty<T> pp =
                                     persistentEntity.getPropertyByName(propertyName);
                             if (pp == null) {
-                                throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
-                            }
-                            final Object newValue;
-                            final BeanProperty<T, ?> beanProperty = pp.getProperty();
-                            if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                                newValue = dateTimeProvider.getNow();
-                                beanProperty.convertAndSet(entity, newValue);
-                            } else {
-                                newValue = beanProperty.get(entity);
-                            }
-                            final DataType dataType = pp.getDataType();
-                            if (dataType == DataType.ENTITY && newValue != null && pp instanceof Association) {
-                                final RuntimePersistentProperty<Object> idReader = getIdReader(newValue);
-                                final Association association = (Association) pp;
-                                final BeanProperty<Object, ?> idReaderProperty = idReader.getProperty();
-                                final Object id = idReaderProperty.get(newValue);
-                                if (QUERY_LOG.isTraceEnabled()) {
-                                    QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, id);
+                                int j = propertyName.indexOf('.');
+                                if (j > -1) {
+                                    RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
+                                            persistentEntity.getPropertyByPath(propertyName).orElse(null);
+                                    if (embeddedProp != null) {
+
+                                        // embedded case
+                                        pp = persistentEntity.getPropertyByName(propertyName.substring(0, j));
+                                        if (pp instanceof Association) {
+                                            Association assoc = (Association) pp;
+                                            if (assoc.getKind() == Relation.Kind.EMBEDDED) {
+                                                Object embeddedInstance = pp.getProperty().get(entity);
+
+                                                Object embeddedValue = embeddedInstance != null ? embeddedProp.getProperty().get(embeddedInstance) : null;
+                                                int index = i + 1;
+                                                preparedStatementWriter.setDynamic(
+                                                        ps,
+                                                        index,
+                                                        embeddedProp.getDataType(),
+                                                        embeddedValue
+                                                );
+                                            }
+                                        }
+                                    } else {
+                                        throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
+                                    }
+                                } else {
+                                    throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                                 }
-                                if (id != null) {
+                            } else {
 
-                                    preparedStatementWriter.setDynamic(
-                                            ps,
-                                            i + 1,
-                                            idReader.getDataType(),
-                                            id
-                                    );
-                                    if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
-                                        final Relation.Kind kind = association.getKind();
-                                        final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
-                                        switch (kind) {
-                                            case ONE_TO_ONE:
-                                            case MANY_TO_ONE:
-                                                persisted.add(newValue);
-                                                final StoredInsert<Object> updateStatement = resolveEntityUpdate(
-                                                        annotationMetadata,
-                                                        repositoryType,
-                                                        associatedEntity.getIntrospection().getBeanType(),
-                                                        associatedEntity
-                                                );
-                                                updateOne(
-                                                        repositoryType,
-                                                        annotationMetadata,
-                                                        updateStatement.getSql(),
-                                                        updateStatement.getParameterBinding(),
-                                                        newValue,
-                                                        persisted
-                                                );
-                                                break;
-                                            case MANY_TO_MANY:
-                                            case ONE_TO_MANY:
-                                                // TODO: handle cascading updates to collections?
+                                final Object newValue;
+                                final BeanProperty<T, ?> beanProperty = pp.getProperty();
+                                if (beanProperty.hasAnnotation(DateUpdated.class)) {
+                                    newValue = dateTimeProvider.getNow();
+                                    beanProperty.convertAndSet(entity, newValue);
+                                } else {
+                                    newValue = beanProperty.get(entity);
+                                }
+                                final DataType dataType = pp.getDataType();
+                                if (dataType == DataType.ENTITY && newValue != null && pp instanceof Association) {
+                                    final RuntimePersistentProperty<Object> idReader = getIdReader(newValue);
+                                    final Association association = (Association) pp;
+                                    final BeanProperty<Object, ?> idReaderProperty = idReader.getProperty();
+                                    final Object id = idReaderProperty.get(newValue);
+                                    if (QUERY_LOG.isTraceEnabled()) {
+                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, id);
+                                    }
+                                    if (id != null) {
 
-                                            case EMBEDDED:
-                                            default:
-                                                // TODO: embedded type updates
+                                        preparedStatementWriter.setDynamic(
+                                                ps,
+                                                i + 1,
+                                                idReader.getDataType(),
+                                                id
+                                        );
+                                        if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
+                                            final Relation.Kind kind = association.getKind();
+                                            final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
+                                            switch (kind) {
+                                                case ONE_TO_ONE:
+                                                case MANY_TO_ONE:
+                                                    persisted.add(newValue);
+                                                    final StoredInsert<Object> updateStatement = resolveEntityUpdate(
+                                                            annotationMetadata,
+                                                            repositoryType,
+                                                            associatedEntity.getIntrospection().getBeanType(),
+                                                            associatedEntity
+                                                    );
+                                                    updateOne(
+                                                            repositoryType,
+                                                            annotationMetadata,
+                                                            updateStatement.getSql(),
+                                                            updateStatement.getParameterBinding(),
+                                                            newValue,
+                                                            persisted
+                                                    );
+                                                    break;
+                                                case MANY_TO_MANY:
+                                                case ONE_TO_MANY:
+                                                    // TODO: handle cascading updates to collections?
+
+                                                case EMBEDDED:
+                                                default:
+                                                    // TODO: embedded type updates
+                                            }
+                                        }
+                                    } else {
+                                        if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
+                                            final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
+
+                                            StoredInsert associatedInsert = resolveEntityInsert(
+                                                    annotationMetadata,
+                                                    repositoryType,
+                                                    associatedEntity.getIntrospection().getBeanType(),
+                                                    associatedEntity
+                                            );
+                                            persistOne(
+                                                    annotationMetadata,
+                                                    repositoryType,
+                                                    associatedInsert,
+                                                    newValue,
+                                                    persisted
+                                            );
+                                            final Object assignedId = idReaderProperty.get(newValue);
+                                            if (assignedId != null) {
+                                                preparedStatementWriter.setDynamic(
+                                                        ps,
+                                                        i + 1,
+                                                        idReader.getDataType(),
+                                                        assignedId
+                                                );
+                                            }
                                         }
                                     }
                                 } else {
-                                    if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
-                                        final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
-
-                                        StoredInsert associatedInsert = resolveEntityInsert(
-                                                annotationMetadata,
-                                                repositoryType,
-                                                associatedEntity.getIntrospection().getBeanType(),
-                                                associatedEntity
-                                        );
-                                        persistOne(
-                                                annotationMetadata,
-                                                repositoryType,
-                                                associatedInsert,
-                                                newValue,
-                                                persisted
-                                        );
-                                        final Object assignedId = idReaderProperty.get(newValue);
-                                        if (assignedId != null) {
-                                            preparedStatementWriter.setDynamic(
-                                                    ps,
-                                                    i + 1,
-                                                    idReader.getDataType(),
-                                                    assignedId
-                                            );
-                                        }
+                                    if (QUERY_LOG.isTraceEnabled()) {
+                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
                                     }
+                                    preparedStatementWriter.setDynamic(
+                                            ps,
+                                            i + 1,
+                                            dataType,
+                                            newValue
+                                    );
                                 }
-                            } else {
-                                if (QUERY_LOG.isTraceEnabled()) {
-                                    QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
-                                }
-                                preparedStatementWriter.setDynamic(
-                                        ps,
-                                        i + 1,
-                                        dataType,
-                                        newValue
-                                );
                             }
                         }
                         ps.executeUpdate();

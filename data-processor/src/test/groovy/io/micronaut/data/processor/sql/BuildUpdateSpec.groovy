@@ -57,4 +57,26 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
         methodName   | query                                                                                         | bindingPaths                               | binding
         'update'     | 'UPDATE `company` SET `last_updated`=?,`name`=?,`url`=? WHERE (`my_id` = ?)' | ['lastUpdated', 'name', 'url', 'myId'] as String[] | [] as String[]
     }
+
+    void "test build update with embedded"() {
+        given:
+        def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Restaurant;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface CompanyRepository extends CrudRepository<Restaurant, Long> {
+}
+""")
+        def method = repository.findPossibleMethods("update").findFirst().get()
+        def updateQuery = method.stringValue(Query).get()
+//        method = repository.findPossibleMethods("save").findFirst().get()
+//        def insertQuery = method.stringValue(Query).get()
+
+        expect:
+        updateQuery == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hq_address_street`=?,`hq_address_zip_code`=? WHERE (`id` = ?)'
+        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["name", "address.street", "address.zipCode", "hqAddress.street", "hqAddress.zipCode", "id"] as String[]
+
+    }
 }

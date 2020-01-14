@@ -37,6 +37,7 @@ class H2EmbeddedSpec extends Specification {
 
     void "test save and retreive entity with embedded"() {
         when:"An entity is saved"
+        restaurantRepository.save(new Restaurant("Fred's Cafe", new Address("High St.", "7896")))
         def restaurant = restaurantRepository.save(new Restaurant("Joe's Cafe", new Address("Smith St.", "1234")))
 
         then:"The entity was saved"
@@ -52,5 +53,24 @@ class H2EmbeddedSpec extends Specification {
         restaurant.id
         restaurant.address.street == 'Smith St.'
         restaurant.address.zipCode == '1234'
+        restaurant.hqAddress == null
+
+        when:"The object is updated with non-null value"
+        restaurant.hqAddress = new Address("John St.", "4567")
+        restaurantRepository.update(restaurant)
+        restaurant = restaurantRepository.findById(restaurant.id).orElse(null)
+
+        then:"The retrieved association is no longer null"
+        restaurant.id
+        restaurant.address
+        restaurant.hqAddress
+        restaurant.hqAddress.street == "John St."
+
+        when:"A query is done by an embedded object"
+        restaurant = restaurantRepository.findByAddress(restaurant.address)
+
+        then:"The correct query is executed"
+        restaurant.address.street == 'Smith St.'
+
     }
 }

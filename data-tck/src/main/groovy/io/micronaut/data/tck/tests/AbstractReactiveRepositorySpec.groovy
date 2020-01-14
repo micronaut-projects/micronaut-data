@@ -30,6 +30,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     def setupSpec() {
         init()
+        personRepository.deleteAll().blockingGet()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
                 new Person(name: "James")

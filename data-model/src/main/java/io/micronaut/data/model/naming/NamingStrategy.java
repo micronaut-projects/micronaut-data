@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
@@ -61,6 +62,25 @@ public interface NamingStrategy {
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class)
                 .filter(StringUtils::isNotEmpty)
                 .orElseGet(() -> mappedName(entity.getSimpleName()));
+    }
+
+    /**
+     * Return the mapped name given an {@link Embedded} association and the property of the assocation. The
+     * default strategy takes the parent embedded property name and combines it underscore separated with the child parent property name.
+     *
+     * <p>For example given:</p>
+     *
+     * <pre><code>
+     * {@literal @}Embedded Address address;
+     * </code></pre>
+     *
+     * <p>Where the {@code Address} type has a property called {@code street} then a name of {@code address_street} will be returned</p>
+     * @param embedded The embedded parent
+     * @param property The embedded property
+     * @return The mapped name
+     */
+    default @NonNull String mappedName(Embedded embedded, PersistentProperty property) {
+        return mappedName(embedded.getName() + property.getCapitilizedName());
     }
 
     /**

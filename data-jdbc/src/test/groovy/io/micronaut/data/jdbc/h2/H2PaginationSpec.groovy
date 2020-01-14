@@ -39,5 +39,6 @@ class H2PaginationSpec extends AbstractPageSpec {
 
     @Override
     void init() {
+        pr.deleteAll()
     }
 }

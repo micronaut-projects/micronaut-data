@@ -15,12 +15,14 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 
-@Entity
+
+@MappedEntity
 public class Restaurant {
 
     @GeneratedValue
@@ -28,8 +30,12 @@ public class Restaurant {
     private Long id;
     private final String name;
 
-    @Embedded
+    @Relation(Relation.Kind.EMBEDDED)
     private final Address address;
+
+    @Relation(Relation.Kind.EMBEDDED)
+    @Nullable
+    private Address hqAddress;
 
 
     public Restaurant(String name, Address address) {
@@ -51,5 +57,14 @@ public class Restaurant {
 
     public Address getAddress() {
         return address;
+    }
+
+    @Nullable
+    public Address getHqAddress() {
+        return hqAddress;
+    }
+
+    public void setHqAddress(@Nullable Address hqAddress) {
+        this.hqAddress = hqAddress;
     }
 }
