@@ -3,7 +3,7 @@ dependencies {
 	api "com.github.spotbugs:spotbugs-annotations:3.1.12"
 	compileOnly "io.micronaut:micronaut-inject:$micronautVersion"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-	testImplementation "io.projectreactor:reactor-core:3.3.1.RELEASE"
+	testImplementation "io.projectreactor:reactor-core:3.3.2.RELEASE"
 	testImplementation "io.micronaut:micronaut-inject-groovy"
 	testImplementation "io.micronaut:micronaut-inject-java-test"
 	testImplementation 'javax.persistence:javax.persistence-api:2.2'
