@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":18,"i3":6};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -164,17 +164,24 @@ public interface <span class="typeNameLabel">NamingStrategy</span></pre>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/naming/NamingStrategy.html#mappedName-io.micronaut.data.model.Embedded-io.micronaut.data.model.PersistentProperty-">mappedName</a></span>(<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&nbsp;embedded,
+          <a href="../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code>
+<div class="block">Return the mapped name given an <a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model"><code>Embedded</code></a> association and the property of the assocation.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/naming/NamingStrategy.html#mappedName-io.micronaut.data.model.PersistentEntity-">mappedName</a></span>(<a href="../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code>
 <div class="block">Return the mapped name for the given entity.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/naming/NamingStrategy.html#mappedName-io.micronaut.data.model.PersistentProperty-">mappedName</a></span>(<a href="../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code>
 <div class="block">Return the mapped name for the given property.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/naming/NamingStrategy.html#mappedName-java.lang.String-">mappedName</a></span>(java.lang.String&nbsp;name)</code>
 <div class="block">Return the mapped name for the given name.</div>
@@ -244,6 +251,34 @@ default&nbsp;java.lang.String&nbsp;mappedName(@NonNull
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>entity</code> - The entity</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The mapped name</dd>
+</dl>
+</li>
+</ul>
+<a name="mappedName-io.micronaut.data.model.Embedded-io.micronaut.data.model.PersistentProperty-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>mappedName</h4>
+<pre>@NonNull
+default&nbsp;java.lang.String&nbsp;mappedName(<a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&nbsp;embedded,
+                                             <a href="../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</pre>
+<div class="block">Return the mapped name given an <a href="../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model"><code>Embedded</code></a> association and the property of the assocation. The
+ default strategy takes the parent embedded property name and combines it underscore separated with the child parent property name.
+
+ <p>For example given:</p>
+
+ <pre><code>
+  @Embedded Address address;
+ </code></pre>
+
+ <p>Where the <code>Address</code> type has a property called <code>street</code> then a name of <code>address_street</code> will be returned</p></div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>embedded</code> - The embedded parent</dd>
+<dd><code>property</code> - The embedded property</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The mapped name</dd>
 </dl>

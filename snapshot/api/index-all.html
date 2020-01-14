@@ -2547,6 +2547,8 @@
 <div class="block">An interceptor that executes a <a href="io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation"><code>Query</code></a> and a <code>Publisher</code> that
  emits the result objects reactively.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/RestaurantRepository.html#findByAddress-io.micronaut.data.tck.entities.Address-">findByAddress(Address)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/RestaurantRepository.html" title="interface in io.micronaut.data.tck.repositories">RestaurantRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#findByAuthorIsNotNull--">findByAuthorIsNotNull()</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#findByAuthorIsNull--">findByAuthorIsNull()</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
@@ -3371,6 +3373,8 @@
 <div class="block">The default foreign key suffix for property names.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.Between.html#getFrom--">getFrom()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Between.html" title="class in io.micronaut.data.model.query">QueryModel.Between</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Restaurant.html#getHqAddress--">getHqAddress()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Restaurant.html" title="class in io.micronaut.data.tck.entities">Restaurant</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Author.html#getId--">getId()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a></dt>
 <dd>&nbsp;</dd>
@@ -5189,6 +5193,12 @@
 <div class="block">Check if the given transaction object indicates an existing transaction
  (that is, a transaction which has already started).</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#isExpandEmbedded--">isExpandEmbedded()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Should embedded queries by expanded by the implementation.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isExpandEmbedded--">isExpandEmbedded()</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#isFailEarlyOnGlobalRollbackOnly--">isFailEarlyOnGlobalRollbackOnly()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#isFailing--">isFailing()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
@@ -6013,6 +6023,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategy.html#mappedName-io.micronaut.data.model.PersistentEntity-">mappedName(PersistentEntity)</a></span> - Method in interface io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></dt>
 <dd>
 <div class="block">Return the mapped name for the given entity.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategy.html#mappedName-io.micronaut.data.model.Embedded-io.micronaut.data.model.PersistentProperty-">mappedName(Embedded, PersistentProperty)</a></span> - Method in interface io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></dt>
+<dd>
+<div class="block">Return the mapped name given an <a href="io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model"><code>Embedded</code></a> association and the property of the assocation.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategy.html#mappedName-io.micronaut.data.model.PersistentProperty-">mappedName(PersistentProperty)</a></span> - Method in interface io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></dt>
 <dd>
@@ -8151,6 +8165,8 @@
  <a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support"><code>TransactionSynchronizationManager</code></a>
  check preceding it).</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Restaurant.html#setHqAddress-io.micronaut.data.tck.entities.Address-">setHqAddress(Address)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Restaurant.html" title="class in io.micronaut.data.tck.entities">Restaurant</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Author.html#setId-java.lang.Long-">setId(Long)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Book.html#setId-java.lang.Long-">setId(Long)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a></dt>
