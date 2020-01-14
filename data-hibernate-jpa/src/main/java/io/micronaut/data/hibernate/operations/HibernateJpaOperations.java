@@ -21,8 +21,10 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -191,7 +193,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                         }
                         value = timestamp;
                     } else {
-                        throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
+                        int j = propertyPath.indexOf('.');
+                        if (j > -1) {
+                            String subProp = propertyPath.substring(j + 1);
+                            value = parameterArray[Integer.valueOf(propertyPath.substring(0, j))];
+                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
+                        } else {
+                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                        }
                     }
                 } else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);

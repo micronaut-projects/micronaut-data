@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.core.annotation.Creator;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
@@ -24,14 +26,18 @@ import java.util.Objects;
 public class ShipmentId implements Serializable {
 
     @Column(name= "sp_country")
-    private final String country;
+    private String country;
 
     @Column(name= "sp_city")
-    private final String city;
+    private String city;
 
+    @Creator
     public ShipmentId(String country, String city) {
         this.country = country;
         this.city = city;
+    }
+
+    public ShipmentId() {
     }
 
     public String getCountry() {
@@ -40,6 +46,14 @@ public class ShipmentId implements Serializable {
 
     public String getCity() {
         return city;
+    }
+
+    public void setCountry(String country) {
+        this.country = country;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
     }
 
     @Override
