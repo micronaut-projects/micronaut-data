@@ -54,6 +54,11 @@ public class Food {
     @MappedProperty("fk_meal_id")
     private Meal meal;
 
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
+    @Nullable
+    @MappedProperty("fk_alt_meal")
+    private Meal alternativeMeal;
+
     public Food(
             @Size(max = 36) @NotNull String key,
             @Size(max = 9999) @NotNull int carbohydrates,
@@ -137,5 +142,14 @@ public class Food {
 
     public void setMeal(Meal meal) {
         this.meal = meal;
+    }
+
+    @Nullable
+    public Meal getAlternativeMeal() {
+        return alternativeMeal;
+    }
+
+    public void setAlternativeMeal(@Nullable Meal alternativeMeal) {
+        this.alternativeMeal = alternativeMeal;
     }
 }

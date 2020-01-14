@@ -52,6 +52,7 @@ class H2ValidationSpec extends Specification {
         retrieved.key == food.key
         retrieved.carbohydrates == food.carbohydrates
         mealRepository.searchById(meal.mid).foods.size() == 1
+        foodRepository.searchById(food.fid)
     }
 
     void "test save invalid objects"() {

@@ -29,4 +29,8 @@ public interface FoodRepository extends CrudRepository<Food, UUID> {
     @Override
     @Join("meal")
     Optional<Food> findById(@NonNull @NotNull UUID uuid);
+
+    @NonNull
+    @Join(value = "alternativeMeal", type = Join.Type.LEFT_FETCH)
+    Food searchById(@NonNull @NotNull UUID uuid);
 }

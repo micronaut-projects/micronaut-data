@@ -357,22 +357,36 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     columnName,
                                     persistentProperty.getDataType()
                             );
+                            if (resolvedId != null) {
+                                Object associated = readAssociation(
+                                        entity,
+                                        prefix,
+                                        (hasPath ? path : ""),
+                                        rs,
+                                        entityAssociation,
+                                        resolvedId,
+                                        hasPrefix
+                                );
+                                if (associated != null) {
+                                    property.set(entity, associated);
+                                }
+                            }
                         } else {
                             resolvedId = null;
+                            Object associated = readAssociation(
+                                    entity,
+                                    prefix,
+                                    (hasPath ? path : ""),
+                                    rs,
+                                    entityAssociation,
+                                    null,
+                                    hasPrefix
+                            );
+                            if (associated != null) {
+                                property.set(entity, associated);
+                            }
                         }
 
-                        Object associated = readAssociation(
-                                entity,
-                                prefix,
-                                (hasPath ? path : ""),
-                                rs,
-                                entityAssociation,
-                                resolvedId,
-                                hasPrefix
-                        );
-                        if (associated != null) {
-                            property.set(entity, associated);
-                        }
                     } else {
                         Relation.Kind kind = entityAssociation.getKind();
                         boolean hasJoin = joinPaths.containsKey((hasPath ? path : "") + entityAssociation.getName());
