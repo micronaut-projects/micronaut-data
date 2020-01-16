@@ -157,24 +157,24 @@ extends java.lang.Object</pre>
 <th class="colOne" scope="col">Constructor and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-">MethodMatchInfo</a></span>(io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-io.micronaut.inject.ast.ClassElement-">MethodMatchInfo</a></span>(io.micronaut.inject.ast.TypedElement&nbsp;resultType,
                <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
-               java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptor)</code>
+               io.micronaut.inject.ast.ClassElement&nbsp;interceptor)</code>
 <div class="block">Creates a method info.</div>
 </td>
 </tr>
 <tr class="rowColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-boolean-">MethodMatchInfo</a></span>(io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-io.micronaut.inject.ast.ClassElement-boolean-">MethodMatchInfo</a></span>(io.micronaut.inject.ast.TypedElement&nbsp;resultType,
                <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
-               java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptor,
+               io.micronaut.inject.ast.ClassElement&nbsp;interceptor,
                boolean&nbsp;dto)</code>
 <div class="block">Creates a method info.</div>
 </td>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-java.lang.String...-">MethodMatchInfo</a></span>(io.micronaut.inject.ast.TypedElement&nbsp;resultType,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-io.micronaut.inject.ast.ClassElement-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-java.lang.String...-">MethodMatchInfo</a></span>(io.micronaut.inject.ast.TypedElement&nbsp;resultType,
                <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
-               java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptor,
+               io.micronaut.inject.ast.ClassElement&nbsp;interceptor,
                <a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.OperationType.html" title="enum in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.OperationType</a>&nbsp;operationType,
                java.lang.String...&nbsp;updateProperties)</code>
 <div class="block">Creates a method info.</div>
@@ -225,7 +225,7 @@ extends java.lang.Object</pre>
 </td>
 </tr>
 <tr id="i5" class="rowColor">
-<td class="colFirst"><code>java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;</code></td>
+<td class="colFirst"><code>io.micronaut.inject.ast.ClassElement</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#getRuntimeInterceptor--">getRuntimeInterceptor</a></span>()</code>
 <div class="block">The runtime interceptor that will handle the method.</div>
 </td>
@@ -262,7 +262,7 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-">
+<a name="MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-io.micronaut.inject.ast.ClassElement-">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -273,7 +273,7 @@ extends java.lang.Object</pre>
                        @Nullable
                        <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
                        @Nullable
-                       java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptor)</pre>
+                       io.micronaut.inject.ast.ClassElement&nbsp;interceptor)</pre>
 <div class="block">Creates a method info.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -283,7 +283,7 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a name="MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-boolean-">
+<a name="MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-io.micronaut.inject.ast.ClassElement-boolean-">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -294,7 +294,7 @@ extends java.lang.Object</pre>
                        @Nullable
                        <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
                        @Nullable
-                       java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptor,
+                       io.micronaut.inject.ast.ClassElement&nbsp;interceptor,
                        boolean&nbsp;dto)</pre>
 <div class="block">Creates a method info.</div>
 <dl>
@@ -306,7 +306,7 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a name="MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-java.lang.Class-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-java.lang.String...-">
+<a name="MethodMatchInfo-io.micronaut.inject.ast.TypedElement-io.micronaut.data.model.query.QueryModel-io.micronaut.inject.ast.ClassElement-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-java.lang.String...-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -317,7 +317,7 @@ extends java.lang.Object</pre>
                        @Nullable
                        <a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query,
                        @Nullable
-                       java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;interceptor,
+                       io.micronaut.inject.ast.ClassElement&nbsp;interceptor,
                        @NonNull
                        <a href="../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.OperationType.html" title="enum in io.micronaut.data.processor.visitors.finders">MethodMatchInfo.OperationType</a>&nbsp;operationType,
                        java.lang.String...&nbsp;updateProperties)</pre>
@@ -437,7 +437,7 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/model/query/QueryModel.
 <li class="blockList">
 <h4>getRuntimeInterceptor</h4>
 <pre>@Nullable
-public&nbsp;java.lang.Class&lt;? extends <a href="../../../../../../io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept">DataInterceptor</a>&gt;&nbsp;getRuntimeInterceptor()</pre>
+public&nbsp;io.micronaut.inject.ast.ClassElement&nbsp;getRuntimeInterceptor()</pre>
 <div class="block">The runtime interceptor that will handle the method.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>

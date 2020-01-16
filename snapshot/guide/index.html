@@ -5881,6 +5881,37 @@ import org.postgresql.Driver;
 </li>
 </ul>
 </div>
+<div class="sect2">
+<h3 id="_spring_data_jpa_specification_support">Spring Data JPA Specification Support</h3>
+<div class="paragraph">
+<p>To obtain additional support for <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">Spring Data JPA Specifications</a> when using Hibernate and JPA you should add the following dependency to your classpath:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring-jpa:1.0.0.BUILD-SNAPSHOT'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:1.0.0.BUILD-SNAPSHOT")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.BUILD-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>You can then implement the <code>JpaSpecificationExecutor</code> (the generic argument to the inteface should be a domain class) interface as per the <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">Spring Data JPA documentation</a>.</p>
+</div>
+</div>
 
     </div>
 </div>

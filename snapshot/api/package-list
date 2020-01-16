@@ -6,7 +6,6 @@ io.micronaut.data.hibernate.event
 io.micronaut.data.hibernate.naming
 io.micronaut.data.hibernate.operations
 io.micronaut.data.hibernate.runtime
-io.micronaut.data.hibernate.runtime.spring
 io.micronaut.data.intercept
 io.micronaut.data.intercept.annotation
 io.micronaut.data.intercept.async
@@ -16,7 +15,6 @@ io.micronaut.data.jdbc.config
 io.micronaut.data.jdbc.mapper
 io.micronaut.data.jdbc.operations
 io.micronaut.data.jdbc.runtime
-io.micronaut.data.jdbc.runtime.spring
 io.micronaut.data.jpa.annotation
 io.micronaut.data.jpa.operations
 io.micronaut.data.jpa.repository
@@ -42,6 +40,7 @@ io.micronaut.data.processor.visitors
 io.micronaut.data.processor.visitors.finders
 io.micronaut.data.processor.visitors.finders.page
 io.micronaut.data.processor.visitors.finders.slice
+io.micronaut.data.processor.visitors.finders.specification
 io.micronaut.data.repository
 io.micronaut.data.repository.async
 io.micronaut.data.repository.reactive
@@ -54,7 +53,11 @@ io.micronaut.data.runtime.intercept.reactive
 io.micronaut.data.runtime.mapper
 io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.operations
-io.micronaut.data.runtime.spring
+io.micronaut.data.spring.hibernate
+io.micronaut.data.spring.jdbc
+io.micronaut.data.spring.jpa.intercept
+io.micronaut.data.spring.runtime
+io.micronaut.data.spring.runtime.http
 io.micronaut.data.tck.entities
 io.micronaut.data.tck.jdbc.entities
 io.micronaut.data.tck.repositories

@@ -67,6 +67,8 @@
 <li><a href="io/micronaut/data/tck/entities/CountryRegion.html" title="class in io.micronaut.data.tck.entities">CountryRegion</a></li>
 <li><a href="io/micronaut/data/tck/entities/CountryRegionCity.html" title="class in io.micronaut.data.tck.entities">CountryRegionCity</a></li>
 <li><a href="io/micronaut/data/tck/repositories/CountryRepository.html" title="interface in io.micronaut.data.tck.repositories"><span class="interfaceName">CountryRepository</span></a></li>
+<li><a href="io/micronaut/data/spring/jpa/intercept/CountSpecificationInterceptor.html" title="class in io.micronaut.data.spring.jpa.intercept">CountSpecificationInterceptor</a></li>
+<li><a href="io/micronaut/data/processor/visitors/finders/specification/CountSpecificationMethod.html" title="class in io.micronaut.data.processor.visitors.finders.specification">CountSpecificationMethod</a></li>
 <li><a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query"><span class="interfaceName">Criteria</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.html" title="class in io.micronaut.data.processor.visitors.finders">CriterionMethodExpression</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.After.html" title="class in io.micronaut.data.processor.visitors.finders">CriterionMethodExpression.After</a></li>
@@ -203,6 +205,8 @@
 <li><a href="io/micronaut/data/intercept/async/FindAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="interfaceName">FindAllAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">FindAllInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/reactive/FindAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="interfaceName">FindAllReactiveInterceptor</span></a></li>
+<li><a href="io/micronaut/data/spring/jpa/intercept/FindAllSpecificationInterceptor.html" title="class in io.micronaut.data.spring.jpa.intercept">FindAllSpecificationInterceptor</a></li>
+<li><a href="io/micronaut/data/processor/visitors/finders/specification/FindAllSpecificationMethod.html" title="class in io.micronaut.data.processor.visitors.finders.specification">FindAllSpecificationMethod</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/FindByFinder.html" title="class in io.micronaut.data.processor.visitors.finders">FindByFinder</a></li>
 <li><a href="io/micronaut/data/intercept/async/FindByIdAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="interfaceName">FindByIdAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/FindByIdInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">FindByIdInterceptor</span></a></li>
@@ -212,11 +216,15 @@
 <li><a href="io/micronaut/data/intercept/FindOneInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">FindOneInterceptor</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/FindOneMethod.html" title="class in io.micronaut.data.processor.visitors.finders">FindOneMethod</a></li>
 <li><a href="io/micronaut/data/intercept/reactive/FindOneReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="interfaceName">FindOneReactiveInterceptor</span></a></li>
+<li><a href="io/micronaut/data/spring/jpa/intercept/FindOneSpecificationInterceptor.html" title="class in io.micronaut.data.spring.jpa.intercept">FindOneSpecificationInterceptor</a></li>
+<li><a href="io/micronaut/data/processor/visitors/finders/specification/FindOneSpecificationMethod.html" title="class in io.micronaut.data.processor.visitors.finders.specification">FindOneSpecificationMethod</a></li>
 <li><a href="io/micronaut/data/intercept/FindOptionalInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">FindOptionalInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/async/FindPageAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="interfaceName">FindPageAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/page/FindPageByMethod.html" title="class in io.micronaut.data.processor.visitors.finders.page">FindPageByMethod</a></li>
 <li><a href="io/micronaut/data/intercept/FindPageInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">FindPageInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/reactive/FindPageReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive"><span class="interfaceName">FindPageReactiveInterceptor</span></a></li>
+<li><a href="io/micronaut/data/spring/jpa/intercept/FindPageSpecificationInterceptor.html" title="class in io.micronaut.data.spring.jpa.intercept">FindPageSpecificationInterceptor</a></li>
+<li><a href="io/micronaut/data/processor/visitors/finders/specification/FindPageSpecificationMethod.html" title="class in io.micronaut.data.processor.visitors.finders.specification">FindPageSpecificationMethod</a></li>
 <li><a href="io/micronaut/data/intercept/async/FindSliceAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="interfaceName">FindSliceAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/slice/FindSliceByMethod.html" title="class in io.micronaut.data.processor.visitors.finders.slice">FindSliceByMethod</a></li>
 <li><a href="io/micronaut/data/intercept/FindSliceInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">FindSliceInterceptor</span></a></li>
@@ -463,13 +471,15 @@
 <li><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></li>
 <li><a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringCreatedDateMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringCreatedDateMapper</a></li>
-<li><a href="io/micronaut/data/runtime/spring/SpringDataTypeConverters.html" title="class in io.micronaut.data.runtime.spring">SpringDataTypeConverters</a></li>
-<li><a href="io/micronaut/data/hibernate/runtime/spring/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.hibernate.runtime.spring">SpringHibernateTransactionOperations</a></li>
+<li><a href="io/micronaut/data/spring/runtime/SpringDataTypeConverters.html" title="class in io.micronaut.data.spring.runtime">SpringDataTypeConverters</a></li>
+<li><a href="io/micronaut/data/spring/hibernate/SpringHibernateTransactionOperations.html" title="class in io.micronaut.data.spring.hibernate">SpringHibernateTransactionOperations</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringIdMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringIdMapper</a></li>
-<li><a href="io/micronaut/data/jdbc/runtime/spring/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.jdbc.runtime.spring">SpringJdbcTransactionOperations</a></li>
+<li><a href="io/micronaut/data/spring/jdbc/SpringJdbcTransactionOperations.html" title="class in io.micronaut.data.spring.jdbc">SpringJdbcTransactionOperations</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringLastModifiedDateMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringLastModifiedDateMapper</a></li>
+<li><a href="io/micronaut/data/spring/runtime/http/SpringPageableRequestArgumentBinder.html" title="class in io.micronaut.data.spring.runtime.http">SpringPageableRequestArgumentBinder</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringPersistenceConstructorMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringPersistenceConstructorMapper</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringPersistentAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringPersistentAnnotationMapper</a></li>
+<li><a href="io/micronaut/data/processor/mappers/spring/SpringRepositoryMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringRepositoryMapper</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringTransactionalEventListenerMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringTransactionalEventListenerMapper</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringTransactionalMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringTransactionalMapper</a></li>
 <li><a href="io/micronaut/data/processor/mappers/spring/SpringTransientMapper.html" title="class in io.micronaut.data.processor.mappers.spring">SpringTransientMapper</a></li>
