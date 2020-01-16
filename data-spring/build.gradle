@@ -5,7 +5,7 @@ dependencies {
     implementation 'org.springframework.data:spring-data-commons:2.2.3.RELEASE'
     implementation "org.springframework:spring-jdbc:5.2.3.RELEASE"
     implementation group:'io.micronaut', name:'micronaut-spring', version: micronautVersion
-    compileOnly "org.springframework:spring-orm:5.2.2.RELEASE"
+    compileOnly "org.springframework:spring-orm:5.2.3.RELEASE"
     compileOnly "org.hibernate:hibernate-core:5.4.10.Final", {
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
