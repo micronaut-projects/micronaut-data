@@ -2,7 +2,16 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>8 Micronaut Data with SQL 1.0.0.M5</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>8 Micronaut Data with SQL 1.0.0.RC1</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -90,7 +99,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>8 Micronaut Data with SQL</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M5</p>
+                    <p><strong>Version:</strong> 1.0.0.RC1</p>
                 </div>
 
                 
@@ -152,8 +161,7 @@ function addJsClass() {
                 
 
                 
-
-<h1 id="sql">8 Micronaut Data with SQL</h1>
+<h1 id="sql"><a class="anchor" href="#sql"></a>8 Micronaut Data with SQL</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql.adoc"'>
@@ -166,8 +174,7 @@ function addJsClass() {
 <p>In addition to JPA, Micronaut Data supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC is the only supported implementation for executing SQL queries, however this may change in the future.</p>
 </div>
 
-
-<h2 id="jdbc">8.1 Micronaut Data JDBC</h2>
+<h2 id="jdbc"><a class="anchor" href="#jdbc"></a>8.1 Micronaut Data JDBC</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc.adoc"'>
@@ -220,8 +227,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 </table>
 </div>
 
-
-<h2 id="jdbcQuickStart">8.1.1 JDBC Quick Start</h2>
+<h2 id="jdbcQuickStart"><a class="anchor" href="#jdbcQuickStart"></a>8.1.1 JDBC Quick Start</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcQuickStart.adoc"'>
@@ -236,7 +242,12 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -245,7 +256,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M5&lt;/version&gt;
+        &lt;version&gt;1.0.0.RC1&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -270,7 +281,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -278,7 +294,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M5&lt;/version&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -290,7 +306,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -310,7 +331,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"io.micronaut.configuration:micronaut-jdbc-hikari")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -358,7 +384,12 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">provided(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -674,8 +705,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 </div>
 
-
-<h2 id="jdbcConfiguration">8.1.2 JDBC Configuration</h2>
+<h2 id="jdbcConfiguration"><a class="anchor" href="#jdbcConfiguration"></a>8.1.2 JDBC Configuration</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcConfiguration.adoc"'>
@@ -758,8 +788,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </table>
 </div>
 
-
-<h2 id="jdbcRepositories">8.1.3 JDBC Repositories</h2>
+<h2 id="jdbcRepositories"><a class="anchor" href="#jdbcRepositories"></a>8.1.3 JDBC Repositories</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories.adoc"'>
@@ -919,8 +948,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 </table>
 </div>
 
-
-<h2 id="sqlInserts">8.1.3.1 Inserts and Updates</h2>
+<h2 id="sqlInserts"><a class="anchor" href="#sqlInserts"></a>8.1.3.1 Inserts and Updates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/sqlInserts.adoc"'>
@@ -966,8 +994,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <p>By being explicit in defining the method as an update method Micronaut Data knows to execute an <code>UPDATE</code>.</p>
 </div>
 
-
-<h2 id="sqlMapping">8.1.4 Mapping Entities</h2>
+<h2 id="sqlMapping"><a class="anchor" href="#sqlMapping"></a>8.1.4 Mapping Entities</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping.adoc"'>
@@ -1051,8 +1078,7 @@ public class Country {
 </div>
 </div>
 
-
-<h2 id="sqlAnnotations">8.1.4.1 SQL Annotations</h2>
+<h2 id="sqlAnnotations"><a class="anchor" href="#sqlAnnotations"></a>8.1.4.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
@@ -1161,8 +1187,7 @@ public class Country {
 <p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
 </div>
 
-
-<h2 id="sqlIdGenerator">8.1.4.2 ID Generation</h2>
+<h2 id="sqlIdGenerator"><a class="anchor" href="#sqlIdGenerator"></a>8.1.4.2 ID Generation</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlIdGenerator.adoc"'>
@@ -1184,8 +1209,7 @@ public class Country {
 <p>Automatically assigned UUIDs are also supported by adding a property annotated with <code>@Id</code> and <code>@AutoPopulated</code>.</p>
 </div>
 
-
-<h2 id="sqlCompositeId">8.1.4.3 Composite Primary Keys</h2>
+<h2 id="sqlCompositeId"><a class="anchor" href="#sqlCompositeId"></a>8.1.4.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlCompositeId.adoc"'>
@@ -1364,8 +1388,7 @@ To alter the column mappings for the ID you use <code>@Column</code> in the <cod
 </table>
 </div>
 
-
-<h2 id="sqlConstructorArguments">8.1.4.4 Constructor Arguments</h2>
+<h2 id="sqlConstructorArguments"><a class="anchor" href="#sqlConstructorArguments"></a>8.1.4.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlConstructorArguments.adoc"'>
@@ -1456,8 +1479,7 @@ data class Manufacturer(
 <p>As you can see from the example above, the <code>ID</code> of the object should however include a setter since this has to be assigned from the database generated value.</p>
 </div>
 
-
-<h2 id="sqlNaming">8.1.4.5 SQL Naming Strategies</h2>
+<h2 id="sqlNaming"><a class="anchor" href="#sqlNaming"></a>8.1.4.5 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlNaming.adoc"'>
@@ -1505,8 +1527,7 @@ public class CountryRegion {
 </div>
 </div>
 
-
-<h2 id="sqlAssociations">8.1.4.6 Association Fetching</h2>
+<h2 id="sqlAssociations"><a class="anchor" href="#sqlAssociations"></a>8.1.4.6 Association Fetching</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociations.adoc"'>
@@ -1519,10 +1540,10 @@ public class CountryRegion {
 <p>Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
 </div>
 <div class="paragraph">
-<p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practise due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
+<p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practice due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
 </div>
 <div class="paragraph">
-<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
+<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practice anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -1621,8 +1642,7 @@ data class Product(
 <p>The following section provides more coverage on handling joins.</p>
 </div>
 
-
-<h2 id="columnTransformer">8.1.4.7 Using @ColumnTransformer</h2>
+<h2 id="columnTransformer"><a class="anchor" href="#columnTransformer"></a>8.1.4.7 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/columnTransformer.adoc"'>
@@ -1670,8 +1690,7 @@ private String name;</code></pre>
 <p>With this any place any <code>INSERT</code> or <code>UPDATE</code> statement generated will include the above <code>write</code> entry.</p>
 </div>
 
-
-<h2 id="sqlJsonType">8.1.4.8 JSON Column Support</h2>
+<h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>8.1.4.8 JSON Column Support</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlJsonType.adoc"'>
@@ -1705,8 +1724,7 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
-
-<h2 id="jdbcJoinQueries">8.1.5 JDBC Join Queries</h2>
+<h2 id="jdbcJoinQueries"><a class="anchor" href="#jdbcJoinQueries"></a>8.1.5 JDBC Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcJoinQueries.adoc"'>
@@ -1862,8 +1880,7 @@ Some databases like Oracle limit the length of alias names in SQL queries so ano
 <p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
 </div>
 
-
-<h2 id="jdbcDataTypes">8.1.6 JDBC Data Types</h2>
+<h2 id="jdbcDataTypes"><a class="anchor" href="#jdbcDataTypes"></a>8.1.6 JDBC Data Types</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcDataTypes.adoc"'>
@@ -2158,8 +2175,7 @@ class QuantityConverters {
 </table>
 </div>
 
-
-<h2 id="jdbcNativeQueries">8.1.7 Explicit JDBC Queries</h2>
+<h2 id="jdbcNativeQueries"><a class="anchor" href="#jdbcNativeQueries"></a>8.1.7 Explicit JDBC Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcNativeQueries.adoc"'>

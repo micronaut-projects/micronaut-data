@@ -2,7 +2,16 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>8.1.1 JDBC Quick Start 1.0.0.M5</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>8.1.1 JDBC Quick Start 1.0.0.RC1</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -90,14 +99,13 @@ function addJsClass() {
                 <div class="project">
                     <h1>8.1.1 JDBC Quick Start</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M5</p>
+                    <p><strong>Version:</strong> 1.0.0.RC1</p>
                 </div>
 
                 
 
                 
-
-<h2 id="jdbcQuickStart">8.1.1 JDBC Quick Start</h2>
+<h2 id="jdbcQuickStart"><a class="anchor" href="#jdbcQuickStart"></a>8.1.1 JDBC Quick Start</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcQuickStart.adoc"'>
@@ -112,7 +120,12 @@ function addJsClass() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -121,7 +134,7 @@ function addJsClass() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M5&lt;/version&gt;
+        &lt;version&gt;1.0.0.RC1&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -146,7 +159,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -154,7 +172,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M5&lt;/version&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -166,7 +184,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -186,7 +209,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"io.micronaut.configuration:micronaut-jdbc-hikari")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -234,7 +262,12 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">provided(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">

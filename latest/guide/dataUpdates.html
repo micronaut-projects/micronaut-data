@@ -2,7 +2,16 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>6 Updating Data 1.0.0.M5</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>6 Updating Data 1.0.0.RC1</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -90,7 +99,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>6 Updating Data</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M5</p>
+                    <p><strong>Version:</strong> 1.0.0.RC1</p>
                 </div>
 
                 
@@ -119,8 +128,7 @@ function addJsClass() {
                 
 
                 
-
-<h1 id="dataUpdates">6 Updating Data</h1>
+<h1 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>6 Updating Data</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates.adoc"'>
@@ -208,8 +216,7 @@ function addJsClass() {
 </div>
 </div>
 
-
-<h2 id="transactions">6.1 Transactions</h2>
+<h2 id="transactions"><a class="anchor" href="#transactions"></a>6.1 Transactions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions.adoc"'>
@@ -240,8 +247,7 @@ If you prefer Spring-managed transactions you can add the <code>micronaut-data-s
 <p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
 </div>
 
-
-<h2 id="programmaticTransactions">6.1.1 Programmatic Transactions</h2>
+<h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>6.1.1 Programmatic Transactions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions/programmaticTransactions.adoc"'>
@@ -263,16 +269,17 @@ If you prefer Spring-managed transactions you can add the <code>micronaut-data-s
 import io.micronaut.transaction.SynchronousTransactionManager;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
+import java.sql.Connection;
 
 @Singleton
 public class ProductManager {
 
     private final EntityManager entityManager;
-    private final SynchronousTransactionManager&lt;EntityManager&gt; transactionManager;
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
 
     public ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager&lt;EntityManager&gt; transactionManager) { <b class="conum">(1)</b>
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
@@ -302,16 +309,17 @@ public class ProductManager {
 import io.micronaut.transaction.SynchronousTransactionManager
 import javax.inject.Singleton
 import javax.persistence.EntityManager
+import java.sql.Connection
 
 @Singleton
 class ProductManager {
 
     private final EntityManager entityManager
-    private final SynchronousTransactionManager&lt;EntityManager&gt; transactionManager
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
 
     ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager&lt;EntityManager&gt; transactionManager) { <b class="conum">(1)</b>
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
         this.entityManager = entityManager
         this.transactionManager = transactionManager
     }
@@ -339,13 +347,14 @@ class ProductManager {
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
 import io.micronaut.transaction.SynchronousTransactionManager
+import java.sql.Connection
 import javax.inject.Singleton
 import javax.persistence.EntityManager
 
 @Singleton
 class ProductManager(
         private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager&lt;EntityManager&gt;) <b class="conum">(1)</b>
+        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
 {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
@@ -564,8 +573,7 @@ class ProductManager(
 <p>If a transaction is not active when using this connection then a <a href="../api/io/micronaut/transaction/exceptions/NoTransactionException.html">NoTransactionException</a> will be thrown indicating you should either provide a programmatic transaction or use <code>@Transactional</code>.</p>
 </div>
 
-
-<h2 id="transactionalEvents">6.1.2 Transactional Events</h2>
+<h2 id="transactionalEvents"><a class="anchor" href="#transactionalEvents"></a>6.1.2 Transactional Events</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions/transactionalEvents.adoc"'>
@@ -720,8 +728,7 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 </table>
 </div>
 
-
-<h2 id="batchUpdates">6.2 Batch Updates</h2>
+<h2 id="batchUpdates"><a class="anchor" href="#batchUpdates"></a>6.2 Batch Updates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/batchUpdates.adoc"'>
@@ -794,8 +801,7 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 <p>In this case you can use any finder expression to query on arbitrary properties and any remaining arguments that don&#8217;t form part of the query expression are used for the update. Once again if one of the remaining arguments does not match an existing property of the entity a compilation error will occur.</p>
 </div>
 
-
-<h2 id="batchDeletes">6.3 Batch Deletes</h2>
+<h2 id="batchDeletes"><a class="anchor" href="#batchDeletes"></a>6.3 Batch Deletes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/batchDeletes.adoc"'>
@@ -859,8 +865,7 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 </div>
 </div>
 
-
-<h2 id="timestamps">6.4 Entity Timestamps</h2>
+<h2 id="timestamps"><a class="anchor" href="#timestamps"></a>6.4 Entity Timestamps</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/timestamps.adoc"'>

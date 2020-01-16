@@ -28,6 +28,7 @@
 <body class="body" id="docs" onload="addJsClass();" onhashchange="highlightMenu()">
 
 <div id="table-of-content-nav-link" class="desktop">
+    <a id="theme-switcher" title="Switch to dark theme" href="javascript:switchTheme(true)"><i class="fa fa-moon-o"></i></a>
     <a title="Collapse/Open Table of contents" title="Hide Table of Contents" href="javascript:hideTableOfContents();" class="button">[ + ]</a>
 </div>
 
@@ -38,8 +39,7 @@
         </div>
         <div class="navLinks">
             <ul>
-                    <li>
-                        <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
+                    <li><div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)" class="desktop">
                             <a href="../guide/index.html" class="button">Table of contents</a>
                             <div id="nav-summary-childs" style="display:none;">
                                 
@@ -194,11 +194,10 @@
         <h1>Micronaut Data</h1>
         <p></p>
         <p>Data Repository Support for Micronaut</p>
-        <p><strong>Version:</strong> 1.0.0.M5</p>
+        <p><strong>Version:</strong> <select style='max-width: 200px' onChange='window.document.location.href=this.options[this.selectedIndex].value;'><option value='https://micronaut-projects.github.io/micronaut-data/snapshot/guide/index.html'>1.0.0.RC1</option><option selected='selected' value='https://micronaut-projects.github.io/micronaut-data/1.0.0.RC1/guide/index.html'>1.0.0.RC1</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M5/guide/index.html'>1.0.0.M5</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M4/guide/index.html'>1.0.0.M4</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M3/guide/index.html'>1.0.0.M3</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M2/guide/index.html'>1.0.0.M2</option><option value='https://micronaut-projects.github.io/micronaut-data/1.0.0.M1/guide/index.html'>1.0.0.M1</option></select></p>
     </div>
     
-
-<h1 id="introduction">1 Introduction</h1>
+<h1 id="introduction"><a class="anchor" href="#introduction"></a>1 Introduction</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/introduction.adoc"'>
@@ -391,8 +390,7 @@ fun testAnnotationMetadata() {
 </table>
 </div>
 
-
-<h2 id="releaseHistory">1.1 Release History</h2>
+<h2 id="releaseHistory"><a class="anchor" href="#releaseHistory"></a>1.1 Release History</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/introduction/releaseHistory.adoc"'>
@@ -401,6 +399,19 @@ fun testAnnotationMetadata() {
 </div>
 
 
+<div class="sect3">
+<h4 id="_1_0_0_rc1">1.0.0.RC1</h4>
+<div class="ulist">
+<ul>
+<li>
+<p>Support for Spring Data JPA specifications</p>
+</li>
+<li>
+<p>Bug Fixes and Improvements</p>
+</li>
+</ul>
+</div>
+</div>
 <div class="sect3">
 <h4 id="_1_0_0_m5">1.0.0.M5</h4>
 <div class="ulist">
@@ -470,8 +481,7 @@ fun testAnnotationMetadata() {
 </div>
 </div>
 
-
-<h1 id="quickStart">2 Quick Start</h1>
+<h1 id="quickStart"><a class="anchor" href="#quickStart"></a>2 Quick Start</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/quickStart.adoc"'>
@@ -486,7 +496,12 @@ fun testAnnotationMetadata() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -495,7 +510,7 @@ fun testAnnotationMetadata() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M5&lt;/version&gt;
+        &lt;version&gt;1.0.0.RC1&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -520,7 +535,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -528,7 +548,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M5&lt;/version&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -803,8 +823,7 @@ bookRepository.save(book)</code></pre>
 </div>
 </div>
 
-
-<h1 id="buildConfig">3 Build Configuration</h1>
+<h1 id="buildConfig"><a class="anchor" href="#buildConfig"></a>3 Build Configuration</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/buildConfig.adoc"'>
@@ -835,7 +854,12 @@ bookRepository.save(book)</code></pre>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -844,7 +868,7 @@ bookRepository.save(book)</code></pre>
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M5&lt;/version&gt;
+        &lt;version&gt;1.0.0.RC1&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -880,7 +904,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -900,7 +929,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-tomcat'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-tomcat'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"io.micronaut.configuration:micronaut-jdbc-tomcat")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -930,12 +964,17 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </div>
 </div>
 <div class="paragraph">
-<p>Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the <code>micronaut-data-hibernate-jpa</code>  and <code>micronaut-hibernate-jpa</code> module:</p>
+<p>Once this is in place if you wish to use Hibernate / JPA you must include the dependency on the <code>micronaut-data-hibernate-jpa</code>:</p>
 </div>
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-hibernate-jpa'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -968,7 +1007,12 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -983,8 +1027,7 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </div>
 </div>
 
-
-<h1 id="repositories">4 Repository Interfaces</h1>
+<h1 id="repositories"><a class="anchor" href="#repositories"></a>4 Repository Interfaces</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/repositories.adoc"'>
@@ -1079,7 +1122,6 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
@@ -1090,7 +1132,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 
     private final EntityManager entityManager
 
-    AbstractBookRepository(@CurrentSession EntityManager entityManager) {
+    AbstractBookRepository(EntityManager entityManager) {
         this.entityManager = entityManager
     }
 
@@ -1106,14 +1148,13 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
 import javax.persistence.EntityManager
 
 @Repository
-abstract class AbstractBookRepository(@param:CurrentSession private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
+abstract class AbstractBookRepository(private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
 
     fun findByTitle(title: String): List&lt;Book&gt; {
         return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book::class.java)
@@ -1127,8 +1168,7 @@ abstract class AbstractBookRepository(@param:CurrentSession private val entityMa
 <p>As you can see from the above example, using abstract classes can be useful as it allows you to combine custom code that interacts with JPA and repository interface code implemented automatically by Micronaut Data.</p>
 </div>
 
-
-<h1 id="querying">5 Writing Queries</h1>
+<h1 id="querying"><a class="anchor" href="#querying"></a>5 Writing Queries</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying.adoc"'>
@@ -1305,8 +1345,7 @@ More details about the batch update variants of these methods is covered in the 
 <p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical <code>AND</code>.</p>
 </div>
 
-
-<h2 id="criteria">5.1 Query Criteria</h2>
+<h2 id="criteria"><a class="anchor" href="#criteria"></a>5.1 Query Criteria</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/criteria.adoc"'>
@@ -1499,8 +1538,7 @@ Any of these criterion expressions can be negated by adding the word <code>Not</
 <p>You can also negate any of the aforementioned expressions by adding <code>Not</code> prior the name of the expression (example <code>NotTrue</code> or <code>NotContain</code>).</p>
 </div>
 
-
-<h2 id="pagination">5.2 Pagination</h2>
+<h2 id="pagination"><a class="anchor" href="#pagination"></a>5.2 Pagination</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/pagination.adoc"'>
@@ -1623,8 +1661,7 @@ val page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))</code></p
 <p>A <a href="../api/io/micronaut/data/model/Slice.html">Slice</a> is the same as a <a href="../api/io/micronaut/data/model/Page.html">Page</a> but results in one less query as it excludes the total number of pages calculation.</p>
 </div>
 
-
-<h2 id="ordering">5.3 Ordering</h2>
+<h2 id="ordering"><a class="anchor" href="#ordering"></a>5.3 Ordering</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/ordering.adoc"'>
@@ -1661,8 +1698,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 <p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order.</p>
 </div>
 
-
-<h2 id="projections">5.4 Query Projections</h2>
+<h2 id="projections"><a class="anchor" href="#projections"></a>5.4 Query Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/projections.adoc"'>
@@ -1785,8 +1821,7 @@ If the projected property type and the return generic type do not match up then 
 <p>The above query will return the first 3 results for the given query expression.</p>
 </div>
 
-
-<h2 id="dto">5.5 DTO Projections</h2>
+<h2 id="dto"><a class="anchor" href="#dto"></a>5.5 DTO Projections</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/dto.adoc"'>
@@ -1882,8 +1917,7 @@ data class BookDTO(
 <p>Micronaut Data will optimize the query to only select the necessary properties from the database.</p>
 </div>
 
-
-<h2 id="joinQueries">5.6 Join Queries</h2>
+<h2 id="joinQueries"><a class="anchor" href="#joinQueries"></a>5.6 Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/joinQueries.adoc"'>
@@ -2151,8 +2185,7 @@ override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 </div>
 
-
-<h2 id="explicitQueries">5.7 Explicit Queries</h2>
+<h2 id="explicitQueries"><a class="anchor" href="#explicitQueries"></a>5.7 Explicit Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/explicitQueries.adoc"'>
@@ -2201,8 +2234,7 @@ Currently Micronaut Data does not parse the JPA-QL AST and perform any further t
 <p>Note that if the method returns a <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination then you must additionally specify a query that performs the equivalent count using the <code>countQuery</code> member of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation.</p>
 </div>
 
-
-<h2 id="whereAnnotation">5.8 Modifying Queries with @Where</h2>
+<h2 id="whereAnnotation"><a class="anchor" href="#whereAnnotation"></a>5.8 Modifying Queries with @Where</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/whereAnnotation.adoc"'>
@@ -2410,8 +2442,7 @@ interface UserRepository : CrudRepository&lt;User, Long&gt; { <b class="conum">(
 <p>All other queries performed on the entity will include <code>enabled = true</code> in the query statement.</p>
 </div>
 
-
-<h2 id="nativeQueries">5.9 Native Queries</h2>
+<h2 id="nativeQueries"><a class="anchor" href="#nativeQueries"></a>5.9 Native Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/nativeQueries.adoc"'>
@@ -2459,8 +2490,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </table>
 </div>
 
-
-<h2 id="async">5.10 Asynchronous Queries</h2>
+<h2 id="async"><a class="anchor" href="#async"></a>5.10 Asynchronous Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/async.adoc"'>
@@ -2562,8 +2592,7 @@ In the case of JPA each operation will run with its own transaction and session,
 </table>
 </div>
 
-
-<h2 id="reactive">5.11 Reactive Queries</h2>
+<h2 id="reactive"><a class="anchor" href="#reactive"></a>5.11 Reactive Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/reactive.adoc"'>
@@ -2660,8 +2689,7 @@ Assertions.assertEquals(
 <p>In addition for more complex operations it may be more efficient to write custom code that uses a single session.</p>
 </div>
 
-
-<h1 id="dataUpdates">6 Updating Data</h1>
+<h1 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>6 Updating Data</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates.adoc"'>
@@ -2749,8 +2777,7 @@ Assertions.assertEquals(
 </div>
 </div>
 
-
-<h2 id="transactions">6.1 Transactions</h2>
+<h2 id="transactions"><a class="anchor" href="#transactions"></a>6.1 Transactions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions.adoc"'>
@@ -2781,8 +2808,7 @@ If you prefer Spring-managed transactions you can add the <code>micronaut-data-s
 <p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
 </div>
 
-
-<h2 id="programmaticTransactions">6.1.1 Programmatic Transactions</h2>
+<h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>6.1.1 Programmatic Transactions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions/programmaticTransactions.adoc"'>
@@ -2804,16 +2830,17 @@ If you prefer Spring-managed transactions you can add the <code>micronaut-data-s
 import io.micronaut.transaction.SynchronousTransactionManager;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
+import java.sql.Connection;
 
 @Singleton
 public class ProductManager {
 
     private final EntityManager entityManager;
-    private final SynchronousTransactionManager&lt;EntityManager&gt; transactionManager;
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
 
     public ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager&lt;EntityManager&gt; transactionManager) { <b class="conum">(1)</b>
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
@@ -2843,16 +2870,17 @@ public class ProductManager {
 import io.micronaut.transaction.SynchronousTransactionManager
 import javax.inject.Singleton
 import javax.persistence.EntityManager
+import java.sql.Connection
 
 @Singleton
 class ProductManager {
 
     private final EntityManager entityManager
-    private final SynchronousTransactionManager&lt;EntityManager&gt; transactionManager
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
 
     ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager&lt;EntityManager&gt; transactionManager) { <b class="conum">(1)</b>
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
         this.entityManager = entityManager
         this.transactionManager = transactionManager
     }
@@ -2880,13 +2908,14 @@ class ProductManager {
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
 import io.micronaut.transaction.SynchronousTransactionManager
+import java.sql.Connection
 import javax.inject.Singleton
 import javax.persistence.EntityManager
 
 @Singleton
 class ProductManager(
         private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager&lt;EntityManager&gt;) <b class="conum">(1)</b>
+        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
 {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
@@ -3105,8 +3134,7 @@ class ProductManager(
 <p>If a transaction is not active when using this connection then a <a href="../api/io/micronaut/transaction/exceptions/NoTransactionException.html">NoTransactionException</a> will be thrown indicating you should either provide a programmatic transaction or use <code>@Transactional</code>.</p>
 </div>
 
-
-<h2 id="transactionalEvents">6.1.2 Transactional Events</h2>
+<h2 id="transactionalEvents"><a class="anchor" href="#transactionalEvents"></a>6.1.2 Transactional Events</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions/transactionalEvents.adoc"'>
@@ -3261,8 +3289,7 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 </table>
 </div>
 
-
-<h2 id="batchUpdates">6.2 Batch Updates</h2>
+<h2 id="batchUpdates"><a class="anchor" href="#batchUpdates"></a>6.2 Batch Updates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/batchUpdates.adoc"'>
@@ -3335,8 +3362,7 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 <p>In this case you can use any finder expression to query on arbitrary properties and any remaining arguments that don&#8217;t form part of the query expression are used for the update. Once again if one of the remaining arguments does not match an existing property of the entity a compilation error will occur.</p>
 </div>
 
-
-<h2 id="batchDeletes">6.3 Batch Deletes</h2>
+<h2 id="batchDeletes"><a class="anchor" href="#batchDeletes"></a>6.3 Batch Deletes</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/batchDeletes.adoc"'>
@@ -3400,8 +3426,7 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 </div>
 </div>
 
-
-<h2 id="timestamps">6.4 Entity Timestamps</h2>
+<h2 id="timestamps"><a class="anchor" href="#timestamps"></a>6.4 Entity Timestamps</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/timestamps.adoc"'>
@@ -3432,8 +3457,7 @@ If you update the entity with an external SQL statement or custom logic you will
 </table>
 </div>
 
-
-<h1 id="howItWorks">7 How Micronaut Data Works</h1>
+<h1 id="howItWorks"><a class="anchor" href="#howItWorks"></a>7 How Micronaut Data Works</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/howItWorks.adoc"'>
@@ -3495,8 +3519,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>At runtime all the <a href="../api/io/micronaut/data/intercept/DataInterceptor.html">DataInterceptor</a> has to do is retrieve the query, read the method parameter values using the parameter binding and execute the query.</p>
 </div>
 
-
-<h1 id="sql">8 Micronaut Data with SQL</h1>
+<h1 id="sql"><a class="anchor" href="#sql"></a>8 Micronaut Data with SQL</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql.adoc"'>
@@ -3509,8 +3532,7 @@ You can add additional method candidates by creating a library that depends on <
 <p>In addition to JPA, Micronaut Data supports the generation of repositories that use native SQL. The implementation is general enough that any transport can use be used for executing the SQL queries, as of this writing JDBC is the only supported implementation for executing SQL queries, however this may change in the future.</p>
 </div>
 
-
-<h2 id="jdbc">8.1 Micronaut Data JDBC</h2>
+<h2 id="jdbc"><a class="anchor" href="#jdbc"></a>8.1 Micronaut Data JDBC</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc.adoc"'>
@@ -3563,8 +3585,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 </table>
 </div>
 
-
-<h2 id="jdbcQuickStart">8.1.1 JDBC Quick Start</h2>
+<h2 id="jdbcQuickStart"><a class="anchor" href="#jdbcQuickStart"></a>8.1.1 JDBC Quick Start</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcQuickStart.adoc"'>
@@ -3579,7 +3600,12 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">annotationProcessor <span class="hljs-string">'io.micronaut.data:micronaut-data-processor:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3588,7 +3614,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0.M5&lt;/version&gt;
+        &lt;version&gt;1.0.0.RC1&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -3613,7 +3639,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-jdbc:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3621,7 +3652,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M5&lt;/version&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -3633,7 +3664,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'com.h2database:h2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"com.h2database:h2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3653,7 +3689,12 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">runtime <span class="hljs-string">'io.micronaut.configuration:micronaut-jdbc-hikari'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">runtime(<span class="hljs-string">"io.micronaut.configuration:micronaut-jdbc-hikari")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3701,7 +3742,12 @@ The <code>schema-generate</code> setting is only useful for demos and testing tr
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compileOnly <span class="hljs-string">'jakarta.persistence:jakarta.persistence-api:2.2.2'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">provided(<span class="hljs-string">"jakarta.persistence:jakarta.persistence-api:2.2.2")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -4017,8 +4063,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 </div>
 
-
-<h2 id="jdbcConfiguration">8.1.2 JDBC Configuration</h2>
+<h2 id="jdbcConfiguration"><a class="anchor" href="#jdbcConfiguration"></a>8.1.2 JDBC Configuration</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcConfiguration.adoc"'>
@@ -4101,8 +4146,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </table>
 </div>
 
-
-<h2 id="jdbcRepositories">8.1.3 JDBC Repositories</h2>
+<h2 id="jdbcRepositories"><a class="anchor" href="#jdbcRepositories"></a>8.1.3 JDBC Repositories</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories.adoc"'>
@@ -4262,8 +4306,7 @@ You could also inject whichever other tool you wish to use to handle more comple
 </table>
 </div>
 
-
-<h2 id="sqlInserts">8.1.3.1 Inserts and Updates</h2>
+<h2 id="sqlInserts"><a class="anchor" href="#sqlInserts"></a>8.1.3.1 Inserts and Updates</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/sqlInserts.adoc"'>
@@ -4309,8 +4352,7 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <p>By being explicit in defining the method as an update method Micronaut Data knows to execute an <code>UPDATE</code>.</p>
 </div>
 
-
-<h2 id="sqlMapping">8.1.4 Mapping Entities</h2>
+<h2 id="sqlMapping"><a class="anchor" href="#sqlMapping"></a>8.1.4 Mapping Entities</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping.adoc"'>
@@ -4394,8 +4436,7 @@ public class Country {
 </div>
 </div>
 
-
-<h2 id="sqlAnnotations">8.1.4.1 SQL Annotations</h2>
+<h2 id="sqlAnnotations"><a class="anchor" href="#sqlAnnotations"></a>8.1.4.1 SQL Annotations</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAnnotations.adoc"'>
@@ -4504,8 +4545,7 @@ public class Country {
 <p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
 </div>
 
-
-<h2 id="sqlIdGenerator">8.1.4.2 ID Generation</h2>
+<h2 id="sqlIdGenerator"><a class="anchor" href="#sqlIdGenerator"></a>8.1.4.2 ID Generation</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlIdGenerator.adoc"'>
@@ -4527,8 +4567,7 @@ public class Country {
 <p>Automatically assigned UUIDs are also supported by adding a property annotated with <code>@Id</code> and <code>@AutoPopulated</code>.</p>
 </div>
 
-
-<h2 id="sqlCompositeId">8.1.4.3 Composite Primary Keys</h2>
+<h2 id="sqlCompositeId"><a class="anchor" href="#sqlCompositeId"></a>8.1.4.3 Composite Primary Keys</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlCompositeId.adoc"'>
@@ -4707,8 +4746,7 @@ To alter the column mappings for the ID you use <code>@Column</code> in the <cod
 </table>
 </div>
 
-
-<h2 id="sqlConstructorArguments">8.1.4.4 Constructor Arguments</h2>
+<h2 id="sqlConstructorArguments"><a class="anchor" href="#sqlConstructorArguments"></a>8.1.4.4 Constructor Arguments</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlConstructorArguments.adoc"'>
@@ -4799,8 +4837,7 @@ data class Manufacturer(
 <p>As you can see from the example above, the <code>ID</code> of the object should however include a setter since this has to be assigned from the database generated value.</p>
 </div>
 
-
-<h2 id="sqlNaming">8.1.4.5 SQL Naming Strategies</h2>
+<h2 id="sqlNaming"><a class="anchor" href="#sqlNaming"></a>8.1.4.5 SQL Naming Strategies</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlNaming.adoc"'>
@@ -4848,8 +4885,7 @@ public class CountryRegion {
 </div>
 </div>
 
-
-<h2 id="sqlAssociations">8.1.4.6 Association Fetching</h2>
+<h2 id="sqlAssociations"><a class="anchor" href="#sqlAssociations"></a>8.1.4.6 Association Fetching</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlAssociations.adoc"'>
@@ -4862,10 +4898,10 @@ public class CountryRegion {
 <p>Micronaut Data is a simple data mapper, hence it will not fetch any associations for you using techniques like lazy loading of entity proxies for single-ended associations.</p>
 </div>
 <div class="paragraph">
-<p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practise due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
+<p>You must instead specify ahead of time what data you want to fetch. You cannot map an association as being eager or lazy. The reason for this design choice is simple, even in the JPA world accessing lazy associations or lazy initialization collections is considered bad practice due to the N+1 query issue and the recommendation is always to write an optimized join query.</p>
 </div>
 <div class="paragraph">
-<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practise anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
+<p>Micronaut Data JDBC takes this a step further by simply not supporting those features considered bad practice anyway. However, it does impact how you may model an association. For example, if you define an association in a constructor argument such as the following entity:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4964,8 +5000,7 @@ data class Product(
 <p>The following section provides more coverage on handling joins.</p>
 </div>
 
-
-<h2 id="columnTransformer">8.1.4.7 Using @ColumnTransformer</h2>
+<h2 id="columnTransformer"><a class="anchor" href="#columnTransformer"></a>8.1.4.7 Using @ColumnTransformer</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/columnTransformer.adoc"'>
@@ -5013,8 +5048,7 @@ private String name;</code></pre>
 <p>With this any place any <code>INSERT</code> or <code>UPDATE</code> statement generated will include the above <code>write</code> entry.</p>
 </div>
 
-
-<h2 id="sqlJsonType">8.1.4.8 JSON Column Support</h2>
+<h2 id="sqlJsonType"><a class="anchor" href="#sqlJsonType"></a>8.1.4.8 JSON Column Support</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/sqlMapping/sqlJsonType.adoc"'>
@@ -5048,8 +5082,7 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
-
-<h2 id="jdbcJoinQueries">8.1.5 JDBC Join Queries</h2>
+<h2 id="jdbcJoinQueries"><a class="anchor" href="#jdbcJoinQueries"></a>8.1.5 JDBC Join Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcJoinQueries.adoc"'>
@@ -5205,8 +5238,7 @@ Some databases like Oracle limit the length of alias names in SQL queries so ano
 <p>If you need to do anything more complex than the join options Micronaut Data has to offer then you may need a native query.</p>
 </div>
 
-
-<h2 id="jdbcDataTypes">8.1.6 JDBC Data Types</h2>
+<h2 id="jdbcDataTypes"><a class="anchor" href="#jdbcDataTypes"></a>8.1.6 JDBC Data Types</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcDataTypes.adoc"'>
@@ -5501,8 +5533,7 @@ class QuantityConverters {
 </table>
 </div>
 
-
-<h2 id="jdbcNativeQueries">8.1.7 Explicit JDBC Queries</h2>
+<h2 id="jdbcNativeQueries"><a class="anchor" href="#jdbcNativeQueries"></a>8.1.7 Explicit JDBC Queries</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcNativeQueries.adoc"'>
@@ -5587,8 +5618,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </div>
 </div>
 
-
-<h1 id="graal">9 Going Native with GraalVM</h1>
+<h1 id="graal"><a class="anchor" href="#graal"></a>9 Going Native with GraalVM</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal.adoc"'>
@@ -5601,14 +5631,13 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <p>Micronaut Data supports GraalVM native images for both the JPA and JDBC implementations.</p>
 </div>
 <div class="paragraph">
-<p>Before you can build a native image however there are a couple of few changes you need to make to your project to allow a native build.</p>
+<p>Before you can build a native image however there are a few changes you need to make to your project to allow a native build.</p>
 </div>
 <div class="paragraph">
 <p>The following sections describe the changes you need to make.</p>
 </div>
 
-
-<h2 id="graalJDBC">9.1 JDBC and Native Builds</h2>
+<h2 id="graalJDBC"><a class="anchor" href="#graalJDBC"></a>9.1 JDBC and Native Builds</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal/graalJDBC.adoc"'>
@@ -5721,9 +5750,31 @@ The <code>--report-unsupported-elements-at-runtime</code> flag is needed for H2 
 </div>
 </div>
 </div>
+<div class="sect3">
+<h4 id="_configuration_for_mariadb">Configuration for MariaDB</h4>
+<div class="paragraph">
+<p>The changes for MariaDB driver (<code>org.mariadb.jdbc:mariadb-java-client:2.5.2</code> or above) are:</p>
+</div>
+<div class="listingblock">
+<div class="title"><code>@TypeHint</code> Declaration in Application Class</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@TypeHint(value = {
+        org.mariadb.jdbc.util.Options.class,
+        org.mariadb.jdbc.Driver.class
+},
+accessType = TypeHint.AccessType.ALL_PUBLIC)</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">GraalVM Flags</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">--initialize-at-build-time=org.mariadb \
+--initialize-at-run-time=org.mariadb.jdbc.credential.aws,org.mariadb.jdbc.internal.failover.impl.MastersSlavesListener,org.mariadb.jdbc.internal.com.send.authentication.SendPamAuthPacket</code></pre>
+</div>
+</div>
+</div>
 
-
-<h2 id="graalJPA">9.2 JPA and Native Builds</h2>
+<h2 id="graalJPA"><a class="anchor" href="#graalJPA"></a>9.2 JPA and Native Builds</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/graal/graalJPA.adoc"'>
@@ -5753,8 +5804,7 @@ import org.postgresql.Driver;
 </div>
 </div>
 
-
-<h1 id="spring">10 Spring Data Support</h1>
+<h1 id="spring"><a class="anchor" href="#spring"></a>10 Spring Data Support</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/spring.adoc"'>
@@ -5769,7 +5819,12 @@ import org.postgresql.Driver;
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5777,7 +5832,7 @@ import org.postgresql.Driver;
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M5&lt;/version&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -5789,7 +5844,12 @@ import org.postgresql.Driver;
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"org.springframework:spring-orm:5.2.0.RELEASE")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5833,6 +5893,37 @@ import org.postgresql.Driver;
 <p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html">PagingAndSortingRepository</a></p>
 </li>
 </ul>
+</div>
+<div class="sect2">
+<h3 id="_spring_data_jpa_specification_support">Spring Data JPA Specification Support</h3>
+<div class="paragraph">
+<p>To obtain additional support for <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">Spring Data JPA Specifications</a> when using Hibernate and JPA you should add the following dependency to your classpath:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring-jpa:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:1.0.0.RC1")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>You can then implement the <code>JpaSpecificationExecutor</code> (the generic argument to the inteface should be a domain class) interface as per the <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">Spring Data JPA documentation</a>.</p>
+</div>
 </div>
 
     </div>

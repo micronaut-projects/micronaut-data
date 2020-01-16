@@ -2,7 +2,16 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>10 Spring Data Support 1.0.0.M5</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>10 Spring Data Support 1.0.0.RC1</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -88,14 +97,13 @@ function addJsClass() {
                 <div class="project">
                     <h1>10 Spring Data Support</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M5</p>
+                    <p><strong>Version:</strong> 1.0.0.RC1</p>
                 </div>
 
                 
 
                 
-
-<h1 id="spring">10 Spring Data Support</h1>
+<h1 id="spring"><a class="anchor" href="#spring"></a>10 Spring Data Support</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/spring.adoc"'>
@@ -110,7 +118,12 @@ function addJsClass() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.M5'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:1.0.0.RC1")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -118,7 +131,7 @@ function addJsClass() {
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;1.0.0.M5&lt;/version&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -130,7 +143,12 @@ function addJsClass() {
 <div class="paragraph">
 <p>        <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'org.springframework:spring-orm:5.2.0.RELEASE'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"org.springframework:spring-orm:5.2.0.RELEASE")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -174,6 +192,37 @@ function addJsClass() {
 <p><a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html">PagingAndSortingRepository</a></p>
 </li>
 </ul>
+</div>
+<div class="sect2">
+<h3 id="_spring_data_jpa_specification_support">Spring Data JPA Specification Support</h3>
+<div class="paragraph">
+<p>To obtain additional support for <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">Spring Data JPA Specifications</a> when using Hibernate and JPA you should add the following dependency to your classpath:</p>
+</div>
+<div class="paragraph">
+<p>        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="gradle-groovy">compile <span class="hljs-string">'io.micronaut.data:micronaut-data-spring-jpa:1.0.0.RC1'</span></code></pre>
+</div>
+</div>
+        <div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle-kotlin">compile(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:1.0.0.RC1")</span></code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
+    &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
+    &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
+    &lt;version&gt;1.0.0.RC1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</p>
+</div>
+<div class="paragraph">
+<p>You can then implement the <code>JpaSpecificationExecutor</code> (the generic argument to the inteface should be a domain class) interface as per the <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">Spring Data JPA documentation</a>.</p>
+</div>
 </div>
 
 

@@ -2,7 +2,16 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>4 Repository Interfaces 1.0.0.M5</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>4 Repository Interfaces 1.0.0.RC1</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -90,14 +99,13 @@ function addJsClass() {
                 <div class="project">
                     <h1>4 Repository Interfaces</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M5</p>
+                    <p><strong>Version:</strong> 1.0.0.RC1</p>
                 </div>
 
                 
 
                 
-
-<h1 id="repositories">4 Repository Interfaces</h1>
+<h1 id="repositories"><a class="anchor" href="#repositories"></a>4 Repository Interfaces</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/repositories.adoc"'>
@@ -192,7 +200,6 @@ public abstract class AbstractBookRepository implements CrudRepository&lt;Book, 
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
@@ -203,7 +210,7 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 
     private final EntityManager entityManager
 
-    AbstractBookRepository(@CurrentSession EntityManager entityManager) {
+    AbstractBookRepository(EntityManager entityManager) {
         this.entityManager = entityManager
     }
 
@@ -219,14 +226,13 @@ abstract class AbstractBookRepository implements CrudRepository&lt;Book, Long&gt
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import io.micronaut.configuration.hibernate.jpa.scope.CurrentSession
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 
 import javax.persistence.EntityManager
 
 @Repository
-abstract class AbstractBookRepository(@param:CurrentSession private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
+abstract class AbstractBookRepository(private val entityManager: EntityManager) : CrudRepository&lt;Book, Long&gt; {
 
     fun findByTitle(title: String): List&lt;Book&gt; {
         return entityManager.createQuery("FROM Book AS book WHERE book.title = :title", Book::class.java)

@@ -2,7 +2,16 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
-    <title>6.1.1 Programmatic Transactions 1.0.0.M5</title>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>6.1.1 Programmatic Transactions 1.0.0.RC1</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -90,14 +99,13 @@ function addJsClass() {
                 <div class="project">
                     <h1>6.1.1 Programmatic Transactions</h1>
 
-                    <p><strong>Version:</strong> 1.0.0.M5</p>
+                    <p><strong>Version:</strong> 1.0.0.RC1</p>
                 </div>
 
                 
 
                 
-
-<h2 id="programmaticTransactions">6.1.1 Programmatic Transactions</h2>
+<h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>6.1.1 Programmatic Transactions</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/dataUpdates/transactions/programmaticTransactions.adoc"'>
@@ -119,16 +127,17 @@ function addJsClass() {
 import io.micronaut.transaction.SynchronousTransactionManager;
 import javax.inject.Singleton;
 import javax.persistence.EntityManager;
+import java.sql.Connection;
 
 @Singleton
 public class ProductManager {
 
     private final EntityManager entityManager;
-    private final SynchronousTransactionManager&lt;EntityManager&gt; transactionManager;
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
 
     public ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager&lt;EntityManager&gt; transactionManager) { <b class="conum">(1)</b>
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
         this.entityManager = entityManager;
         this.transactionManager = transactionManager;
     }
@@ -158,16 +167,17 @@ public class ProductManager {
 import io.micronaut.transaction.SynchronousTransactionManager
 import javax.inject.Singleton
 import javax.persistence.EntityManager
+import java.sql.Connection
 
 @Singleton
 class ProductManager {
 
     private final EntityManager entityManager
-    private final SynchronousTransactionManager&lt;EntityManager&gt; transactionManager
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
 
     ProductManager(
             EntityManager entityManager,
-            SynchronousTransactionManager&lt;EntityManager&gt; transactionManager) { <b class="conum">(1)</b>
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
         this.entityManager = entityManager
         this.transactionManager = transactionManager
     }
@@ -195,13 +205,14 @@ class ProductManager {
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
 import io.micronaut.transaction.SynchronousTransactionManager
+import java.sql.Connection
 import javax.inject.Singleton
 import javax.persistence.EntityManager
 
 @Singleton
 class ProductManager(
         private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager&lt;EntityManager&gt;) <b class="conum">(1)</b>
+        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
 {
 
     fun save(name: String, manufacturer: Manufacturer): Product {
