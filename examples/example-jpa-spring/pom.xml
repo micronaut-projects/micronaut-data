@@ -10,9 +10,9 @@
   <artifactId>example-jpa-spring</artifactId>
   <version>0.1</version>
   <properties>    
-    <micronaut.version>1.2.8</micronaut.version>
+    <micronaut.version>1.2.9</micronaut.version>
     <micronaut.spring.version>1.0.2</micronaut.spring.version>
-    <micronaut.data.version>1.0.0.BUILD-SNAPSHOT</micronaut.data.version>
+    <micronaut.data.version>1.0.0.RC1</micronaut.data.version>
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>example.Application</exec.mainClass>

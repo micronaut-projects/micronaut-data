@@ -9,7 +9,6 @@ version "0.1"
 group "example.jpa"
 
 repositories {
-    mavenLocal()
     maven { url "https://jcenter.bintray.com" }
 }
 
@@ -19,8 +18,8 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0.BUILD-SNAPSHOT"
-    micronautVersion = "1.2.8"
+    micronautDataVersion = "1.0.0.RC1"
+    micronautVersion = "1.2.9"
 }
 
 dependencyManagement {

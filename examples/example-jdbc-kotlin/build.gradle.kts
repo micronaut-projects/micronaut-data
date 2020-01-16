@@ -20,7 +20,6 @@ version = "0.1"
 group = "example"
 
 repositories {
-    mavenCentral()
     maven("https://jcenter.bintray.com")
 }
 

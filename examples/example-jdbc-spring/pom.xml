@@ -3,16 +3,16 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.1.4.RELEASE</version>
+    <version>2.2.0.RELEASE</version>
     <relativePath/> <!-- lookup parent from repository -->
   </parent>  
   <groupId>example.jdbc</groupId>
   <artifactId>example-jdbc</artifactId>
   <version>0.1</version>
   <properties>    
-    <micronaut.version>1.2.4</micronaut.version>
+    <micronaut.version>1.2.9</micronaut.version>
     <micronaut.spring.version>1.0.2</micronaut.spring.version>
-    <micronaut.data.version>1.0.0.M3</micronaut.data.version>
+    <micronaut.data.version>1.0.0.RC1</micronaut.data.version>
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>example.Application</exec.mainClass>
