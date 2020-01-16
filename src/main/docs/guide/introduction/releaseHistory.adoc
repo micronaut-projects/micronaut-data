@@ -1,3 +1,8 @@
+==== 1.0.0.RC1
+
+* Support for Spring Data JPA specifications
+* Bug Fixes and Improvements
+
 ==== 1.0.0.M5
 
 * Support for explicit entity updates with the `update` method
