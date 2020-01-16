@@ -47,6 +47,7 @@ import io.micronaut.inject.ast.PropertyElement;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
@@ -144,14 +145,16 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @Nullable QueryModel query) {
         ClassElement returnType = matchContext.getReturnType();
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
+
         if (!returnType.getName().equals("void")) {
             if (isValidResultType(returnType)) {
                 if (TypeUtils.areTypesCompatible(returnType, queryResultType)) {
                     if (isFindByIdQuery(matchContext, queryResultType, query)) {
+                        final Class<FindByIdInterceptor> type = FindByIdInterceptor.class;
                         return new MethodMatchInfo(
                                 matchContext.getReturnType(),
                                 query,
-                                FindByIdInterceptor.class
+                                getInterceptorElement(matchContext, type)
                         );
                     } else {
                         if (query instanceof RawQuery) {
@@ -163,20 +166,20 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                                 if (q != null) {
                                     q = q.trim().toLowerCase(Locale.ENGLISH);
                                     if (q.startsWith("update")) {
-                                        return new MethodMatchInfo(queryResultType, query, UpdateInterceptor.class);
+                                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, UpdateInterceptor.class));
                                     } else if (q.startsWith("delete")) {
-                                        return new MethodMatchInfo(queryResultType, query, DeleteAllInterceptor.class);
+                                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, DeleteAllInterceptor.class));
                                     } else {
-                                        return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
                                     }
                                 } else {
-                                    return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                                    return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
                                 }
                             } else {
-                                return new MethodMatchInfo(queryResultType, query, UpdateInterceptor.class);
+                                return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, UpdateInterceptor.class));
                             }
                         } else {
-                            return new MethodMatchInfo(queryResultType, query, FindOneInterceptor.class);
+                            return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
                         }
                     }
                 } else {
@@ -185,7 +188,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                             return null;
                         }
 
-                        return new MethodMatchInfo(returnType, query, FindOneInterceptor.class, true);
+                        return new MethodMatchInfo(returnType, query, getInterceptorElement(matchContext, FindOneInterceptor.class), true);
                     } else {
 
                         matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
@@ -238,7 +241,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     if (matchContext.isFailing()) {
                         return null;
                     } else {
-                        return new MethodMatchInfo(finalResultType, query, interceptorType, dto);
+                        return new MethodMatchInfo(finalResultType, query, getInterceptorElement(matchContext, interceptorType), dto);
                     }
                 } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
                     Class<? extends DataInterceptor> interceptorType;
@@ -266,7 +269,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     if (matchContext.isFailing()) {
                         return null;
                     } else {
-                        return new MethodMatchInfo(finalResultType, query, interceptorType, dto);
+                        return new MethodMatchInfo(finalResultType, query, getInterceptorElement(matchContext, interceptorType), dto);
                     }
                 } else {
                     boolean dto = false;
@@ -289,20 +292,20 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                             matchContext.getReturnType(),
                             TypeRole.PAGE
                     )) {
-                        return new MethodMatchInfo(typeArgument, query, FindPageInterceptor.class, dto);
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindPageInterceptor.class), dto);
                     } else if (matchContext.isTypeInRole(
                             matchContext.getReturnType(),
                             TypeRole.SLICE
                     )) {
-                        return new MethodMatchInfo(typeArgument, query, FindSliceInterceptor.class, dto);
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindSliceInterceptor.class), dto);
                     } else if (returnType.isAssignable(Iterable.class)) {
-                        return new MethodMatchInfo(typeArgument, query, FindAllInterceptor.class, dto);
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindAllInterceptor.class), dto);
                     } else if (returnType.isAssignable(Stream.class)) {
-                        return new MethodMatchInfo(typeArgument, query, FindStreamInterceptor.class, dto);
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindStreamInterceptor.class), dto);
                     } else if (returnType.isAssignable(Optional.class)) {
-                        return new MethodMatchInfo(typeArgument, query, FindOptionalInterceptor.class, dto);
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindOptionalInterceptor.class), dto);
                     } else if (returnType.isAssignable(Publisher.class)) {
-                        return new MethodMatchInfo(typeArgument, query, FindAllReactiveInterceptor.class, dto);
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindAllReactiveInterceptor.class), dto);
                     }
                 }
             }
@@ -310,6 +313,26 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
         matchContext.fail("Unsupported Repository method return type");
         return null;
+    }
+
+    /**
+     * Obtain the interceptor element for the given class.
+     * @param matchContext The match context
+     * @param type The type
+     * @return The element
+     */
+    protected ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, Class<? extends DataInterceptor> type) {
+        return matchContext.getVisitorContext().getClassElement(type).orElseGet(() -> new DynamicClassElement(type));
+    }
+
+    /**
+     * Obtain the interceptor element for the given class name.
+     * @param matchContext The match context
+     * @param type The type
+     * @return The element
+     */
+    protected ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, String type) {
+        return matchContext.getVisitorContext().getClassElement(type).orElseThrow(() -> new IllegalStateException("Unable to apply interceptor of type: " + type + ". The interceptor was not found on the classpath. Check your annotation processor configuration and try again."));
     }
 
     private boolean isFindByIdQuery(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
@@ -488,5 +511,43 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             }
         }
         return new RawQuery(matchContext.getRootEntity(), parameterBinding);
+    }
+
+    /**
+     * Internally used for dynamically defining a class element.
+     */
+    private static class DynamicClassElement implements ClassElement {
+        private final Class<? extends DataInterceptor> type;
+
+        DynamicClassElement(Class<? extends DataInterceptor> type) {
+            this.type = type;
+        }
+
+        @Override
+        public boolean isAssignable(String type) {
+            return false;
+        }
+
+        @Nonnull
+        @Override
+        public String getName() {
+            return type.getName();
+        }
+
+        @Override
+        public boolean isProtected() {
+            return Modifier.isProtected(type.getModifiers());
+        }
+
+        @Override
+        public boolean isPublic() {
+            return Modifier.isPublic(type.getModifiers());
+        }
+
+        @Nonnull
+        @Override
+        public Object getNativeType() {
+            return type;
+        }
     }
 }

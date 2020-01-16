@@ -3,7 +3,6 @@ rootProject.name = 'data'
 include 'data-model'
 include 'data-processor'
 include 'data-runtime'
-include 'data-spring'
 include 'data-tx'
 
 // Test Compatibility Kit
@@ -13,6 +12,10 @@ include 'data-tck'
 include 'data-hibernate-jpa'
 include 'data-tx-hibernate'
 include 'data-jdbc'
+
+// Spring compatibility
+include 'data-spring'
+include 'data-spring-jpa'
 
 // documentation samples
 include 'doc-examples:example-java'

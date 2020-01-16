@@ -130,7 +130,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         MethodMatchInfo info = new MethodMatchInfo(
                 returnType,
                 query,
-                interceptor,
+                getInterceptorElement(matchContext, interceptor),
                 MethodMatchInfo.OperationType.UPDATE,
                 properiesToUpdate.toArray(new String[0])
         );

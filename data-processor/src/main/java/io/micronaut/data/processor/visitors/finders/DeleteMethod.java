@@ -87,7 +87,7 @@ public class DeleteMethod extends AbstractListMethod {
                     return new MethodMatchInfo(
                             null,
                             null,
-                            interceptor,
+                            getInterceptorElement(matchContext, interceptor),
                             MethodMatchInfo.OperationType.DELETE
                     );
                 } else {
@@ -106,7 +106,7 @@ public class DeleteMethod extends AbstractListMethod {
                     return new MethodMatchInfo(
                             null,
                             queryModel,
-                            interceptor,
+                            getInterceptorElement(matchContext, interceptor),
                             MethodMatchInfo.OperationType.DELETE
                     );
                 }
@@ -123,14 +123,14 @@ public class DeleteMethod extends AbstractListMethod {
             return new MethodMatchInfo(
                     null,
                     query,
-                    interceptor,
+                    getInterceptorElement(matchContext, interceptor),
                     MethodMatchInfo.OperationType.DELETE
             );
         } else {
             return new MethodMatchInfo(
                     null,
                     matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
-                    interceptor,
+                    getInterceptorElement(matchContext, interceptor),
                     MethodMatchInfo.OperationType.DELETE
             );
         }

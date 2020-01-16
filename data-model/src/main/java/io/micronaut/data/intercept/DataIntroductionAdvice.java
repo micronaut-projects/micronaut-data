@@ -23,6 +23,7 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.Qualifier;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
@@ -77,8 +78,22 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                         findInterceptor(dataSourceName, operationsType, interceptorType);
                 interceptorMap.put(key, childInterceptor);
                 return childInterceptor.intercept(key, context);
-
             } else {
+                final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
+                if (declaredAnnotation != null) {
+                    interceptorType = declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+                    if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+                        DataInterceptor<Object, Object> childInterceptor =
+                                findInterceptor(dataSourceName, operationsType, interceptorType);
+                        interceptorMap.put(key, childInterceptor);
+                        return childInterceptor.intercept(key, context);
+                    }
+                }
+
+                final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+                if (interceptorName != null) {
+                    throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod().toString());
+                }
                 throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
             }
         } else {

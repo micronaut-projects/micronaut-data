@@ -24,7 +24,6 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.QueryModel;
@@ -38,6 +37,10 @@ import io.micronaut.data.processor.visitors.finders.page.FindPageByMethod;
 import io.micronaut.data.processor.visitors.finders.page.ListPageMethod;
 import io.micronaut.data.processor.visitors.finders.slice.FindSliceByMethod;
 import io.micronaut.data.processor.visitors.finders.slice.ListSliceMethod;
+import io.micronaut.data.processor.visitors.finders.specification.CountSpecificationMethod;
+import io.micronaut.data.processor.visitors.finders.specification.FindAllSpecificationMethod;
+import io.micronaut.data.processor.visitors.finders.specification.FindOneSpecificationMethod;
+import io.micronaut.data.processor.visitors.finders.specification.FindPageSpecificationMethod;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
@@ -341,7 +344,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             }
                         }
 
-                        Class<? extends DataInterceptor> runtimeInterceptor = methodInfo.getRuntimeInterceptor();
+                        ClassElement runtimeInterceptor = methodInfo.getRuntimeInterceptor();
 
                         if (runtimeInterceptor != null) {
                             Map<String, String> finalParameterBinding = parameterBinding;
@@ -372,7 +375,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 if (idType != null) {
                                     annotationBuilder.member(DataMethod.META_MEMBER_ID_TYPE, idType);
                                 }
-                                annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, runtimeInterceptor);
+                                annotationBuilder.member(DataMethod.META_MEMBER_INTERCEPTOR, new AnnotationClassValue<>(runtimeInterceptor.getName()));
 
                                 if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
                                     if (!supportsImplicitQueries && !finalEncodeEntityParameters) {
@@ -636,7 +639,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new FindPageByMethod(),
                 new ListPageMethod(),
                 new FindOneMethod(),
-                new FindByIdsMethod()
+                new FindByIdsMethod(),
+                new FindOneSpecificationMethod(),
+                new CountSpecificationMethod(),
+                new FindAllSpecificationMethod(),
+                new FindPageSpecificationMethod()
         );
         SoftServiceLoader<MethodCandidate> otherCandidates = SoftServiceLoader.load(MethodCandidate.class);
         for (ServiceDefinition<MethodCandidate> definition : otherCandidates) {

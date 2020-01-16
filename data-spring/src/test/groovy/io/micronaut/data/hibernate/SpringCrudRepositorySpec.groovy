@@ -17,9 +17,12 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.spring.SpringCrudRepository
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Sort
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -37,14 +40,14 @@ class SpringCrudRepositorySpec extends Specification {
 
     def setupSpec() {
         crudRepository.saveAll([
-                new Person(name: "Jeff"),
-                new Person(name: "James")
+                new Person(name: "Jeff", age: 50),
+                new Person(name: "James", age: 35)
         ])
     }
 
     void "test save one"() {
         when:"one is saved"
-        def person = new Person(name: "Fred")
+        def person = new Person(name: "Fred", age: 40)
         crudRepository.save(person)
 
         then:"the instance is persisted"
@@ -60,8 +63,8 @@ class SpringCrudRepositorySpec extends Specification {
 
     void "test save many"() {
         when:"many are saved"
-        def p1 = new Person(name: "Frank")
-        def p2 = new Person(name: "Bob")
+        def p1 = new Person(name: "Frank", age: 20)
+        def p2 = new Person(name: "Bob", age: 45)
         def people = [p1, p2]
         crudRepository.saveAll(people)
 
@@ -74,6 +77,31 @@ class SpringCrudRepositorySpec extends Specification {
         !crudRepository.queryAll(PageRequest.of(0, 1)).isEmpty()
         crudRepository.list(PageRequest.of(1, 10)).isEmpty()
         crudRepository.list(PageRequest.of(0, 1)).size() == 1
+    }
+
+    void "test JPA specification count"() {
+        expect:
+        crudRepository.count(SpringCrudRepository.Specifications.ageGreaterThanThirty()) == 4
+        def results = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty())
+        results.size() == 4
+        results.every({ it instanceof Person})
+
+        def sorted = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(), Sort.by("age"))
+
+        sorted.first().name == "James"
+        sorted.last().name == "Jeff"
+
+        crudRepository.findOne(SpringCrudRepository.Specifications.nameEquals("James")).get().name == "James"
+        def page2Req = PageRequest.of(1, 2, Sort.by("age"))
+        def page1Req = PageRequest.of(0, 2, Sort.by("age"))
+        def page1 = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(), page1Req)
+        def page2 = crudRepository.findAll(SpringCrudRepository.Specifications.ageGreaterThanThirty(), page2Req)
+        page2.size == 2
+        page2.content*.name == ["Bob", "Jeff"]
+        page1.size == 2
+        page1.content*.name == ["James", "Fred"]
+
+
     }
 
     void "test delete by id"() {

@@ -80,14 +80,14 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
             return new MethodMatchInfo(
                     null,
                     null,
-                    interceptor,
+                    getInterceptorElement(matchContext, interceptor),
                     MethodMatchInfo.OperationType.INSERT
             );
         } else {
             return new MethodMatchInfo(
                     null,
                     QueryModel.from(matchContext.getRootEntity()),
-                    interceptor,
+                    getInterceptorElement(matchContext, interceptor),
                     MethodMatchInfo.OperationType.INSERT
             );
         }

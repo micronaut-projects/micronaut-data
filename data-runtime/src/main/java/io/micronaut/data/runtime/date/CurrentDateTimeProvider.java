@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 
 /**
  * Default implementation of {@link DateTimeProvider}.
- * @param <T> The type of the time.
+ *
  * @author niravassar
  * @since 1.0.0
  */

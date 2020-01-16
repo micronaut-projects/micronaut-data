@@ -22,6 +22,8 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.tck.entities.Person;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.repository.CrudRepository;
 
 import javax.transaction.Transactional;
@@ -29,7 +31,7 @@ import java.util.List;
 
 @Repository
 @Transactional
-public interface SpringCrudRepository extends CrudRepository<Person, Long> {
+public interface SpringCrudRepository extends CrudRepository<Person, Long>, JpaSpecificationExecutor<Person> {
 
     Page<Person> queryAll(Pageable pageable);
 
@@ -67,4 +69,19 @@ public interface SpringCrudRepository extends CrudRepository<Person, Long> {
     List<Person> findByNameLikeOrderByAge(String name);
 
     List<Person> findByNameLikeOrderByAgeDesc(String name);
+
+
+    class Specifications {
+        public static Specification<Person> ageGreaterThanThirty() {
+            return (Specification<Person>) (root, query, criteriaBuilder) -> criteriaBuilder.greaterThan(
+                    root.get("age"), 30
+            );
+        }
+
+        public static Specification<Person> nameEquals(String name) {
+            return (Specification<Person>) (root, query, criteriaBuilder) -> criteriaBuilder.equal(
+                    root.get("name"), name
+            );
+        }
+    }
 }

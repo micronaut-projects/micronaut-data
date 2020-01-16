@@ -69,7 +69,7 @@ public class FindByIdsMethod extends AbstractPatternBasedMethod {
             return new MethodMatchInfo(
                     matchContext.getReturnType(),
                     query,
-                    FindAllInterceptor.class);
+                    getInterceptorElement(matchContext, FindAllInterceptor.class));
         } else {
             matchContext.fail("Cannot query by ID on entity that defines no ID");
             return null;

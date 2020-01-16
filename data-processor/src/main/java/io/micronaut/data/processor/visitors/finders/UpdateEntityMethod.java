@@ -66,7 +66,11 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
                 }
                 if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(returnType, null, interceptor, MethodMatchInfo.OperationType.UPDATE);
+                    return new MethodMatchInfo(
+                            returnType,
+                            null, getInterceptorElement(matchContext, interceptor),
+                            MethodMatchInfo.OperationType.UPDATE
+                    );
                 } else {
                     final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
                     final String idName;
@@ -89,14 +93,14 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                         return new MethodMatchInfo(
                                 returnType,
                                 null,
-                                interceptor,
+                                getInterceptorElement(matchContext, interceptor),
                                 MethodMatchInfo.OperationType.UPDATE
                         );
                     } else {
                         return new MethodMatchInfo(
                                 returnType,
                                 queryModel,
-                                interceptor,
+                                getInterceptorElement(matchContext, interceptor),
                                 MethodMatchInfo.OperationType.UPDATE,
                                 updateProperties
                         );

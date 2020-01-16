@@ -17,8 +17,8 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.TypedElement;
 
 import java.util.*;
@@ -36,7 +36,7 @@ public class MethodMatchInfo {
 
     private final TypedElement resultType;
     private final QueryModel query;
-    private final Class<? extends DataInterceptor> interceptor;
+    private final ClassElement interceptor;
     private final OperationType operationType;
     private final String[] updateProperties;
 
@@ -52,7 +52,7 @@ public class MethodMatchInfo {
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
-            @Nullable Class<? extends DataInterceptor> interceptor) {
+            @Nullable ClassElement interceptor) {
         this(resultType, query, interceptor, OperationType.QUERY);
     }
 
@@ -66,7 +66,7 @@ public class MethodMatchInfo {
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
-            @Nullable Class<? extends DataInterceptor> interceptor,
+            @Nullable ClassElement interceptor,
             boolean dto) {
         this(resultType, query, interceptor, OperationType.QUERY);
         this.dto = dto;
@@ -83,7 +83,7 @@ public class MethodMatchInfo {
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
-            @Nullable Class<? extends DataInterceptor> interceptor,
+            @Nullable ClassElement interceptor,
             @NonNull OperationType operationType,
             String... updateProperties) {
         this.query = query;
@@ -151,7 +151,7 @@ public class MethodMatchInfo {
      * The runtime interceptor that will handle the method.
      * @return The runtime interceptor
      */
-    @Nullable public Class<? extends DataInterceptor> getRuntimeInterceptor() {
+    @Nullable public ClassElement getRuntimeInterceptor() {
         return interceptor;
     }
 

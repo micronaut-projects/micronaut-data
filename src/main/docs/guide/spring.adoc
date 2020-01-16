@@ -18,3 +18,11 @@ The following Spring Data types are also supported:
 * https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/PageRequest.html[PageRequest]
 * https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/CrudRepository.html[CrudRepository]
 * https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/repository/PagingAndSortingRepository.html[PagingAndSortingRepository]
+
+=== Spring Data JPA Specification Support
+
+To obtain additional support for https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[Spring Data JPA Specifications] when using Hibernate and JPA you should add the following dependency to your classpath:
+
+dependency:io.micronaut.data:micronaut-data-spring-jpa[version="{version}"]
+
+You can then implement the `JpaSpecificationExecutor` (the generic argument to the inteface should be a domain class) interface as per the https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[Spring Data JPA documentation].

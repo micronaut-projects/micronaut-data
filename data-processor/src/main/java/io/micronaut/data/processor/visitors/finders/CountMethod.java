@@ -17,6 +17,11 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.intercept.CountInterceptor;
+import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.intercept.async.CountAsyncInterceptor;
+import io.micronaut.data.intercept.reactive.CountReactiveInterceptor;
+import io.micronaut.data.model.query.ProjectionList;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -52,9 +57,42 @@ public class CountMethod extends AbstractListMethod {
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
-        return CountByMethod.buildCountInfo(
+        return buildCountInfo(
                 matchContext, query
         );
+    }
+
+    /**
+     * Builds count info.
+     * @param matchContext The match context
+     * @param query The query
+     * @return The method info
+     */
+    MethodMatchInfo buildCountInfo(@NonNull MethodMatchContext matchContext, @Nullable QueryModel query) {
+        Class<? extends DataInterceptor> interceptor = CountInterceptor.class;
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isFutureType(returnType)) {
+            interceptor = CountAsyncInterceptor.class;
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
+        } else if (TypeUtils.isReactiveType(returnType)) {
+            interceptor = CountReactiveInterceptor.class;
+            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
+        }
+        if (query != null) {
+            ProjectionList projections = query.projections();
+            projections.count();
+            return new MethodMatchInfo(
+                    returnType,
+                    query,
+                    getInterceptorElement(matchContext, interceptor)
+                    );
+        } else {
+            return new MethodMatchInfo(
+                    returnType,
+                    matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
+                    getInterceptorElement(matchContext, interceptor)
+            );
+        }
     }
 
 }

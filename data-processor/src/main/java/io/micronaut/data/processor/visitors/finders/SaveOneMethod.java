@@ -139,14 +139,14 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
             return new MethodMatchInfo(
                     returnType,
                     null,
-                    interceptor,
+                    getInterceptorElement(matchContext, interceptor),
                     MethodMatchInfo.OperationType.INSERT
             );
         } else {
             return new MethodMatchInfo(
                     returnType,
                     QueryModel.from(matchContext.getRootEntity()),
-                    interceptor,
+                    getInterceptorElement(matchContext, interceptor),
                     MethodMatchInfo.OperationType.INSERT
             );
         }

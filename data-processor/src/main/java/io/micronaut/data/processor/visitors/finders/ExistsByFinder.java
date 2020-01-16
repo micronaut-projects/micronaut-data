@@ -80,7 +80,7 @@ public class ExistsByFinder extends DynamicFinder {
         return new MethodMatchInfo(
                 returnType,
                 query,
-                interceptor
+                getInterceptorElement(matchContext, interceptor)
         );
     }
 

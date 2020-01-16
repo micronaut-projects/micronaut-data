@@ -69,7 +69,7 @@ public class DeleteByMethod extends DynamicFinder {
             return new MethodMatchInfo(
                     null,
                     query,
-                    DeleteMethod.pickDeleteAllInterceptor(matchContext.getReturnType()),
+                    getInterceptorElement(matchContext, DeleteMethod.pickDeleteAllInterceptor(matchContext.getReturnType())),
                     MethodMatchInfo.OperationType.DELETE
             );
         }

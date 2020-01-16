@@ -72,11 +72,11 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
                 }
 
                 if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(returnType, null, interceptor, MethodMatchInfo.OperationType.INSERT);
+                    return new MethodMatchInfo(returnType, null, getInterceptorElement(matchContext, interceptor), MethodMatchInfo.OperationType.INSERT);
                 } else {
                     return new MethodMatchInfo(returnType,
                             QueryModel.from(matchContext.getRootEntity()),
-                            interceptor,
+                            getInterceptorElement(matchContext, interceptor),
                             MethodMatchInfo.OperationType.INSERT
                     );
                 }

@@ -62,7 +62,7 @@ public class CountByMethod extends DynamicFinder {
      * @param query The query
      * @return The method info
      */
-    static MethodMatchInfo buildCountInfo(@NonNull MethodMatchContext matchContext, @Nullable QueryModel query) {
+    MethodMatchInfo buildCountInfo(@NonNull MethodMatchContext matchContext, @Nullable QueryModel query) {
         Class<? extends DataInterceptor> interceptor = CountInterceptor.class;
         ClassElement returnType = matchContext.getReturnType();
         if (TypeUtils.isFutureType(returnType)) {
@@ -78,13 +78,13 @@ public class CountByMethod extends DynamicFinder {
             return new MethodMatchInfo(
                     returnType,
                     query,
-                    interceptor
+                    getInterceptorElement(matchContext, interceptor)
             );
         } else {
             return new MethodMatchInfo(
                     returnType,
                     matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
-                    interceptor
+                    getInterceptorElement(matchContext, interceptor)
             );
         }
     }

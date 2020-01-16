@@ -47,6 +47,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
 
 import javax.annotation.Nonnull;
+import java.lang.annotation.Annotation;
 import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -190,8 +191,20 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @NonNull
     protected Class<?> getRequiredRootEntity(MethodInvocationContext context) {
-        return context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
-                .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
+        Class aClass = context.classValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
+        if (aClass != null) {
+            return aClass;
+        } else {
+            final AnnotationValue<Annotation> ann = context.getDeclaredAnnotation(PREDATOR_ANN_NAME);
+            if (ann != null) {
+                aClass = ann.classValue(DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
+                if (aClass != null) {
+                    return aClass;
+                }
+            }
+
+            throw new IllegalStateException("No root entity present in method");
+        }
     }
 
     /**

@@ -122,7 +122,7 @@ public class UpdateByMethod extends DynamicFinder {
         return new MethodMatchInfo(
                 queryResultType,
                 query,
-                UpdateMethod.pickUpdateInterceptor(matchContext.getReturnType()),
+                getInterceptorElement(matchContext, UpdateMethod.pickUpdateInterceptor(matchContext.getReturnType())),
                 MethodMatchInfo.OperationType.UPDATE,
                 updateProperties
         );
