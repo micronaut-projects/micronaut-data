@@ -34,4 +34,4 @@ jobs:
       env:
          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-      run: ./gradlew sWMC -x data-spring-jpa:sWMC
+      run: ./gradlew sWMC 
