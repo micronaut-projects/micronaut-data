@@ -26,7 +26,7 @@ Examples can be found in the [examples](https://github.com/micronaut-projects/mi
 
 ## Snapshots and Releases
 
-Snaphots are automatically published to JFrog OSS using [Github Actions](https://github.com/micronaut-projects/micronaut-data/actions).
+Snaphots are automatically published to [JFrog OSS](https://oss.jfrog.org/artifactory/oss-snapshot-local/) using [Github Actions](https://github.com/micronaut-projects/micronaut-data/actions).
 
 See the documentation in the [Micronaut Docs](https://docs.micronaut.io/latest/guide/index.html#usingsnapshots) for how to configure your build to use snapshots.
 
@@ -34,7 +34,7 @@ Releases are published to JCenter and Maven Central via [Github Actions](https:/
 
 A release is performed with the following steps:
 
-* Change the version specified by `projectVersion` in `gradle.properties` to a semantic, unreleased version. Example `1.0.0`
-* Commit the change. Example: `git commit -m "Release Version 1.0.0"`
-* Tag the release where the tag starts with `v`. Example: `git tag v1.0.0`
-* Push the commit and the tag: `git push && git push --tags`
+* [Edit the version](https://github.com/micronaut-projects/micronaut-data/edit/master/gradle.properties) specified by `projectVersion` in `gradle.properties` to a semantic, unreleased version. Example `1.0.0`
+* [Create a new release](https://github.com/micronaut-projects/micronaut-data/releases/new). The Git Tag should start with `v`. For example `v1.0.0`.
+* [Monitor the Workflow](https://github.com/micronaut-projects/micronaut-data/actions?query=workflow%3ARelease) to check it passed successfully.
+* Celebrate!
