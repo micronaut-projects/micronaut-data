@@ -23,7 +23,7 @@ dependencies {
     testImplementation "org.testcontainers:mysql:1.12.4"
     testImplementation "org.testcontainers:mariadb:1.12.4"
     testImplementation "org.testcontainers:postgresql:1.12.5"
-    testImplementation "org.testcontainers:mssqlserver:1.12.4"
+    testImplementation "org.testcontainers:mssqlserver:1.12.5"
     testImplementation "org.testcontainers:oracle-xe:1.12.4"
     testImplementation 'mysql:mysql-connector-java:8.0.19'
     testImplementation 'org.postgresql:postgresql:42.2.9'
