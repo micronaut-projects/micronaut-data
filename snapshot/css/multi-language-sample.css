@@ -89,12 +89,12 @@
 
 .multi-language-selector .language-option[data-lang='gradle-groovy'] {
     background-position: 30px center;
-    padding-left: 52px;
+    padding-left: 54px;
 }
 
 .multi-language-selector .language-option[data-lang='gradle-kotlin'] {
     background-position: 30px center;
-    padding-left: 52px;
+    padding-left: 56px;
 }
 
 .multi-language-selector .language-option[data-lang='groovy'] {
