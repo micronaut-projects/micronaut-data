@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class BuildQuerySpec extends AbstractDataSpec {
@@ -112,6 +113,22 @@ ${dto('MovieTitle', [title: String])}
         method.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
         query == 'SELECT movie_.`title` FROM `movie` movie_'
 
+    }
+
+    @Issue('#375')
+    void "test in query with property that starts with in"() {
+        given:
+        def repository = buildRepository('test.SomeEntityRepository', """
+@Repository
+interface SomeEntityRepository extends CrudRepository<SomeEntity, Long> {
+    List<SomeEntity> findByInternetNumberInList(List<Long> internetNumbers);
+}
+
+${entity('SomeEntity', [internetNumber: Long])}
+""")
+
+        expect:
+        repository != null
     }
 
 }

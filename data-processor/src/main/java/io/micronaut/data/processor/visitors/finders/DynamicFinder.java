@@ -486,7 +486,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     private static String calcPropertyName(String queryParameter, String clause) {
         String propName;
         if (clause != null) {
-            int i = queryParameter.indexOf(clause);
+            int i = queryParameter.lastIndexOf(clause);
             if (i > -1) {
                 propName = queryParameter.substring(0, i);
             } else {
