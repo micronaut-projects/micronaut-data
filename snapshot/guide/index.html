@@ -2044,9 +2044,12 @@ data class Product(
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
+import org.hibernate.annotations.BatchSize;
+
 import javax.persistence.*;
 
 @Entity
+@BatchSize(size = 10)
 public class Manufacturer {
     @Id
     @GeneratedValue
