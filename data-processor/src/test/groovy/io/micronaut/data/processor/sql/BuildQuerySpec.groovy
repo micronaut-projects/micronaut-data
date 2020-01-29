@@ -131,4 +131,5 @@ ${entity('SomeEntity', [internetNumber: Long])}
         repository != null
     }
 
+
 }

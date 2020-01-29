@@ -991,6 +991,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(DOT)
                                 .append(escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
                     } else {
+                        final PersistentProperty associatedId = associationOwner.getIdentity();
+                        if (associatedId == null) {
+                            throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
+                        }
                         target.append(joinType);
                         final boolean escape = shouldEscape(associationOwner);
                         NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
@@ -1008,7 +1012,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                               .append(" ON ")
                               .append(alias)
                               .append(DOT)
-                              .append(escape ? quote(getColumnName(identity)) : getColumnName(identity))
+                              .append(escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId))
                               .append('=')
                               .append(joinTableAlias)
                               .append(DOT)

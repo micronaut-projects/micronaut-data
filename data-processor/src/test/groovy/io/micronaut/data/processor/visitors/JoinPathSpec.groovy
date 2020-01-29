@@ -20,9 +20,72 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.tck.entities.City
 import io.micronaut.inject.ExecutableMethod
+import spock.lang.Issue
 import spock.lang.Unroll
 
 class JoinPathSpec extends AbstractDataSpec {
+
+    @Issue('##356')
+    void "test join with custom ID"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.*;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+interface MyInterface extends GenericRepository<User, Long> {
+
+    @Join(value = "authorities")
+    User findById(Long id);
+}
+
+@MappedEntity
+class Authority {
+
+    @Id
+    private String name12345;
+    
+    public String getName12345() {
+        return name12345;
+    }
+    
+    public void setName12345(String name12345) {
+        this.name12345 = name12345;
+    }
+}
+
+@MappedEntity
+class User {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    public Long getId() {
+        return id;
+    }
+    
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    @Relation(Relation.Kind.ONE_TO_MANY)
+    private Set<Authority> authorities = new HashSet<>();
+    
+    public Set<Authority> getAuthorities() {
+        return authorities;
+    }
+    
+    public void setAuthorities(Set<Authority> authorities) {
+        this.authorities = authorities;
+    }
+}
+""")
+        def query = repository.getRequiredMethod("findById", Long)
+                .stringValue(Query).get()
+
+        expect:
+        query == 'SELECT *,user_authorities_."name12345" AS authorities_name12345 FROM "user" user_ INNER JOIN user_authority user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_.user_id  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_.authority_id=user_authorities_."name12345" WHERE (user_."id" = ?)'
+    }
 
     @Unroll
     void "test JPA projection across nested property path for #method"() {
