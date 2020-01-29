@@ -46,3 +46,6 @@ test {
 springBoot {
     mainClassName = 'example.Application'
 }
+jmh {
+	duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+}

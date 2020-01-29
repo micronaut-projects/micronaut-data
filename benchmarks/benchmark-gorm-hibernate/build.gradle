@@ -19,3 +19,6 @@ dependencies {
     jmh "org.openjdk.jmh:jmh-core:$jmhVersion"
     jmh "org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion"
 }
+jmh {
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+}
