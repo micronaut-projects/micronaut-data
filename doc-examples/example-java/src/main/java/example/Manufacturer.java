@@ -1,8 +1,11 @@
 package example;
 
+import org.hibernate.annotations.BatchSize;
+
 import javax.persistence.*;
 
 @Entity
+@BatchSize(size = 10)
 public class Manufacturer {
     @Id
     @GeneratedValue
