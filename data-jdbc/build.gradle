@@ -27,7 +27,7 @@ dependencies {
     testImplementation "org.testcontainers:oracle-xe:1.12.5"
     testImplementation 'mysql:mysql-connector-java:8.0.19'
     testImplementation 'org.postgresql:postgresql:42.2.9'
-    testImplementation 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
+    testImplementation 'com.microsoft.sqlserver:mssql-jdbc:8.2.0.jre13'
 }
 
 //compileTestJava.options.fork = true
