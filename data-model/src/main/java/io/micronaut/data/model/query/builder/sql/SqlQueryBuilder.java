@@ -145,7 +145,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public @NonNull String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
-        String sql = "DROP TABLE " + (escape ? quote(tableName) : tableName) + ";";
+        String sql = "DROP TABLE " + tableName + ";";
         Collection<Association> foreignKeyAssociations = getJoinTableAssociations(entity.getPersistentProperties());
         List<String> dropStatements = new ArrayList<>();
         for (Association association : foreignKeyAssociations) {
