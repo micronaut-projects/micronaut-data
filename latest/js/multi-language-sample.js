@@ -90,6 +90,12 @@ function postProcessCodeBlocks() {
                 codeEl.classList.add('language-' + BUILD_GRADLE);
                 hljs.highlightBlock(codeEl);
             }
+            // This block corrects highlighting issues for Maven, which isn't supported by hljs as maven but as XML
+            if(codeEl.classList.contains("language-" + BUILD_MAVEN)) {
+                codeEl.classList.remove('language-' + BUILD_MAVEN);
+                codeEl.classList.add('language-xml');
+                hljs.highlightBlock(codeEl);
+            }
         }
     }
 
