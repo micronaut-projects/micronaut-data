@@ -17,7 +17,7 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0.RC1"
+    micronautDataVersion = "1.0.0"
     micronautVersion = "1.2.9"
 }
 
