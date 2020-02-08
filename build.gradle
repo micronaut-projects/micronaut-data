@@ -36,6 +36,7 @@ ext {
 
 subprojects { Project subproject ->
     repositories {
+        mavenLocal()
         maven { url "https://repo.grails.org/grails/core" }
     }
 
@@ -180,9 +181,9 @@ project.afterEvaluate {
 }
 
 task benchmarks {
-     subprojects.each { 
+     subprojects.each {
         if (it.name.startsWith("benchmark-")) {
-            dependsOn("benchmarks:${it.name}:jmh")     
-        }        
+            dependsOn("benchmarks:${it.name}:jmh")
+        }
     }
 }

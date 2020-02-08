@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <option name="DEFAULT_COMPILER" value="Javac"/>
+    <resourceExtensions>
+      <entry name=".+\.(properties|xml|html|dtd|tld)"/>
+      <entry name=".+\.(gif|png|jpeg|jpg)"/>
+    </resourceExtensions>
+    <wildcardResourcePatterns>
+      <entry name="!?*.class"/>
+      <entry name="!?*.scala"/>
+      <entry name="!?*.groovy"/>
+      <entry name="!?*.java"/>
+    </wildcardResourcePatterns>
+    <annotationProcessing enabled="false" useClasspath="true"/>
+    <bytecodeTargetLevel target="11">
+      <module name="data-cassandra" target="1.8"/>
+      <module name="data-hibernate-jpa" target="1.8"/>
+      <module name="data-jdbc" target="1.8"/>
+      <module name="data-model" target="1.8"/>
+      <module name="data-processor" target="1.8"/>
+      <module name="data-runtime" target="1.8"/>
+      <module name="data-spring" target="1.8"/>
+      <module name="data-spring-jpa" target="1.8"/>
+      <module name="data-tck" target="1.8"/>
+      <module name="data-tx" target="1.8"/>
+      <module name="data-tx-hibernate" target="1.8"/>
+      <module name="benchmark-spring-data" target="1.8"/>
+      <module name="benchmark-spring-data-jdbc" target="1.8"/>
+    </bytecodeTargetLevel>
+  </component>
+  <component name="CopyrightManager" default="">
+    <module2copyright/>
+  </component>
+  <component name="DependencyValidationManager">
+    <option name="SKIP_IMPORT_STATEMENTS" value="false"/>
+  </component>
+  <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false"/>
+  <component name="GradleUISettings">
+    <setting name="root"/>
+  </component>
+  <component name="GradleUISettings2">
+    <setting name="root"/>
+  </component>
+  <component name="IdProvider" IDEtalkID="11DA1DB66DD62DDA1ED602B7079FE97C"/>
+  <component name="JavadocGenerationManager">
+    <option name="OUTPUT_DIRECTORY"/>
+    <option name="OPTION_SCOPE" value="protected"/>
+    <option name="OPTION_HIERARCHY" value="true"/>
+    <option name="OPTION_NAVIGATOR" value="true"/>
+    <option name="OPTION_INDEX" value="true"/>
+    <option name="OPTION_SEPARATE_INDEX" value="true"/>
+    <option name="OPTION_DOCUMENT_TAG_USE" value="false"/>
+    <option name="OPTION_DOCUMENT_TAG_AUTHOR" value="false"/>
+    <option name="OPTION_DOCUMENT_TAG_VERSION" value="false"/>
+    <option name="OPTION_DOCUMENT_TAG_DEPRECATED" value="true"/>
+    <option name="OPTION_DEPRECATED_LIST" value="true"/>
+    <option name="OTHER_OPTIONS" value=""/>
+    <option name="HEAP_SIZE"/>
+    <option name="LOCALE"/>
+    <option name="OPEN_IN_BROWSER" value="true"/>
+  </component>
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/data.iml" filepath="$PROJECT_DIR$/data.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/benchmarks/benchmarks.iml" filepath="$PROJECT_DIR$/benchmarks/benchmarks.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-cassandra/data-cassandra.iml" filepath="$PROJECT_DIR$/data-cassandra/data-cassandra.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-hibernate-jpa/data-hibernate-jpa.iml" filepath="$PROJECT_DIR$/data-hibernate-jpa/data-hibernate-jpa.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-jdbc/data-jdbc.iml" filepath="$PROJECT_DIR$/data-jdbc/data-jdbc.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-model/data-model.iml" filepath="$PROJECT_DIR$/data-model/data-model.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-processor/data-processor.iml" filepath="$PROJECT_DIR$/data-processor/data-processor.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-runtime/data-runtime.iml" filepath="$PROJECT_DIR$/data-runtime/data-runtime.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-spring/data-spring.iml" filepath="$PROJECT_DIR$/data-spring/data-spring.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-spring-jpa/data-spring-jpa.iml" filepath="$PROJECT_DIR$/data-spring-jpa/data-spring-jpa.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-tck/data-tck.iml" filepath="$PROJECT_DIR$/data-tck/data-tck.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-tx/data-tx.iml" filepath="$PROJECT_DIR$/data-tx/data-tx.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/data-tx-hibernate/data-tx-hibernate.iml" filepath="$PROJECT_DIR$/data-tx-hibernate/data-tx-hibernate.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/doc-examples.iml" filepath="$PROJECT_DIR$/doc-examples/doc-examples.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/benchmarks/benchmark-gorm-hibernate/benchmark-gorm-hibernate.iml" filepath="$PROJECT_DIR$/benchmarks/benchmark-gorm-hibernate/benchmark-gorm-hibernate.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/benchmarks/benchmark-micronaut-data-jdbc/benchmark-micronaut-data-jdbc.iml" filepath="$PROJECT_DIR$/benchmarks/benchmark-micronaut-data-jdbc/benchmark-micronaut-data-jdbc.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/benchmarks/benchmark-micronaut-data-jpa/benchmark-micronaut-data-jpa.iml" filepath="$PROJECT_DIR$/benchmarks/benchmark-micronaut-data-jpa/benchmark-micronaut-data-jpa.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/benchmarks/benchmark-spring-data/benchmark-spring-data.iml" filepath="$PROJECT_DIR$/benchmarks/benchmark-spring-data/benchmark-spring-data.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/benchmarks/benchmark-spring-data-jdbc/benchmark-spring-data-jdbc.iml" filepath="$PROJECT_DIR$/benchmarks/benchmark-spring-data-jdbc/benchmark-spring-data-jdbc.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/example-groovy/example-groovy.iml" filepath="$PROJECT_DIR$/doc-examples/example-groovy/example-groovy.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/example-hibernate-and-jdbc/example-hibernate-and-jdbc.iml" filepath="$PROJECT_DIR$/doc-examples/example-hibernate-and-jdbc/example-hibernate-and-jdbc.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/example-java/example-java.iml" filepath="$PROJECT_DIR$/doc-examples/example-java/example-java.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/example-kotlin/example-kotlin.iml" filepath="$PROJECT_DIR$/doc-examples/example-kotlin/example-kotlin.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/jdbc-example-groovy/jdbc-example-groovy.iml" filepath="$PROJECT_DIR$/doc-examples/jdbc-example-groovy/jdbc-example-groovy.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/jdbc-example-java/jdbc-example-java.iml" filepath="$PROJECT_DIR$/doc-examples/jdbc-example-java/jdbc-example-java.iml"/>
+      <module fileurl="file://$PROJECT_DIR$/doc-examples/jdbc-example-kotlin/jdbc-example-kotlin.iml" filepath="$PROJECT_DIR$/doc-examples/jdbc-example-kotlin/jdbc-example-kotlin.iml"/>
+    </modules>
+  </component>
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" assert-keyword="true" jdk-15="true" project-jdk-type="JavaSDK" assert-jdk-15="true" project-jdk-name="11">
+    <output url="file://$PROJECT_DIR$/out"/>
+  </component>
+  <component name="SvnBranchConfigurationManager">
+    <option name="mySupportsUserInfoFilter" value="true"/>
+  </component>
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs=""/>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl/>
+          </splitter-proportions>
+          <settings/>
+        </UIState>
+      </state>
+      <state key="Copyright.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl/>
+          </splitter-proportions>
+        </UIState>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl>
+              <option name="proportions">
+                <list>
+                  <option value="0.2"/>
+                </list>
+              </option>
+            </SplitterProportionsDataImpl>
+          </splitter-proportions>
+          <last-edited>1.6</last-edited>
+        </UIState>
+      </state>
+      <state key="ScopeChooserConfigurable.UI">
+        <UIState>
+          <splitter-proportions>
+            <SplitterProportionsDataImpl/>
+          </splitter-proportions>
+          <settings/>
+        </UIState>
+      </state>
+    </states>
+  </component>
+</project>

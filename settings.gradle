@@ -12,6 +12,7 @@ include 'data-tck'
 include 'data-hibernate-jpa'
 include 'data-tx-hibernate'
 include 'data-jdbc'
+include 'data-cassandra'
 
 // Spring compatibility
 include 'data-spring'
