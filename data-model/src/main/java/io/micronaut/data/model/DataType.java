@@ -87,7 +87,12 @@ public enum DataType {
     /**
      * A JSON type.
      */
-    JSON;
+    JSON,
+
+    /**
+     * A {@link java.util.UUID} value.
+     */
+    UUID;
 
     /**
      * Empty array of data types.

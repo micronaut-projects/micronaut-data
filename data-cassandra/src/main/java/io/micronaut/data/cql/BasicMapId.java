@@ -1,16 +1,24 @@
 package io.micronaut.data.cql;
 
+import io.micronaut.core.util.ArgumentUtils;
+
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class BasicMapId implements MapId {
 
     private final Map<String, Object> map = new HashMap<>();
 
-    public BasicMapId(Map<String,Object> map){
-        
+    public BasicMapId() {
+    }
+
+    public BasicMapId(@Nonnull Map<String, Object> map) {
+        ArgumentUtils.requireNonNull("map", map);
+        this.map.putAll(map);
     }
 
     @Override
@@ -40,36 +48,63 @@ public class BasicMapId implements MapId {
 
     @Override
     public Object put(String s, Object o) {
-        return null;
+        return map.put(s, o);
     }
 
     @Override
     public Object remove(Object o) {
-        return null;
+        return map.remove(o);
     }
 
     @Override
-    public void putAll(Map<? extends String, ?> map) {
-
+    public void putAll(Map<? extends String, ? extends Object> source) {
+        map.putAll(source);
     }
 
     @Override
     public void clear() {
-
+        map.clear();
     }
 
     @Override
     public Set<String> keySet() {
-        return null;
+        return map.keySet();
     }
 
     @Override
     public Collection<Object> values() {
-        return null;
+        return map.values();
     }
 
     @Override
     public Set<Entry<String, Object>> entrySet() {
-        return null;
+        return map.entrySet();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        return map.equals(o);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder s = new StringBuilder("{");
+        boolean first = false;
+        for (Entry<String, Object> entry : map.entrySet()) {
+            if (first) {
+                first = false;
+            } else {
+                s.append(",");
+            }
+            s.append(entry.getKey()).append(" : ").append(entry.getValue());
+        }
+        return s.append(" }").toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return map.hashCode();
     }
 }
