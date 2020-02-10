@@ -1,12 +1,10 @@
 package io.micronaut.data.cql.annotation;
 
-import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.cql.operations.CqlRepositoryOperations;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
-import javax.inject.Named;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,9 +25,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
 @Repository
-@Named
 public @interface CqlRepository {
-
-    @AliasFor(annotation = Named.class, member = "value")
-    String value() default "default";
+//
+//    @AliasFor(annotation = Named.class, member = "value")
+//    String value() default "default";
 }

@@ -1,16 +1,28 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
-    api project(":data-cassandra")
-    api project(":data-model")
+    annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
+
     api project(":data-runtime")
+    api project(":data-model")
     implementation 'io.micronaut.configuration:micronaut-cassandra:2.0.0.BUILD-SNAPSHOT'
 
     api "com.github.spotbugs:spotbugs-annotations:3.1.12"
     api "io.micronaut:micronaut-inject:$micronautVersion"
     api "io.micronaut:micronaut-validation:$micronautVersion"
     api "io.micronaut:micronaut-aop:$micronautVersion"
-    testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
+
+
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    testAnnotationProcessor project(":data-processor")
+    testImplementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+    testImplementation "io.micronaut:micronaut-validation:$micronautVersion"
+    testImplementation project(":data-tck")
+
     compileOnly "com.fasterxml.jackson.core:jackson-annotations"
+
+    testCompile(group: 'org.cassandraunit', name: 'cassandra-unit', version:'4.3.1.0') {
+        exclude(module: 'slf4j-log4j12')
+    }
 }
 tasks.withType(GroovyCompile) {
     groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')

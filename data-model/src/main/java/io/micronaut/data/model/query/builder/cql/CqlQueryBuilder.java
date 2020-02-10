@@ -22,8 +22,10 @@ public class CqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected String getTableName(PersistentEntity entity) {
-        return entity.getName();
+       // TODO: workout keyset
+        return entity.getPersistedName();
     }
+
 
     @Override
     protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder stringBuilder, Map<String, String> appliedJoinPaths, QueryState queryState) {

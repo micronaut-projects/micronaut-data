@@ -33,7 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.Spliterator;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public final class ResultWrapper implements GettableByName, GettableByIndex {
     private final Iterator<Row> results;
@@ -42,9 +44,6 @@ public final class ResultWrapper implements GettableByName, GettableByIndex {
     public ResultWrapper(ResultSet results) {
         this.resultSet = results;
         this.results = results.iterator();
-        if (this.results.hasNext()) {
-            current = this.results.next();
-        }
     }
 
     public static ResultWrapper of(ResultSet resultSet) {
@@ -65,41 +64,35 @@ public final class ResultWrapper implements GettableByName, GettableByIndex {
 
     @Override
     public int firstIndexOf(@NonNull String s) {
-        if(current == null) throw new NoSuchElementException();
         return current.firstIndexOf(s);
     }
 
     @NonNull
     @Override
     public DataType getType(@NonNull String s) {
-        if(current == null) throw new NoSuchElementException();
         return current.getType(s);
     }
 
     @Nullable
     @Override
     public ByteBuffer getBytesUnsafe(int i) {
-        if(current == null) throw new NoSuchElementException();
         return current.getBytesUnsafe(i);
     }
 
     @Override
     public boolean isNull(int i) {
-        if(current == null) throw new NoSuchElementException();
         return current.isNull(i);
     }
 
     @Nullable
     @Override
     public <ValueT> ValueT get(int i, TypeCodec<ValueT> codec) {
-        if(current == null) throw new NoSuchElementException();
         return current.get(i,codec);
     }
 
     @Nullable
     @Override
     public <ValueT> ValueT get(int i, GenericType<ValueT> targetType) {
-        if(current == null) throw new NoSuchElementException();
         return current.get(i,targetType);
     }
 
@@ -493,4 +486,5 @@ public final class ResultWrapper implements GettableByName, GettableByIndex {
         if(current == null) throw new NoSuchElementException();
         return current.getTupleValue(name);
     }
+
 }

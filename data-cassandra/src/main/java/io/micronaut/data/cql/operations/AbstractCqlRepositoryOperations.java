@@ -67,7 +67,7 @@ public abstract class AbstractCqlRepositoryOperations<RS,PS> implements Reposito
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final Map<Class, Dialect> dialects = new HashMap<>(10);
-    protected final CqlQueryBuilder queryBuilder = new CqlQueryBuilder();
+    protected final SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ANSI);
     protected final MediaTypeCodec jsonCodec;
     protected final DateTimeProvider dateTimeProvider;
 
