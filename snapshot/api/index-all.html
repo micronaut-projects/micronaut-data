@@ -6605,6 +6605,8 @@
 <dd>
 <div class="block">Sets the offset.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html#onCreated-io.micronaut.context.event.BeanCreatedEvent-">onCreated(BeanCreatedEvent&lt;DataSource&gt;)</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html" title="class in io.micronaut.transaction.jdbc">TransactionAwareDataSource</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/OneToManyMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">OneToManyMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
 <dd>
 <div class="block">Maps JPA's <code>OneToMany</code> annotation to <a href="io/micronaut/data/annotation/Relation.html" title="annotation in io.micronaut.data.annotation"><code>Relation</code></a>.</div>
@@ -9150,6 +9152,14 @@
 <dd>
 <div class="block">This interface adds a <code>rollbackOn</code> specification to <a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction"><code>TransactionDefinition</code></a>.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html" title="class in io.micronaut.transaction.jdbc"><span class="typeNameLink">TransactionAwareDataSource</span></a> - Class in <a href="io/micronaut/transaction/jdbc/package-summary.html">io.micronaut.transaction.jdbc</a></dt>
+<dd>
+<div class="block">Transaction aware data source implementation.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html#TransactionAwareDataSource-io.micronaut.context.BeanLocator-">TransactionAwareDataSource(BeanLocator)</a></span> - Constructor for class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/TransactionAwareDataSource.html" title="class in io.micronaut.transaction.jdbc">TransactionAwareDataSource</a></dt>
+<dd>
+<div class="block">Create a new DelegatingDataSource.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction"><span class="typeNameLink">TransactionCallback</span></a>&lt;<a href="io/micronaut/transaction/TransactionCallback.html" title="type parameter in TransactionCallback">T</a>,<a href="io/micronaut/transaction/TransactionCallback.html" title="type parameter in TransactionCallback">R</a>&gt; - Interface in <a href="io/micronaut/transaction/package-summary.html">io.micronaut.transaction</a></dt>
 <dd>
 <div class="block">A functional interface for running code that runs within the context of a transaction.</div>
@@ -9399,6 +9409,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html#unwrap-java.lang.Class-">unwrap(Class&lt;T&gt;)</a></span> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html#unwrapDataSource-javax.sql.DataSource-">unwrapDataSource(DataSource)</a></span> - Static method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DelegatingDataSource.html" title="class in io.micronaut.transaction.jdbc">DelegatingDataSource</a></dt>
+<dd>
+<div class="block">Unwraps the data source obtaining the target.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update(UpdateOperation&lt;T&gt;)</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update(UpdateOperation&lt;T&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
