@@ -51,6 +51,12 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
         super(METHOD_PATTERN);
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.INSERT;
+    }
+
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();

@@ -47,6 +47,12 @@ public class SaveAllMethod extends AbstractPatternBasedMethod {
         super(Pattern.compile(METHOD_PATTERN));
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.INSERT;
+    }
+
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = methodElement.getParameters();

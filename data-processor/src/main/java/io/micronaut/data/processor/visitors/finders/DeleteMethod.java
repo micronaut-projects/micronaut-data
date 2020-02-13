@@ -62,6 +62,12 @@ public class DeleteMethod extends AbstractListMethod {
                 TypeUtils.isValidBatchUpdateReturnType(methodElement);
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.DELETE;
+    }
+
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
@@ -88,7 +94,7 @@ public class DeleteMethod extends AbstractListMethod {
                             null,
                             null,
                             getInterceptorElement(matchContext, interceptor),
-                            MethodMatchInfo.OperationType.DELETE
+                            getOperationType()
                     );
                 } else {
                     QueryModel queryModel = QueryModel.from(rootEntity);
@@ -107,7 +113,7 @@ public class DeleteMethod extends AbstractListMethod {
                             null,
                             queryModel,
                             getInterceptorElement(matchContext, interceptor),
-                            MethodMatchInfo.OperationType.DELETE
+                            getOperationType()
                     );
                 }
             }
@@ -124,14 +130,14 @@ public class DeleteMethod extends AbstractListMethod {
                     null,
                     query,
                     getInterceptorElement(matchContext, interceptor),
-                    MethodMatchInfo.OperationType.DELETE
+                    getOperationType()
             );
         } else {
             return new MethodMatchInfo(
                     null,
                     matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
                     getInterceptorElement(matchContext, interceptor),
-                    MethodMatchInfo.OperationType.DELETE
+                    getOperationType()
             );
         }
     }

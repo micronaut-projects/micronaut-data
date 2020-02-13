@@ -514,6 +514,13 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     }
 
     /**
+     * @return The operation type
+     */
+    protected @NonNull MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.QUERY;
+    }
+
+    /**
      * Internally used for dynamically defining a class element.
      */
     private static class DynamicClassElement implements ClassElement {

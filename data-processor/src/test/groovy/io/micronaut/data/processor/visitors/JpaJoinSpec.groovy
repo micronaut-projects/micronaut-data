@@ -26,6 +26,22 @@ import spock.lang.Unroll
 class JpaJoinSpec extends AbstractDataSpec {
 
 
+    void "test join on repository type that inherits from CrudRepository"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.tck.entities.Book;
+
+@Repository
+@Join("author")
+interface MyInterface extends CrudRepository<Book, Long> {
+}
+"""
+        )
+
+        expect:"The repository to compile"
+        repository != null
+    }
+
     @Unroll
     void "test JPA projection across nested property path for #method"() {
         given:

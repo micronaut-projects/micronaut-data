@@ -53,6 +53,12 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         super(Pattern.compile("^update\\w*$"));
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.UPDATE;
+    }
+
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         return super.isMethodMatch(methodElement, matchContext) &&
