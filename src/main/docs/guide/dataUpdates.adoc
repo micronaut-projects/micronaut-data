@@ -16,4 +16,4 @@ For partial updates, you must define a method that features a parameter annotate
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="update", indent="0"]
 
-snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="update3", indent="0"]
+
