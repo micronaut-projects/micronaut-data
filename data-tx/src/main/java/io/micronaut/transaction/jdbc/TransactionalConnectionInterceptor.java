@@ -30,7 +30,11 @@ public final class TransactionalConnectionInterceptor implements MethodIntercept
      */
     @Internal
     TransactionalConnectionInterceptor(BeanContext beanContext, Qualifier<DataSource> qualifier) {
-        this.dataSource = beanContext.getBean(DataSource.class, qualifier);
+        DataSource dataSource = beanContext.getBean(DataSource.class, qualifier);
+        if (dataSource instanceof DelegatingDataSource) {
+            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
+        }
+        this.dataSource = dataSource;
     }
 
     @Override

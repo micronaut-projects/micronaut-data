@@ -20,6 +20,7 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.*;
 import io.micronaut.transaction.hibernate5.MicronautSessionContext;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.transaction.jdbc.DelegatingDataSource;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.cfg.AvailableSettings;
 
@@ -66,7 +67,9 @@ public class DataEntityManagerFactoryBean {
     protected StandardServiceRegistry hibernateStandardServiceRegistry(
             @Parameter String dataSourceName,
             DataSource dataSource) {
-
+        if (dataSource instanceof DelegatingDataSource) {
+            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
+        }
         Map<String, Object> additionalSettings = new LinkedHashMap<>();
         additionalSettings.put(AvailableSettings.DATASOURCE, dataSource);
         additionalSettings.put(AvailableSettings.CURRENT_SESSION_CONTEXT_CLASS, MicronautSessionContext.class.getName());
