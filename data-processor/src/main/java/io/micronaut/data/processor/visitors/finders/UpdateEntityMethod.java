@@ -42,6 +42,12 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
         super(METHOD_PATTERN);
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.UPDATE;
+    }
+
     @Override
     public int getOrder() {
         return DEFAULT_POSITION - 100;

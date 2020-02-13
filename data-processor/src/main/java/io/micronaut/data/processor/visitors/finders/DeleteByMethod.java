@@ -44,6 +44,12 @@ public class DeleteByMethod extends DynamicFinder {
         super(PREFIXES);
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.DELETE;
+    }
+
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement); // void return

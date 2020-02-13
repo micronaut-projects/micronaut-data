@@ -9,6 +9,42 @@ import spock.lang.Unroll
 
 class BuildQuerySpec extends AbstractDataSpec {
 
+    void "test to-many join on repository type that inherits from CrudRepository"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.*;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@Join("books")
+interface MyInterface extends CrudRepository<Author, Long> {
+}
+"""
+        )
+
+        expect:"The repository to compile"
+        repository != null
+    }
+
+    void "test to-one join on repository type that inherits from CrudRepository"() {
+        given:
+        def repository = buildRepository('test.MyInterface', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@Join("author")
+interface MyInterface extends CrudRepository<Book, Long> {
+}
+"""
+        )
+
+        expect:"The repository to compile"
+        repository != null
+    }
+
     void "test join query on collection with custom ID name"() {
         given:
         def repository = buildRepository('test.MealRepository', """

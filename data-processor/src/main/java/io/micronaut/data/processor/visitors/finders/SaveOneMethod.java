@@ -52,6 +52,12 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
         super(SaveEntityMethod.METHOD_PATTERN);
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.INSERT;
+    }
+
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();

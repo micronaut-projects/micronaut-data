@@ -47,6 +47,12 @@ public class UpdateByMethod extends DynamicFinder {
         super("update");
     }
 
+    @NonNull
+    @Override
+    protected MethodMatchInfo.OperationType getOperationType() {
+        return MethodMatchInfo.OperationType.UPDATE;
+    }
+
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement);
