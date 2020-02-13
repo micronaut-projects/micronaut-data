@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.jdbc.config;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.exceptions.ConfigurationException;
@@ -27,17 +25,17 @@ import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
-import io.micronaut.transaction.SynchronousTransactionManager;
-import io.micronaut.transaction.TransactionCallback;
-import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.jdbc.DelegatingDataSource;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -65,8 +63,8 @@ public class SchemaGenerator {
 
     /**
      * Initialize the schema for the configuration.
-     *
      * @param beanLocator The bean locator
+     *
      */
     @PostConstruct
     public void createSchema(BeanLocator beanLocator) {
@@ -86,92 +84,86 @@ public class SchemaGenerator {
                 PersistentEntity[] entities = introspections.stream()
                         // filter out inner / internal classes
                         .filter(i -> !i.getBeanType().getName().contains("$"))
-                        .map(PersistentEntity::of).toArray(PersistentEntity[]::new);
+                        .map(PersistentEntity ::of).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    SynchronousTransactionManager<Connection> transactionManager
-                            = beanLocator.getBean(SynchronousTransactionManager.class, Qualifiers.byName(name));
+                    DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                     try {
-                        transactionManager.executeWrite(new TransactionCallback<Connection, Object>() {
-                            @Nullable
-                            @Override
-                            public Object call(@NonNull TransactionStatus<Connection> status) throws Exception {
-                                final Connection connection = status.getConnection();
-                                SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
-                                if (dialect.allowBatch() && configuration.isBatchGenerate()) {
-                                    switch (schemaGenerate) {
-                                        case CREATE_DROP:
+                        try (Connection connection = dataSource.getConnection()) {
+                            SqlQueryBuilder builder = new SqlQueryBuilder(dialect);
+                            if (dialect.allowBatch() && configuration.isBatchGenerate()) {
+                                switch (schemaGenerate) {
+                                    case CREATE_DROP:
+                                        try {
+                                            String sql = builder.buildBatchDropTableStatement(entities);
+                                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                                DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
+                                            }
+                                            PreparedStatement ps = connection.prepareStatement(sql);
+                                            ps.executeUpdate();
+                                        } catch (SQLException e) {
+                                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                                                DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
+                                            }
+                                        }
+                                    case CREATE:
+                                        String sql = builder.buildBatchCreateTableStatement(entities);
+                                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                            DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
+                                        }
+                                        PreparedStatement ps = connection.prepareStatement(sql);
+                                        ps.executeUpdate();
+                                        break;
+                                    default:
+                                        // do nothing
+                                }
+                            } else {
+                                switch (schemaGenerate) {
+                                    case CREATE_DROP:
+                                        for (PersistentEntity entity : entities) {
                                             try {
-                                                String sql = builder.buildBatchDropTableStatement(entities);
-                                                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                                    DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
+                                                String[] statements = builder.buildDropTableStatements(entity);
+                                                for (String sql : statements) {
+                                                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                                        DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                                                    }
+                                                    PreparedStatement ps = connection.prepareStatement(sql);
+                                                    ps.executeUpdate();
                                                 }
-                                                PreparedStatement ps = connection.prepareStatement(sql);
-                                                ps.executeUpdate();
                                             } catch (SQLException e) {
                                                 if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                                     DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
                                                 }
                                             }
-                                        case CREATE:
-                                            String sql = builder.buildBatchCreateTableStatement(entities);
-                                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                                DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
-                                            }
-                                            PreparedStatement ps = connection.prepareStatement(sql);
-                                            ps.executeUpdate();
-                                            break;
-                                        default:
-                                            // do nothing
-                                    }
-                                } else {
-                                    switch (schemaGenerate) {
-                                        case CREATE_DROP:
-                                            for (PersistentEntity entity : entities) {
+                                        }
+                                    case CREATE:
+                                        for (PersistentEntity entity : entities) {
+
+                                            String[] sql = builder.buildCreateTableStatements(entity);
+                                            for (String stmt : sql) {
+                                                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                                                    DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
+                                                }
                                                 try {
-                                                    String[] statements = builder.buildDropTableStatements(entity);
-                                                    for (String sql : statements) {
-                                                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                                            DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                                                        }
-                                                        PreparedStatement ps = connection.prepareStatement(sql);
-                                                        ps.executeUpdate();
-                                                    }
+                                                    PreparedStatement ps = connection.prepareStatement(stmt);
+                                                    ps.executeUpdate();
                                                 } catch (SQLException e) {
-                                                    if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                                        DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
+                                                    if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                                                        DataSettings.QUERY_LOG.warn("CREATE Statement Failed: " + e.getMessage());
                                                     }
                                                 }
                                             }
-                                        case CREATE:
-                                            for (PersistentEntity entity : entities) {
 
-                                                String[] sql = builder.buildCreateTableStatements(entity);
-                                                for (String stmt : sql) {
-                                                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                                        DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
-                                                    }
-                                                    try {
-                                                        PreparedStatement ps = connection.prepareStatement(stmt);
-                                                        ps.executeUpdate();
-                                                    } catch (SQLException e) {
-                                                        if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                                            DataSettings.QUERY_LOG.warn("CREATE Statement Failed: " + e.getMessage());
-                                                        }
-                                                    }
-                                                }
-
-                                            }
+                                        }
 
 
-                                            break;
-                                        default:
-                                            // do nothing
-                                    }
+                                        break;
+                                    default:
+                                        // do nothing
                                 }
-                                return null;
                             }
-                        });
-
+                        } catch (SQLException e) {
+                            throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
+                        }
                     } catch (NoSuchBeanException e) {
                         throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
                     }

@@ -5,12 +5,14 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.Qualifier;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException;
 
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * An interceptor that allows injecting a {@link Connection} that acts a proxy to lookup the connection for the current transaction.
@@ -22,11 +24,13 @@ import java.sql.Connection;
 public final class TransactionalConnectionInterceptor implements MethodInterceptor<Connection, Object> {
 
     private final DataSource dataSource;
+    private boolean closed;
 
     /**
      * Default constructor.
+     *
      * @param beanContext The bean context
-     * @param qualifier The qualifier
+     * @param qualifier   The qualifier
      */
     @Internal
     TransactionalConnectionInterceptor(BeanContext beanContext, Qualifier<DataSource> qualifier) {
@@ -45,6 +49,18 @@ public final class TransactionalConnectionInterceptor implements MethodIntercept
         } catch (CannotGetJdbcConnectionException e) {
             throw new NoTransactionException("No current transaction present. Consider declaring @Transactional on the surrounding method", e);
         }
-        return context.getExecutableMethod().invoke(connection, context.getParameterValues());
+        final ExecutableMethod<Connection, Object> method = context.getExecutableMethod();
+
+        if (method.getName().equals("close")) {
+            // Handle close method: only close if not within a transaction.
+            try {
+                DataSourceUtils.doReleaseConnection(connection, this.dataSource);
+            } catch (SQLException e) {
+                throw new CannotGetJdbcConnectionException("Failed to release connection: " + e.getMessage(), e);
+            }
+            return null;
+        }
+
+        return method.invoke(connection, context.getParameterValues());
     }
 }

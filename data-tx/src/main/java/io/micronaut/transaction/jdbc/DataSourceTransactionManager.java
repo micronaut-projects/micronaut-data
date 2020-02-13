@@ -103,9 +103,7 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
     public DataSourceTransactionManager(@NonNull DataSource dataSource) {
         Objects.requireNonNull(dataSource, "DataSource cannot be null");
         setNestedTransactionAllowed(true);
-        if (dataSource instanceof DelegatingDataSource) {
-            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
-        }
+        dataSource = DelegatingDataSource.unwrapDataSource(dataSource);
         this.dataSource = dataSource;
     }
 
