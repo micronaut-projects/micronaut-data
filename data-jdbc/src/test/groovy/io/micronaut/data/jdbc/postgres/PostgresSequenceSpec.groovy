@@ -7,15 +7,19 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.transaction.SynchronousTransactionManager
+import io.micronaut.transaction.TransactionStatus
 
 import javax.inject.Inject
 import javax.sql.DataSource
+import java.sql.Connection
 
 @MicronautTest(transactional = false)
 class PostgresSequenceSpec extends AbstractPostgresSpec {
 
     @Inject TestSequenceRepo testSequenceRepo
     @Inject DataSource dataSource
+    @Inject SynchronousTransactionManager<Connection> transactionManager
 
     void "test postgres sequence handling"() {
         when:
@@ -26,16 +30,18 @@ class PostgresSequenceSpec extends AbstractPostgresSpec {
         testSequenceRepo.findById(test.id).isPresent()
 
         when:
-        def currentValue = dataSource.connection.withCloseable {
+        def currentValue = transactionManager.executeRead({ TransactionStatus status ->
+            Connection it = status.connection
             it.prepareStatement("select last_value from test_sequence_id_seq").withCloseable { ps ->
                 ps.executeQuery().withCloseable { rs ->
                     rs.next()
                     return rs.getLong(1)
                 }
             }
-        }
+        })
 
-        def name = dataSource.connection.withCloseable {
+        def name = transactionManager.executeRead({ TransactionStatus status ->
+            Connection it = status.connection
             it.prepareStatement("select \"name\" from test_sequence_id").withCloseable { ps ->
                 ps.executeQuery().withCloseable { rs ->
                     if (rs.next()) {
@@ -43,7 +49,7 @@ class PostgresSequenceSpec extends AbstractPostgresSpec {
                     }
                 }
             }
-        }
+        })
 
         then:
         currentValue == test.id

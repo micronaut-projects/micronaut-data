@@ -32,6 +32,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.transaction.jdbc.DelegatingDataSource;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
@@ -85,7 +86,7 @@ public class SchemaGenerator {
                         .filter(i -> !i.getBeanType().getName().contains("$"))
                         .map(PersistentEntity ::of).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    DataSource dataSource = beanLocator.getBean(DataSource.class, Qualifiers.byName(name));
+                    DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                     try {
                         try (Connection connection = dataSource.getConnection()) {
                             SqlQueryBuilder builder = new SqlQueryBuilder(dialect);

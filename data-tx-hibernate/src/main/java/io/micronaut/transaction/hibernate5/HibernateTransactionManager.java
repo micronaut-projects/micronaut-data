@@ -26,10 +26,7 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
 import io.micronaut.transaction.exceptions.InvalidIsolationLevelException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.jdbc.ConnectionHolder;
-import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
-import io.micronaut.transaction.jdbc.DataSourceUtils;
-import io.micronaut.transaction.jdbc.JdbcTransactionObjectSupport;
+import io.micronaut.transaction.jdbc.*;
 import io.micronaut.transaction.support.AbstractSynchronousTransactionManager;
 import io.micronaut.transaction.support.DefaultTransactionStatus;
 import io.micronaut.transaction.support.ResourceTransactionManager;
@@ -120,6 +117,9 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
             @Parameter DataSource dataSource,
             @Nullable Interceptor entityInterceptor) {
         this.sessionFactory = sessionFactory;
+        if (dataSource instanceof DelegatingDataSource) {
+            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
+        }
         this.dataSource = dataSource;
         this.entityInterceptor = entityInterceptor;
     }

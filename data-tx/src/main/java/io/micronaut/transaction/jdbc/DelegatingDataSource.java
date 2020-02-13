@@ -118,5 +118,16 @@ public class DelegatingDataSource implements DataSource {
         return Logger.getLogger(Logger.GLOBAL_LOGGER_NAME);
     }
 
+    /**
+     * Unwraps the data source obtaining the target.
+     * @param dataSource The data source
+     * @return The target
+     */
+    public static @NonNull DataSource unwrapDataSource(@NonNull DataSource dataSource) {
+        while (dataSource instanceof DelegatingDataSource) {
+            dataSource = ((DelegatingDataSource) dataSource).getTargetDataSource();
+        }
+        return dataSource;
+    }
 }
 
