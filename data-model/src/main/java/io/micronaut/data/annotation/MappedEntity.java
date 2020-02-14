@@ -20,7 +20,7 @@ import io.micronaut.data.model.naming.NamingStrategy;
 import java.lang.annotation.*;
 
 /**
- * Designates a class as being persisted. This is a generic annotation to identity and persistent type
+ * Designates a class as being persisted. This is a generic annotation to identify a persistent type
  * and is typically not used directly but rather mapped to.
  *
  * @author graemerocher
