@@ -82,8 +82,9 @@ public class SchemaGenerator {
                     introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
                 }
                 PersistentEntity[] entities = introspections.stream()
-                        // filter out inner / internal classes
+                        // filter out inner / internal / abstract(MappedSuperClass) classes
                         .filter(i -> !i.getBeanType().getName().contains("$"))
+                        .filter(i -> !java.lang.reflect.Modifier.isAbstract(i.getBeanType().getModifiers()))
                         .map(PersistentEntity ::of).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
                     DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
