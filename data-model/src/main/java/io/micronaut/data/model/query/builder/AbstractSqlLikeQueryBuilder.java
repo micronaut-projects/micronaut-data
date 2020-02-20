@@ -239,7 +239,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         queryHandlers.put(QueryModel.IdEquals.class, (queryState, criterion) -> {
             PersistentProperty prop = queryState.getEntity().getIdentity();
             if (prop == null) {
-                throw new IllegalStateException("No id found for name entity: " + queryState.getEntity().getIdentity());
+                throw new IllegalStateException("No ID found for entity: " + queryState.getEntity().getName());
             }
             appendCriteriaForOperator(
                     queryState,
