@@ -153,6 +153,9 @@ subprojects { Project subproject ->
 }
 
 apply from:"https://raw.githubusercontent.com/micronaut-projects/micronaut-docs/v${micronautDocsVersion}/gradle/docs.gradle"
+javadoc {
+    exclude "**/tck/**"
+}
 
 allprojects {
     apply plugin: 'idea'
