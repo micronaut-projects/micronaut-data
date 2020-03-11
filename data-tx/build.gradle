@@ -6,6 +6,7 @@ dependencies {
     api 'jakarta.transaction:jakarta.transaction-api:1.3.3'
 
     // optional dependencies
+    compileOnly "io.micronaut:micronaut-jdbc:$micronautVersion"
     compileOnly "org.springframework:spring-jdbc:5.2.4.RELEASE"
     compileOnly "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
 
@@ -17,6 +18,7 @@ dependencies {
     testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
     testImplementation "com.fasterxml.jackson.core:jackson-databind"
 
+    testImplementation "io.micronaut:micronaut-jdbc:$micronautVersion"
     testRuntimeOnly "com.h2database:h2"
     testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
 
