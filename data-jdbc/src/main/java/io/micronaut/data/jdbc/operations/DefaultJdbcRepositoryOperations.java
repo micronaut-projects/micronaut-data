@@ -636,7 +636,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (hasGeneratedID) {
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
-                        long id = generatedKeys.getLong(1);
+                        Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
+
                         if (identity.getType().isInstance(id)) {
                             identity.set(entity, id);
                         } else {
@@ -1072,7 +1073,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         if (!generatedKeys.next()) {
                             throw new DataAccessException("Failed to generate ID for entity: " + entity);
                         } else {
-                            long id = generatedKeys.getLong(1);
+                            Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
+
                             if (identity.getType().isInstance(id)) {
                                 identity.set(entity, id);
                             } else {
@@ -1097,6 +1099,21 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 throw new DataAccessException("SQL error executing INSERT: " + e.getMessage(), e);
             }
         });
+    }
+
+    private Object getEntityId(ResultSet generatedKeys, DataType dataType, Class<Object> type) throws SQLException {
+        Object id;
+        switch (dataType) {
+            case LONG:
+                id = generatedKeys.getLong(1);
+                break;
+            case STRING:
+                id = generatedKeys.getString(1);
+                break;
+            default:
+                id = generatedKeys.getObject(1, type);
+        }
+        return id;
     }
 
     @Override
