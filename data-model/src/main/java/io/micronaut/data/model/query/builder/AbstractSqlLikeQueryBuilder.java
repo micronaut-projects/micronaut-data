@@ -1478,11 +1478,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     aliasName = getAliasName(entity);
                 }
             }
+            boolean ignoreCase = order.isIgnoreCase();
+            if (ignoreCase) {
+                buff.append("LOWER(");
+            }
             buff.append(aliasName)
-                    .append(DOT)
-                    .append(getColumnName(persistentProperty))
-                    .append(SPACE)
-                    .append(order.getDirection());
+                    .append(DOT);
+            buff.append(getColumnName(persistentProperty));
+            if (ignoreCase) {
+                buff.append(")");
+            }
+            buff.append(SPACE)
+                .append(order.getDirection());
             if (i.hasNext()) {
                 buff.append(",");
             }
