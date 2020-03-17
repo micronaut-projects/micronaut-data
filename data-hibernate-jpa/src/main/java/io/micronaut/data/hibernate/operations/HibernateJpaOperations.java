@@ -47,6 +47,7 @@ import io.micronaut.transaction.TransactionOperations;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 
 import javax.inject.Named;
@@ -64,6 +65,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -435,10 +437,12 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             Map<String, Object> parameterValues = preparedQuery.getParameterValues();
             Pageable pageable = preparedQuery.getPageable();
             Session currentSession = getCurrentSession();
+            Class<R> resultType = preparedQuery.getResultType();
+            boolean isNativeQuery = preparedQuery.isNative();
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
 
-                if (preparedQuery.isNative()) {
+                if (isNativeQuery) {
                     q = currentSession
                             .createNativeQuery(query, Tuple.class);
                 } else {
@@ -448,14 +452,34 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 bindParameters(q, preparedQuery, query);
                 bindPageable(q, pageable);
                 return q.stream()
-                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()));
+                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType));
 
             } else {
+
                 Query<R> q;
                 @SuppressWarnings("unchecked")
-                Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
-                if (preparedQuery.isNative()) {
-                    q = currentSession.createNativeQuery(query, wrapperType);
+                Class<R> wrapperType = ReflectionUtils.getWrapperType(resultType);
+                if (isNativeQuery) {
+                    Class<T> rootEntity = preparedQuery.getRootEntity();
+                    if (wrapperType != rootEntity) {
+                        NativeQuery<Tuple> nativeQuery = currentSession.createNativeQuery(query, Tuple.class);
+                        bindParameters(nativeQuery, preparedQuery, query);
+                        bindPageable(nativeQuery, pageable);
+                        return nativeQuery.stream()
+                                  .map(tuple -> {
+                                      Object o = tuple.get(0);
+                                      if (wrapperType.isInstance(o)) {
+                                          return (R) o;
+                                      } else {
+                                          return ConversionService.SHARED.convertRequired(
+                                                  o,
+                                                  wrapperType
+                                          );
+                                      }
+                                  });
+                    } else {
+                        q = currentSession.createNativeQuery(query, wrapperType);
+                    }
                 } else {
                     q = currentSession.createQuery(query, wrapperType);
                 }

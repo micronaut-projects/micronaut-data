@@ -16,19 +16,18 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.hibernate.entities.Pet
 import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
 import javax.inject.Inject
+import java.util.stream.Collectors
 
-@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
+@MicronautTest(rollback = false, packages = ["io.micronaut.data.tck.entities", "io.micronaut.data.hibernate.entities"])
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 @Stepwise
@@ -49,6 +48,10 @@ class ProjectionSpec extends Specification {
     @Inject
     @Shared
     OrderRepo orderRepository
+
+    @Inject
+    @Shared
+    PetRepository petRepository
 
     def setupSpec() {
         crudRepository.saveAndFlush(new Person(name: "Jeff", age: 40))
@@ -102,4 +105,35 @@ class ProjectionSpec extends Specification {
         bookRepository.findByAuthorName("Stephen King").size() == 2
     }
 
+    void "test projection on enum type"() {
+        given:
+        petRepository.saveAll([
+                new Pet(name: "A", type: Pet.PetType.DOG),
+                new Pet(name: "B", type: Pet.PetType.CAT),
+                new Pet(name: "C", type: Pet.PetType.CAT)
+        ])
+
+        when:
+        def types = petRepository.listDistinctType()
+
+        then:
+        types.size() == 2
+        types.contains(Pet.PetType.DOG)
+        types.contains(Pet.PetType.CAT)
+
+        when:"a native query is used"
+        List names = petRepository.findPetNamesNative().collect(Collectors.toList())
+
+        then:
+        names.size() == 3
+        names.containsAll(["A", "B", "C"])
+
+        when:"a native query is used"
+        types = petRepository.findPetTypesNative().collect(Collectors.toList())
+
+        then:
+        types.size() == 2
+        types.contains(Pet.PetType.DOG)
+        types.contains(Pet.PetType.CAT)
+    }
 }
