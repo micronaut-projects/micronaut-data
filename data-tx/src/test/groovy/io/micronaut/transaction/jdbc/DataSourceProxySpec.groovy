@@ -1,10 +1,12 @@
 package io.micronaut.transaction.jdbc
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.jdbc.DataSourceResolver
 import io.micronaut.test.annotation.MicronautTest
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionStatus
+import io.micronaut.transaction.exceptions.NoTransactionException
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -17,6 +19,9 @@ class DataSourceProxySpec extends Specification {
 
     @Inject
     DataSource dataSource
+
+    @Inject
+    DataSourceResolver dataSourceResolver
 
     @Inject
     SynchronousTransactionManager<Connection> transactionManager
@@ -56,6 +61,24 @@ class DataSourceProxySpec extends Specification {
             getCount()
         }) == 1
 
+    }
+
+    void "test outside of transaction"() {
+        when:
+        def connection = dataSource.getConnection()
+        connection.prepareStatement("select 1")
+
+        then:
+        thrown NoTransactionException
+
+        when:
+        connection = dataSourceResolver.resolve(dataSource).getConnection()
+        def ps = connection.prepareStatement("select 1")
+        def success = ps.execute();
+        ps.close();
+
+        then:
+        success
     }
 
     int getCount() {
