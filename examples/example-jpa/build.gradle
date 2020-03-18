@@ -50,10 +50,10 @@ dependencies {
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
-    implementation "io.micronaut.configuration:micronaut-hibernate-jpa:2.0.0.BUILD-SNAPSHOT"
+    implementation "io.micronaut.configuration:micronaut-hibernate-jpa:2.0.0.M1"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     runtimeOnly "com.h2database:h2"
-    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-hikari:2.0.0.BUILD-SNAPSHOT"
+    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-hikari:2.0.0.M1"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "org.junit.jupiter:junit-jupiter-api"
