@@ -1,5 +1,4 @@
 name: Release Notes
-
 on:
   pull_request:
     types: [closed]
@@ -7,19 +6,25 @@ on:
       - master
   issues:
     types: [closed,reopened]
-
+  push:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/release-notes.yml"
 jobs:
   release_notes:
     runs-on: ubuntu-latest
     steps:
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
-      - uses: ncipollo/release-action@v1
+      - name: Create Release
+        id: create_release
+        uses:  micronaut-projects/create-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          allowUpdates: true
-          commit: master
+          tag_name: v${{ steps.release_notes.outputs.next_version }}
+          release_name: Micronaut Data ${{ steps.release_notes.outputs.next_version }}
+          bodyFromFile: CHANGELOG.md
           draft: true
-          name: Micronaut Data ${{ steps.release_notes.outputs.next_version }}
-          tag: v${{ steps.release_notes.outputs.next_version }}
-          bodyFile: CHANGELOG.md
-          token: ${{ secrets.GITHUB_TOKEN }}
+
