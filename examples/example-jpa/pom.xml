@@ -17,6 +17,10 @@
             <id>jcenter.bintray.com</id>
             <url>https://jcenter.bintray.com</url>
         </repository>
+        <repository>
+            <id>jfrog-snapshots</id>
+            <url>https://oss.jfrog.org/oss-snapshot-local</url>
+        </repository>        
     </repositories>
     <dependencyManagement>
         <dependencies>
@@ -53,8 +57,15 @@
         </dependency>
         <dependency>
             <groupId>io.micronaut.configuration</groupId>
+            <artifactId>micronaut-hibernate-jpa</artifactId>
+            <scope>runtime</scope>
+            <version>2.0.0.BUILD-SNAPSHOT</version>
+        </dependency>        
+        <dependency>
+            <groupId>io.micronaut.configuration</groupId>
             <artifactId>micronaut-jdbc-hikari</artifactId>
             <scope>runtime</scope>
+            <version>2.0.0.BUILD-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>

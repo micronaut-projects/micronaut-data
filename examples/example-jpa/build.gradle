@@ -49,12 +49,11 @@ dependencies {
     implementation "io.micronaut:micronaut-runtime"
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
-    implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion", {
-        exclude group:'io.micronaut.configuration', module:'micronaut-hibernate-jpa-spring'
-    }
+    implementation "io.micronaut.data:micronaut-data-hibernate-jpa:$micronautDataVersion"
+    implementation "io.micronaut.configuration:micronaut-hibernate-jpa:2.0.0.BUILD-SNAPSHOT"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     runtimeOnly "com.h2database:h2"
-    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-hikari"
+    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-hikari:2.0.0.BUILD-SNAPSHOT"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "org.junit.jupiter:junit-jupiter-api"
