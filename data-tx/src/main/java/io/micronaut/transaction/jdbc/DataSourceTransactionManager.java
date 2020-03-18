@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -89,6 +90,7 @@ import javax.sql.DataSource;
 @EachBean(DataSource.class)
 // only enable if spring transaction management is not present
 @Requires(missingClasses = "org.springframework.jdbc.datasource.DataSourceTransactionManager")
+@TypeHint(DataSourceTransactionManager.class)
 public class DataSourceTransactionManager extends AbstractSynchronousTransactionManager<Connection>
         implements ResourceTransactionManager<DataSource, Connection> {
 

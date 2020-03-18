@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.IllegalTransactionStateException;
@@ -87,6 +88,7 @@ import java.util.Objects;
 @EachBean(SessionFactory.class)
 @Requires(missingClasses = "org.springframework.orm.hibernate5.HibernateTransactionManager")
 @Replaces(DataSourceTransactionManager.class)
+@TypeHint(HibernateTransactionManager.class)
 public class HibernateTransactionManager extends AbstractSynchronousTransactionManager<Connection>
         implements ResourceTransactionManager<EntityManagerFactory, Connection> {
 
@@ -104,7 +106,6 @@ public class HibernateTransactionManager extends AbstractSynchronousTransactionM
 
     @Nullable
     private final Interceptor entityInterceptor;
-
 
     /**
      * Create a new HibernateTransactionManager instance.
