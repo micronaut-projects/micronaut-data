@@ -58,9 +58,6 @@ io.micronaut.data.spring.jdbc
 io.micronaut.data.spring.jpa.intercept
 io.micronaut.data.spring.runtime
 io.micronaut.data.spring.runtime.http
-io.micronaut.data.tck.entities
-io.micronaut.data.tck.jdbc.entities
-io.micronaut.data.tck.repositories
 io.micronaut.transaction
 io.micronaut.transaction.annotation
 io.micronaut.transaction.exceptions
