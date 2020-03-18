@@ -77,14 +77,16 @@ public class EventIntegrator implements Integrator {
 
         entityBindings.forEach(e -> {
                     Class<?> mappedClass = e.getMappedClass();
-                    BeanIntrospection<?> introspection = BeanIntrospector.SHARED.findIntrospection(mappedClass).orElse(null);
-                    if (introspection != null) {
-                        introspection.getIndexedProperty(DateCreated.class).ifPresent(bp ->
-                            dateCreated.put(mappedClass, bp)
-                        );
-                        introspection.getIndexedProperty(DateUpdated.class).ifPresent(bp ->
-                            lastUpdates.put(mappedClass, bp)
-                        );
+                    if (mappedClass != null) {
+                        BeanIntrospection<?> introspection = BeanIntrospector.SHARED.findIntrospection(mappedClass).orElse(null);
+                        if (introspection != null) {
+                            introspection.getIndexedProperty(DateCreated.class).ifPresent(bp ->
+                                    dateCreated.put(mappedClass, bp)
+                            );
+                            introspection.getIndexedProperty(DateUpdated.class).ifPresent(bp ->
+                                    lastUpdates.put(mappedClass, bp)
+                            );
+                        }
                     }
                 }
         );
