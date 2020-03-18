@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-bom</artifactId>
+      <version>1.3.3</version>
+  </parent>   
   <modelVersion>4.0.0</modelVersion>
   <groupId>example.jdbc</groupId>
   <artifactId>example-jdbc</artifactId>
   <version>0.1</version>
   <properties>    
-    <micronaut.version>1.2.9</micronaut.version>
-    <micronaut.data.version>1.0.0</micronaut.data.version>
+    <micronaut.version>1.3.3</micronaut.version>
+    <micronaut.data.version>1.0.1</micronaut.data.version>
     <jdk.version>1.8</jdk.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <exec.mainClass>example.Application</exec.mainClass>
@@ -16,17 +21,6 @@
       <url>https://jcenter.bintray.com</url>
     </repository>
   </repositories>
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>io.micronaut</groupId>
-        <artifactId>micronaut-bom</artifactId>
-        <version>${micronaut.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
   <dependencies>
     <dependency>
       <groupId>io.micronaut</groupId>
@@ -47,7 +41,6 @@
     <dependency>
         <groupId>io.micronaut.data</groupId>
         <artifactId>micronaut-data-jdbc</artifactId>
-        <version>${micronaut.data.version}</version>
         <scope>compile</scope>
     </dependency>
     <dependency>
@@ -94,13 +87,11 @@
     <dependency>
       <groupId>io.micronaut.test</groupId>
       <artifactId>micronaut-test-junit5</artifactId>
-      <version>1.0.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.micronaut.test</groupId>
       <artifactId>micronaut-test-core</artifactId>
-      <version>1.0.5</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

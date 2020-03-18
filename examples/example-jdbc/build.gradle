@@ -17,10 +17,19 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0"
-    micronautVersion = "1.2.9"
+    micronautDataVersion = "1.0.1"
+    micronautVersion = "1.3.3"
 }
-
+configurations {
+    all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            String group = details.requested.group
+            if (group == 'io.micronaut.data') {
+                details.useVersion(micronautDataVersion)
+            }
+        }
+    }
+}
 dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")     
     annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")

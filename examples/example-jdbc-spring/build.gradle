@@ -1,7 +1,7 @@
 plugins {
     id "java"
     id "net.ltgt.apt-eclipse" version "0.21"
-    id "org.springframework.boot" version "2.1.0.RELEASE"
+    id "org.springframework.boot" version "2.2.0.RELEASE"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
 }
 
@@ -18,8 +18,8 @@ configurations {
 }
 
 ext {
-    micronautDataVersion = "1.0.0.RC1"
-    micronautVersion = "1.2.9"
+    micronautDataVersion = "1.0.1"
+    micronautVersion = "1.3.3"
 }
 
 dependencyManagement {
@@ -27,6 +27,19 @@ dependencyManagement {
         mavenBom "io.micronaut:micronaut-bom:$micronautVersion"
     }
 }
+
+configurations {
+    all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            String group = details.requested.group
+            if (group == 'io.micronaut.data') {
+                details.useVersion(micronautDataVersion)
+            }
+        }
+    }
+}
+
+
 dependencies {
     annotationProcessor "io.micronaut.spring:micronaut-spring-boot-annotation"
     annotationProcessor "io.micronaut.spring:micronaut-spring-web-annotation"        
