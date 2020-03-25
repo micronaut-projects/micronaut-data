@@ -7,7 +7,7 @@ dependencies {
 
     // optional dependencies
     compileOnly "io.micronaut:micronaut-jdbc:$micronautVersion"
-    compileOnly "org.springframework:spring-jdbc:5.2.4.RELEASE"
+    compileOnly "org.springframework:spring-jdbc:5.2.5.RELEASE"
     compileOnly "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
