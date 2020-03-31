@@ -52,13 +52,21 @@ class TransactionAnnotationSpec extends Specification {
         testService.lastEvent == null
         testService.readTransactionally() == 1
 
+        when:"A transaction is rolled back but the exception ignored"
+        testService.insertAndRollbackDontRollbackOn()
+
+        then:
+        thrown(IOException)
+        testService.readTransactionally() == 2
+        testService.lastEvent
+
 
         when:"Test that connections are never exhausted"
         int i = 0
         200.times { i += testService.readTransactionally() }
 
         then:"We're ok at it completed"
-        i == 200
+        i == 400
     }
 
     @Singleton
@@ -99,6 +107,15 @@ class TransactionAnnotationSpec extends Specification {
             ps1.close()
             eventPublisher.publishEvent(new NewBookEvent("The Shining"))
             throw new Exception("Bad things happened")
+        }
+
+        @Transactional(dontRollbackOn = IOException)
+        void insertAndRollbackDontRollbackOn() {
+            def ps1 = connection.prepareStatement("insert into book (pages, title) values(200, 'The Shining')")
+            ps1.execute()
+            ps1.close()
+            eventPublisher.publishEvent(new NewBookEvent("The Shining"))
+            throw new IOException("Bad things happened")
         }
 
 

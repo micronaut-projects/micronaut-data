@@ -46,7 +46,7 @@ public class DefaultTransactionAttribute extends DefaultTransactionDefinition im
             // rollback on all exceptions
             return true;
         } else {
-            return noRollbackFor.stream().anyMatch(t -> t.isInstance(ex));
+            return noRollbackFor.stream().noneMatch(t -> t.isInstance(ex));
         }
     }
 }

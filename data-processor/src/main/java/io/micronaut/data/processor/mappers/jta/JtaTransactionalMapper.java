@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.jta;
 
+import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
@@ -22,6 +23,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import java.lang.annotation.Annotation;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,11 +48,15 @@ public class JtaTransactionalMapper implements NamedAnnotationMapper {
         annotation.getValue(String.class).ifPresent(type ->
                     builder.member("propagation", type)
         );
-        annotation.get("rollbackOn", String[].class).ifPresent(type ->
-                builder.member("rollbackFor", type)
+        annotation.get("rollbackOn", String[].class).ifPresent(type -> {
+                    AnnotationClassValue[] classValues = Arrays.stream(type).map(AnnotationClassValue::new).toArray(AnnotationClassValue[]::new);
+                    builder.member("rollbackFor", classValues);
+                }
         );
-        annotation.get("dontRollbackOn", String[].class).ifPresent(type ->
-                builder.member("noRollbackFor", type)
+        annotation.get("dontRollbackOn", String[].class).ifPresent(type -> {
+                    AnnotationClassValue[] classValues = Arrays.stream(type).map(AnnotationClassValue::new).toArray(AnnotationClassValue[]::new);
+                    builder.member("noRollbackFor", classValues);
+                }
         );
         return Collections.singletonList(
                 builder.build()
