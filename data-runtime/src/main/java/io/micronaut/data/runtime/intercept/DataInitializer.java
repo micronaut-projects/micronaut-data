@@ -43,6 +43,9 @@ class DataInitializer {
         conversionService.addConverter(Timestamp.class, ZonedDateTime.class, timestamp ->
                 timestamp.toLocalDateTime().atZone(ZoneId.systemDefault())
         );
+        conversionService.addConverter(ZonedDateTime.class, Timestamp.class, zonedDateTime ->
+                new Timestamp(zonedDateTime.toInstant().toEpochMilli())
+        );
         conversionService.addConverter(Timestamp.class, LocalDateTime.class, Timestamp::toLocalDateTime);
         conversionService.addConverter(Instant.class, Date.class, instant ->
                 new Date(instant.toEpochMilli())

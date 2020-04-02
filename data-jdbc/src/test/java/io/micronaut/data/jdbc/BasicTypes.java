@@ -65,7 +65,6 @@ public class BasicTypes {
     private Date date = new Date();
 
     private LocalDateTime localDateTime = LocalDateTime.now();
-    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private ZonedDateTime zonedDateTime = ZonedDateTime.now();
     private Instant instant = Instant.now();
     private UUID uuid = UUID.randomUUID();
