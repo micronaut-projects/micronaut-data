@@ -77,7 +77,7 @@ class H2BasicTypesSpec extends Specification {
         book.myId != null
 
         when:"A book is found"
-        def retrievedBook = repository.findById(book.myId).orElse(null)
+        def retrievedBook = repository.findByByteArray(book.byteArray)
 
         then:"The book is correct"
         retrievedBook.uuid == book.uuid
@@ -104,6 +104,13 @@ class H2BasicTypesSpec extends Specification {
         retrievedBook.url == book.url
         // stored as a DATE type without time
 //        retrievedBook.date == book.date
+
+        when:"Updating a byte array"
+        def changed = "changed byte".bytes
+        repository.update(retrievedBook.myId, changed)
+
+        then:
+        repository.findByByteArray(changed) != null
 
     }
 }

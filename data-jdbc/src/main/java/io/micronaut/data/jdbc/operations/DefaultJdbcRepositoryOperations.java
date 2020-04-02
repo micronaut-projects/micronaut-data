@@ -937,10 +937,14 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         setStatementParameter(ps, index++, dataType, o);
                     }
                 } else if (value.getClass().isArray()) {
-                    int len = Array.getLength(value);
-                    for (int j = 0; j < len; j++) {
-                        Object o = Array.get(value, j);
-                        setStatementParameter(ps, index++, dataType, o);
+                    if (value instanceof byte[]) {
+                        setStatementParameter(ps, index++, dataType, value);
+                    } else {
+                        int len = Array.getLength(value);
+                        for (int j = 0; j < len; j++) {
+                            Object o = Array.get(value, j);
+                            setStatementParameter(ps, index++, dataType, o);
+                        }
                     }
                 } else {
                     setStatementParameter(ps, index++, dataType, value);
