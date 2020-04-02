@@ -29,6 +29,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -62,7 +63,10 @@ public class BasicTypes {
     private URI uri = URI.create("https://test.com");
     private byte[] byteArray = new byte[] { 1, 2, 3};
     private Date date = new Date();
+
     private LocalDateTime localDateTime = LocalDateTime.now();
+    @Column(columnDefinition = "TIMESTAMP WITH TIME ZONE")
+    private ZonedDateTime zonedDateTime = ZonedDateTime.now();
     private Instant instant = Instant.now();
     private UUID uuid = UUID.randomUUID();
     @Column(columnDefinition = "DECIMAL(24) NOT NULL")
@@ -263,6 +267,14 @@ public class BasicTypes {
 
     public void setLocalDateTime(LocalDateTime localDateTime) {
         this.localDateTime = localDateTime;
+    }
+
+    public ZonedDateTime getZonedDateTime() {
+        return zonedDateTime;
+    }
+
+    public void setZonedDateTime(ZonedDateTime zonedDateTime) {
+        this.zonedDateTime = zonedDateTime;
     }
 
     public Instant getInstant() {

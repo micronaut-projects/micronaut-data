@@ -40,6 +40,10 @@ class DataInitializer {
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime ->
                 new java.sql.Date(offsetDateTime.toInstant().toEpochMilli())
         );
+        conversionService.addConverter(Timestamp.class, ZonedDateTime.class, timestamp ->
+                timestamp.toLocalDateTime().atZone(ZoneId.systemDefault())
+        );
+        conversionService.addConverter(Timestamp.class, LocalDateTime.class, Timestamp::toLocalDateTime);
         conversionService.addConverter(Instant.class, Date.class, instant ->
                 new Date(instant.toEpochMilli())
         );

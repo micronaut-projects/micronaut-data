@@ -22,6 +22,8 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 /**
@@ -94,7 +96,9 @@ public interface QueryStatement<PS, IDX> {
                     return setDate(statement, index, convertRequired(value, Date.class));
                 }
             case TIMESTAMP:
-                if (value instanceof Date) {
+                if (value instanceof LocalDateTime || value instanceof ZonedDateTime) {
+                    return setValue(statement, index, value);
+                } else if (value instanceof Date) {
                     return setTimestamp(statement, index, ((Date) value));
                 } else {
                     return setTimestamp(statement, index, convertRequired(value, Date.class));
@@ -241,7 +245,6 @@ public interface QueryStatement<PS, IDX> {
     QueryStatement<PS, IDX> setDate(PS statement, IDX name, Date date) {
         return setValue(statement, name, date);
     }
-
 
     /**
      * Write a date value for the given name.
