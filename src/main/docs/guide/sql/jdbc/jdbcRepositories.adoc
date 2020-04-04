@@ -1,7 +1,7 @@
 As seen in the <<jdbcQuickStart, Quick Start>> JDBC repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.jdbc.annotation.JdbcRepository[] annotation.
 
 
-In multi database scenario, the ann:io.micronaut.data.annotation.Repository annotation can be used to specify the datsource configuration to use. By default Micronaut Data will look for the default datasource.
+In multiple datasource scenario, the @io.micronaut.data.annotation.Repository annotation can be used to specify the datsource configuration to use. By default Micronaut Data will look for the default datasource.
 
 For example: 
 [source,java]
