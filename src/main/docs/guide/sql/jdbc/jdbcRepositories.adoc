@@ -1,6 +1,20 @@
 As seen in the <<jdbcQuickStart, Quick Start>> JDBC repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.jdbc.annotation.JdbcRepository[] annotation.
 
-The ann:data.jdbc.annotation.JdbcRepository[] annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Micronaut Data will look for the default datasource.
+
+In multiple datasource scenario, the @io.micronaut.data.annotation.Repository annotation can be used to specify the datsource configuration to use. By default Micronaut Data will look for the default datasource.
+
+For example: 
+[source,java]
+----
+@Repository(value = "inventoryDataSource") // <1>
+@JdbcRepository(dialect = Dialect.ORACLE) // <2>
+public interface PhoneRepository extends CrudRepository<Phone, Integer> {
+    Optional<Phone> findByAssetId(@NotNull Integer assetId);
+}
+----
+<1> @Repository annotaiton, pointing to data source configuration 'inventoryDataSource'
+<2> @JdbcRepository with a specific dialect. 
+
 
 The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.
 
