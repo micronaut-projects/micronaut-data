@@ -11,7 +11,7 @@
 
         gtag('config', 'UA-82213539-2');
     </script>
-    <title>8 Micronaut Data with SQL 1.0.2.BUILD-SNAPSHOT</title>
+    <title>8 Micronaut Data with SQL 1.0.3.BUILD-SNAPSHOT</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -99,7 +99,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>8 Micronaut Data with SQL</h1>
 
-                    <p><strong>Version:</strong> 1.0.2.BUILD-SNAPSHOT</p>
+                    <p><strong>Version:</strong> 1.0.3.BUILD-SNAPSHOT</p>
                 </div>
 
                 
@@ -243,7 +243,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.2.BUILD-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:1.0.3.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -253,7 +253,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;1.0.2.BUILD-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;1.0.3.BUILD-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -279,7 +279,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:1.0.2.BUILD-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:1.0.3.BUILD-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -287,7 +287,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;1.0.2.BUILD-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;1.0.3.BUILD-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -782,7 +782,31 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <p>As seen in the <a href="#jdbcQuickStart">Quick Start</a> JDBC repositories in Micronaut Data are defined as interfaces that are annotated with the <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation.</p>
 </div>
 <div class="paragraph">
-<p>The <a href="../api/io/micronaut/data/jdbc/annotation/JdbcRepository.html">@JdbcRepository</a> annotation accepts an optional string value which represents the name of the connection or datasource in a multiple datasource scenario. By default Micronaut Data will look for the default datasource.</p>
+<p>In multiple datasource scenario, the @io.micronaut.data.annotation.Repository annotation can be used to specify the datsource configuration to use. By default Micronaut Data will look for the default datasource.</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Repository(value = "inventoryDataSource") <i class="conum" data-value="1"></i><b>(1)</b>
+@JdbcRepository(dialect = Dialect.ORACLE) <i class="conum" data-value="2"></i><b>(2)</b>
+public interface PhoneRepository extends CrudRepository&lt;Phone, Integer&gt; {
+    Optional&lt;Phone&gt; findByAssetId(@NotNull Integer assetId);
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>@Repository annotaiton, pointing to data source configuration 'inventoryDataSource'</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>@JdbcRepository with a specific dialect.</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> interface.</p>
