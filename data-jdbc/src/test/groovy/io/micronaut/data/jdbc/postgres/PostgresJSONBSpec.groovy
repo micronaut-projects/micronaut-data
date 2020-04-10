@@ -48,6 +48,13 @@ class PostgresJSONBSpec extends Specification implements TestPropertyProvider {
         sale.data == [foo:'bar']
 
         when:
+        sale.data.put('foo2', 'bar2')
+        saleRepository.update(sale)
+        sale = saleRepository.findById(sale.id).orElse(null)
+        then:
+        sale.data.containsKey('foo2')
+
+        when:
         saleRepository.updateData(sale.id,[foo:'changed'] )
         sale = saleRepository.findById(sale.id).orElse(null)
 

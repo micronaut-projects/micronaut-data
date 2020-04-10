@@ -70,6 +70,7 @@ import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -568,6 +569,17 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             }
                                         }
                                     }
+                                } else if (dataType == DataType.JSON && jsonCodec != null) {
+                                    String value = new String(jsonCodec.encode(newValue), StandardCharsets.UTF_8);
+                                    if (QUERY_LOG.isTraceEnabled()) {
+                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, value);
+                                    }
+                                    preparedStatementWriter.setDynamic(
+                                            ps,
+                                            i + 1,
+                                            dataType,
+                                            value
+                                    );
                                 } else {
                                     if (QUERY_LOG.isTraceEnabled()) {
                                         QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
