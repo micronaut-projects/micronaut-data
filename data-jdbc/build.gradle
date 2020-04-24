@@ -19,7 +19,7 @@ dependencies {
     testRuntimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
     testRuntimeOnly "com.oracle.ojdbc:ojdbc8:19.3.0.0"
     testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
-    testImplementation "org.testcontainers:spock:1.13.0"
+    testImplementation "org.testcontainers:spock:1.14.1"
     testImplementation "org.testcontainers:mysql:1.13.0"
     testImplementation "org.testcontainers:mariadb:1.13.0"
     testImplementation "org.testcontainers:postgresql:1.13.0"
