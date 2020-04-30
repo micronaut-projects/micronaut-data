@@ -48,7 +48,7 @@ class PhysicalNamingStrategyConfiguration implements BeanCreatedEventListener<Jp
     @Override
     public JpaConfiguration onCreated(BeanCreatedEvent<JpaConfiguration> event) {
         JpaConfiguration jpaConfiguration = event.getBean();
-        jpaConfiguration.getProperties().put(
+        jpaConfiguration.getProperties().putIfAbsent(
                 AvailableSettings.PHYSICAL_NAMING_STRATEGY, physicalNamingStrategy
         );
         return jpaConfiguration;
