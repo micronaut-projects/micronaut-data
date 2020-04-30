@@ -40,6 +40,7 @@ class JpaOrderBySpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.repository.CrudRepository;
@@ -49,6 +50,7 @@ import java.util.List;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<Person> queryByNameOrderByName(String n);
@@ -104,7 +106,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
-import io.micronaut.data.annotation.Repository;
+import io.micronaut.context.annotation.Executable;import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.entities.Person;
 import java.util.List;
@@ -112,6 +114,7 @@ import io.micronaut.data.repository.GenericRepository;
 
 @Repository
 interface MyInterface extends GenericRepository<Person, Long>{
+    @Executable
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
 

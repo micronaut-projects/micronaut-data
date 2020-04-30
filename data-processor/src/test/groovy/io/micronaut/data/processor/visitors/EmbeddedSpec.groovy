@@ -7,6 +7,7 @@ class EmbeddedSpec extends AbstractDataSpec {
     void "test compile embedded id count query"() {
         given:
         def repository = buildRepository('test.LikeRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @javax.persistence.Entity
@@ -47,6 +48,7 @@ class LikeId {
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@Executable
 interface LikeRepository extends CrudRepository<Like, LikeId> {
     long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);
 }

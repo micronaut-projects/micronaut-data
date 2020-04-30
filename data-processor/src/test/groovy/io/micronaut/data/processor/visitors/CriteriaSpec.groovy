@@ -31,13 +31,14 @@ class CriteriaSpec extends AbstractDataSpec {
         String methodName = "findBy${NameUtils.capitalize(property)}${criterion}"
         String sig = signature.entrySet().collect { "$it.value.name $it.key" }.join(",")
         BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
 interface MyInterface {
+    @Executable
     Person $methodName($sig);    
 }
-
 """)
 
         def method = beanDefinition.getRequiredMethod(methodName, signature.values() as Class[])

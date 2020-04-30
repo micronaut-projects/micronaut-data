@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors
 
 
-import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.intercept.annotation.DataMethod
 
 class ParameterTypeDefSpec extends AbstractDataSpec {
@@ -25,6 +24,7 @@ class ParameterTypeDefSpec extends AbstractDataSpec {
         given:
         def repository = buildRepository('test.PersonRepository', '''
 import java.util.UUID;
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @RepositoryConfiguration(
@@ -33,9 +33,9 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
     namedParameters = false
 )
 @Repository
+@Executable
 interface PersonRepository extends io.micronaut.data.repository.GenericRepository<Person, UUID> {
     List<Person> findByIdIn(List<UUID> id);
-    
      
     void deleteAll(Iterable<Person> entities);
 }
@@ -75,6 +75,7 @@ class Person {
         given:
         def repository = buildRepository('test.PersonRepository', '''
 import java.util.UUID;
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @RepositoryConfiguration(
@@ -84,6 +85,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 )
 @Repository
 interface PersonRepository extends io.micronaut.data.repository.GenericRepository<Person, Long> {
+    @Executable
     void deleteAll(Iterable<Person> entities);
 }
 

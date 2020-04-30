@@ -31,6 +31,7 @@ class BuildInsertSpec extends AbstractDataSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -38,6 +39,7 @@ import io.micronaut.data.model.DataType;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@Executable
 interface MyInterface extends CrudRepository<TableRatings, Long> {
 }
 
@@ -82,6 +84,7 @@ class TableRatings {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
@@ -89,6 +92,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 }
 """)
@@ -109,6 +113,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
         BeanDefinition beanDefinition = buildBeanDefinition('test.TestBookPageRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -118,6 +123,7 @@ import io.micronaut.data.tck.entities.ShelfBook;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@Executable
 interface TestBookPageRepository extends io.micronaut.data.tck.repositories.BookPageRepository {
 
 }

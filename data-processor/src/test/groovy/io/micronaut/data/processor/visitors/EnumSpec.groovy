@@ -21,10 +21,12 @@ class EnumSpec extends AbstractDataSpec {
         when:
         def repo = buildRepository('test.MyInterface', """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Pet;
 import io.micronaut.data.tck.entities.Pet.PetType;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Pet, Long> {
 
     Pet findByType(PetType type);

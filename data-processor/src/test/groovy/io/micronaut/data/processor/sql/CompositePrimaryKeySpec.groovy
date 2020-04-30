@@ -34,9 +34,11 @@ class CompositePrimaryKeySpec extends AbstractDataSpec {
     void "test compile repository 2"() {
         given:
         def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@Executable
 interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository{
 }
 """)
@@ -54,12 +56,14 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
 import javax.persistence.Entity;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Column;
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId>{
     void update(@Id Long id, @Parameter("name") String name);
 }

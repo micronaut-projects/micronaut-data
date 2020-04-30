@@ -24,6 +24,7 @@ class SqlParameterBindingSpec extends AbstractDataSpec {
     void "test update binding respects data type"() {
         given:
         def repository = buildRepository('test.SaleRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Sale;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
@@ -31,6 +32,7 @@ import java.util.Map;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@Executable
 interface SaleRepository extends CrudRepository<Sale, Long> {
 
     void updateData(@Id Long id, Map<String, String> data);
@@ -50,12 +52,14 @@ interface SaleRepository extends CrudRepository<Sale, Long> {
 import javax.persistence.Entity;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Column;
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     List<Project> findByNameLikeOrNameNotEqual(String n1, String n2, Pageable pageable);
 }
@@ -74,10 +78,12 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
 import javax.persistence.Entity;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Column;
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
+@Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     List<Project> findByNameLikeOrNameNotEqual(String name1, String name2, Pageable pageable);
 
@@ -98,7 +104,10 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     void "test compile non-sql repository 2"() {
         given:
         def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.context.annotation.Executable;
+
 @Repository
+@Executable
 interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository{
 }
 """)

@@ -123,12 +123,14 @@ class JpaProjectionsSpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.entities.*;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long>{
     $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
@@ -143,6 +145,7 @@ interface MyInterface extends GenericRepository<Person, Long>{
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Repository;
 ${returnType.isAnnotationPresent(Entity) ? 'import ' + returnType.getName() + ';' : ''}
 import io.micronaut.data.model.entities.*;
@@ -150,6 +153,7 @@ import java.util.List;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long>{
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }

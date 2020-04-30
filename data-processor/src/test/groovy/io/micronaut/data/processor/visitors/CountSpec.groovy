@@ -28,6 +28,7 @@ class CountSpec extends AbstractDataSpec {
     void "test count method variations for method #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.*;
 import java.util.concurrent.*;
 import io.reactivex.*;
@@ -36,6 +37,7 @@ import io.micronaut.data.model.*;
 import java.util.*;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     $returnType $method($arguments);

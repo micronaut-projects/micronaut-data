@@ -10,10 +10,12 @@ class BuildUpdateSpec extends AbstractDataSpec {
     void "test build update with datasource set"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     void updateById(int id, String theLongName, String title);
 }
@@ -38,10 +40,12 @@ ${entity('Movie', [title: String, theLongName: String])}
     void "test build update with custom ID"() {
         given:
         def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Company;
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface CompanyRepository extends CrudRepository<Company, Long> {
 }
 """)
@@ -61,11 +65,13 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
     void "test build update with embedded"() {
         given:
         def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Restaurant;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface CompanyRepository extends CrudRepository<Restaurant, Long> {
 }
 """)

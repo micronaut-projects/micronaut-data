@@ -32,6 +32,8 @@ class FindSpec extends AbstractDataSpec {
     void "test find by with overlapping property paths 2"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.PlayerRepository', '''
+import io.micronaut.context.annotation.Executable;
+
 @javax.persistence.Entity
 @javax.persistence.Table(name = "player")
 class Player {
@@ -113,6 +115,7 @@ class Team {
 }
 
 @Repository
+@Executable
 interface PlayerRepository extends GenericRepository<Player, Long> {
 
     Collection<Player> findByName(String name);
@@ -133,6 +136,8 @@ interface PlayerRepository extends GenericRepository<Player, Long> {
     void "test find by with overlapping property paths"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.DeviceInfoRepository', """
+import io.micronaut.context.annotation.Executable;
+
 @javax.persistence.Entity
 class DeviceInfo {
 
@@ -187,6 +192,7 @@ class DeviceManufacturer {
 }
 
 @Repository
+@Executable
 interface DeviceInfoRepository extends GenericRepository<DeviceInfo, Long> {
 
     DeviceInfo findByManufacturerDeviceId(String id);
@@ -206,6 +212,7 @@ interface DeviceInfoRepository extends GenericRepository<DeviceInfo, Long> {
 ${playerTeamModel()}
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface PlayerRepository extends GenericRepository<Player, Integer> {
 
     Collection<Player> findAllOrderByName();
@@ -231,6 +238,7 @@ interface PlayerRepository extends GenericRepository<Player, Integer> {
 ${playerTeamModel()}
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface PlayerRepository extends GenericRepository<Player, Integer> {
 
     Collection<Player> findByTeamName(String name);
@@ -252,11 +260,13 @@ interface PlayerRepository extends GenericRepository<Player, Integer> {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person find(Long id);

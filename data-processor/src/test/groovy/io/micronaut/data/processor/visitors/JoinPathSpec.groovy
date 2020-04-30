@@ -29,10 +29,12 @@ class JoinPathSpec extends AbstractDataSpec {
     void "test join with custom ID"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<User, Long> {
 
     @Join(value = "authorities")
@@ -91,9 +93,11 @@ class User {
     void "test JPA projection across nested property path for #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $returnType $method($arguments);
@@ -121,10 +125,12 @@ interface MyInterface extends GenericRepository<City, Long> {
     void "test SQL projection across one-to-many with mappedBy #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<Author, Long> {
 
     $returnType $method($arguments);
@@ -151,10 +157,12 @@ interface MyInterface extends GenericRepository<Author, Long> {
     void "test SQL projection across one-to-many with join table #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<CountryRegion, Long> {
 
     $returnType $method($arguments);
@@ -188,10 +196,12 @@ interface MyInterface extends GenericRepository<CountryRegion, Long> {
             }.join('')
         }
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -222,12 +232,14 @@ interface MyInterface extends GenericRepository<City, Long> {
     void "test 2 join annotations with custom overlapping aliases"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import java.util.List;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     @Join(value = "countryRegion", alias = "r_")
@@ -261,10 +273,12 @@ interface MyInterface extends GenericRepository<City, Long> {
             }.join('')
         }
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -307,9 +321,11 @@ interface MyInterface extends GenericRepository<City, Long> {
             }.join('')
         }
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -352,9 +368,11 @@ interface MyInterface extends GenericRepository<City, Long> {
     void "test JPA projection across nested property path for #method with @Join"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     @Join("$joinPath")
@@ -382,10 +400,12 @@ interface MyInterface extends GenericRepository<City, Long> {
     void "test nested to-many joins results in the correct query"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends io.micronaut.data.tck.repositories.ShelfRepository {
 
 }

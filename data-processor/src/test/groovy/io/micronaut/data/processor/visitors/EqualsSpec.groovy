@@ -29,11 +29,12 @@ class EqualsSpec extends AbstractDataMethodSpec {
         when:
         buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
 interface MyInterface extends GenericRepository<Person, Long> {
-
+    @Executable
     Person findByNameOrAge(int age, String name);
 }
 """)

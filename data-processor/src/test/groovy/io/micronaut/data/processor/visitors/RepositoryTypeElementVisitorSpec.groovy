@@ -48,10 +48,12 @@ class RepositoryTypeElementVisitorSpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Repository;
 import $returnType.name;
 
 @Repository
+@Executable
 interface MyInterface {
     $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
@@ -83,12 +85,14 @@ interface MyInterface {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.Repository;
 import $returnType.name;
 import java.util.List;
 import io.micronaut.data.model.Pageable;
 
 @Repository
+@Executable
 interface MyInterface {
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')}, Pageable pager);    
 }

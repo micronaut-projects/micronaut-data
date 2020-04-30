@@ -43,12 +43,14 @@ class SpringCrudRepositorySpec extends AbstractTypeElementSpec {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 import io.micronaut.data.annotation.Repository;
 
 @Repository
+@Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 
     List<Person> list(String name);   

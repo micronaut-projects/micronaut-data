@@ -24,9 +24,11 @@ class OrderBySpec extends AbstractDataSpec {
     void "test order by date created"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 
     Company $method($arguments);
@@ -52,12 +54,14 @@ interface MyInterface extends GenericRepository<Company, Long> {
     void "test order by date created - sql"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 
     Company $method($arguments);

@@ -22,6 +22,7 @@ abstract class AbstractDataMethodSpec extends AbstractDataSpec {
     ExecutableMethod<?, ?> buildMethod(String entity ,String returnType, String method, String arguments, String...imports) {
         def repository = buildRepository('test.MyInterface', """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.*;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
@@ -29,6 +30,7 @@ import java.util.*;
 ${imports ? imports.collect({ 'import ' + it + '.*;' }).join('\n') : ''}
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<$entity, Long> {
 
     $returnType $method($arguments);

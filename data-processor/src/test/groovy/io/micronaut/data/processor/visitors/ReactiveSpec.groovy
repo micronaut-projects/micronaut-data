@@ -26,7 +26,7 @@ class ReactiveSpec extends AbstractDataSpec {
     void "test reactive method with rxjava #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
-
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import java.util.concurrent.CompletionStage;
 import io.micronaut.data.annotation.*;
@@ -35,6 +35,7 @@ import java.util.*;
 import io.reactivex.*;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     $returnType $method($arguments);
@@ -67,7 +68,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "save"         | "Single<Person>"        | "Person person"         | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId"  | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities" | SaveAllReactiveInterceptor
-        "updateByName" | "Single<Number>"       | "String name, int age"  | UpdateReactiveInterceptor
-        "update"       | "Completable"       | "@Id Long id, int age"  | UpdateReactiveInterceptor
+        "updateByName" | "Single<Number>"        | "String name, int age"  | UpdateReactiveInterceptor
+        "update"       | "Completable"           | "@Id Long id, int age"  | UpdateReactiveInterceptor
     }
 }

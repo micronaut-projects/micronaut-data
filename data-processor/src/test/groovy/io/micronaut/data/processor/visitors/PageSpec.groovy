@@ -37,9 +37,11 @@ class PageSpec extends AbstractDataSpec {
         when:
         buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Page<Person> findAllByNameNotStartsWith(Pageable pageable, String name);
@@ -55,9 +57,11 @@ interface MyInterface extends GenericRepository<Person, Long> {
         when:
         buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Page<Person> findByNameOrAge(Pageable pageable, String name, int age);
@@ -73,9 +77,11 @@ interface MyInterface extends GenericRepository<Person, Long> {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Page<Person> list(Pageable pageable);
@@ -107,9 +113,11 @@ interface MyInterface extends GenericRepository<Person, Long> {
         when:
         buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     @Query("from Person p where p.name = :name")
@@ -125,9 +133,11 @@ interface MyInterface extends GenericRepository<Person, Long> {
         when:
         buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     @Query("from Person p where p.name = :name")

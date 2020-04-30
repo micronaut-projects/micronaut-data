@@ -12,12 +12,14 @@ class BuildQuerySpec extends AbstractDataSpec {
     void "test to-many join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.*;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @Join("books")
+@Executable
 interface MyInterface extends CrudRepository<Author, Long> {
 }
 """
@@ -30,12 +32,14 @@ interface MyInterface extends CrudRepository<Author, Long> {
     void "test to-one join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @Join("author")
+@Executable
 interface MyInterface extends CrudRepository<Book, Long> {
 }
 """
@@ -48,12 +52,14 @@ interface MyInterface extends CrudRepository<Book, Long> {
     void "test join query on collection with custom ID name"() {
         given:
         def repository = buildRepository('test.MealRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Meal;
 import java.util.UUID;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface MealRepository extends CrudRepository<Meal, UUID> {
     @Join("foods")
     Meal searchById(UUID uuid);
@@ -71,6 +77,7 @@ interface MealRepository extends CrudRepository<Meal, UUID> {
     void "test join query with custom foreign key"() {
         given:
         def repository = buildRepository('test.FoodRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Food;
@@ -79,6 +86,7 @@ import java.util.UUID;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface FoodRepository extends CrudRepository<Food, UUID> {
     
     @Join("meal")
@@ -98,11 +106,13 @@ interface FoodRepository extends CrudRepository<Food, UUID> {
     void "test build query with datasource set"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     Optional<Movie> findByTitle(String title);
     Optional<String> findTheLongNameById(int id);
@@ -126,11 +136,13 @@ ${entity('Movie', [title: String, theLongName: String])}
     void "test build DTO projection with pageable"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     Page<MovieTitle> queryAll(Pageable pageable);
 }
@@ -155,7 +167,10 @@ ${dto('MovieTitle', [title: String])}
     void "test in query with property that starts with in"() {
         given:
         def repository = buildRepository('test.SomeEntityRepository', """
+import io.micronaut.context.annotation.Executable;
+
 @Repository
+@Executable
 interface SomeEntityRepository extends CrudRepository<SomeEntity, Long> {
     List<SomeEntity> findByInternetNumberInList(List<Long> internetNumbers);
 }

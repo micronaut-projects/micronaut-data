@@ -29,10 +29,12 @@ class JpaJoinSpec extends AbstractDataSpec {
     void "test join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Book;
 
 @Repository
 @Join("author")
+@Executable
 interface MyInterface extends CrudRepository<Book, Long> {
 }
 """
@@ -46,9 +48,11 @@ interface MyInterface extends CrudRepository<Book, Long> {
     void "test JPA projection across nested property path for #method"() {
         given:
         def repository = buildRepository('test.MyInterface', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Author, Long> {
 
     $returnType $method($arguments);
@@ -73,9 +77,11 @@ interface MyInterface extends GenericRepository<Author, Long> {
     void "test join spec - list"() {
         given:
         def repository = buildRepository("test.MyInterface", '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Book;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Book, Long> {
 
     @Join("author")

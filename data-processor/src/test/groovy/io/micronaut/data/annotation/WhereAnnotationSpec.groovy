@@ -10,7 +10,10 @@ class WhereAnnotationSpec extends AbstractDataSpec {
         given:
         def repository = buildRepository('test.TestRepository', '''
 
+import io.micronaut.context.annotation.Executable;
+
 @Repository
+@Executable
 interface TestRepository extends CrudRepository<User, Long> {
     int countByIdGreaterThan(Long id);
 }
@@ -58,10 +61,12 @@ class User {
     void "test parameterized @Where declaration - fails compile"() {
         when:"A parameterized @Where is missing an argument definition"
         buildRepository('test.TestRepository', '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Person;
 
 @Where("age > :age")
 @Repository
+@Executable
 interface TestRepository extends GenericRepository<Person, Long> {
     int countByNameLike(String name);
 }
@@ -74,10 +79,12 @@ interface TestRepository extends GenericRepository<Person, Long> {
     void "test parameterized @Where declaration"() {
         given:
         def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Person;
 
 @Where("age > :age")
 @Repository
+@Executable
 interface TestRepository extends GenericRepository<Person, Long> {
     int countByNameLike(String name, int age);
 }
@@ -94,10 +101,12 @@ interface TestRepository extends GenericRepository<Person, Long> {
     void "test build @Where definition with no parameters at type level"() {
         given:
         def repository = buildRepository('test.TestRepository', '''
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Person;
 
 @Where("person_.age > 18")
 @Repository
+@Executable
 interface TestRepository extends CrudRepository<Person, Long> {
     int countByNameLike(String name);
 }

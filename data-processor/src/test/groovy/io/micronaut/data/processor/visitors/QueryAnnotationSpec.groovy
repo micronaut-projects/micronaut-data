@@ -42,11 +42,13 @@ class QueryAnnotationSpec extends AbstractDataSpec {
     void "test @Query with update statement #methodName"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@Executable
 interface MovieRepository extends GenericRepository<Movie, Long> {
     @Query("$query")
     void deleteById(Long id);
@@ -82,10 +84,10 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         'nextTask'   | [String.class] | 'UPDATE User SET enabled = false WHERE id = :id' | UpdateInterceptor
     }
 
-    @PendingFeature(reason = "Micronaut Core currently visits methods that are overridden. This is a bug and once fixed in core this can be removed.")
     void "test @Query with update statement - override"() {
         given:
         def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
@@ -93,6 +95,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 @JdbcRepository(dialect= Dialect.MYSQL)
 interface MovieRepository extends CrudRepository<Movie, Long> {
     @Query("UPDATE User SET enabled = false WHERE id = :id")
+    @Executable
     @Override
     void deleteById(Long id);
 }
@@ -115,6 +118,7 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.*;
@@ -122,6 +126,7 @@ import java.util.List;
 
 @Repository
 @RepositoryConfiguration(namedParameters = false, implicitQueries = false)
+@Executable
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")
@@ -156,6 +161,7 @@ interface MyInterface {
         BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.annotation.Repository;
@@ -163,6 +169,7 @@ import io.micronaut.data.annotation.Query;
 import java.util.List;
 
 @Repository
+@Executable
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")

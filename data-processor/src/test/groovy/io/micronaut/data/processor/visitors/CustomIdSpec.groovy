@@ -21,9 +21,11 @@ class CustomIdSpec extends AbstractDataSpec {
         when:
         def repo = buildRepository('test.MyInterface', """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.tck.entities.Task;
 
 @Repository
+@Executable
 interface MyInterface extends CrudRepository<Task, Long> {
 
 }

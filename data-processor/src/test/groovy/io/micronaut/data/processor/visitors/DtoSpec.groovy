@@ -28,10 +28,12 @@ class DtoSpec extends AbstractDataSpec {
         when:
         buildRepository('test.MyInterface' , """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.core.annotation.Introspected;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<PersonDto> list(String name);
@@ -61,10 +63,12 @@ class PersonDto {
         when:
         def repository = buildRepository('test.MyInterface', """
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.model.entities.Person;
 import io.micronaut.core.annotation.Introspected;
 
 @Repository
+@Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<PersonDto> list(String name);
