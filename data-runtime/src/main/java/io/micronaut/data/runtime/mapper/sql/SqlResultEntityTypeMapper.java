@@ -435,7 +435,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 Object currentId = id;
                 if (CollectionUtils.isNotEmpty(toManyJoins)) {
 
-                    while (currentId != null && currentId.equals(id)) {
+                    while (id.equals(currentId)) {
                         for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
                             Object associated = readAssociation(
                                     entity,
@@ -449,20 +449,26 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 entry.getValue().add(associated);
                             }
                         }
-                        currentId = nextId(identity, rs);
 
+                        String columnName = resolveColumnName(
+                                identity,
+                                prefix,
+                                isEmbedded,
+                                hasPrefix
+                        );
+
+                        currentId = nextId(identity, rs, columnName);
                     }
 
                     if (currentId != null) {
                         this.callNext = false;
                     }
 
-                    for (Map.Entry<Association, List> entry : toManyJoins.entrySet()) {
-                        List value = entry.getValue();
-                        RuntimePersistentProperty joinAssociation = (RuntimePersistentProperty) entry.getKey();
+                    toManyJoins.forEach((key, value) -> {
+                        RuntimePersistentProperty joinAssociation = (RuntimePersistentProperty) key;
                         BeanProperty property = joinAssociation.getProperty();
                         convertAndSet(entity, joinAssociation, property, value, joinAssociation.getDataType());
-                    }
+                    });
                 }
             }
             return entity;
@@ -490,17 +496,16 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * Resolve the ID of the next row.
      * @param identity The identity
      * @param resultSet The result set
+     * @param columnName The column name
      * @return The ID
      */
-    Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet) {
-        Object id = resultReader.readNextDynamic(resultSet, identity.getPersistedName(), identity.getDataType());
-        if (id != null) {
+    Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet, @NonNull String columnName) {
+        if (hasNext(resultSet)) {
+            final Object id = resultReader.readDynamic(resultSet, columnName, identity.getDataType());
             final Class<?> isType = identity.getType();
-            if (!isType.isInstance(id)) {
-                id = resultReader.convertRequired(id, isType);
-            }
+            return isType.isInstance(id) ? id : resultReader.convertRequired(id, isType);
         }
-        return id;
+        return null;
     }
 
     private Object convertAndSet(
@@ -510,19 +515,18 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             Object v,
             DataType dataType) {
         Class<?> propertyType = rpp.getType();
-        Object r;
+        final Object r;
         if (propertyType.isInstance(v)) {
             r = v;
-            property.set(entity, v);
         } else {
             if (dataType == DataType.JSON && jsonCodec != null) {
                 r = jsonCodec.decode(property.asArgument(), v.toString());
-                property.set(entity, r);
             } else {
                 r = resultReader.convertRequired(v, propertyType);
-                property.set(entity, r);
             }
         }
+        property.set(entity, r);
+
         return r;
     }
 
