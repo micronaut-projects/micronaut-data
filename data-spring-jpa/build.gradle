@@ -12,6 +12,6 @@ dependencies {
     testImplementation project(":data-hibernate-jpa")
     testImplementation project(":data-tck")
     testRuntimeOnly "com.h2database:h2"
-    testRuntimeOnly group:'io.micronaut.configuration', name:'micronaut-hibernate-jpa-spring', version:'1.3.0'
+    testRuntimeOnly group:'io.micronaut.configuration', name:'micronaut-hibernate-jpa-spring', version:'2.2.0'
     testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
 }
