@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
@@ -22,9 +23,18 @@ import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
 import java.util.List;
+import java.util.Optional;
 
 public interface AuthorRepository extends CrudRepository<Author, Long> {
+
+    @NonNull
+    @Override
+    @Join(value = "books", alias = "b", type = Join.Type.LEFT_FETCH)
+    @Join(value = "books.pages", alias = "bp", type = Join.Type.LEFT_FETCH)
+    Optional<Author> findById(@NonNull @NotNull Long aLong);
 
     Author findByName(String name);
 

@@ -15,9 +15,16 @@
  */
 package io.micronaut.data.tck.entities;
 
-import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 
 @Entity
 public class Book {
@@ -33,7 +40,7 @@ public class Book {
     @ManyToOne
     private Publisher publisher;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
     private List<Page> pages = new ArrayList<>();
 
     public List<Page> getPages() {
@@ -83,5 +90,4 @@ public class Book {
     public void setPublisher(Publisher publisher) {
         this.publisher = publisher;
     }
-
 }

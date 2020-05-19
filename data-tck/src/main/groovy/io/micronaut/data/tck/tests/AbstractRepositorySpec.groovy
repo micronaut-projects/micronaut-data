@@ -16,35 +16,13 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.data.exceptions.EmptyResultException
-import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.tck.entities.Author
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.BookDto
-import io.micronaut.data.tck.entities.City
-import io.micronaut.data.tck.entities.Company
-import io.micronaut.data.tck.entities.Country
-import io.micronaut.data.tck.entities.CountryRegion
-import io.micronaut.data.tck.entities.CountryRegionCity
-import io.micronaut.data.tck.entities.Face
-import io.micronaut.data.tck.entities.Nose
-import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.repositories.AuthorRepository
-import io.micronaut.data.tck.repositories.BookDtoRepository
-import io.micronaut.data.tck.repositories.BookRepository
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CompanyRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.FaceRepository
-import io.micronaut.data.tck.repositories.NoseRepository
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.repositories.RegionRepository
-import spock.lang.Ignore
+import io.micronaut.data.tck.entities.*
+import io.micronaut.data.tck.repositories.*
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import java.time.Instant
 import java.time.LocalDate
 
 @Stepwise
@@ -545,7 +523,68 @@ abstract class AbstractRepositorySpec extends Specification {
         results.first().name == 'Google'
     }
 
+    void "test one-to-many mappedBy"() {
+        when:"a one-to-many is saved"
+        def author = new Author()
+        author.name = "author"
 
+        def book1 = new Book()
+        book1.title = "Book1"
+        def page1 = new io.micronaut.data.tck.entities.Page()
+        page1.num = 1
+        book1.getPages().add(page1)
+
+        def book2 = new Book()
+        book2.title = "Book2"
+        def page21 = new io.micronaut.data.tck.entities.Page()
+        def page22 = new io.micronaut.data.tck.entities.Page()
+        page21.num = 21
+        page22.num = 22
+        book2.getPages().add(page21)
+        book2.getPages().add(page22)
+
+        def book3 = new Book()
+        book3.title = "Book3"
+        def page31 = new io.micronaut.data.tck.entities.Page()
+        def page32 = new io.micronaut.data.tck.entities.Page()
+        def page33 = new io.micronaut.data.tck.entities.Page()
+        page31.num = 31
+        page32.num = 32
+        page33.num = 33
+        book3.getPages().add(page31)
+        book3.getPages().add(page32)
+        book3.getPages().add(page33)
+
+        author.getBooks().add(book1)
+        author.getBooks().add(book2)
+        author.getBooks().add(book3)
+        author = authorRepository.save(author)
+
+        then: "They are saved correctly"
+        println(author)
+        author.id
+
+        when:"retrieving an author"
+        author = authorRepository.findById(author.id).orElse(null)
+
+        then:"the associations are correct"
+        author.getBooks().size() == 3
+
+        def result1 = author.getBooks().find {book -> book.title == "Book1" }
+        result1.pages.size() == 1
+        result1.pages.find {page -> page.num = 1}
+
+        def result2 = author.getBooks().find {book -> book.title == "Book2" }
+        result2.pages.size() == 2
+        result2.pages.find {page -> page.num = 21}
+        result2.pages.find {page -> page.num = 22}
+
+        def result3 = author.getBooks().find {book -> book.title == "Book3" }
+        result3.pages.size() == 3
+        result3.pages.find {page -> page.num = 31}
+        result3.pages.find {page -> page.num = 32}
+        result3.pages.find {page -> page.num = 33}
+    }
 
     void "test one-to-one mappedBy"() {
         when:"when a one-to-one mapped by is saved"
