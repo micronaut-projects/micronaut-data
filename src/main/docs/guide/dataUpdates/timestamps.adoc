@@ -1,4 +1,4 @@
-It is common to want to add a field that represents the time when an entity is was first persisted and the time when it was last updated.
+It is common to want to add a field that represents the time when an entity was first persisted and the time when it was last updated.
 
 You can annotate a property that is a date type of an entity with ann:data.annotation.DateCreated[] which will be automatically populated when saving entities and indicates the date a record was created.
 
