@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18};
+var methods = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -228,28 +228,20 @@ var activeTableTab = "activeTableTab";
 </td>
 </tr>
 <tr id="i14" class="altColor">
-<td class="colFirst"><code>default java.lang.Object</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readNextDynamic-RS-IDX-io.micronaut.data.model.DataType-">readNextDynamic</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
-               <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
-               <a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code>
-<div class="block">Read the next value dynamically using the result set and the given name and data type.</div>
-</td>
-</tr>
-<tr id="i15" class="rowColor">
 <td class="colFirst"><code>default short</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readShort-RS-IDX-">readShort</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
          <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a short value for the given name.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readString-RS-IDX-">readString</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
           <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a string value for the given name.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default java.util.Date</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readTimestamp-RS-IDX-">readTimestamp</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
              <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code>
@@ -316,34 +308,6 @@ var activeTableTab = "activeTableTab";
 <dd><code>type</code> - The type</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The value</dd>
-<dt><span class="throwsLabel">Throws:</span></dt>
-<dd><code><a href="../../../../../io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code> - if the value cannot be read</dd>
-</dl>
-</li>
-</ul>
-<a name="readNextDynamic-java.lang.Object-java.lang.Object-io.micronaut.data.model.DataType-">
-<!--   -->
-</a><a name="readNextDynamic-RS-IDX-io.micronaut.data.model.DataType-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>readNextDynamic</h4>
-<pre>@Nullable
-default&nbsp;java.lang.Object&nbsp;readNextDynamic(@NonNull
-                                                   <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
-                                                   @NonNull
-                                                   <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
-                                                   @NonNull
-                                                   <a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;dataType)</pre>
-<div class="block">Read the next value dynamically using the result set and the given name and data type.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>resultSet</code> - The result set</dd>
-<dd><code>index</code> - The name</dd>
-<dd><code>dataType</code> - The data type</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The value, can be null</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
 <dd><code><a href="../../../../../io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code> - if the value cannot be read</dd>
 </dl>
