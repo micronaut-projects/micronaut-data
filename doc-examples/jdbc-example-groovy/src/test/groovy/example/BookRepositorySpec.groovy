@@ -1,21 +1,18 @@
 package example
 
 import io.micronaut.test.annotation.MicronautTest
-import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
 
-// @MicronautTest
+@MicronautTest
 class BookRepositorySpec extends Specification {
 
     // tag::inject[]
     @Inject @Shared BookRepository bookRepository
     // end::inject[]
 
-
-    @PendingFeature(reason = "Requires GA release of Micronaut 1.2")
     void 'test CRUD operations'() {
 
         when: "Create: Save a new book"
