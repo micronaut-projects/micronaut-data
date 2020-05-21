@@ -24,7 +24,7 @@ dependencies {
     testImplementation "org.testcontainers:mariadb:1.13.0"
     testImplementation "org.testcontainers:postgresql:1.13.0"
     testImplementation "org.testcontainers:mssqlserver:1.14.2"
-    testImplementation "org.testcontainers:oracle-xe:1.13.0"
+    testImplementation "org.testcontainers:oracle-xe:1.14.2"
     testImplementation 'mysql:mysql-connector-java:8.0.19'
     testImplementation 'org.postgresql:postgresql:42.2.12'
     testImplementation 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
