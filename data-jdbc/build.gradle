@@ -22,7 +22,7 @@ dependencies {
     testImplementation "org.testcontainers:spock:1.13.0"
     testImplementation "org.testcontainers:mysql:1.14.2"
     testImplementation "org.testcontainers:mariadb:1.13.0"
-    testImplementation "org.testcontainers:postgresql:1.13.0"
+    testImplementation "org.testcontainers:postgresql:1.14.2"
     testImplementation "org.testcontainers:mssqlserver:1.14.2"
     testImplementation "org.testcontainers:oracle-xe:1.13.0"
     testImplementation 'mysql:mysql-connector-java:8.0.19'
