@@ -1,6 +1,9 @@
 package example
 
-import javax.persistence.*
+import javax.persistence.Id
+import javax.persistence.Entity
+import javax.persistence.ManyToOne
+import javax.persistence.GeneratedValue
 
 @Entity
 class Sale {
