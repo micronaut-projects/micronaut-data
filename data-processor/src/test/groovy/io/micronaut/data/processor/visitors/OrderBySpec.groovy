@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.Company
 
 class OrderBySpec extends AbstractDataSpec {

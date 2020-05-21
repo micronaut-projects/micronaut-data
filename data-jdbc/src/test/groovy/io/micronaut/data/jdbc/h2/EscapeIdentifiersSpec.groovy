@@ -17,8 +17,6 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.jdbc.TableRatings
-import io.micronaut.data.model.Pageable
-import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
