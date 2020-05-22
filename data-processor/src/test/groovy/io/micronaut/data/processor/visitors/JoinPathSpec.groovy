@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 original authors
+ * Copyright 2017-2020 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,8 +396,8 @@ interface MyInterface extends io.micronaut.data.tck.repositories.ShelfRepository
         def query = method.stringValue(Query).get()
 
         expect:
-        query.contains('LEFT JOIN book_page p_book_page_ ON b_."id"=p_book_page_.book_id ')
         query.contains('LEFT JOIN shelf_book b_shelf_book_ ON shelf_."id"=b_shelf_book_.shelf_id ')
-        query.contains('LEFT JOIN "page" p_ ON p_book_page_.page_id=p_."id" ')
+        query.contains('LEFT JOIN "book" b_ ON b_shelf_book_.book_id=b_."id" ')
+        query.contains('LEFT JOIN "page" p_ ON b_."id"=p_."book_id" ')
     }
 }

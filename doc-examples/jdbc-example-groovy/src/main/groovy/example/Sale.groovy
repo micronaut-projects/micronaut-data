@@ -1,16 +1,16 @@
 package example
 
-import io.micronaut.data.annotation.TypeDef
-import io.micronaut.data.model.DataType
-
-import javax.persistence.*
+import javax.persistence.Id
+import javax.persistence.Entity
+import javax.persistence.ManyToOne
+import javax.persistence.GeneratedValue
 
 @Entity
 class Sale {
 
     @ManyToOne
     final Product product
-    @TypeDef(type = DataType.INTEGER)
+
     final Quantity quantity
 
     @Id

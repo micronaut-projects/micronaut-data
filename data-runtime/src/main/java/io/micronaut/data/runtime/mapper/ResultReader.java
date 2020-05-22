@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 original authors
+ * Copyright 2017-2020 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package io.micronaut.data.runtime.mapper;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
-
-import java.math.BigDecimal;
-import java.util.Date;
 
 /**
  * A result reader is a type that is capable of reading data from the given result set type.
@@ -61,25 +61,6 @@ public interface ResultReader<RS, IDX> {
      */
     @Nullable <T> T getRequiredValue(RS resultSet, IDX name, Class<T> type)
         throws DataAccessException;
-
-    /**
-     * Read the next value dynamically using the result set and the given name and data type.
-     * @param resultSet The result set
-     * @param index The name
-     * @param dataType The data type
-     * @return The value, can be null
-     * @throws DataAccessException if the value cannot be read
-     */
-    default @Nullable Object readNextDynamic(
-            @NonNull RS resultSet,
-            @NonNull IDX index,
-            @NonNull DataType dataType) {
-        if (next(resultSet)) {
-            return readDynamic(resultSet, index, dataType);
-        } else {
-            return null;
-        }
-    }
 
     /**
      * Move the index to the next result if possible.
