@@ -45,7 +45,8 @@ class PageSpec extends Specification {
         List<Person> people = []
         50.times { num ->
             ('A'..'Z').each {
-                people << new Person(name: it * 5 + num, age: num)
+                //  age doesn't follow the name ordering so we can test sorting
+                people << new Person(name: it * 5 + num, age: (49 - num) % 25)
             }
         }
 
@@ -71,6 +72,36 @@ class PageSpec extends Specification {
         then:"The results are correct"
         results.size() == 10
         results[0].name.startsWith("Z")
+    }
+
+    void "test sortMultiple"() {
+        when:"Sorted Age ASC Name DESC results are returned"
+        def results = personRepository.listTop10(
+                Sort.unsorted().order("age", Sort.Order.Direction.ASC)
+                               .order("name", Sort.Order.Direction.DESC)
+        )
+
+        then:"The results are correct"
+        results.size() == 10
+        results[0].name.equals("ZZZZZ49")
+        results[1].name.equals("ZZZZZ24")
+        results[2].name.equals("YYYYY49")
+        results[3].name.equals("YYYYY24")
+
+
+        when:"Sorted Age DESC Name ASC results are returned"
+        results = personRepository.listTop10(
+                Sort.unsorted().order("age", Sort.Order.Direction.DESC)
+                        .order("name", Sort.Order.Direction.ASC)
+        )
+
+        then:"The results are correct"
+        results.size() == 10
+        results[0].name.equals("AAAAA0")
+        results[1].name.equals("AAAAA25")
+        results[2].name.equals("BBBBB0")
+        results[3].name.equals("BBBBB25")
+
     }
 
     void "test pageable list"() {

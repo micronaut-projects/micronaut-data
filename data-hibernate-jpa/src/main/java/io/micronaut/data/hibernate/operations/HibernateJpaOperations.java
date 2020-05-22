@@ -59,6 +59,7 @@ import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -564,23 +565,21 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     private <T> void bindCriteriaSort(CriteriaQuery<T> criteriaQuery, Root<?> root, CriteriaBuilder builder, @NonNull Sort sort) {
+        List<Order> orders = new ArrayList<>();
         for (Sort.Order order : sort.getOrderBy()) {
             Path<String> path = root.get(order.getProperty());
             Expression expression = order.isIgnoreCase() ? builder.lower(path) : path;
             switch (order.getDirection()) {
 
                 case DESC:
-                    criteriaQuery.orderBy(
-                            builder.desc(expression)
-                    );
+                    orders.add(builder.desc(expression));
                     continue;
                 default:
                 case ASC:
-                    criteriaQuery.orderBy(
-                            builder.asc(expression)
-                    );
+                    orders.add(builder.asc(expression));
             }
         }
+        criteriaQuery.orderBy(orders);
     }
 
     @NonNull
