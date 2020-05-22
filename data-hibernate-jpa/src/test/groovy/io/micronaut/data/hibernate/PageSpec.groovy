@@ -59,8 +59,8 @@ class PageSpec extends Specification {
 
         expect:
         page.size == 10
-        page.totalPages == 102
-        page.totalSize == 1014
+        page.totalSize == 728
+        page.totalPages == 73
     }
 
     void "test sort"() {
