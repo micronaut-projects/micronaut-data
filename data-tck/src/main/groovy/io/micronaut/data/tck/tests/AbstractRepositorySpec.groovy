@@ -199,6 +199,31 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 0
     }
 
+    void "test update method variations"() {
+        when:
+        def person = personRepository.save("Groot", 300)
+
+        then:
+        personRepository.count() == 1
+
+        when:
+        long result = personRepository.updatePersonCount(person.id, "Greg")
+
+        then:
+        personRepository.findByName("Greg")
+        result == 1
+
+        when:
+        personRepository.updatePersonFuture(person.id, "Fred").get()
+        personRepository.updatePersonRx(person.id, "Freddie").blockingGet()
+        result = personRepository.updatePersonCustom(person.id)
+
+        then:
+        result == 1
+
+        cleanup:
+        personRepository.deleteById(person.id)
+    }
 
     void "test is null or empty"() {
         expect:

@@ -48,6 +48,7 @@ public class FindOneMethod extends AbstractListMethod {
 
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && matchContext.getReturnType().hasStereotype(Introspected.class);
+        return super.isMethodMatch(methodElement, matchContext) &&
+                        matchContext.getReturnType().hasStereotype(Introspected.class);
     }
 }

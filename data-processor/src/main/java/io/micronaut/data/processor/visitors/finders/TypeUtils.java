@@ -352,4 +352,16 @@ public class TypeUtils {
         }
         return false;
     }
+
+    /**
+     * Return the type for the given class element, wrapping primitives types if necessary.
+     * @param type The type
+     * @return The ID type
+     */
+    public static @NonNull String getTypeName(@NonNull ClassElement type) {
+        String typeName = type.getName();
+        return ClassUtils.getPrimitiveType(typeName).map(t ->
+            ReflectionUtils.getWrapperType(t).getName()
+        ).orElse(typeName);
+    }
 }

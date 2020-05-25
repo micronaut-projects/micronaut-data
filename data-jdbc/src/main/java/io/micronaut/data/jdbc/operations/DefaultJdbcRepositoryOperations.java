@@ -412,7 +412,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             try {
                 Connection connection = status.getConnection();
                 try (PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false)) {
-                    return Optional.of(ps.executeUpdate());
+                    int result = ps.executeUpdate();
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Update operation updated {} records", result);
+                    }
+                    return Optional.of(result);
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);

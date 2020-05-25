@@ -16,11 +16,51 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
+import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Unroll
 
 class BuildUpdateSpec extends AbstractDataSpec {
+
+    @Unroll
+    void "test build update for type #type"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    $type updatePerson(@Id Long id, String name);
+
+    @Query("UPDATE person SET name = 'test' WHERE id = :id")
+    $type customUpdate(Long id); 
+    
+}
+""")
+        def method = repository.findPossibleMethods("updatePerson").findFirst().get()
+        def updateQuery = method.stringValue(Query).get()
+
+        expect:
+        updateQuery == 'UPDATE `person` SET `name`=? WHERE (`id` = ?)'
+        method.classValue(DataMethod, "interceptor").get() == interceptor
+
+        where:
+        type                                          | interceptor
+        'java.util.concurrent.Future<java.lang.Void>' | UpdateAsyncInterceptor
+        'io.reactivex.Completable'                    | UpdateReactiveInterceptor
+        'io.reactivex.Single<Long>'                   | UpdateReactiveInterceptor
+        'java.util.concurrent.CompletableFuture<Long>'| UpdateAsyncInterceptor
+        'long'                                        | UpdateInterceptor
+        'Long'                                        | UpdateInterceptor
+        'void'                                        | UpdateInterceptor
+    }
+
     @Unroll
     void "test build update with datasource set"() {
         given:
@@ -69,8 +109,8 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
 
 
         where:
-        methodName   | query                                                                                         | bindingPaths                               | binding
-        'update'     | 'UPDATE `company` SET `last_updated`=?,`name`=?,`url`=? WHERE (`my_id` = ?)' | ['lastUpdated', 'name', 'url', 'myId'] as String[] | [] as String[]
+        methodName | query                                                                        | bindingPaths                                       | binding
+        'update'   | 'UPDATE `company` SET `last_updated`=?,`name`=?,`url`=? WHERE (`my_id` = ?)' | ['lastUpdated', 'name', 'url', 'myId'] as String[] | [] as String[]
     }
 
     void "test build update with embedded"() {
