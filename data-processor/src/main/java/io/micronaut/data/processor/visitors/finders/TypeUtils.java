@@ -311,7 +311,9 @@ public class TypeUtils {
                 } else {
                     return DataType.DATE;
                 }
-            } else if (Stream.of(UUID.class, Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
+            } else if (type.isAssignable(UUID.class)) {
+                return DataType.UUID;
+            } if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
                 return DataType.STRING;
             }
 

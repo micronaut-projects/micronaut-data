@@ -119,7 +119,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
                                               @NonNull DateTimeProvider dateTimeProvider) {
-        super(new ColumnNameResultSetReader(), new ColumnIndexResultSetReader(), new JdbcQueryStatement(), codecs, dateTimeProvider);
+        super(
+                new ColumnNameResultSetReader(),
+                new ColumnIndexResultSetReader(),
+                new JdbcQueryStatement(),
+                codecs,
+                dateTimeProvider
+        );
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;

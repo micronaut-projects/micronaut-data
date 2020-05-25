@@ -101,7 +101,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             if (prop == null) {
                 RuntimePersistentProperty<T> identity = getIdentity();
                 if (identity != null && !identity.getName().equals(argumentName)) {
-                    throw new MappingException("Constructor argument [" + argumentName + "] must have an associated getter");
+                    throw new MappingException("Constructor argument [" + argumentName + "] for type [" + getName() + "] must have an associated getter");
                 }
             }
             this.constructorArguments[i] = prop;

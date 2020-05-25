@@ -87,7 +87,11 @@ public enum DataType {
     /**
      * A JSON type.
      */
-    JSON;
+    JSON,
+    /**
+     * The UUID type.
+     */
+    UUID;
 
     /**
      * Empty array of data types.

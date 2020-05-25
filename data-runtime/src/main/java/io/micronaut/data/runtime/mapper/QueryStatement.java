@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * An abstract interface over prepared statements.
@@ -102,6 +103,14 @@ public interface QueryStatement<PS, IDX> {
                     return setTimestamp(statement, index, ((Date) value));
                 } else {
                     return setTimestamp(statement, index, convertRequired(value, Date.class));
+                }
+            case UUID:
+                if (value instanceof CharSequence) {
+                    return setValue(statement, index, UUID.fromString(value.toString()));
+                } else if (value instanceof UUID) {
+                    return setValue(statement, index, value);
+                } else {
+                    throw new DataAccessException("Invalid UUID: " + value);
                 }
             case DOUBLE:
                 if (value instanceof Number) {

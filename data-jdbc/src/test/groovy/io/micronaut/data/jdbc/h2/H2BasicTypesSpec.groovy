@@ -66,7 +66,7 @@ class H2BasicTypesSpec extends Specification {
         "wrapperLong"      | DataType.LONG
         "primitiveDouble"  | DataType.DOUBLE
         "wrapperDouble"    | DataType.DOUBLE
-        "uuid"             | DataType.STRING
+        "uuid"             | DataType.UUID
     }
 
     void "test save and retrieve basic types"() {

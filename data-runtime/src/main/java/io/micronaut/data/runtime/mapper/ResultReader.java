@@ -83,6 +83,7 @@ public interface ResultReader<RS, IDX> {
             @NonNull DataType dataType) {
         switch (dataType) {
             case STRING:
+            case UUID:
             case JSON:
                 return readString(resultSet, index);
             case LONG:

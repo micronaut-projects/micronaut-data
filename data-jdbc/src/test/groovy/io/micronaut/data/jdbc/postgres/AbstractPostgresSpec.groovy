@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.postgres
 
+import groovy.sql.Sql
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.annotation.MicronautTest
@@ -23,6 +24,9 @@ import org.testcontainers.containers.PostgreSQLContainer
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import javax.inject.Inject
+import javax.sql.DataSource
 
 abstract class AbstractPostgresSpec extends Specification implements TestPropertyProvider {
 
@@ -39,6 +43,5 @@ abstract class AbstractPostgresSpec extends Specification implements TestPropert
             "datasources.default.dialect": Dialect.POSTGRES
         ]
     }
-
 
 }
