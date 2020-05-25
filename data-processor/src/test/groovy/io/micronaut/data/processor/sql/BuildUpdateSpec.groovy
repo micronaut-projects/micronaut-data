@@ -94,4 +94,25 @@ interface CompanyRepository extends CrudRepository<Restaurant, Long> {
         method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["name", "address.street", "address.zipCode", "hqAddress.street", "hqAddress.zipCode", "id"] as String[]
 
     }
+
+
+    void "test build update by ID"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    void updatePerson(@Id Long id, String name);
+}
+""")
+        def method = repository.findPossibleMethods("updatePerson").findFirst().get()
+        def updateQuery = method.stringValue(Query).get()
+
+        expect:
+        updateQuery == 'UPDATE `person` SET `name`=? WHERE (`id` = ?)'
+    }
 }
