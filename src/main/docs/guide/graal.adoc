@@ -1,5 +1,11 @@
 Micronaut Data supports GraalVM native images for both the JPA and JDBC implementations.
 
-Before you can build a native image however there are a few changes you need to make to your project to allow a native build.
+The currently supported databases are:
 
-The following sections describe the changes you need to make.
+* H2
+* Postgres
+* Oracle
+* MariaDB
+* MS SQLServer
+
+Micronaut Data will automatically detect the driver and configure the driver correctly for each database as appropriate.

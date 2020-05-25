@@ -2,6 +2,7 @@
 
 * Micronaut 1.3.x minimum version
 * Bug Fixes
+* Improvements to GraalVM support
 
 ==== 1.0.0.RC1
 

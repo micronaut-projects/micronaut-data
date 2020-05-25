@@ -55,8 +55,6 @@ sql:
     jdbcNativeQueries: Explicit JDBC Queries
 graal:
   title: Going Native with GraalVM
-  graalJDBC: JDBC and Native Builds
-  graalJPA: JPA and Native Builds
 spring:
   title: Spring Data Support
 
