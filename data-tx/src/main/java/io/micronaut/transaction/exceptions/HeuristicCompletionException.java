@@ -71,7 +71,6 @@ public class HeuristicCompletionException extends TransactionException {
      */
     private final State outcomeState;
 
-
     /**
      * Constructor for HeuristicCompletionException.
      * @param outcomeState the outcome state of the transaction

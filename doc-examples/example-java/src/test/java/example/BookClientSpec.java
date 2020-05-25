@@ -1,7 +1,9 @@
 package example;
 
+import io.micronaut.context.annotation.Property;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.jackson.JacksonConfiguration;
 import io.micronaut.test.annotation.MicronautTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -9,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 @MicronautTest
+// remove after upgrading to Micronaut 2.x
+@Property(name = JacksonConfiguration.PROPERTY_USE_BEAN_INTROSPECTION, value = "false")
 public class BookClientSpec {
 
     @Inject BookClient bookClient;

@@ -33,7 +33,6 @@ public class TransactionSystemException extends TransactionException {
     @Nullable
     private Throwable applicationException;
 
-
     /**
      * Constructor for TransactionSystemException.
      * @param msg the detail message
@@ -50,7 +49,6 @@ public class TransactionSystemException extends TransactionException {
     public TransactionSystemException(String msg, Throwable cause) {
         super(msg, cause);
     }
-
 
     /**
      * Set an application exception that was thrown before this transaction exception,

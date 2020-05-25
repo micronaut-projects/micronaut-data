@@ -27,7 +27,6 @@ public class TransactionAwareDataSource implements BeanCreatedEventListener<Data
     private Connection transactionAwareConnection;
     private String qualifier;
 
-
     /**
      * Create a new DelegatingDataSource.
      *
@@ -65,7 +64,6 @@ public class TransactionAwareDataSource implements BeanCreatedEventListener<Data
      * @since 1.0.1
      */
     private final class DataSourceProxy extends DelegatingDataSource {
-
 
         /**
          * Create a new DelegatingDataSource.

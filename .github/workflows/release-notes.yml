@@ -17,14 +17,12 @@ jobs:
     steps:
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
-      - name: Create Release
-        id: create_release
-        uses:  micronaut-projects/create-release@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ steps.release_notes.outputs.next_version }}
-          release_name: Micronaut Data ${{ steps.release_notes.outputs.next_version }}
-          bodyFromFile: CHANGELOG.md
+          allowUpdates: true
+          commit: master
           draft: true
-
+          name: Micronaut Data ${{ steps.release_notes.outputs.next_version }}
+          tag: v${{ steps.release_notes.outputs.next_version }}
+          bodyFile: CHANGELOG.md
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,3 +1,6 @@
+ext {
+    testContainersVersion = "1.14.2"
+}
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
@@ -19,15 +22,15 @@ dependencies {
     testRuntimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
     testRuntimeOnly "com.oracle.ojdbc:ojdbc8:19.3.0.0"
     testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
-    testImplementation "org.testcontainers:spock:1.14.2"
-    testImplementation "org.testcontainers:mysql:1.14.2"
-    testImplementation "org.testcontainers:mariadb:1.13.0"
-    testImplementation "org.testcontainers:postgresql:1.14.2"
-    testImplementation "org.testcontainers:mssqlserver:1.14.2"
-    testImplementation "org.testcontainers:oracle-xe:1.14.2"
-    testImplementation 'mysql:mysql-connector-java:8.0.19'
+    testImplementation "org.testcontainers:spock:$testContainersVersion"
+    testImplementation "org.testcontainers:mysql:$testContainersVersion"
+    testImplementation "org.testcontainers:mariadb:$testContainersVersion"
+    testImplementation "org.testcontainers:postgresql:$testContainersVersion"
+    testImplementation "org.testcontainers:mssqlserver:$testContainersVersion"
+    testImplementation "org.testcontainers:oracle-xe:$testContainersVersion"
+    testImplementation 'mysql:mysql-connector-java:8.0.20'
     testImplementation 'org.postgresql:postgresql:42.2.12'
-    testImplementation 'com.microsoft.sqlserver:mssql-jdbc:7.2.2.jre8'
+    testImplementation 'com.microsoft.sqlserver:mssql-jdbc:8.2.2.jre8'
 }
 
 //compileTestJava.options.fork = true

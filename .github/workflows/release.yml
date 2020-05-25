@@ -3,10 +3,11 @@ on:
   release:
     types: [published]
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -34,14 +35,54 @@ jobs:
           BRANCH: gh-pages
           FOLDER: build/docs
           VERSION: ${{ steps.release_version.outputs.release_version }}
+      - name: Checkout micronaut-core
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          repository: micronaut-projects/micronaut-core
+          ref: master # Or 1.3.x etc
+          path: micronaut-core # Must be micronaut-core
+        continue-on-error: true      
+      - name: Export Gradle Properties
+        uses: micronaut-projects/github-actions/export-gradle-properties@master            
+      - name: Update BOM
+        uses: micronaut-projects/github-actions/update-bom@master
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          branch: master # Or 1.3.x etc
+          # Refers to the key in the BOM (gradle.properties)
+          properties: |
+            micronautDataVersion=${{ steps.release_version.outputs.release_version }} 
+          version: ${{ steps.release_version.outputs.release_version }} 
+        continue-on-error: true
       - name: Run post-release
         if: success()
         uses: micronaut-projects/github-actions/post-release@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Synchronize Maven Central
-        if: success()
+  central-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+          ref: ${{ github.head_ref }}
+      - name: Set the current release version
+        id: release_version
+        run: |
+          release_version=${GITHUB_REF:11}
+          sed -i "s/^projectVersion.*$/projectVersion\=${release_version}/" gradle.properties
+          echo ::set-output name=release_version::${release_version}
+      - name: Publish to Sonatype OSSRH
         env:
-          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-        run: ./gradlew sWMC
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
+          GPG_FILE: ${{ secrets.GPG_FILE }}
+        run: echo $GPG_FILE | base64 -d > secring.gpg && ./gradlew publish closeAndReleaseRepository          
+
+          
