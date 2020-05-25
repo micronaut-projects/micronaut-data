@@ -39,7 +39,19 @@ ext {
 
 subprojects { Project subproject ->
     repositories {
-        maven { url "https://repo.grails.org/grails/core" }
+        jcenter()
+    }
+
+    configurations {
+        documentation
+        all {
+            resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+                String group = details.requested.group
+                if(group == 'org.codehaus.groovy') {
+                    details.useVersion(groovyVersion)
+                }
+            }
+        }
     }
 
     if (subproject.name.contains('example') || subproject.name.startsWith('benchmark')) {
@@ -120,17 +132,6 @@ subprojects { Project subproject ->
 
     }
 
-    configurations {
-        documentation
-        all {
-            resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-                String group = details.requested.group
-                if(group == 'org.codehaus.groovy') {
-                    details.useVersion(groovyVersion)
-                }
-            }
-        }
-    }
     dependencies {
         annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
         testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
