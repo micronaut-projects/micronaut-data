@@ -11,7 +11,7 @@
 
         gtag('config', 'UA-82213539-2');
     </script>
-    <title>8.1.7 Explicit JDBC Queries 1.0.3.BUILD-SNAPSHOT</title>
+    <title>8.1.7 Explicit JDBC Queries 1.1.0.BUILD-SNAPSHOT</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -99,7 +99,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>8.1.7 Explicit JDBC Queries</h1>
 
-                    <p><strong>Version:</strong> 1.0.3.BUILD-SNAPSHOT</p>
+                    <p><strong>Version:</strong> 1.1.0.BUILD-SNAPSHOT</p>
                 </div>
 
                 
@@ -187,6 +187,18 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 </div>
 <div class="paragraph">
 <p>In the above example the query uses an alias called <code>m_</code> to query the <code>manufacturer</code> table via an <code>INNER JOIN</code>. Since the returned <code>Product</code> entity features a <code>manufacturer</code> association it may be nice to materialize this object as well. The <code>alias</code> member of the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is used to specify which alias to materialize the <code>Manufacturer</code> instance from.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+It is necessary to use the "logical name" of the field in the <code>@Join</code> (the name used in the <code>@Entity</code> class) and not the name used in the native query itself. In the previous example, if the name in the class were <code>myManufacturer</code>, then you would need to use <code>Join(value = "myManufacturer", alias = "m_")</code> without modifying anything on the native sql query.
+</td>
+</tr>
+</table>
 </div>
 </div>
 
