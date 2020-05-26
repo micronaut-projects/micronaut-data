@@ -26,7 +26,7 @@ If you want to quickly test out Micronaut Data then you can set the `schema-gene
 include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 ----
 
-The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready.
+The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
 === Setting the Dialect
 
@@ -54,3 +54,5 @@ As seen in the YAML above you should also configure the dialect. Although querie
 |Oracle 12c or above
 
 |===
+
+IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.
