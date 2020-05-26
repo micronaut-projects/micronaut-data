@@ -157,7 +157,7 @@ function addJsClass() {
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>schema-generate</code> option is currently only recommended for simple applications, testing and demos and is not considered production-ready.</p>
+<p>The <code>schema-generate</code> option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.</p>
 </div>
 </div>
 <div class="sect2">
@@ -198,6 +198,18 @@ function addJsClass() {
 </tr>
 </tbody>
 </table>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+The dialect setting in configuration does <strong>not</strong> replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have <code>@JdbcRepository(dialect = Dialect.H2)</code>. Because repositories are computed at compile time, the configuration value is not known at that time.
+</td>
+</tr>
+</table>
+</div>
 </div>
 
 
