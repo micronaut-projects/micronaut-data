@@ -2750,6 +2750,18 @@ Assertions.assertEquals(
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(@Id id: Long?, pages: Int)</code></pre>
 </div>
 </div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+It is not possible to use the entity as the return type in partial updates because it would require an additional select to retrieve the additional information. A number type (int, long, etc) can be returned to indicate the number of rows updated. The updated row count should be checked in most scenarios to ensure the update actually affected the row.
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="transactions"><a class="anchor" href="#transactions"></a>6.1 Transactions</h2>
 
