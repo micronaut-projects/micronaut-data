@@ -18,6 +18,6 @@ dependencies {
     testImplementation project(":data-tck")
     testRuntimeOnly "com.h2database:h2:1.4.200"
     testRuntimeOnly project(":data-hibernate-jpa")
-    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat:2.2.1"
+    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat:2.2.2"
 
 }

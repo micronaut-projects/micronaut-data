@@ -9,7 +9,7 @@ dependencies {
     api "org.springframework.data:spring-data-commons:$springDataVersion"
     implementation "org.springframework:spring-jdbc:$springVersion"
     implementation group:'io.micronaut', name:'micronaut-spring', version: micronautVersion
-    implementation group:'io.micronaut.configuration', name:'micronaut-hibernate-jpa-spring', version:'2.2.1'
+    implementation group:'io.micronaut.configuration', name:'micronaut-hibernate-jpa-spring', version:'2.2.2'
 
     compileOnly 'io.micronaut:micronaut-http'
     compileOnly "org.springframework.data:spring-data-jpa:$springDataVersion"

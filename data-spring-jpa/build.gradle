@@ -1,5 +1,5 @@
 ext {
-    micronautSqlVersion = "2.2.1"
+    micronautSqlVersion = "2.2.2"
 }
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
