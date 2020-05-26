@@ -92,7 +92,7 @@ public class DataJdbcConfiguration implements Named {
 
     /**
      * Sets the packages to include use for the purposes of schema generation.
-     * 
+     *
      * @param packages The packages
      */
     public void setPackages(List<String> packages) {

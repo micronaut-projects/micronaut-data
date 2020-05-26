@@ -345,7 +345,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
              GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
                     .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
                     .orElseGet(() -> selectAutoStrategy(identity));
-            boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE || (dialect == Dialect.ORACLE && identity.getDataType() != DataType.UUID);
+            boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
             final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
             if (generatedDefinition != null) {
                 createStatements.add(generatedDefinition);
@@ -430,6 +430,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     // then alter the table for sequences
                     if (type == UUID) {
                         column += " NOT NULL DEFAULT SYS_GUID()";
+                    } else if (type == IDENTITY) {
+                        if (prop == identity) {
+                            column += " GENERATED ALWAYS AS IDENTITY";
+                        } else {
+                            column += " NOT NULL";
+                        }
                     } else {
                         column += " NOT NULL";
                     }

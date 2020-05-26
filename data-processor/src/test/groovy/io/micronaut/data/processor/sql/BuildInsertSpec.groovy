@@ -31,6 +31,107 @@ import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 class BuildInsertSpec extends AbstractDataSpec {
+
+    @Unroll
+    void "test build create table for identity generation and dialect - #dialect"() {
+        given:
+        ClassElement element = buildClassElement("""
+package test;
+import io.micronaut.data.annotation.*;
+
+class Test {
+    @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    private Long id;
+    private String name;
+
+    public Test(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+
+""")
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        def entity = new SourcePersistentEntity(element, {})
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        expect:
+        sql == query
+
+        where:
+        dialect            | query
+        Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" NUMBER(19) PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"NAME" VARCHAR(255) NOT NULL)'
+        Dialect.H2         | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+        Dialect.POSTGRES   | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL);'
+        Dialect.SQL_SERVER | 'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL);'
+        Dialect.MYSQL      | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+    }
+
+    @Unroll
+    void "test build insert for identity generation and dialect - #dialect"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import java.util.UUID;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect=Dialect.${dialect.name()})
+interface MyInterface extends GenericRepository<Test, Long> {
+    Test save(String name);
+    
+    Test findById(Long id);
+}
+
+@MappedEntity
+class Test {
+    @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    private Long id;
+    private String name;
+
+    public Test(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}
+
+""")
+        expect:
+        beanDefinition.getRequiredMethod("save", String)
+                .stringValue(Query).get() == query
+
+        where:
+        dialect            | query
+        Dialect.MYSQL      | 'INSERT INTO `test` (`name`) VALUES (?)'
+        Dialect.ORACLE     | 'INSERT INTO "TEST" ("NAME") VALUES (?)'
+        Dialect.H2         | 'INSERT INTO `test` (`name`) VALUES (?)'
+        Dialect.POSTGRES   | 'INSERT INTO "test" ("name") VALUES (?)'
+        Dialect.SQL_SERVER | 'INSERT INTO [test] ([name]) VALUES (?)'
+    }
+
     @Unroll
     void "test build create table for UUID and dialect - #dialect"() {
         given:
