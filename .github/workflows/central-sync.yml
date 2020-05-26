@@ -26,6 +26,6 @@ jobs:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
           GPG_FILE: ${{ secrets.GPG_FILE }}
-        run: echo $GPG_FILE | base64 -d > secring.gpg && ./gradlew publish closeAndReleaseRepository          
+        run: echo $GPG_FILE | base64 -d > secring.gpg && ./gradlew publish && ./gradlew closeAndReleaseRepository
 
           
