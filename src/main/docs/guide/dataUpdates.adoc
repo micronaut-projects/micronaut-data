@@ -16,4 +16,4 @@ For partial updates, you must define a method that features a parameter annotate
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="update", indent="0"]
 
-
+TIP: It is not possible to use the entity as the return type in partial updates because it would require an additional select to retrieve the additional information. A number type (int, long, etc) can be returned to indicate the number of rows updated. The updated row count should be checked in most scenarios to ensure the update actually affected the row.
