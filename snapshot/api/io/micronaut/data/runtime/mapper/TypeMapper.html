@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":6};
+var methods = {"i0":18,"i1":6,"i2":18,"i3":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -150,6 +150,13 @@ var activeTableTab = "activeTableTab";
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>default java.lang.Object</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html#read-D-io.micronaut.core.type.Argument-">read</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="type parameter in TypeMapper">D</a>&nbsp;object,
+    io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</code>
+<div class="block">Read a value for the given name from the given object.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html#read-D-java.lang.String-">read</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="type parameter in TypeMapper">D</a>&nbsp;object,
     java.lang.String&nbsp;name)</code>
@@ -215,6 +222,29 @@ java.lang.Object&nbsp;read(@NonNull
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>object</code> - The object to read from</dd>
 <dd><code>name</code> - The name</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The value</dd>
+</dl>
+</li>
+</ul>
+<a name="read-java.lang.Object-io.micronaut.core.type.Argument-">
+<!--   -->
+</a><a name="read-D-io.micronaut.core.type.Argument-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>read</h4>
+<pre>@Nullable
+default&nbsp;java.lang.Object&nbsp;read(@NonNull
+                                        <a href="../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="type parameter in TypeMapper">D</a>&nbsp;object,
+                                        @NonNull
+                                        io.micronaut.core.type.Argument&lt;?&gt;&nbsp;argument)</pre>
+<div class="block">Read a value for the given name from the given object.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>object</code> - The object to read from</dd>
+<dd><code>argument</code> - The argument</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The value</dd>
 </dl>
