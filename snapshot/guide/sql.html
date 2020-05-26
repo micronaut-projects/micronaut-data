@@ -699,7 +699,19 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <p>Micronaut Data JDBC requires that an appropriate <code>java.sql.DataSource</code> bean is configured.</p>
 </div>
 <div class="paragraph">
-<p>You can either do this manually or use the <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">Micronaut JDBC</a> module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari or Commons DBCP.</p>
+<p>You can either do this manually or use the <a href="https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc">Micronaut JDBC</a> module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari, Commons DBCP or Oracle UDP.</p>
+</div>
+<div class="sect2">
+<h3 id="_sql_logging">SQL Logging</h3>
+<div class="paragraph">
+<p>You can enable SQL logging by enabling trace logging for the <code>io.micronaut.data.query</code> logger. For example in <code>logback.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="title">Enabling SQL Query Logging</div>
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;logger name="io.micronaut.data.query" level="trace" /&gt;</code></pre>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_creating_the_schema">Creating the Schema</h3>
