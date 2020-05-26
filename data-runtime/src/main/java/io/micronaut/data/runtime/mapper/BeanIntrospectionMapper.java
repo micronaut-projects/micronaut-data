@@ -84,6 +84,10 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
             }
             Collection<BeanProperty<R, Object>> properties = introspection.getBeanProperties();
             for (BeanProperty<R, Object> property : properties) {
+                if (property.isReadOnly()) {
+                    continue;
+                }
+
                 Object v = read(object, property.getName());
                 if (property.getType().isInstance(v))  {
                     property.set(instance, v);

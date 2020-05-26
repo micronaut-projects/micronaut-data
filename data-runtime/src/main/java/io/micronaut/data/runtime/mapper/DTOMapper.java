@@ -24,6 +24,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.http.codec.MediaTypeCodec;
 
 /**
  * A {@link BeanIntrospectionMapper} that reads the result using the specified
@@ -37,6 +38,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
 
     private final RuntimePersistentEntity<T> persistentEntity;
     private final ResultReader<S, String> resultReader;
+    private final @Nullable MediaTypeCodec jsonCodec;
 
     /**
      * Default constructor.
@@ -46,10 +48,23 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     public DTOMapper(
             RuntimePersistentEntity<T> persistentEntity,
             ResultReader<S, String> resultReader) {
+        this(persistentEntity, resultReader, null);
+    }
+    /**
+     * Default constructor.
+     * @param persistentEntity The entity
+     * @param resultReader The result reader
+     * @param jsonCodec The JSON codec
+     */
+    public DTOMapper(
+            RuntimePersistentEntity<T> persistentEntity,
+            ResultReader<S, String> resultReader,
+            @Nullable MediaTypeCodec jsonCodec) {
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.persistentEntity = persistentEntity;
         this.resultReader = resultReader;
+        this.jsonCodec = jsonCodec;
     }
 
     @Nullable
@@ -72,7 +87,12 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<T> property) {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
-        return read(resultSet, propertyName, dataType);
+        if (dataType == DataType.JSON && jsonCodec != null) {
+            String data = resultReader.readString(resultSet, propertyName);
+            return jsonCodec.decode(property.getArgument(), data);
+        } else {
+            return read(resultSet, propertyName, dataType);
+        }
     }
 
     /**

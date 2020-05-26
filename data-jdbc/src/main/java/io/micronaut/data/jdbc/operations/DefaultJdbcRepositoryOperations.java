@@ -206,7 +206,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
                                         persistentEntity,
-                                        columnNameResultSetReader
+                                        columnNameResultSetReader,
+                                        jsonCodec
                                 );
 
                                 return introspectedDataMapper.map(rs, resultType);
@@ -260,7 +261,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 RuntimePersistentEntity<E> entity = getEntity(rootEntity);
                 TypeMapper<ResultSet, D> introspectedDataMapper = new DTOMapper<>(
                         entity,
-                        columnNameResultSetReader
+                        columnNameResultSetReader,
+                        jsonCodec
                 );
                 return introspectedDataMapper.map(rs, dtoType);
             }
@@ -325,7 +327,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (dtoProjection) {
                 mapper = new SqlDTOMapper<>(
                         getEntity(rootEntity),
-                        columnNameResultSetReader
+                        columnNameResultSetReader,
+                        jsonCodec
                 );
             } else {
                 mapper = new SqlResultEntityTypeMapper<>(
@@ -1209,7 +1212,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     public <E, D> D readDTO(@NonNull String prefix, @NonNull ResultSet resultSet, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException {
         return new DTOMapper<E, ResultSet, D>(
                 getEntity(rootEntity),
-                columnNameResultSetReader
+                columnNameResultSetReader,
+                jsonCodec
         ).map(resultSet, dtoType);
     }
 

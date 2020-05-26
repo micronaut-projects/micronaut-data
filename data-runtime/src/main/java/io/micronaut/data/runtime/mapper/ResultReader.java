@@ -21,6 +21,7 @@ import java.util.Date;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 
@@ -41,6 +42,24 @@ public interface ResultReader<RS, IDX> {
      * @throws DataAccessException if the value cannot be converted
      */
     default <T> T convertRequired(Object value, Class<T> type) {
+
+        return ConversionService.SHARED.convert(
+                value,
+                type
+        ).orElseThrow(() ->
+                new DataAccessException("Cannot convert type [" + value.getClass() + "] with value [" + value + "] to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.")
+        );
+    }
+
+    /**
+     * Convert the value to the given type.
+     * @param value The value
+     * @param type The type
+     * @param <T> The generic type
+     * @return The converted value
+     * @throws DataAccessException if the value cannot be converted
+     */
+    default <T> T convertRequired(Object value, Argument<T> type) {
 
         return ConversionService.SHARED.convert(
                 value,

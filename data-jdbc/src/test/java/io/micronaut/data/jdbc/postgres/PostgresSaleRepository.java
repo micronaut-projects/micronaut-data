@@ -20,6 +20,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Sale;
+import io.micronaut.data.tck.entities.SaleDTO;
 
 import java.util.Map;
 
@@ -27,4 +28,6 @@ import java.util.Map;
 public interface PostgresSaleRepository extends CrudRepository<Sale, Long> {
 
     void updateData(@Id Long id, Map<String, String> data);
+
+    SaleDTO getById(Long id);
 }

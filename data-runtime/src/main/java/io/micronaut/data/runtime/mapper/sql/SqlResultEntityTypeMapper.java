@@ -515,9 +515,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             r = v;
         } else {
             if (dataType == DataType.JSON && jsonCodec != null) {
-                r = jsonCodec.decode(property.asArgument(), v.toString());
+                r = jsonCodec.decode(rpp.getArgument(), v.toString());
             } else {
-                r = resultReader.convertRequired(v, propertyType);
+                r = resultReader.convertRequired(v, rpp.getArgument());
             }
         }
         property.set(entity, r);
