@@ -26,7 +26,7 @@ If you want to quickly test out Micronaut Data then you can set the `schema-gene
 include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 ----
 
-The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready.
+The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
 === Setting the Dialect
 
