@@ -37,6 +37,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -170,6 +171,29 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             resultSet,
             columnName,
             dataType
+        );
+    }
+
+    @Nullable
+    @Override
+    public Object read(@NonNull RS resultSet, @NonNull Argument<?> argument) {
+        RuntimePersistentProperty<R> property = entity.getPropertyByName(argument.getName());
+        DataType dataType;
+        String columnName;
+        if (property == null) {
+            dataType = argument.getAnnotationMetadata()
+                    .enumValue(TypeDef.class, "type", DataType.class)
+                    .orElseGet(() -> DataType.forType(argument.getType()));
+            columnName = argument.getName();
+        } else {
+            dataType = property.getDataType();
+            columnName = property.getPersistedName();
+        }
+
+        return resultReader.readDynamic(
+                resultSet,
+                columnName,
+                dataType
         );
     }
 

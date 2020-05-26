@@ -18,7 +18,9 @@ package io.micronaut.data.runtime.mapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
@@ -73,6 +75,20 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
         RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(name);
         if (pp == null) {
             throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + persistentEntity.getName());
+        } else {
+            return read(object, pp);
+        }
+    }
+
+    @Nullable
+    @Override
+    public Object read(@NonNull S object, @NonNull Argument<?> argument) {
+        RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(argument.getName());
+        if (pp == null) {
+            DataType type = argument.getAnnotationMetadata()
+                    .enumValue(TypeDef.class, "type", DataType.class)
+                    .orElseGet(() -> DataType.forType(argument.getType()));
+            return read(object, argument.getName(), type);
         } else {
             return read(object, pp);
         }

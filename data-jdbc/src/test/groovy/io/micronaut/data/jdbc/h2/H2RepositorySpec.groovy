@@ -146,6 +146,11 @@ class H2RepositorySpec extends AbstractRepositorySpec {
     void init() {
     }
 
+    void "test total dto"() {
+        expect:
+        pr.getTotal().total == 6
+    }
+
     void "test repositories are singleton"() {
         expect:
         pr.is(context.getBean(H2PersonRepository))

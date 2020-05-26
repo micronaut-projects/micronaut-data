@@ -192,8 +192,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 } else {
                     if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
-                        if (attemptProjection(matchContext, queryResultType, query, returnType)) {
-                            return null;
+                        if (!(query instanceof RawQuery)) {
+                            if (attemptProjection(matchContext, queryResultType, query, returnType)) {
+                                return null;
+                            }
                         }
 
                         return new MethodMatchInfo(returnType, query, getInterceptorElement(matchContext, FindOneInterceptor.class), true);
