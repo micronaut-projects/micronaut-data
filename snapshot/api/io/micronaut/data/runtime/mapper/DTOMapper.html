@@ -149,6 +149,13 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/BeanIntrospe
 <div class="block">Default constructor.</div>
 </td>
 </tr>
+<tr class="rowColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/DTOMapper.html#DTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.http.codec.MediaTypeCodec-">DTOMapper</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
+         <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">S</a>,java.lang.String&gt;&nbsp;resultReader,
+         io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec)</code>
+<div class="block">Default constructor.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -233,7 +240,7 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/BeanIntrospe
 <a name="DTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>DTOMapper</h4>
 <pre>public&nbsp;DTOMapper(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
@@ -243,6 +250,25 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/BeanIntrospe
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>persistentEntity</code> - The entity</dd>
 <dd><code>resultReader</code> - The result reader</dd>
+</dl>
+</li>
+</ul>
+<a name="DTOMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.http.codec.MediaTypeCodec-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>DTOMapper</h4>
+<pre>public&nbsp;DTOMapper(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">T</a>&gt;&nbsp;persistentEntity,
+                 <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/runtime/mapper/DTOMapper.html" title="type parameter in DTOMapper">S</a>,java.lang.String&gt;&nbsp;resultReader,
+                 @Nullable
+                 io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec)</pre>
+<div class="block">Default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>persistentEntity</code> - The entity</dd>
+<dd><code>resultReader</code> - The result reader</dd>
+<dd><code>jsonCodec</code> - The JSON codec</dd>
 </dl>
 </li>
 </ul>

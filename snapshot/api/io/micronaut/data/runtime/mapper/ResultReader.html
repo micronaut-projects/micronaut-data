@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":6,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18};
+var methods = {"i0":18,"i1":18,"i2":6,"i3":6,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -130,12 +130,19 @@ var activeTableTab = "activeTableTab";
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>default &lt;T&gt;&nbsp;T</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#convertRequired-java.lang.Object-io.micronaut.core.type.Argument-">convertRequired</a></span>(java.lang.Object&nbsp;value,
+               io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type)</code>
+<div class="block">Convert the value to the given type.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>default &lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#convertRequired-java.lang.Object-java.lang.Class-">convertRequired</a></span>(java.lang.Object&nbsp;value,
                java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Convert the value to the given type.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#getRequiredValue-RS-IDX-java.lang.Class-">getRequiredValue</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
                 <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name,
@@ -143,62 +150,62 @@ var activeTableTab = "activeTableTab";
 <div class="block">Get a value from the given result set for the given name and type.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#next-RS-">next</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet)</code>
 <div class="block">Move the index to the next result if possible.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>default java.math.BigDecimal</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readBigDecimal-RS-IDX-">readBigDecimal</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
               <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a BigDecimal value for the given name.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readBoolean-RS-IDX-">readBoolean</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
            <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a boolean value for the given name.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>default byte</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readByte-RS-IDX-">readByte</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
         <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a byte value for the given name.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>default byte[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readBytes-RS-IDX-">readBytes</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
          <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a byte[] value for the given name.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>default char</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readChar-RS-IDX-">readChar</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
         <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a char value for the given name.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>default java.util.Date</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readDate-RS-IDX-">readDate</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
         <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a date value for the given name.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>default double</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readDouble-RS-IDX-">readDouble</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
           <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a double value for the given name.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>default java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readDynamic-RS-IDX-io.micronaut.data.model.DataType-">readDynamic</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
            <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index,
@@ -206,42 +213,42 @@ var activeTableTab = "activeTableTab";
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>default float</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readFloat-RS-IDX-">readFloat</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
          <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a float value for the given name.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>default int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readInt-RS-IDX-">readInt</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
        <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a int value for the given name.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>default long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readLong-RS-IDX-">readLong</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
         <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a long value for the given name.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>default short</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readShort-RS-IDX-">readShort</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
          <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a short value for the given name.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readString-RS-IDX-">readString</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
           <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
 <div class="block">Read a string value for the given name.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>default java.util.Date</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readTimestamp-RS-IDX-">readTimestamp</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
              <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code>
@@ -271,6 +278,28 @@ var activeTableTab = "activeTableTab";
 <h4>convertRequired</h4>
 <pre>default&nbsp;&lt;T&gt;&nbsp;T&nbsp;convertRequired(java.lang.Object&nbsp;value,
                               java.lang.Class&lt;T&gt;&nbsp;type)</pre>
+<div class="block">Convert the value to the given type.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>value</code> - The value</dd>
+<dd><code>type</code> - The type</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The converted value</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></code> - if the value cannot be converted</dd>
+</dl>
+</li>
+</ul>
+<a name="convertRequired-java.lang.Object-io.micronaut.core.type.Argument-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>convertRequired</h4>
+<pre>default&nbsp;&lt;T&gt;&nbsp;T&nbsp;convertRequired(java.lang.Object&nbsp;value,
+                              io.micronaut.core.type.Argument&lt;T&gt;&nbsp;type)</pre>
 <div class="block">Convert the value to the given type.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
