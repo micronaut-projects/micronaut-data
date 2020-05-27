@@ -31,7 +31,7 @@ jobs:
         env:
           BETA: ${{ contains(steps.release_version.outputs.release_version, 'M') || contains(steps.release_version.outputs.release_version, 'RC') }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BASE_BRANCH: master
+          BASE_BRANCH: ${{ env.githubBranch }}
           BRANCH: gh-pages
           FOLDER: build/docs
           VERSION: ${{ steps.release_version.outputs.release_version }}
@@ -40,26 +40,24 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           repository: micronaut-projects/micronaut-core
-          ref: master # Or 1.3.x etc
+          ref: ${{ env.githubCoreBranch }}
           path: micronaut-core # Must be micronaut-core
-        continue-on-error: true      
+        continue-on-error: true
       - name: Export Gradle Properties
-        uses: micronaut-projects/github-actions/export-gradle-properties@master            
+        uses: micronaut-projects/github-actions/export-gradle-properties@master
       - name: Update BOM
         uses: micronaut-projects/github-actions/update-bom@master
+#        env:
+#          DRY_RUN: true
         with:
           token: ${{ secrets.GH_TOKEN }}
-          branch: master # Or 1.3.x etc
-          # Refers to the key in the BOM (gradle.properties)
-          properties: |
-            micronautDataVersion=${{ steps.release_version.outputs.release_version }} 
-          version: ${{ steps.release_version.outputs.release_version }} 
+          version: ${{ steps.release_version.outputs.release_version }}
         continue-on-error: true
       - name: Run post-release
         if: success()
         uses: micronaut-projects/github-actions/post-release@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-     
+   
 
           
