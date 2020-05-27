@@ -15,6 +15,9 @@ jobs:
   release_notes:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+      - name: Export Gradle Properties
+        uses: micronaut-projects/github-actions/export-gradle-properties@master
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
       - uses: ncipollo/release-action@v1
@@ -22,7 +25,7 @@ jobs:
           allowUpdates: true
           commit: master
           draft: true
-          name: Micronaut Data ${{ steps.release_notes.outputs.next_version }}
+          name: ${{ env.title }} ${{ steps.release_notes.outputs.next_version }}
           tag: v${{ steps.release_notes.outputs.next_version }}
           bodyFile: CHANGELOG.md
           token: ${{ secrets.GITHUB_TOKEN }}
