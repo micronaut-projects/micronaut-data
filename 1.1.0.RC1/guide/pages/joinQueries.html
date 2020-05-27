@@ -1,0 +1,411 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>5.6 Join Queries 1.1.0.RC1</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Data
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/repositories.html"><strong>4</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/querying.html"><strong>5</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>10</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../../guide/repositories.html">&lt;&lt; <strong>4</strong><span>Repository Interfaces</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+                    <div class="toc-item next-right"><a href="../../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span> >></a></div>
+                
+
+
+                <div class="project">
+                    <h1>5.6 Join Queries</h1>
+
+                    <p><strong>Version:</strong> 1.1.0.RC1</p>
+                </div>
+
+                
+
+                
+<h2 id="joinQueries"><a class="anchor" href="#joinQueries"></a>5.6 Join Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/joinQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To optimize your queries you may need to alter joins to fetch exactly the data you need in the result set.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+If a <code>LazyInitializationException</code> occurs this is not a bug in Micronaut Data or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Consider a <code>Product</code> entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import javax.persistence.*;
+
+@Entity
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    private Manufacturer manufacturer;
+
+    public Product(String name, Manufacturer manufacturer) {
+        this.name = name;
+        this.manufacturer = manufacturer;
+    }
+
+    public Product() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Manufacturer getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(Manufacturer manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import javax.persistence.*
+
+@Entity
+class Product {
+
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    Manufacturer manufacturer
+
+    Product(String name, Manufacturer manufacturer) {
+        this.name = name
+        this.manufacturer = manufacturer
+    }
+
+    Product() {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import javax.persistence.*
+
+@Entity
+data class Product(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    var name: String,
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    var manufacturer: Manufacturer
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That has an association to a <code>Manufacturer</code> entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import org.hibernate.annotations.BatchSize;
+
+import javax.persistence.*;
+
+@Entity
+@BatchSize(size = 10)
+public class Manufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import javax.persistence.*
+
+@Entity
+class Manufacturer {
+
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import javax.persistence.*
+
+@Entity
+data class Manufacturer(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    var name: String
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this case when you read each <code>Product</code> from the database an additional select is required to retrieve the <code>Manufacturer</code> for each <code>Product</code>. This leads to <code>N + 1</code> queries.</p>
+</div>
+<div class="paragraph">
+<p>To resolve this you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that a <code>JOIN FETCH</code> should be executed to retrieve the associated <code>Manufacturer</code>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Repository
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    Manufacturer saveManufacturer(String name);
+
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
+interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    Manufacturer saveManufacturer(String name)
+
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    List&lt;Product&gt; list()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
+interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+    fun save(manufacturer: Manufacturer) : Manufacturer
+
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    fun list(): List&lt;Product&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> is used to indicate a <code>JOIN FETCH</code> clause should be included.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple times for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="_jpa_2_1_entity_graphs">JPA 2.1 Entity Graphs</h3>
+<div class="paragraph">
+<p>A JPA-specific alternative to specifying the joins to a query is to use JPA 2.1 entity graphs. With entity graphs you defer to the JPA implementation to pick the appropriate join type to use:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@EntityGraph(attributePaths = {"manufacturer", "title"}) <b class="conum">(1)</b>
+List&lt;Product&gt; findAll();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
+List&lt;Product&gt; findAll()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
+override fun findAll(): List&lt;Product&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>attributePaths</code> member is used to specify the paths to include in the Entity graph.</td>
+</tr>
+</table>
+</div>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../../guide/repositories.html">&lt;&lt; <strong>4</strong><span>Repository Interfaces</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span> >></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>

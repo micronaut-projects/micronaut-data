@@ -1,0 +1,1702 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>5 Writing Queries 1.1.0.RC1</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Data
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/repositories.html"><strong>4</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/querying.html"><strong>5</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../guide/spring.html"><strong>10</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../guide/repositories.html">&lt;&lt; <strong>4</strong><span>Repository Interfaces</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+                    <div class="toc-item next-right"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span> >></a></div>
+                
+
+
+                <div class="project">
+                    <h1>5 Writing Queries</h1>
+
+                    <p><strong>Version:</strong> 1.1.0.RC1</p>
+                </div>
+
+                
+                <div id="table-of-content">
+                    <h2>Table of Contents</h2>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#criteria"><strong>5.1</strong><span>Query Criteria</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#pagination"><strong>5.2</strong><span>Pagination</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#ordering"><strong>5.3</strong><span>Ordering</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#projections"><strong>5.4</strong><span>Query Projections</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#dto"><strong>5.5</strong><span>DTO Projections</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#joinQueries"><strong>5.6</strong><span>Join Queries</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#explicitQueries"><strong>5.7</strong><span>Explicit Queries</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#whereAnnotation"><strong>5.8</strong><span>Modifying Queries with @Where</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#nativeQueries"><strong>5.9</strong><span>Native Queries</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#async"><strong>5.10</strong><span>Asynchronous Queries</span></a>
+                    </div>
+                    
+                    <div class="toc-item" style="margin-left:0px"><a href="#reactive"><strong>5.11</strong><span>Reactive Queries</span></a>
+                    </div>
+                    
+                </div>
+                
+
+                
+<h1 id="querying"><a class="anchor" href="#querying"></a>5 Writing Queries</h1>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The implementation of querying in Micronaut Data is based on the dynamic finders in <a href="https://gorm.grails.org">GORM</a>.</p>
+</div>
+<div class="paragraph">
+<p>A pattern matching approach is taken at compilation time. The general pattern of query methods is:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="../img/finderpattern.svg" alt="finderpattern">
+</div>
+<div class="title">Figure 1. Query Method Pattern</div>
+</div>
+<div class="paragraph">
+<p>As shown in Figure 1, the most common query stem is <code>find</code>, but you can also use <code>search</code>, <code>query</code>, <code>get</code>, <code>read</code> or <code>retrieve</code>.</p>
+</div>
+<div class="paragraph">
+<p>The projection and ordering parts of the query pattern are optional (more on those later). The following snippet demonstrates 3 simple queries that use a different stem but perform the same query:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Book findByTitle(String title);
+
+Book getByTitle(String title);
+
+Book retrieveByTitle(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book findByTitle(String title)
+
+Book getByTitle(String title)
+
+Book retrieveByTitle(String title)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findByTitle(title: String): Book
+
+fun getByTitle(title: String): Book
+
+fun retrieveByTitle(title: String): Book</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above examples return a single instance of an entity, the supported return types are described in the following table:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Supported Return Types for Finder Methods</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Return Type</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>List&lt;Book&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>java.util.List</code> or any common <code>Iterable</code> type</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Stream&lt;Book&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A Java 8 <code>java.util.stream.Stream</code> instance</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Optional&lt;Book&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An optional value, if <code>null</code> is retrieved otherwise a <a href="../api/io/micronaut/data/exceptions/EmptyResultException.html">EmptyResultException</a> is thrown</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Page&lt;Book&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An instance of <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Slice&lt;Book&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An instance of <a href="../api/io/micronaut/data/model/Slice.html">Slice</a> for pagination.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Future&lt;Book&gt;</code> or <code>CompletableFuture&lt;Book&gt;</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>java.util.concurrent.Future</code> for asynchronous execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Publisher&lt;Book&gt;</code> (or <code>Single</code>, <code>Maybe</code>, <code>Flux</code>, <code>Mono</code> etc.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An Reactive Streams compatible type</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Primitive/Simple Types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">In the case of projections primitive/basic types can be returned</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>In addition, to the standard <code>findBy*</code> pattern, a few other patterns exist that have special return type requirements.</p>
+</div>
+<div class="paragraph">
+<p>The following table summarizes the possible alternative patterns, behaviour and expected return types:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. Method Patterns and Return Types</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Method Pattern</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Expected Return Type</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>countBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A primitive number of an instance of <code>java.lang.Number</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counts the number of records</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>existsBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A primitive or wrapper <code>boolean</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Checks whether a record exists</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>deleteBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch delete for the given finder</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>updateBy*</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A <code>void</code> or <code>Number</code> return type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Batch update for the given finder</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+More details about the batch update variants of these methods is covered in the <a href="#dataUpdates">Data Updates</a> section.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Finally, as an alternative to the <code>By</code> syntax you also define simple finders that use the parameter names to match properties to query. This syntax is less flexible, but is more readable in certain circumstances. For example the following can be used as an alternative to <code>findByTitle</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Book find(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book find(String title)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun find(title: String): Book</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that in this case if the <code>title</code> parameter does not exist as a property in the entity being queried or the type does not match up a compilation error will occur. Also you can specify more than one parameter to perform a logical <code>AND</code>.</p>
+</div>
+
+<h2 id="criteria"><a class="anchor" href="#criteria"></a>5.1 Query Criteria</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/criteria.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The previous example presented a simple <code>findByTitle</code> query which searches for all <code>Book</code> instances that have a <code>title</code> property <em>equal to</em> the given value.</p>
+</div>
+<div class="paragraph">
+<p>This is the simplest type of query supported by Micronaut Data, but you can use an optional suffix on the property name to modify the type of criterion to apply.</p>
+</div>
+<div class="paragraph">
+<p>For example the following query pattern will execute a query that finds only <code>Book</code> instances that have a page count greater than the given value:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">List&lt;Book&gt; findByPagesGreaterThan(int pageCount);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">List&lt;Book&gt; findByPagesGreaterThan(int pageCount)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findByPagesGreaterThan(pageCount: Int): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The following table summarizes the possible expressions and behaviour:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Property Criterion Expressions</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Example Suffix</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Sample</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>After</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is after the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByDateCreatedAfter</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Before</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is before the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByDateCreatedBefore</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Contains</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property contains the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleContains</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>StartsWith</code> or <code>StartingWith</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property starts with the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleStartsWith</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>EndsWith</code> or <code>EndingWith</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property ends with the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleEndsWith</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Equals</code> or <code>Equal</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results equal to the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleEquals</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>NotEquals</code> or <code>NotEqual</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results not equal to the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleNotEquals</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GreaterThan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is greater than the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByPagesGreaterThan</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>GreaterThanEquals</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is greater than or equal to the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByPagesGreaterThanEquals</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LessThan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is less than the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByPagesLessThan</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>LessThanEquals</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is less than or equal to the given value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByPagesLessThanEquals</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Like</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds string values "like" the given expression</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleLike</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Ilike</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Case insensitive "like" query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleIlike</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>InList</code> or <code>In</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is that are contained within the given list</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByTitleInList</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Between</code> or <code>InRange</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Find results where the property is between the given values</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByDateCreatedBetween</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IsNull</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds results where the property is <code>null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByAuthorIsNull</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IsNotNull</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds results where the property is not <code>null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByAuthorIsNotNull</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IsEmpty</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds results where the property is empty or <code>null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByAuthorIsEmpty</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>IsNotEmpty</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds results where the property is not empty or <code>null</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByAuthorIsNotEmpty</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>True</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds results where the property is true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByAuthorEnabledTrue</code></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>False</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds results where the property is false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findByAuthorEnabledFalse</code></p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+Any of these criterion expressions can be negated by adding the word <code>Not</code> before the expression (for example <code>NotInList</code>).
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can combine multiple criterion by separating them with <code>And</code> or <code>Or</code> logical operators. For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">List&lt;Book&gt; findByPagesGreaterThanOrTitleLike(int pageCount, String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">List&lt;Book&gt; findByPagesGreaterThanOrTitleLike(int pageCount, String title)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findByPagesGreaterThanOrTitleLike(pageCount: Int, title: String): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example uses <code>Or</code> to express a greater than condition and a like condition.</p>
+</div>
+<div class="paragraph">
+<p>You can also negate any of the aforementioned expressions by adding <code>Not</code> prior the name of the expression (example <code>NotTrue</code> or <code>NotContain</code>).</p>
+</div>
+
+<h2 id="pagination"><a class="anchor" href="#pagination"></a>5.2 Pagination</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/pagination.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Typically when returning multiple records you need some control over paging the data. Micronaut Data includes the ability to specify pagination requirements with the <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> type (inspired by GORM&#8217;s <a href="https://gorm.grails.org/latest/api/grails/orm/PagedResultList.html">PagedResultList</a> and Spring Data&#8217;s <a href="https://docs.spring.io/spring-data/commons/docs/current/api/org/springframework/data/domain/Pageable.html">Pageable</a>).</p>
+</div>
+<div class="paragraph">
+<p>In addition methods can return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> object which includes the execution of an additional query to obtain the total number of results for a given query.</p>
+</div>
+<div class="paragraph">
+<p>The following are some example signatures:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">List&lt;Book&gt; findByPagesGreaterThan(int pageCount, Pageable pageable);
+
+Page&lt;Book&gt; findByTitleLike(String title, Pageable pageable);
+
+Slice&lt;Book&gt; list(Pageable pageable);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">List&lt;Book&gt; findByPagesGreaterThan(int pageCount, Pageable pageable)
+
+Page&lt;Book&gt; findByTitleLike(String title, Pageable pageable)
+
+Slice&lt;Book&gt; list(Pageable pageable)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findByPagesGreaterThan(pageCount: Int, pageable: Pageable): List&lt;Book&gt;
+
+fun findByTitleLike(title: String, pageable: Pageable): Page&lt;Book&gt;
+
+fun list(pageable: Pageable): Slice&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And some test data:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">bookRepository.saveAll(Arrays.asList(
+		new Book("The Stand", 1000),
+		new Book("The Shining", 600),
+		new Book("The Power of the Dog", 500),
+		new Book("The Border", 700),
+		new Book("Along Came a Spider", 300),
+		new Book("Pet Cemetery", 400),
+		new Book("A Game of Thrones", 900),
+		new Book("A Clash of Kings", 1100)
+));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">bookRepository.saveAll(Arrays.asList(
+        new Book("The Stand", 1000),
+        new Book("The Shining", 600),
+        new Book("The Power of the Dog", 500),
+        new Book("The Border", 700),
+        new Book("Along Came a Spider", 300),
+        new Book("Pet Cemetery", 400),
+        new Book("A Game of Thrones", 900),
+        new Book("A Clash of Kings", 1100)
+))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">bookRepository.saveAll(Arrays.asList(
+        Book(0,"The Stand", 1000),
+        Book(0,"The Shining", 600),
+        Book(0,"The Power of the Dog", 500),
+        Book(0,"The Border", 700),
+        Book(0,"Along Came a Spider", 300),
+        Book(0,"Pet Cemetery", 400),
+        Book(0,"A Game of Thrones", 900),
+        Book(0,"A Clash of Kings", 1100)
+))</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can execute queries and return paginated data using the <code>from</code> method of <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> and specifying an appropriate return type:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Slice&lt;Book&gt; slice = bookRepository.list(Pageable.from(0, 3));
+List&lt;Book&gt; resultList =
+		bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3));
+Page&lt;Book&gt; page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3));</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Slice&lt;Book&gt; slice = bookRepository.list(Pageable.from(0, 3))
+List&lt;Book&gt; resultList =
+        bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3))
+Page&lt;Book&gt; page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">val slice = bookRepository.list(Pageable.from(0, 3))
+val resultList = bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3))
+val page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3))</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>from</code> method accepts <code>index</code> and <code>size</code> arguments which are the page number to begin from and the number of records to return per page.</p>
+</div>
+<div class="paragraph">
+<p>A <a href="../api/io/micronaut/data/model/Slice.html">Slice</a> is the same as a <a href="../api/io/micronaut/data/model/Page.html">Page</a> but results in one less query as it excludes the total number of pages calculation.</p>
+</div>
+
+<h2 id="ordering"><a class="anchor" href="#ordering"></a>5.3 Ordering</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/ordering.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can control ordering of results by appending an <code>OrderBy*</code> expression to the end of the method name:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">List&lt;Book&gt; listOrderByTitle();
+
+List&lt;Book&gt; listOrderByTitleDesc();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">List&lt;Book&gt; listOrderByTitle()
+
+List&lt;Book&gt; listOrderByTitleDesc()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun listOrderByTitle(): List&lt;Book&gt;
+
+fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order.</p>
+</div>
+
+<h2 id="projections"><a class="anchor" href="#projections"></a>5.4 Query Projections</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/projections.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Frequently, rather than retrieving all of the data for a particular entity, you may only want a single property or association of an entity or to perform some kind of computation and obtain just that result. This is where query projections come in.</p>
+</div>
+<div class="paragraph">
+<p>The simplest form of projection is to retrieve a property or association. For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">List&lt;String&gt; findTitleByPagesGreaterThan(int pageCount);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">List&lt;String&gt; findTitleByPagesGreaterThan(int pageCount)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findTitleByPagesGreaterThan(pageCount: Int): List&lt;String&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the above example the <code>findTitleByPagesGreaterThan</code> method is resolving the <code>title</code> property of the <code>Book</code> entity and returning the data as a <code>List</code> of <code>String</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+If the projected property type and the return generic type do not match up then Micronaut Data will fail to compile the method.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can also use projections on association paths, for example if an <code>author</code> association were present you could write <code>findAuthorNameByPagesGreaterThan</code> to retrieve the names of all the authors.</p>
+</div>
+<div class="paragraph">
+<p>In addition to this, Micronaut Data also supports projection expressions. The following table summarizes the possible expressions with an example and description:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Projection Expressions</caption>
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Expression</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Example</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Count</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>countTitleByPagesGreaterThan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counts the values</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>CountDistinct</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>countDistinctTitleByPagesGreaterThan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counts the distinct values</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Distinct</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findDistinctTitleByPagesGreaterThan</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds the distinct property values</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Max</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findMaxPagesByTitleLike</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds the maximum property value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Min</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findMinPagesByTitleLike</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds the minimum property value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Sum</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findSumPagesByTitleLike</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds the sum of all the property values</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Avg</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>findAvgPagesByTitleLike</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Finds the average of all the property values</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>You can also use <code>top</code> or <code>first</code> to limit the results returned (as a simple alternative to pagination)</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">List&lt;Book&gt; findTop3ByTitleLike(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">List&lt;Book&gt; findTop3ByTitleLike(String title)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findTop3ByTitleLike(title: String): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above query will return the first 3 results for the given query expression.</p>
+</div>
+
+<h2 id="dto"><a class="anchor" href="#dto"></a>5.5 DTO Projections</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/dto.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports reflection-free Data Transfer Object (DTO) projections if the return type is annotated with <code>@Introspected</code>.</p>
+</div>
+<div class="paragraph">
+<p>For example if you wanted to project on an entity called <code>Book</code> you could define a DTO as follows:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.core.annotation.Introspected;
+
+@Introspected
+public class BookDTO {
+
+    private String title;
+    private int pages;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public int getPages() {
+        return pages;
+    }
+
+    public void setPages(int pages) {
+        this.pages = pages;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.core.annotation.Introspected
+
+@Introspected
+class BookDTO {
+    String title
+    int pages
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.core.annotation.Introspected
+
+@Introspected
+data class BookDTO(
+    var title: String,
+    var pages: Int
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The DTO should include properties that match the property names you wish to project on (in this case <code>title</code> and <code>pages</code>). If any properties do not match then a compilation error will occur.</p>
+</div>
+<div class="paragraph">
+<p>You can then use the DTO object as return type in query methods:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">BookDTO findOne(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">BookDTO findOne(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun findOne(title: String): BookDTO</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Micronaut Data will optimize the query to only select the necessary properties from the database.</p>
+</div>
+
+<h2 id="joinQueries"><a class="anchor" href="#joinQueries"></a>5.6 Join Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/joinQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To optimize your queries you may need to alter joins to fetch exactly the data you need in the result set.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+If a <code>LazyInitializationException</code> occurs this is not a bug in Micronaut Data or Hibernate, but instead an indication that you should alter your query joins to fetch the associated data you need to implement your use case.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Consider a <code>Product</code> entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import javax.persistence.*;
+
+@Entity
+public class Product {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    private Manufacturer manufacturer;
+
+    public Product(String name, Manufacturer manufacturer) {
+        this.name = name;
+        this.manufacturer = manufacturer;
+    }
+
+    public Product() {
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Manufacturer getManufacturer() {
+        return manufacturer;
+    }
+
+    public void setManufacturer(Manufacturer manufacturer) {
+        this.manufacturer = manufacturer;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import javax.persistence.*
+
+@Entity
+class Product {
+
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    Manufacturer manufacturer
+
+    Product(String name, Manufacturer manufacturer) {
+        this.name = name
+        this.manufacturer = manufacturer
+    }
+
+    Product() {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import javax.persistence.*
+
+@Entity
+data class Product(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    var name: String,
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    var manufacturer: Manufacturer
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That has an association to a <code>Manufacturer</code> entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import org.hibernate.annotations.BatchSize;
+
+import javax.persistence.*;
+
+@Entity
+@BatchSize(size = 10)
+public class Manufacturer {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import javax.persistence.*
+
+@Entity
+class Manufacturer {
+
+    @Id
+    @GeneratedValue
+    Long id
+    String name
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import javax.persistence.*
+
+@Entity
+data class Manufacturer(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    var name: String
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In this case when you read each <code>Product</code> from the database an additional select is required to retrieve the <code>Manufacturer</code> for each <code>Product</code>. This leads to <code>N + 1</code> queries.</p>
+</div>
+<div class="paragraph">
+<p>To resolve this you can use the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation on your repository interface to specify that a <code>JOIN FETCH</code> should be executed to retrieve the associated <code>Manufacturer</code>.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Repository
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    Manufacturer saveManufacturer(String name);
+
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    List&lt;Product&gt; list();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
+interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    Manufacturer saveManufacturer(String name)
+
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    List&lt;Product&gt; list()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
+interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+    fun save(manufacturer: Manufacturer) : Manufacturer
+
+    @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
+    fun list(): List&lt;Product&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> is used to indicate a <code>JOIN FETCH</code> clause should be included.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that the <a href="../api/io/micronaut/data/annotation/Join.html">@Join</a> annotation is repeatable and hence can be specified multiple times for different associations. In addition, the <code>type</code> member of the annotation can be used to specify the join type, for example <code>LEFT</code>, <code>INNER</code> or <code>RIGHT</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="_jpa_2_1_entity_graphs">JPA 2.1 Entity Graphs</h3>
+<div class="paragraph">
+<p>A JPA-specific alternative to specifying the joins to a query is to use JPA 2.1 entity graphs. With entity graphs you defer to the JPA implementation to pick the appropriate join type to use:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@EntityGraph(attributePaths = {"manufacturer", "title"}) <b class="conum">(1)</b>
+List&lt;Product&gt; findAll();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
+List&lt;Product&gt; findAll()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
+override fun findAll(): List&lt;Product&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>attributePaths</code> member is used to specify the paths to include in the Entity graph.</td>
+</tr>
+</table>
+</div>
+</div>
+
+<h2 id="explicitQueries"><a class="anchor" href="#explicitQueries"></a>5.7 Explicit Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/explicitQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>If you want to have more control over the JPA-QL query then you can use the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation to specify an explicit query:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+List&lt;Book&gt; listBooks(String t);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+List&lt;Book&gt; listBooks(String t)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Query("FROM Book b WHERE b.title = :t ORDER BY b.title")
+fun listBooks(t: String): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You specify named parameters using colon (<code>:</code>) followed by the name and these must match a parameter specified to the method otherwise a compilation error will occur.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Currently Micronaut Data does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Micronaut Data.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that if the method returns a <a href="../api/io/micronaut/data/model/Page.html">Page</a> for pagination then you must additionally specify a query that performs the equivalent count using the <code>countQuery</code> member of the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation.</p>
+</div>
+
+<h2 id="whereAnnotation"><a class="anchor" href="#whereAnnotation"></a>5.8 Modifying Queries with @Where</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/whereAnnotation.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can use the <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> annotation to modify compile time generated query with additional query criterion.</p>
+</div>
+<div class="paragraph">
+<p>A common use case for this is to implement soft delete. For example considering the following <code>User</code> entity which declares an <code>enabled</code> property:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.*;
+
+@MappedEntity
+@Where("enabled = true") <b class="conum">(1)</b>
+public class User {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private String name;
+    private boolean enabled = true; <b class="conum">(2)</b>
+
+    public User(String name) {
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.EqualsAndHashCode
+import io.micronaut.data.annotation.*
+
+@MappedEntity
+@Where("enabled = true") <b class="conum">(1)</b>
+@EqualsAndHashCode(includes = "name")
+class User {
+    @GeneratedValue
+    @Id
+    Long id
+    String name
+    boolean enabled = true <b class="conum">(2)</b>
+
+    User(String name) {
+        this.name = name
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Where
+import javax.persistence.Entity
+import javax.persistence.GeneratedValue
+import javax.persistence.Id
+
+
+@Entity
+@Where("enabled = true") <b class="conum">(1)</b>
+data class User(
+    @GeneratedValue
+    @Id
+    var id: Long,
+    val name: String,
+    val enabled: Boolean <b class="conum">(2)</b>
+)</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/annotation/Where.html">@Where</a> annotation is used to declare that all queries should include <code>enabled = true</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>An <code>enabled</code> property exists on the entity</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You can then easily modify the <code>delete</code> operations to instead issue an update. For example, consider the following repository implementation:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import javax.validation.constraints.NotNull;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+public interface UserRepository extends CrudRepository&lt;User, Long&gt; { <b class="conum">(1)</b>
+
+    @Override
+    @Query("UPDATE user SET enabled = false WHERE id = :id") <b class="conum">(2)</b>
+    void deleteById(@NonNull @NotNull Long id);
+
+    @Query("SELECT * FROM user WHERE enabled = false") <b class="conum">(3)</b>
+    List&lt;User&gt; findDisabled();
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import edu.umd.cs.findbugs.annotations.NonNull
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
+
+import javax.validation.constraints.NotNull
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRepository extends CrudRepository&lt;User, Long&gt; { <b class="conum">(1)</b>
+
+    @Override
+    @Query("UPDATE user SET enabled = false WHERE id = :id") <b class="conum">(2)</b>
+    void deleteById(@NonNull @NotNull Long id)
+
+    @Query("SELECT * FROM user WHERE enabled = false") <b class="conum">(3)</b>
+    List&lt;User&gt; findDisabled()
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
+import javax.validation.constraints.NotNull
+
+@JdbcRepository(dialect = Dialect.H2)
+interface UserRepository : CrudRepository&lt;User, Long&gt; { <b class="conum">(1)</b>
+
+    @Query("UPDATE user SET enabled = false WHERE id = :id") <b class="conum">(2)</b>
+    override fun deleteById(@NotNull id: Long)
+
+    @Query("SELECT * FROM user WHERE enabled = false") <b class="conum">(3)</b>
+    fun findDisabled(): List&lt;User&gt;
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The interface extends <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>deleteById</code> is overridden to perform a soft delete by setting <code>enabled</code> to false.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>An additional method is added to return disabled entities if needed using an explicit query.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>All other queries performed on the entity will include <code>enabled = true</code> in the query statement.</p>
+</div>
+
+<h2 id="nativeQueries"><a class="anchor" href="#nativeQueries"></a>5.9 Native Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/nativeQueries.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>When using Micronaut Data with JPA you can execute native SQL queries by setting <code>nativeQuery</code> to true in the <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Query(value = "select * from books b where b.title like :title limit 5",
+       nativeQuery = true)
+List&lt;Book&gt; findNativeBooks(String title);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Query(value = "select * from books b where b.title like :title limit 5",
+        nativeQuery = true)
+List&lt;Book&gt; findNativeBooks(String title)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Query(value = "select * from books b where b.title like :title limit 5", nativeQuery = true)
+fun findNativeBooks(title: String): List&lt;Book&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example will execute the raw SQL against the database.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+For <a href="#pagination">Pagination</a> queries that return a <a href="../api/io/micronaut/data/model/Page.html">Page</a> you also need to specify a native <code>countQuery</code>.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="async"><a class="anchor" href="#async"></a>5.10 Asynchronous Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/async.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports asynchronous query execution by defining methods that return either <code>CompletionStage</code>, <code>CompletableFuture</code> or <code>Future</code>.</p>
+</div>
+<div class="paragraph">
+<p>In the case of asynchronous execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+</div>
+<div class="paragraph">
+<p>The following is an example of a couple of asynchronous methods:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Repository
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    @Join("manufacturer")
+    CompletableFuture&lt;Product&gt; findByNameContains(String str);
+
+    CompletableFuture&lt;Long&gt; countByManufacturerName(String name);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
+interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+    @Join("manufacturer")
+    CompletableFuture&lt;Product&gt; findByNameContains(String str)
+
+    CompletableFuture&lt;Long&gt; countByManufacturerName(String name)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
+interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+    @Join("manufacturer")
+    fun findByNameContains(str: String): CompletableFuture&lt;Product&gt;
+
+    fun countByManufacturerName(name: String): CompletableFuture&lt;Long&gt;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example defines two methods that use <code>CompletableFuture</code> as return type, the API for which you can use to compose query operations:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long total = productRepository.findByNameContains("o")
+        .thenCompose(product -&gt; productRepository.countByManufacturerName(product.getManufacturer().getName()))
+        .get(1000, TimeUnit.SECONDS);
+
+Assertions.assertEquals(
+        2,
+        total
+);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">when:"A result is retrieved using async composition"
+long total = productRepository.findByNameContains("o")
+        .thenCompose { product -&gt; productRepository.countByManufacturerName(product.manufacturer.name) }
+        .get(1000, TimeUnit.SECONDS)
+
+then:"the result is correct"
+total == 2</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">val total = productRepository.findByNameContains("o")
+        .thenCompose { product -&gt; productRepository.countByManufacturerName(product.manufacturer.name) }
+        .get(1000, TimeUnit.SECONDS)
+
+Assertions.assertEquals(
+        2,
+        total
+)</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects. In addition for more complex operations it may be more efficient to write custom code that uses a single session.
+</td>
+</tr>
+</table>
+</div>
+
+<h2 id="reactive"><a class="anchor" href="#reactive"></a>5.11 Reactive Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/reactive.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://docs.oracle.com/javase/8/docs/api/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
+</div>
+<div class="paragraph">
+<p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
+</div>
+<div class="paragraph">
+<p>If the backing implementation natively supports reactive types at the driver level then the I/O thread pool is not used and instead it is assumed the driver will handle the query in a non-blocking manner.</p>
+</div>
+<div class="paragraph">
+<p>The following is an example of a couple of reactive methods:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Join("manufacturer")
+Maybe&lt;Product&gt; queryByNameContains(String str);
+
+Single&lt;Long&gt; countDistinctByManufacturerName(String name);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Join("manufacturer")
+Maybe&lt;Product&gt; queryByNameContains(String str)
+
+Single&lt;Long&gt; countDistinctByManufacturerName(String name)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Join("manufacturer")
+fun queryByNameContains(str: String): Maybe&lt;Product&gt;
+
+fun countDistinctByManufacturerName(name: String): Single&lt;Long&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example defines two methods that use reactive return types from RxJava 2, the API for which you can use to compose query operations:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">long total = productRepository.queryByNameContains("o")
+        .flatMap(product -&gt; productRepository.countDistinctByManufacturerName(product.getManufacturer().getName())
+                                .toMaybe())
+        .defaultIfEmpty(0L)
+        .blockingGet();
+
+Assertions.assertEquals(
+        2,
+        total
+);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">when:"A result is retrieved with reactive composition"
+long total = productRepository.queryByNameContains("o")
+        .flatMap { product -&gt; productRepository.countDistinctByManufacturerName(product.manufacturer.name).toMaybe() }
+        .defaultIfEmpty(0L)
+        .blockingGet()
+
+then:"The result is correct"
+total == 2</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">val total = productRepository.queryByNameContains("o")
+        .flatMap { product -&gt;
+            productRepository.countDistinctByManufacturerName(product.manufacturer.name)
+                    .toMaybe()
+        }
+        .defaultIfEmpty(0L)
+        .blockingGet()
+
+Assertions.assertEquals(
+        2,
+        total
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the case of JPA each operation will run with its own transaction and session, hence care needs to be taken to fetch the correct data and avoid detached objects.</p>
+</div>
+<div class="paragraph">
+<p>In addition for more complex operations it may be more efficient to write custom code that uses a single session.</p>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../guide/repositories.html">&lt;&lt; <strong>4</strong><span>Repository Interfaces</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span> >></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>

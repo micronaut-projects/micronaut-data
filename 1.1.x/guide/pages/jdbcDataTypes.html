@@ -1,0 +1,435 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script src="/cdn-cgi/apps/head/3cOPSgo5Omz84ycX7CvigfX4cpw.js"></script><script async src="https://www.googletagmanager.com/gtag/js?id=UA-82213539-2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-82213539-2');
+    </script>
+    <title>8.1.6 JDBC Data Types 1.1.0.RC1</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
+    <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
+    <script type="text/javascript">
+function addJsClass() {
+    var classes = document.body.className.split(" ");
+    classes.push("js");
+    document.body.className = classes.join(" ");
+}
+    </script>
+</head>
+
+<body class="body" onload="addJsClass();">
+<div id="navigation">
+    <div class="navTitle">
+        
+        Micronaut Data
+    </div>
+    <div class="navLinks">
+        <ul>
+            <li>
+                <div id="nav-summary" onmouseover="toggleNavSummary(false)" onmouseout="toggleNavSummary(true)">
+                    <a href="../../guide/index.html" class="button">Table of contents</a>
+
+                    <div id="nav-summary-childs" style="display:none;">
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/introduction.html"><strong>1</strong><span>Introduction</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/quickStart.html"><strong>2</strong><span>Quick Start</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/buildConfig.html"><strong>3</strong><span>Build Configuration</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/repositories.html"><strong>4</strong><span>Repository Interfaces</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/querying.html"><strong>5</strong><span>Writing Queries</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/dataUpdates.html"><strong>6</strong><span>Updating Data</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/howItWorks.html"><strong>7</strong><span>How Micronaut Data Works</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/sql.html"><strong>8</strong><span>Micronaut Data with SQL</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span></a>
+                        </div>
+                        
+                        <div class="toc-item" style="margin-left:0"><a href="../../guide/spring.html"><strong>10</strong><span>Spring Data Support</span></a>
+                        </div>
+                        
+                    </div>
+                </div>
+            </li>
+            <li class="separator selected">
+                <a id="ref-button" onclick="localToggle(); return false;" href="#">Quick Reference</a>
+            </li>
+        </ul>
+    </div>
+
+
+</div>
+
+<table id="colset" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+        <td id="col1">
+            <div id="main" class="corner-all">
+
+                
+                    <div class="toc-item prev-left"><a href="../../guide/howItWorks.html">&lt;&lt; <strong>7</strong><span>How Micronaut Data Works</span></a></div>
+                
+
+                <span id='toggle-col1' class="toggle">(<a href="#" onclick="localToggle(); return false;">Quick Reference</a>)</span>
+
+                
+                    <div class="toc-item next-right"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span> >></a></div>
+                
+
+
+                <div class="project">
+                    <h1>8.1.6 JDBC Data Types</h1>
+
+                    <p><strong>Version:</strong> 1.1.0.RC1</p>
+                </div>
+
+                
+
+                
+<h2 id="jdbcDataTypes"><a class="anchor" href="#jdbcDataTypes"></a>8.1.6 JDBC Data Types</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcDataTypes.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data JDBC supports most common Java data types. The following properties types are supported by default:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>All primitive types and their wrappers (<code>int</code>, <code>java.lang.Integer</code> etc.)</p>
+</li>
+<li>
+<p><code>CharSequence</code>, <code>String</code> etc.</p>
+</li>
+<li>
+<p>Date types like <code>java.util.Date</code>, <code>java.time.LocalDate</code> etc.</p>
+</li>
+<li>
+<p>Enum types (by name only)</p>
+</li>
+<li>
+<p>Entity References. In the case of <code>@ManyToOne</code> the foreign key column name is computed to be the name of the association plus a suffix of <code>_id</code>. You can alter this with either <code>@Column(name="..")</code> or by providing a <code>NamingStrategy.mappedName(..)</code> implementation.</p>
+</li>
+<li>
+<p>Collections of Entity. In the case of <code>@OneToMany</code> and if <code>mappedBy</code> is specified then it is expected that the inverse property exists defining the column, otherwise a join table mapping is created.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If you wish to define a custom data type then you can do so by defining a class that is annotated with <a href="../api/io/micronaut/data/annotation/TypeDef.html">@TypeDef</a>.</p>
+</div>
+<div class="paragraph">
+<p>Consider the following example entity:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import javax.persistence.*;
+
+@Entity
+public class Sale {
+
+    @ManyToOne
+    private final Product product;
+    private final Quantity quantity;
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    public Sale(Product product, Quantity quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public Quantity getQuantity() {
+        return quantity;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import javax.persistence.Id
+import javax.persistence.Entity
+import javax.persistence.ManyToOne
+import javax.persistence.GeneratedValue
+
+@Entity
+class Sale {
+
+    @ManyToOne
+    final Product product
+
+    final Quantity quantity
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    Sale(Product product, Quantity quantity) {
+        this.product = product
+        this.quantity = quantity
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import javax.persistence.*
+
+@Entity
+data class Sale(
+    @Id
+    @GeneratedValue
+    var id: Long?,
+    @ManyToOne
+    val product: Product,
+    val quantity: Quantity
+)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>Sale</code> class has a reference to a type <code>Quantity</code>. The <code>Quantity</code> type is defined as:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
+
+@TypeDef(type = DataType.INTEGER)
+public class Quantity {
+    private final int amount;
+
+    private Quantity(int amount) {
+        this.amount = amount;
+    }
+
+    public int getAmount() {
+        return amount;
+    }
+
+    public static Quantity valueOf(int amount) {
+        return new Quantity(amount);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.Immutable
+import io.micronaut.data.annotation.TypeDef
+import io.micronaut.data.model.DataType
+
+@TypeDef(type = DataType.INTEGER)
+@Immutable
+class Quantity {
+    int amount
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.TypeDef
+import io.micronaut.data.model.DataType
+
+@TypeDef(type = DataType.INTEGER)
+data class Quantity(val amount: Int)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can see <code>@TypeDef</code> is used to define the <code>Quantity</code> type as an <code>INTEGER</code> using the <a href="../api/io/micronaut/data/model/DataType.html">DataType</a> enum.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+If you cannot declare <code>@TypeDef</code> directly on the type then you can declare it on the field where the type is used.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The last step is to add custom type conversion so that Micronaut Data knows how to read and write the type from an <code>Integer</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.convert.TypeConverter;
+
+import javax.inject.Singleton;
+import java.util.Optional;
+
+@Factory <b class="conum">(1)</b>
+public class QuantityConverters {
+
+    @Singleton <b class="conum">(2)</b>
+    TypeConverter&lt;Quantity, Integer&gt; quantityIntegerTypeConverter() {
+        return (object, targetType, context) -&gt; Optional.of(object.getAmount());
+    }
+
+    @Singleton <b class="conum">(3)</b>
+    TypeConverter&lt;Integer, Quantity&gt; integerQuantityTypeConverter() {
+        return (object, targetType, context) -&gt; Optional.of(Quantity.valueOf(object));
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import groovy.transform.CompileStatic
+import io.micronaut.context.annotation.Factory
+import io.micronaut.core.convert.ConversionContext
+import io.micronaut.core.convert.TypeConverter
+
+import javax.inject.Singleton
+
+@Factory <b class="conum">(1)</b>
+@CompileStatic
+class QuantityConverters {
+
+    @Singleton <b class="conum">(2)</b>
+    TypeConverter&lt;Quantity, Integer&gt; quantityIntegerTypeConverter() {
+        return { Quantity quantity, Class targetType, ConversionContext context -&gt;
+            Optional.of(quantity.amount)
+        } as TypeConverter&lt;Quantity, Integer&gt;
+    }
+
+    @Singleton <b class="conum">(3)</b>
+    TypeConverter&lt;Integer, Quantity&gt; integerQuantityTypeConverter() {
+        return { Integer integer, Class targetType, ConversionContext context -&gt;
+            Optional.of(new Quantity(integer))
+        } as TypeConverter&lt;Integer, Quantity&gt;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.context.annotation.Factory
+import io.micronaut.core.convert.TypeConverter
+
+import javax.inject.Singleton
+import java.util.Optional
+
+@Factory <b class="conum">(1)</b>
+class QuantityConverters {
+
+    @Singleton <b class="conum">(2)</b>
+    fun quantityIntegerTypeConverter(): TypeConverter&lt;Quantity, Int&gt; {
+        return TypeConverter { quantity, targetType, context -&gt; Optional.of&lt;Int&gt;(quantity.amount) }
+    }
+
+    @Singleton <b class="conum">(3)</b>
+    fun integerQuantityTypeConverter(): TypeConverter&lt;Int, Quantity&gt; {
+        return TypeConverter { integer, targetType, context -&gt; Optional.of&lt;Quantity&gt;(Quantity(integer)) }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>A <code>@Factory</code> bean is created to define the converters</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>A converter from <code>Quantity</code> to <code>Integer</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>A converter from <code>Integer</code> to <code>Quantity</code></td>
+</tr>
+</table>
+</div>
+
+
+                <div style="clear:both;margin-top:15px;"></div>
+                
+                    <div class="toc-item prev-left"><a href="../../guide/howItWorks.html">&lt;&lt; <strong>7</strong><span>How Micronaut Data Works</span></a></div>
+                
+                    <div class="toc-item next-right"><a href="../../guide/graal.html"><strong>9</strong><span>Going Native with GraalVM</span> >></a></div>
+                
+                <div style="clear:both"></div>
+            </div>
+        </td>
+        <td id="col2">
+            <div class="local clearfix">
+                <div class="local-title">
+                    <a href="../../guide/index.html" target="mainFrame">Quick Reference</a>
+                    <span class="toggle">(<a href="#" onclick="localToggle(); return false;">hide</a>)</span>
+                </div>
+                <div class="menu">
+                    
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+
+<div id="footer">
+    
+    
+</div>
+
+<script type="text/javascript" src="../js/docs.js"></script>
+
+</body>
+</html>
