@@ -5,6 +5,6 @@
         "http://checkstyle.sourceforge.net/dtds/suppressions_1_1.dtd">
 
 <suppressions>
-    <suppress checks="FileLength"
-              files="DefaultBeanContext.java|BeanDefinitionWriter.java|DefaultHttpClient.java"/>
+    <!-- <suppress checks="FileLength" -->
+              <!-- files="DefaultBeanContext.java|BeanDefinitionWriter.java|DefaultHttpClient.java"/> -->
 </suppressions>
