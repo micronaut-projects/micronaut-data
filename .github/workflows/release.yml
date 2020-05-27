@@ -51,7 +51,6 @@ jobs:
 #          DRY_RUN: true
         with:
           token: ${{ secrets.GH_TOKEN }}
-          version: ${{ steps.release_version.outputs.release_version }}
         continue-on-error: true
       - name: Run post-release
         if: success()
