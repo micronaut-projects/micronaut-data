@@ -1084,7 +1084,6 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
         }
     }
 
-
     //---------------------------------------------------------------------
     // Template methods to be implemented in subclasses
     //---------------------------------------------------------------------
@@ -1325,7 +1324,6 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      */
     protected void doCleanupAfterCompletion(Object transaction) {
     }
-
 
     //---------------------------------------------------------------------
     // Serialization support

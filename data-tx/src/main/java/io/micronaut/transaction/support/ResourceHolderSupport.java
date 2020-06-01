@@ -45,7 +45,6 @@ public abstract class ResourceHolderSupport implements ResourceHolder {
 
     private boolean isVoid = false;
 
-
     /**
      * Mark the resource as synchronized with a transaction.
      * @param synchronizedWithTransaction True if synchronized with transaction

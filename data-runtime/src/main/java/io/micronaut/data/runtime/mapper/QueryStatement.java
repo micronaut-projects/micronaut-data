@@ -326,7 +326,6 @@ public interface QueryStatement<PS, IDX> {
         return setValue(statement, name, b);
     }
 
-
     /**
      * Write a short value for the given name.
      * @param statement The statement

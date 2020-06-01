@@ -58,7 +58,6 @@ public class DefaultTransactionDefinition implements TransactionDefinition, Seri
     @Nullable
     private String name;
 
-
     /**
      * Create a new DefaultTransactionDefinition, with default settings.
      * Can be modified through bean property setters.

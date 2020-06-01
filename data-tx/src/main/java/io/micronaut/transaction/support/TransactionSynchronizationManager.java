@@ -118,7 +118,6 @@ public abstract class TransactionSynchronizationManager {
                 }
             };
 
-
     //-------------------------------------------------------------------------
     // Management of transaction-associated resource handles
     //-------------------------------------------------------------------------
@@ -273,7 +272,6 @@ public abstract class TransactionSynchronizationManager {
         return value;
     }
 
-
     //-------------------------------------------------------------------------
     // Management of transaction synchronizations
     //-------------------------------------------------------------------------
@@ -359,7 +357,6 @@ public abstract class TransactionSynchronizationManager {
         LOG.trace("Clearing transaction synchronization");
         SYNCHRONIZATIONS.remove();
     }
-
 
     //-------------------------------------------------------------------------
     // Exposure of transaction characteristics
@@ -482,8 +479,7 @@ public abstract class TransactionSynchronizationManager {
     public static boolean isActualTransactionActive() {
         return (ACTUAL_TRANSACTION_ACTIVE.get() != null);
     }
-
-
+    
     /**
      * Clear the entire transaction synchronization state for the current thread:
      * registered synchronizations as well as the various transaction characteristics.

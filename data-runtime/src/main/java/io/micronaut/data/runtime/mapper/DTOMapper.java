@@ -52,6 +52,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
             ResultReader<S, String> resultReader) {
         this(persistentEntity, resultReader, null);
     }
+
     /**
      * Default constructor.
      * @param persistentEntity The entity
