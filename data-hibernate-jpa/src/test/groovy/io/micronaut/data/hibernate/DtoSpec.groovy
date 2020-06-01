@@ -21,13 +21,12 @@ import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.test.annotation.MicronautTest
 import org.hibernate.Hibernate
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
 
-@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
+@MicronautTest(rollback = false, transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class DtoSpec extends Specification {
@@ -56,7 +55,6 @@ class DtoSpec extends Specification {
         results.every({ Book b -> Hibernate.isInitialized(b.author)})
     }
 
-    @Ignore
     void "test no entity graph"() {
         when:
         def results = bookRepository.findAllByTitleStartingWith("The")
@@ -85,13 +83,6 @@ class DtoSpec extends Specification {
         result.size == 10
         result.content.every { it instanceof BookDto }
         result.content.every { it.title.startsWith("The")}
-
-        when:"Stream is used"
-        def dto = bookDtoRepository.findStream("The Stand").findFirst().get()
-
-        then:"The result is correct"
-        dto instanceof BookDto
-        dto.title == "The Stand"
     }
 
 }
