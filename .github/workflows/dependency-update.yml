@@ -7,12 +7,12 @@
 # https://github.com/micronaut-projects/micronaut-build/actions?query=workflow%3A%22Actions+sync%22
 #
 # and restart the latest job.
-name: Check Dependencies
+name: Update Dependencies
 on:
   schedule:
     - cron: '0 8 * * *'
 jobs:
-  check-dependencies:
+  dependency-updates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -27,5 +27,16 @@ jobs:
         with:
           java-version: 1.8
           ref: ${{ github.head_ref }}
+      - name: Export Gradle Properties
+        uses: micronaut-projects/github-actions/export-gradle-properties@master
       - name: Check Dependencies
-        run: ./gradlew dependencyUpdates
+        run: ./gradlew useLatestVersions
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          commit-message: Update dependencies
+          title: 'Dependency upgrades'
+          body: Upgrades dependencies to their latest versions
+          labels: "type: dependency-upgrade"
+          base: ${{ env.githubBranch }}

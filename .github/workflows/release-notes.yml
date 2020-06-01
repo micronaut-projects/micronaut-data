@@ -32,7 +32,7 @@ jobs:
       - uses: ncipollo/release-action@v1
         with:
           allowUpdates: true
-          commit: master
+          commit: ${{ env.githubBranch }}
           draft: true
           name: ${{ env.title }} ${{ steps.release_notes.outputs.next_version }}
           tag: v${{ steps.release_notes.outputs.next_version }}

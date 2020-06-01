@@ -48,6 +48,6 @@ jobs:
       uses: micronaut-projects/github-pages-deploy-action@master
       env:
         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        BASE_BRANCH: master 
+        BASE_BRANCH: ${{ env.githubBranch }}
         BRANCH: gh-pages 
         FOLDER: build/docs
