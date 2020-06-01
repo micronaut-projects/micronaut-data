@@ -385,11 +385,6 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test query across multiple associations"() {
-        given:"TODO: Figure out why this join fails on mysql"
-        def specName = specificationContext.currentSpec.name
-        if (specName.contains("MySql") || specName.contains("Maria")) {
-            return
-        }
         when:
         def spain = new Country("Spain")
         def france = new Country("France")
@@ -424,12 +419,6 @@ abstract class AbstractRepositorySpec extends Specification {
         cityRepository.countByCountryRegionCountryName("Spain") == 2
         cityRepository.countByCountryRegionCountryName("France") == 1
 
-        when:"A join that uses a join table is executed"
-        def region = regionRepository.findByCitiesName("Bilbao")
-
-        then:"The result is correct"
-        region.name == 'Pais Vasco'
-
         when:"A single level join is executed"
         def results = cityRepository.findByCountryRegionCountryName("Spain")
 
@@ -459,6 +448,17 @@ abstract class AbstractRepositorySpec extends Specification {
         results[1].countryRegion.name == 'Madrid'
         results[1].countryRegion.country.uuid == spain.uuid
         results[1].countryRegion.country.name == "Spain"
+
+        when:"A join that uses a join table is executed"
+        //TODO: Figure out why this join fails on mysql
+        def specName = specificationContext.currentSpec.name
+        if (specName.contains("MySql") || specName.contains("Maria")) {
+            return
+        }
+        def region = regionRepository.findByCitiesName("Bilbao")
+
+        then:"The result is correct"
+        region.name == 'Pais Vasco'
     }
 
     void "test find by name"() {
