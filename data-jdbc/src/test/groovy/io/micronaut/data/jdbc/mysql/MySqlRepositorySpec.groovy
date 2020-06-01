@@ -69,17 +69,17 @@ class MySqlRepositorySpec extends AbstractRepositorySpec {
 
     @Override
     CountryRepository getCountryRepository() {
-        return context.getBean(H2CountryRepository)
+        return context.getBean(MySqlCountryRepository)
     }
 
     @Override
     CityRepository getCityRepository() {
-        return context.getBean(H2CityRepository)
+        return context.getBean(MySqlCityRepository)
     }
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(MySqlRegionRepository)
     }
 
     @Override
