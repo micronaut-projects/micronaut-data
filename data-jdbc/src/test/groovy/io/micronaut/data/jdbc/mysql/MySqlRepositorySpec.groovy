@@ -17,10 +17,6 @@ package io.micronaut.data.jdbc.mysql
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
-import io.micronaut.data.jdbc.postgres.PostgresBasicTypesRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
