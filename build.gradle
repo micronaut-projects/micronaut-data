@@ -163,7 +163,7 @@ subprojects { Project subproject ->
         apply plugin: 'checkstyle'
 
         checkstyle {
-            toolVersion = 8.32
+            toolVersion = 8.33
             configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
 
             // Per submodule
