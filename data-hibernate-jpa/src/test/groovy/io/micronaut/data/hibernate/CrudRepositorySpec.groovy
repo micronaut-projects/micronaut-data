@@ -40,11 +40,13 @@ class CrudRepositorySpec extends Specification {
     @Shared
     ApplicationContext context
 
-    def setupSpec() {
-        crudRepository.saveAll([
-                new Person(name: "Jeff"),
-                new Person(name: "James")
-        ])
+    def setup() {
+        if (crudRepository.count() == 0) {
+            crudRepository.saveAll([
+                    new Person(name: "Jeff"),
+                    new Person(name: "James")
+            ])
+        }
     }
 
     void "test save one"() {

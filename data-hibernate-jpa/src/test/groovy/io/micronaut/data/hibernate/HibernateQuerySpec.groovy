@@ -31,10 +31,10 @@ class HibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     BookRepository br
+
     @Shared
     @Inject
     AuthorRepository ar
-
 
     void "test native query"() {
         given:
