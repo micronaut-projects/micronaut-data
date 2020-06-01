@@ -17,17 +17,17 @@ package io.micronaut.data.jdbc.mariadb
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
 import io.micronaut.data.jdbc.mysql.MySqlAuthorRepository
 import io.micronaut.data.jdbc.mysql.MySqlBasicTypesRepository
 import io.micronaut.data.jdbc.mysql.MySqlBookDtoRepository
 import io.micronaut.data.jdbc.mysql.MySqlBookRepository
+import io.micronaut.data.jdbc.mysql.MySqlCityRepository
 import io.micronaut.data.jdbc.mysql.MySqlCompanyRepository
+import io.micronaut.data.jdbc.mysql.MySqlCountryRepository
 import io.micronaut.data.jdbc.mysql.MySqlFaceRepository
 import io.micronaut.data.jdbc.mysql.MySqlNoseRepository
 import io.micronaut.data.jdbc.mysql.MySqlPersonRepository
+import io.micronaut.data.jdbc.mysql.MySqlRegionRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
@@ -78,17 +78,17 @@ class MariaRepositorySpec extends AbstractRepositorySpec {
 
     @Override
     CountryRepository getCountryRepository() {
-        return context.getBean(H2CountryRepository)
+        return context.getBean(MySqlCountryRepository)
     }
 
     @Override
     CityRepository getCityRepository() {
-        return context.getBean(H2CityRepository)
+        return context.getBean(MySqlCityRepository)
     }
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(MySqlRegionRepository)
     }
 
     @Override
