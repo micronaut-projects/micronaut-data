@@ -66,6 +66,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionOperations;
 
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
@@ -102,6 +103,28 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private ExecutorService executorService;
 
     /**
+     *
+     * @deprecated Use {@link DefaultJdbcRepositoryOperations(String, DataSource, TransactionOperations, ExecutorService, BeanContext, List, DateTimeProvider, List)}
+     * @param dataSourceName        The data source name
+     * @param dataSource            The datasource
+     * @param transactionOperations The JDBC operations for the data source
+     * @param executorService       The executor service
+     * @param beanContext           The bean context
+     * @param codecs                The codecs
+     * @param dateTimeProvider      The dateTimeProvider
+     */
+    @Deprecated
+    protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
+                                              DataSource dataSource,
+                                              @Parameter TransactionOperations<Connection> transactionOperations,
+                                              @Named("io") @Nullable ExecutorService executorService,
+                                              BeanContext beanContext,
+                                              List<MediaTypeCodec> codecs,
+                                              @NonNull DateTimeProvider dateTimeProvider) {
+        this(dataSourceName, dataSource, transactionOperations, executorService, beanContext, codecs, dateTimeProvider, AbstractSqlRepositoryOperations.currentAutoPopulatedGenerators(dateTimeProvider));
+
+    }
+    /**
      * Default constructor.
      *
      * @param dataSourceName        The data source name
@@ -111,20 +134,24 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param beanContext           The bean context
      * @param codecs                The codecs
      * @param dateTimeProvider      The dateTimeProvider
+     * @param autoPopulatedGenerators    Generators for AutoPopulated fields
      */
+    @Inject
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               DataSource dataSource,
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
-                                              @NonNull DateTimeProvider dateTimeProvider) {
+                                              @NonNull DateTimeProvider dateTimeProvider,
+                                              List<AutoPopulatedGenerator> autoPopulatedGenerators) {
         super(
                 new ColumnNameResultSetReader(),
                 new ColumnIndexResultSetReader(),
                 new JdbcQueryStatement(),
                 codecs,
-                dateTimeProvider
+                dateTimeProvider,
+                autoPopulatedGenerators
         );
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);

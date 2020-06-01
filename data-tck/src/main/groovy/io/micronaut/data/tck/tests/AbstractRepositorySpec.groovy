@@ -516,8 +516,14 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         company.myId != null
         dateCreated != null
-        company.lastUpdated.toEpochMilli().toString().startsWith(company.dateCreated.getTime().toString())
         getYearMonthDay(retrieved.dateCreated) == calendar
+
+        when:
+        long lastUpdatedMillis = company.lastUpdated.toEpochMilli()
+        long lastCreatedMillis = company.dateCreated.getTime()
+
+        then: 'last updated is equals or at most 50 millis different than date created'
+        (lastUpdatedMillis - lastCreatedMillis) >= 0 && ((lastUpdatedMillis - lastCreatedMillis) < 50)
 
         when:
         companyRepository.update(company.myId, "Changed")

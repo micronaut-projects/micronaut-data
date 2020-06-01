@@ -7,7 +7,7 @@ The following table summarizes the different annotations and what they enable. I
 |*Description*
 
 |ann:data.annotation.AutoPopulated[]
-|Meta annotation for a value that should be auto-populated by Micronaut Data (such as time stamps and UUIDs)
+|Meta annotation for a value that should be auto-populated by Micronaut Data. Micronaut Data provides generators for time stamps and UUIDs. You can provide your own bean of type api::data.jdbc.operations.AutoPopulatedGenerator[]
 
 |ann:data.annotation.DateCreated[]
 |Allows assigning a data created value (such as a `java.time.Instant`) prior to an insert

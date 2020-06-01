@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -46,6 +47,7 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -76,6 +78,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final Map<Dialect, SqlQueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
     protected final MediaTypeCodec jsonCodec;
     protected final DateTimeProvider dateTimeProvider;
+    protected final List<AutoPopulatedGenerator> autoPopulatedGenerators;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
@@ -92,18 +95,56 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
      * @param dateTimeProvider           The injected dateTimeProvider instance
+     * @param autoPopulatedGenerators    Generators for AutoPopulated fields
      */
+    @Inject
+    protected AbstractSqlRepositoryOperations(
+            ResultReader<RS, String> columnNameResultSetReader,
+            ResultReader<RS, Integer> columnIndexResultSetReader,
+            QueryStatement<PS, Integer> preparedStatementWriter,
+            List<MediaTypeCodec> codecs,
+            @NonNull DateTimeProvider dateTimeProvider,
+            List<AutoPopulatedGenerator> autoPopulatedGenerators) {
+        this.columnNameResultSetReader = columnNameResultSetReader;
+        this.columnIndexResultSetReader = columnIndexResultSetReader;
+        this.preparedStatementWriter = preparedStatementWriter;
+        this.jsonCodec = resolveJsonCodec(codecs);
+        this.dateTimeProvider = dateTimeProvider;
+        this.autoPopulatedGenerators = autoPopulatedGenerators;
+    }
+
+    /**
+     * Constructor.
+     * @deprecated Use {@link AbstractSqlRepositoryOperations(ResultReader, ResultReader, QueryStatement, List, DateTimeProvider, List)}
+     * @param columnNameResultSetReader  The column name result reader
+     * @param columnIndexResultSetReader The column index result reader
+     * @param preparedStatementWriter    The prepared statement writer
+     * @param codecs                     The media type codecs
+     * @param dateTimeProvider           The injected dateTimeProvider instance
+     */
+    @Deprecated
     protected AbstractSqlRepositoryOperations(
             ResultReader<RS, String> columnNameResultSetReader,
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
             @NonNull DateTimeProvider dateTimeProvider) {
-        this.columnNameResultSetReader = columnNameResultSetReader;
-        this.columnIndexResultSetReader = columnIndexResultSetReader;
-        this.preparedStatementWriter = preparedStatementWriter;
-        this.jsonCodec = resolveJsonCodec(codecs);
-        this.dateTimeProvider = dateTimeProvider;
+        this(columnNameResultSetReader,
+                columnIndexResultSetReader,
+                preparedStatementWriter,
+                codecs,
+                dateTimeProvider,
+                currentAutoPopulatedGenerators(dateTimeProvider));
+    }
+
+    @Deprecated
+    public static List<AutoPopulatedGenerator> currentAutoPopulatedGenerators(DateTimeProvider dateTimeProvider) {
+        List<AutoPopulatedGenerator> generators = new ArrayList<>();
+        generators.add(new DateCreatedAutoPopulatedGenerator(dateTimeProvider));
+        generators.add(new DateUpdatedAutoPopulatedGenerator(dateTimeProvider));
+        generators.add(new UUIDAutoPopulatedGenerator());
+        OrderUtil.sort(generators);
+        return generators;
     }
 
     private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
@@ -136,7 +177,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T>    The entity type
      */
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
-        Object now = null;
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
         for (int i = 0; i < parameterBinding.length; i++) {
@@ -210,50 +250,30 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
                 } else if (!prop.isGenerated()) {
                     if (beanProperty.hasStereotype(AutoPopulated.class)) {
-                        if (beanProperty.hasAnnotation(DateCreated.class)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                            }
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    now
-                            );
-                            beanProperty.convertAndSet(entity, now);
-                        } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                            }
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    now
-                            );
-                            beanProperty.convertAndSet(entity, now);
-                        } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
-                            UUID uuid = UUID.randomUUID();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
-                            }
-                            if (insert.dialect == Dialect.ORACLE) {
+                        Optional<AutoPopulatedGenerator> autoPopulatedGenerator = autoPopulatedGenerators.stream()
+                                .filter(generator -> generator.canPopulate(beanProperty))
+                                .findFirst();
+                        if (autoPopulatedGenerator.isPresent()) {
+                            AutoPopulatedValue autoPopulatedValue = autoPopulatedGenerator.get().valueAtIndex(index, insert.dialect);
+                            if (autoPopulatedValue.getWriteValueMode() == WriteValueMode.STRING) {
                                 preparedStatementWriter.setString(
                                         stmt,
                                         index,
-                                        uuid.toString()
+                                        autoPopulatedValue.getValue().toString()
                                 );
                             } else {
                                 preparedStatementWriter.setDynamic(
                                         stmt,
                                         index,
                                         type,
-                                        uuid
+                                        autoPopulatedValue.getValue()
                                 );
                             }
-                            beanProperty.set(entity, uuid);
+                            if (autoPopulatedValue.needsConversion()) {
+                                beanProperty.convertAndSet(entity, autoPopulatedValue.getValue());
+                            } else {
+                                beanProperty.set(entity, autoPopulatedValue.getValue());
+                            }
                         } else {
                             throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                         }
