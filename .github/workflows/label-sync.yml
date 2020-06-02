@@ -2,11 +2,7 @@
 #
 # https://github.com/micronaut-projects/micronaut-project-template/tree/master/.github/workflows
 #
-# and edit them there. Then, go to:
-#
-# https://github.com/micronaut-projects/micronaut-build/actions?query=workflow%3A%22Actions+sync%22
-#
-# and restart the latest job.
+# and edit them there. Note that it will be sync'ed to all the Micronaut repos
 name: Sync labels
 on:
   issues:

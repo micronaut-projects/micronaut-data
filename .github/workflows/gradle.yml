@@ -2,21 +2,17 @@
 #
 # https://github.com/micronaut-projects/micronaut-project-template/tree/master/.github/workflows
 #
-# and edit them there. Then, go to:
-#
-# https://github.com/micronaut-projects/micronaut-build/actions?query=workflow%3A%22Actions+sync%22
-#
-# and restart the latest job.
+# and edit them there. Note that it will be sync'ed to all the Micronaut repos
 name: Java CI
 on:
   push:
     branches:
       - master
-      - [1-9]+.[0-9]+.x
+      - '[1-9]+.[0-9]+.x'
   pull_request:
     branches:
       - master
-      - [1-9]+.[0-9]+.x
+      - '[1-9]+.[0-9]+.x'
 jobs:
   build:
     runs-on: ubuntu-latest

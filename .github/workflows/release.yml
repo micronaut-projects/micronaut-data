@@ -2,11 +2,7 @@
 #
 # https://github.com/micronaut-projects/micronaut-project-template/tree/master/.github/workflows
 #
-# and edit them there. Then, go to:
-#
-# https://github.com/micronaut-projects/micronaut-build/actions?query=workflow%3A%22Actions+sync%22
-#
-# and restart the latest job.
+# and edit them there. Note that it will be sync'ed to all the Micronaut repos
 name: Release
 on:
   release:
@@ -21,7 +17,6 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-          ref: ${{ github.head_ref }}
       - name: Set the current release version
         id: release_version
         run: echo ::set-output name=release_version::${GITHUB_REF:11}
@@ -34,6 +29,8 @@ jobs:
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
           BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
         run: ./gradlew bintrayUpload docs
+      - name: Export Gradle Properties
+        uses: micronaut-projects/github-actions/export-gradle-properties@master
       - name: Publish to Github Pages
         if: success()
         uses: micronaut-projects/github-pages-deploy-action@master
@@ -52,12 +49,8 @@ jobs:
           ref: ${{ env.githubCoreBranch }}
           path: micronaut-core # Must be micronaut-core
         continue-on-error: true
-      - name: Export Gradle Properties
-        uses: micronaut-projects/github-actions/export-gradle-properties@master
       - name: Update BOM
         uses: micronaut-projects/github-actions/update-bom@master
-#        env:
-#          DRY_RUN: true
         with:
           token: ${{ secrets.GH_TOKEN }}
         continue-on-error: true
