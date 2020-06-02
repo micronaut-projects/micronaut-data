@@ -12,9 +12,11 @@ on:
   push:
     branches:
     - master
+    - [1-9]+.[0-9]+.x
   pull_request:
     branches:
-    - master    
+    - master
+    - [1-9]+.[0-9]+.x
 jobs:
   build:
     runs-on: ubuntu-latest
