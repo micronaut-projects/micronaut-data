@@ -11,12 +11,12 @@ name: Java CI
 on:
   push:
     branches:
-    - master
-    - [1-9]+.[0-9]+.x
+      - master
+      - [1-9]+.[0-9]+.x
   pull_request:
     branches:
-    - master
-    - [1-9]+.[0-9]+.x
+      - master
+      - [1-9]+.[0-9]+.x
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,32 +24,32 @@ jobs:
       matrix:
         java: ['8', '11', '14']
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/cache@v1
-      with:
-        path: ~/.gradle/caches
-        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
-        restore-keys: |
-          ${{ runner.os }}-gradle-
-    - name: Set up JDK
-      uses: actions/setup-java@v1
-      with:
-        java-version: ${{ matrix.java }}   
-    - name: Build with Gradle
-      run: ./gradlew dependencyUpdates check --parallel --continue
-      env:
-        TESTCONTAINERS_RYUK_DISABLED: true
-    - name: Publish to JFrog OSS
-      if: success() && github.event_name == 'push' && matrix.java == '8'
-      env:
-         BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
-         BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
-      run: ./gradlew publish docs
-    - name: Publish to Github Pages
-      if: success() && github.event_name == 'push' && matrix.java == '8'
-      uses: micronaut-projects/github-pages-deploy-action@master
-      env:
-        GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        BASE_BRANCH: ${{ env.githubBranch }}
-        BRANCH: gh-pages 
-        FOLDER: build/docs
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Build with Gradle
+        run: ./gradlew dependencyUpdates check --parallel --continue
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: true
+      - name: Publish to JFrog OSS
+        if: success() && github.event_name == 'push' && matrix.java == '8'
+        env:
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_KEY: ${{ secrets.BINTRAY_KEY }}
+        run: ./gradlew publish docs
+      - name: Publish to Github Pages
+        if: success() && github.event_name == 'push' && matrix.java == '8'
+        uses: micronaut-projects/github-pages-deploy-action@master
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          BASE_BRANCH: ${{ env.githubBranch }}
+          BRANCH: gh-pages
+          FOLDER: build/docs
