@@ -239,7 +239,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                 DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
                             }
-                            if (insert.dialect == Dialect.ORACLE) {
+                            if (insert.dialect == Dialect.MYSQL || insert.dialect == Dialect.ORACLE) {
                                 preparedStatementWriter.setString(
                                         stmt,
                                         index,
