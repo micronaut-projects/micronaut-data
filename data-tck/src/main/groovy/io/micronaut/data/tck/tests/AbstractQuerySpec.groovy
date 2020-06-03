@@ -29,8 +29,8 @@ abstract class AbstractQuerySpec extends Specification {
     }
 
     void cleanup() {
-        bookRepository.deleteAll()
-        authorRepository.deleteAll()
+        bookRepository?.deleteAll()
+        authorRepository?.deleteAll()
     }
 
     void addBookSeedData() {
