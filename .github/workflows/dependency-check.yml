@@ -6,7 +6,7 @@
 name: Check Dependencies
 on:
   schedule:
-    - cron: '0 12 * * *'
+    - cron: '0 16 * * MON-FRI'
 jobs:
   check-dependencies:
     runs-on: ubuntu-latest

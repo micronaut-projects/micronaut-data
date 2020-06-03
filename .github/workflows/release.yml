@@ -13,6 +13,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+      - uses: gradle/wrapper-validation-action@v1
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -59,6 +60,3 @@ jobs:
         uses: micronaut-projects/github-actions/post-release@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-   
-
-          
