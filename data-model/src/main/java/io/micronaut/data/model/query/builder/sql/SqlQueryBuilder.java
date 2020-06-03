@@ -1132,6 +1132,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Selects the default fallback strategy. For a generated value.
+     * @param property The Persistent property
      * @return The generated value
      */
     protected GeneratedValue.Type selectAutoStrategy(PersistentProperty property) {
