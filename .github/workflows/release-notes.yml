@@ -27,12 +27,10 @@ jobs:
         uses: micronaut-projects/github-actions/export-gradle-properties@master
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
-        continue-on-error: true
         with:
           branch: ${{ env.githubBranch }}
       - uses: ncipollo/release-action@v1
         if: success()
-        continue-on-error: true
         with:
           allowUpdates: true
           commit: ${{ env.githubBranch }}
@@ -41,6 +39,11 @@ jobs:
           tag: v${{ steps.release_notes.outputs.next_version }}
           bodyFile: CHANGELOG.md
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  release_drafter:
+    runs-on: ubuntu-latest
+    needs: release_notes
+    steps:
       - uses: release-drafter/release-drafter@v5
         if: failure()
         env:
