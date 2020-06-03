@@ -55,6 +55,17 @@ public class Projections {
     }
 
     /**
+     * A projection that obtains the value of a property of an entity.
+     * @param entityAlias Entity Alias
+     * @param name The name of the property
+     * @param alias alias
+     * @return The PropertyProjection instance
+     */
+    public static QueryModel.PropertyProjection property(String entityAlias, String name, String alias) {
+        return new QueryModel.PropertyProjection(entityAlias, name, alias);
+    }
+
+    /**
      * Computes the sum of a property.
      *
      * @param name The name of the property

@@ -53,6 +53,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -67,6 +68,8 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     private static final String DELETE = "delete";
     private static final String UPDATE = "update";
     private static final String VOID = "void";
+    private static final String ID = "id";
+    private static final Join.Type DEFAULT_JOIN_TYPE = Join.Type.FETCH;
     protected final Pattern pattern;
 
     /**
@@ -81,6 +84,20 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         return pattern.matcher(methodElement.getName()).find();
+    }
+
+    /**
+     *
+     * @param returnType Return Type
+     * @param queryResultType Query Result Type
+     * @return Whether the return type is a DTO
+     */
+    protected boolean isReturnTypeDto(@Nullable ClassElement returnType, @Nullable ClassElement queryResultType) {
+        return returnType != null &&
+                queryResultType != null &&
+                !TypeUtils.areTypesCompatible(returnType, queryResultType) &&
+                returnType.hasStereotype(Introspected.class) &&
+                queryResultType.hasStereotype(MappedEntity.class);
     }
 
     /**
@@ -189,6 +206,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                             }
                         }
 
+//                        if (returnType.getSimpleName().equals("FaceDTO")) {
+//                            applyJoinSpecifications(matchContext, query, matchContext.getRootEntity(), Arrays.asList(new JoinSpec("nose", "nose_", Join.Type.RIGHT_FETCH)));
+//                        }
                         return new MethodMatchInfo(returnType, query, getInterceptorElement(matchContext, FindOneInterceptor.class), true);
                     } else {
 
@@ -479,7 +499,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return returnType.hasStereotype(SingleResult.class) || returnType.isAssignable("io.reactivex.Single") || returnType.isAssignable("reactor.core.publisher.Mono");
     }
 
-    private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull QueryModel query, ClassElement returnType) {
+    private boolean attemptProjection(@NonNull MethodMatchContext matchContext,
+                                      @NonNull ClassElement queryResultType,
+                                      @NonNull QueryModel query,
+                                      ClassElement returnType) {
         List<PropertyElement> beanProperties = returnType.getBeanProperties();
         SourcePersistentEntity entity = matchContext.getEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
@@ -488,6 +511,18 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
             if (pp == null) {
                 pp = entity.getIdOrVersionPropertyByName(propertyName);
+            }
+            SourcePersistentEntity association = null;
+            if (pp == null && propertyName.endsWith(DtoJoinPathsParser.CAPITALIZED_ID)) {
+                String associationPropertyName = propertyName.substring(0, propertyName.indexOf(DtoJoinPathsParser.CAPITALIZED_ID));
+                Optional<SourcePersistentProperty> associationOptional = entity.getPersistentProperties()
+                        .stream()
+                        .filter(persistentProperty -> persistentProperty.getName().equals(associationPropertyName))
+                        .findFirst();
+                if (associationOptional.isPresent()) {
+                    association = matchContext.getEntity(associationOptional.get().getType());
+                    pp = association.getIdOrVersionPropertyByName(ID);
+                }
             }
 
             if (pp == null) {
@@ -501,10 +536,16 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             }
             // add an alias projection for each property
             final QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-            if (queryBuilder.shouldAliasProjections()) {
-                query.projections().add(Projections.property(propertyName).aliased());
+
+            if (association == null) {
+                if (queryBuilder.shouldAliasProjections()) {
+                    query.projections().add(Projections.property(propertyName).aliased());
+                } else {
+                    query.projections().add(Projections.property(propertyName));
+                }
             } else {
-                query.projections().add(Projections.property(propertyName));
+                String entityAlias = entity.getAliasName() + association.getAliasName();
+                query.projections().add(Projections.property(entityAlias, pp.getName(), propertyName));
             }
         }
         return false;
@@ -561,28 +602,78 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull QueryModel query,
             @Nonnull SourcePersistentEntity rootEntity,
             @NonNull List<AnnotationValue<Join>> joinSpecs) {
-        for (AnnotationValue<Join> joinSpec : joinSpecs) {
-            String path = joinSpec.stringValue().orElse(null);
-            Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(Join.Type.FETCH);
-            String alias = joinSpec.stringValue("alias").orElse(null);
-            if (path != null) {
-                PersistentProperty prop = rootEntity.getPropertyByPath(path).orElse(null);
-                if (!(prop instanceof Association)) {
-                    matchContext.fail("Invalid join spec [" + path + "]. Property is not an association!");
-                    return true;
-                } else {
-                    boolean hasExisting = query.getCriteria().getCriteria().stream().anyMatch(c -> {
-                        if (c instanceof AssociationQuery) {
-                            AssociationQuery aq = (AssociationQuery) c;
-                            return aq.getAssociation().equals(prop);
-                        }
-                        return false;
-                    });
-                    if (!hasExisting) {
-                        query.add(new AssociationQuery(path, (Association) prop));
+        return applyJoinSpecifications(matchContext, query, rootEntity, joinSpecsByAnnotationValue(joinSpecs));
+    }
+
+    /**
+     *
+     * @param paths Association Paths
+     * @return set of {@link AssociationJoin} for the supplied association paths.
+     */
+    protected Set<AssociationJoin> joinSpecsByPath(@NonNull Set<String> paths) {
+        return paths.stream().map(path -> new AssociationJoin(path, null, DEFAULT_JOIN_TYPE)).collect(Collectors.toSet());
+    }
+
+    /**
+     *
+     * @param joinSpecs {@link Join} Annotation values.
+     * @return set of {@link AssociationJoin} for the supplied {@link Join} Annotation values.
+     */
+    protected Set<AssociationJoin> joinSpecsByAnnotationValue(@NonNull List<AnnotationValue<Join>> joinSpecs) {
+        return joinSpecs.stream()
+                .filter(joinSpec -> joinSpec.stringValue().orElse(null) != null)
+                .map(joinSpec -> {
+                    String path = joinSpec.stringValue().orElse(null);
+                    Join.Type type = joinSpec.enumValue("type", Join.Type.class).orElse(DEFAULT_JOIN_TYPE);
+                    String alias = joinSpec.stringValue("alias").orElse(null);
+                    return new AssociationJoin(path, alias, type);
+                }).collect(Collectors.toSet());
+    }
+
+    /**
+     *
+     * @param matchContext Match Context
+     * @return set of {@link AssociationJoin} for the {@link Join} annotations.
+     */
+    protected Set<AssociationJoin> joinSpecsForMatchContext(@NonNull MethodMatchContext matchContext) {
+        final MethodMatchInfo.OperationType operationType = getOperationType();
+        if (operationType != MethodMatchInfo.OperationType.QUERY) {
+            return joinSpecsByAnnotationValue(matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class));
+        }
+        return joinSpecsByAnnotationValue(matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class));
+    }
+
+    /**
+     * Apply the configured join specifications to the given query.
+     *
+     * @param matchContext The match context
+     * @param query        The query
+     * @param rootEntity   the root entity
+     * @param joinSpecs    The join specs
+     * @return True if an error occurred applying the specs
+     */
+    protected boolean applyJoinSpecifications(
+            @NonNull MethodMatchContext matchContext,
+            @NonNull QueryModel query,
+            @Nonnull SourcePersistentEntity rootEntity,
+            @NonNull Set<AssociationJoin> joinSpecs) {
+        for (AssociationJoin spec : joinSpecs) {
+            PersistentProperty prop = rootEntity.getPropertyByPath(spec.getPath()).orElse(null);
+            if (!(prop instanceof Association)) {
+                matchContext.fail("Invalid join spec [" + spec.getPath() + "]. Property is not an association!");
+                return true;
+            } else {
+                boolean hasExisting = query.getCriteria().getCriteria().stream().anyMatch(c -> {
+                    if (c instanceof AssociationQuery) {
+                        AssociationQuery aq = (AssociationQuery) c;
+                        return aq.getAssociation().equals(prop);
                     }
-                    query.join(path, (Association) prop, type, alias);
+                    return false;
+                });
+                if (!hasExisting) {
+                    query.add(new AssociationQuery(spec.getPath(), (Association) prop));
                 }
+                query.join(spec.getPath(), (Association) prop, spec.getJoinType(), spec.getAlias());
             }
         }
         return false;

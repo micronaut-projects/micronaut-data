@@ -55,7 +55,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final char DOT = '.';
     protected static final String NOT_CLAUSE = " NOT";
     protected static final String AND = "AND";
-    protected static final String LOGICAL_AND = " "+ AND + " ";
+    protected static final String LOGICAL_AND = " " + AND + " ";
     protected static final String UPDATE_CLAUSE = "UPDATE ";
     protected static final String DELETE_CLAUSE = "DELETE ";
     protected static final String OR = "OR";
@@ -727,7 +727,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         String propertyName = pp.getPropertyName();
                         PersistentProperty persistentProperty = entity.getPropertyByPath(propertyName)
                                 .orElseThrow(() -> new IllegalArgumentException("Cannot project on non-existent property: " + propertyName));
-                        appendPropertyProjection(queryString, logicalName, persistentProperty, propertyName);
+                        String entityAlias = pp.getEntityAlias() != null ?  pp.getEntityAlias() : logicalName;
+                        appendPropertyProjection(queryString, entityAlias, persistentProperty, propertyName);
                     }
                     if (alias != null) {
                         queryString.append(AS_CLAUSE)

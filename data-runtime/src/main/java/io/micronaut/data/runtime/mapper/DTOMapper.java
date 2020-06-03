@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.http.codec.MediaTypeCodec;
@@ -41,6 +42,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final ResultReader<S, String> resultReader;
     private final @Nullable MediaTypeCodec jsonCodec;
+    private static final String CAPITALIZED_ID = "Id";
 
     /**
      * Default constructor.
@@ -73,7 +75,16 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     @Nullable
     @Override
     public Object read(@NonNull S object, @NonNull String name) throws ConversionErrorException {
-        RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(name);
+        RuntimePersistentProperty<?> pp = persistentEntity.getPropertyByName(name);
+        if (pp == null && name.endsWith(CAPITALIZED_ID)) {
+            pp = persistentEntity.getPropertyByName(name.substring(0, name.indexOf(CAPITALIZED_ID)));
+            if (pp != null) {
+                if (pp instanceof RuntimeAssociation) {
+                    RuntimeAssociation<?> runtimeAssociation = (RuntimeAssociation<?>) pp;
+                    pp = runtimeAssociation.getAssociatedEntity().getIdentity();
+                }
+            }
+        }
         if (pp == null) {
             throw new DataAccessException("DTO projection defines a property [" + name + "] that doesn't exist on root entity: " + persistentEntity.getName());
         } else {
@@ -101,7 +112,7 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param property THe property
      * @return The result
      */
-    public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<T> property) {
+    public @Nullable Object read(@NonNull S resultSet, @NonNull RuntimePersistentProperty<?> property) {
         String propertyName = property.getPersistedName();
         DataType dataType = property.getDataType();
         if (dataType == DataType.JSON && jsonCodec != null) {
