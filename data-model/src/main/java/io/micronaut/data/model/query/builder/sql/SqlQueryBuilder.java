@@ -1011,7 +1011,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 alias,
                                 escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
                                 escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
-                        target.append(join);
+                        String joinStr = join.toString();
+                        if (target.indexOf(joinStr) == -1) {
+                            target.append(joinStr);
+                        }
                     } else {
                         final PersistentProperty associatedId = associationOwner.getIdentity();
                         if (associatedId == null) {
@@ -1034,7 +1037,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 alias,
                                 escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
                                 joinColumnNames[0]);
-                        target.append(join);
+                        String joinStr = join.toString();
+                        if (target.indexOf(joinStr) == -1) {
+                            target.append(joinStr);
+                        }
                         target.append(SPACE);
                         join = joinStringBuilder(joinType,
                                 associatedTableName,
@@ -1042,7 +1048,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 joinTableAlias,
                                 joinColumnNames[1],
                                 escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
-                        target.append(join);
+                        joinStr = join.toString();
+                        if (target.indexOf(joinStr) == -1) {
+                            target.append(joinStr);
+                        }
                     }
                 } else {
                     StringBuilder join = joinStringBuilder(joinType,
@@ -1051,7 +1060,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             alias,
                             escape ? quote(getColumnName(association)) : getColumnName(association),
                             escape ? quote(getColumnName(identity)) : getColumnName(identity));
-                    target.append(join);
+                    String joinStr = join.toString();
+                    if (target.indexOf(joinStr) == -1) {
+                        target.append(joinStr);
+                    }
                 }
                 alias = joinAliases[i];
             }
