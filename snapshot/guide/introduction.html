@@ -166,16 +166,7 @@ function addJsClass() {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">package example;
-
-import io.micronaut.data.annotation.*;
-import io.micronaut.data.model.*;
-import io.micronaut.data.repository.CrudRepository;
-import java.util.List;
-
-@Repository <b class="conum">(1)</b>
-interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
-    Book find(String title);
+<pre class="highlight"><code class="language-java" data-lang="java">    Book find(String title);
 }</code></pre>
 </div>
 </div>
