@@ -33,7 +33,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter-api"
     testImplementation "org.jetbrains.spek:spek-api:1.1.5"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
-    testImplementation "io.micronaut.test:micronaut-test-junit5"
+    testImplementation "io.micronaut.test:micronaut-test-junit5:$micronautTestVersion"
 }
 
 mainClassName = "example.Application"

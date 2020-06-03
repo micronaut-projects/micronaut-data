@@ -52,8 +52,8 @@ dependencies {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
     testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation "io.micronaut.test:micronaut-test-spock"
-    testImplementation "io.micronaut.test:micronaut-test-junit5"
+    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+    testImplementation "io.micronaut.test:micronaut-test-junit5:$micronautTestVersion"
     testRuntimeOnly "org.junit.vintage:junit-vintage-engine:5.5.0"
 }
 

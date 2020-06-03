@@ -25,7 +25,7 @@ dependencies {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
     testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation "io.micronaut.test:micronaut-test-spock"
+    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
 }
 
 //compileGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']

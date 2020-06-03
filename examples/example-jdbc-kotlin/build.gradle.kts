@@ -53,7 +53,7 @@ dependencies {
 
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testAnnotationProcessor("io.micronaut:micronaut-inject-java")
-    testImplementation("io.micronaut.test:micronaut-test-junit5")
+    testImplementation("io.micronaut.test:micronaut-test-junit5:$micronautTestVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
