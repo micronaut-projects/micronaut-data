@@ -44,16 +44,6 @@ class H2QuerySpec extends AbstractQuerySpec {
     DataSource dataSource
 
     @Override
-    void init() {
-        ar.deleteAll()
-        br.deleteAll()
-    }
-
-    def cleanupSpec() {
-        br.deleteAll()
-    }
-
-    @Override
     H2BookRepository getBookRepository() {
         return br
     }

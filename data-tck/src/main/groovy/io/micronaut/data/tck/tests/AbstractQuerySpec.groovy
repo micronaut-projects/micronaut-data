@@ -24,12 +24,16 @@ abstract class AbstractQuerySpec extends Specification {
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
 
-    void init() {
+    void setup() {
+        addBookSeedData()
     }
 
-    def setupSpec() {
+    void cleanup() {
+        authorRepository.deleteAll()
         bookRepository.deleteAll()
-        init()
+    }
+
+    void addBookSeedData() {
         bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
         // blank title
         bookRepository.save(new Book(title: "", totalPages: 0))
