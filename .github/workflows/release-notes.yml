@@ -6,12 +6,12 @@
 name: Release Notes
 on:
   pull_request:
-    types: [closed]
+    types: [closed, labeled]
     branches:
       - master
       - '[1-9]+.[0-9]+.x'
   issues:
-    types: [closed,reopened]
+    types: [closed,reopened, labeled]
   push:
     branches:
       - master
@@ -30,6 +30,7 @@ jobs:
         with:
           branch: ${{ env.githubBranch }}
       - uses: ncipollo/release-action@v1
+        if: success()
         with:
           allowUpdates: true
           commit: ${{ env.githubBranch }}
@@ -38,3 +39,7 @@ jobs:
           tag: v${{ steps.release_notes.outputs.next_version }}
           bodyFile: CHANGELOG.md
           token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: release-drafter/release-drafter@v5
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
