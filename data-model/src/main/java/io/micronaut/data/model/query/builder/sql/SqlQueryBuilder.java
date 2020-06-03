@@ -987,10 +987,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (identity == null) {
                     throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
                 }
+                final PersistentEntity associationOwner = association.getOwner();
+                final boolean escape = shouldEscape(associationOwner);
 
                 if (association.isForeignKey()) {
                     String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-                    final PersistentEntity associationOwner = association.getOwner();
                     if (StringUtils.isNotEmpty(mappedBy)) {
                         PersistentProperty mappedProp = associatedEntity.getPropertyByName(mappedBy);
                         if (mappedProp == null) {
@@ -1001,7 +1002,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         if (associatedId == null) {
                             throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                         }
-                        final boolean escape = shouldEscape(associationOwner);
                         target.append(joinType)
                                 .append(getTableName(associatedEntity))
                                 .append(SPACE)
@@ -1020,7 +1020,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                         }
                         target.append(joinType);
-                        final boolean escape = shouldEscape(associationOwner);
                         NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
                         String joinTableName = association.getAnnotationMetadata()
                                 .stringValue(ANN_JOIN_TABLE, "name")
@@ -1056,8 +1055,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                               .append(escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
                     }
                 } else {
-                    final PersistentEntity associationOwner = association.getOwner();
-                    final boolean escape = shouldEscape(associationOwner);
                     target.append(joinType)
                             .append(getTableName(associatedEntity))
                             .append(SPACE)
