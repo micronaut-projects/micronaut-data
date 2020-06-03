@@ -992,6 +992,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
                 if (association.isForeignKey()) {
                     String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+
                     if (StringUtils.isNotEmpty(mappedBy)) {
                         PersistentProperty mappedProp = associatedEntity.getPropertyByName(mappedBy);
                         if (mappedProp == null) {
@@ -1002,24 +1003,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         if (associatedId == null) {
                             throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                         }
-                        target.append(joinType)
-                                .append(getTableName(associatedEntity))
-                                .append(SPACE)
-                                .append(joinAliases[i])
-                                .append(" ON ")
-                                .append(alias)
-                                .append(DOT)
-                                .append(escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId))
-                                .append('=')
-                                .append(joinAliases[i])
-                                .append(DOT)
-                                .append(escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
+
+
+                        StringBuilder join = joinStringBuilder(joinType,
+                                getTableName(associatedEntity),
+                                joinAliases[i],
+                                alias,
+                                escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
+                                escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
+                        target.append(join);
                     } else {
                         final PersistentProperty associatedId = associationOwner.getIdentity();
                         if (associatedId == null) {
                             throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                         }
-                        target.append(joinType);
+
                         NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
                         String joinTableName = association.getAnnotationMetadata()
                                 .stringValue(ANN_JOIN_TABLE, "name")
@@ -1029,50 +1027,57 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String[] joinColumnNames = resolveJoinTableColumns(associationOwner, associatedEntity, association, identity, associatedEntity.getIdentity(), namingStrategy);
                         String joinTableAlias = joinAliases[i] + joinTableName + "_";
                         String associatedTableName = getTableName(associatedEntity);
-                        target.append(joinTableName)
-                              .append(SPACE)
-                              .append(joinTableAlias)
-                              .append(" ON ")
-                              .append(alias)
-                              .append(DOT)
-                              .append(escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId))
-                              .append('=')
-                              .append(joinTableAlias)
-                              .append(DOT)
-                              .append(joinColumnNames[0])
-                              .append(SPACE)
-                              .append(joinType)
-                              .append(associatedTableName)
-                              .append(SPACE)
-                              .append(joinAliases[i])
-                              .append(" ON ")
-                              .append(joinTableAlias)
-                              .append(DOT)
-                              .append(joinColumnNames[1])
-                              .append('=')
-                              .append(joinAliases[i])
-                              .append(DOT)
-                              .append(escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
+
+                        StringBuilder join = joinStringBuilder(joinType,
+                                joinTableName,
+                                joinTableAlias,
+                                alias,
+                                escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
+                                joinColumnNames[0]);
+                        target.append(join);
+                        target.append(SPACE);
+                        join = joinStringBuilder(joinType,
+                                associatedTableName,
+                                joinAliases[i],
+                                joinTableAlias,
+                                joinColumnNames[1],
+                                escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
+                        target.append(join);
                     }
                 } else {
-                    target.append(joinType)
-                            .append(getTableName(associatedEntity))
-                            .append(SPACE)
-                            .append(joinAliases[i])
-                            .append(" ON ")
-                            .append(alias)
-                            .append(DOT)
-                            .append(escape ? quote(getColumnName(association)) : getColumnName(association))
-                            .append('=')
-                            .append(joinAliases[i])
-                            .append(DOT)
-                            .append(escape ? quote(getColumnName(identity)) : getColumnName(identity));
+                    StringBuilder join = joinStringBuilder(joinType,
+                            getTableName(associatedEntity),
+                            joinAliases[i],
+                            alias,
+                            escape ? quote(getColumnName(association)) : getColumnName(association),
+                            escape ? quote(getColumnName(identity)) : getColumnName(identity));
+                    target.append(join);
                 }
                 alias = joinAliases[i];
             }
             pathSoFar.append(DOT);
         }
         return joinAliases;
+    }
+
+    private StringBuilder joinStringBuilder(String joinType,
+                                            String tableName,
+                                            String tableAlias,
+                                            String onTableName,
+                                            String onTableColumn,
+                                            String tableColumnName) {
+        return new StringBuilder().append(joinType)
+                .append(tableName)
+                .append(SPACE)
+                .append(tableAlias)
+                .append(" ON ")
+                .append(onTableName)
+                .append(DOT)
+                .append(onTableColumn)
+                .append('=')
+                .append(tableAlias)
+                .append(DOT)
+                .append(tableColumnName);
     }
 
     /**
