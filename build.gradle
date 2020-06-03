@@ -15,6 +15,7 @@ subprojects { Project subproject ->
     apply plugin: "io.micronaut.build.common"
 
     if (subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")) {
+        checkstyleMain.enabled = false
         return
     }
 
