@@ -49,3 +49,6 @@ springBoot {
 jmh {
 	duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
 }
+spotlessJavaCheck.enabled = false
+checkstyleMain.enabled = false
+checkstyleJmh.enabled = false

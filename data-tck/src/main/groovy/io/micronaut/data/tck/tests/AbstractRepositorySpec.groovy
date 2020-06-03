@@ -503,8 +503,8 @@ abstract class AbstractRepositorySpec extends Specification {
 
     void "test date created and last updated"() {
         when:
-        def company = new Company("Apple", new URL("http://apple.com"))
-        def google = new Company("Google", new URL("http://google.com"))
+        def company = new Company("Apple", new URL("https://apple.com"))
+        def google = new Company("Google", new URL("https://google.com"))
         companyRepository.save(company)
         sleep(1000)
         companyRepository.save(google)
