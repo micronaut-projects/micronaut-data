@@ -84,6 +84,7 @@
     </module>
 
     <module name="TreeWalker">
+        <module name="SuppressionCommentFilter"/>
 
         <!-- Needed for SuppressWarningsFilter -->
         <module name="SuppressWarningsHolder"/>
