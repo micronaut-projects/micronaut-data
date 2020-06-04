@@ -1,25 +1,32 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.sql.Sql
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.event.BeanCreatedEvent
 import io.micronaut.context.event.BeanCreatedEventListener
 import io.micronaut.core.order.Ordered
 import io.micronaut.test.annotation.MicronautTest
 import io.micronaut.test.annotation.MockBean
+import spock.lang.AutoCleanup
 import spock.lang.Shared
+import spock.lang.Specification
 
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.sql.DataSource
 
 @MicronautTest
-class PostgresUUIDSpec extends AbstractPostgresSpec {
+class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProvider {
 
-    @Inject
+    @AutoCleanup
     @Shared
-    DataSource dataSource
+    ApplicationContext applicationContext = ApplicationContext.run(properties)
 
-    @Inject PostgresUuidRepository repository
+    @Shared
+    DataSource dataSource = applicationContext.getBean(DataSource)
+
+    @Shared
+    PostgresUuidRepository repository = applicationContext.getBean(PostgresUuidRepository)
 
     void 'test insert with UUID'() {
         when:
@@ -37,6 +44,8 @@ class PostgresUUIDSpec extends AbstractPostgresSpec {
         test.uuid == uuid
         test.name == 'Fred'
 
+        cleanup:
+        repository.deleteAll()
     }
 
     // sets up UUID extension support for Postgres

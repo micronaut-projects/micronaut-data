@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
-import io.micronaut.context.ApplicationContext
+
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.jdbc.mysql.MySqlAuthorRepository
 import io.micronaut.data.jdbc.mysql.MySqlBasicTypesRepository
@@ -28,8 +28,6 @@ import io.micronaut.data.jdbc.mysql.MySqlFaceRepository
 import io.micronaut.data.jdbc.mysql.MySqlNoseRepository
 import io.micronaut.data.jdbc.mysql.MySqlPersonRepository
 import io.micronaut.data.jdbc.mysql.MySqlRegionRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -42,14 +40,9 @@ import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
-import org.testcontainers.containers.MariaDBContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 @MicronautTest
-class MariaRepositorySpec extends AbstractRepositorySpec {
-    @Shared @AutoCleanup MariaDBContainer mariadb = new MariaDBContainer<>()
-    @Shared @AutoCleanup ApplicationContext context
+class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPropertyProvider {
 
     @Override
     PersonRepository getPersonRepository() {
@@ -99,19 +92,6 @@ class MariaRepositorySpec extends AbstractRepositorySpec {
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MySqlFaceRepository)
-    }
-
-    @Override
-    void init() {
-        mariadb.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":mariadb.getJdbcUrl(),
-                "datasources.default.username":mariadb.getUsername(),
-                "datasources.default.password":mariadb.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.MYSQL
-        )
-
     }
 
     void "test save and retrieve basic types"() {

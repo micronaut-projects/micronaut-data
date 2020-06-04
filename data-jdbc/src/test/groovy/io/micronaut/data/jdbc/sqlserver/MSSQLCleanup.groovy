@@ -13,24 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.sqlserver
 
-import io.micronaut.context.ApplicationContext
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractPageSpec
-import spock.lang.AutoCleanup
-import spock.lang.Shared
+import org.spockframework.runtime.extension.AbstractGlobalExtension
 
-class PostgresPaginationSpec extends AbstractPageSpec implements PostgresTestPropertyProvider {
-    @Shared @AutoCleanup ApplicationContext context
+class MSSQLCleanup extends AbstractGlobalExtension {
 
     @Override
-    PersonRepository getPersonRepository() {
-        return context.getBean(PostgresPersonRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(getProperties())
+    void stop() {
+        MSSQL.destroy(MSSQL.sqlServer)
     }
 }

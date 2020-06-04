@@ -15,26 +15,36 @@
  */
 package io.micronaut.data.jdbc.postgres
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.annotation.MicronautTest
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionStatus
+import spock.lang.AutoCleanup
+import spock.lang.Shared
+import spock.lang.Specification
 
-import javax.inject.Inject
 import javax.sql.DataSource
 import java.sql.Connection
 
-@MicronautTest(transactional = false)
-class PostgresSequenceSpec extends AbstractPostgresSpec {
+class PostgresSequenceSpec extends Specification implements PostgresTestPropertyProvider {
 
-    @Inject TestSequenceRepo testSequenceRepo
-    @Inject DataSource dataSource
-    @Inject SynchronousTransactionManager<Connection> transactionManager
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext = ApplicationContext.run(properties)
+
+    @Shared
+    TestSequenceRepo testSequenceRepo = applicationContext.getBean(TestSequenceRepo)
+
+    @Shared
+    DataSource dataSource = applicationContext.getBean(DataSource)
+
+    @Shared
+    SynchronousTransactionManager<Connection> transactionManager = applicationContext.getBean(SynchronousTransactionManager)
 
     void "test postgres sequence handling"() {
         when:

@@ -15,22 +15,12 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.context.ApplicationContext
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.tests.AbstractPageSpec
-import spock.lang.AutoCleanup
-import spock.lang.Shared
+import org.spockframework.runtime.extension.AbstractGlobalExtension
 
-class PostgresPaginationSpec extends AbstractPageSpec implements PostgresTestPropertyProvider {
-    @Shared @AutoCleanup ApplicationContext context
+class PostgresCleanup extends AbstractGlobalExtension {
 
     @Override
-    PersonRepository getPersonRepository() {
-        return context.getBean(PostgresPersonRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(getProperties())
+    void stop() {
+        Postgres.destroy(Postgres.postgres)
     }
 }

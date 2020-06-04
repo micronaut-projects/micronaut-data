@@ -16,12 +16,7 @@
 package io.micronaut.data.jdbc.sqlserver
 
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
-import io.micronaut.data.jdbc.postgres.PostgresBasicTypesRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
@@ -35,13 +30,8 @@ import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import org.testcontainers.containers.MSSQLServerContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-class SqlServerRepositorySpec extends AbstractRepositorySpec {
-    @Shared @AutoCleanup MSSQLServerContainer sqlServer = new MSSQLServerContainer<>()
-    @Shared @AutoCleanup ApplicationContext context
+class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTestPropertyProvider {
 
     @Override
     PersonRepository getPersonRepository() {
@@ -68,7 +58,6 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec {
         return context.getBean(MSBookDtoRepository)
     }
 
-
     @Override
     CountryRepository getCountryRepository() {
         return context.getBean(MSCountryRepository)
@@ -92,18 +81,6 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec {
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MSFaceRepository)
-    }
-
-    @Override
-    void init() {
-        sqlServer.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":sqlServer.getJdbcUrl(),
-                "datasources.default.username":sqlServer.getUsername(),
-                "datasources.default.password":sqlServer.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.SQL_SERVER
-        )
     }
 
     void "test save and retrieve basic types"() {
@@ -142,6 +119,9 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec {
         retrievedBook.url == book.url
         // stored as a DATE type without time
 //        retrievedBook.date == book.date
+
+        cleanup:
+        basicTypesRepo.deleteAll()
 
     }
 }

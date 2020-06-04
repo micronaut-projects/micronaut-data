@@ -19,7 +19,6 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.test.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.PostgreSQLContainer
-import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -29,9 +28,29 @@ import java.sql.Connection
 @MicronautTest
 class PostgresSequenceDefaultSpec extends Specification implements TestPropertyProvider {
 
-    @Shared @AutoCleanup PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:10")
-    @Inject Connection connection
-    @Inject UserRepository userRepository
+    @Shared
+    PostgreSQLContainer postgres
+
+    @Override
+    Map<String, String> getProperties() {
+        postgres = new PostgreSQLContainer<>("postgres:10")
+                .withDatabaseName("test-database")
+                .withUsername("test")
+                .withPassword("test")
+        postgres.start()
+        [
+                "datasources.default.url":postgres.getJdbcUrl(),
+                "datasources.default.username":postgres.getUsername(),
+                "datasources.default.password":postgres.getPassword(),
+                "datasources.default.dialect": Dialect.POSTGRES
+        ] as Map<String, String>
+    }
+
+    @Inject
+    Connection connection
+
+    @Inject
+    UserRepository userRepository
 
     void setup() {
         connection.prepareStatement('''
@@ -47,6 +66,11 @@ create table "user_"
 ''').withCloseable { it.executeUpdate( )}
     }
 
+    def cleanup() {
+        postgres.close()
+    }
+
+
     void "test sequence generation with default nextval"() {
         when:
         User user = userRepository.save("Fred")
@@ -58,17 +82,4 @@ create table "user_"
         user.id != user2.id
         user.id == userRepository.findById(user.id).id
     }
-
-    @Override
-    Map<String, String> getProperties() {
-        postgres.start()
-        return [
-                "datasources.default.url":postgres.getJdbcUrl(),
-                "datasources.default.username":postgres.getUsername(),
-                "datasources.default.password":postgres.getPassword(),
-                "datasources.default.dialect": Dialect.POSTGRES
-        ]
-    }
-
-
 }

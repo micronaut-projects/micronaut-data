@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.sqlserver
+package io.micronaut.data.jdbc.oraclexe
 
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.support.TestPropertyProvider
-import spock.lang.Specification
 
-abstract class AbstractSqlServerSpec extends Specification implements TestPropertyProvider {
+trait OracleTestPropertyProvider implements TestPropertyProvider {
+
     @Override
-    Map<String, String> getProperties() {
-        return ["datasources.default.url":MSSQL.getJdbcUrl(),
-                "datasources.default.username":MSSQL.getUsername(),
-                "datasources.default.password":MSSQL.getPassword(),
+    Map<String, String> getProperties()  {
+        [
+                "datasources.default.url": Oracle.getJdbcUrl(),
+                "datasources.default.username": Oracle.getUsername(),
+                "datasources.default.password": Oracle.getPassword(),
                 "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.SQL_SERVER]
-
+                "datasources.default.dialect": Dialect.ORACLE
+        ] as Map<String, String>
     }
+
 }

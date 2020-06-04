@@ -17,33 +17,36 @@ package io.micronaut.data.tck.entities;
 
 import io.micronaut.core.annotation.Introspected;
 
+import java.util.List;
+
 @Introspected
-public class BookDto {
+public class AuthorBooksDto {
 
-    private String title;
-    private int totalPages;
+    private String authorName;
 
-    public BookDto() {
+    private List<BookDto> books;
+
+    public AuthorBooksDto() {
     }
 
-    public BookDto(String title, int totalPages) {
-        this.title = title;
-        this.totalPages = totalPages;
+    public AuthorBooksDto(String authorName, List<BookDto> books) {
+        this.authorName = authorName;
+        this.books = books;
     }
 
-    public String getTitle() {
-        return title;
+    public String getAuthorName() {
+        return authorName;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
     }
 
-    public int getTotalPages() {
-        return totalPages;
+    public List<BookDto> getBooks() {
+        return books;
     }
 
-    public void setTotalPages(int totalPages) {
-        this.totalPages = totalPages;
+    public void setBooks(List<BookDto> books) {
+        this.books = books;
     }
 }

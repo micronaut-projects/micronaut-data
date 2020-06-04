@@ -30,13 +30,8 @@ import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import org.testcontainers.containers.MySQLContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-class MySqlRepositorySpec extends AbstractRepositorySpec {
-    @Shared @AutoCleanup MySQLContainer mysql = new MySQLContainer<>()
-    @Shared @AutoCleanup ApplicationContext context
+class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPropertyProvider {
 
     @Override
     PersonRepository getPersonRepository() {
@@ -86,19 +81,6 @@ class MySqlRepositorySpec extends AbstractRepositorySpec {
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MySqlFaceRepository)
-    }
-
-    @Override
-    void init() {
-        mysql.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":mysql.getJdbcUrl(),
-                "datasources.default.username":mysql.getUsername(),
-                "datasources.default.password":mysql.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.MYSQL
-        )
-
     }
 
     void "test save and retrieve basic types"() {

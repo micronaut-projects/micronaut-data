@@ -18,16 +18,15 @@ package io.micronaut.data.jdbc.sqlserver
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.support.TestPropertyProvider
-import spock.lang.Specification
 
-abstract class AbstractSqlServerSpec extends Specification implements TestPropertyProvider {
+trait MSSQLTestPropertyProvider implements TestPropertyProvider {
+
     @Override
     Map<String, String> getProperties() {
-        return ["datasources.default.url":MSSQL.getJdbcUrl(),
-                "datasources.default.username":MSSQL.getUsername(),
-                "datasources.default.password":MSSQL.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.SQL_SERVER]
-
+        ["datasources.default.url":MSSQL.getJdbcUrl(),
+        "datasources.default.username":MSSQL.getUsername(),
+        "datasources.default.password":MSSQL.getPassword(),
+        "datasources.default.schema-generate": SchemaGenerate.CREATE,
+        "datasources.default.dialect": Dialect.SQL_SERVER] as Map<String, String>
     }
 }

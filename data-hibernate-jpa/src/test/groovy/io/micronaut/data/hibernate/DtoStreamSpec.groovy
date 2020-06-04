@@ -1,6 +1,7 @@
 package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -22,7 +23,12 @@ class DtoStreamSpec extends Specification {
     BookDtoRepository bookDtoRepository
 
     def setup() {
-        bookRepository.setupData()
+        bookRepository.saveAuthorBooks([
+                new AuthorBooksDto("Stephen King", Arrays.asList(
+                        new BookDto("The Stand", 1000),
+                        new BookDto("Pet Cemetery", 400)
+                )),
+        ])
     }
 
     def cleanup() {

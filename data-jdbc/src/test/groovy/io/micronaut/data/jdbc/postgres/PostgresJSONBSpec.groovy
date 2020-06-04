@@ -15,41 +15,23 @@
  */
 package io.micronaut.data.jdbc.postgres
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Sale
-import io.micronaut.data.tck.entities.SaleDTO
 import io.micronaut.test.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.PostgreSQLContainer
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+class PostgresJSONBSpec extends Specification implements PostgresTestPropertyProvider {
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
-@MicronautTest
-class PostgresJSONBSpec extends Specification implements TestPropertyProvider {
-    @Shared @AutoCleanup PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:10")
-            .withDatabaseName("test-database")
-            .withUsername("test")
-            .withPassword("test")
-
-
-    @Override
-    Map<String, String> getProperties() {
-        postgres.start()
-
-        return [
-            "datasources.default.url":postgres.getJdbcUrl(),
-            "datasources.default.username":postgres.getUsername(),
-            "datasources.default.password":postgres.getPassword(),
-            "datasources.default.schema-generate": SchemaGenerate.CREATE.name(),
-            "datasources.default.dialect": Dialect.POSTGRES.name()
-        ]
-    }
-
-    @Inject PostgresSaleRepository saleRepository
+    @Shared
+    PostgresSaleRepository saleRepository = applicationContext.getBean(PostgresSaleRepository)
 
     void "test read and write json"() {
         when:
@@ -88,6 +70,7 @@ class PostgresJSONBSpec extends Specification implements TestPropertyProvider {
         dto.name == 'test 1'
         dto.data == [foo:'changed']
 
-
+        cleanup:
+        saleRepository.deleteAll()
     }
 }
