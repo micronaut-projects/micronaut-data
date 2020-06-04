@@ -30,6 +30,8 @@ jobs:
         uses: peter-evans/create-pull-request@v2
         with:
           token: ${{ secrets.GH_TOKEN }}
+          committer: GitHub <noreply@github.com>
+          author: micronaut-build <micronaut-build@users.noreply.github.com>
           commit-message: Update dependencies
           title: 'Dependency upgrades'
           body: Upgrades dependencies to their latest versions
