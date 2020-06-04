@@ -23,14 +23,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Check if it has release drafter config file
+        id: check_release_drafter
+        run: |
+          has_release_drafter=$([ -f .github/release-drafter.yml ] && echo "true" || echo "false")
+          echo ::set-output name=has_release_drafter::${has_release_drafter}
+
+      # If it has release drafter:
+      - uses: release-drafter/release-drafter@v5
+        if: steps.check_release_drafter.outputs.has_release_drafter == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Otherwise:
       - name: Export Gradle Properties
+        if: steps.check_release_drafter.outputs.has_release_drafter == 'false'
         uses: micronaut-projects/github-actions/export-gradle-properties@master
       - uses: micronaut-projects/github-actions/release-notes@master
+        if: steps.check_release_drafter.outputs.has_release_drafter == 'false'
         id: release_notes
         with:
           branch: ${{ env.githubBranch }}
       - uses: ncipollo/release-action@v1
-        if: success()
+        if: steps.check_release_drafter.outputs.has_release_drafter == 'false'
         with:
           allowUpdates: true
           commit: ${{ env.githubBranch }}
@@ -39,12 +54,3 @@ jobs:
           tag: v${{ steps.release_notes.outputs.next_version }}
           bodyFile: CHANGELOG.md
           token: ${{ secrets.GITHUB_TOKEN }}
-
-  release_drafter:
-    runs-on: ubuntu-latest
-    needs: release_notes
-    steps:
-      - uses: release-drafter/release-drafter@v5
-        if: failure()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
