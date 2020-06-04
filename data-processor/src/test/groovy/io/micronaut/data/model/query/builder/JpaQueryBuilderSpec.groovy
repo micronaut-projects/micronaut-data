@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model.query.builder
 
-import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
