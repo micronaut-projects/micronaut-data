@@ -39,3 +39,15 @@ dependencies {
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
 }
+
+micronautBuild {
+    resolutionStrategy {
+        componentSelection {
+            all { selection ->
+                if (selection.candidate.module == 'mssql-jdbc' && !selection.candidate.version.contains("jre8")) {
+                    selection.reject("Not a JDK8 compatible MS SQL driver")
+                }
+            }
+        }
+    }
+}
