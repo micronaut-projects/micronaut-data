@@ -16,6 +16,7 @@ subprojects { Project subproject ->
 
     if (subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")) {
         checkstyleMain.enabled = false
+        tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) { it.enabled = false }
         return
     }
 
