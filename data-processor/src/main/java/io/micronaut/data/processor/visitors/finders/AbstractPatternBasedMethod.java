@@ -193,7 +193,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 } else {
                     if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                         if (!(query instanceof RawQuery)) {
-                            if (attemptProjection(matchContext, queryResultType, query, returnType)) {
+                            if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
                                 return null;
                             }
                         }
@@ -287,7 +287,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
                         if ((typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class))) {
                             QueryModel projectionQuery = query != null ? query : QueryModel.from(matchContext.getRootEntity());
-                            if (attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
+                            if (!attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
                                 return null;
                             }
                             query = projectionQuery;
@@ -364,7 +364,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull ClassElement returnType) {
         if (!TypeUtils.areTypesCompatible(returnType, queryResultType)) {
             if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
-                if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
+                if (attemptProjection(matchContext, queryResultType, query, returnType)) {
                     return true;
                 }
             } else {
@@ -382,7 +382,18 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return returnType.hasStereotype(SingleResult.class) || returnType.isAssignable("io.reactivex.Single") || returnType.isAssignable("reactor.core.publisher.Mono");
     }
 
-    private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull QueryModel query, ClassElement returnType) {
+    /**
+     *
+     * @param matchContext Match Context
+     * @param queryResultType Query Result Type
+     * @param query Query
+     * @param returnType Return Type
+     * @return returns {@literal false} if the attempt to create the projection fails.
+     */
+    private boolean attemptProjection(@NonNull MethodMatchContext matchContext,
+                                      @NonNull ClassElement queryResultType,
+                                      @NonNull QueryModel query,
+                                      ClassElement returnType) {
         List<PropertyElement> beanProperties = returnType.getBeanProperties();
         SourcePersistentEntity entity = matchContext.getEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
@@ -395,12 +406,12 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
             if (pp == null) {
                 matchContext.fail("Property " + propertyName + " is not present in entity: " + entity.getName());
-                return true;
+                return false;
             }
 
             if (!TypeUtils.areTypesCompatible(beanProperty.getType(), pp.getType())) {
                 matchContext.fail("Property [" + propertyName + "] of type [" + beanProperty.getType().getName() + "] is not compatible with equivalent property declared in entity: " + entity.getName());
-                return true;
+                return false;
             }
             // add an alias projection for each property
             final QueryBuilder queryBuilder = matchContext.getQueryBuilder();
@@ -410,7 +421,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 query.projections().add(Projections.property(propertyName));
             }
         }
-        return false;
+        return true;
     }
 
     /**
