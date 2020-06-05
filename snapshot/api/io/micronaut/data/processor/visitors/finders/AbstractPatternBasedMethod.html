@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -254,13 +254,17 @@ implements <a href="../../../../../../io/micronaut/data/processor/visitors/finde
 </td>
 </tr>
 <tr id="i8" class="altColor">
+<td class="colFirst"><code>protected java.util.List&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../../../../io/micronaut/data/annotation/Join.html" title="annotation in io.micronaut.data.annotation">Join</a>&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#joinSpecsAtMatchContext-io.micronaut.data.processor.visitors.MethodMatchContext-">joinSpecsAtMatchContext</a></span>(<a href="../../../../../../io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</code>&nbsp;</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchOrder-java.lang.String-java.util.List-">matchOrder</a></span>(java.lang.String&nbsp;querySequence,
           java.util.List&lt;<a href="../../../../../../io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a>&gt;&nbsp;orders)</code>
 <div class="block">Matches order by definitions in the query sequence.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchProjections-io.micronaut.data.processor.visitors.MethodMatchContext-java.util.List-java.lang.String-">matchProjections</a></span>(<a href="../../../../../../io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
                 java.util.List&lt;<a href="../../../../../../io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html" title="class in io.micronaut.data.processor.visitors.finders">ProjectionMethodExpression</a>&gt;&nbsp;projectionExpressions,
@@ -479,6 +483,23 @@ protected&nbsp;<a href="../../../../../../io/micronaut/data/processor/visitors/f
 <dd><code>orderList</code> - The list mutate</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if an error occurred applying the order</dd>
+</dl>
+</li>
+</ul>
+<a name="joinSpecsAtMatchContext-io.micronaut.data.processor.visitors.MethodMatchContext-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>joinSpecsAtMatchContext</h4>
+<pre>@NonNull
+protected&nbsp;java.util.List&lt;io.micronaut.core.annotation.AnnotationValue&lt;<a href="../../../../../../io/micronaut/data/annotation/Join.html" title="annotation in io.micronaut.data.annotation">Join</a>&gt;&gt;&nbsp;joinSpecsAtMatchContext(@NonNull
+                                                                                                              <a href="../../../../../../io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>matchContext</code> - The match context</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>a List of annotations values for  annotation.</dd>
 </dl>
 </li>
 </ul>
