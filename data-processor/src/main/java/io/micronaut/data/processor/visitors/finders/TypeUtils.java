@@ -313,7 +313,8 @@ public class TypeUtils {
                 }
             } else if (type.isAssignable(UUID.class)) {
                 return DataType.UUID;
-            } if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
+            }
+            if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
                 return DataType.STRING;
             }
 
