@@ -29,7 +29,7 @@ dependencies {
     testImplementation "org.testcontainers:mssqlserver:$testContainersVersion"
     testImplementation "org.testcontainers:oracle-xe:$testContainersVersion"
     testImplementation 'mysql:mysql-connector-java:8.0.20'
-    testImplementation 'org.postgresql:postgresql:42.2.12'
+    testImplementation 'org.postgresql:postgresql:42.2.13'
     testImplementation 'com.microsoft.sqlserver:mssql-jdbc:8.2.2.jre8'
 }
 
