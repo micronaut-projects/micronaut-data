@@ -362,17 +362,16 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull ClassElement queryResultType,
             @Nullable QueryModel query,
             @NonNull ClassElement returnType) {
-        boolean dto = false;
         if (!TypeUtils.areTypesCompatible(returnType, queryResultType)) {
             if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
                 if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
-                    dto = true;
+                    return true;
                 }
             } else {
                 matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
             }
         }
-        return dto;
+        return false;
     }
 
     private boolean isValidResultType(ClassElement returnType) {
