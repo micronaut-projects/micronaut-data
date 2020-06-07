@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
-import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.DeleteAllInterceptor
