@@ -92,6 +92,32 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.deleteAll()
     }
 
+    void "project face to DTO with association id"() {
+        when:
+        Face face = faceRepository.save(new Face("Bob"))
+        Nose nose = noseRepository.save(new Nose(face: face))
+
+        then:
+        nose.id
+        face.id
+
+        and:
+        faceRepository.queryById(face.id).nose.id == nose.id
+
+        when:
+        FaceDTO dto = faceRepository.get(face.id)
+
+        then:
+        dto
+        dto.id == face.id
+        dto.name == face.name
+        dto.noseId == nose.id
+
+        cleanup:
+        noseRepository.deleteAll()
+        faceRepository.deleteAll()
+    }
+
     void "test save one"() {
         given:
         savePersons(["Jeff", "James"])

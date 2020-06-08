@@ -1330,12 +1330,38 @@ public interface QueryModel extends Criteria {
         private String propertyName;
         private String alias;
 
+        @Nullable
+        private String entityAlias;
+
         /**
          * Default constructor.
          * @param propertyName The property name
          */
         public PropertyProjection(String propertyName) {
             this.propertyName = propertyName;
+        }
+
+        /**
+         * constructor.
+         * @param entityAlias Entity Alias
+         * @param propertyName The property name
+         * @param alias the alias
+         */
+        public PropertyProjection(@Nullable String entityAlias,
+                                  String propertyName,
+                                  String alias) {
+            this.entityAlias = entityAlias;
+            this.propertyName = propertyName;
+            this.alias = alias;
+        }
+
+        /**
+         *
+         * @return The alias of the entity the property belongs to.
+         */
+        @Nullable
+        public String getEntityAlias() {
+            return entityAlias;
         }
 
         /**

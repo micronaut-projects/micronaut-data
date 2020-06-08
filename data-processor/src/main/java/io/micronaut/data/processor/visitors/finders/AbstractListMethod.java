@@ -17,17 +17,15 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
@@ -39,6 +37,7 @@ import io.micronaut.inject.ast.ParameterElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -139,13 +138,17 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 }
             }
 
-            List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext);
-            
+            Set<AssociationJoin> joinSpecs = joinSpecsForMatchContext(matchContext);
+            ClassElement returnType = matchContext.getReturnType();
+            boolean dto = isReturnTypeDto(returnType, queryResultType);
+            if (dto) {
+                joinSpecs.addAll(joinSpecsByPath(joinPathsForDto(returnType, queryResultType)));
+            }
             if (CollectionUtils.isNotEmpty(joinSpecs)) {
                 if (query == null) {
                     query = QueryModel.from(rootEntity);
                 }
-                if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
+                if (applyJoinSpecifications(matchContext, query, rootEntity, joinSpecs)) {
                     return null;
                 }
             }

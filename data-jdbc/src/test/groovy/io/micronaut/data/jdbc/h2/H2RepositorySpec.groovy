@@ -16,6 +16,9 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.data.tck.entities.Car
+import io.micronaut.data.tck.entities.Face
+import io.micronaut.data.tck.entities.FaceDTO
+import io.micronaut.data.tck.entities.Nose
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
