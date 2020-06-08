@@ -1357,7 +1357,7 @@ public interface QueryModel extends Criteria {
 
         /**
          *
-         * @return The type the projected property belongs to
+         * @return The alias of the entity the property belongs to.
          */
         @Nullable
         public String getEntityAlias() {

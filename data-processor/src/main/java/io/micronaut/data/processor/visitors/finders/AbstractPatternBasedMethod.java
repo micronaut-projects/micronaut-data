@@ -68,7 +68,6 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     private static final String DELETE = "delete";
     private static final String UPDATE = "update";
     private static final String VOID = "void";
-    private static final String ID = "id";
     private static final Join.Type DEFAULT_JOIN_TYPE = Join.Type.FETCH;
     protected final Pattern pattern;
 
@@ -205,10 +204,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                                 return null;
                             }
                         }
-
-//                        if (returnType.getSimpleName().equals("FaceDTO")) {
-//                            applyJoinSpecifications(matchContext, query, matchContext.getRootEntity(), Arrays.asList(new JoinSpec("nose", "nose_", Join.Type.RIGHT_FETCH)));
-//                        }
+                        
                         return new MethodMatchInfo(returnType, query, getInterceptorElement(matchContext, FindOneInterceptor.class), true);
                     } else {
 
@@ -521,7 +517,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         .findFirst();
                 if (associationOptional.isPresent()) {
                     association = matchContext.getEntity(associationOptional.get().getType());
-                    pp = association.getIdOrVersionPropertyByName(ID);
+                    pp = association.getIdentity();
                 }
             }
 
