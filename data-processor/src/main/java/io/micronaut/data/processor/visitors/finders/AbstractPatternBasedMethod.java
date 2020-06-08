@@ -63,6 +63,7 @@ import java.util.stream.Stream;
  * @since 1.1.0
  */
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
+    public static final String CAPITALIZED_ID = "Id";
 
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
     private static final String DELETE = "delete";
@@ -85,6 +86,24 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return pattern.matcher(methodElement.getName()).find();
     }
 
+    /**
+     *
+     * @param dto DTO Class element
+     * @param query Query Class Element
+     * @return A set of Paths
+     */
+    @NonNull
+    protected static Set<String> joinPathsForDto(@NonNull ClassElement dto, @NonNull ClassElement query) {
+        Set<String> paths = new HashSet<>();
+        for (PropertyElement propertyElement : dto.getBeanProperties()) {
+            final String name = propertyElement.getName();
+            if (name.endsWith(CAPITALIZED_ID)) {
+                String associationName = name.substring(0, name.indexOf(CAPITALIZED_ID));
+                paths.add(associationName);
+            }
+        }
+        return paths;
+    }
     /**
      *
      * @param returnType Return Type
@@ -509,8 +528,8 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 pp = entity.getIdOrVersionPropertyByName(propertyName);
             }
             SourcePersistentEntity association = null;
-            if (pp == null && propertyName.endsWith(DtoJoinPathsParser.CAPITALIZED_ID)) {
-                String associationPropertyName = propertyName.substring(0, propertyName.indexOf(DtoJoinPathsParser.CAPITALIZED_ID));
+            if (pp == null && propertyName.endsWith(CAPITALIZED_ID)) {
+                String associationPropertyName = propertyName.substring(0, propertyName.indexOf(CAPITALIZED_ID));
                 Optional<SourcePersistentProperty> associationOptional = entity.getPersistentProperties()
                         .stream()
                         .filter(persistentProperty -> persistentProperty.getName().equals(associationPropertyName))

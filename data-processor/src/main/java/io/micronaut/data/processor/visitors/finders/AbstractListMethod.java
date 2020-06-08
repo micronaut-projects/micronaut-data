@@ -142,7 +142,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             ClassElement returnType = matchContext.getReturnType();
             boolean dto = isReturnTypeDto(returnType, queryResultType);
             if (dto) {
-                joinSpecs.addAll(joinSpecsByPath(DtoJoinPathsParser.joinPathsForDto(returnType, queryResultType)));
+                joinSpecs.addAll(joinSpecsByPath(joinPathsForDto(returnType, queryResultType)));
             }
             if (CollectionUtils.isNotEmpty(joinSpecs)) {
                 if (query == null) {

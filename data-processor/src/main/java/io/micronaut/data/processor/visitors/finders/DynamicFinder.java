@@ -274,7 +274,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         Set<AssociationJoin> joinSpecs = joinSpecsForMatchContext(matchContext);
         boolean dto = isReturnTypeDto(matchContext.getReturnType(), queryResultType);
         if (dto) {
-            joinSpecs.addAll(joinSpecsByPath(DtoJoinPathsParser.joinPathsForDto(matchContext.getReturnType(), queryResultType)));
+            joinSpecs.addAll(joinSpecsByPath(joinPathsForDto(matchContext.getReturnType(), queryResultType)));
         }
         if (CollectionUtils.isNotEmpty(joinSpecs)) {
             if (applyJoinSpecifications(matchContext, query, entity, joinSpecs)) {
