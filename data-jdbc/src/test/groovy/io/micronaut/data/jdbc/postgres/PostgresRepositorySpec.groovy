@@ -15,25 +15,25 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.context.ApplicationContext
+
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
-import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.repositories.BookDtoRepository
+import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CityRepository
+import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.NoseRepository
+import io.micronaut.data.tck.repositories.PersonRepository
+import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import org.testcontainers.containers.PostgreSQLContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-class PostgresRepositorySpec extends AbstractRepositorySpec {
-    @Shared @AutoCleanup PostgreSQLContainer postgres = new PostgreSQLContainer<>("postgres:10")
-        .withDatabaseName("test-database")
-        .withUsername("test")
-        .withPassword("test")
-    @Shared @AutoCleanup ApplicationContext context
-
+class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresTestPropertyProvider {
+    
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(PostgresPersonRepository)
@@ -59,7 +59,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
         return context.getBean(PostgresBookDtoRepository)
     }
 
-
     @Override
     CountryRepository getCountryRepository() {
         return context.getBean(PostgresCountryRepository)
@@ -83,18 +82,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec {
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(PostgresFaceRepository)
-    }
-
-    @Override
-    void init() {
-        postgres.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":postgres.getJdbcUrl(),
-                "datasources.default.username":postgres.getUsername(),
-                "datasources.default.password":postgres.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.POSTGRES
-        )
     }
 
     void "test save and fetch author with no books"() {

@@ -311,7 +311,10 @@ public class TypeUtils {
                 } else {
                     return DataType.DATE;
                 }
-            } else if (Stream.of(UUID.class, Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
+            } else if (type.isAssignable(UUID.class)) {
+                return DataType.UUID;
+            }
+            if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
                 return DataType.STRING;
             }
 
@@ -351,5 +354,17 @@ public class TypeUtils {
             }
         }
         return false;
+    }
+
+    /**
+     * Return the type for the given class element, wrapping primitives types if necessary.
+     * @param type The type
+     * @return The ID type
+     */
+    public static @NonNull String getTypeName(@NonNull ClassElement type) {
+        String typeName = type.getName();
+        return ClassUtils.getPrimitiveType(typeName).map(t ->
+            ReflectionUtils.getWrapperType(t).getName()
+        ).orElse(typeName);
     }
 }

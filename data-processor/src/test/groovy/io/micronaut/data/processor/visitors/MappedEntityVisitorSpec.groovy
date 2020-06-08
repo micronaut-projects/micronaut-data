@@ -195,7 +195,7 @@ class TestEntity {
         introspection.getPropertyNames()
         def so = introspection.getProperty("someOther").get()
 //        so.stringValue(MappedProperty).get() == 'some_other'
-        so.getValue(MappedProperty, "type", DataType).orElse(null) == DataType.STRING
+        so.getValue(MappedProperty, "type", DataType).orElse(null) == DataType.UUID
     }
 
     void "test mapping javax.persistent entity"() {
@@ -250,7 +250,7 @@ class TestEntity {
         def so = introspection.getProperty("someOther").get()
         so.stringValue(MappedProperty).get() == 'some_other'
         introspection.getProperty("id").get().getValue(MappedProperty, "type", DataType).get() == DataType.INTEGER
-        so.getValue(MappedProperty, "type", DataType).orElse(null) == DataType.STRING
+        so.getValue(MappedProperty, "type", DataType).orElse(null) == DataType.UUID
     }
 
     void "test mapping with custom type def"() {

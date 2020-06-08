@@ -81,7 +81,7 @@ ${TestEntities.compositePrimaryKeyEntities()}
 interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     List<Project> findByNameLikeOrNameNotEqual(String name1, String name2, Pageable pageable);
 
-    void update(@Id Long id, @Parameter("name") String name);
+    void update(@Id ProjectId id, @Parameter("name") String name);
 }
 """)
         def findMethod = repository.getRequiredMethod("findByNameLikeOrNameNotEqual", String, String, Pageable)

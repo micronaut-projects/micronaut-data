@@ -39,7 +39,6 @@ public class DataEntityManagerFactoryBean {
     private final JpaConfiguration jpaConfiguration;
     private final BeanLocator beanLocator;
 
-
     /**
      * @param jpaConfiguration The JPA configuration
      * @param beanLocator      The bean locator

@@ -40,11 +40,13 @@ class CrudRepositorySpec extends Specification {
     @Shared
     ApplicationContext context
 
-    def setupSpec() {
-        crudRepository.saveAll([
-                new Person(name: "Jeff"),
-                new Person(name: "James")
-        ])
+    def setup() {
+        if (crudRepository.count() == 0) {
+            crudRepository.saveAll([
+                    new Person(name: "Jeff"),
+                    new Person(name: "James")
+            ])
+        }
     }
 
     void "test save one"() {
@@ -79,6 +81,13 @@ class CrudRepositorySpec extends Specification {
         crudRepository.count("Fred") == 1
         crudRepository.list(Pageable.from(1)).isEmpty()
         crudRepository.list(Pageable.from(0, 1)).size() == 1
+
+        when:"The person is updated with rxjava"
+        long result = crudRepository.updatePersonRx(crudRepository.findByName("Jeff").id).blockingGet()
+
+        then:
+        result == 1
+
     }
 
     void "test delete by id"() {
@@ -142,6 +151,7 @@ class CrudRepositorySpec extends Specification {
         then:"the person is updated"
         crudRepository.findByName("Fred") == null
         crudRepository.findByName("Jack") != null
+
     }
 
     void "test delete all"() {

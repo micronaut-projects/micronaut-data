@@ -15,9 +15,13 @@
  */
 package io.micronaut.data.jdbc.h2;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.TotalDto;
 
 @JdbcRepository(dialect = Dialect.H2)
 public interface H2PersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+    @Query("select count(*) as total from person")
+    TotalDto getTotal();
 }

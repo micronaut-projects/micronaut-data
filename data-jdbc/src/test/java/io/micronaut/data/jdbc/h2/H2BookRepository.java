@@ -26,7 +26,6 @@ import io.micronaut.data.tck.entities.Book;
 
 import javax.transaction.Transactional;
 import java.sql.ResultSet;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,29 +36,6 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
     public H2BookRepository(JdbcOperations jdbcOperations, H2AuthorRepository authorRepository) {
         super(authorRepository);
         this.jdbcOperations = jdbcOperations;
-    }
-
-    @Override
-    public void setupData() {
-        Author king = newAuthor("Stephen King");
-        Author jp = newAuthor("James Patterson");
-        Author dw = newAuthor("Don Winslow");
-
-
-        authorRepository.saveAll(Arrays.asList(
-                king,
-                jp,
-                dw
-        ));
-
-        saveAll(Arrays.asList(
-            newBook(king, "The Stand", 1000),
-            newBook(king, "Pet Cemetery", 400),
-            newBook(jp, "Along Came a Spider", 300),
-            newBook(jp, "Double Cross", 300),
-            newBook(dw, "The Power of the Dog", 600),
-            newBook(dw, "The Border", 700)
-        ));
     }
 
     @Query("UPDATE book SET total_pages = :pages WHERE title = :title")

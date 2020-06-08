@@ -1,26 +1,38 @@
+/*
+ * Copyright 2017-2020 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.jdbc.oraclexe
 
-import io.micronaut.context.ApplicationContext
+
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Author
-import io.micronaut.data.tck.entities.Book
-import io.micronaut.data.tck.entities.Person
-import io.micronaut.data.tck.repositories.*
+import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BookDtoRepository
+import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CityRepository
+import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRepository
+import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.NoseRepository
+import io.micronaut.data.tck.repositories.PersonRepository
+import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import org.testcontainers.containers.OracleContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-class OracleXERepositorySpec extends AbstractRepositorySpec {
-
-    @Shared
-    @AutoCleanup
-    OracleContainer oracleContainer = new OracleContainer("wnameless/oracle-xe-11g-r2")
-    @Shared
-    @AutoCleanup
-    ApplicationContext context
+class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
 
     @Override
     boolean isOracle() {
@@ -77,32 +89,7 @@ class OracleXERepositorySpec extends AbstractRepositorySpec {
         return context.getBean(OracleXEFaceRepository)
     }
 
-    @Override
-    void init() {
-        oracleContainer.start()
-        context = ApplicationContext.run(
-                "datasources.default.url": oracleContainer.getJdbcUrl(),
-                "datasources.default.username": oracleContainer.getUsername(),
-                "datasources.default.password": oracleContainer.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.ORACLE
-        )
-
-    }
-
-    @Override
-    protected void setupData() {
-        personRepository.saveAll([
-                new Person(name: "Jeff"),
-                new Person(name: "James")
-        ])
-        bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
-        // book without an author
-        bookRepository.setupData()
-    }
-
     void "test save and fetch author with no books"() {
-
         given:
         def author = new Author(name: "Some Dude")
         authorRepository.save(author)
@@ -115,7 +102,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec {
         cleanup:
         authorRepository.deleteById(author.id)
     }
-
 
     void "test save and retrieve basic types"() {
         when: "we save a new book"
@@ -152,6 +138,8 @@ class OracleXERepositorySpec extends AbstractRepositorySpec {
         retrievedBook.uri == book.uri
         retrievedBook.url == book.url
 
+        cleanup:
+        basicTypesRepo.deleteAll()
     }
 
 }

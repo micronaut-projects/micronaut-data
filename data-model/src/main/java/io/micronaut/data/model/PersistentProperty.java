@@ -132,7 +132,7 @@ public interface PersistentProperty extends PersistentElement {
             AnnotationMetadata annotationMetadata = getAnnotationMetadata();
             return annotationMetadata.enumValue(MappedProperty.class, "type", DataType.class)
                     .orElseGet(() -> {
-                        DataType dt = annotationMetadata.getValue(TypeDef.class, "type", DataType.class).orElse(null);
+                        DataType dt = annotationMetadata.enumValue(TypeDef.class, "type", DataType.class).orElse(null);
                         if (dt != null) {
                             return dt;
                         } else {

@@ -156,15 +156,12 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
                     MethodMatchInfo.OperationType.INSERT
             );
         }
-
-
     }
 
     private boolean isRequiredProperty(SourcePersistentProperty pp) {
         return pp.isRequired() &&
                 !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent();
     }
-
 
     /**
      * Pick a runtime interceptor to use based on the return type.

@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.test.annotation.MicronautTest
@@ -26,7 +27,7 @@ import spock.lang.Specification
 
 import javax.inject.Inject
 
-@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
+@MicronautTest(rollback = false, transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class DtoSpec extends Specification {
@@ -38,8 +39,24 @@ class DtoSpec extends Specification {
     @Shared
     BookDtoRepository bookDtoRepository
 
-    void setupSpec() {
-        bookRepository.setupData()
+    def setup() {
+        bookRepository.saveAuthorBooks([
+                new AuthorBooksDto("Stephen King", Arrays.asList(
+                        new BookDto("The Stand", 1000),
+                        new BookDto("Pet Cemetery", 400)
+                )),
+                new AuthorBooksDto("James Patterson", Arrays.asList(
+                        new BookDto("Along Came a Spider", 300),
+                        new BookDto("Double Cross", 300)
+                )),
+                new AuthorBooksDto("Don Winslow", Arrays.asList(
+                        new BookDto("The Power of the Dog", 600),
+                        new BookDto("The Border", 700)
+                ))])
+    }
+
+    def cleanup() {
+        bookRepository.deleteAll()
     }
 
     void "test entity graph"() {
@@ -79,13 +96,6 @@ class DtoSpec extends Specification {
         result.size == 10
         result.content.every { it instanceof BookDto }
         result.content.every { it.title.startsWith("The")}
-
-        when:"Stream is used"
-        def dto = bookDtoRepository.findStream("The Stand").findFirst().get()
-
-        then:"The result is correct"
-        dto instanceof BookDto
-        dto.title == "The Stand"
     }
 
 }

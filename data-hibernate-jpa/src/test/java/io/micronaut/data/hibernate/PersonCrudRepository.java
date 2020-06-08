@@ -45,4 +45,7 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
             countQuery = "SELECT COUNT(u) FROM Person u WHERE u.age > :age"
     )
     Single<Page<Person>> find(int age, Pageable pageable);
+
+    @Query("UPDATE Person p SET p.enabled = false WHERE p.id = :id")
+    Single<Long> updatePersonRx(Long id);
 }

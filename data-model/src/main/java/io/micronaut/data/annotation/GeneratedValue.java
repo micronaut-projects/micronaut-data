@@ -64,6 +64,10 @@ public @interface GeneratedValue {
         /**
          * Use identity generation.
          */
-        IDENTITY
+        IDENTITY,
+        /**
+         * UUID generation strategy.
+         */
+        UUID
     }
 }

@@ -61,7 +61,7 @@ ${TestEntities.compositePrimaryKeyEntities()}
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
 interface ProjectRepository extends CrudRepository<Project, ProjectId>{
-    void update(@Id Long id, @Parameter("name") String name);
+    void update(@Id ProjectId id, @Parameter("name") String name);
 }
 """)
         def findByIdMethod = repository.findPossibleMethods("findById").findFirst().get()

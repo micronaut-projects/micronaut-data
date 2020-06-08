@@ -15,6 +15,20 @@
  */
 package io.micronaut.data.model;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.TypeDef;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.sql.Timestamp;
+import java.time.*;
+import java.util.*;
+
 /**
  * Enum of basic data types allowing compile time computation which can then subsequently be used at runtime for fast
  * switching.
@@ -27,55 +41,55 @@ public enum DataType {
     /**
      * A big decimal such as {@link java.math.BigDecimal}.
      */
-    BIGDECIMAL,
+    BIGDECIMAL(BigDecimal.class, BigInteger.class),
     /**
      * A boolean value.
      */
-    BOOLEAN,
+    BOOLEAN(Boolean.class),
     /**
      * A byte.
      */
-    BYTE,
+    BYTE(Byte.class),
     /**
      * A byte array. Often stored as binary.
      */
-    BYTE_ARRAY,
+    BYTE_ARRAY(byte[].class),
     /**
      * A character.
      */
-    CHARACTER,
+    CHARACTER(Character.class),
     /**
      * A date such as {@link java.util.Date} or {@link java.time.LocalDate}.
      */
-    DATE,
+    DATE(Date.class, java.sql.Date.class, LocalDate.class),
     /**
      * A timestamp such as {@link java.sql.Timestamp} or {@link java.time.Instant}.
      */
-    TIMESTAMP,
+    TIMESTAMP(Timestamp.class, Instant.class, OffsetDateTime.class, ZonedDateTime.class),
     /**
      * A {@link Double} value.
      */
-    DOUBLE,
+    DOUBLE(Double.class),
     /**
      * A {@link Float} value.
      */
-    FLOAT,
+    FLOAT(Float.class),
     /**
      * A {@link Integer} value.
      */
-    INTEGER,
+    INTEGER(Integer.class),
     /**
      * A {@link Long} value.
      */
-    LONG,
+    LONG(Long.class),
     /**
      * A {@link Short} value.
      */
-    SHORT,
+    SHORT(Short.class),
     /**
      * A {@link String} value.
      */
-    STRING,
+    STRING(String.class, CharSequence.class, URL.class, URI.class, Locale.class, TimeZone.class, Charset.class),
     /**
      * An object of an indeterminate type.
      */
@@ -87,10 +101,49 @@ public enum DataType {
     /**
      * A JSON type.
      */
-    JSON;
+    JSON,
+    /**
+     * The UUID type.
+     */
+    UUID(java.util.UUID.class);
 
     /**
      * Empty array of data types.
      */
     public static final DataType[] EMPTY_DATA_TYPE_ARRAY = new DataType[0];
+    private static final Map<Class<?>, DataType> CLASS_DATA_TYPE_MAP = new HashMap<>();
+
+    static {
+        DataType[] values = DataType.values();
+        for (DataType dt : values) {
+            for (Class<?> javaType : dt.javaTypes) {
+                CLASS_DATA_TYPE_MAP.put(javaType, dt);
+            }
+        }
+    }
+
+    private final Set<Class<?>> javaTypes;
+
+    /**
+     * Default constructor.
+     * @param javaTypes Associated data types.
+     */
+    DataType(Class<?>...javaTypes) {
+        this.javaTypes = CollectionUtils.setOf(javaTypes);
+    }
+
+    /**
+     * Obtains the data type for the given type.
+     * @param type The type
+     * @return The data type
+     */
+    public static DataType forType(@NonNull Class<?> type) {
+        Class<?> wrapper = ReflectionUtils.getWrapperType(Objects.requireNonNull(type, "The type cannot be null"));
+        TypeDef td = wrapper.getAnnotation(TypeDef.class);
+        if (td != null) {
+            return td.type();
+        } else {
+            return CLASS_DATA_TYPE_MAP.getOrDefault(wrapper, DataType.OBJECT);
+        }
+    }
 }

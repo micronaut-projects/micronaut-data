@@ -20,12 +20,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractPageSpec
-import org.testcontainers.containers.MSSQLServerContainer
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-class SqlServerPaginationSpec extends AbstractPageSpec {
-    @Shared @AutoCleanup MSSQLServerContainer sqlServer = new MSSQLServerContainer<>()
+class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPropertyProvider {
+
     @Shared @AutoCleanup ApplicationContext context
 
     @Override
@@ -35,13 +34,6 @@ class SqlServerPaginationSpec extends AbstractPageSpec {
 
     @Override
     void init() {
-        sqlServer.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":sqlServer.getJdbcUrl(),
-                "datasources.default.username":sqlServer.getUsername(),
-                "datasources.default.password":sqlServer.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.SQL_SERVER
-        )
+        context = ApplicationContext.run(properties)
     }
 }

@@ -26,9 +26,12 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Person;
+import io.reactivex.Single;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public interface PersonRepository extends CrudRepository<Person, Long>, PageableRepository<Person, Long> {
 
@@ -41,6 +44,21 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     Person get(Long id);
 
     void updatePerson(@Id Long id, @Parameter("name") String name);
+
+    long updatePersonCount(@Id Long id, @Parameter("name") String name);
+
+    Single<Long> updatePersonRx(@Id Long id, @Parameter("name") String name);
+
+    @Query("UPDATE person SET name = 'test' WHERE id = :id")
+    Single<Long> updatePersonCustomRx(Long id);
+
+    @Query("UPDATE person SET name = 'test' WHERE id = :id")
+    Future<Long> updatePersonCustomFuture(Long id);
+
+    @Query("UPDATE person SET name = 'test' WHERE id = :id")
+    long updatePersonCustom(Long id);
+
+    CompletableFuture<Long> updatePersonFuture(@Id Long id, @Parameter("name") String name);
 
     long updateByName(String name, int age);
 

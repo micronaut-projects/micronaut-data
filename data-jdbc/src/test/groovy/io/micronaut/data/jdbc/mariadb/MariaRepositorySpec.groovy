@@ -1,20 +1,33 @@
+/*
+ * Copyright 2017-2020 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.jdbc.mariadb
 
-import io.micronaut.context.ApplicationContext
+
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
 import io.micronaut.data.jdbc.mysql.MySqlAuthorRepository
 import io.micronaut.data.jdbc.mysql.MySqlBasicTypesRepository
 import io.micronaut.data.jdbc.mysql.MySqlBookDtoRepository
 import io.micronaut.data.jdbc.mysql.MySqlBookRepository
+import io.micronaut.data.jdbc.mysql.MySqlCityRepository
 import io.micronaut.data.jdbc.mysql.MySqlCompanyRepository
+import io.micronaut.data.jdbc.mysql.MySqlCountryRepository
 import io.micronaut.data.jdbc.mysql.MySqlFaceRepository
 import io.micronaut.data.jdbc.mysql.MySqlNoseRepository
 import io.micronaut.data.jdbc.mysql.MySqlPersonRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.jdbc.mysql.MySqlRegionRepository
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -27,14 +40,9 @@ import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
-import org.testcontainers.containers.MariaDBContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 @MicronautTest
-class MariaRepositorySpec extends AbstractRepositorySpec {
-    @Shared @AutoCleanup MariaDBContainer mariadb = new MariaDBContainer<>()
-    @Shared @AutoCleanup ApplicationContext context
+class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPropertyProvider {
 
     @Override
     PersonRepository getPersonRepository() {
@@ -63,17 +71,17 @@ class MariaRepositorySpec extends AbstractRepositorySpec {
 
     @Override
     CountryRepository getCountryRepository() {
-        return context.getBean(H2CountryRepository)
+        return context.getBean(MySqlCountryRepository)
     }
 
     @Override
     CityRepository getCityRepository() {
-        return context.getBean(H2CityRepository)
+        return context.getBean(MySqlCityRepository)
     }
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(MySqlRegionRepository)
     }
 
     @Override
@@ -84,19 +92,6 @@ class MariaRepositorySpec extends AbstractRepositorySpec {
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MySqlFaceRepository)
-    }
-
-    @Override
-    void init() {
-        mariadb.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":mariadb.getJdbcUrl(),
-                "datasources.default.username":mariadb.getUsername(),
-                "datasources.default.password":mariadb.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.MYSQL
-        )
-
     }
 
     void "test save and retrieve basic types"() {

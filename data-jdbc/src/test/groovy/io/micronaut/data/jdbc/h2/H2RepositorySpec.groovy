@@ -15,9 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.ApplicationContext
-import io.micronaut.context.annotation.Property
-import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -29,69 +26,42 @@ import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 
-import javax.inject.Inject
-import javax.sql.DataSource
+class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyProvider {
 
-@MicronautTest(rollback = false)
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
-@Property(name = "datasources.default.dialect", value = "H2")
-class H2RepositorySpec extends AbstractRepositorySpec {
-
-    @Inject
     @Shared
-    ApplicationContext context
+    H2PersonRepository pr = context.getBean(H2PersonRepository)
 
-    @Inject
     @Shared
-    H2PersonRepository pr
+    H2BookRepository br = context.getBean(H2BookRepository)
 
-    @Inject
     @Shared
-    H2BookRepository br
+    H2AuthorRepository ar = context.getBean(H2AuthorRepository)
 
-    @Inject
     @Shared
-    H2AuthorRepository ar
+    H2CompanyRepository cr = context.getBean(H2CompanyRepository)
 
-    @Inject
     @Shared
-    H2CompanyRepository cr
+    H2BookDtoRepository dto = context.getBean(H2BookDtoRepository)
 
-    @Inject
     @Shared
-    H2BookDtoRepository dto
+    H2CountryRepository countryr = context.getBean(H2CountryRepository)
 
-    @Inject
     @Shared
-    DataSource dataSource
+    H2CityRepository cityr = context.getBean(H2CityRepository)
 
-    @Inject
     @Shared
-    H2CountryRepository countryr
+    H2RegionRepository regr = context.getBean(H2RegionRepository)
 
-    @Inject
     @Shared
-    H2CityRepository cityr
+    H2FaceRepository fr = context.getBean(H2FaceRepository)
 
-    @Inject
     @Shared
-    H2RegionRepository regr
+    H2NoseRepository nr = context.getBean(H2NoseRepository)
 
-    @Inject
     @Shared
-    H2FaceRepository fr
-
-    @Inject
-    @Shared
-    H2NoseRepository nr
-
-    @Inject
-    @Shared
-    H2CarRepository carRepo
+    H2CarRepository carRepo = context.getBean(H2CarRepository)
 
     @Override
     NoseRepository getNoseRepository() {
@@ -143,7 +113,15 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         return regr
     }
 
-    void init() {
+    void "test total dto"() {
+        given:
+        savePersons(["Jeff", "James"])
+
+        expect:
+        pr.getTotal().total == 2
+
+        cleanup:
+        personRepository.deleteAll()
     }
 
     void "test repositories are singleton"() {
@@ -186,11 +164,15 @@ class H2RepositorySpec extends AbstractRepositorySpec {
 
         then:"It was deleted"
         !carRepo.findById(a5.id).isPresent()
+
+        cleanup:
+        carRepo.deleteAll()
     }
 
-
-
     void "test manual joining on many ended association"() {
+        given:
+        saveSampleBooks()
+
         when:
         def author = br.findByName("Stephen King")
 
@@ -200,9 +182,15 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         author.books.size() == 2
         author.books.find { it.title == "The Stand"}
         author.books.find { it.title == "Pet Cemetery"}
+
+        cleanup:
+        cleanupData()
     }
 
     void "test SQL mapping function"() {
+        given:
+        saveSampleBooks()
+
         when:"using a function that maps a single value"
         def book = ar.testReadSingleProperty("The Stand", 700)
 
@@ -224,24 +212,39 @@ class H2RepositorySpec extends AbstractRepositorySpec {
         then:"The result is correct"
         book != null
         book.author.name == 'Stephen King'
+
+        then:
+        cleanupData()
     }
 
     void "test custom alias"() {
         given:
+        saveSampleBooks()
+
+        when:
         def book = br.queryByTitle("The Stand")
 
-        expect:
+        then:
         book.title == "The Stand"
         book.author != null
         book.author.name == "Stephen King"
+
+        cleanup:
+        cleanupData()
     }
 
     void "test @Query with DTO"() {
         given:
+        saveSampleBooks()
+
+        when:
         def book = dto.findByTitleWithQuery("The Stand")
 
-        expect:
+        then:
         book.isPresent()
         book.get().title == "The Stand"
+
+        cleanup:
+        cleanupData()
     }
 }

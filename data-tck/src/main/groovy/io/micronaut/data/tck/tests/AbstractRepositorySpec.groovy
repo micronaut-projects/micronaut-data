@@ -15,17 +15,17 @@
  */
 package io.micronaut.data.tck.tests
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.repositories.*
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Stepwise
-
 import java.time.LocalDate
 
-@Stepwise
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
@@ -39,33 +39,63 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract NoseRepository getNoseRepository()
     abstract FaceRepository getFaceRepository()
 
+    abstract Map<String, String> getProperties();
 
-    abstract void init()
-
-    def setupSpec() {
-        init()
-        setupData()
-    }
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
 
     boolean isOracle() {
         return false
     }
 
-    protected void setupData() {
-        authorRepository.deleteAll()
-        bookRepository.deleteAll()
-        personRepository.saveAll([
-                new Person(name: "Jeff"),
-                new Person(name: "James")
-        ])
-        bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
-        // blank title
-        bookRepository.save(new Book(title: "", totalPages: 0))
+    protected void savePersons(List<String> names) {
+        personRepository.saveAll(names.collect { new Person(name: it) })
+    }
+
+    protected void setupBooks() {
         // book without an author
-        bookRepository.setupData()
+        bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
+
+        // blank title
+        if (!isOracle()) {
+            bookRepository.save(new Book(title: "", totalPages: 0))
+        }
+
+        saveSampleBooks()
+    }
+
+    protected void saveSampleBooks() {
+        bookRepository.saveAuthorBooks([
+                new AuthorBooksDto("Stephen King", Arrays.asList(
+                        new BookDto("The Stand", 1000),
+                        new BookDto("Pet Cemetery", 400)
+                )),
+                new AuthorBooksDto("James Patterson", Arrays.asList(
+                        new BookDto("Along Came a Spider", 300),
+                        new BookDto("Double Cross", 300)
+                )),
+                new AuthorBooksDto("Don Winslow", Arrays.asList(
+                        new BookDto("The Power of the Dog", 600),
+                        new BookDto("The Border", 700)
+                ))])
+    }
+
+    protected void cleanupBooks() {
+        bookRepository.deleteAll()
+        authorRepository.deleteAll()
+    }
+
+    protected void cleanupData() {
+        bookRepository.deleteAll()
+        authorRepository.deleteAll()
+        personRepository.deleteAll()
     }
 
     void "test save one"() {
+        given:
+        savePersons(["Jeff", "James"])
+
         when:"one is saved"
         def person = new Person(name: "Fred")
         personRepository.save(person)
@@ -78,9 +108,15 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 3
         personRepository.count("Fred") == 1
         personRepository.findAll().size() == 3
+
+        cleanup:
+        personRepository.deleteAll()
     }
 
     void "test save many"() {
+        given:
+        savePersons(["Jeff", "James"])
+
         when:"many are saved"
         def p1 = personRepository.save("Frank", 0)
         def p2 = personRepository.save("Bob", 0)
@@ -89,22 +125,28 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"all are saved"
         people.every { it.id != null }
         people.every { personRepository.findById(it.id).isPresent() }
-        personRepository.findAll().size() == 5
-        personRepository.count() == 5
-        personRepository.count("Fred") == 1
+        personRepository.findAll().size() == 4
+        personRepository.count() == 4
+        personRepository.count("Jeff") == 1
 
         // Oracle 11g doesn't support pagination
         isOracle() || personRepository.list(Pageable.from(1)).isEmpty()
         isOracle() || personRepository.list(Pageable.from(0, 1)).size() == 1
+
+        cleanup:
+        personRepository.deleteAll()
     }
 
     void "test delete by id"() {
+        given:
+        savePersons(["Jeff", "James"])
+
         when:"an entity is retrieved"
-        def person = personRepository.findByName("Frank")
+        def person = personRepository.findByName("Jeff")
 
         then:"the person is not null"
         person != null
-        person.name == 'Frank'
+        person.name == 'Jeff'
         personRepository.findById(person.id).isPresent()
 
         when:"the person is deleted"
@@ -112,10 +154,16 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:"They are really deleted"
         !personRepository.findById(person.id).isPresent()
-        personRepository.count() == 4
+        old(personRepository.count()) - 1 == personRepository.count()
+
+        cleanup:
+        personRepository.deleteAll()
     }
 
     void "test delete by multiple ids"() {
+        given:
+        savePersons(["Jeff", "James"])
+
         when:"A search for some people"
         def people = personRepository.findByNameLike("J%")
 
@@ -126,11 +174,17 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.deleteAll(people)
 
         then:"Only the correct people are deleted"
+        old(personRepository.count()) - 2 == personRepository.count()
         people.every { !personRepository.findById(it.id).isPresent() }
-        personRepository.count() == 2
+
+        cleanup:
+        personRepository.deleteAll()
     }
 
     void "test delete one"() {
+        given:
+        savePersons(["Bob"])
+
         when:"A specific person is found and deleted"
         def bob = personRepository.findByName("Bob")
 
@@ -142,12 +196,15 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:"They are deleted"
         !personRepository.findById(bob.id).isPresent()
-        personRepository.count() == 1
+        old(personRepository.count()) - 1 == personRepository.count()
     }
 
     void "test update one"() {
+        given:
+        savePersons(["Jeff", "James"])
+
         when:"A person is retrieved"
-        def fred = personRepository.findByName("Fred")
+        def fred = personRepository.findByName("Jeff")
 
         then:"The person is present"
         fred != null
@@ -156,7 +213,7 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.updatePerson(fred.id, "Jack")
 
         then:"the person is updated"
-        personRepository.findByName("Fred") == null
+        personRepository.findByName("Jeff") == null
         personRepository.findByName("Jack") != null
 
         when:"an update is issued that returns a number"
@@ -175,22 +232,28 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         personRepository.findByName("Jack") == null
         personRepository.findByName("Jeffrey").age == 30
+
+        cleanup:
+        personRepository.deleteAll()
     }
 
     void "test delete all"() {
+        given:
+        int personsWithG = personRepository.findByNameLike("G%").size()
+
         when:"A new person is saved"
         personRepository.save("Greg", 30)
         personRepository.save("Groot", 300)
 
-        then:"The count is 3"
-        personRepository.count() == 3
+        then:"The count is "
+        old(personRepository.count()) + 2 == personRepository.count()
 
         when:"batch delete occurs"
         def deleted = personRepository.deleteByNameLike("G%")
 
         then:"The count is back to 1 and it entries were deleted"
-        deleted == 2
-        personRepository.count() == 1
+        deleted == personsWithG + 2
+        old(personRepository.count()) - (personsWithG + 2) == personRepository.count()
 
         when:"everything is deleted"
         personRepository.deleteAll()
@@ -199,8 +262,36 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.count() == 0
     }
 
+    void "test update method variations"() {
+        when:
+        def person = personRepository.save("Groot", 300)
+
+        then:
+        old(personRepository.count()) + 1 == personRepository.count()
+
+        when:
+        long result = personRepository.updatePersonCount(person.id, "Greg")
+
+        then:
+        personRepository.findByName("Greg")
+        result == 1
+
+        when:
+        personRepository.updatePersonFuture(person.id, "Fred").get()
+        personRepository.updatePersonRx(person.id, "Freddie").blockingGet()
+        result = personRepository.updatePersonCustom(person.id)
+
+        then:
+        result == 1
+
+        cleanup:
+        personRepository.deleteById(person.id)
+    }
 
     void "test is null or empty"() {
+        given:
+        setupBooks()
+
         expect:
         // NOTE: Oracle treats blank and null the same
         isOracle() || bookRepository.count() == 8
@@ -208,9 +299,15 @@ abstract class AbstractRepositorySpec extends Specification {
         isOracle() || bookRepository.findByAuthorIsNotNull().size() == 6
         isOracle() || bookRepository.countByTitleIsEmpty() == 1
         isOracle() || bookRepository.countByTitleIsNotEmpty() == 7
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test order by association"() {
+        given:
+        setupBooks()
+
         when:"Sorting by an assocation"
         def page = bookRepository.findAll(Pageable.from(Sort.of(
                 Sort.Order.desc("author.name")
@@ -218,21 +315,33 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         page.content
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test string comparison methods"() {
         given:
+        setupBooks()
+
+        when:
         def authors = authorRepository.findByNameContains("e")
         authors.each { println it.name }
-        expect:
+
+        then:
         authorRepository.countByNameContains("e") == 2
         authorRepository.findByNameStartsWith("S").name == "Stephen King"
         authorRepository.findByNameEndsWith("w").name == "Don Winslow"
         authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test project on single property"() {
         given:
+        setupBooks()
+
         // cleanup invalid titles
         bookRepository.deleteByTitleIsEmptyOrTitleIsNull()
 
@@ -257,9 +366,16 @@ abstract class AbstractRepositorySpec extends Specification {
         personRepository.readAgeByNameLike("J%").sort() == [35,40]
         personRepository.findByNameLikeOrderByAge("J%")*.age == [35,40]
         personRepository.findByNameLikeOrderByAgeDesc("J%")*.age == [40,35]
+
+        cleanup:
+        personRepository.deleteAll()
+        cleanupBooks()
     }
 
     void "test dto projection"() {
+        given:
+        saveSampleBooks()
+
         when:
         def results = bookDtoRepository.findByTitleLike("The%")
 
@@ -283,7 +399,8 @@ abstract class AbstractRepositorySpec extends Specification {
         result.size == 10
         result.content.every { it instanceof BookDto }
         result.content.every { it.title.startsWith("The")}
-        all.content.every { it instanceof BookDto && it.title }
+        all.content.every { it instanceof BookDto }
+        all.content.collect { it.title }.every {  it }
 
         when:"Stream is used"
         def dto = bookDtoRepository.findStream("The Stand").findFirst().get()
@@ -291,9 +408,16 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"The result is correct"
         dto instanceof BookDto
         dto.title == "The Stand"
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test null argument handling" () {
+        given:
+        savePersons(["Jeff", "James"])
+        setupBooks()
+
         when:
         personRepository.countByAgeGreaterThan(null) == 2
 
@@ -315,11 +439,22 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         author.nickName == null
+
+        cleanup:
+        personRepository.deleteAll()
+        cleanupBooks()
     }
 
     void "test project on single ended association"() {
+        given:
+        setupBooks()
+
         expect:
-        bookRepository.count() == 7
+        if (isOracle()) {
+            assert bookRepository.count() == 7
+        } else {
+            assert bookRepository.count() == 8
+        }
         isOracle() || bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
                 .findFirst().get().title == "Pet Cemetery"
         isOracle() || bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
@@ -327,9 +462,15 @@ abstract class AbstractRepositorySpec extends Specification {
         authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
         authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
         bookRepository.findByAuthorName("Stephen King").size() == 2
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test join on single ended association"() {
+        given:
+        setupBooks()
+
         when:
         def book = bookRepository.findByTitle("Pet Cemetery")
 
@@ -339,9 +480,15 @@ abstract class AbstractRepositorySpec extends Specification {
         book.author != null
         book.author.id != null
         book.author.name == "Stephen King"
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test join on many ended association"() {
+        given:
+        saveSampleBooks()
+
         when:
         def author = authorRepository.searchByName("Stephen King")
 
@@ -355,16 +502,15 @@ abstract class AbstractRepositorySpec extends Specification {
         def authors = authorRepository.listAll()
 
         then:
-        authors.every { it.books.size() == 2 }
         authors.size() == 3
+        authors.collect { [authorName: it.name, books: it.books.size()] }.every { it.books == 2 }
+
+
+        cleanup:
+        cleanupBooks()
     }
 
     void "test query across multiple associations"() {
-        given:"TODO: Figure out why this join fails on mysql"
-        def specName = specificationContext.currentSpec.name
-        if (specName.contains("MySql") || specName.contains("Maria")) {
-            return
-        }
         when:
         def spain = new Country("Spain")
         def france = new Country("France")
@@ -399,12 +545,6 @@ abstract class AbstractRepositorySpec extends Specification {
         cityRepository.countByCountryRegionCountryName("Spain") == 2
         cityRepository.countByCountryRegionCountryName("France") == 1
 
-        when:"A join that uses a join table is executed"
-        def region = regionRepository.findByCitiesName("Bilbao")
-
-        then:"The result is correct"
-        region.name == 'Pais Vasco'
-
         when:"A single level join is executed"
         def results = cityRepository.findByCountryRegionCountryName("Spain")
 
@@ -434,11 +574,28 @@ abstract class AbstractRepositorySpec extends Specification {
         results[1].countryRegion.name == 'Madrid'
         results[1].countryRegion.country.uuid == spain.uuid
         results[1].countryRegion.country.name == "Spain"
+
+        when:"A join that uses a join table is executed"
+        //TODO: Figure out why this join fails on mysql
+        def specName = specificationContext.currentSpec.name
+        if (specName.contains("MySql") || specName.contains("Maria")) {
+            return
+        }
+        def region = regionRepository.findByCitiesName("Bilbao")
+
+        then:"The result is correct"
+        region.name == 'Pais Vasco'
+
+        cleanup:
+        cityRepository.deleteAll()
+        regionRepository.deleteAll()
+        countryRepository.deleteAll()
     }
 
     void "test find by name"() {
+
         when:
-        Person p = personRepository.getByName("Fred")
+        personRepository.getByName("Fred")
 
         then:
         thrown(EmptyResultException)
@@ -448,7 +605,7 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         personRepository.save(new Person(name: "Fred"))
         personRepository.saveAll([new Person(name: "Bob"), new Person(name: "Fredrick")])
-        p = personRepository.findByName("Bob")
+        Person p = personRepository.findByName("Bob")
 
         then:
         p != null
@@ -473,13 +630,15 @@ abstract class AbstractRepositorySpec extends Specification {
         then:
         results.size() == 2
 
+        cleanup:
+        personRepository.deleteAll()
     }
 
 
     void "test date created and last updated"() {
         when:
-        def company = new Company("Apple", new URL("http://apple.com"))
-        def google = new Company("Google", new URL("http://google.com"))
+        def company = new Company("Apple", new URL("https://apple.com"))
+        def google = new Company("Google", new URL("https://google.com"))
         companyRepository.save(company)
         sleep(1000)
         companyRepository.save(google)
@@ -521,6 +680,9 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"no error occurs"
         results.size() == 2
         results.first().name == 'Google'
+
+        cleanup:
+        companyRepository.deleteAll()
     }
 
     void "test one-to-many mappedBy"() {
@@ -530,14 +692,14 @@ abstract class AbstractRepositorySpec extends Specification {
 
         def book1 = new Book()
         book1.title = "Book1"
-        def page1 = new io.micronaut.data.tck.entities.Page()
+        def page1 = new Page()
         page1.num = 1
         book1.getPages().add(page1)
 
         def book2 = new Book()
         book2.title = "Book2"
-        def page21 = new io.micronaut.data.tck.entities.Page()
-        def page22 = new io.micronaut.data.tck.entities.Page()
+        def page21 = new Page()
+        def page22 = new Page()
         page21.num = 21
         page22.num = 22
         book2.getPages().add(page21)
@@ -545,9 +707,9 @@ abstract class AbstractRepositorySpec extends Specification {
 
         def book3 = new Book()
         book3.title = "Book3"
-        def page31 = new io.micronaut.data.tck.entities.Page()
-        def page32 = new io.micronaut.data.tck.entities.Page()
-        def page33 = new io.micronaut.data.tck.entities.Page()
+        def page31 = new Page()
+        def page32 = new Page()
+        def page33 = new Page()
         page31.num = 31
         page32.num = 32
         page33.num = 33
@@ -584,6 +746,10 @@ abstract class AbstractRepositorySpec extends Specification {
         result3.pages.find {page -> page.num = 31}
         result3.pages.find {page -> page.num = 32}
         result3.pages.find {page -> page.num = 33}
+
+        cleanup:
+        bookRepository.deleteAll()
+        authorRepository.deleteAll()
     }
 
     void "test one-to-one mappedBy"() {
@@ -624,6 +790,10 @@ abstract class AbstractRepositorySpec extends Specification {
         nose
         nose.id
         nose.face == null
+
+        cleanup:
+        noseRepository.deleteAll()
+        faceRepository.deleteAll()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

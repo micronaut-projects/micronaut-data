@@ -54,12 +54,30 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final char SPACE = ' ';
     protected static final char DOT = '.';
     protected static final String NOT_CLAUSE = " NOT";
-    protected static final String LOGICAL_AND = " AND ";
+    protected static final String AND = "AND";
+    protected static final String LOGICAL_AND = " "+ AND + " ";
     protected static final String UPDATE_CLAUSE = "UPDATE ";
     protected static final String DELETE_CLAUSE = "DELETE ";
-    protected static final String LOGICAL_OR = " OR ";
+    protected static final String OR = "OR";
+    protected static final String LOGICAL_OR = " " + OR + " ";
     protected static final String FUNCTION_COUNT = "COUNT";
-    private static final String DISTINCT_CLAUSE = "DISTINCT ";
+    protected static final String AVG = "AVG";
+    protected static final String DISTINCT = "DISTINCT";
+    protected static final String SUM = "SUM";
+    protected static final String MIN = "MIN";
+    protected static final String MAX = "MAX";
+    protected static final String COUNT_DISTINCT = "COUNT(DISTINCT";
+    protected static final String IS_NOT_NULL = " IS NOT NULL ";
+    protected static final String IS_EMPTY = " IS EMPTY ";
+    protected static final String IS_NOT_EMPTY = " IS NOT EMPTY ";
+    protected static final String IS_NULL = " IS NULL ";
+    protected static final String EQUALS_TRUE = " = TRUE ";
+    protected static final String EQUALS_FALSE = " = FALSE ";
+    protected static final String GREATER_THAN_OR_EQUALS = " >= ";
+    protected static final String LESS_THAN_OR_EQUALS = " <= ";
+    protected static final String LESS_THAN = " < ";
+    protected static final String GREATER_THAN = " > ";
+    protected static final String NOT_EQUALS = " != ";
     protected final Map<Class, QueryHandler> queryHandlers = new HashMap<>(30);
 
     {
@@ -206,34 +224,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         queryHandlers.put(QueryModel.IsNull.class, (queryState, criterion) -> {
             QueryModel.IsNull isNull = (QueryModel.IsNull) criterion;
-            applyPropertyExpression(queryState, isNull, QueryModel.IsNull.class, " IS NULL ");
+            applyPropertyExpression(queryState, isNull, QueryModel.IsNull.class, IS_NULL);
         });
 
         queryHandlers.put(QueryModel.IsTrue.class, (queryState, criterion) -> {
             QueryModel.IsTrue isTrue = (QueryModel.IsTrue) criterion;
-            applyPropertyExpression(queryState, isTrue, QueryModel.IsTrue.class, " = TRUE ");
+            applyPropertyExpression(queryState, isTrue, QueryModel.IsTrue.class, EQUALS_TRUE);
         });
 
         queryHandlers.put(QueryModel.IsFalse.class, (queryState, criterion) -> {
             QueryModel.IsFalse isFalse = (QueryModel.IsFalse) criterion;
-            applyPropertyExpression(queryState, isFalse, QueryModel.IsFalse.class, " = FALSE ");
+            applyPropertyExpression(queryState, isFalse, QueryModel.IsFalse.class, EQUALS_FALSE);
         });
 
         queryHandlers.put(QueryModel.IsNotNull.class, (queryState, criterion) -> {
             QueryModel.IsNotNull isNotNull = (QueryModel.IsNotNull) criterion;
-            applyPropertyExpression(queryState, isNotNull, QueryModel.IsNotNull.class, " IS NOT NULL ");
+            applyPropertyExpression(queryState, isNotNull, QueryModel.IsNotNull.class, IS_NOT_NULL);
         });
 
         queryHandlers.put(QueryModel.IsEmpty.class, (queryState, criterion) -> {
             QueryModel.IsEmpty isEmpty = (QueryModel.IsEmpty) criterion;
             final String name = isEmpty.getProperty();
-            appendEmptyExpression(queryState, " IS NULL OR ", " = '' ", " IS EMPTY ", name);
+            appendEmptyExpression(queryState, IS_NULL + OR + StringUtils.SPACE, " = '' ", IS_EMPTY, name);
         });
 
         queryHandlers.put(QueryModel.IsNotEmpty.class, (queryState, criterion) -> {
             QueryModel.IsNotEmpty isNotEmpty = (QueryModel.IsNotEmpty) criterion;
             final String name = isNotEmpty.getProperty();
-            appendEmptyExpression(queryState, " IS NOT NULL AND ", " <> '' ", " IS NOT EMPTY ", name);
+            appendEmptyExpression(queryState, IS_NOT_NULL + AND + StringUtils.SPACE, " <> '' ", IS_NOT_EMPTY, name);
         });
 
         queryHandlers.put(QueryModel.IdEquals.class, (queryState, criterion) -> {
@@ -264,7 +282,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 );
             } else {
                 appendCriteriaForOperator(
-                        queryState, prop.getProperty(), prop.getPath(), eq.getValue(), " != "
+                        queryState, prop.getProperty(), prop.getPath(), eq.getValue(), NOT_EQUALS
                 );
             }
         });
@@ -274,7 +292,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             final String name = eq.getProperty();
             PropertyPath prop = validateProperty(queryState, name, QueryModel.GreaterThan.class);
             appendCriteriaForOperator(
-                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), " > "
+                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), GREATER_THAN
             );
         });
 
@@ -283,7 +301,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             final String name = eq.getProperty();
             PropertyPath prop = validateProperty(queryState, name, QueryModel.LessThanEquals.class);
             appendCriteriaForOperator(
-                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), " <= "
+                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), LESS_THAN_OR_EQUALS
             );
         });
 
@@ -292,7 +310,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             final String name = eq.getProperty();
             PropertyPath prop = validateProperty(queryState, name, QueryModel.GreaterThanEquals.class);
             appendCriteriaForOperator(
-                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), " >= "
+                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), GREATER_THAN_OR_EQUALS
             );
         });
 
@@ -305,11 +323,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Placeholder toParam = queryState.newParameter();
             queryState.getWhereClause().append(OPEN_BRACKET)
                     .append(qualifiedName)
-                    .append(" >= ")
+                    .append(GREATER_THAN_OR_EQUALS)
                     .append(fromParam.name);
-            queryState.getWhereClause().append(" AND ")
+            queryState.getWhereClause().append(LOGICAL_AND)
                     .append(qualifiedName)
-                    .append(" <= ")
+                    .append(LESS_THAN_OR_EQUALS)
                     .append(toParam.name)
                     .append(CLOSE_BRACKET);
 
@@ -322,7 +340,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             final String name = eq.getProperty();
             PropertyPath prop = validateProperty(queryState, name, QueryModel.LessThan.class);
             appendCriteriaForOperator(
-                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), " < "
+                    queryState, prop.getProperty(), prop.getPath(), eq.getValue(), LESS_THAN
             );
         });
 
@@ -693,17 +711,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
                     String alias = pp.getAlias().orElse(null);
                     if (projection instanceof QueryModel.AvgProjection) {
-                        appendProjection(queryState.getEntity(), "AVG", pp, logicalName, queryString);
+                        appendProjection(queryState.getEntity(), AVG, pp, logicalName, queryString);
                     } else if (projection instanceof QueryModel.DistinctPropertyProjection) {
-                        appendProjection(queryState.getEntity(), "DISTINCT", pp, logicalName, queryString);
+                        appendProjection(queryState.getEntity(), DISTINCT, pp, logicalName, queryString);
                     } else if (projection instanceof QueryModel.SumProjection) {
-                        appendProjection(queryState.getEntity(), "SUM", pp, logicalName, queryString);
+                        appendProjection(queryState.getEntity(), SUM, pp, logicalName, queryString);
                     } else if (projection instanceof QueryModel.MinProjection) {
-                        appendProjection(queryState.getEntity(), "MIN", pp, logicalName, queryString);
+                        appendProjection(queryState.getEntity(), MIN, pp, logicalName, queryString);
                     } else if (projection instanceof QueryModel.MaxProjection) {
-                        appendProjection(queryState.getEntity(), "MAX", pp, logicalName, queryString);
+                        appendProjection(queryState.getEntity(), MAX, pp, logicalName, queryString);
                     } else if (projection instanceof QueryModel.CountDistinctProjection) {
-                        appendProjection(queryState.getEntity(), "COUNT(DISTINCT", pp, logicalName, queryString);
+                        appendProjection(queryState.getEntity(), COUNT_DISTINCT, pp, logicalName, queryString);
                         queryString.append(CLOSE_BRACKET);
                     } else {
                         String propertyName = pp.getPropertyName();
@@ -782,7 +800,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .append(columnName)
                 .append(CLOSE_BRACKET);
     }
-
 
     /**
      * Appends a row count projection to the query string.

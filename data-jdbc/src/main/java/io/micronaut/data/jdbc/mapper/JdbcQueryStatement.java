@@ -83,7 +83,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                         return this;
 
                     default:
-                        throw new DataAccessException("Unknown data type: " + dataType);
+                        statement.setNull(index, Types.NULL);
+                        return this;
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);
