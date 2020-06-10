@@ -22,7 +22,6 @@ import io.micronaut.data.tck.jdbc.entities.User;
 import io.micronaut.data.tck.jdbc.entities.UserRole;
 import io.micronaut.data.tck.jdbc.entities.UserRoleId;
 
-import javax.persistence.Entity;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 

@@ -7,7 +7,7 @@ dependencies {
 
     // optional dependencies
     compileOnly "io.micronaut:micronaut-jdbc:$micronautVersion"
-    compileOnly "org.springframework:spring-jdbc:5.2.6.RELEASE"
+    compileOnly "org.springframework:spring-jdbc:5.2.7.RELEASE"
     compileOnly "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
@@ -20,7 +20,7 @@ dependencies {
 
     testImplementation "io.micronaut:micronaut-jdbc:$micronautVersion"
     testRuntimeOnly "com.h2database:h2"
-    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
 
 }
 tasks.withType(GroovyCompile) {

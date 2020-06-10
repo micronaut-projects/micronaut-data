@@ -117,4 +117,32 @@ class H2CompositePrimaryKeySpec extends Specification {
         then:
         userRoleRepository.count() == 2
     }
+
+    void "test a composite primary key with relations"() {
+        User adminUser = userRepository.save(new User("admin@gmail.com"))
+        User user = userRepository.save(new User("user@gmail.com"))
+        Role adminRole = roleRepository.save(new Role("ROLE_ADMIN"))
+        Role role = roleRepository.save(new Role("ROLE_USER"))
+
+        when:
+        UserRole userRole = userRoleRepository.save(adminUser, adminRole)
+
+        then:
+        userRoleRepository.count() == 1
+        userRole.user.id == adminUser.id
+        userRole.role.id == adminRole.id
+
+        when:
+        userRoleRepository.save(adminUser, role)
+        userRoleRepository.save(user, role)
+
+        then:
+        userRoleRepository.count() == 3
+
+        when:
+        userRoleRepository.delete(user, role)
+
+        then:
+        userRoleRepository.count() == 2
+    }
 }

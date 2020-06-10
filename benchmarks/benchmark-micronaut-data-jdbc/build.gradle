@@ -27,7 +27,7 @@ dependencies {
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-runtime"
-    implementation "io.micronaut.configuration:micronaut-jdbc-hikari"
+    implementation "io.micronaut.sql:micronaut-jdbc-hikari:$micronautSqlVersion"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     runtimeOnly "com.h2database:h2"
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"

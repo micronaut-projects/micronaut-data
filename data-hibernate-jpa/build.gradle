@@ -11,7 +11,7 @@ dependencies {
         exclude group: 'org.jboss:jandex', module: 'jar'
     }
     api project(":data-tx-hibernate")
-    implementation "io.micronaut.configuration:micronaut-hibernate-jpa:$micronautSqlVersion", {
+    implementation "io.micronaut.sql:micronaut-hibernate-jpa:$micronautSqlVersion", {
         exclude group:'org.jboss.spec.javax.transaction', module:'jboss-transaction-api_1.2_spec'
         exclude group:'org.jboss:jandex', module:'jar'
         exclude group:'io.micronaut', module:'micronaut-spring'
@@ -31,7 +31,7 @@ dependencies {
     testImplementation "io.micronaut:micronaut-inject-groovy:$micronautVersion"
     testImplementation project(":data-processor")
     testRuntimeOnly "com.h2database:h2"
-    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
 
 //    compileTestGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
 
