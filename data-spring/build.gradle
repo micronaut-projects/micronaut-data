@@ -30,6 +30,6 @@ dependencies {
     testRuntimeOnly "com.h2database:h2"
 
     testRuntimeOnly "org.springframework:spring-orm:$springVersion"
-    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
 }
 

@@ -20,7 +20,7 @@ dependencies {
 
     testImplementation "io.micronaut:micronaut-jdbc:$micronautVersion"
     testRuntimeOnly "com.h2database:h2"
-    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
 
 }
 tasks.withType(GroovyCompile) {

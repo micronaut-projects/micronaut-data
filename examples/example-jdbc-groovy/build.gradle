@@ -44,7 +44,7 @@ dependencies {
     implementation "jakarta.persistence:jakarta.persistence-api:2.2.2"
     implementation "io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion"
     runtimeOnly "com.h2database:h2"
-    runtimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    runtimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
 
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     testCompileOnly platform("io.micronaut:micronaut-bom:$micronautVersion")

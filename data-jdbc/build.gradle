@@ -21,7 +21,7 @@ dependencies {
     testRuntimeOnly "com.h2database:h2:1.4.200"
     testRuntimeOnly 'org.mariadb.jdbc:mariadb-java-client:2.6.0'
     testRuntimeOnly "com.oracle.ojdbc:ojdbc8:19.3.0.0"
-    testRuntimeOnly "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     testImplementation "org.testcontainers:spock:$testContainersVersion"
     testImplementation "org.testcontainers:mysql:$testContainersVersion"
     testImplementation "org.testcontainers:mariadb:$testContainersVersion"

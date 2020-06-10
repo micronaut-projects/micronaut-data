@@ -60,7 +60,7 @@ dependencies {
     implementation "io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion"
     runtime "ch.qos.logback:logback-classic:1.2.3"
     runtime "com.h2database:h2"
-    runtime "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    runtime "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     runtime("io.micronaut.spring:micronaut-spring-web")
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"

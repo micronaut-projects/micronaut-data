@@ -15,7 +15,7 @@ dependencies {
 
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}"
     implementation "org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}"
