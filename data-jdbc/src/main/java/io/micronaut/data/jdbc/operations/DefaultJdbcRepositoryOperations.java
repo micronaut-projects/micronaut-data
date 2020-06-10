@@ -184,11 +184,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             try (PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        Class<T> rootEntity = preparedQuery.getRootEntity();
                         Class<R> resultType = preparedQuery.getResultType();
-                        if (resultType == rootEntity) {
-                            @SuppressWarnings("unchecked")
-                            RuntimePersistentEntity<R> persistentEntity = getEntity((Class<R>) rootEntity);
+                        if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                            RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
                             TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                     persistentEntity,
                                     columnNameResultSetReader,

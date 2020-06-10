@@ -25,6 +25,7 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
@@ -82,6 +83,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(PostgresFaceRepository)
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(PostgresCountryRegionCityRepository)
     }
 
     void "test save and fetch author with no books"() {

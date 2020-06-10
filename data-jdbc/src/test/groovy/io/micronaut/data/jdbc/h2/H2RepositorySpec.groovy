@@ -21,6 +21,7 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
@@ -47,6 +48,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2CountryRepository countryr = context.getBean(H2CountryRepository)
+
+    @Shared
+    H2CountryRegionCityRepository countryrcr = context.getBean(H2CountryRegionCityRepository)
 
     @Shared
     H2CityRepository cityr = context.getBean(H2CityRepository)
@@ -111,6 +115,11 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     RegionRepository getRegionRepository() {
         return regr
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return countryrcr
     }
 
     void "test total dto"() {

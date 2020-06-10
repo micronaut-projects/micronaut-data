@@ -23,6 +23,7 @@ import io.micronaut.data.jdbc.mysql.MySqlBookDtoRepository
 import io.micronaut.data.jdbc.mysql.MySqlBookRepository
 import io.micronaut.data.jdbc.mysql.MySqlCityRepository
 import io.micronaut.data.jdbc.mysql.MySqlCompanyRepository
+import io.micronaut.data.jdbc.mysql.MySqlCountryRegionCityRepository
 import io.micronaut.data.jdbc.mysql.MySqlCountryRepository
 import io.micronaut.data.jdbc.mysql.MySqlFaceRepository
 import io.micronaut.data.jdbc.mysql.MySqlNoseRepository
@@ -33,6 +34,7 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
@@ -92,6 +94,11 @@ class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPro
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MySqlFaceRepository)
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(MySqlCountryRegionCityRepository)
     }
 
     void "test save and retrieve basic types"() {

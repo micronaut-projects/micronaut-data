@@ -706,7 +706,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (identity == null) {
                         throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
                     }
-                    appendPropertyProjection(queryString, logicalName, identity, identity.getName());
+                    appendPropertyProjection(queryString, logicalName, entity, identity, identity.getName());
                 } else if (projection instanceof QueryModel.PropertyProjection) {
                     QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
                     String alias = pp.getAlias().orElse(null);
@@ -727,7 +727,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         String propertyName = pp.getPropertyName();
                         PersistentProperty persistentProperty = entity.getPropertyByPath(propertyName)
                                 .orElseThrow(() -> new IllegalArgumentException("Cannot project on non-existent property: " + propertyName));
-                        appendPropertyProjection(queryString, logicalName, persistentProperty, propertyName);
+                        appendPropertyProjection(queryString, logicalName, entity, persistentProperty, propertyName);
                     }
                     if (alias != null) {
                         queryString.append(AS_CLAUSE)
@@ -742,9 +742,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
     }
 
-    private void appendPropertyProjection(StringBuilder queryString, String alias, PersistentProperty persistentProperty, String propertyName) {
+    private void appendPropertyProjection(StringBuilder queryString, String alias, PersistentEntity rootEntity, PersistentProperty persistentProperty, String propertyName) {
         PersistentEntity owner = persistentProperty.getOwner();
         boolean escape = shouldEscape(owner);
+        PersistentProperty rootIdentity = rootEntity.getIdentity();
+        boolean embeddedId = rootIdentity instanceof Embedded && ((Embedded) rootIdentity).getAssociatedEntity() == owner;
         if (persistentProperty instanceof Embedded) {
             PersistentEntity embedded = ((Embedded) persistentProperty).getAssociatedEntity();
             Iterator<? extends PersistentProperty> embeddedIterator = embedded.getPersistentProperties().iterator();
@@ -762,6 +764,14 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     queryString.append(COMMA).append(SPACE);
                 }
             }
+        } else if (embeddedId) {
+            String columnName = computeEmbeddedName(rootIdentity, rootIdentity.getName(), persistentProperty);
+            if (escape) {
+                columnName = quote(columnName);
+            }
+            queryString.append(alias)
+                    .append(DOT)
+                    .append(columnName);
         } else {
             if (computePropertyPaths()) {
                 String columnName = getColumnName(persistentProperty);
@@ -1039,6 +1049,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             QueryParameter queryParameter = (QueryParameter) value;
             StringBuilder whereClause = queryState.getWhereClause();
             String alias = queryState.getCurrentAlias();
+            PersistentEntity rootEntity = queryState.getEntity();
+            PersistentProperty rootIdentity = rootEntity.getIdentity();
+            boolean embeddedId = rootIdentity instanceof Embedded &&  ((Embedded) rootIdentity).getAssociatedEntity() == property.getOwner();
             if (property instanceof Embedded) {
                 PersistentEntity embeddedEntity = ((Embedded) property).getAssociatedEntity();
                 Iterator<? extends PersistentProperty> iterator = embeddedEntity.getPersistentProperties().iterator();
@@ -1059,6 +1072,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         whereClause.append(LOGICAL_AND);
                     }
                 }
+            } else if (embeddedId) {
+                Placeholder placeholder = queryState.newParameter();
+                if (alias != null) {
+                    whereClause.append(alias)
+                            .append(DOT);
+                }
+
+                String columnName = computeEmbeddedName(rootIdentity, path, property);
+                whereClause.append(columnName)
+                        .append(operator)
+                        .append(placeholder.name);
+                addComputedParameter(queryState, property, placeholder, new QueryParameter(rootIdentity.getName() + "." + property.getName()));
             } else {
                 Placeholder placeholder = queryState.newParameter();
                 if (alias != null) {

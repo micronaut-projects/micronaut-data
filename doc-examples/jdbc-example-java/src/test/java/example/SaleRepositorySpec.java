@@ -9,15 +9,19 @@ class SaleRepositorySpec {
 
     private final ProductRepository productRepository;
     private final SaleRepository saleRepository;
+    private final ManufacturerRepository manufacturerRepository;
 
-    public SaleRepositorySpec(ProductRepository productRepository, SaleRepository saleRepository) {
+    public SaleRepositorySpec(ProductRepository productRepository,
+                              SaleRepository saleRepository,
+                              ManufacturerRepository manufacturerRepository) {
         this.productRepository = productRepository;
         this.saleRepository = saleRepository;
+        this.manufacturerRepository = manufacturerRepository;
     }
 
     @Test
     void testReadWriteCustomType() {
-        Manufacturer apple = productRepository.saveManufacturer("Apple");
+        Manufacturer apple = manufacturerRepository.save("Apple");
         Product macBook = new Product("MacBook", apple);
         productRepository.save(macBook);
 

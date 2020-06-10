@@ -178,8 +178,13 @@ public interface PersistentEntity extends PersistentElement {
                 PersistentProperty sp = currentEntity.getPropertyByName(name);
                 if (sp == null) {
                     PersistentProperty identity = currentEntity.getIdentity();
-                    if (identity != null && identity.getName().equals(name)) {
-                        sp = identity;
+                    if (identity != null) {
+                        if (identity.getName().equals(name)) {
+                            sp = identity;
+                        } else if (identity instanceof Association) {
+                            PersistentEntity idEntity = ((Association) identity).getAssociatedEntity();
+                            sp = idEntity.getPropertyByName(name);
+                        }
                     }
                 }
                 if (sp != null) {
@@ -227,8 +232,13 @@ public interface PersistentEntity extends PersistentElement {
             PersistentProperty pp = getPropertyByName(path);
             if (pp == null) {
                 PersistentProperty identity = getIdentity();
-                if (identity != null && identity.getName().equals(path)) {
-                    pp = identity;
+                if (identity != null) {
+                    if (identity.getName().equals(path)) {
+                        pp = identity;
+                    } else if (identity instanceof Embedded) {
+                        PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
+                        pp = idEntity.getPropertyByName(path);
+                    }
                 }
             }
             return Optional.ofNullable(pp);

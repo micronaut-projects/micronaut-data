@@ -14,8 +14,12 @@ class ProductRepositorySpec extends Specification {
     @Shared
     ProductRepository productRepository
 
+    @Inject
+    @Shared
+    ManufacturerRepository manufacturerRepository
+
     void setupSpec() {
-        Manufacturer apple = productRepository.saveManufacturer("Apple")
+        Manufacturer apple = manufacturerRepository.save("Apple")
         productRepository.saveAll(Arrays.asList(
                 new Product(name: "MacBook",
                             manufacturer: apple),

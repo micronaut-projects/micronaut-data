@@ -24,6 +24,7 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
@@ -81,6 +82,11 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MySqlFaceRepository)
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(MySqlCountryRegionCityRepository)
     }
 
     void "test save and retrieve basic types"() {

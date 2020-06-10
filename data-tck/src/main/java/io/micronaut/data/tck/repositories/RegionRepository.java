@@ -22,8 +22,6 @@ import io.micronaut.data.tck.entities.CountryRegionCity;
 
 public interface RegionRepository extends CrudRepository<CountryRegion, Long> {
 
-    CountryRegionCity save(CountryRegionCity countryRegionCity);
-
     @Join(value = "cities", alias = "c")
     CountryRegion findByCitiesName(String name);
 }

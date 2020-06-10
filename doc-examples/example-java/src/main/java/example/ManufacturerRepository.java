@@ -15,13 +15,11 @@
  */
 package example;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface ManufacturerRepository extends GenericRepository<Manufacturer, Long> {
-    Manufacturer findByName(String name);
+@Repository
+public interface ManufacturerRepository extends CrudRepository<Manufacturer, Long> {
 
     Manufacturer save(String name);
 }

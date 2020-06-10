@@ -680,9 +680,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private @Nullable SourcePersistentEntity resolvePersistentEntity(MethodElement element, Map<String, Element> parametersInRole, VisitorContext context) {
         ClassElement returnType = element.getGenericReturnType();
-        SourcePersistentEntity entity = resolvePersistentEntity(returnType);
+        SourcePersistentEntity entity = resolveEntityForCurrentClass();
         if (entity == null) {
-            entity = resolveEntityForCurrentClass();
+            entity = resolvePersistentEntity(returnType);
         }
 
         if (entity != null) {

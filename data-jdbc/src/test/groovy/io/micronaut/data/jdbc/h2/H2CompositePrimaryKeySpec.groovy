@@ -80,7 +80,6 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         then:"The object was deleted"
         project == null
-
     }
 
     void "test a composite primary key with relations"() {
@@ -103,6 +102,14 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         then:
         userRoleRepository.count() == 3
+
+        when:
+        List<Role> roles = userRoleRepository.findRoleByUser(adminUser).toList()
+
+        then:
+        roles.size() == 2
+        roles.stream().anyMatch {r -> r.name == "ROLE_ADMIN" }
+        roles.stream().anyMatch {r -> r.name == "ROLE_USER" }
 
         when:
         userRoleRepository.delete(user, role)

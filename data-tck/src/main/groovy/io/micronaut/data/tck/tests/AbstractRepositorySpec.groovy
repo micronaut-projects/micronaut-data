@@ -36,6 +36,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract CountryRepository getCountryRepository()
     abstract CityRepository getCityRepository()
     abstract RegionRepository getRegionRepository()
+    abstract CountryRegionCityRepository getCountryRegionCityRepository()
     abstract NoseRepository getNoseRepository()
     abstract FaceRepository getFaceRepository()
 
@@ -528,15 +529,15 @@ abstract class AbstractRepositorySpec extends Specification {
         cityRepository.save(bdx)
         cityRepository.save(bilbao)
         cityRepository.save(mad)
-        regionRepository.save(new CountryRegionCity(
+        countryRegionCityRepository.save(new CountryRegionCity(
                 b,
                 bdx
         ))
-        regionRepository.save(new CountryRegionCity(
+        countryRegionCityRepository.save(new CountryRegionCity(
                 pv,
                 bilbao
         ))
-        regionRepository.save(new CountryRegionCity(
+        countryRegionCityRepository.save(new CountryRegionCity(
                 madrid,
                 mad
         ))

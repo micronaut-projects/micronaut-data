@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package example;
+package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository;
 
 @JdbcRepository(dialect = Dialect.H2)
-public interface ManufacturerRepository extends GenericRepository<Manufacturer, Long> {
-    Manufacturer findByName(String name);
-
-    Manufacturer save(String name);
+public interface H2CountryRegionCityRepository extends CountryRegionCityRepository {
 }

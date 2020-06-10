@@ -81,6 +81,42 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId>{
         updatePaths == ['', "0.departmentId", "0.projectId"] as String[]
     }
 
+    void "test compile repo with composite key relations"() {
+        given:
+        def repository = buildRepository('test.UserRoleRepository', """
+import javax.persistence.Entity;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Column;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.context.annotation.Parameter;
+${TestEntities.compositeRelationPrimaryKeyEntities()}
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
+        
+    UserRole save(UserRole entity);
+
+    default UserRole save(User user, Role role) {
+        return save(new UserRole(new UserRoleId(user, role)));
+    }
+
+    void deleteById(UserRoleId id);
+
+    default void delete(User user, Role role) {
+        deleteById(new UserRoleId(user, role));
+    }
+
+    int count();
+
+    Iterable<Role> findRoleByUser(User user);
+}
+""")
+
+        expect:
+        repository != null
+    }
+
     void "test create table"() {
         given:
         def entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())

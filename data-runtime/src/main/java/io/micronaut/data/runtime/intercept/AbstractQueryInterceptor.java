@@ -1037,6 +1037,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @NonNull
         @Override
         public DataType getResultDataType() {
+            if (isCount) {
+                return DataType.LONG;
+            }
             return annotationMetadata.enumValue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
                                      .orElse(DataType.OBJECT);
         }

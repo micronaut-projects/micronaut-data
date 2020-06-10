@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.sqlserver
 
 
 import io.micronaut.data.jdbc.BasicTypes
+import io.micronaut.data.jdbc.postgres.PostgresCountryRegionCityRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
@@ -24,6 +25,7 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
@@ -81,6 +83,11 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTes
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MSFaceRepository)
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(MSCountryRegionCityRepository)
     }
 
     void "test save and retrieve basic types"() {
