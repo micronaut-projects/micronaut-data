@@ -156,14 +156,29 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             if (assoc.getKind() == Relation.Kind.EMBEDDED) {
 
                                 Object value = prop.getProperty().get(entity);
-                                Object embeddedValue = value != null ? embeddedProp.getProperty().get(value) : null;
                                 int index = i + 1;
-                                preparedStatementWriter.setDynamic(
-                                        stmt,
-                                        index,
-                                        embeddedProp.getDataType(),
-                                        embeddedValue
-                                );
+
+                                RuntimePersistentEntity<?> embeddedEntity = entities.get(embeddedProp.getProperty().getType());
+
+                                if (embeddedEntity != null) {
+                                    Object bean = embeddedProp.getProperty().get(value);
+                                    RuntimePersistentProperty embeddedIdentity = embeddedEntity.getIdentity();
+                                    Object beanId = embeddedIdentity.getProperty().get(bean);
+                                    preparedStatementWriter.setDynamic(
+                                            stmt,
+                                            index,
+                                            embeddedIdentity.getDataType(),
+                                            beanId
+                                    );
+                                } else {
+                                    Object embeddedValue = value != null ? embeddedProp.getProperty().get(value) : null;
+                                    preparedStatementWriter.setDynamic(
+                                            stmt,
+                                            index,
+                                            embeddedProp.getDataType(),
+                                            embeddedValue
+                                    );
+                                }
                             }
                         }
                     }
