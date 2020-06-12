@@ -12,9 +12,17 @@ buildscript {
 subprojects { Project subproject ->
     group "io.micronaut.data"
 
-    apply plugin: "io.micronaut.build.common"
+    boolean isExampleOrBenchmark = subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")
+    if (subproject.name != 'data-bom' || isExampleOrBenchmark) {
+        apply plugin: "io.micronaut.build.common"
 
-    if (subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")) {
+    } else {
+        apply plugin: "java-platform"
+        version projectVersion
+    }    
+
+
+    if (isExampleOrBenchmark) {
         checkstyleMain.enabled = false
         tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) { it.enabled = false }
         return
@@ -23,12 +31,15 @@ subprojects { Project subproject ->
     apply plugin: "io.micronaut.build.dependency-updates"
     apply plugin: "io.micronaut.build.publishing"
 
-    dependencies {
-        testImplementation("org.spockframework:spock-core:${spockVersion}") {
-            exclude module:'groovy-all'
+    if (subproject.name != 'data-bom') {
+        dependencies {
+            testImplementation("org.spockframework:spock-core:${spockVersion}") {
+                exclude module:'groovy-all'
+            }
+            testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"        
         }
-        testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"        
     }
+    
 }
 
 apply plugin: "io.micronaut.build.docs"
