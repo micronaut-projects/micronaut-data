@@ -1,0 +1,15 @@
+javaPlatform {
+    allowDependencies()
+}
+dependencies {
+    constraints {
+        for (Project p : rootProject.subprojects) {
+            if (p.name == "data-bom" || p.name.contains('benchmark') || p.name.contains('example')) {
+            	continue	
+        	} 
+            
+            api "$p.group:micronaut-$p.name:$p.version"
+        }
+
+    }
+}
