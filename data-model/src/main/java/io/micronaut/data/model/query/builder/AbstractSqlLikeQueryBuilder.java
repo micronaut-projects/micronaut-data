@@ -55,7 +55,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final char DOT = '.';
     protected static final String NOT_CLAUSE = " NOT";
     protected static final String AND = "AND";
-    protected static final String LOGICAL_AND = " "+ AND + " ";
+    protected static final String LOGICAL_AND = " " + AND + " ";
     protected static final String UPDATE_CLAUSE = "UPDATE ";
     protected static final String DELETE_CLAUSE = "DELETE ";
     protected static final String OR = "OR";
@@ -641,7 +641,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * Selects all columns for the given entity and alias.
      * @param entity The entity
      * @param alias The alias
-     * @return The column selection string
+     * @param queryBuffer The buffer to append the columns
      */
     protected abstract void selectAllColumns(PersistentEntity entity, String alias, StringBuilder queryBuffer);
 

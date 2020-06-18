@@ -559,7 +559,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * Selects all columns for the given entity and alias.
      * @param entity The entity
      * @param alias The alias
-     * @return The column selection string
+     * @param stringBuffer The builder to add the columns
      */
     @Override
     public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder stringBuffer) {
