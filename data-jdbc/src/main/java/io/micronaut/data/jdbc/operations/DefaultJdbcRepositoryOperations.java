@@ -316,15 +316,15 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
         }
         boolean dtoProjection = preparedQuery.isDtoProjection();
-        boolean isRootResult = resultType == rootEntity;
+        boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
         Spliterator<R> spliterator;
         AtomicBoolean finished = new AtomicBoolean();
-        if (isRootResult || dtoProjection) {
+        if (isEntity || dtoProjection) {
             SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
             SqlTypeMapper<ResultSet, R> mapper;
             if (dtoProjection) {
                 mapper = new SqlDTOMapper<>(
-                        getEntity(rootEntity),
+                        getEntity(resultType),
                         columnNameResultSetReader,
                         jsonCodec
                 );

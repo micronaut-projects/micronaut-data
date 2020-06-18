@@ -16,12 +16,14 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.tck.entities.User
 import io.micronaut.inject.ExecutableMethod
 import spock.lang.Requires
 import spock.lang.Shared
@@ -37,7 +39,7 @@ class CompositePrimaryKeySpec extends AbstractDataSpec {
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
-interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository{
+interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository {
 }
 """)
         def updateMethod = repository.findPossibleMethods("update").findFirst().get()
@@ -113,8 +115,15 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 }
 """)
 
-        expect:
-        repository != null
+        when:
+        def method = repository.findPossibleMethods(methodName).findFirst().get()
+
+        then:
+        method.stringValue(Query).get() == query
+
+        where:
+        methodName               | query
+        'findRoleByUser'         | 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."id_role"=user_role_id_role_."id" WHERE (user_role_.id_user = ?)'
     }
 
     void "test create table"() {

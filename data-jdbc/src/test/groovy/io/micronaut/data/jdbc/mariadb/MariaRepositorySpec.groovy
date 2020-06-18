@@ -29,6 +29,9 @@ import io.micronaut.data.jdbc.mysql.MySqlFaceRepository
 import io.micronaut.data.jdbc.mysql.MySqlNoseRepository
 import io.micronaut.data.jdbc.mysql.MySqlPersonRepository
 import io.micronaut.data.jdbc.mysql.MySqlRegionRepository
+import io.micronaut.data.jdbc.mysql.MySqlRoleRepository
+import io.micronaut.data.jdbc.mysql.MySqlUserRepository
+import io.micronaut.data.jdbc.mysql.MySqlUserRoleRepository
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -40,6 +43,9 @@ import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
 
@@ -99,6 +105,21 @@ class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPro
     @Override
     CountryRegionCityRepository getCountryRegionCityRepository() {
         return context.getBean(MySqlCountryRegionCityRepository)
+    }
+
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return context.getBean(MySqlUserRoleRepository)
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return context.getBean(MySqlRoleRepository)
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return context.getBean(MySqlUserRepository)
     }
 
     void "test save and retrieve basic types"() {

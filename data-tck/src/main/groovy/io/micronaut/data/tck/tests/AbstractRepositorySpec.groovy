@@ -20,6 +20,8 @@ import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.*
+import io.micronaut.data.tck.jdbc.entities.Role
+import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -39,6 +41,9 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract CountryRegionCityRepository getCountryRegionCityRepository()
     abstract NoseRepository getNoseRepository()
     abstract FaceRepository getFaceRepository()
+    abstract UserRepository getUserRepository()
+    abstract UserRoleRepository getUserRoleRepository()
+    abstract RoleRepository getRoleRepository()
 
     abstract Map<String, String> getProperties();
 
@@ -795,6 +800,57 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanup:
         noseRepository.deleteAll()
         faceRepository.deleteAll()
+    }
+
+    void "test a composite primary key with relations"() {
+        io.micronaut.data.tck.jdbc.entities.User adminUser = userRepository.save(new io.micronaut.data.tck.jdbc.entities.User("admin@gmail.com"))
+        io.micronaut.data.tck.jdbc.entities.User user = userRepository.save(new io.micronaut.data.tck.jdbc.entities.User("user@gmail.com"))
+        Role adminRole = roleRepository.save(new Role("ROLE_ADMIN"))
+        Role role = roleRepository.save(new Role("ROLE_USER"))
+
+        when:
+        UserRole userRole = userRoleRepository.save(adminUser, adminRole)
+
+        then:
+        userRoleRepository.count() == 1
+        userRole.user.id == adminUser.id
+        userRole.role.id == adminRole.id
+
+        when:
+        userRoleRepository.save(adminUser, role)
+        userRoleRepository.save(user, role)
+
+        then:
+        userRoleRepository.count() == 3
+
+        when:
+        List<Role> roles = userRoleRepository.findRoleByUser(adminUser).toList()
+
+        then:
+        roles.size() == 2
+        roles.stream().anyMatch {r -> r.name == "ROLE_ADMIN" }
+        roles.stream().anyMatch {r -> r.name == "ROLE_USER" }
+
+        when:
+        userRoleRepository.delete(user, role)
+
+        then:
+        userRoleRepository.count() == 2
+    }
+
+    void "test finding authors by book"() {
+        given:
+        setupBooks()
+
+        when:
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        def author = bookRepository.findAuthorById(book.id)
+
+        then:
+        author.name == "Stephen King"
+
+        cleanup:
+        cleanupBooks()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

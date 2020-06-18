@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import io.micronaut.data.jdbc.mysql.MySqlRoleRepository
+import io.micronaut.data.jdbc.mysql.MySqlUserRepository
+import io.micronaut.data.jdbc.mysql.MySqlUserRoleRepository
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -26,6 +29,9 @@ import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.Shared
 
@@ -66,6 +72,15 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2CarRepository carRepo = context.getBean(H2CarRepository)
+
+    @Shared
+    H2UserRoleRepository userRoleRepo = context.getBean(H2UserRoleRepository)
+
+    @Shared
+    H2RoleRepository roleRepo = context.getBean(H2RoleRepository)
+
+    @Shared
+    H2UserRepository userRepo = context.getBean(H2UserRepository)
 
     @Override
     NoseRepository getNoseRepository() {
@@ -120,6 +135,21 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     CountryRegionCityRepository getCountryRegionCityRepository() {
         return countryrcr
+    }
+
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return userRoleRepo
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return roleRepo
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return userRepo
     }
 
     void "test total dto"() {

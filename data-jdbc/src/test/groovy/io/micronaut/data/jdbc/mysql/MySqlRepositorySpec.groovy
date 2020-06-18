@@ -30,6 +30,9 @@ import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPropertyProvider {
@@ -87,6 +90,21 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
     @Override
     CountryRegionCityRepository getCountryRegionCityRepository() {
         return context.getBean(MySqlCountryRegionCityRepository)
+    }
+
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return context.getBean(MySqlUserRoleRepository)
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return context.getBean(MySqlRoleRepository)
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return context.getBean(MySqlUserRepository)
     }
 
     void "test save and retrieve basic types"() {

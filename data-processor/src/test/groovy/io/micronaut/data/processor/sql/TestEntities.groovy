@@ -128,7 +128,7 @@ class User {
     }
 }
 
-@Entity
+@Embeddable
 class UserRoleId {
 
     @Relation(value = Relation.Kind.MANY_TO_ONE)

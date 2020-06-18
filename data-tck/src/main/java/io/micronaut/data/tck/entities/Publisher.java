@@ -25,7 +25,6 @@ public class Publisher {
     @GeneratedValue
     private Long id;
 
-
     private String zipCode;
 
     public Long getId() {

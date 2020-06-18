@@ -18,6 +18,9 @@ package io.micronaut.data.jdbc.sqlserver
 
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.jdbc.postgres.PostgresCountryRegionCityRepository
+import io.micronaut.data.jdbc.postgres.PostgresRoleRepository
+import io.micronaut.data.jdbc.postgres.PostgresUserRepository
+import io.micronaut.data.jdbc.postgres.PostgresUserRoleRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
@@ -31,6 +34,9 @@ import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTestPropertyProvider {
@@ -88,6 +94,21 @@ class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTes
     @Override
     CountryRegionCityRepository getCountryRegionCityRepository() {
         return context.getBean(MSCountryRegionCityRepository)
+    }
+
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return context.getBean(MSUserRoleRepository)
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return context.getBean(MSRoleRepository)
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return context.getBean(MSUserRepository)
     }
 
     void "test save and retrieve basic types"() {

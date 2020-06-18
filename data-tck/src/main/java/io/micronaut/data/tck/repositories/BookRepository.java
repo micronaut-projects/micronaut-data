@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -59,6 +60,8 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
 
     @Join("author")
     public abstract Book findByTitle(String title);
+
+    public abstract Author findAuthorById(@Id Long id);
 
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();
