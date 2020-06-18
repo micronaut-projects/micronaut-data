@@ -1,5 +1,6 @@
 rootProject.name = 'data'
 
+include 'data-bom'
 include 'data-model'
 include 'data-processor'
 include 'data-runtime'
