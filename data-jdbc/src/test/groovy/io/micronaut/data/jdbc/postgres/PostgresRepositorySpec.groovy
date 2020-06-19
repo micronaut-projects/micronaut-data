@@ -17,19 +17,21 @@ package io.micronaut.data.jdbc.postgres
 
 
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresTestPropertyProvider {
@@ -82,6 +84,26 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(PostgresFaceRepository)
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(PostgresCountryRegionCityRepository)
+    }
+
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return context.getBean(PostgresUserRoleRepository)
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return context.getBean(PostgresRoleRepository)
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return context.getBean(PostgresUserRepository)
     }
 
     void "test save and fetch author with no books"() {

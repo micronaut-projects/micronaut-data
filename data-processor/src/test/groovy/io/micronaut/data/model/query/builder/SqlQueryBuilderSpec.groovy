@@ -195,7 +195,8 @@ class SqlQueryBuilderSpec extends Specification {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Book)
         SqlQueryBuilder encoder = new SqlQueryBuilder()
-        def columns = encoder.selectAllColumns(entity, "book_")
+        StringBuilder columns = new StringBuilder()
+        encoder.selectAllColumns(entity, "book_", columns)
 
         def query = QueryModel.from(entity)
                 .eq("author.nickName", new QueryParameter("test"))
@@ -214,7 +215,8 @@ class SqlQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         SqlQueryBuilder encoder = new SqlQueryBuilder()
-        def columns = encoder.selectAllColumns(entity, "person_")
+        StringBuilder columns = new StringBuilder()
+        encoder.selectAllColumns(entity, "person_", columns)
         QueryResult encodedQuery = encoder.buildQuery(q)
         NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
         def mappedName = namingStrategy.mappedName(property)

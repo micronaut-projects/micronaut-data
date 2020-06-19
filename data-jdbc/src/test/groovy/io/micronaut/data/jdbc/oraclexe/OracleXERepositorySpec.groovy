@@ -17,6 +17,9 @@ package io.micronaut.data.jdbc.oraclexe
 
 
 import io.micronaut.data.jdbc.BasicTypes
+import io.micronaut.data.jdbc.mysql.MySqlRoleRepository
+import io.micronaut.data.jdbc.mysql.MySqlUserRepository
+import io.micronaut.data.jdbc.mysql.MySqlUserRoleRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Author
@@ -25,11 +28,15 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
 class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTestPropertyProvider {
@@ -87,6 +94,26 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(OracleXEFaceRepository)
+    }
+
+    @Override
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(OracleXECountryRegionCityRepository)
+    }
+
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return context.getBean(OracleXEUserRoleRepository)
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return context.getBean(OracleXERoleRepository)
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return context.getBean(OracleXEUserRepository)
     }
 
     void "test save and fetch author with no books"() {

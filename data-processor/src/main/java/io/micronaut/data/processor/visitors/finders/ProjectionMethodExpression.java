@@ -20,6 +20,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -281,6 +283,7 @@ public abstract class ProjectionMethodExpression {
 
         private String property;
         private ClassElement expectedType;
+        private SourcePersistentProperty persistentProperty;
 
         /**
          * Default constructor.
@@ -297,12 +300,12 @@ public abstract class ProjectionMethodExpression {
             } else {
 
                 this.property = NameUtils.decapitalize(remaining);
-                SourcePersistentProperty pp = (SourcePersistentProperty) matchContext.getRootEntity().getPropertyByPath(property).orElse(null);
-                if (pp == null || pp.getType() == null) {
+                this.persistentProperty = (SourcePersistentProperty) matchContext.getRootEntity().getPropertyByPath(property).orElse(null);
+                if (persistentProperty == null || persistentProperty.getType() == null) {
                     matchContext.fail("Cannot project on non-existent property " + property);
                     return null;
                 }
-                this.expectedType = resolveExpectedType(matchContext, pp.getType());
+                this.expectedType = resolveExpectedType(matchContext, persistentProperty.getType());
                 return this;
             }
         }
@@ -320,6 +323,9 @@ public abstract class ProjectionMethodExpression {
         @Override
         public void apply(@NonNull MethodMatchContext matchContext, @NonNull QueryModel query) {
             query.projections().property(property);
+            if (persistentProperty instanceof Association && !query.getJoinPath(property).isPresent()) {
+                query.join((Association) persistentProperty);
+            }
         }
 
         @NonNull

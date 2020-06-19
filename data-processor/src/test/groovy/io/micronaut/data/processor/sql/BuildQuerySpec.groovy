@@ -48,16 +48,23 @@ interface MyInterface extends CrudRepository<Author, Long> {
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @Join("author")
 interface MyInterface extends CrudRepository<Book, Long> {
+
+    Author findAuthorById(@Id Long id);
 }
 """
         )
 
-        expect:"The repository to compile"
-        repository != null
+        when:
+        String query = repository.getRequiredMethod("findAuthorById", Long).stringValue(Query).get()
+
+        then:
+        query == 'SELECT book_author_.`id`,book_author_.`name`,book_author_.`nick_name` FROM `book` book_ INNER JOIN `author` book_author_ ON book_.`author_id`=book_author_.`id` WHERE (book_.`id` = ?)'
+
     }
 
     void "test join query on collection with custom ID name"() {

@@ -16,13 +16,9 @@ interface ProductRepository : CrudRepository<Product, Long> {
 // end::async[]
 
     // tag::join[]
-    fun save(manufacturer: Manufacturer) : Manufacturer
-
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
     fun list(): List<Product>
     // end::join[]
-
-    fun saveManufacturer(name: String) : Manufacturer
 
     // tag::async[]
     @Join("manufacturer")

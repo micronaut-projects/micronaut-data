@@ -58,8 +58,6 @@ interface MyInterface extends GenericRepository<Person, Long> {
     List<String> listNameOrderByName();
     
     List<Person> listTop3OrderByName();
-    
-    List<Book> findTop3OrderByTitle();
 }
 """)
         def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))

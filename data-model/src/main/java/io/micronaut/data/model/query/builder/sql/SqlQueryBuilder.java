@@ -504,12 +504,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void selectAllColumns(QueryState queryState) {
+    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
         PersistentEntity entity = queryState.getEntity();
         String alias = queryState.getCurrentAlias();
-        StringBuilder queryBuffer = queryState.getQuery();
-        String columns = selectAllColumns(entity, alias);
-        queryBuffer.append(columns);
+        selectAllColumns(entity, alias, queryBuffer);
 
         QueryModel queryModel = queryState.getQueryModel();
 
@@ -561,9 +559,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * Selects all columns for the given entity and alias.
      * @param entity The entity
      * @param alias The alias
-     * @return The column selection string
+     * @param stringBuffer The builder to add the columns
      */
-    public String selectAllColumns(PersistentEntity entity, String alias) {
+    @Override
+    public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder stringBuffer) {
         String columns;
         boolean escape = shouldEscape(entity);
         List<PersistentProperty> persistentProperties = getPropertiesThatAreColumns(entity);
@@ -606,7 +605,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             columns = "*";
         }
-        return columns;
+        stringBuffer.append(columns);
     }
 
     @NonNull
@@ -1054,11 +1053,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                     }
                 } else {
+                    String associationColumn;
+                    PersistentProperty rootIdentity = queryState.getEntity().getIdentity();
+                    if (associationOwner.isEmbeddable() &&
+                            rootIdentity instanceof Embedded &&
+                            ((Embedded) rootIdentity).getAssociatedEntity() == associationOwner) {
+                        associationColumn = computeEmbeddedName(rootIdentity, rootIdentity.getName(), association);
+                    } else {
+                        associationColumn = getColumnName(association);
+                    }
                     StringBuilder join = joinStringBuilder(joinType,
                             getTableName(associatedEntity),
                             joinAliases[i],
                             alias,
-                            escape ? quote(getColumnName(association)) : getColumnName(association),
+                            escape ? quote(associationColumn) : associationColumn,
                             escape ? quote(getColumnName(identity)) : getColumnName(identity));
                     String joinStr = join.toString();
                     if (target.indexOf(joinStr) == -1) {

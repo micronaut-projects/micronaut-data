@@ -18,10 +18,6 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.ProjectId
-import io.micronaut.data.tck.jdbc.entities.Role
-import io.micronaut.data.tck.jdbc.entities.User
-import io.micronaut.data.tck.jdbc.entities.UserRole
-import io.micronaut.data.tck.jdbc.entities.UserRoleId
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Specification
 
@@ -34,9 +30,6 @@ import javax.inject.Inject
 class H2CompositePrimaryKeySpec extends Specification {
 
     @Inject H2ProjectRepository projectRepository
-    @Inject H2UserRepository userRepository
-    @Inject H2RoleRepository roleRepository
-    @Inject H2UserRoleRepository userRoleRepository
 
     void "test CRUD with composite ID"() {
         when:"An entity is saved"
@@ -80,34 +73,5 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         then:"The object was deleted"
         project == null
-
-    }
-
-    void "test a composite primary key with relations"() {
-        User adminUser = userRepository.save(new User("admin@gmail.com"))
-        User user = userRepository.save(new User("user@gmail.com"))
-        Role adminRole = roleRepository.save(new Role("ROLE_ADMIN"))
-        Role role = roleRepository.save(new Role("ROLE_USER"))
-
-        when:
-        UserRole userRole = userRoleRepository.save(adminUser, adminRole)
-
-        then:
-        userRoleRepository.count() == 1
-        userRole.user.id == adminUser.id
-        userRole.role.id == adminRole.id
-
-        when:
-        userRoleRepository.save(adminUser, role)
-        userRoleRepository.save(user, role)
-
-        then:
-        userRoleRepository.count() == 3
-
-        when:
-        userRoleRepository.delete(user, role)
-
-        then:
-        userRoleRepository.count() == 2
     }
 }

@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.tck.jdbc.entities.Role;
 import io.micronaut.data.tck.jdbc.entities.User;
@@ -41,4 +42,7 @@ public interface UserRoleRepository extends GenericRepository<UserRole, UserRole
     }
 
     int count();
+
+    @Join("role")
+    Iterable<Role> findRoleByUser(User user);
 }
