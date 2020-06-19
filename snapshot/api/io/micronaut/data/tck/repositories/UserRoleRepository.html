@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":18,"i2":6,"i3":6,"i4":18};
+var methods = {"i0":6,"i1":18,"i2":6,"i3":6,"i4":6,"i5":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -137,10 +137,14 @@ extends <a href="../../../../../io/micronaut/data/repository/GenericRepository.h
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/UserRoleRepository.html#deleteById-io.micronaut.data.tck.jdbc.entities.UserRoleId-">deleteById</a></span>(@NotNull <a href="../../../../../io/micronaut/data/tck/jdbc/entities/UserRoleId.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRoleId</a>&nbsp;id)</code>&nbsp;</td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/jdbc/entities/Role.html" title="class in io.micronaut.data.tck.jdbc.entities">Role</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/UserRoleRepository.html#findRoleByUser-io.micronaut.data.tck.jdbc.entities.User-">findRoleByUser</a></span>(<a href="../../../../../io/micronaut/data/tck/jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user)</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/UserRoleRepository.html#save-io.micronaut.data.tck.jdbc.entities.UserRole-">save</a></span>(@Valid @NotNull <a href="../../../../../io/micronaut/data/tck/jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a>&nbsp;entity)</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../../io/micronaut/data/tck/jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/UserRoleRepository.html#save-io.micronaut.data.tck.jdbc.entities.User-io.micronaut.data.tck.jdbc.entities.Role-">save</a></span>(<a href="../../../../../io/micronaut/data/tck/jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user,
     <a href="../../../../../io/micronaut/data/tck/jdbc/entities/Role.html" title="class in io.micronaut.data.tck.jdbc.entities">Role</a>&nbsp;role)</code>&nbsp;</td>
@@ -204,10 +208,19 @@ extends <a href="../../../../../io/micronaut/data/repository/GenericRepository.h
 <a name="count--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>count</h4>
 <pre>int&nbsp;count()</pre>
+</li>
+</ul>
+<a name="findRoleByUser-io.micronaut.data.tck.jdbc.entities.User-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>findRoleByUser</h4>
+<pre>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/jdbc/entities/Role.html" title="class in io.micronaut.data.tck.jdbc.entities">Role</a>&gt;&nbsp;findRoleByUser(<a href="../../../../../io/micronaut/data/tck/jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a>&nbsp;user)</pre>
 </li>
 </ul>
 </li>

@@ -333,8 +333,6 @@ data class Manufacturer(
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">@Repository
 public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
-    Manufacturer saveManufacturer(String name);
-
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
     List&lt;Product&gt; list();
 }</code></pre>
@@ -344,8 +342,6 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
 interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
-    Manufacturer saveManufacturer(String name)
-
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
     List&lt;Product&gt; list()
 }</code></pre>
@@ -355,8 +351,6 @@ interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
 interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
-    fun save(manufacturer: Manufacturer) : Manufacturer
-
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
     fun list(): List&lt;Product&gt;
 }</code></pre>

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -288,8 +288,17 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 </tr>
 <tr id="i13" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">selectAllColumns</a></span>(<a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-java.lang.StringBuilder-">selectAllColumns</a></span>(<a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState,
+                java.lang.StringBuilder&nbsp;queryBuffer)</code>
 <div class="block">Obtain the string that selects all columns from the entity.</div>
+</td>
+</tr>
+<tr id="i14" class="altColor">
+<td class="colFirst"><code>protected void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#selectAllColumns-io.micronaut.data.model.PersistentEntity-java.lang.String-java.lang.StringBuilder-">selectAllColumns</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+                java.lang.String&nbsp;alias,
+                java.lang.StringBuilder&nbsp;queryBuffer)</code>
+<div class="block">Selects all columns for the given entity and alias.</div>
 </td>
 </tr>
 </table>
@@ -298,7 +307,7 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.data.model.query.builder.<a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></h3>
-<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#appendUpdateSetParameter-java.lang.StringBuilder-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">appendUpdateSetParameter</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildDelete-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildDelete</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildOrderBy-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.Sort-">buildOrderBy</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildQuery-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildQuery</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildUpdate-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#encodeInExpression-java.lang.StringBuilder-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">encodeInExpression</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatEndsWith--">formatEndsWith</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatStartsWith--">formatStartsWith</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatStartsWithBeginning--">formatStartsWithBeginning</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formEndsWithEnd--">formEndsWithEnd</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getAliasName-io.micronaut.data.model.query.JoinPath-">getAliasName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getPathOnlyAliasName-io.micronaut.data.model.query.JoinPath-">getPathOnlyAliasName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getTableAsKeyword--">getTableAsKeyword</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getUnescapedTableName-io.micronaut.data.model.PersistentEntity-">getUnescapedTableName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#handleSubQuery-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-io.micronaut.data.model.query.QueryModel.SubqueryCriterion-java.lang.String-">handleSubQuery</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#isExpandEmbedded--">isExpandEmbedded</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#shouldEscape-io.micronaut.data.model.PersistentEntity-">shouldEscape</a></code></li>
+<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#appendUpdateSetParameter-java.lang.StringBuilder-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">appendUpdateSetParameter</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildDelete-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildDelete</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildOrderBy-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.Sort-">buildOrderBy</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildQuery-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-">buildQuery</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#buildUpdate-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.model.query.QueryModel-java.util.List-">buildUpdate</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#computeEmbeddedName-io.micronaut.data.model.PersistentProperty-java.lang.String-io.micronaut.data.model.PersistentProperty-">computeEmbeddedName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#encodeInExpression-java.lang.StringBuilder-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">encodeInExpression</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatEndsWith--">formatEndsWith</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatStartsWith--">formatStartsWith</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formatStartsWithBeginning--">formatStartsWithBeginning</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#formEndsWithEnd--">formEndsWithEnd</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getAliasName-io.micronaut.data.model.query.JoinPath-">getAliasName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getPathOnlyAliasName-io.micronaut.data.model.query.JoinPath-">getPathOnlyAliasName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getTableAsKeyword--">getTableAsKeyword</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getUnescapedTableName-io.micronaut.data.model.PersistentEntity-">getUnescapedTableName</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#handleSubQuery-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-io.micronaut.data.model.query.QueryModel.SubqueryCriterion-java.lang.String-">handleSubQuery</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#isExpandEmbedded--">isExpandEmbedded</a>, <a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#shouldEscape-io.micronaut.data.model.PersistentEntity-">shouldEscape</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -451,20 +460,42 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 </dl>
 </li>
 </ul>
-<a name="selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">
+<a name="selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-java.lang.StringBuilder-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>selectAllColumns</h4>
-<pre>protected&nbsp;void&nbsp;selectAllColumns(<a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">AbstractSqlLikeQueryBuilder</a></code></span></div>
+<pre>protected&nbsp;void&nbsp;selectAllColumns(<a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState,
+                                java.lang.StringBuilder&nbsp;queryBuffer)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-java.lang.StringBuilder-">AbstractSqlLikeQueryBuilder</a></code></span></div>
 <div class="block">Obtain the string that selects all columns from the entity.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-">selectAllColumns</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-java.lang.StringBuilder-">selectAllColumns</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>queryState</code> - The query state</dd>
+</dl>
+</li>
+</ul>
+<a name="selectAllColumns-io.micronaut.data.model.PersistentEntity-java.lang.String-java.lang.StringBuilder-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>selectAllColumns</h4>
+<pre>protected&nbsp;void&nbsp;selectAllColumns(<a href="../../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
+                                java.lang.String&nbsp;alias,
+                                java.lang.StringBuilder&nbsp;queryBuffer)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#selectAllColumns-io.micronaut.data.model.PersistentEntity-java.lang.String-java.lang.StringBuilder-">AbstractSqlLikeQueryBuilder</a></code></span></div>
+<div class="block">Selects all columns for the given entity and alias.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#selectAllColumns-io.micronaut.data.model.PersistentEntity-java.lang.String-java.lang.StringBuilder-">selectAllColumns</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>entity</code> - The entity</dd>
+<dd><code>alias</code> - The alias</dd>
+<dd><code>queryBuffer</code> - The buffer to append the columns</dd>
 </dl>
 </li>
 </ul>
