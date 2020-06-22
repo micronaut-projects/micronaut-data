@@ -21,8 +21,42 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.inject.BeanDefinition
 
 class DtoSpec extends AbstractDataSpec {
+
+    void "test build DTO with raw @Query method doesn't fail to compile"() {
+        when:
+        def repository = buildRepository('test.MyInterface', """
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.core.annotation.Introspected;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    @Query("select count(*) as total from person")
+    TotalDto getTotal();
+}
+
+@Introspected
+class TotalDto {
+    private long total;
+    
+    public long getTotal() {
+        return total;
+    }
+
+    public void setTotal(long total) {
+        this.total = total;
+    }
+    
+}
+""")
+
+        then:
+        repository != null
+    }
 
     void "test build repository with DTO projection - invalid types"() {
         when:

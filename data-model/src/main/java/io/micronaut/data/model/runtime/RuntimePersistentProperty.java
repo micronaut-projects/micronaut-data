@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 
@@ -36,6 +37,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final Class<?> type;
     private final DataType dataType;
     private final boolean constructorArg;
+    private final Argument<?> argument;
     private String persistedName;
 
     /**
@@ -50,6 +52,14 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.type = ReflectionUtils.getWrapperType(property.getType());
         this.dataType = PersistentProperty.super.getDataType();
         this.constructorArg = constructorArg;
+        this.argument = property.asArgument();
+    }
+
+    /**
+     * @return The argument for this property.
+     */
+    public Argument<?> getArgument() {
+        return argument;
     }
 
     @Override

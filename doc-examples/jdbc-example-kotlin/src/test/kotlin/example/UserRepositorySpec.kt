@@ -14,11 +14,11 @@ class UserRepositorySpec (val userRepository: UserRepository) {
         val bob = User(0, "Bob", true)
         userRepository.saveAll(listOf(fred, bob, joe))
 
-        userRepository.deleteById(joe.id!!)
+        userRepository.deleteById(joe.id)
 
         assertEquals(2, userRepository.count())
-        assertTrue(userRepository.existsById(fred.id!!))
-        assertFalse(userRepository.existsById(joe.id!!))
+        assertTrue(userRepository.existsById(fred.id))
+        assertFalse(userRepository.existsById(joe.id))
 
         val disabled = userRepository.findDisabled()
         assertEquals(1, disabled.size)

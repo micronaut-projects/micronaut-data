@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.tck.tests
 
+import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import spock.lang.Specification
@@ -24,17 +26,37 @@ abstract class AbstractQuerySpec extends Specification {
     abstract BookRepository getBookRepository()
     abstract AuthorRepository getAuthorRepository()
 
-    void init() {
+    void setup() {
+        addBookSeedData()
     }
 
-    def setupSpec() {
-        bookRepository.deleteAll()
-        init()
+    void cleanup() {
+        bookRepository?.deleteAll()
+        authorRepository?.deleteAll()
+    }
+
+    void addBookSeedData() {
         bookRepository.save(new Book(title: "Anonymous", totalPages: 400))
         // blank title
         bookRepository.save(new Book(title: "", totalPages: 0))
         // book without an author
-        bookRepository.setupData()
+        saveSampleBooks()
+    }
+
+    void saveSampleBooks() {
+        bookRepository.saveAuthorBooks([
+                new AuthorBooksDto("Stephen King", Arrays.asList(
+                        new BookDto("The Stand", 1000),
+                        new BookDto("Pet Cemetery", 400)
+                )),
+                new AuthorBooksDto("James Patterson", Arrays.asList(
+                        new BookDto("Along Came a Spider", 300),
+                        new BookDto("Double Cross", 300)
+                )),
+                new AuthorBooksDto("Don Winslow", Arrays.asList(
+                        new BookDto("The Power of the Dog", 600),
+                        new BookDto("The Border", 700)
+                ))])
     }
 
     void "test is null or empty"() {

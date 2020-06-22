@@ -156,7 +156,7 @@ class SqlQueryBuilderSpec extends Specification {
         def result = encoder.buildBatchCreateTableStatement(entity)
 
         expect:
-        result == 'CREATE TABLE "restaurant" ("id" BIGINT AUTO_INCREMENT PRIMARY KEY,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hq_address_street" VARCHAR(255),"hq_address_zip_code" VARCHAR(255));'
+        result == 'CREATE TABLE "restaurant" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL,"address_street" VARCHAR(255) NOT NULL,"address_zip_code" VARCHAR(255) NOT NULL,"hq_address_street" VARCHAR(255),"hq_address_zip_code" VARCHAR(255));'
     }
 
     void "test encode insert statement - custom mapping strategy"() {
@@ -195,7 +195,8 @@ class SqlQueryBuilderSpec extends Specification {
         given:
         PersistentEntity entity = new RuntimePersistentEntity(Book)
         SqlQueryBuilder encoder = new SqlQueryBuilder()
-        def columns = encoder.selectAllColumns(entity, "book_")
+        StringBuilder columns = new StringBuilder()
+        encoder.selectAllColumns(entity, "book_", columns)
 
         def query = QueryModel.from(entity)
                 .eq("author.nickName", new QueryParameter("test"))
@@ -214,7 +215,8 @@ class SqlQueryBuilderSpec extends Specification {
         q."$method"(property, QueryParameter.of('test'))
 
         SqlQueryBuilder encoder = new SqlQueryBuilder()
-        def columns = encoder.selectAllColumns(entity, "person_")
+        StringBuilder columns = new StringBuilder()
+        encoder.selectAllColumns(entity, "person_", columns)
         QueryResult encodedQuery = encoder.buildQuery(q)
         NamingStrategy namingStrategy = NamingStrategies.UnderScoreSeparatedLowerCase.newInstance()
         def mappedName = namingStrategy.mappedName(property)

@@ -72,7 +72,7 @@ class SourceAssociation extends SourcePersistentProperty implements Association 
                 if (classElement  != null) {
                     return entityResolver.apply(classElement);
                 } else {
-                    throw new MappingException("Collection association [" + getName() + "] of entity [" + getOwner().getName() + "] does not specify a generic type argument");
+                    throw new MappingException("Collection association [" + getName() + "] of entity [" + getOwner().getName() + "] is not a collection type with a generic type argument that specifies another entity type to associate");
                 }
             default:
                 return entityResolver.apply(type);

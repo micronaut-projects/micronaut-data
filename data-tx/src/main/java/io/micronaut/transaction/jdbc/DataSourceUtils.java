@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2017-2020 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      https://www.apache.org/licenses/LICENSE-2.0
+ * https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,6 @@ public abstract class DataSourceUtils {
     public static final int CONNECTION_SYNCHRONIZATION_ORDER = 1000;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceUtils.class);
-
 
     /**
      * Obtain a Connection from the given DataSource. Translates SQLExceptions into

@@ -165,7 +165,6 @@ public interface ResultConsumer<T, RS> extends BiConsumer<T, ResultConsumer.Cont
             return getResultReader().readByte(getResultSet(), name);
         }
 
-
         /**
          * Read a short value for the given name.
          * 

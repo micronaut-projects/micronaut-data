@@ -273,14 +273,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         QueryModel query = QueryModel.from(entity);
         ClassElement queryResultType = entity.getClassElement();
 
-        List<AnnotationValue<Join>> joinSpecs;
-
-        final MethodMatchInfo.OperationType operationType = getOperationType();
-        if (operationType != MethodMatchInfo.OperationType.QUERY) {
-            joinSpecs = matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class);
-        } else {
-            joinSpecs = matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
-        }
+        List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext);
 
         if (CollectionUtils.isNotEmpty(joinSpecs)) {
             if (applyJoinSpecs(matchContext, query, entity, joinSpecs)) {

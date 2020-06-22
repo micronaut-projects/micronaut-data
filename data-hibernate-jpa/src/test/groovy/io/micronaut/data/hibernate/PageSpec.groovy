@@ -20,14 +20,16 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
+import javax.transaction.Transactional
 
-@MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")
+@MicronautTest(rollback = false, transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
 class PageSpec extends Specification {
@@ -40,8 +42,15 @@ class PageSpec extends Specification {
     @Shared
     PersonCrudRepository crudRepository
 
-    def setupSpec() {
+    def setup() {
+        populate()
+    }
 
+    def cleanup() {
+        crudRepository.deleteAll()
+    }
+
+    private void populate() {
         List<Person> people = []
         50.times { num ->
             ('A'..'Z').each {
@@ -49,15 +58,14 @@ class PageSpec extends Specification {
                 people << new Person(name: it * 5 + num, age: (49 - num) % 25)
             }
         }
-
         crudRepository.saveAll(people)
     }
 
     void "test reactive single result that returns pageable"() {
-        given:
+        when:
         def page = crudRepository.find(10, Pageable.from(1)).blockingGet()
 
-        expect:
+        then:
         page.size == 10
         page.totalSize == 728
         page.totalPages == 73
@@ -75,33 +83,31 @@ class PageSpec extends Specification {
     }
 
     void "test sortMultiple"() {
-        when:"Sorted Age ASC Name DESC results are returned"
+        when: "Sorted Age ASC Name DESC results are returned"
         def results = personRepository.listTop10(
                 Sort.unsorted().order("age", Sort.Order.Direction.ASC)
-                               .order("name", Sort.Order.Direction.DESC)
+                        .order("name", Sort.Order.Direction.DESC)
         )
 
-        then:"The results are correct"
+        then: "The results are correct"
         results.size() == 10
         results[0].name.equals("ZZZZZ49")
         results[1].name.equals("ZZZZZ24")
         results[2].name.equals("YYYYY49")
         results[3].name.equals("YYYYY24")
 
-
-        when:"Sorted Age DESC Name ASC results are returned"
+        when: "Sorted Age DESC Name ASC results are returned"
         results = personRepository.listTop10(
                 Sort.unsorted().order("age", Sort.Order.Direction.DESC)
                         .order("name", Sort.Order.Direction.ASC)
         )
 
-        then:"The results are correct"
+        then: "The results are correct"
         results.size() == 10
         results[0].name.equals("AAAAA0")
         results[1].name.equals("AAAAA25")
         results[2].name.equals("BBBBB0")
         results[3].name.equals("BBBBB25")
-
     }
 
     void "test pageable list"() {
@@ -134,19 +140,19 @@ class PageSpec extends Specification {
     }
 
     void "test pageable sort"() {
-        when:"All the people are count"
+        when: "All the people are count"
         def count = crudRepository.count()
 
-        then:"the count is correct"
+        then: "the count is correct"
         count == 1300
 
-        when:"10 people are paged"
+        when: "10 people are paged"
         Page<Person> page = personRepository.list(
                 Pageable.from(0, 10)
                         .order("name", Sort.Order.Direction.DESC)
         )
 
-        then:"The data is correct"
+        then: "The data is correct"
         page.content.size() == 10
         page.content.every() { it instanceof Person }
         page.content[0].name.startsWith("Z")
@@ -156,15 +162,14 @@ class PageSpec extends Specification {
         page.nextPageable().offset == 10
         page.nextPageable().size == 10
 
-        when:"The next page is selected"
+        when: "The next page is selected"
         page = crudRepository.findAll(page.nextPageable())
 
-        then:"it is correct"
+        then: "it is correct"
         page.offset == 10
         page.pageNumber == 1
         page.content[0].name.startsWith("Z")
     }
-
 
     void "test pageable findBy"() {
         when:"People are searched for"
@@ -193,6 +198,5 @@ class PageSpec extends Specification {
         page.totalSize == 50
         page.nextPageable().offset == 20
         page.nextPageable().number == 2
-
     }
 }

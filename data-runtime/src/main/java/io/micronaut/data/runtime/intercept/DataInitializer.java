@@ -22,6 +22,7 @@ import java.sql.Timestamp;
 import java.time.*;
 import java.time.chrono.ChronoLocalDate;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Internal Data initialization.
@@ -40,6 +41,7 @@ class DataInitializer {
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime ->
                 new java.sql.Date(offsetDateTime.toInstant().toEpochMilli())
         );
+        conversionService.addConverter(byte[].class, UUID.class, UUID::nameUUIDFromBytes);
         conversionService.addConverter(Timestamp.class, ZonedDateTime.class, timestamp ->
                 timestamp.toLocalDateTime().atZone(ZoneId.systemDefault())
         );

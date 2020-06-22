@@ -156,14 +156,29 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             if (assoc.getKind() == Relation.Kind.EMBEDDED) {
 
                                 Object value = prop.getProperty().get(entity);
-                                Object embeddedValue = value != null ? embeddedProp.getProperty().get(value) : null;
                                 int index = i + 1;
-                                preparedStatementWriter.setDynamic(
-                                        stmt,
-                                        index,
-                                        embeddedProp.getDataType(),
-                                        embeddedValue
-                                );
+
+                                RuntimePersistentEntity<?> embeddedEntity = entities.get(embeddedProp.getProperty().getType());
+
+                                if (embeddedEntity != null) {
+                                    Object bean = embeddedProp.getProperty().get(value);
+                                    RuntimePersistentProperty embeddedIdentity = embeddedEntity.getIdentity();
+                                    Object beanId = embeddedIdentity.getProperty().get(bean);
+                                    preparedStatementWriter.setDynamic(
+                                            stmt,
+                                            index,
+                                            embeddedIdentity.getDataType(),
+                                            beanId
+                                    );
+                                } else {
+                                    Object embeddedValue = value != null ? embeddedProp.getProperty().get(value) : null;
+                                    preparedStatementWriter.setDynamic(
+                                            stmt,
+                                            index,
+                                            embeddedProp.getDataType(),
+                                            embeddedValue
+                                    );
+                                }
                             }
                         }
                     }
@@ -192,12 +207,20 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                         }
 
-                        preparedStatementWriter.setDynamic(
-                                stmt,
-                                index,
-                                type,
-                                value
-                        );
+                        if (requiresStringUUID(insert, type, value)) {
+                            preparedStatementWriter.setString(
+                                    stmt,
+                                    index,
+                                    value.toString()
+                            );
+                        } else {
+                            preparedStatementWriter.setDynamic(
+                                    stmt,
+                                    index,
+                                    type,
+                                    value
+                            );
+                        }
                     }
 
                 } else if (!prop.isGenerated()) {
@@ -231,12 +254,20 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                 DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
                             }
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    uuid
-                            );
+                            if (insert.dialect == Dialect.MYSQL || insert.dialect == Dialect.ORACLE) {
+                                preparedStatementWriter.setString(
+                                        stmt,
+                                        index,
+                                        uuid.toString()
+                                );
+                            } else {
+                                preparedStatementWriter.setDynamic(
+                                        stmt,
+                                        index,
+                                        type,
+                                        uuid
+                                );
+                            }
                             beanProperty.set(entity, uuid);
                         } else {
                             throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
@@ -248,16 +279,28 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         if (type == DataType.JSON && jsonCodec != null) {
                             value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                         }
-                        preparedStatementWriter.setDynamic(
-                                stmt,
-                                index,
-                                type,
-                                value
-                        );
+                        if (requiresStringUUID(insert, type, value)) {
+                            preparedStatementWriter.setString(
+                                    stmt,
+                                    index,
+                                    value.toString()
+                            );
+                        } else {
+                            preparedStatementWriter.setDynamic(
+                                    stmt,
+                                    index,
+                                    type,
+                                    value
+                            );
+                        }
                     }
                 }
             }
         }
+    }
+
+    private <T> boolean requiresStringUUID(@NonNull StoredInsert<T> insert, DataType type, Object value) {
+        return value != null && type == DataType.UUID && (insert.dialect == Dialect.ORACLE || insert.dialect == Dialect.MYSQL);
     }
 
     /**

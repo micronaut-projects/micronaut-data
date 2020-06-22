@@ -119,7 +119,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
                                               @NonNull DateTimeProvider dateTimeProvider) {
-        super(new ColumnNameResultSetReader(), new ColumnIndexResultSetReader(), new JdbcQueryStatement(), codecs, dateTimeProvider);
+        super(
+                new ColumnNameResultSetReader(),
+                new ColumnIndexResultSetReader(),
+                new JdbcQueryStatement(),
+                codecs,
+                dateTimeProvider
+        );
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
@@ -178,11 +184,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             try (PreparedStatement ps = prepareStatement(connection, preparedQuery, false, true)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     if (rs.next()) {
-                        Class<T> rootEntity = preparedQuery.getRootEntity();
                         Class<R> resultType = preparedQuery.getResultType();
-                        if (resultType == rootEntity) {
-                            @SuppressWarnings("unchecked")
-                            RuntimePersistentEntity<R> persistentEntity = getEntity((Class<R>) rootEntity);
+                        if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                            RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
                             TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                     persistentEntity,
                                     columnNameResultSetReader,
@@ -200,7 +204,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
                                 TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
                                         persistentEntity,
-                                        columnNameResultSetReader
+                                        columnNameResultSetReader,
+                                        jsonCodec
                                 );
 
                                 return introspectedDataMapper.map(rs, resultType);
@@ -254,7 +259,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 RuntimePersistentEntity<E> entity = getEntity(rootEntity);
                 TypeMapper<ResultSet, D> introspectedDataMapper = new DTOMapper<>(
                         entity,
-                        columnNameResultSetReader
+                        columnNameResultSetReader,
+                        jsonCodec
                 );
                 return introspectedDataMapper.map(rs, dtoType);
             }
@@ -310,16 +316,17 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
         }
         boolean dtoProjection = preparedQuery.isDtoProjection();
-        boolean isRootResult = resultType == rootEntity;
+        boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
         Spliterator<R> spliterator;
         AtomicBoolean finished = new AtomicBoolean();
-        if (isRootResult || dtoProjection) {
+        if (isEntity || dtoProjection) {
             SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
             SqlTypeMapper<ResultSet, R> mapper;
             if (dtoProjection) {
                 mapper = new SqlDTOMapper<>(
-                        getEntity(rootEntity),
-                        columnNameResultSetReader
+                        getEntity(resultType),
+                        columnNameResultSetReader,
+                        jsonCodec
                 );
             } else {
                 mapper = new SqlResultEntityTypeMapper<>(
@@ -412,7 +419,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             try {
                 Connection connection = status.getConnection();
                 try (PreparedStatement ps = prepareStatement(connection, preparedQuery, true, false)) {
-                    return Optional.of(ps.executeUpdate());
+                    int result = ps.executeUpdate();
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Update operation updated {} records", result);
+                    }
+                    return Optional.of(result);
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
@@ -1199,7 +1210,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     public <E, D> D readDTO(@NonNull String prefix, @NonNull ResultSet resultSet, @NonNull Class<E> rootEntity, @NonNull Class<D> dtoType) throws DataAccessException {
         return new DTOMapper<E, ResultSet, D>(
                 getEntity(rootEntity),
-                columnNameResultSetReader
+                columnNameResultSetReader,
+                jsonCodec
         ).map(resultSet, dtoType);
     }
 

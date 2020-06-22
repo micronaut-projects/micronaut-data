@@ -41,7 +41,6 @@ public class JoinPath {
     private final Join.Type joinType;
     private final String alias;
 
-
     /**
      * Default constructor.
      *

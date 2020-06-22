@@ -17,6 +17,8 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.Pet
+import io.micronaut.data.tck.entities.AuthorBooksDto
+import io.micronaut.data.tck.entities.BookDto
 import io.micronaut.data.tck.entities.Order
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
@@ -61,7 +63,19 @@ class ProjectionSpec extends Specification {
         ])
 
         crudRepository.flush()
-        bookRepository.setupData()
+        bookRepository.saveAuthorBooks([
+                new AuthorBooksDto("Stephen King", Arrays.asList(
+                        new BookDto("The Stand", 1000),
+                        new BookDto("Pet Cemetery", 400)
+                )),
+                new AuthorBooksDto("James Patterson", Arrays.asList(
+                        new BookDto("Along Came a Spider", 300),
+                        new BookDto("Double Cross", 300)
+                )),
+                new AuthorBooksDto("Don Winslow", Arrays.asList(
+                        new BookDto("The Power of the Dog", 600),
+                        new BookDto("The Border", 700)
+                ))])
         orderRepository.saveAll([
                 new Order("AAA", BigDecimal.TEN, new Double("10"), 10, 10L),
                 new Order("AAA", new BigDecimal("5.25"), new Double("5.25"), 5, 5L),

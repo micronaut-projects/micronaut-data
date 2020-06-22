@@ -18,10 +18,7 @@ package io.micronaut.data.model.query;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.model.Association;
-import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.factory.Restrictions;
 import java.util.*;
 
@@ -125,8 +122,12 @@ public class DefaultQuery implements QueryModel {
             PersistentProperty property = entity.getPropertyByName(elements[i]);
             if (property == null) {
                 final PersistentProperty identity = entity.getIdentity();
-                if (identity != null && elements[i].equals(identity.getName())) {
-                    property = identity;
+                if (identity != null) {
+                    if (elements[i].equals(identity.getName())) {
+                        property = identity;
+                    } else if (identity instanceof Embedded) {
+                        property = ((Embedded) identity).getAssociatedEntity().getPropertyByName(elements[i]);
+                    }
                 }
             }
             if (property instanceof Association) {

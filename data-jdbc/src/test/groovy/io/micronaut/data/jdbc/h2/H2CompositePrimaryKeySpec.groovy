@@ -73,6 +73,5 @@ class H2CompositePrimaryKeySpec extends Specification {
 
         then:"The object was deleted"
         project == null
-
     }
 }

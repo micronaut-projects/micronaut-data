@@ -23,6 +23,14 @@ public class BookDto {
     private String title;
     private int totalPages;
 
+    public BookDto() {
+    }
+
+    public BookDto(String title, int totalPages) {
+        this.title = title;
+        this.totalPages = totalPages;
+    }
+
     public String getTitle() {
         return title;
     }

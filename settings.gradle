@@ -1,5 +1,6 @@
 rootProject.name = 'data'
 
+include 'data-bom'
 include 'data-model'
 include 'data-processor'
 include 'data-runtime'
@@ -31,4 +32,3 @@ include 'benchmarks:benchmark-micronaut-data-jpa'
 include 'benchmarks:benchmark-micronaut-data-jdbc'
 include 'benchmarks:benchmark-spring-data'
 include 'benchmarks:benchmark-spring-data-jdbc'
-include 'benchmarks:benchmark-gorm-hibernate'

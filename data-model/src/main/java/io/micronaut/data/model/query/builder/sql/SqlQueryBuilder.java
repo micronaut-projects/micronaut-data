@@ -344,29 +344,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (identity != null && identity.isGenerated()) {
              GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
                     .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
-                    .orElseGet(this::selectAutoStrategy);
-            boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE || dialect == Dialect.ORACLE;
-            if (isSequence) {
-                final String createSequenceStatement = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition")
-                        .orElseGet(() -> {
-                            final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
-                            final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
-                            String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
-                            if (isSqlServer) {
-                                createSequenceStmt += " AS BIGINT";
-                            }
+                    .orElseGet(() -> selectAutoStrategy(identity));
+            boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
+            final String generatedDefinition = identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "definition").orElse(null);
+            if (generatedDefinition != null) {
+                createStatements.add(generatedDefinition);
+            } else if (isSequence) {
+                final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
+                final String sequenceName = quote(unescapedTableName + SEQ_SUFFIX);
+                String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
+                if (isSqlServer) {
+                    createSequenceStmt += " AS BIGINT";
+                }
 
-                            createSequenceStmt += " MINVALUE 1 START WITH 1";
-                            if (dialect == Dialect.ORACLE) {
-                                createSequenceStmt += " NOCACHE NOCYCLE";
-                            } else {
-                                if (isSqlServer) {
-                                    createSequenceStmt += " INCREMENT BY 1";
-                                }
-                            }
-                            return createSequenceStmt;
-                        });
-                createStatements.add(createSequenceStatement);
+                createSequenceStmt += " MINVALUE 1 START WITH 1";
+                if (dialect == Dialect.ORACLE) {
+                    createSequenceStmt += " NOCACHE NOCYCLE";
+                } else {
+                    if (isSqlServer) {
+                        createSequenceStmt += " INCREMENT BY 1";
+                    }
+                }
+                createStatements.add(createSequenceStmt);
             }
         }
         createStatements.add(builder.toString());
@@ -384,7 +383,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     .orElse(AUTO);
 
             if (type == AUTO) {
-                if (dialect == Dialect.ORACLE) {
+                if (prop.getDataType() == DataType.UUID) {
+                    type = UUID;
+                } else if (dialect == Dialect.ORACLE) {
                     type = SEQUENCE;
                 } else {
                     type = IDENTITY;
@@ -392,45 +393,66 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
             switch (dialect) {
                 case POSTGRES:
+                    if (prop == identity) {
+                        column += " PRIMARY KEY";
+                    }
                     if (type == SEQUENCE) {
-                        if (prop == identity) {
-                            column += " PRIMARY KEY NOT NULL";
-                        } else {
-                            column += " NOT NULL";
-                        }
-                    } else {
+                        column += " NOT NULL";
+                    } else if (type == IDENTITY) {
                         if (prop == identity) {
                             column += " GENERATED ALWAYS AS IDENTITY";
                         } else {
                             column += " NOT NULL";
                         }
+                    } else if (type == UUID) {
+                        column += " NOT NULL DEFAULT uuid_generate_v4()";
                     }
                     break;
                 case SQL_SERVER:
-                    if (type == SEQUENCE) {
+                    if (prop == identity) {
+                        column += " PRIMARY KEY";
+                    }
+                    if (type == UUID) {
+                        column += " NOT NULL DEFAULT newid()";
+                    } else if (type == SEQUENCE) {
                         if (prop == identity) {
-                            column += " PRIMARY KEY NOT NULL";
+                            column += " NOT NULL";
                         }
                     } else {
-                        if (prop == identity) {
-                            column += " PRIMARY KEY";
-                        }
                         column += " IDENTITY(1,1) NOT NULL";
                     }
                     break;
                 case ORACLE:
+                    if (prop == identity) {
+                        column += " PRIMARY KEY";
+                    }
                     // for Oracle we use sequences so just add NOT NULL
                     // then alter the table for sequences
-                    if (prop == identity) {
-                        column += " PRIMARY KEY NOT NULL";
+                    if (type == UUID) {
+                        column += " NOT NULL DEFAULT SYS_GUID()";
+                    } else if (type == IDENTITY) {
+                        if (prop == identity) {
+                            column += " GENERATED ALWAYS AS IDENTITY";
+                        } else {
+                            column += " NOT NULL";
+                        }
                     } else {
                         column += " NOT NULL";
                     }
                 break;
                 default:
-                    column += " AUTO_INCREMENT";
                     if (prop == identity) {
                         column += " PRIMARY KEY";
+                    }
+                    if (type == UUID) {
+                        // mysql requires the UUID generation in the insert statement
+                        if (dialect != Dialect.MYSQL) {
+                            column += " NOT NULL DEFAULT random_uuid()";
+                        } else {
+                            column += " NOT NULL";
+                        }
+                    } else {
+                        column += " AUTO_INCREMENT";
                     }
             }
         }
@@ -482,12 +504,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void selectAllColumns(QueryState queryState) {
+    protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
         PersistentEntity entity = queryState.getEntity();
         String alias = queryState.getCurrentAlias();
-        StringBuilder queryBuffer = queryState.getQuery();
-        String columns = selectAllColumns(entity, alias);
-        queryBuffer.append(columns);
+        selectAllColumns(entity, alias, queryBuffer);
 
         QueryModel queryModel = queryState.getQueryModel();
 
@@ -539,9 +559,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * Selects all columns for the given entity and alias.
      * @param entity The entity
      * @param alias The alias
-     * @return The column selection string
+     * @param stringBuffer The builder to add the columns
      */
-    public String selectAllColumns(PersistentEntity entity, String alias) {
+    @Override
+    public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder stringBuffer) {
         String columns;
         boolean escape = shouldEscape(entity);
         List<PersistentProperty> persistentProperties = getPropertiesThatAreColumns(entity);
@@ -584,7 +605,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         } else {
             columns = "*";
         }
-        return columns;
+        stringBuffer.append(columns);
     }
 
     @NonNull
@@ -702,9 +723,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (generated.isPresent()) {
                 GeneratedValue.Type idGeneratorType = generated
                         .flatMap(av -> av.enumValue(GeneratedValue.Type.class))
-                        .orElseGet(this::selectAutoStrategy);
-                if (idGeneratorType == GeneratedValue.Type.SEQUENCE || dialect == Dialect.ORACLE) {
+                        .orElseGet(() -> selectAutoStrategy(identity));
+                if (idGeneratorType == GeneratedValue.Type.SEQUENCE) {
                     isSequence = true;
+                    assignedOrSequence = true;
+                } else if (dialect == Dialect.MYSQL && identity.getDataType() == DataType.UUID) {
                     assignedOrSequence = true;
                 }
             } else {
@@ -963,10 +986,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (identity == null) {
                     throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
                 }
+                final PersistentEntity associationOwner = association.getOwner();
+                final boolean escape = shouldEscape(associationOwner);
 
                 if (association.isForeignKey()) {
                     String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-                    final PersistentEntity associationOwner = association.getOwner();
+
                     if (StringUtils.isNotEmpty(mappedBy)) {
                         PersistentProperty mappedProp = associatedEntity.getPropertyByName(mappedBy);
                         if (mappedProp == null) {
@@ -977,26 +1002,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         if (associatedId == null) {
                             throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                         }
-                        final boolean escape = shouldEscape(associationOwner);
-                        target.append(joinType)
-                                .append(getTableName(associatedEntity))
-                                .append(SPACE)
-                                .append(joinAliases[i])
-                                .append(" ON ")
-                                .append(alias)
-                                .append(DOT)
-                                .append(escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId))
-                                .append('=')
-                                .append(joinAliases[i])
-                                .append(DOT)
-                                .append(escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
+
+
+                        StringBuilder join = joinStringBuilder(joinType,
+                                getTableName(associatedEntity),
+                                joinAliases[i],
+                                alias,
+                                escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
+                                escape ? quote(getColumnName(mappedProp)) : getColumnName(mappedProp));
+                        String joinStr = join.toString();
+                        if (target.indexOf(joinStr) == -1) {
+                            target.append(joinStr);
+                        }
                     } else {
                         final PersistentProperty associatedId = associationOwner.getIdentity();
                         if (associatedId == null) {
                             throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
                         }
-                        target.append(joinType);
-                        final boolean escape = shouldEscape(associationOwner);
+
                         NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
                         String joinTableName = association.getAnnotationMetadata()
                                 .stringValue(ANN_JOIN_TABLE, "name")
@@ -1006,52 +1029,75 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String[] joinColumnNames = resolveJoinTableColumns(associationOwner, associatedEntity, association, identity, associatedEntity.getIdentity(), namingStrategy);
                         String joinTableAlias = joinAliases[i] + joinTableName + "_";
                         String associatedTableName = getTableName(associatedEntity);
-                        target.append(joinTableName)
-                              .append(SPACE)
-                              .append(joinTableAlias)
-                              .append(" ON ")
-                              .append(alias)
-                              .append(DOT)
-                              .append(escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId))
-                              .append('=')
-                              .append(joinTableAlias)
-                              .append(DOT)
-                              .append(joinColumnNames[0])
-                              .append(SPACE)
-                              .append(joinType)
-                              .append(associatedTableName)
-                              .append(SPACE)
-                              .append(joinAliases[i])
-                              .append(" ON ")
-                              .append(joinTableAlias)
-                              .append(DOT)
-                              .append(joinColumnNames[1])
-                              .append('=')
-                              .append(joinAliases[i])
-                              .append(DOT)
-                              .append(escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
+
+                        StringBuilder join = joinStringBuilder(joinType,
+                                joinTableName,
+                                joinTableAlias,
+                                alias,
+                                escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
+                                joinColumnNames[0]);
+                        String joinStr = join.toString();
+                        if (target.indexOf(joinStr) == -1) {
+                            target.append(joinStr);
+                        }
+                        target.append(SPACE);
+                        join = joinStringBuilder(joinType,
+                                associatedTableName,
+                                joinAliases[i],
+                                joinTableAlias,
+                                joinColumnNames[1],
+                                escape ? quote(getColumnName(associatedEntity.getIdentity())) : getColumnName(associatedEntity.getIdentity()));
+                        joinStr = join.toString();
+                        if (target.indexOf(joinStr) == -1) {
+                            target.append(joinStr);
+                        }
                     }
                 } else {
-                    final PersistentEntity associationOwner = association.getOwner();
-                    final boolean escape = shouldEscape(associationOwner);
-                    target.append(joinType)
-                            .append(getTableName(associatedEntity))
-                            .append(SPACE)
-                            .append(joinAliases[i])
-                            .append(" ON ")
-                            .append(alias)
-                            .append(DOT)
-                            .append(escape ? quote(getColumnName(association)) : getColumnName(association))
-                            .append('=')
-                            .append(joinAliases[i])
-                            .append(DOT)
-                            .append(escape ? quote(getColumnName(identity)) : getColumnName(identity));
+                    String associationColumn;
+                    PersistentProperty rootIdentity = queryState.getEntity().getIdentity();
+                    if (associationOwner.isEmbeddable() &&
+                            rootIdentity instanceof Embedded &&
+                            ((Embedded) rootIdentity).getAssociatedEntity() == associationOwner) {
+                        associationColumn = computeEmbeddedName(rootIdentity, rootIdentity.getName(), association);
+                    } else {
+                        associationColumn = getColumnName(association);
+                    }
+                    StringBuilder join = joinStringBuilder(joinType,
+                            getTableName(associatedEntity),
+                            joinAliases[i],
+                            alias,
+                            escape ? quote(associationColumn) : associationColumn,
+                            escape ? quote(getColumnName(identity)) : getColumnName(identity));
+                    String joinStr = join.toString();
+                    if (target.indexOf(joinStr) == -1) {
+                        target.append(joinStr);
+                    }
                 }
                 alias = joinAliases[i];
             }
             pathSoFar.append(DOT);
         }
         return joinAliases;
+    }
+
+    private StringBuilder joinStringBuilder(String joinType,
+                                            String tableName,
+                                            String tableAlias,
+                                            String onTableName,
+                                            String onTableColumn,
+                                            String tableColumnName) {
+        return new StringBuilder().append(joinType)
+                .append(tableName)
+                .append(SPACE)
+                .append(tableAlias)
+                .append(" ON ")
+                .append(onTableName)
+                .append(DOT)
+                .append(onTableColumn)
+                .append('=')
+                .append(tableAlias)
+                .append(DOT)
+                .append(tableColumnName);
     }
 
     /**
@@ -1108,9 +1154,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Selects the default fallback strategy. For a generated value.
+     * @param property The Persistent property
      * @return The generated value
      */
-    protected GeneratedValue.Type selectAutoStrategy() {
+    protected GeneratedValue.Type selectAutoStrategy(PersistentProperty property) {
+        if (property.getDataType() == DataType.UUID) {
+            return UUID;
+        }
+        if (dialect == Dialect.ORACLE) {
+            return SEQUENCE;
+        }
         return GeneratedValue.Type.AUTO;
     }
 
@@ -1125,6 +1178,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         switch (dataType) {
             case STRING:
                 column += " VARCHAR(255)";
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case UUID:
+                if (dialect == Dialect.ORACLE || dialect == Dialect.MYSQL) {
+                    column += " VARCHAR(36)";
+                } else if (dialect == Dialect.SQL_SERVER) {
+                    column += " UNIQUEIDENTIFIER";
+                } else {
+                    column += " UUID";
+                }
                 if (required) {
                     column += " NOT NULL";
                 }

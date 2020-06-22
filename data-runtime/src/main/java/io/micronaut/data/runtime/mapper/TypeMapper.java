@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.mapper;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 
 /**
@@ -46,6 +47,16 @@ public interface TypeMapper<D, R> {
      * @return The value
      */
     @Nullable Object read(@NonNull D object, @NonNull String name);
+
+    /**
+     * Read a value for the given name from the given object.
+     * @param object The object to read from
+     * @param argument The argument
+     * @return The value
+     */
+    default @Nullable Object read(@NonNull D object, @NonNull Argument<?> argument) {
+        return read(object, argument.getName());
+    }
 
     /**
      * @return The conversion service to use.

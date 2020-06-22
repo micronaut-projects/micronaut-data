@@ -22,10 +22,11 @@ class ProductRepositorySpec {
 
     @Inject ProductRepository productRepository;
     @Inject ProductManager productManager;
+    @Inject ManufacturerRepository manufacturerRepository;
 
     @BeforeAll
     void setupTest() {
-        Manufacturer apple = productRepository.saveManufacturer("Apple");
+        Manufacturer apple = manufacturerRepository.save("Apple");
         productRepository.saveAll(Arrays.asList(
                 new Product(
                         "MacBook",
@@ -80,7 +81,7 @@ class ProductRepositorySpec {
 
     @Test
     void testProgrammaticTransactions() {
-        Manufacturer apple = productRepository.saveManufacturer("Apple");
+        Manufacturer apple = manufacturerRepository.save("Apple");
         final Product watch = productManager.save("Watch", apple);
 
         Assertions.assertEquals(

@@ -1,6 +1,5 @@
 plugins {
     id "groovy"
-    id "com.github.johnrengelman.shadow" 
     id "application"
 }
 
@@ -16,7 +15,7 @@ dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut.configuration:micronaut-jdbc-tomcat"
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     implementation "io.micronaut:micronaut-http-server-netty"
     implementation "io.micronaut:micronaut-runtime-groovy"
     implementation "io.micronaut:micronaut-validation"
@@ -28,16 +27,13 @@ dependencies {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
     testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation "io.micronaut.test:micronaut-test-spock"
+    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
 }
 
 test.classpath += configurations.developmentOnly
 
 mainClassName = "example.Application"
 
-shadowJar {
-    mergeServiceFiles()
-}
 
 run.classpath += configurations.developmentOnly
 run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')

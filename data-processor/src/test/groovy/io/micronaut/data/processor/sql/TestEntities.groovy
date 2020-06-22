@@ -65,4 +65,134 @@ class ProjectId {
 
 '''
     }
+
+    static String compositeRelationPrimaryKeyEntities() {
+        '''
+@Entity
+class Role {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    public Role(String name) {
+        this.name = name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+@Entity
+class User {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    private String email;
+
+    public User(String email) {
+        this.email = email;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+}
+
+@Embeddable
+class UserRoleId {
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private final User user;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private final Role role;
+
+    public UserRoleId(User user, Role role) {
+        this.user = user;
+        this.role = role;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        UserRoleId userRoleId = (UserRoleId) o;
+        return role.getId().equals(userRoleId.getRole().getId()) &&
+                user.getId().equals(userRoleId.getUser().getId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(role.getId(), user.getId());
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+}
+
+@Entity
+class UserRole {
+
+    @EmbeddedId
+    private final UserRoleId id;
+
+    public UserRole(UserRoleId id) {
+        this.id = id;
+    }
+
+    public UserRoleId getId() {
+        return id;
+    }
+
+    @Transient
+    public User getUser() {
+        return id.getUser();
+    }
+
+    @Transient
+    public Role getRole() {
+        return id.getRole();
+    }
+}
+'''
+    }
 }

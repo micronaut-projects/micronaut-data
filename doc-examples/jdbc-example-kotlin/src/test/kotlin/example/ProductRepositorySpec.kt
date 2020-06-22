@@ -13,10 +13,12 @@ internal class ProductRepositorySpec {
 
     @Inject
     lateinit var productRepository: ProductRepository
+    @Inject
+    lateinit var manufacturerRepository: ManufacturerRepository
 
     @BeforeAll
     fun setupData() {
-        val apple = productRepository.save(Manufacturer(null,"Apple"))
+        val apple = manufacturerRepository.save("Apple")
         productRepository.saveAll(listOf(
                 Product(null,
                         "MacBook",

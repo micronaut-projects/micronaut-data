@@ -24,6 +24,7 @@ import io.micronaut.data.tck.entities.Book;
 
 @JdbcRepository(dialectName = "H2")
 public interface H2AuthorRepository extends io.micronaut.data.tck.repositories.AuthorRepository  {
+
     @Query("select *, author.name as author_name, author.nick_name as author_nick_name from book as book inner join author as author where book.title = :title and book.total_pages > :pages")
     Book customSearch(String title, int pages, SqlResultConsumer<Book> mappingFunction);
 

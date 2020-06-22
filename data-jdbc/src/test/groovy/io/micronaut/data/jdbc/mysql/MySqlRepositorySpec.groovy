@@ -17,10 +17,6 @@ package io.micronaut.data.jdbc.mysql
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.h2.H2CityRepository
-import io.micronaut.data.jdbc.h2.H2CountryRepository
-import io.micronaut.data.jdbc.h2.H2RegionRepository
-import io.micronaut.data.jdbc.postgres.PostgresBasicTypesRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
@@ -28,19 +24,18 @@ import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
+import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
+import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.UserRepository
+import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import org.testcontainers.containers.MySQLContainer
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-class MySqlRepositorySpec extends AbstractRepositorySpec {
-    @Shared @AutoCleanup MySQLContainer mysql = new MySQLContainer<>()
-    @Shared @AutoCleanup ApplicationContext context
+class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPropertyProvider {
 
     @Override
     PersonRepository getPersonRepository() {
@@ -69,17 +64,17 @@ class MySqlRepositorySpec extends AbstractRepositorySpec {
 
     @Override
     CountryRepository getCountryRepository() {
-        return context.getBean(H2CountryRepository)
+        return context.getBean(MySqlCountryRepository)
     }
 
     @Override
     CityRepository getCityRepository() {
-        return context.getBean(H2CityRepository)
+        return context.getBean(MySqlCityRepository)
     }
 
     @Override
     RegionRepository getRegionRepository() {
-        return context.getBean(H2RegionRepository)
+        return context.getBean(MySqlRegionRepository)
     }
 
     @Override
@@ -93,16 +88,23 @@ class MySqlRepositorySpec extends AbstractRepositorySpec {
     }
 
     @Override
-    void init() {
-        mysql.start()
-        context = ApplicationContext.run(
-                "datasources.default.url":mysql.getJdbcUrl(),
-                "datasources.default.username":mysql.getUsername(),
-                "datasources.default.password":mysql.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.MYSQL
-        )
+    CountryRegionCityRepository getCountryRegionCityRepository() {
+        return context.getBean(MySqlCountryRegionCityRepository)
+    }
 
+    @Override
+    UserRoleRepository getUserRoleRepository() {
+        return context.getBean(MySqlUserRoleRepository)
+    }
+
+    @Override
+    RoleRepository getRoleRepository() {
+        return context.getBean(MySqlRoleRepository)
+    }
+
+    @Override
+    UserRepository getUserRepository() {
+        return context.getBean(MySqlUserRepository)
     }
 
     void "test save and retrieve basic types"() {

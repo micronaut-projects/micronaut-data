@@ -16,14 +16,17 @@
 package io.micronaut.data.tck.repositories;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.BookDto;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -58,23 +61,18 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     @Join("author")
     public abstract Book findByTitle(String title);
 
-    public void setupData() {
-        Author king = newAuthor("Stephen King");
-        Author jp = newAuthor("James Patterson");
-        Author dw = newAuthor("Don Winslow");
+    public abstract Author findAuthorById(@Id Long id);
 
-        newBook(king, "The Stand", 1000);
-        newBook(king, "Pet Cemetery", 400);
-        newBook(jp, "Along Came a Spider", 300);
-        newBook(jp, "Double Cross", 300);
-        newBook(dw, "The Power of the Dog", 600);
-        newBook(dw, "The Border", 700);
-
-        authorRepository.saveAll(Arrays.asList(
-                king,
-                jp,
-                dw
-        ));
+    public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
+        List<Author> authors = new ArrayList<>();
+        for (AuthorBooksDto dto: authorBooksDtos) {
+            Author author = newAuthor(dto.getAuthorName());
+            authors.add(author);
+            for (BookDto book : dto.getBooks()) {
+                newBook(author, book.getTitle(), book.getTotalPages());
+            }
+        }
+        authorRepository.saveAll(authors);
     }
 
     protected Author newAuthor(String name) {

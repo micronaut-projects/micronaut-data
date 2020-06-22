@@ -8,11 +8,12 @@ import org.junit.jupiter.api.Test
 @MicronautTest
 class SaleRepositorySpec(
         private val productRepository: ProductRepository,
-        private val saleRepository: SaleRepository) {
+        private val saleRepository: SaleRepository,
+        private val manufacturerRepository: ManufacturerRepository) {
 
     @Test
     fun testReadWriteCustomType() {
-        val apple = productRepository.saveManufacturer("Apple")
+        val apple = manufacturerRepository.save("Apple")
         val macBook = Product(0,"MacBook", apple)
         productRepository.save(macBook)
 

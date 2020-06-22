@@ -64,10 +64,14 @@ import java.util.stream.Stream;
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
+    private static final String DELETE = "delete";
+    private static final String UPDATE = "update";
+    private static final String VOID = "void";
     protected final Pattern pattern;
 
     /**
      * Default constructor.
+     *
      * @param pattern The pattern to match
      */
     protected AbstractPatternBasedMethod(@NonNull Pattern pattern) {
@@ -81,8 +85,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     /**
      * Matches order by definitions in the query sequence.
+     *
      * @param querySequence The query sequence
-     * @param orders A list or orders to populate
+     * @param orders        A list or orders to populate
      * @return The new query sequence minus any order by definitions
      */
     protected String matchOrder(String querySequence, List<Sort.Order> orders) {
@@ -115,9 +120,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     /**
      * Matches projections.
-     * @param matchContext The match context
+     *
+     * @param matchContext          The match context
      * @param projectionExpressions the projection expressions
-     * @param projectionSequence The sequence
+     * @param projectionSequence    The sequence
      */
     protected void matchProjections(@NonNull MethodMatchContext matchContext, List<ProjectionMethodExpression> projectionExpressions, String projectionSequence) {
         ProjectionMethodExpression currentExpression = ProjectionMethodExpression.matchProjection(
@@ -133,9 +139,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     /**
      * Build the {@link MethodMatchInfo}.
-     * @param matchContext The match context
+     *
+     * @param matchContext    The match context
      * @param queryResultType The query result type
-     * @param query The query
+     * @param query           The query
      * @return The info or null if it can't be built
      */
     @Nullable
@@ -146,46 +153,40 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         ClassElement returnType = matchContext.getReturnType();
         ClassElement typeArgument = returnType.getFirstTypeArgument().orElse(null);
 
-        if (!returnType.getName().equals("void")) {
+        if (!returnType.getName().equals(VOID)) {
+            if (query instanceof RawQuery) {
+                final AnnotationMetadata annotationMetadata = matchContext.getAnnotationMetadata();
+                String q = annotationMetadata.stringValue(Query.class).orElse(null);
+                if (q != null) {
+                    final boolean readOnly = annotationMetadata
+                            .booleanValue(Query.class, "readOnly").orElse(true);
+                    q = q.trim().toLowerCase(Locale.ENGLISH);
+                    Class<? extends DataInterceptor> interceptorType = null;
+                    if (q.startsWith(DELETE)) {
+                        interceptorType = resolveInterceptorTypeByOperationType(MethodMatchInfo.OperationType.DELETE, returnType);
+                    } else if (q.startsWith(UPDATE) || !readOnly) {
+                        interceptorType = resolveInterceptorTypeByOperationType(MethodMatchInfo.OperationType.UPDATE, returnType);
+                    }
+                    if (interceptorType != null) {
+                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, interceptorType));
+                    }
+                }
+            }
+
             if (isValidResultType(returnType)) {
                 if (TypeUtils.areTypesCompatible(returnType, queryResultType)) {
                     if (isFindByIdQuery(matchContext, queryResultType, query)) {
                         final Class<FindByIdInterceptor> type = FindByIdInterceptor.class;
-                        return new MethodMatchInfo(
-                                matchContext.getReturnType(),
-                                query,
-                                getInterceptorElement(matchContext, type)
-                        );
+                        return new MethodMatchInfo(matchContext.getReturnType(), query, getInterceptorElement(matchContext, type));
                     } else {
-                        if (query instanceof RawQuery) {
-                            final AnnotationMetadata annotationMetadata = matchContext.getAnnotationMetadata();
-                            final boolean readOnly = annotationMetadata
-                                    .booleanValue(Query.class, "readOnly").orElse(true);
-                            if (readOnly) {
-                                String q = annotationMetadata.stringValue(Query.class).orElse(null);
-                                if (q != null) {
-                                    q = q.trim().toLowerCase(Locale.ENGLISH);
-                                    if (q.startsWith("update")) {
-                                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, UpdateInterceptor.class));
-                                    } else if (q.startsWith("delete")) {
-                                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, DeleteAllInterceptor.class));
-                                    } else {
-                                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
-                                    }
-                                } else {
-                                    return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
-                                }
-                            } else {
-                                return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, UpdateInterceptor.class));
-                            }
-                        } else {
-                            return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
-                        }
+                        return new MethodMatchInfo(queryResultType, query, getInterceptorElement(matchContext, FindOneInterceptor.class));
                     }
                 } else {
                     if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
-                        if (attemptProjection(matchContext, queryResultType, query, returnType)) {
-                            return null;
+                        if (!(query instanceof RawQuery)) {
+                            if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
+                                return null;
+                            }
                         }
 
                         return new MethodMatchInfo(returnType, query, getInterceptorElement(matchContext, FindOneInterceptor.class), true);
@@ -196,16 +197,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 }
             } else if (typeArgument != null) {
-                boolean isPage = matchContext.isTypeInRole(
-                        typeArgument,
-                        TypeRole.PAGE
-                );
-                boolean isSlice = matchContext.isTypeInRole(
-                        typeArgument,
-                        TypeRole.SLICE
-                );
+                boolean isPage = isPage(matchContext, typeArgument);
+                boolean isSlice = isSlice(matchContext, typeArgument);
                 if (returnType.isAssignable(CompletionStage.class) || returnType.isAssignable(Future.class)) {
-                    Class<? extends DataInterceptor> interceptorType;
+
                     ClassElement firstTypeArgument;
 
                     if (typeArgument.isAssignable(Iterable.class) || isSlice || isPage) {
@@ -217,19 +212,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     } else {
                         firstTypeArgument = typeArgument;
                     }
-                    if (isPage) {
-                        interceptorType = FindPageAsyncInterceptor.class;
-                    } else if (isSlice) {
-                        interceptorType = FindSliceAsyncInterceptor.class;
-                    } else if (typeArgument.isAssignable(Iterable.class)) {
-                        interceptorType = FindAllAsyncInterceptor.class;
-                    } else if (isValidResultType(typeArgument)) {
-                        if (isFindByIdQuery(matchContext, queryResultType, query)) {
-                            interceptorType = FindByIdAsyncInterceptor.class;
-                        } else {
-                            interceptorType = FindOneAsyncInterceptor.class;
-                        }
-                    } else {
+
+                    Class<? extends DataInterceptor> interceptorType = resolveInterceptorType(matchContext,
+                            typeArgument, queryResultType, query, isPage, isSlice);
+                   if (interceptorType == null) {
                         matchContext.fail("Unsupported Async return type: " + firstTypeArgument.getName());
                         return null;
                     }
@@ -244,27 +230,15 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                         return new MethodMatchInfo(finalResultType, query, getInterceptorElement(matchContext, interceptorType), dto);
                     }
                 } else if (returnType.isAssignable(Publisher.class) || returnType.getPackageName().equals("io.reactivex")) {
-                    Class<? extends DataInterceptor> interceptorType;
+
                     ClassElement finalResultType = TypeUtils.isObjectClass(typeArgument) ? matchContext.getRootEntity().getType() : typeArgument;
                     boolean isContainerType = isSlice || isPage;
                     if (isContainerType) {
                         finalResultType = typeArgument.getFirstTypeArgument().orElse(matchContext.getRootEntity().getType());
                     }
-                    if (isPage) {
-                        interceptorType = FindPageReactiveInterceptor.class;
-                    } else if (isSlice) {
-                        interceptorType = FindSliceReactiveInterceptor.class;
-                    } else {
-                        if (isReactiveSingleResult(returnType)) {
-                            if (isFindByIdQuery(matchContext, queryResultType, query)) {
-                                interceptorType = FindByIdReactiveInterceptor.class;
-                            } else {
-                                interceptorType = FindOneReactiveInterceptor.class;
-                            }
-                        } else {
-                            interceptorType = FindAllReactiveInterceptor.class;
-                        }
-                    }
+                    Class<? extends DataInterceptor> interceptorType = resolveReactiveInterceptorType(matchContext,
+                            returnType, queryResultType, query, isPage, isSlice);
+
                     boolean dto = resolveDtoIfNecessary(matchContext, queryResultType, query, finalResultType);
                     if (matchContext.isFailing()) {
                         return null;
@@ -277,7 +251,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
                         if ((typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class))) {
                             QueryModel projectionQuery = query != null ? query : QueryModel.from(matchContext.getRootEntity());
-                            if (attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
+                            if (!attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
                                 return null;
                             }
                             query = projectionQuery;
@@ -287,25 +261,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                             return null;
                         }
                     }
-
-                    if (matchContext.isTypeInRole(
-                            matchContext.getReturnType(),
-                            TypeRole.PAGE
-                    )) {
-                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindPageInterceptor.class), dto);
-                    } else if (matchContext.isTypeInRole(
-                            matchContext.getReturnType(),
-                            TypeRole.SLICE
-                    )) {
-                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindSliceInterceptor.class), dto);
-                    } else if (returnType.isAssignable(Iterable.class)) {
-                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindAllInterceptor.class), dto);
-                    } else if (returnType.isAssignable(Stream.class)) {
-                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindStreamInterceptor.class), dto);
-                    } else if (returnType.isAssignable(Optional.class)) {
-                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindOptionalInterceptor.class), dto);
-                    } else if (returnType.isAssignable(Publisher.class)) {
-                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, FindAllReactiveInterceptor.class), dto);
+                    Class<? extends DataInterceptor> interceptor = resolveFindInterceptor(matchContext);
+                    if (interceptor != null) {
+                        return new MethodMatchInfo(typeArgument, query, getInterceptorElement(matchContext, interceptor), dto);
                     }
                 }
             }
@@ -315,10 +273,159 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return null;
     }
 
+
+    /**
+     * @param matchContext The match context
+     * @return The resolved {@link DataInterceptor} or {@literal null}.
+     */
+    @Nullable
+    protected Class<? extends DataInterceptor> resolveFindInterceptor(@NonNull MethodMatchContext matchContext) {
+        ClassElement returnType = matchContext.getReturnType();
+
+        if (isPage(matchContext, returnType)) {
+            return FindPageInterceptor.class;
+        } else if (isSlice(matchContext, returnType)) {
+            return FindSliceInterceptor.class;
+        } else if (returnType.isAssignable(Iterable.class)) {
+            return FindAllInterceptor.class;
+        } else if (returnType.isAssignable(Stream.class)) {
+            return FindStreamInterceptor.class;
+        } else if (returnType.isAssignable(Optional.class)) {
+            return FindOptionalInterceptor.class;
+        } else if (returnType.isAssignable(Publisher.class)) {
+            return FindAllReactiveInterceptor.class;
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param operationType Operation Type
+     * @param returnType Return Type
+     * @return The resolved {@link DataInterceptor} or {@literal null}.
+     */
+    @Nullable
+    protected Class<? extends DataInterceptor> resolveInterceptorTypeByOperationType(MethodMatchInfo.OperationType operationType,
+                                                                                     ClassElement returnType) {
+        if (operationType == MethodMatchInfo.OperationType.DELETE) {
+            if (TypeUtils.isReactiveType(returnType)) {
+                return DeleteAllReactiveInterceptor.class;
+            } else if (TypeUtils.isFutureType(returnType)) {
+                return DeleteAllAsyncInterceptor.class;
+            } else {
+                return DeleteAllInterceptor.class;
+            }
+        }
+        if (operationType == MethodMatchInfo.OperationType.UPDATE) {
+            if (TypeUtils.isReactiveType(returnType)) {
+                return UpdateReactiveInterceptor.class;
+            } else if (TypeUtils.isFutureType(returnType)) {
+                return UpdateAsyncInterceptor.class;
+            } else {
+                return UpdateInterceptor.class;
+            }
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param matchContext The match context
+     * @param returnType Return Type
+     * @param queryResultType Query Result Type
+     * @param query Query
+     * @param isPage {@literal true} if the type argument performs the {@link  TypeRole#PAGE} role.
+     * @param isSlice {@literal true} if the type argument performs the {@link  TypeRole#SLICE} role.
+     * @return The resolved {@link DataInterceptor} or {@literal null}.
+     */
+    @NonNull
+    protected Class<? extends DataInterceptor> resolveReactiveInterceptorType(@NonNull MethodMatchContext matchContext,
+                                                                      @NonNull ClassElement returnType,
+                                                                      @NonNull ClassElement queryResultType,
+                                                                      @Nullable QueryModel query,
+                                                                      boolean isPage,
+                                                                      boolean isSlice) {
+        if (isPage) {
+            return FindPageReactiveInterceptor.class;
+        } else if (isSlice) {
+            return FindSliceReactiveInterceptor.class;
+        } else {
+            if (isReactiveSingleResult(returnType)) {
+                if (isFindByIdQuery(matchContext, queryResultType, query)) {
+                    return FindByIdReactiveInterceptor.class;
+                } else {
+                    return FindOneReactiveInterceptor.class;
+                }
+            } else {
+                return FindAllReactiveInterceptor.class;
+            }
+        }
+    }
+
+    /**
+     *
+     * @param matchContext The match context
+     * @param typeArgument Type Argument
+     * @param queryResultType Query Result Type
+     * @param query Query
+     * @param isPage {@literal true} if the type argument performs the {@link  TypeRole#PAGE} role.
+     * @param isSlice {@literal true} if the type argument performs the {@link  TypeRole#SLICE} role.
+     * @return The resolved {@link DataInterceptor} or {@literal null}.
+     */
+    @Nullable
+    protected Class<? extends DataInterceptor> resolveInterceptorType(@NonNull MethodMatchContext matchContext,
+                                                                      @NonNull ClassElement typeArgument,
+                                                                      @NonNull ClassElement queryResultType,
+                                                                      @Nullable QueryModel query,
+                                                                      boolean isPage,
+                                                                      boolean isSlice) {
+        if (isPage) {
+            return FindPageAsyncInterceptor.class;
+        } else if (isSlice) {
+            return FindSliceAsyncInterceptor.class;
+        } else if (typeArgument.isAssignable(Iterable.class)) {
+            return FindAllAsyncInterceptor.class;
+        } else if (isValidResultType(typeArgument)) {
+            if (isFindByIdQuery(matchContext, queryResultType, query)) {
+                return FindByIdAsyncInterceptor.class;
+            } else {
+                return FindOneAsyncInterceptor.class;
+            }
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param matchContext The match context
+     * @param typeArgument Type argument
+     * @return {@literal true} if the type argument performs the {@link  TypeRole#PAGE} role.
+     */
+    protected boolean isPage(@NonNull MethodMatchContext matchContext, @NonNull ClassElement typeArgument) {
+        return matchContext.isTypeInRole(
+                typeArgument,
+                TypeRole.PAGE
+        );
+    }
+
+    /**
+     *
+     * @param matchContext The match context
+     * @param typeArgument type argument
+     * @return {@literal true} if the type argument performs the {@link  TypeRole#SLICE} role.
+     */
+    protected boolean isSlice(@NonNull MethodMatchContext matchContext, @NonNull ClassElement typeArgument) {
+        return matchContext.isTypeInRole(
+                typeArgument,
+                TypeRole.SLICE
+        );
+    }
+
     /**
      * Obtain the interceptor element for the given class.
+     *
      * @param matchContext The match context
-     * @param type The type
+     * @param type         The type
      * @return The element
      */
     protected ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, Class<? extends DataInterceptor> type) {
@@ -327,8 +434,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     /**
      * Obtain the interceptor element for the given class name.
+     *
      * @param matchContext The match context
-     * @param type The type
+     * @param type         The type
      * @return The element
      */
     protected ClassElement getInterceptorElement(@NonNull MethodMatchContext matchContext, String type) {
@@ -350,17 +458,16 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull ClassElement queryResultType,
             @Nullable QueryModel query,
             @NonNull ClassElement returnType) {
-        boolean dto = false;
         if (!TypeUtils.areTypesCompatible(returnType, queryResultType)) {
             if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
-                if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
-                    dto = true;
+                if (attemptProjection(matchContext, queryResultType, query, returnType)) {
+                    return true;
                 }
             } else {
                 matchContext.fail("Query results in a type [" + queryResultType.getName() + "] whilst method returns an incompatible type: " + returnType.getName());
             }
         }
-        return dto;
+        return false;
     }
 
     private boolean isValidResultType(ClassElement returnType) {
@@ -371,7 +478,18 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         return returnType.hasStereotype(SingleResult.class) || returnType.isAssignable("io.reactivex.Single") || returnType.isAssignable("reactor.core.publisher.Mono");
     }
 
-    private boolean attemptProjection(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @NonNull QueryModel query, ClassElement returnType) {
+    /**
+     *
+     * @param matchContext Match Context
+     * @param queryResultType Query Result Type
+     * @param query Query
+     * @param returnType Return Type
+     * @return returns {@literal false} if the attempt to create the projection fails.
+     */
+    private boolean attemptProjection(@NonNull MethodMatchContext matchContext,
+                                      @NonNull ClassElement queryResultType,
+                                      @NonNull QueryModel query,
+                                      ClassElement returnType) {
         List<PropertyElement> beanProperties = returnType.getBeanProperties();
         SourcePersistentEntity entity = matchContext.getEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
@@ -384,12 +502,12 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
             if (pp == null) {
                 matchContext.fail("Property " + propertyName + " is not present in entity: " + entity.getName());
-                return true;
+                return false;
             }
 
             if (!TypeUtils.areTypesCompatible(beanProperty.getType(), pp.getType())) {
                 matchContext.fail("Property [" + propertyName + "] of type [" + beanProperty.getType().getName() + "] is not compatible with equivalent property declared in entity: " + entity.getName());
-                return true;
+                return false;
             }
             // add an alias projection for each property
             final QueryBuilder queryBuilder = matchContext.getQueryBuilder();
@@ -399,13 +517,14 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                 query.projections().add(Projections.property(propertyName));
             }
         }
-        return false;
+        return true;
     }
 
     /**
      * Apply ordering.
-     * @param context The context
-     * @param query The query
+     *
+     * @param context   The context
+     * @param query     The query
      * @param orderList The list mutate
      * @return True if an error occurred applying the order
      */
@@ -425,11 +544,26 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     }
 
     /**
-     * Apply the configured join specifications to the given query.
+     *
      * @param matchContext The match context
-     * @param query The query
-     * @param rootEntity the root entity
-     * @param joinSpecs The join specs
+     * @return a List of annotations values for {@Join} annotation.
+     */
+    @NonNull
+    protected List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext) {
+        final MethodMatchInfo.OperationType operationType = getOperationType();
+        if (operationType != MethodMatchInfo.OperationType.QUERY) {
+            return matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class);
+        }
+        return matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
+    }
+
+    /**
+     * Apply the configured join specifications to the given query.
+     *
+     * @param matchContext The match context
+     * @param query        The query
+     * @param rootEntity   the root entity
+     * @param joinSpecs    The join specs
      * @return True if an error occurred applying the specs
      */
     protected boolean applyJoinSpecs(
@@ -466,13 +600,14 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     /**
      * Builds a raw query for the given match context. Should be called for methods annotated with {@link Query} explicitly.
+     *
      * @param matchContext The match context
      * @return The raw query or null if an error occurred
      */
     protected RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
-            new IllegalStateException("Should only be called if Query has value!")
+                new IllegalStateException("Should only be called if Query has value!")
         );
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         Map<String, String> parameterBinding = new LinkedHashMap<>(parameters.size());
@@ -516,7 +651,8 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     /**
      * @return The operation type
      */
-    protected @NonNull MethodMatchInfo.OperationType getOperationType() {
+    protected @NonNull
+    MethodMatchInfo.OperationType getOperationType() {
         return MethodMatchInfo.OperationType.QUERY;
     }
 

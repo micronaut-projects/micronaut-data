@@ -41,12 +41,12 @@ dependencies {
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-runtime"
-    implementation "io.micronaut.configuration:micronaut-jdbc-hikari"
+    implementation "io.micronaut.sql:micronaut-jdbc-hikari:$micronautSqlVersion"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     runtimeOnly "com.h2database:h2"
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "org.junit.jupiter:junit-jupiter-api"
-    testImplementation "io.micronaut.test:micronaut-test-junit5"
+    testImplementation "io.micronaut.test:micronaut-test-junit5:$micronautTestVersion"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
     jmh "org.openjdk.jmh:jmh-core:$jmhVersion"
@@ -70,3 +70,6 @@ tasks.withType(JavaCompile){
 jmh {
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
 }
+spotlessJavaCheck.enabled = false
+checkstyleMain.enabled = false
+checkstyleJmh.enabled = false

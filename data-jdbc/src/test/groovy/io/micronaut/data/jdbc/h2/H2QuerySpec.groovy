@@ -15,17 +15,14 @@
  */
 package io.micronaut.data.jdbc.h2
 
-
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
-import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
 
 import javax.inject.Inject
-import javax.sql.DataSource
 
 @MicronautTest
 @Property(name = "datasources.default.name", value = "mydb")
@@ -38,20 +35,6 @@ class H2QuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     H2AuthorRepository ar
-
-    @Inject
-    @Shared
-    DataSource dataSource
-
-    @Override
-    void init() {
-        ar.deleteAll()
-        br.deleteAll()
-    }
-
-    def cleanupSpec() {
-        br.deleteAll()
-    }
 
     @Override
     H2BookRepository getBookRepository() {

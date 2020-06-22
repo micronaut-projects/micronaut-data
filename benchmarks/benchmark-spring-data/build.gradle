@@ -3,7 +3,7 @@ buildscript {
 		maven { url 'https://repo.spring.io/milestone' }
 	}
 	dependencies {
-		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.2.6.RELEASE"
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:2.3.0.RELEASE"
 	}
 }
 
@@ -30,7 +30,7 @@ dependencies {
 	testImplementation "org.junit.jupiter:junit-jupiter-api"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
-	runtimeOnly "com.zaxxer:HikariCP:3.4.2"
+	runtimeOnly "com.zaxxer:HikariCP:3.4.5"
 	runtimeOnly "com.h2database:h2"
 
     jmh "ch.qos.logback:logback-classic:1.2.3"
@@ -48,3 +48,6 @@ springBoot {
 jmh {
 	duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
 }
+spotlessJavaCheck.enabled = false
+checkstyleMain.enabled = false
+checkstyleJmh.enabled = false

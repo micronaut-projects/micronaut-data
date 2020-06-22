@@ -59,15 +59,14 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                 Object[] args = new Object[arguments.length];
                 for (int i = 0; i < arguments.length; i++) {
                     Argument<?> argument = arguments[i];
-                    Object o = read(object, argument.getName());
+                    Object o = read(object, argument);
                     if (o == null) {
                         args[i] = o;
                     } else {
-                        ArgumentConversionContext<?> acc = ConversionContext.of(argument);
                         if (argument.getType().isInstance(o)) {
                             args[i] = o;
                         } else {
-
+                            ArgumentConversionContext<?> acc = ConversionContext.of(argument);
                             args[i] = conversionService.convert(o, acc).orElseThrow(() -> {
                                         Optional<ConversionError> lastError = acc.getLastError();
                                         return lastError.<RuntimeException>map(conversionError -> new ConversionErrorException(argument, conversionError))
@@ -84,6 +83,10 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
             }
             Collection<BeanProperty<R, Object>> properties = introspection.getBeanProperties();
             for (BeanProperty<R, Object> property : properties) {
+                if (property.isReadOnly()) {
+                    continue;
+                }
+
                 Object v = read(object, property.getName());
                 if (property.getType().isInstance(v))  {
                     property.set(instance, v);

@@ -49,11 +49,11 @@ dependencies {
     implementation("io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion")
     runtimeOnly("ch.qos.logback:logback-classic:1.2.3")
     runtimeOnly("com.h2database:h2")
-    runtimeOnly("io.micronaut.configuration:micronaut-jdbc-hikari")
+    runtimeOnly("io.micronaut.sql:micronaut-jdbc-hikari:$micronautSqlVersion")
 
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testAnnotationProcessor("io.micronaut:micronaut-inject-java")
-    testImplementation("io.micronaut.test:micronaut-test-junit5")
+    testImplementation("io.micronaut.test:micronaut-test-junit5:$micronautTestVersion")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 }
 
