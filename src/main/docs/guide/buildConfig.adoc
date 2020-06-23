@@ -25,7 +25,7 @@ dependency:com.h2database:h2[scope="runtime]
 
 *2)* A JDBC Connection Pool Module (Hikari, Tomcat JDBC or DBCP ) from the Micronaut SQL project. For example for Tomcat JDBC:
 
-dependency:io.micronaut.configuration:micronaut-jdbc-tomcat[scope="runtime]
+dependency:io.micronaut.sql:micronaut-jdbc-tomcat[scope="runtime]
 
 *3)* A configured data source in `application.yml`. For example for H2:
 

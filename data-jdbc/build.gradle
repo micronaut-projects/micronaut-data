@@ -7,7 +7,7 @@ dependencies {
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     api project(":data-runtime")
     implementation "io.micronaut:micronaut-http:$micronautVersion"
-    implementation "io.micronaut:micronaut-jdbc:$micronautVersion"
+    implementation "io.micronaut.sql:micronaut-jdbc:$micronautSqlVersion"
     compileOnly project(":data-hibernate-jpa")
     testImplementation project(":data-tck")
 
