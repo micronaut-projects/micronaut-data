@@ -978,7 +978,6 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
         triggerAfterCompletion(status, TransactionSynchronization.Status.ROLLED_BACK);
     }
 
-
     /**
      * Trigger {@code beforeCommit} callbacks.
      * @param status object representing the transaction
@@ -1082,7 +1081,6 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
             resume(transaction, (SuspendedResourcesHolder) status.getSuspendedResources());
         }
     }
-
 
     //---------------------------------------------------------------------
     // Template methods to be implemented in subclasses
@@ -1324,7 +1322,6 @@ public abstract class AbstractSynchronousTransactionManager<T> implements Synchr
      */
     protected void doCleanupAfterCompletion(Object transaction) {
     }
-
 
     //---------------------------------------------------------------------
     // Serialization support

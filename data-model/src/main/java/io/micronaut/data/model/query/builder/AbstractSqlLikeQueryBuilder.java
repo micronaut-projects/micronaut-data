@@ -783,7 +783,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 .append(CLOSE_BRACKET);
     }
 
-
     /**
      * Appends a row count projection to the query string.
      *

@@ -58,7 +58,6 @@ public class ConnectionHolder extends ResourceHolderSupport {
 
     private int savepointCounter = 0;
 
-
     /**
      * Create a new ConnectionHolder for the given ConnectionHandle.
      * @param connectionHandle the ConnectionHandle to hold
@@ -123,7 +122,6 @@ public class ConnectionHolder extends ResourceHolderSupport {
     protected boolean isTransactionActive() {
         return this.transactionActive;
     }
-
 
     /**
      * Override the existing Connection handle with the given Connection.

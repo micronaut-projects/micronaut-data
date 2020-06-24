@@ -165,7 +165,6 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
                 !ClassUtils.getPrimitiveType(pp.getTypeName()).isPresent();
     }
 
-
     /**
      * Pick a runtime interceptor to use based on the return type.
      * @param returnType The return type

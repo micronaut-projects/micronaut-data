@@ -51,7 +51,6 @@ public abstract class DataSourceUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceUtils.class);
 
-
     /**
      * Obtain a Connection from the given DataSource. Translates SQLExceptions into
      * the Spring hierarchy of unchecked generic data access exceptions, simplifying
