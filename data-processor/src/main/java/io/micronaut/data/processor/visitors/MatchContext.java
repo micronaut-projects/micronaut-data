@@ -25,7 +25,9 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -46,6 +48,7 @@ public class MatchContext implements AnnotationMetadataProvider {
     protected final ParameterElement[] parameters;
     private final ClassElement repositoryClass;
     private final QueryBuilder queryBuilder;
+    private final List<String> possibleFailures = new ArrayList<>();
     private boolean failing = false;
 
     /**
@@ -144,12 +147,46 @@ public class MatchContext implements AnnotationMetadataProvider {
     }
 
     /**
+     * Add a message that indicates a given finder failed. This should only be used
+     * if a finder matches a method, but some additional requirement is not met. This
+     * leaves the possibility that another finder may match the method and proceed
+     * successfully. Possible failures will only be logged if the method could not be
+     * implemented.
+     *
+     * @param message The message
+     */
+    public void possiblyFail(@NonNull String message) {
+        this.possibleFailures.add(message);
+    }
+
+    /**
      * Is there a current error.
      *
      * @return True if there is an error
      */
     public boolean isFailing() {
         return failing;
+    }
+
+    /**
+     * Are there possible failures.
+     *
+     * @return True if there is an error
+     */
+    public boolean isPossiblyFailing() {
+        return !possibleFailures.isEmpty();
+    }
+
+    /**
+     * Log any possible failures.
+     */
+    public void logPossibleFailures() {
+        VisitorContext visitorContext = getVisitorContext();
+        String unableToImplementMessage = getUnableToImplementMessage();
+        MethodElement methodElement = getMethodElement();
+        for (String message: possibleFailures) {
+            visitorContext.fail(unableToImplementMessage + message, methodElement);
+        }
     }
 
     /**

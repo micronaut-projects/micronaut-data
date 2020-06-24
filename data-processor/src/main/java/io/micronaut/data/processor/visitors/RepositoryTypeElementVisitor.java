@@ -462,8 +462,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             this.failing = true;
 
-            String messageStart = matchContext.getUnableToImplementMessage();
-            context.fail(messageStart + "No possible implementations found.", element);
+            if (matchContext.isPossiblyFailing()) {
+                matchContext.logPossibleFailures();
+            } else {
+                String messageStart = matchContext.getUnableToImplementMessage();
+                context.fail(messageStart + "No possible implementations found.", element);
+            }
         }
     }
 
