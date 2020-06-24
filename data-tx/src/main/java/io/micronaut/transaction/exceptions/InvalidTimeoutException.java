@@ -32,7 +32,6 @@ public class InvalidTimeoutException extends TransactionUsageException {
 
     private final Duration timeout;
 
-
     /**
      * Constructor for InvalidTimeoutException.
      * @param msg the detail message

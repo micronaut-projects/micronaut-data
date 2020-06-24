@@ -23,7 +23,6 @@ import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 
@@ -317,7 +316,6 @@ public interface QueryStatement<PS, IDX> {
     QueryStatement<PS, IDX> setByte(PS statement, IDX name, byte b) {
         return setValue(statement, name, b);
     }
-
 
     /**
      * Write a short value for the given name.

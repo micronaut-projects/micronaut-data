@@ -205,7 +205,6 @@ public interface ResultReader<RS, IDX> {
         return getRequiredValue(resultSet, name, byte.class);
     }
 
-
     /**
      * Read a short value for the given name.
      * @param resultSet The result set

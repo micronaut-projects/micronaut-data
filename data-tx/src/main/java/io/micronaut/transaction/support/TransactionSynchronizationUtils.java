@@ -69,7 +69,6 @@ public abstract class TransactionSynchronizationUtils {
         return resourceRef;
     }
 
-
     /**
      * Trigger {@code flush} callbacks on all currently registered synchronizations.
      * @throws RuntimeException if thrown by a {@code flush} callback

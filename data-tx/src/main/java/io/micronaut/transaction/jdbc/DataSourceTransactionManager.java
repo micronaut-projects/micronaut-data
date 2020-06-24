@@ -312,7 +312,6 @@ public class DataSourceTransactionManager extends AbstractSynchronousTransaction
         txObject.getConnectionHolder().clear();
     }
 
-
     /**
      * Prepare the transactional {@code Connection} right after transaction begin.
      * <p>The default implementation executes a "SET TRANSACTION READ ONLY" statement
