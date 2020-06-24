@@ -112,7 +112,6 @@ public interface JdbcOperations {
             @NonNull ResultSet resultSet,
             @NonNull Class<E> type) throws DataAccessException;
 
-
     /**
      * Read an entity using the given prefix to be passes to result set lookups.
      * @param resultSet The result set

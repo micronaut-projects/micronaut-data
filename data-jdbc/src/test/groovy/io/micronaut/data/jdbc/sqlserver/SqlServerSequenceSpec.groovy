@@ -1,3 +1,4 @@
+
 package io.micronaut.data.jdbc.sqlserver
 
 import io.micronaut.data.annotation.GeneratedValue
