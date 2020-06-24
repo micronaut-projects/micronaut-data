@@ -23,6 +23,7 @@ tasks.withType(JavaCompile){
 }
 
 checkstyleMain.enabled = false
+checkstyleNohttp.enabled = false
 
 
 //compileJava.options.fork = true
