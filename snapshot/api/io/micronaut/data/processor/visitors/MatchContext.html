@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -231,12 +231,30 @@ implements io.micronaut.core.annotation.AnnotationMetadataProvider</pre>
 </tr>
 <tr id="i10" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MatchContext.html#isPossiblyFailing--">isPossiblyFailing</a></span>()</code>
+<div class="block">Are there possible failures.</div>
+</td>
+</tr>
+<tr id="i11" class="rowColor">
+<td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MatchContext.html#isTypeInRole-io.micronaut.inject.ast.ClassElement-java.lang.String-">isTypeInRole</a></span>(io.micronaut.inject.ast.ClassElement&nbsp;type,
             java.lang.String&nbsp;role)</code>
 <div class="block">Check whether the given type performs the given role.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MatchContext.html#logPossibleFailures--">logPossibleFailures</a></span>()</code>
+<div class="block">Log any possible failures.</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MatchContext.html#possiblyFail-java.lang.String-">possiblyFail</a></span>(java.lang.String&nbsp;message)</code>
+<div class="block">Add a message that indicates a given finder failed.</div>
+</td>
+</tr>
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/visitors/MatchContext.html#supportsImplicitQueries--">supportsImplicitQueries</a></span>()</code>
 <div class="block">Whether or not implicit queries such as lookup by id and counting is supported without an explicit query.</div>
@@ -451,6 +469,25 @@ public&nbsp;io.micronaut.inject.ast.ParameterElement[]&nbsp;getParameters()</pre
 </dl>
 </li>
 </ul>
+<a name="possiblyFail-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>possiblyFail</h4>
+<pre>public&nbsp;void&nbsp;possiblyFail(@NonNull
+                         java.lang.String&nbsp;message)</pre>
+<div class="block">Add a message that indicates a given finder failed. This should only be used
+ if a finder matches a method, but some additional requirement is not met. This
+ leaves the possibility that another finder may match the method and proceed
+ successfully. Possible failures will only be logged if the method could not be
+ implemented.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>message</code> - The message</dd>
+</dl>
+</li>
+</ul>
 <a name="isFailing--">
 <!--   -->
 </a>
@@ -463,6 +500,30 @@ public&nbsp;io.micronaut.inject.ast.ParameterElement[]&nbsp;getParameters()</pre
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if there is an error</dd>
 </dl>
+</li>
+</ul>
+<a name="isPossiblyFailing--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>isPossiblyFailing</h4>
+<pre>public&nbsp;boolean&nbsp;isPossiblyFailing()</pre>
+<div class="block">Are there possible failures.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if there is an error</dd>
+</dl>
+</li>
+</ul>
+<a name="logPossibleFailures--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>logPossibleFailures</h4>
+<pre>public&nbsp;void&nbsp;logPossibleFailures()</pre>
+<div class="block">Log any possible failures.</div>
 </li>
 </ul>
 <a name="supportsImplicitQueries--">
