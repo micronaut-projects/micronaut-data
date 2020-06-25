@@ -61,10 +61,17 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) &&
+        boolean isMatch = super.isMethodMatch(methodElement, matchContext) &&
                 methodElement.getParameters().length > 1 &&
-                TypeUtils.isValidBatchUpdateReturnType(methodElement) &&
                 hasIdParameter(methodElement.getParameters());
+        if (isMatch) {
+            if (!TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
+                matchContext.possiblyFail("Update methods only support void or number based return types");
+            } else {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean hasIdParameter(ParameterElement[] parameters) {

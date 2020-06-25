@@ -55,7 +55,15 @@ public class UpdateByMethod extends DynamicFinder {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement);
+        boolean isMatch = super.isMethodMatch(methodElement, matchContext);
+        if (isMatch) {
+            if (!TypeUtils.isValidBatchUpdateReturnType(methodElement)) {
+                matchContext.possiblyFail("Update methods only support void or number based return types");
+            } else {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

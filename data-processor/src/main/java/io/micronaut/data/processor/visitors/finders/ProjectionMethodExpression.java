@@ -21,7 +21,6 @@ import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -32,7 +31,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 
 /**
  * Method expression for performing a projection of some sort.
