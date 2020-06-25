@@ -155,4 +155,23 @@ interface PersonRepository extends CrudRepository<Person, Long> {
         expect:
         updateQuery == 'UPDATE `person` SET `name`=? WHERE (`id` = ?)'
     }
+
+    void "test error message for update method with invalid return type"() {
+        when:
+        buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface PersonRepository extends CrudRepository<Person, Long> {
+
+    Person updatePerson(@Id Long id, String name);
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Update methods only support void or number based return types")
+    }
 }
