@@ -970,7 +970,12 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                     }
                 } else {
-                    setStatementParameter(ps, index++, dataType, value);
+                    final Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+                    if (requiresStringUUID(dialect, dataType, value)) {
+                        setStatementParameter(ps, index++, DataType.STRING, value.toString());
+                    } else {
+                        setStatementParameter(ps, index++, dataType, value);
+                    }
                 }
             }
         }

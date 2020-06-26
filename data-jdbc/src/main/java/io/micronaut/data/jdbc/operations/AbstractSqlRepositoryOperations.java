@@ -207,7 +207,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                         }
 
-                        if (requiresStringUUID(insert, type, value)) {
+                        if (requiresStringUUID(insert.dialect, type, value)) {
                             preparedStatementWriter.setString(
                                     stmt,
                                     index,
@@ -279,7 +279,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         if (type == DataType.JSON && jsonCodec != null) {
                             value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                         }
-                        if (requiresStringUUID(insert, type, value)) {
+                        if (requiresStringUUID(insert.dialect, type, value)) {
                             preparedStatementWriter.setString(
                                     stmt,
                                     index,
@@ -299,8 +299,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         }
     }
 
-    private <T> boolean requiresStringUUID(@NonNull StoredInsert<T> insert, DataType type, Object value) {
-        return value != null && type == DataType.UUID && (insert.dialect == Dialect.ORACLE || insert.dialect == Dialect.MYSQL);
+    /**
+     * Determines if a UUID should be treated as a string. This will return true
+     * for dialects that have no special handling of UUID.
+     *
+     * @param dialect The dialect
+     * @param type The data type
+     * @param value The value
+     * @return True if the UUID should be treated as a string.
+     */
+    protected boolean requiresStringUUID(Dialect dialect, DataType type, Object value) {
+        return value != null && type == DataType.UUID && (dialect == Dialect.ORACLE || dialect == Dialect.MYSQL);
     }
 
     /**

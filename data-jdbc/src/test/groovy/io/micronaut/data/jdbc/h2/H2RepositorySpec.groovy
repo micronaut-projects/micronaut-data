@@ -15,9 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.data.jdbc.mysql.MySqlRoleRepository
-import io.micronaut.data.jdbc.mysql.MySqlUserRepository
-import io.micronaut.data.jdbc.mysql.MySqlUserRoleRepository
 import io.micronaut.data.tck.entities.Car
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -27,6 +24,7 @@ import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.repositories.RoleRepository
@@ -81,6 +79,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2UserRepository userRepo = context.getBean(H2UserRepository)
+
+    @Shared
+    H2MealRepository mealRepo = context.getBean(H2MealRepository)
 
     @Override
     NoseRepository getNoseRepository() {
@@ -150,6 +151,11 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     UserRepository getUserRepository() {
         return userRepo
+    }
+
+    @Override
+    MealRepository getMealRepository() {
+        return mealRepo
     }
 
     void "test total dto"() {

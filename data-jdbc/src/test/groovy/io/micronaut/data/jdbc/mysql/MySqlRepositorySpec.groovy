@@ -15,10 +15,7 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
@@ -27,6 +24,7 @@ import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
@@ -105,6 +103,11 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
     @Override
     UserRepository getUserRepository() {
         return context.getBean(MySqlUserRepository)
+    }
+
+    @Override
+    MealRepository getMealRepository() {
+        return context.getBean(MySqlMealRepository)
     }
 
     void "test save and retrieve basic types"() {

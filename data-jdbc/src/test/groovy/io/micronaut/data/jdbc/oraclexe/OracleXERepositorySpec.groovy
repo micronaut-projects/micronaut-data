@@ -17,11 +17,6 @@ package io.micronaut.data.jdbc.oraclexe
 
 
 import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.jdbc.mysql.MySqlRoleRepository
-import io.micronaut.data.jdbc.mysql.MySqlUserRepository
-import io.micronaut.data.jdbc.mysql.MySqlUserRoleRepository
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.repositories.AuthorRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
@@ -31,6 +26,7 @@ import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
@@ -114,6 +110,11 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
     @Override
     UserRepository getUserRepository() {
         return context.getBean(OracleXEUserRepository)
+    }
+
+    @Override
+    MealRepository getMealRepository() {
+        return context.getBean(OracleXEMealRepository)
     }
 
     void "test save and fetch author with no books"() {
