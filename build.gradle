@@ -43,3 +43,4 @@ subprojects { Project subproject ->
 }
 
 apply plugin: "io.micronaut.build.docs"
+apply plugin: "io.micronaut.build.dependency-updates"
