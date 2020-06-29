@@ -1,5 +1,3 @@
-
-
 package example;
 
 import io.micronaut.context.BeanContext;
@@ -122,4 +120,3 @@ class BookRepositorySpec {
         assertEquals("The Shining", book.getTitle());
     }
 }
-
