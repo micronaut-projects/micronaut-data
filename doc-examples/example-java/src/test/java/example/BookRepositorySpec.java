@@ -35,10 +35,10 @@ class BookRepositorySpec {
 	@Test
 	void testAnnotationMetadata() {
 		String query = beanContext.getBeanDefinition(BookRepository.class) // <1>
-								.getRequiredMethod("find", String.class) // <2>
-							    .getAnnotationMetadata()
-								.stringValue(Query.class) // <3>
-								.orElse(null);
+            .getRequiredMethod("find", String.class) // <2>
+            .getAnnotationMetadata()
+			.stringValue(Query.class) // <3>
+			.orElse(null);
 
 		assertEquals( // <4>
 				"SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)",
