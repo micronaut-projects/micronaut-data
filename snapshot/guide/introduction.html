@@ -229,16 +229,13 @@ BeanContext beanContext;
 
 @Test
 void testAnnotationMetadata() {
-	String query = beanContext.getBeanDefinition(BookRepository.class) <b class="conum">(1)</b>
-							.getRequiredMethod("find", String.class) <b class="conum">(2)</b>
-						    .getAnnotationMetadata()
-							.stringValue(Query.class) <b class="conum">(3)</b>
-							.orElse(null);
+    String query = beanContext.getBeanDefinition(BookRepository.class) <b class="conum">(1)</b>
+            .getRequiredMethod("find", String.class) <b class="conum">(2)</b>
+            .getAnnotationMetadata().stringValue(Query.class) <b class="conum">(3)</b>
+            .orElse(null);
 
-	assertEquals( <b class="conum">(4)</b>
-			"SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)",
-			query
-	);
+    assertEquals( <b class="conum">(4)</b>
+            "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)", query);
 
 }</code></pre>
 </div>
