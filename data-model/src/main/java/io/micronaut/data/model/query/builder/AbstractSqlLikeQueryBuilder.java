@@ -1239,7 +1239,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         while (iterator.hasNext()) {
             String propertyName = iterator.next();
             PersistentProperty prop = queryState.getEntity().getPropertyByName(propertyName);
-            if (prop == null) {
+            if (prop == null || prop.isGenerated()) {
                 continue;
             }
 
