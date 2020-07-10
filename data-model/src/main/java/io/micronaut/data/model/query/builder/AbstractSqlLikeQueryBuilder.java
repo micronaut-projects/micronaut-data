@@ -1309,6 +1309,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 queryString.append(COMMA);
             }
         }
+        if (queryString.charAt(queryString.length() - 1) == COMMA) {
+            queryString.deleteCharAt(queryString.length() - 1);
+        }
     }
 
     /**
