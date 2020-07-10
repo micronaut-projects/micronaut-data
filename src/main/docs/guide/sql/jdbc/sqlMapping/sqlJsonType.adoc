@@ -1,4 +1,4 @@
-You can declare a field of a class as a JSON type using the ann:data.annotations.TypeDef[] annotation as follows:
+You can declare a field of a class as a JSON type using the ann:data.annotation.TypeDef[] annotation as follows:
 
 [source,java]
 ----
