@@ -97,7 +97,7 @@ public interface Pageable extends Sort {
      */
     default @NonNull Pageable previous() {
         int size = getSize();
-        int newNumber = getNumber() - size;
+        int newNumber = getNumber() - 1;
         // handle overflow
         if (newNumber < 0) {
             return Pageable.from(0, size, getSort());
