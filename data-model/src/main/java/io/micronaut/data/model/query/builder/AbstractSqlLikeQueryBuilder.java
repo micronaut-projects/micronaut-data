@@ -1236,6 +1236,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         // keys need to be sorted before query is built
 
         Iterator<String> iterator = propertiesToUpdate.iterator();
+        boolean addComma = false; // skip first comma
         while (iterator.hasNext()) {
             String propertyName = iterator.next();
             PersistentProperty prop = queryState.getEntity().getPropertyByName(propertyName);
@@ -1259,6 +1260,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             queryState.addParameterType(propertyPath, embeddedProp.getDataType());
 
                             String currentAlias = queryState.getCurrentAlias();
+                            if (addComma) {
+                                queryString.append(COMMA);
+                            }
+                            addComma = true;
                             if (currentAlias != null) {
                                 queryString.append(currentAlias).append(DOT);
                             }
@@ -1272,18 +1277,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             if (queryState.escape) {
                                 columnName = quote(columnName);
                             }
-
                             queryString.append(columnName).append('=');
                             Placeholder param = queryState.newParameter();
                             appendUpdateSetParameter(queryString, prop, param);
                             parameters.put(param.key, propertyPath);
-                            if (eIter.hasNext()) {
-                                queryString.append(COMMA);
-                            }
 
-                        }
-                        if (iterator.hasNext()) {
-                            queryString.append(COMMA);
                         }
                         continue;
                     }
@@ -1294,6 +1292,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
             queryState.addParameterType(propertyName, prop.getDataType());
             String currentAlias = queryState.getCurrentAlias();
+            if (addComma) {
+                queryString.append(COMMA);
+            }
+            addComma = true;
             if (currentAlias != null) {
                 queryString.append(currentAlias).append(DOT);
             }
@@ -1305,12 +1307,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Placeholder param = queryState.newParameter();
             appendUpdateSetParameter(queryString, prop, param);
             parameters.put(param.key, prop.getName());
-            if (iterator.hasNext()) {
-                queryString.append(COMMA);
-            }
-        }
-        if (queryString.charAt(queryString.length() - 1) == COMMA) {
-            queryString.deleteCharAt(queryString.length() - 1);
         }
     }
 
