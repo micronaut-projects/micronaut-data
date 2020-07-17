@@ -26,6 +26,7 @@ import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
+import spock.lang.Issue
 
 class FindSpec extends AbstractDataSpec {
 
@@ -352,4 +353,33 @@ class Team {
     }
 }'''
     }
+
+  @Issue('#632')
+  void "test embedded object on finders"() {
+    given:
+    def repository = buildRepository('test.RestaurantRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Restaurant;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+interface RestaurantRepository extends CrudRepository<Restaurant, UUID> {
+
+    Restaurant findByAddressZipCodeLike(String name);
+    
+    Restaurant findByAddressZipCodeIlike(String name);
+}
+""")
+
+    def query1 = repository.getRequiredMethod("findByAddressZipCodeLike", String)
+        .stringValue(Query).get()
+    def query2 = repository.getRequiredMethod("findByAddressZipCodeIlike", String)
+        .stringValue(Query).get()
+
+    expect:"The query contains the correct embedded property name"
+    query1.contains('WHERE (restaurant_.`address_zip_code` like ?')
+    query2.contains('WHERE (lower(restaurant_.`address_zip_code`) like lower(?)')
+
+  }
 }
