@@ -11,7 +11,7 @@
 
         gtag('config', 'UA-82213539-2');
     </script>
-    <title>5 Writing Queries 1.1.1</title>
+    <title>5 Writing Queries 1.1.2</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -99,7 +99,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>5 Writing Queries</h1>
 
-                    <p><strong>Version:</strong> 1.1.1</p>
+                    <p><strong>Version:</strong> 1.1.2</p>
                 </div>
 
                 
@@ -563,16 +563,10 @@ fun list(pageable: Pageable): Slice&lt;Book&gt;</code></pre>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">bookRepository.saveAll(Arrays.asList(
-		new Book("The Stand", 1000),
-		new Book("The Shining", 600),
-		new Book("The Power of the Dog", 500),
-		new Book("The Border", 700),
-		new Book("Along Came a Spider", 300),
-		new Book("Pet Cemetery", 400),
-		new Book("A Game of Thrones", 900),
-		new Book("A Clash of Kings", 1100)
-));</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">bookRepository.saveAll(Arrays.asList(new Book("The Stand", 1000), new Book("The Shining", 600),
+        new Book("The Power of the Dog", 500), new Book("The Border", 700),
+        new Book("Along Came a Spider", 300), new Book("Pet Cemetery", 400), new Book("A Game of Thrones", 900),
+        new Book("A Clash of Kings", 1100)));</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -609,8 +603,7 @@ fun list(pageable: Pageable): Slice&lt;Book&gt;</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">Slice&lt;Book&gt; slice = bookRepository.list(Pageable.from(0, 3));
-List&lt;Book&gt; resultList =
-		bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3));
+List&lt;Book&gt; resultList = bookRepository.findByPagesGreaterThan(500, Pageable.from(0, 3));
 Page&lt;Book&gt; page = bookRepository.findByTitleLike("The%", Pageable.from(0, 3));</code></pre>
 </div>
 </div>

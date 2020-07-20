@@ -11,7 +11,7 @@
 
         gtag('config', 'UA-82213539-2');
     </script>
-    <title>1 Introduction 1.1.1</title>
+    <title>1 Introduction 1.1.2</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen, print" title="Style" charset="utf-8"/>
     <link rel="stylesheet" href="../css/pdf.css" type="text/css" media="print" title="PDF" charset="utf-8"/>
@@ -97,7 +97,7 @@ function addJsClass() {
                 <div class="project">
                     <h1>1 Introduction</h1>
 
-                    <p><strong>Version:</strong> 1.1.1</p>
+                    <p><strong>Version:</strong> 1.1.2</p>
                 </div>
 
                 
@@ -166,7 +166,16 @@ function addJsClass() {
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">    Book find(String title);
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.*;
+import io.micronaut.data.repository.CrudRepository;
+import java.util.List;
+
+@Repository <b class="conum">(1)</b>
+interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    Book find(String title);
 }</code></pre>
 </div>
 </div>
@@ -220,16 +229,13 @@ BeanContext beanContext;
 
 @Test
 void testAnnotationMetadata() {
-	String query = beanContext.getBeanDefinition(BookRepository.class) <b class="conum">(1)</b>
-							.getRequiredMethod("find", String.class) <b class="conum">(2)</b>
-						    .getAnnotationMetadata()
-							.stringValue(Query.class) <b class="conum">(3)</b>
-							.orElse(null);
+    String query = beanContext.getBeanDefinition(BookRepository.class) <b class="conum">(1)</b>
+            .getRequiredMethod("find", String.class) <b class="conum">(2)</b>
+            .getAnnotationMetadata().stringValue(Query.class) <b class="conum">(3)</b>
+            .orElse(null);
 
-	assertEquals( <b class="conum">(4)</b>
-			"SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)",
-			query
-	);
+    assertEquals( <b class="conum">(4)</b>
+            "SELECT book_ FROM example.Book AS book_ WHERE (book_.title = :p1)", query);
 
 }</code></pre>
 </div>
