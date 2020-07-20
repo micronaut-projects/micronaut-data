@@ -24,7 +24,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Optional;
 
 /**
- * A repository interface for performing CRUD (Create, Read, Update, Delete). This a blocking
+ * A repository interface for performing CRUD (Create, Read, Update, Delete). This is a blocking
  * variant and is largely based on the same interface in Spring Data, however includes integrated validation support.
  *
  * @author graemerocher
