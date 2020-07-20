@@ -1144,7 +1144,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         boolean isComputePaths = computePropertyPaths();
         if (isComputePaths) {
-            String columnName = getColumnName(prop);
+            final Embedded currentEmbedded = queryState.getCurrentEmbedded();
+            String columnName;
+            if (currentEmbedded != null) {
+                columnName = computeEmbeddedName(
+                    currentEmbedded,
+                    path,
+                    prop
+                );
+            } else {
+                columnName = getColumnName(prop);
+            }
+
             if (queryState.shouldEscape()) {
                 columnName = quote(columnName);
             }
