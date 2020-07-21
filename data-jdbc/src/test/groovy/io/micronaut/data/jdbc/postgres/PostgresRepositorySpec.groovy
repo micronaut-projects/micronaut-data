@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.postgres
 
 
 import io.micronaut.data.jdbc.BasicTypes
+import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
@@ -104,6 +105,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     @Override
     UserRepository getUserRepository() {
         return context.getBean(PostgresUserRepository)
+    }
+
+    @Override
+    MealRepository getMealRepository() {
+        return context.getBean(PostgresMealRepository)
     }
 
     void "test save and fetch author with no books"() {

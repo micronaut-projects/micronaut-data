@@ -44,8 +44,9 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract UserRepository getUserRepository()
     abstract UserRoleRepository getUserRoleRepository()
     abstract RoleRepository getRoleRepository()
+    abstract MealRepository getMealRepository()
 
-    abstract Map<String, String> getProperties();
+    abstract Map<String, String> getProperties()
 
     @AutoCleanup
     @Shared
@@ -851,6 +852,17 @@ abstract class AbstractRepositorySpec extends Specification {
 
         cleanup:
         cleanupBooks()
+    }
+
+    void "test finding by UUID"() {
+        when:
+        Meal meal = mealRepository.save(new Meal(100))
+
+        then:
+        meal != null
+
+        expect:
+        mealRepository.findById(meal.mid).get().currentBloodGlucose == 100
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
