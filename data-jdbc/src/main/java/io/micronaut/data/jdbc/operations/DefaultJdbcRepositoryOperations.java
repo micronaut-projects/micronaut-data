@@ -968,7 +968,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         }
                     }
                 } else {
-                    setStatementParameter(ps, index++, dataType, value.toString(), dialect);
+                    setStatementParameter(ps, index++, dataType, value, dialect);
                 }
             }
         }
