@@ -1,14 +1,14 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     api project(":data-tx")
-    api "com.github.spotbugs:spotbugs-annotations:4.0.4"
+    api "com.github.spotbugs:spotbugs-annotations:4.0.6"
     api "io.micronaut:micronaut-inject:$micronautVersion"
     api "io.micronaut:micronaut-validation:$micronautVersion"
     api "io.micronaut:micronaut-aop:$micronautVersion"
     api "io.reactivex.rxjava2:rxjava:2.2.19"
     testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
     compileOnly "com.fasterxml.jackson.core:jackson-annotations"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.0"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.1"
 }
 tasks.withType(GroovyCompile) {
     groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')

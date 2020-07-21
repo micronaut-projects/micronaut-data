@@ -2,7 +2,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
     api project(":data-tx")
-    implementation "com.github.spotbugs:spotbugs-annotations:4.0.4"
+    implementation "com.github.spotbugs:spotbugs-annotations:4.0.6"
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
     compileOnly "org.springframework:spring-orm:5.2.7.RELEASE"
     api "org.hibernate:hibernate-core:5.4.18.Final", {

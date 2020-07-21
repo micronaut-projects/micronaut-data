@@ -44,7 +44,7 @@ dependencies {
     implementation("io.micronaut:micronaut-runtime")
     implementation("io.micronaut:micronaut-http-server-netty")
     implementation("io.micronaut:micronaut-http-client")
-    runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.9")
+    runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin:2.11.1")
     implementation("jakarta.persistence:jakarta.persistence-api:2.2.2")
     implementation("io.micronaut.data:micronaut-data-jdbc:$micronautDataVersion")
     runtimeOnly("ch.qos.logback:logback-classic:1.2.3")
