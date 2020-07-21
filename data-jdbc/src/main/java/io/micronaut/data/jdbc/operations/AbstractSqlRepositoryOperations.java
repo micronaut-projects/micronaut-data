@@ -139,6 +139,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         Object now = null;
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
+        final Dialect dialect = insert.dialect;
         for (int i = 0; i < parameterBinding.length; i++) {
             String path = parameterBinding[i];
             RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(path);
@@ -188,6 +189,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
                 Object value = beanProperty.get(entity);
                 int index = i + 1;
+
                 if (prop instanceof Association) {
                     Association association = (Association) prop;
                     if (!association.isForeignKey()) {
@@ -207,7 +209,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                         }
 
-                        if (requiresStringUUID(insert.dialect, type, value)) {
+                        if (value != null && dialect.requiresStringUUID(type)) {
                             preparedStatementWriter.setString(
                                     stmt,
                                     index,
@@ -254,7 +256,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                                 DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
                             }
-                            if (insert.dialect == Dialect.MYSQL || insert.dialect == Dialect.ORACLE) {
+                            if (dialect.requiresStringUUID(type)) {
                                 preparedStatementWriter.setString(
                                         stmt,
                                         index,
@@ -279,7 +281,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         if (type == DataType.JSON && jsonCodec != null) {
                             value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                         }
-                        if (requiresStringUUID(insert.dialect, type, value)) {
+                        if (value != null && dialect.requiresStringUUID(type)) {
                             preparedStatementWriter.setString(
                                     stmt,
                                     index,
@@ -297,19 +299,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 }
             }
         }
-    }
-
-    /**
-     * Determines if a UUID should be treated as a string. This will return true
-     * for dialects that have no special handling of UUID.
-     *
-     * @param dialect The dialect
-     * @param type The data type
-     * @param value The value
-     * @return True if the UUID should be treated as a string.
-     */
-    protected boolean requiresStringUUID(Dialect dialect, DataType type, Object value) {
-        return value != null && type == DataType.UUID && (dialect == Dialect.ORACLE || dialect == Dialect.MYSQL);
     }
 
     /**
@@ -433,12 +422,23 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param index The index
      * @param dataType The data type
      * @param value The value
+     * @param dialect The dialect
      */
-    protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value) {
+    protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
         switch (dataType) {
             case JSON:
                 if (value != null && jsonCodec != null) {
                     value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
+                }
+                preparedStatementWriter.setDynamic(
+                        preparedStatement,
+                        index,
+                        dataType,
+                        value);
+            break;
+            case UUID:
+                if (value != null && dialect.requiresStringUUID(dataType)) {
+                    dataType = DataType.STRING;
                 }
                 preparedStatementWriter.setDynamic(
                         preparedStatement,

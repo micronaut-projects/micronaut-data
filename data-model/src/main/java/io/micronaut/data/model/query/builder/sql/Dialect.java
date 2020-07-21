@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.model.DataType;
+
 /**
  * The SQL dialect to use.
  *
@@ -29,7 +32,7 @@ public enum Dialect {
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL(false),
+    MYSQL(false, true),
     /**
      * Postgres 9.5 or later.
      */
@@ -37,38 +40,51 @@ public enum Dialect {
     /**
      * SQL server 2012 or above.
      */
-    SQL_SERVER(false),
+    SQL_SERVER(false, false),
     /**
      * Oracle 12c or above.
      */
-    ORACLE,
+    ORACLE(true, true),
     /**
      * Ansi compliant SQL.
      */
     ANSI;
 
     private final boolean supportsBatch;
+    private final boolean stringUUID;
 
     /**
      * Default constructor.
      */
     Dialect() {
-        this(true);
+        this(true, false);
     }
 
     /**
      * Allows customization of batch support.
      * @param supportsBatch If batch is supported
+     * @param stringUUID Does the dialect require a string UUID
      */
-    Dialect(boolean supportsBatch) {
+    Dialect(boolean supportsBatch, boolean stringUUID) {
         this.supportsBatch = supportsBatch;
+        this.stringUUID = stringUUID;
     }
 
     /**
      * Some drivers and dialects do not support JDBC batching. This allows customization.
      * @return True if batch is supported.
      */
-    public boolean allowBatch() {
+    public final boolean allowBatch() {
         return supportsBatch;
+    }
+
+    /**
+     * Determines whether
+     * @param type the type
+     * @return True if a string UUID is required
+     * @since 1.1.3
+     */
+    public final boolean requiresStringUUID(@NonNull DataType type) {
+        return type == DataType.UUID && this.stringUUID;
     }
 }

@@ -855,7 +855,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
         DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
         String query = preparedQuery.getQuery();
-
+        final Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
         final boolean hasIn = preparedQuery.hasInExpression();
         if (hasIn) {
             Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
@@ -888,8 +888,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (pageable != Pageable.UNPAGED) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 Sort sort = pageable.getSort();
-                final Class<?> repositoryType = preparedQuery.getRepositoryType();
-                Dialect dialect = dialects.getOrDefault(repositoryType, Dialect.ANSI);
                 QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
                     query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
@@ -952,30 +950,25 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
             }
             if (value == null) {
-                setStatementParameter(ps, index++, dataType, null);
+                setStatementParameter(ps, index++, dataType, null, dialect);
             } else if (value != IGNORED_PARAMETER) {
                 if (value instanceof Iterable) {
                     Iterable iter = (Iterable) value;
                     for (Object o : iter) {
-                        setStatementParameter(ps, index++, dataType, o);
+                        setStatementParameter(ps, index++, dataType, o, dialect);
                     }
                 } else if (value.getClass().isArray()) {
                     if (value instanceof byte[]) {
-                        setStatementParameter(ps, index++, dataType, value);
+                        setStatementParameter(ps, index++, dataType, value, dialect);
                     } else {
                         int len = Array.getLength(value);
                         for (int j = 0; j < len; j++) {
                             Object o = Array.get(value, j);
-                            setStatementParameter(ps, index++, dataType, o);
+                            setStatementParameter(ps, index++, dataType, o, dialect);
                         }
                     }
                 } else {
-                    final Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
-                    if (requiresStringUUID(dialect, dataType, value)) {
-                        setStatementParameter(ps, index++, DataType.STRING, value.toString());
-                    } else {
-                        setStatementParameter(ps, index++, dataType, value);
-                    }
+                    setStatementParameter(ps, index++, DataType.STRING, value.toString(), dialect);
                 }
             }
         }
