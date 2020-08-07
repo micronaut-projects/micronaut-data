@@ -21,11 +21,13 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 
+import io.micronaut.data.runtime.config.DataSettings;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
+import org.slf4j.Logger;
 
 /**
  * An abstract interface over prepared statements.
@@ -34,6 +36,8 @@ import java.util.UUID;
  * @param <IDX> The index type
  */
 public interface QueryStatement<PS, IDX> {
+
+    Logger QUERY_LOG = DataSettings.QUERY_LOG;
 
     /**
      * Sets the give given object value.

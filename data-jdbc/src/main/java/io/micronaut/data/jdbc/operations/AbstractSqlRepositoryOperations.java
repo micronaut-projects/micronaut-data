@@ -205,9 +205,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         if (value != null) {
                             value = identityProperty.get(value);
                         }
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                        }
 
                         if (value != null && dialect.requiresStringUUID(type)) {
                             preparedStatementWriter.setString(
@@ -229,9 +226,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     if (beanProperty.hasStereotype(AutoPopulated.class)) {
                         if (beanProperty.hasAnnotation(DateCreated.class)) {
                             now = now != null ? now : dateTimeProvider.getNow();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                            }
                             preparedStatementWriter.setDynamic(
                                     stmt,
                                     index,
@@ -241,9 +235,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             beanProperty.convertAndSet(entity, now);
                         } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
                             now = now != null ? now : dateTimeProvider.getNow();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                            }
                             preparedStatementWriter.setDynamic(
                                     stmt,
                                     index,
@@ -253,9 +244,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             beanProperty.convertAndSet(entity, now);
                         } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
                             UUID uuid = UUID.randomUUID();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
-                            }
                             if (dialect.requiresStringUUID(type)) {
                                 preparedStatementWriter.setString(
                                         stmt,
@@ -275,9 +263,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                         }
                     } else {
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                        }
                         if (type == DataType.JSON && jsonCodec != null) {
                             value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                         }

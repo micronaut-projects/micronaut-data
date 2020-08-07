@@ -39,51 +39,51 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 switch (dataType) {
                     case ENTITY:
                     case LONG:
-                        statement.setNull(index, Types.BIGINT);
+                        bindNullParameter(statement, index, Types.BIGINT);
                         return this;
                     case STRING:
                     case JSON:
-                        statement.setNull(index, Types.VARCHAR);
+                        bindNullParameter(statement, index, Types.VARCHAR);
                         return this;
                     case DATE:
-                        statement.setNull(index, Types.DATE);
+                        bindNullParameter(statement, index, Types.DATE);
                         return this;
                     case BOOLEAN:
-                        statement.setNull(index, Types.BOOLEAN);
+                        bindNullParameter(statement, index, Types.BOOLEAN);
                         return this;
                     case INTEGER:
-                        statement.setNull(index, Types.INTEGER);
+                        bindNullParameter(statement, index, Types.INTEGER);
                         return this;
                     case TIMESTAMP:
-                        statement.setNull(index, Types.TIMESTAMP);
+                        bindNullParameter(statement, index, Types.TIMESTAMP);
                         return this;
                     case OBJECT:
-                        statement.setNull(index, Types.OTHER);
+                        bindNullParameter(statement, index, Types.OTHER);
                         return this;
                     case CHARACTER:
-                        statement.setNull(index, Types.CHAR);
+                        bindNullParameter(statement, index, Types.CHAR);
                         return this;
                     case DOUBLE:
-                        statement.setNull(index, Types.DOUBLE);
+                        bindNullParameter(statement, index, Types.DOUBLE);
                         return this;
                     case BYTE_ARRAY:
-                        statement.setNull(index, Types.BINARY);
+                        bindNullParameter(statement, index, Types.BINARY);
                         return this;
                     case FLOAT:
-                        statement.setNull(index, Types.FLOAT);
+                        bindNullParameter(statement, index, Types.FLOAT);
                         return this;
                     case BIGDECIMAL:
-                        statement.setNull(index, Types.DECIMAL);
+                        bindNullParameter(statement, index, Types.DECIMAL);
                         return this;
                     case BYTE:
-                        statement.setNull(index, Types.BIT);
+                        bindNullParameter(statement, index, Types.BIT);
                         return this;
                     case SHORT:
-                        statement.setNull(index, Types.TINYINT);
+                        bindNullParameter(statement, index, Types.TINYINT);
                         return this;
 
                     default:
-                        statement.setNull(index, Types.NULL);
+                        bindNullParameter(statement, index, Types.NULL);
                         return this;
                 }
             } catch (SQLException e) {
@@ -99,10 +99,12 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     public QueryStatement<PreparedStatement, Integer> setTimestamp(PreparedStatement statement, Integer name, Date date) {
         try {
             if (date == null) {
-                statement.setNull(name, Types.TIMESTAMP);
+                bindNullParameter(statement, name, Types.TIMESTAMP);
             } else if (date instanceof Timestamp) {
+                logBindingParameterValue(name, Types.TIMESTAMP, date);
                 statement.setTimestamp(name, (Timestamp) date);
             } else {
+                logBindingParameterValue(name, Types.TIMESTAMP, date);
                 statement.setTimestamp(name, new Timestamp(date.getTime()));
             }
         } catch (SQLException e) {
@@ -115,13 +117,17 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     public QueryStatement<PreparedStatement, Integer> setValue(PreparedStatement statement, Integer index, Object value) throws DataAccessException {
         try {
             if (value instanceof Clob) {
+                logBindingParameterValue(index, Types.CLOB, value);
                 statement.setClob(index, (Clob) value);
             } else if (value instanceof Blob) {
+                logBindingParameterValue(index, Types.BLOB, "<blob>");
                 statement.setBlob(index, (Blob) value);
             } else if (value != null) {
                 if (value.getClass().isEnum()) {
+                    logBindingParameterValue(index, Types.VARCHAR, value);
                     statement.setString(index, ((Enum) value).name());
                 } else {
+                    logBindingParameterValue(index, Types.JAVA_OBJECT, value);
                     statement.setObject(index, value);
                 }
             }
@@ -135,6 +141,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setLong(PreparedStatement statement, Integer name, long value) {
         try {
+            logBindingParameterValue(name, Types.BIGINT, value);
             statement.setLong(name, value);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -146,6 +153,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setChar(PreparedStatement statement, Integer name, char value) {
         try {
+            logBindingParameterValue(name, Types.INTEGER, value);
             statement.setInt(name, value);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -158,8 +166,9 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     public QueryStatement<PreparedStatement, Integer> setDate(PreparedStatement statement, Integer name, Date date) {
         try {
             if (date == null) {
-                statement.setNull(name, Types.DATE);
+                bindNullParameter(statement, name, Types.DATE);
             } else {
+                logBindingParameterValue(name, Types.DATE, date);
                 statement.setDate(name, new java.sql.Date(date.getTime()));
             }
         } catch (SQLException e) {
@@ -172,8 +181,9 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     public QueryStatement<PreparedStatement, Integer> setString(PreparedStatement statement, Integer name, String string) {
         try {
             if (string == null) {
-                statement.setNull(name, Types.VARCHAR);
+                bindNullParameter(statement, name, Types.VARCHAR);
             } else {
+                logBindingParameterValue(name, Types.VARCHAR, string);
                 statement.setString(name, string);
             }
         } catch (SQLException e) {
@@ -186,6 +196,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setInt(PreparedStatement statement, Integer name, int integer) {
         try {
+            logBindingParameterValue(name, Types.INTEGER, integer);
             statement.setInt(name, integer);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -197,6 +208,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setBoolean(PreparedStatement statement, Integer name, boolean bool) {
         try {
+            logBindingParameterValue(name, Types.BOOLEAN, bool);
             statement.setBoolean(name, bool);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -208,6 +220,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setFloat(PreparedStatement statement, Integer name, float f) {
         try {
+            logBindingParameterValue(name, Types.REAL, f);
             statement.setFloat(name, f);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -219,6 +232,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setByte(PreparedStatement statement, Integer name, byte b) {
         try {
+            logBindingParameterValue(name, Types.TINYINT, b);
             statement.setByte(name, b);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -230,6 +244,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setShort(PreparedStatement statement, Integer name, short s) {
         try {
+            logBindingParameterValue(name, Types.SMALLINT, s);
             statement.setShort(name, s);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -241,6 +256,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setDouble(PreparedStatement statement, Integer name, double d) {
         try {
+            logBindingParameterValue(name, Types.DOUBLE, d);
             statement.setDouble(name, d);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -252,6 +268,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setBigDecimal(PreparedStatement statement, Integer name, BigDecimal bd) {
         try {
+            logBindingParameterValue(name, Types.NUMERIC, bd);
             statement.setBigDecimal(name, bd);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -263,6 +280,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     @Override
     public QueryStatement<PreparedStatement, Integer> setBytes(PreparedStatement statement, Integer name, byte[] bytes) {
         try {
+            logBindingParameterValue(name, Types.VARBINARY, "<bytearray>");
             statement.setBytes(name, bytes);
         } catch (SQLException e) {
             throw newDataAccessException(e);
@@ -272,5 +290,16 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
 
     private DataAccessException newDataAccessException(SQLException e) {
         return new DataAccessException("Unable to set PreparedStatement value: " + e.getMessage(), e);
+    }
+
+    private void bindNullParameter(PreparedStatement statement, Integer index, int sqlType) throws SQLException {
+        logBindingParameterValue(index, sqlType, null);
+        statement.setNull(index, sqlType);
+    }
+
+    private void logBindingParameterValue(int index, int sqlType, Object value) {
+        if (QUERY_LOG.isTraceEnabled()) {
+            QUERY_LOG.trace("Binding value {} as {} to parameter at position: {}", value, JDBCType.valueOf(sqlType).getName(), index);
+        }
     }
 }

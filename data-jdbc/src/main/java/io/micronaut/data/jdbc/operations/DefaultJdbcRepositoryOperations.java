@@ -510,9 +510,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     final Association association = (Association) pp;
                                     final BeanProperty<Object, ?> idReaderProperty = idReader.getProperty();
                                     final Object id = idReaderProperty.get(newValue);
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, id);
-                                    }
                                     if (id != null) {
 
                                         preparedStatementWriter.setDynamic(
@@ -582,9 +579,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     }
                                 } else if (dataType == DataType.JSON && jsonCodec != null) {
                                     String value = new String(jsonCodec.encode(newValue), StandardCharsets.UTF_8);
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, value);
-                                    }
                                     preparedStatementWriter.setDynamic(
                                             ps,
                                             i + 1,
@@ -592,9 +586,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             value
                                     );
                                 } else {
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
-                                    }
                                     preparedStatementWriter.setDynamic(
                                             ps,
                                             i + 1,
@@ -818,17 +809,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                         final Object parentId = identity.get(entity);
                                         for (Object o : batchResult) {
                                             final Object childId = associatedIdProperty.get(o);
-                                            if (QUERY_LOG.isTraceEnabled()) {
-                                                QUERY_LOG.trace("Binding parameter at position {} to value {}", 1, parentId);
-                                            }
                                             preparedStatementWriter.setDynamic(
                                                     ps,
                                                     1,
                                                     persistentEntity.getIdentity().getDataType(),
                                                     parentId);
-                                            if (QUERY_LOG.isTraceEnabled()) {
-                                                QUERY_LOG.trace("Binding parameter at position {} to value {}", 2, childId);
-                                            }
                                             preparedStatementWriter.setDynamic(
                                                     ps,
                                                     2,
@@ -946,9 +931,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
             }
 
-            if (QUERY_LOG.isTraceEnabled()) {
-                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
-            }
             if (value == null) {
                 setStatementParameter(ps, index++, dataType, null, dialect);
             } else if (value != IGNORED_PARAMETER) {
