@@ -102,7 +102,7 @@ public interface QueryStatement<PS, IDX> {
                 } else if (value instanceof Date) {
                     return setTimestamp(statement, index, ((Date) value));
                 } else {
-                    return setTimestamp(statement, index, convertRequired(value, Date.class));
+                    return setTimestamp(statement, index, convertRequired(value, Timestamp.class));
                 }
             case UUID:
                 if (value instanceof CharSequence) {
