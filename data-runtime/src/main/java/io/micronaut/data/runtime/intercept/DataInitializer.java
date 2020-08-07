@@ -52,8 +52,7 @@ class DataInitializer {
         conversionService.addConverter(Instant.class, Date.class, instant ->
                 new Date(instant.toEpochMilli())
         );
-        conversionService.addConverter(Instant.class, Timestamp.class, instant ->
-        {
+        conversionService.addConverter(Instant.class, Timestamp.class, instant -> {
             Timestamp timestamp = new Timestamp(instant.toEpochMilli());
             timestamp.setNanos(instant.getNano());
             return timestamp;
@@ -83,8 +82,7 @@ class DataInitializer {
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime ->
                 offsetDateTime.toInstant().toEpochMilli()
         );
-        conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime ->
-            {
+        conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime -> {
                 Instant instant = offsetDateTime.toInstant();
                 Timestamp timestamp = new Timestamp(instant.toEpochMilli());
                 timestamp.setNanos(instant.getNano());
