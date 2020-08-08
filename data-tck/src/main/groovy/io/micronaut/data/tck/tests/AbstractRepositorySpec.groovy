@@ -871,4 +871,9 @@ abstract class AbstractRepositorySpec extends Specification {
         GregorianCalendar calendar = new GregorianCalendar(localDate.year, localDate.month.value, localDate.dayOfMonth)
         calendar
     }
+
+    protected ApplicationContext getApplicationContext() {
+        return context;
+    }
+
 }
