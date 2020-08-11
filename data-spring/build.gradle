@@ -1,6 +1,6 @@
 ext {
     springVersion = "5.2.7.RELEASE"
-    springDataVersion = "2.3.1.RELEASE"
+    springDataVersion = "2.3.2.RELEASE"
 }
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
