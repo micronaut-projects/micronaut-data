@@ -3,7 +3,7 @@ dependencies {
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     implementation project(":data-spring")
     api project(":data-hibernate-jpa")
-    api 'org.springframework.data:spring-data-jpa:2.3.1.RELEASE'
+    api 'org.springframework.data:spring-data-jpa:2.3.3.RELEASE'
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     testAnnotationProcessor project(":data-processor")
