@@ -27,7 +27,7 @@ dependencies {
     testRuntimeOnly "com.h2database:h2:1.4.200"
     testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     testRuntimeOnly "org.mariadb.jdbc:mariadb-java-client:$mariadbDriverVersion"
-    testRuntimeOnly "com.oracle.ojdbc:ojdbc8:$oracleDriverVersion"
+    testRuntimeOnly "com.oracle.database.jdbc:ojdbc8:$oracleDriverVersion"
     testRuntimeOnly "mysql:mysql-connector-java:$mysqlDriverVersion"
     testRuntimeOnly "org.postgresql:postgresql:$postgresDriverVersion"
     testRuntimeOnly "com.microsoft.sqlserver:mssql-jdbc:$mssqlDriverVersion"
