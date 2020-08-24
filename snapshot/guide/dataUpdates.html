@@ -870,6 +870,18 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">override fun deleteAll()</code></pre>
 </div>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<code>deleteAll</code> does not cascade. Delete all foreign key references first or use <code>delete</code> on all individual items.
+</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
 <p>To delete by ID or by the value of a property you can specify a parameter that matches a property of an entity:</p>
 </div>
