@@ -36,6 +36,7 @@ import io.micronaut.data.model.*;
 import java.util.*;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     $returnType $method($arguments);

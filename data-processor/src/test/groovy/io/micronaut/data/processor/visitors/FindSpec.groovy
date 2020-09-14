@@ -188,6 +188,7 @@ class DeviceManufacturer {
 }
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface DeviceInfoRepository extends GenericRepository<DeviceInfo, Long> {
 
     DeviceInfo findByManufacturerDeviceId(String id);
@@ -207,6 +208,7 @@ interface DeviceInfoRepository extends GenericRepository<DeviceInfo, Long> {
 ${playerTeamModel()}
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface PlayerRepository extends GenericRepository<Player, Integer> {
 
     Collection<Player> findAllOrderByName();
@@ -232,6 +234,7 @@ interface PlayerRepository extends GenericRepository<Player, Integer> {
 ${playerTeamModel()}
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface PlayerRepository extends GenericRepository<Player, Integer> {
 
     Collection<Player> findByTeamName(String name);
@@ -258,6 +261,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person find(Long id);
@@ -364,6 +368,7 @@ import io.micronaut.data.tck.entities.Restaurant;
 import java.util.UUID;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface RestaurantRepository extends CrudRepository<Restaurant, UUID> {
 
     Restaurant findByAddressZipCodeLike(String name);

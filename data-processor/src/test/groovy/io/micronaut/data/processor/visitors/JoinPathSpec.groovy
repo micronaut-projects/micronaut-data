@@ -33,6 +33,7 @@ import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<User, Long> {
 
     @Join(value = "authorities")
@@ -94,6 +95,7 @@ class User {
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $returnType $method($arguments);
@@ -125,6 +127,7 @@ import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Author, Long> {
 
     $returnType $method($arguments);
@@ -155,6 +158,7 @@ import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<CountryRegion, Long> {
 
     $returnType $method($arguments);
@@ -192,6 +196,7 @@ import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -228,6 +233,7 @@ import java.util.List;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     @Join(value = "countryRegion", alias = "r_")
@@ -265,6 +271,7 @@ import io.micronaut.data.tck.entities.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -310,6 +317,7 @@ interface MyInterface extends GenericRepository<City, Long> {
 import io.micronaut.data.tck.entities.*;
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     $joinAnn
@@ -357,6 +365,7 @@ interface MyInterface extends GenericRepository<City, Long> {
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<City, Long> {
 
     @Join("$joinPath")
@@ -388,6 +397,7 @@ import io.micronaut.data.tck.entities.*;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=io.micronaut.data.model.query.builder.sql.SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends io.micronaut.data.tck.repositories.ShelfRepository {
 
 }

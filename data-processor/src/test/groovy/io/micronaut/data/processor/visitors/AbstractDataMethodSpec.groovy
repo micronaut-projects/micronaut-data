@@ -29,6 +29,7 @@ import java.util.*;
 ${imports ? imports.collect({ 'import ' + it + '.*;' }).join('\n') : ''}
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<$entity, Long> {
 
     $returnType $method($arguments);

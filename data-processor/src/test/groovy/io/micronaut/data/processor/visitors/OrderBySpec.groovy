@@ -26,6 +26,7 @@ class OrderBySpec extends AbstractDataSpec {
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 
     Company $method($arguments);
@@ -57,6 +58,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 
     Company $method($arguments);

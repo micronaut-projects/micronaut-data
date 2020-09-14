@@ -52,6 +52,7 @@ import io.micronaut.data.tck.entities.Author;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @Join("author")
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Book, Long> {
 
     Author findAuthorById(@Id Long id);
@@ -76,6 +77,7 @@ import io.micronaut.data.tck.entities.Meal;
 import java.util.UUID;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface MealRepository extends CrudRepository<Meal, UUID> {
     @Join("foods")
     Meal searchById(UUID uuid);
@@ -101,6 +103,7 @@ import java.util.UUID;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface FoodRepository extends CrudRepository<Food, UUID> {
     
     @Join("meal")
@@ -125,6 +128,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     Optional<Movie> findByTitle(String title);
     Optional<String> findTheLongNameById(int id);
@@ -153,6 +157,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     Page<MovieTitle> queryAll(Pageable pageable);
 }

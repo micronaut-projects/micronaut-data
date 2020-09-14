@@ -129,6 +129,7 @@ import io.micronaut.data.model.entities.*;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long>{
     $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
@@ -150,6 +151,7 @@ import java.util.List;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long>{
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }

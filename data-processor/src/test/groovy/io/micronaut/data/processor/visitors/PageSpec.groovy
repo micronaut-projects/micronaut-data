@@ -76,6 +76,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 import io.micronaut.data.model.entities.Person;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Page<Person> list(Pageable pageable);

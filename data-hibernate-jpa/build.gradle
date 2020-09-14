@@ -4,7 +4,7 @@ dependencies {
     api project(":data-runtime")
     api project(":data-model")
     api 'jakarta.persistence:jakarta.persistence-api:2.2.3'
-    api "org.hibernate:hibernate-core:5.4.20.Final", {
+    api "org.hibernate:hibernate-core:5.4.21.Final", {
         exclude group: "javax.persistence", module:"javax.persistence-api"
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
@@ -32,6 +32,7 @@ dependencies {
     testImplementation project(":data-processor")
     testRuntimeOnly "com.h2database:h2"
     testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+    testImplementation("org.codehaus.groovy:groovy-sql")
 
 //    compileTestGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
 

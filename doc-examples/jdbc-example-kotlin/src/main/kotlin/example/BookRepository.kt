@@ -1,6 +1,7 @@
 // tag::repository[]
 package example
 
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.*
@@ -21,6 +22,7 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
 
     // tag::simple-alt[]
     // tag::repository[]
+    @Executable
     fun find(title: String): Book
     // end::simple-alt[]
     // end::repository[]

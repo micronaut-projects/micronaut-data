@@ -88,6 +88,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect=Dialect.${dialect.name()})
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, Long> {
     Test save(String name);
     
@@ -189,6 +190,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect=Dialect.${dialect.name()})
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Test, UUID> {
     Test save(String name);
     
@@ -247,6 +249,7 @@ import io.micronaut.data.model.DataType;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<TableRatings, Long> {
 }
 
@@ -298,6 +301,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 }
 """)

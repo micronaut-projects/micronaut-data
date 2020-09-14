@@ -49,6 +49,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     void update(@Id Long myId, String name);
@@ -94,6 +95,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Company, Long> {
 
     void update(@Id Long myId, String name);
