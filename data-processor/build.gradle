@@ -1,9 +1,9 @@
 dependencies {
 	api project(":data-model")
-	api "com.github.spotbugs:spotbugs-annotations:4.0.6"
+	api "com.github.spotbugs:spotbugs-annotations:4.1.2"
 	compileOnly "io.micronaut:micronaut-inject:$micronautVersion"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-	testImplementation "io.projectreactor:reactor-core:3.3.8.RELEASE"
+	testImplementation "io.projectreactor:reactor-core:3.3.9.RELEASE"
 	testImplementation "io.micronaut:micronaut-inject-groovy"
 	testImplementation "io.micronaut:micronaut-inject-java-test"
 	testImplementation 'javax.persistence:javax.persistence-api:2.2'
@@ -11,6 +11,6 @@ dependencies {
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}
-	testImplementation 'org.springframework.data:spring-data-jpa:2.3.1.RELEASE'
+	testImplementation 'org.springframework.data:spring-data-jpa:2.3.3.RELEASE'
 	testImplementation project(":data-tck")
 }

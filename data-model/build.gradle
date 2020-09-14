@@ -1,7 +1,7 @@
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     api project(":data-tx")
-    api "com.github.spotbugs:spotbugs-annotations:4.0.6"
+    api "com.github.spotbugs:spotbugs-annotations:4.1.2"
     api "io.micronaut:micronaut-inject:$micronautVersion"
     api "io.micronaut:micronaut-validation:$micronautVersion"
     api "io.micronaut:micronaut-aop:$micronautVersion"
