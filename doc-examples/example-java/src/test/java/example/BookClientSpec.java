@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 
 @MicronautTest
-// remove after upgrading to Micronaut 2.x
-@Property(name = JacksonConfiguration.PROPERTY_USE_BEAN_INTROSPECTION, value = "false")
 public class BookClientSpec {
 
     @Inject BookClient bookClient;
