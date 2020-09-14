@@ -17,7 +17,7 @@ dependencies {
     implementation project(":data-hibernate-jpa")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     implementation "io.micronaut:micronaut-http-server-netty"
-    implementation "io.micronaut:micronaut-runtime-groovy"
+    implementation "io.micronaut.groovy:micronaut-runtime-groovy"
     implementation "io.micronaut:micronaut-validation"
     compileOnly project(":data-processor")
     compileOnly "io.micronaut:micronaut-inject-groovy"

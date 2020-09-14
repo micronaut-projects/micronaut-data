@@ -49,6 +49,7 @@ import java.util.List;
 import io.micronaut.data.annotation.Repository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends CrudRepository<Person, Long> {
 
     List<Person> list(String name);   

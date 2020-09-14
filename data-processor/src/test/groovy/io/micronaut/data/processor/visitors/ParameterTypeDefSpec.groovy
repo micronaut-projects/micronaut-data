@@ -33,6 +33,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
     namedParameters = false
 )
 @Repository
+@io.micronaut.context.annotation.Executable
 interface PersonRepository extends io.micronaut.data.repository.GenericRepository<Person, UUID> {
     List<Person> findByIdIn(List<UUID> id);
     
@@ -83,6 +84,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
     namedParameters = false
 )
 @Repository
+@io.micronaut.context.annotation.Executable
 interface PersonRepository extends io.micronaut.data.repository.GenericRepository<Person, Long> {
     void deleteAll(Iterable<Person> entities);
 }

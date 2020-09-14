@@ -32,6 +32,7 @@ dependencies {
     testImplementation project(":data-processor")
     testRuntimeOnly "com.h2database:h2"
     testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+    testImplementation("org.codehaus.groovy:groovy-sql")
 
 //    compileTestGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
 

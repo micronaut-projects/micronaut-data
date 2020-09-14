@@ -52,6 +52,7 @@ import io.micronaut.data.annotation.Repository;
 import $returnType.name;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface {
     $returnType.simpleName $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')});    
 }
@@ -89,6 +90,7 @@ import java.util.List;
 import io.micronaut.data.model.Pageable;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface {
     List<$returnType.simpleName> $method(${arguments.entrySet().collect { "$it.value.name $it.key" }.join(',')}, Pageable pager);    
 }

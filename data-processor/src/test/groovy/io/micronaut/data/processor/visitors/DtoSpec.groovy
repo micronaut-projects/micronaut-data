@@ -99,6 +99,7 @@ import io.micronaut.data.model.entities.Person;
 import io.micronaut.core.annotation.Introspected;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     List<PersonDto> list(String name);

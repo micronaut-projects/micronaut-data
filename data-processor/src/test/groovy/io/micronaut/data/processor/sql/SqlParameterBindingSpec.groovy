@@ -31,6 +31,7 @@ import java.util.Map;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@io.micronaut.context.annotation.Executable
 interface SaleRepository extends CrudRepository<Sale, Long> {
 
     void updateData(@Id Long id, Map<String, String> data);
@@ -56,6 +57,7 @@ ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@io.micronaut.context.annotation.Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     List<Project> findByNameLikeOrNameNotEqual(String n1, String n2, Pageable pageable);
 }
@@ -78,6 +80,7 @@ import io.micronaut.context.annotation.Parameter;
 ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId> {
     List<Project> findByNameLikeOrNameNotEqual(String name1, String name2, Pageable pageable);
 
@@ -99,6 +102,7 @@ interface ProjectRepository extends CrudRepository<Project, ProjectId> {
         given:
         def repository = buildRepository('test.CompanyRepository', """
 @Repository
+@io.micronaut.context.annotation.Executable
 interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository{
 }
 """)

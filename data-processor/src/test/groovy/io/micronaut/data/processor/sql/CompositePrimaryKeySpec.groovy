@@ -25,10 +25,11 @@ import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.User
 import io.micronaut.inject.ExecutableMethod
+import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Shared
 
-@Requires({ javaVersion <= 1.8 })
+@Requires({ jvm.isJava8() })
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
     @Shared SourcePersistentEntity entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
@@ -39,6 +40,7 @@ class CompositePrimaryKeySpec extends AbstractDataSpec {
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@io.micronaut.context.annotation.Executable
 interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRepository {
 }
 """)
@@ -62,6 +64,7 @@ ${TestEntities.compositePrimaryKeyEntities()}
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@io.micronaut.context.annotation.Executable
 interface ProjectRepository extends CrudRepository<Project, ProjectId>{
     void update(@Id ProjectId id, @Parameter("name") String name);
 }
@@ -95,6 +98,7 @@ ${TestEntities.compositeRelationPrimaryKeyEntities()}
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false, namedParameters = false)
+@io.micronaut.context.annotation.Executable
 interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         
     UserRole save(UserRole entity);

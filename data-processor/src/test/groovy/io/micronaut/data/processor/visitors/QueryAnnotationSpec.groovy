@@ -46,6 +46,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface MovieRepository extends GenericRepository<Movie, Long> {
     @Query("$query")
     void deleteById(Long id);
@@ -90,6 +91,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @Repository(value = "secondary")
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface MovieRepository extends CrudRepository<Movie, Long> {
     @Query("UPDATE User SET enabled = false WHERE id = :id")
     @Override
@@ -121,6 +123,7 @@ import java.util.List;
 
 @Repository
 @RepositoryConfiguration(namedParameters = false, implicitQueries = false)
+@io.micronaut.context.annotation.Executable
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")
@@ -162,6 +165,7 @@ import io.micronaut.data.annotation.Query;
 import java.util.List;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface {
 
     @Query("from Person p where p.name = :n")

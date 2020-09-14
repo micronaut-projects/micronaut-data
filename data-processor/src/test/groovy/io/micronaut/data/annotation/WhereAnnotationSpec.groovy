@@ -26,6 +26,7 @@ class WhereAnnotationSpec extends AbstractDataSpec {
         def repository = buildRepository('test.TestRepository', '''
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface TestRepository extends CrudRepository<User, Long> {
     int countByIdGreaterThan(Long id);
 }
@@ -93,6 +94,7 @@ import io.micronaut.data.tck.entities.Person;
 
 @Where("age > :age")
 @Repository
+@io.micronaut.context.annotation.Executable
 interface TestRepository extends GenericRepository<Person, Long> {
     int countByNameLike(String name, int age);
 }
@@ -113,6 +115,7 @@ import io.micronaut.data.tck.entities.Person;
 
 @Where("person_.age > 18")
 @Repository
+@io.micronaut.context.annotation.Executable
 interface TestRepository extends CrudRepository<Person, Long> {
     int countByNameLike(String name);
 }

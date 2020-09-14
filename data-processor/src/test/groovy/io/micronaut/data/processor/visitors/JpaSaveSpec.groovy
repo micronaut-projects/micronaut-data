@@ -37,6 +37,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.GenericRepository;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Person, Long> {
 
     Person save(String name, int age, String publicId);

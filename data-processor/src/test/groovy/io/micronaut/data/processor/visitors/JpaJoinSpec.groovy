@@ -49,6 +49,7 @@ interface MyInterface extends CrudRepository<Book, Long> {
 import io.micronaut.data.tck.entities.*;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Author, Long> {
 
     $returnType $method($arguments);
@@ -76,6 +77,7 @@ interface MyInterface extends GenericRepository<Author, Long> {
 import io.micronaut.data.tck.entities.Book;
 
 @Repository
+@io.micronaut.context.annotation.Executable
 interface MyInterface extends GenericRepository<Book, Long> {
 
     @Join("author")

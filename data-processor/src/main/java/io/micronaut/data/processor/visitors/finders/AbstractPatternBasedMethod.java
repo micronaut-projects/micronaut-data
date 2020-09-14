@@ -47,6 +47,7 @@ import io.micronaut.inject.ast.PropertyElement;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.CompletionStage;
@@ -494,6 +495,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         SourcePersistentEntity entity = matchContext.getEntity(queryResultType);
         for (PropertyElement beanProperty : beanProperties) {
             String propertyName = beanProperty.getName();
+            if ("metaClass".equals(propertyName) && beanProperty.getType().isAssignable("groovy.lang.MetaClass")) {
+                // ignore Groovy meta class
+                continue;
+            }
             SourcePersistentProperty pp = entity.getPropertyByName(propertyName);
 
             if (pp == null) {
@@ -669,6 +674,11 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
         @Override
         public boolean isAssignable(String type) {
             return false;
+        }
+
+        @Override
+        public ClassElement toArray() {
+            return new DynamicClassElement((Class<? extends DataInterceptor>) Array.newInstance(type, 0).getClass());
         }
 
         @Nonnull

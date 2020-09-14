@@ -34,6 +34,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Person;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface PersonRepository extends CrudRepository<Person, Long> {
 
     $type updatePerson(@Id Long id, String name);
@@ -69,6 +70,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     void updateById(int id, String theLongName, String title);
 }
@@ -97,6 +99,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Company;
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface CompanyRepository extends CrudRepository<Company, Long> {
 }
 """)
@@ -121,6 +124,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Restaurant;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface CompanyRepository extends CrudRepository<Restaurant, Long> {
 }
 """)
@@ -144,6 +148,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Person;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
 interface PersonRepository extends CrudRepository<Person, Long> {
 
     void updatePerson(@Id Long id, String name);
@@ -184,6 +189,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
   import io.micronaut.data.tck.entities.Student;
 
   @JdbcRepository(dialect= Dialect.MYSQL)
+  @io.micronaut.context.annotation.Executable
   interface StudentRepository extends CrudRepository<Student, Long> {
 
   }
