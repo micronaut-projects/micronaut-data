@@ -250,6 +250,7 @@
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
@@ -257,6 +258,7 @@ import java.util.List;
 
 @Repository <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     Book find(String title);
 }</code></pre>
 </div>
@@ -265,12 +267,14 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="co
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
 @Repository <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     Book find(String title)
 }</code></pre>
 </div>
@@ -279,12 +283,14 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="co
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
 @Repository <b class="conum">(1)</b>
 interface BookRepository : CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     fun find(title: String): Book
 }</code></pre>
 </div>
@@ -674,6 +680,7 @@ data class Book(@Id
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
+import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
@@ -681,6 +688,7 @@ import java.util.List;
 
 @Repository <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     Book find(String title);
 }</code></pre>
 </div>
@@ -689,12 +697,14 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="co
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
 @Repository <b class="conum">(1)</b>
 interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     Book find(String title)
 }</code></pre>
 </div>
@@ -703,12 +713,14 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="co
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.model.*
 import io.micronaut.data.repository.CrudRepository
 
 @Repository <b class="conum">(1)</b>
 interface BookRepository : CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     fun find(title: String): Book
 }</code></pre>
 </div>
@@ -1342,17 +1354,20 @@ More details about the batch update variants of these methods is covered in the 
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">Book find(String title);</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">@Executable
+Book find(String title);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book find(String title)</code></pre>
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Executable
+Book find(String title)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun find(title: String): Book</code></pre>
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Executable
+fun find(title: String): Book</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -3984,7 +3999,8 @@ data class Book(@Id
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">    Book find(String title);
+<pre class="highlight"><code class="language-java" data-lang="java">    @Executable
+    Book find(String title);
 }</code></pre>
 </div>
 </div>
@@ -4010,6 +4026,7 @@ interface BookRepository extends CrudRepository&lt;Book, Long&gt; { <b class="co
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.*
@@ -4018,6 +4035,7 @@ import io.micronaut.data.repository.CrudRepository
 
 @JdbcRepository(dialect = Dialect.H2) <b class="conum">(1)</b>
 interface BookRepository : CrudRepository&lt;Book, Long&gt; { <b class="conum">(2)</b>
+    @Executable
     fun find(title: String): Book
 }</code></pre>
 </div>
