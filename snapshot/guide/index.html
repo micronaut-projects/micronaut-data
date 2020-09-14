@@ -1717,7 +1717,7 @@ fun listOrderByTitleDesc(): List&lt;Book&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order.</p>
+<p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order. Multiple conditions can be used by joining them with <code>And</code> like <code>findByTypeOrderByNameAndDate</code>.</p>
 </div>
 
 <h2 id="projections"><a class="anchor" href="#projections"></a>5.4 Query Projections</h2>
