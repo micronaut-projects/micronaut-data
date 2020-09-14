@@ -29,10 +29,14 @@ import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Shared
 
-@Requires({ jvm.isJava8() })
+@IgnoreIf({ !jvm.isJava8() })
 class CompositePrimaryKeySpec extends AbstractDataSpec {
 
-    @Shared SourcePersistentEntity entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
+    @Shared SourcePersistentEntity entity
+
+    def setupSpec() {
+        entity = buildJpaEntity('test.Project', TestEntities.compositePrimaryKeyEntities())
+    }
 
     void "test compile repository 2"() {
         given:
