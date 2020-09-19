@@ -38,6 +38,7 @@ public class DefaultQuery implements QueryModel {
     private long offset = 0;
     private Map<String, JoinPath> joinPaths = new HashMap<>(2);
     private Sort sort = Sort.unsorted();
+    private boolean forUpdate;
 
     /**
      * Default constructor.
@@ -236,6 +237,16 @@ public class DefaultQuery implements QueryModel {
     @Override
     public long getOffset() {
         return this.offset;
+    }
+
+    @Override
+    public void forUpdate() {
+        forUpdate = true;
+    }
+
+    @Override
+    public boolean isForUpdate() {
+        return forUpdate;
     }
 
     /**

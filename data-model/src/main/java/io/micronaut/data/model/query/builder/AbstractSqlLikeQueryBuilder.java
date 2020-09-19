@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
+    protected static final String FOR_UPDATE_CLAUSE = " FOR UPDATE";
     protected static final String SELECT_CLAUSE = "SELECT ";
     protected static final String AS_CLAUSE = " AS ";
     protected static final String FROM_CLAUSE = " FROM ";
@@ -539,6 +540,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         appendOrder(query, queryState);
+        appendForUpdate(query, queryState);
+
         return QueryResult.of(
                 queryState.getQuery().toString(),
                 parameters,
@@ -987,6 +990,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     buff.append(",");
                 }
             }
+        }
+    }
+
+    private void appendForUpdate(QueryModel query, QueryState queryState) {
+        if (query.isForUpdate()) {
+            queryState.getQuery().append(FOR_UPDATE_CLAUSE);
         }
     }
 

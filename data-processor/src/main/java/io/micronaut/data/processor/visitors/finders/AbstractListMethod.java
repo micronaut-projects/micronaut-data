@@ -97,6 +97,14 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             if (matcher.find()) {
                 String querySequence = matcher.group(3);
                 ArrayList<Sort.Order> orderBys = new ArrayList<>(2);
+                String querySequenceBefore = querySequence;
+                querySequence = matchForUpdate(querySequenceBefore);
+                if (!querySequenceBefore.equals(querySequence)) {
+                    if (query == null) {
+                        query = QueryModel.from(rootEntity);
+                    }
+                    applyForUpdate(query);
+                }
                 querySequence = matchOrder(querySequence, orderBys);
                 if (CollectionUtils.isNotEmpty(orderBys)) {
                     if (query == null) {

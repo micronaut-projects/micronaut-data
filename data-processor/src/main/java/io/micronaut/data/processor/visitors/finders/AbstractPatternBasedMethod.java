@@ -65,6 +65,7 @@ import java.util.stream.Stream;
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
+    private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("(.*)ForUpdate$");
     private static final String DELETE = "delete";
     private static final String UPDATE = "update";
     private static final String VOID = "void";
@@ -117,6 +118,17 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             return buffer.toString();
         }
         return querySequence;
+    }
+
+    /**
+     * Matches for update definitions in the query sequence.
+     *
+     * @param querySequence The query sequence
+     * @return The new query sequence without the for update definitions
+     */
+    protected String matchForUpdate(String querySequence) {
+        Matcher matcher = FOR_UPDATE_PATTERN.matcher(querySequence);
+        return matcher.matches() ? matcher.group(1) : querySequence;
     }
 
     /**
@@ -546,6 +558,15 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             query.sort(Sort.of(orderList));
         }
         return false;
+    }
+
+    /**
+     * Apply for update.
+     *
+     * @param query The query
+     */
+    protected void applyForUpdate(QueryModel query) {
+        query.forUpdate();
     }
 
     /**

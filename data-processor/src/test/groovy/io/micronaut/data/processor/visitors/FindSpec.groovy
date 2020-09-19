@@ -287,7 +287,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         def findAnn3 = findMethod3.synthesize(DataMethod)
         def findByIdsAnn = findByIds.synthesize(DataMethod)
 
-        then:"it is configured correctly"
+        then: "it is configured correctly"
         findAnn.interceptor() == FindByIdInterceptor
         findAnn3.interceptor() == FindByIdInterceptor
         findAnn2.interceptor() == FindOneInterceptor
@@ -358,10 +358,10 @@ class Team {
 }'''
     }
 
-  @Issue('#632')
-  void "test embedded object on finders"() {
-    given:
-    def repository = buildRepository('test.RestaurantRepository', """
+    @Issue('#632')
+    void "test embedded object on finders"() {
+        given:
+        def repository = buildRepository('test.RestaurantRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Restaurant;
@@ -377,14 +377,41 @@ interface RestaurantRepository extends CrudRepository<Restaurant, UUID> {
 }
 """)
 
-    def query1 = repository.getRequiredMethod("findByAddressZipCodeLike", String)
-        .stringValue(Query).get()
-    def query2 = repository.getRequiredMethod("findByAddressZipCodeIlike", String)
-        .stringValue(Query).get()
+        def query1 = repository.getRequiredMethod("findByAddressZipCodeLike", String)
+                .stringValue(Query).get()
+        def query2 = repository.getRequiredMethod("findByAddressZipCodeIlike", String)
+                .stringValue(Query).get()
 
-    expect:"The query contains the correct embedded property name"
-    query1.contains('WHERE (restaurant_.`address_zip_code` like ?')
-    query2.contains('WHERE (lower(restaurant_.`address_zip_code`) like lower(?)')
+        expect: "The query contains the correct embedded property name"
+        query1.contains('WHERE (restaurant_.`address_zip_code` like ?')
+        query2.contains('WHERE (lower(restaurant_.`address_zip_code`) like lower(?)')
 
-  }
+    }
+
+    void "test find for update"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.tck.entities.Book;
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    $returnType.simpleName<Book> $methodName($arguments);
+}
+""")
+        expect:
+        repository.findPossibleMethods(methodName).findFirst().get()
+                .stringValue(Query).get().endsWith(" FOR UPDATE")
+
+        where:
+        returnType | methodName                                 | arguments
+        Optional   | 'findByIdForUpdate'                        | 'Long id'
+        List       | 'findAllForUpdate'                         | ''
+        List       | 'findAllByTitleForUpdate'                  | 'String title'
+        List       | 'findAllOrderByTotalPagesForUpdate'        | ''
+        List       | 'findAllByTitleOrderByTotalPagesForUpdate' | 'String title'
+        Optional   | 'findFirstForUpdate'                       | ''
+        List       | 'findTop10ForUpdate'                       | ''
+    }
 }

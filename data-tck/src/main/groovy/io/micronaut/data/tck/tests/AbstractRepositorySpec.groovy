@@ -23,9 +23,12 @@ import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
+import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.sql.Connection
 import java.time.LocalDate
 
 abstract class AbstractRepositorySpec extends Specification {
@@ -51,6 +54,9 @@ abstract class AbstractRepositorySpec extends Specification {
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
+
+    @Shared
+    SynchronousTransactionManager<Connection> transactionManager = context.getBean(SynchronousTransactionManager)
 
     boolean isOracle() {
         return false
@@ -864,6 +870,70 @@ abstract class AbstractRepositorySpec extends Specification {
         expect:
         mealRepository.findById(meal.mid).get().currentBloodGlucose == 100
     }
+
+    void "test find one for update"() {
+        given:
+        saveSampleBooks()
+        def book = bookRepository.findAll().first()
+
+        when:
+        def bookById = transactionManager.executeWrite { bookRepository.findByIdForUpdate(book.id) }
+        def bookByTitle = transactionManager.executeWrite { bookRepository.findByTitleForUpdate(book.title) }
+
+        then:
+        book.title == bookById.title
+        book.id == bookByTitle.id
+
+        cleanup:
+        cleanupBooks()
+    }
+
+    void "test find many for update"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def books = transactionManager.executeWrite { forUpdateMethod.call(*args) }
+
+        then:
+        books.collect { it.title }.sort() == normalMethod.call(*args).collect { it.title }.sort()
+
+        cleanup:
+        cleanupBooks()
+
+        where:
+        forUpdateMethod                                     | normalMethod                               | args
+        bookRepository::findAllForUpdate                    | bookRepository::findAll                    | []
+        bookRepository::findAllByTitleStartingWithForUpdate | bookRepository::findAllByTitleStartingWith | ["The"]
+        bookRepository::findByAuthorNameForUpdate           | bookRepository::findByAuthorName           | ["Stephen King"]
+    }
+
+//    void "test find for update locking"() {
+//        given:
+//        def book = bookRepository.save(new Book(title: "A Book", totalPages: 100))
+//
+//        when:
+//        def couldUpdate;
+//        CountDownLatch firstLatch = new CountDownLatch(1)
+//        CountDownLatch secondLatch = new CountDownLatch(1)
+//        List<Thread> threads = []
+//        threads << Thread.start {
+//            transactionManager.executeWrite {
+//                bookRepository.findByIdForUpdate(book.getId())
+//                secondLatch.countDown()
+//                couldUpdate = firstLatch.await(5, TimeUnit.SECONDS)
+//            }
+//        }
+//        threads << Thread.start {
+//            secondLatch.await()
+//            bookRepository.update(book)
+//            firstLatch.countDown()
+//        }
+//        threads.forEach {it.join() }
+//
+//        then:
+//        !couldUpdate
+//    }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()

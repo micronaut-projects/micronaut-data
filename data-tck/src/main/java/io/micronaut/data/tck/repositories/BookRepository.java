@@ -63,6 +63,16 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
 
     public abstract Author findAuthorById(@Id Long id);
 
+    public abstract Book findByIdForUpdate(Long id);
+
+    public abstract Book findByTitleForUpdate(String title);
+
+    public abstract List<Book> findAllForUpdate();
+
+    public abstract List<Book> findAllByTitleStartingWithForUpdate(String text);
+
+    public abstract List<Book> findByAuthorNameForUpdate(String name);
+
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();
         for (AuthorBooksDto dto: authorBooksDtos) {

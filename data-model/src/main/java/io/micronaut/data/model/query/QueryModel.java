@@ -369,6 +369,17 @@ public interface QueryModel extends Criteria {
     long getOffset();
 
     /**
+     * Lock the selected entities.
+     */
+    void forUpdate();
+
+    /**
+     * Whether to lock the selected entities.
+     * @return true if the the selected entities should be locked
+     */
+    boolean isForUpdate();
+
+    /**
      * Represents a criterion to be used in a criteria query.
      */
     interface Criterion {
