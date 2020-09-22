@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
  */
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
-    protected static final String FOR_UPDATE_CLAUSE = " FOR UPDATE";
     protected static final String SELECT_CLAUSE = "SELECT ";
     protected static final String AS_CLAUSE = " AS ";
     protected static final String FROM_CLAUSE = " FROM ";
@@ -996,14 +995,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     protected void appendForUpdate(QueryPosition queryPosition, QueryModel query, StringBuilder queryBuilder) {
     }
-
-    protected String forUpdateClause() {
-        return FOR_UPDATE_CLAUSE;
-    };
-
-    protected QueryPosition forUpdateClausePosition() {
-        return QueryPosition.END_OF_QUERY;
-    };
 
     private void buildWhereClauseForCriterion(
             final QueryState queryState,

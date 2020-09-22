@@ -62,6 +62,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
+    private static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
     private static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
 
     private Dialect dialect = Dialect.ANSI;
@@ -1155,21 +1156,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     protected void appendForUpdate(QueryPosition queryPosition, QueryModel query, StringBuilder queryBuilder) {
         if (query.isForUpdate()) {
-            if (queryPosition.equals(QueryPosition.AFTER_TABLE_NAME) && Dialect.SQL_SERVER.equals(dialect)
-            || queryPosition.equals(QueryPosition.END_OF_QUERY) && !Dialect.SQL_SERVER.equals(dialect)) {
-                queryBuilder.append(forUpdateClause());
+            boolean isSqlServer = Dialect.SQL_SERVER.equals(dialect);
+            if (isSqlServer && queryPosition.equals(QueryPosition.AFTER_TABLE_NAME) ||
+                !isSqlServer && queryPosition.equals(QueryPosition.END_OF_QUERY)) {
+                queryBuilder.append(isSqlServer ? SQL_SERVER_FOR_UPDATE_CLAUSE : STANDARD_FOR_UPDATE_CLAUSE);
             }
         }
-    }
-
-    @Override
-    protected String forUpdateClause() {
-        return Dialect.SQL_SERVER.equals(dialect) ? SQL_SERVER_FOR_UPDATE_CLAUSE : super.forUpdateClause();
-    }
-
-    @Override
-    protected QueryPosition forUpdateClausePosition() {
-        return Dialect.SQL_SERVER.equals(dialect) ? QueryPosition.AFTER_TABLE_NAME : super.forUpdateClausePosition();
     }
 
     @Override
