@@ -30,6 +30,8 @@ import spock.lang.Specification
 
 import java.sql.Connection
 import java.time.LocalDate
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -908,32 +910,33 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository::findByAuthorNameForUpdate           | bookRepository::findByAuthorName           | ["Stephen King"]
     }
 
-//    void "test find for update locking"() {
-//        given:
-//        def book = bookRepository.save(new Book(title: "A Book", totalPages: 100))
-//
-//        when:
-//        def couldUpdate;
-//        CountDownLatch firstLatch = new CountDownLatch(1)
-//        CountDownLatch secondLatch = new CountDownLatch(1)
-//        List<Thread> threads = []
-//        threads << Thread.start {
-//            transactionManager.executeWrite {
-//                bookRepository.findByIdForUpdate(book.getId())
-//                secondLatch.countDown()
-//                couldUpdate = firstLatch.await(5, TimeUnit.SECONDS)
-//            }
-//        }
-//        threads << Thread.start {
-//            secondLatch.await()
-//            bookRepository.update(book)
-//            firstLatch.countDown()
-//        }
-//        threads.forEach {it.join() }
-//
-//        then:
-//        !couldUpdate
-//    }
+    void "test find for update locking"() {
+        given:
+        setupBooks()
+        def initialBook = bookRepository.findOne()
+        def threadCount = 2
+        def pageCount = 100
+
+        when:
+        def latch = new CountDownLatch(threadCount)
+        (1..threadCount).collect {
+            Thread.start {
+                transactionManager.executeWrite {
+                    def book = bookRepository.findByIdForUpdate(initialBook.id)
+                    latch.countDown()
+                    latch.await(5, TimeUnit.SECONDS)
+                    book.totalPages = book.totalPages + pageCount
+                    bookRepository.update(book)
+                }
+            }
+        }.forEach { it.join() }
+
+        then:
+        bookRepository.findById(initialBook.id).get().totalPages == initialBook.totalPages + threadCount * pageCount
+
+        cleanup:
+        cleanupBooks()
+    }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
