@@ -1415,4 +1415,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
         return column;
     }
+
+    @Override
+    public boolean supportsForUpdate() {
+        return true;
+    }
 }

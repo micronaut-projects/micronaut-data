@@ -170,4 +170,12 @@ public interface QueryBuilder {
     default boolean shouldAliasProjections() {
         return true;
     }
+
+    /**
+     * Whether FOR UPDATE queries are supported.
+     * @return True if FOR UPDATE queries are supported
+     */
+    default boolean supportsForUpdate() {
+        return false;
+    }
 }

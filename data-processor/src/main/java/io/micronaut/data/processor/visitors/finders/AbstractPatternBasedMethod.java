@@ -123,12 +123,19 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     /**
      * Matches for update definitions in the query sequence.
      *
+     *
+     * @param matchContext
      * @param querySequence The query sequence
      * @return The new query sequence without the for update definitions
      */
-    protected String matchForUpdate(String querySequence) {
-        Matcher matcher = FOR_UPDATE_PATTERN.matcher(querySequence);
-        return matcher.matches() ? matcher.group(1) : querySequence;
+    protected String matchForUpdate(MethodMatchContext matchContext, String querySequence) {
+        if (matchContext.getQueryBuilder().supportsForUpdate()) {
+            Matcher matcher = FOR_UPDATE_PATTERN.matcher(querySequence);
+            if (matcher.matches()) {
+                return matcher.group(1);
+            }
+        }
+        return querySequence;
     }
 
     /**

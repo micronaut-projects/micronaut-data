@@ -448,4 +448,30 @@ interface TestRepository extends CrudRepository<Book, Long> {
         Optional   | 'findFirstForUpdate'                       | ''
         List       | 'findTop10ForUpdate'                       | ''
     }
+
+    void "test find for update jpa"() {
+        when:
+        buildRepository('test.TestRepository', """
+import io.micronaut.data.tck.entities.Book;
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    $returnType.simpleName<Book> $methodName($arguments);
+}
+""")
+        then:
+        RuntimeException exception = thrown()
+        exception.message.contains("non-existent property: ${nonExistentProperty}")
+
+        where:
+        returnType | methodName                          | arguments      | nonExistentProperty
+        Optional   | 'findByIdForUpdate'                 | 'Long id'      | 'idForUpdate'
+        List       | 'findAllForUpdate'                  | ''             | 'allForUpdate'
+        List       | 'findAllByTitleForUpdate'           | 'String title' | 'titleForUpdate'
+        List       | 'findAllOrderByTotalPagesForUpdate' | ''             | 'totalPagesForUpdate'
+        Optional   | 'findFirstForUpdate'                | ''             | 'firstForUpdate'
+        List       | 'findTop10ForUpdate'                | ''             | 'top10ForUpdate'
+    }
 }
