@@ -434,8 +434,9 @@ interface TestRepository extends CrudRepository<Book, Long> {
 }
 """)
         expect:
-        repository.findPossibleMethods(methodName).findFirst().get()
-                .stringValue(Query).get().endsWith(" FOR UPDATE")
+        def query = repository.findPossibleMethods(methodName).findFirst().get().stringValue(Query).get()
+        query.contains("[book] book_ WITH (UPDLOCK, ROWLOCK) INNER JOIN [author] book_author_ WITH (UPDLOCK, ROWLOCK)")
+        !query.endsWith("FOR UPDATE")
 
         where:
         returnType | methodName                                 | arguments

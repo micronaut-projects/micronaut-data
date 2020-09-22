@@ -530,7 +530,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         StringBuilder select = new StringBuilder(SELECT_CLAUSE);
         buildSelectClause(query, queryState, select);
-        appendForUpdate(QueryPosition.AFTER_SELECT_CLAUSE, query, select);
+        appendForUpdate(QueryPosition.AFTER_TABLE_NAME, query, select);
         queryState.getQuery().insert(0, select.toString());
 
         QueryModel.Junction criteria = query.getCriteria();
@@ -1922,6 +1922,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     protected enum QueryPosition {
-        AFTER_SELECT_CLAUSE, END_OF_QUERY
+        AFTER_TABLE_NAME, END_OF_QUERY
     }
 }

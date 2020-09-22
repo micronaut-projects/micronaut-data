@@ -940,6 +940,35 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupBooks()
     }
 
+    void "test find for update locking with associations"() {
+        given:
+        setupBooks()
+        def initialBook = bookRepository.findOne()
+        def threadCount = 2
+        def pageCount = 100
+
+        when:
+        def latch = new CountDownLatch(threadCount)
+        (1..threadCount).collect {
+            Thread.start {
+                transactionManager.executeWrite {
+                    def author = authorRepository.findByBooksTitleForUpdate(initialBook.title)
+                    def book = author.books.find { it.id == initialBook.id }
+                    latch.countDown()
+                    latch.await(5, TimeUnit.SECONDS)
+                    book.totalPages = book.totalPages + pageCount
+                    bookRepository.update(book)
+                }
+            }
+        }.forEach { it.join() }
+
+        then:
+        bookRepository.findById(initialBook.id).get().totalPages == initialBook.totalPages + threadCount * pageCount
+
+        cleanup:
+        cleanupBooks()
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))
