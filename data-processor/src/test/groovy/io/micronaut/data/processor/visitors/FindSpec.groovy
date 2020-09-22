@@ -391,12 +391,45 @@ interface RestaurantRepository extends CrudRepository<Restaurant, UUID> {
     void "test find for update"() {
         given:
         def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 
-@Repository
+@JdbcRepository(dialect= Dialect.POSTGRES)
 @io.micronaut.context.annotation.Executable
 interface TestRepository extends CrudRepository<Book, Long> {
 
+    @Join("author")
+    $returnType.simpleName<Book> $methodName($arguments);
+}
+""")
+        expect:
+        repository.findPossibleMethods(methodName).findFirst().get()
+                .stringValue(Query).get().endsWith(" FOR UPDATE")
+
+        where:
+        returnType | methodName                                 | arguments
+        Optional   | 'findByIdForUpdate'                        | 'Long id'
+        List       | 'findAllForUpdate'                         | ''
+        List       | 'findAllByTitleForUpdate'                  | 'String title'
+        List       | 'findAllOrderByTotalPagesForUpdate'        | ''
+        List       | 'findAllByTitleOrderByTotalPagesForUpdate' | 'String title'
+        Optional   | 'findFirstForUpdate'                       | ''
+        List       | 'findTop10ForUpdate'                       | ''
+    }
+
+    void "test find for update sql server"() {
+        given:
+        def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect= Dialect.SQL_SERVER)
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    @Join("author")
     $returnType.simpleName<Book> $methodName($arguments);
 }
 """)

@@ -876,15 +876,17 @@ abstract class AbstractRepositorySpec extends Specification {
     void "test find one for update"() {
         given:
         saveSampleBooks()
-        def book = bookRepository.findAll().first()
+        def book = bookRepository.findOne()
 
         when:
         def bookById = transactionManager.executeWrite { bookRepository.findByIdForUpdate(book.id) }
-        def bookByTitle = transactionManager.executeWrite { bookRepository.findByTitleForUpdate(book.title) }
-
         then:
         book.title == bookById.title
-        book.id == bookByTitle.id
+
+        when: "finding with associations"
+        def bookByTitle = transactionManager.executeWrite { bookRepository.findByTitleForUpdate(book.title) }
+        then: "the association is fetched"
+        book.author.name == bookByTitle.author.name
 
         cleanup:
         cleanupBooks()

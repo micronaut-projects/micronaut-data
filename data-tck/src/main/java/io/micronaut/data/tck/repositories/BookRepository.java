@@ -65,6 +65,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
 
     public abstract Book findByIdForUpdate(Long id);
 
+    @Join("author")
     public abstract Book findByTitleForUpdate(String title);
 
     public abstract List<Book> findAllForUpdate();
@@ -73,6 +74,7 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
 
     public abstract List<Book> findByAuthorNameForUpdate(String name);
 
+    @Join("author")
     public abstract Book findOne();
 
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
