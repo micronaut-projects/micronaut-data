@@ -26,14 +26,13 @@ import javax.validation.constraints.Size;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @MappedEntity
 public class Meal {
 
     @Id
-    @AutoPopulated
-    private UUID mid;
+    @GeneratedValue
+    private Long mid;
 
     @NotNull
     @Max(999)
@@ -58,7 +57,7 @@ public class Meal {
 
     @Creator
     public Meal(
-            UUID mid,
+            Long mid,
             @NotNull @Max(999) int currentBloodGlucose,
             Date createdOn,
             Date updatedOn,
@@ -74,11 +73,11 @@ public class Meal {
         this.currentBloodGlucose = currentBloodGlucose;
     }
 
-    public UUID getMid() {
+    public Long getMid() {
         return mid;
     }
 
-    public void setMid(UUID mid) {
+    public void setMid(Long mid) {
         this.mid = mid;
     }
 

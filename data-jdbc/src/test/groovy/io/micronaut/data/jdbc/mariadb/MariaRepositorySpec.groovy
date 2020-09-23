@@ -25,6 +25,7 @@ import io.micronaut.data.jdbc.mysql.MySqlCompanyRepository
 import io.micronaut.data.jdbc.mysql.MySqlCountryRegionCityRepository
 import io.micronaut.data.jdbc.mysql.MySqlCountryRepository
 import io.micronaut.data.jdbc.mysql.MySqlFaceRepository
+import io.micronaut.data.jdbc.mysql.MySqlFoodRepository
 import io.micronaut.data.jdbc.mysql.MySqlMealRepository
 import io.micronaut.data.jdbc.mysql.MySqlNoseRepository
 import io.micronaut.data.jdbc.mysql.MySqlPersonRepository
@@ -40,6 +41,7 @@ import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
@@ -126,6 +128,11 @@ class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPro
     @Override
     MealRepository getMealRepository() {
         return context.getBean(MySqlMealRepository)
+    }
+
+    @Override
+    FoodRepository getFoodRepository() {
+        return context.getBean(MySqlFoodRepository)
     }
 
     void "test save and retrieve basic types"() {

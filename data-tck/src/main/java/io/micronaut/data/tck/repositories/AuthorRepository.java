@@ -40,9 +40,6 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
 
     Author findByBooksTitle(String title);
 
-    @Join("books")
-    Author findByBooksTitleForUpdate(String title);
-
     long countByNameContains(String text);
 
     Author findByNameStartsWith(String name);

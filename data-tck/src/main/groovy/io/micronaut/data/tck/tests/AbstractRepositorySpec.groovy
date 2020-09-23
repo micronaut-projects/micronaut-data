@@ -50,6 +50,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract UserRoleRepository getUserRoleRepository()
     abstract RoleRepository getRoleRepository()
     abstract MealRepository getMealRepository()
+    abstract FoodRepository getFoodRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -105,6 +106,11 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.deleteAll()
         authorRepository.deleteAll()
         personRepository.deleteAll()
+    }
+
+    protected void cleanupMeals() {
+        foodRepository.deleteAll()
+        mealRepository.deleteAll()
     }
 
     void "test save one"() {
@@ -871,102 +877,108 @@ abstract class AbstractRepositorySpec extends Specification {
 
         expect:
         mealRepository.findById(meal.mid).get().currentBloodGlucose == 100
+
+        cleanup:
+        cleanupMeals()
     }
 
     void "test find one for update"() {
         given:
-        saveSampleBooks()
-        def book = bookRepository.findOne()
+        def meal = mealRepository.save(new Meal(10))
+        def food = foodRepository.save(new Food("food", 80, 200, meal))
 
         when:
-        def bookById = transactionManager.executeWrite { bookRepository.findByIdForUpdate(book.id) }
+        def mealById = transactionManager.executeWrite { mealRepository.findByIdForUpdate(meal.mid) }
         then:
-        book.title == bookById.title
+        meal.currentBloodGlucose == mealById.currentBloodGlucose
 
         when: "finding with associations"
-        def bookByTitle = transactionManager.executeWrite { bookRepository.findByTitleForUpdate(book.title) }
+        def mealWithFood = transactionManager.executeWrite { mealRepository.searchByIdForUpdate(meal.mid) }
         then: "the association is fetched"
-        book.author.name == bookByTitle.author.name
+        food.carbohydrates == mealWithFood.foods.first().carbohydrates
 
         cleanup:
-        cleanupBooks()
+        cleanupMeals()
     }
 
     void "test find many for update"() {
         given:
-        saveSampleBooks()
+        def meals = mealRepository.saveAll([
+                new Meal(10),
+                new Meal(20),
+                new Meal(30)
+        ])
+        foodRepository.saveAll(meals.collect { new Food("food", 10, 100, it) })
 
         when:
-        def books = transactionManager.executeWrite { forUpdateMethod.call(*args) }
+        def mealsForUpdate = transactionManager.executeWrite { forUpdateMethod.call(*args) }
 
         then:
-        books.collect { it.title }.sort() == normalMethod.call(*args).collect { it.title }.sort()
+        mealsForUpdate.collect { it.currentBloodGlucose }.sort() ==
+                normalMethod.call(*args).collect { it.currentBloodGlucose }.sort()
 
         cleanup:
-        cleanupBooks()
+        cleanupMeals()
 
         where:
-        forUpdateMethod                                     | normalMethod                               | args
-        bookRepository::findAllForUpdate                    | bookRepository::findAll                    | []
-        bookRepository::findAllByTitleStartingWithForUpdate | bookRepository::findAllByTitleStartingWith | ["The"]
-        bookRepository::findByAuthorNameForUpdate           | bookRepository::findByAuthorName           | ["Stephen King"]
+        forUpdateMethod                                               | normalMethod                                         | args
+        mealRepository::findAllForUpdate                              | mealRepository::findAll                              | []
+        mealRepository::findAllByCurrentBloodGlucoseLessThanForUpdate | mealRepository::findAllByCurrentBloodGlucoseLessThan | [100]
+        mealRepository::findByFoodsPortionGramsGreaterThanForUpdate   | mealRepository::findByFoodsPortionGramsGreaterThan   | [10]
     }
 
     void "test find for update locking"() {
         given:
-        setupBooks()
-        def initialBook = bookRepository.findOne()
+        def meal = mealRepository.save(new Meal(10))
         def threadCount = 2
-        def pageCount = 100
 
         when:
         def latch = new CountDownLatch(threadCount)
         (1..threadCount).collect {
             Thread.start {
                 transactionManager.executeWrite {
-                    def book = bookRepository.findByIdForUpdate(initialBook.id)
+                    def mealToUpdate = mealRepository.findByIdForUpdate(meal.mid)
                     latch.countDown()
                     latch.await(5, TimeUnit.SECONDS)
-                    book.totalPages = book.totalPages + pageCount
-                    bookRepository.update(book)
+                    mealToUpdate.currentBloodGlucose++
+                    mealRepository.update(mealToUpdate)
                 }
             }
         }.forEach { it.join() }
 
         then:
-        bookRepository.findById(initialBook.id).get().totalPages == initialBook.totalPages + threadCount * pageCount
+        mealRepository.findById(meal.mid).get().currentBloodGlucose == meal.currentBloodGlucose + threadCount
 
         cleanup:
-        cleanupBooks()
+        cleanupMeals()
     }
 
     void "test find for update locking with associations"() {
         given:
-        setupBooks()
-        def initialBook = bookRepository.findOne()
+        def meal = mealRepository.save(new Meal(10))
+        foodRepository.save(new Food("food", 80, 200, meal))
         def threadCount = 2
-        def pageCount = 100
 
         when:
         def latch = new CountDownLatch(threadCount)
         (1..threadCount).collect {
             Thread.start {
                 transactionManager.executeWrite {
-                    def author = authorRepository.findByBooksTitleForUpdate(initialBook.title)
-                    def book = author.books.find { it.id == initialBook.id }
+                    def food = foodRepository.findByMealMidForUpdate(meal.mid)
+                    def mealToUpdate = food.meal
                     latch.countDown()
                     latch.await(5, TimeUnit.SECONDS)
-                    book.totalPages = book.totalPages + pageCount
-                    bookRepository.update(book)
+                    mealToUpdate.currentBloodGlucose++
+                    mealRepository.update(mealToUpdate)
                 }
             }
         }.forEach { it.join() }
 
         then:
-        bookRepository.findById(initialBook.id).get().totalPages == initialBook.totalPages + threadCount * pageCount
+        mealRepository.findById(meal.mid).get().currentBloodGlucose == meal.currentBloodGlucose + threadCount
 
         cleanup:
-        cleanupBooks()
+        cleanupMeals()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
