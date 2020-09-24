@@ -15,10 +15,15 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
+import java.time.Instant;
 
 @Entity
 public class Face {
@@ -28,12 +33,26 @@ public class Face {
     private Long id;
     private String name;
 
+    @DateCreated
+    private Instant dateCreated;
+
+    @DateUpdated
+    private Instant lastUpdated;
+
+    public Face() {
+    }
+
+    @Creator
     public Face(String name) {
         this.name = name;
     }
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @OneToOne(mappedBy = "face")
@@ -53,5 +72,21 @@ public class Face {
 
     public void setNose(Nose nose) {
         this.nose = nose;
+    }
+
+    public Instant getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(Instant dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public Instant getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(Instant lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }

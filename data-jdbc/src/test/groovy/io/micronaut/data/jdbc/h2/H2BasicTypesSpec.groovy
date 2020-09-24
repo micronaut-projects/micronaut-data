@@ -102,6 +102,12 @@ class H2BasicTypesSpec extends Specification {
         retrievedBook.wrapperLong == book.wrapperLong
         retrievedBook.uri == book.uri
         retrievedBook.url == book.url
+        retrievedBook.instant == book.instant
+        retrievedBook.localDateTime == book.localDateTime
+        retrievedBook.zonedDateTime == book.zonedDateTime
+        retrievedBook.offsetDateTime == book.offsetDateTime
+        retrievedBook.dateCreated == book.dateCreated
+        retrievedBook.dateUpdated == book.dateUpdated
         // stored as a DATE type without time
 //        retrievedBook.date == book.date
 
