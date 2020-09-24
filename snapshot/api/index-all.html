@@ -138,6 +138,8 @@
 <dd>
 <div class="block">A query handler.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryPosition</span></a> - Enum in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryState</span></a> - Class in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
 <dd>
 <div class="block">The state of the query.</div>
@@ -286,6 +288,10 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#appendDeleteClause-java.lang.StringBuilder-">appendDeleteClause(StringBuilder)</a></span> - Method in class io.micronaut.data.model.query.builder.jpa.<a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#appendForUpdate-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryPosition-io.micronaut.data.model.query.QueryModel-java.lang.StringBuilder-">appendForUpdate(AbstractSqlLikeQueryBuilder.QueryPosition, QueryModel, StringBuilder)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#appendForUpdate-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryPosition-io.micronaut.data.model.query.QueryModel-java.lang.StringBuilder-">appendForUpdate(AbstractSqlLikeQueryBuilder.QueryPosition, QueryModel, StringBuilder)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#appendProjectionRowCount-java.lang.StringBuilder-java.lang.String-">appendProjectionRowCount(StringBuilder, String)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Appends a row count projection to the query string.</div>
@@ -318,6 +324,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionCallback.html#apply-io.micronaut.transaction.TransactionStatus-">apply(TransactionStatus&lt;T&gt;)</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionCallback.html" title="interface in io.micronaut.transaction">TransactionCallback</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyForUpdate-io.micronaut.data.model.query.QueryModel-">applyForUpdate(QueryModel)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternBasedMethod</a></dt>
+<dd>
+<div class="block">Apply for update.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#applyJoin-io.micronaut.data.model.query.JoinPath-">applyJoin(JoinPath)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>
 <div class="block">Applies a join for the given association.</div>
@@ -2630,11 +2640,17 @@
 <dd>
 <div class="block">An interceptor that executes a query and returns an iterable result asynchronously.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#findAllByCurrentBloodGlucoseLessThan-int-">findAllByCurrentBloodGlucoseLessThan(int)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#findAllByCurrentBloodGlucoseLessThanForUpdate-int-">findAllByCurrentBloodGlucoseLessThanForUpdate(int)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonRepository.html#findAllByName-java.lang.String-">findAllByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonRepository.html#findAllByNameLike-java.lang.String-io.micronaut.data.model.Pageable-">findAllByNameLike(String, Pageable)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#findAllByTitleStartingWith-java.lang.String-">findAllByTitleStartingWith(String)</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#findAllForUpdate--">findAllForUpdate()</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindAllInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="type parameter in FindAllInterceptor">T</a>,<a href="io/micronaut/data/intercept/FindAllInterceptor.html" title="type parameter in FindAllInterceptor">R</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
 <dd>
@@ -2685,6 +2701,10 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#findByFoodsPortionGramsGreaterThan-int-">findByFoodsPortionGramsGreaterThan(int)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#findByFoodsPortionGramsGreaterThanForUpdate-int-">findByFoodsPortionGramsGreaterThanForUpdate(int)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html#findById-ID-">findById(ID)</a></span> - Method in interface io.micronaut.data.repository.async.<a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a></dt>
 <dd>
 <div class="block">Retrieves an entity by its id.</div>
@@ -2713,6 +2733,8 @@
 <dd>
 <div class="block">An interceptor that executes a query and returns a result asynchronously.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#findByIdForUpdate-java.lang.Long-">findByIdForUpdate(Long)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/intercept/FindByIdInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="typeNameLink">FindByIdInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/FindByIdInterceptor.html" title="type parameter in FindByIdInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/package-summary.html">io.micronaut.data.intercept</a></dt>
 <dd>
 <div class="block">An interceptor that finds an entity by ID.</div>
@@ -2729,6 +2751,8 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/FoodRepository.html#findByMealMidForUpdate-java.lang.Long-">findByMealMidForUpdate(Long)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/FoodRepository.html" title="interface in io.micronaut.data.tck.repositories">FoodRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/AuthorRepository.html#findByName-java.lang.String-">findByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/AuthorRepository.html" title="interface in io.micronaut.data.tck.repositories">AuthorRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html#findByName-java.lang.String-">findByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonReactiveRepository</a></dt>
@@ -3062,6 +3086,12 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/DataType.html#forType-java.lang.Class-">forType(Class&lt;?&gt;)</a></span> - Static method in enum io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></dt>
 <dd>
 <div class="block">Obtains the data type for the given type.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/DefaultQuery.html#forUpdate--">forUpdate()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.html#forUpdate--">forUpdate()</a></span> - Method in interface io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></dt>
+<dd>
+<div class="block">Lock the selected entities.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Pageable.html#from-int-">from(int)</a></span> - Static method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a></dt>
 <dd>
@@ -5531,6 +5561,12 @@
 <dd>
 <div class="block">Is the given association a foreign key reference that requires a join table.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/DefaultQuery.html#isForUpdate--">isForUpdate()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.html#isForUpdate--">isForUpdate()</a></span> - Method in interface io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></dt>
+<dd>
+<div class="block">Whether to lock the selected entities.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html#isFutureType-io.micronaut.inject.ast.ClassElement-">isFutureType(ClassElement)</a></span> - Static method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders">TypeUtils</a></dt>
 <dd>
 <div class="block">Is the type a future type.</div>
@@ -6378,6 +6414,10 @@
 <dd>
 <div class="block">A match context when matching methods.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchForUpdate-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.String-">matchForUpdate(MethodMatchContext, String)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternBasedMethod</a></dt>
+<dd>
+<div class="block">Matches for update definitions in the query sequence.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchOrder-java.lang.String-java.util.List-">matchOrder(String, List&lt;Sort.Order&gt;)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternBasedMethod</a></dt>
 <dd>
 <div class="block">Matches order by definitions in the query sequence.</div>
@@ -6418,7 +6458,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Meal.html#Meal-int-java.util.Date-java.util.Date-">Meal(int, Date, Date)</a></span> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Meal.html#Meal-java.util.UUID-int-java.util.Date-java.util.Date-java.util.Set-">Meal(UUID, int, Date, Date, Set&lt;Food&gt;)</a></span> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Meal.html#Meal-java.lang.Long-int-java.util.Date-java.util.Date-java.util.Set-">Meal(Long, int, Date, Date, Set&lt;Food&gt;)</a></span> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Meal.html#Meal-int-">Meal(int)</a></span> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
 <dd>&nbsp;</dd>
@@ -8328,7 +8368,9 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/FoodRepository.html#searchById-java.util.UUID-">searchById(UUID)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/FoodRepository.html" title="interface in io.micronaut.data.tck.repositories">FoodRepository</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#searchById-java.util.UUID-">searchById(UUID)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#searchById-java.lang.Long-">searchById(Long)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/MealRepository.html#searchByIdForUpdate-java.lang.Long-">searchByIdForUpdate(Long)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/MealRepository.html" title="interface in io.micronaut.data.tck.repositories">MealRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/AuthorRepository.html#searchByName-java.lang.String-">searchByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/AuthorRepository.html" title="interface in io.micronaut.data.tck.repositories">AuthorRepository</a></dt>
 <dd>&nbsp;</dd>
@@ -8679,7 +8721,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Food.html#setMeal-io.micronaut.data.tck.entities.Meal-">setMeal(Meal)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Food.html" title="class in io.micronaut.data.tck.entities">Food</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Meal.html#setMid-java.util.UUID-">setMid(UUID)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Meal.html#setMid-java.lang.Long-">setMid(Long)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Company.html#setMyId-java.lang.Long-">setMyId(Long)</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Company.html" title="class in io.micronaut.data.tck.entities">Company</a></dt>
 <dd>&nbsp;</dd>
@@ -9319,6 +9361,12 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/QueryBuilder.html#supportsForUpdate--">supportsForUpdate()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></dt>
+<dd>
+<div class="block">Whether FOR UPDATE queries are supported.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#supportsForUpdate--">supportsForUpdate()</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#supportsImplicitQueries--">supportsImplicitQueries()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>
 <div class="block">Whether or not implicit queries such as lookup by id and counting is supported without an explicit query.</div>
@@ -9881,6 +9929,10 @@
 <dd>
 <div class="block">Returns the enum constant of this type with the specified name.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html#valueOf-java.lang.String-">valueOf(String)</a></span> - Static method in enum io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPosition</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this type with the specified name.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/Dialect.html#valueOf-java.lang.String-">valueOf(String)</a></span> - Static method in enum io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this type with the specified name.</div>
@@ -9942,6 +9994,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/DataType.html#values--">values()</a></span> - Static method in enum io.micronaut.data.model.<a href="io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum type, in
+the order they are declared.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html#values--">values()</a></span> - Static method in enum io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPosition</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum type, in
 the order they are declared.</div>

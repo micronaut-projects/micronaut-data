@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":18,"i2":6,"i3":6,"i4":6,"i5":6,"i6":18,"i7":6,"i8":18,"i9":17,"i10":18};
+var methods = {"i0":6,"i1":18,"i2":6,"i3":6,"i4":6,"i5":6,"i6":18,"i7":6,"i8":18,"i9":17,"i10":18,"i11":18};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -222,6 +222,12 @@ public interface <span class="typeNameLabel">QueryBuilder</span></pre>
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#shouldAliasProjections--">shouldAliasProjections</a></span>()</code>
 <div class="block">Whether projections should be aliased.</div>
+</td>
+</tr>
+<tr id="i11" class="rowColor">
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html#supportsForUpdate--">supportsForUpdate</a></span>()</code>
+<div class="block">Whether FOR UPDATE queries are supported.</div>
 </td>
 </tr>
 </table>
@@ -456,7 +462,7 @@ static&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/Que
 <a name="shouldAliasProjections--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>shouldAliasProjections</h4>
 <pre>default&nbsp;boolean&nbsp;shouldAliasProjections()</pre>
@@ -464,6 +470,20 @@ static&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/Que
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if they should</dd>
+</dl>
+</li>
+</ul>
+<a name="supportsForUpdate--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>supportsForUpdate</h4>
+<pre>default&nbsp;boolean&nbsp;supportsForUpdate()</pre>
+<div class="block">Whether FOR UPDATE queries are supported.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>True if FOR UPDATE queries are supported</dd>
 </dl>
 </li>
 </ul>

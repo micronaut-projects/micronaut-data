@@ -154,6 +154,8 @@
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-sqlInserts"><a href="#sqlInserts"><strong>8.1.3.1</strong><span>Inserts and Updates</span></a></div>
         
+        <div class="toc-item" style="margin-left:30px" id="toc-item-pessimisticLocking"><a href="#pessimisticLocking"><strong>8.1.3.2</strong><span>Pessimistic Locking</span></a></div>
+        
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlMapping"><a href="#sqlMapping"><strong>8.1.4</strong><span>Mapping Entities</span></a></div>
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-sqlAnnotations"><a href="#sqlAnnotations"><strong>8.1.4.1</strong><span>SQL Annotations</span></a></div>
@@ -4548,6 +4550,89 @@ fun update(@Id id: Long?, title: String)</code></pre>
 </div>
 <div class="paragraph">
 <p>By being explicit in defining the method as an update method Micronaut Data knows to execute an <code>UPDATE</code>.</p>
+</div>
+
+<h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>8.1.3.2 Pessimistic Locking</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/sql/jdbc/jdbcRepositories/pessimisticLocking.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Pessimistic locking is supported through the use of <code>find*ForUpdate</code> methods.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Repository
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface AccountBalanceRepository extends CrudRepository&lt;AccountBalance, Long&gt; {
+
+    AccountBalance findByIdForUpdate(Long id); <i class="conum" data-value="1"></i><b>(1)</b>
+
+    @Transactional <i class="conum" data-value="2"></i><b>(2)</b>
+    void addToBalance(Long id, BigInteger amount) {
+        AccountBalance accountBalance = findByIdForUpdate(id); <i class="conum" data-value="3"></i><b>(3)</b>
+        accountBalance.addAmount(amount);
+        update(accountBalance); <i class="conum" data-value="4"></i><b>(4)</b>
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>ForUpdate</code> suffix indicates that the selected record should be locked.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Both read and write operations are wrapped in a single transaction.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>A locking read is performed, preventing other queries from accessing the record.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The record is updated safely.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>All <code>find</code> methods can be declared as <code>ForUpdate</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">@Repository
+@JdbcRepository(dialect = Dialect.POSTGRES)
+public interface BookRepository extends CrudRepository&lt;Book, Long&gt; {
+
+    @Join("author")
+    Optional&lt;Book&gt; findByIdForUpdate(Long id);
+
+    List&lt;Book&gt; findAllOrderByTotalPagesForUpdate();
+
+    List&lt;Book&gt; findByTitleForUpdate(String title);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The queries generated for these methods make use of the <code>FOR UPDATE</code> SQL clause or the <code>UPDLOCK</code> and <code>ROWLOCK</code> query hints in the case of SQL Server.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The semantics of the <code>FOR UPDATE</code> clause may vary depending on the database. Make sure to check the relevant documentation for your engine.
+</td>
+</tr>
+</table>
 </div>
 
 <h2 id="sqlMapping"><a class="anchor" href="#sqlMapping"></a>8.1.4 Mapping Entities</h2>

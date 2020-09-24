@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -99,12 +99,12 @@ var activeTableTab = "activeTableTab";
 <li class="blockList">
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd><a href="../../../../../io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>,java.util.UUID&gt;, <a href="../../../../../io/micronaut/data/repository/GenericRepository.html" title="interface in io.micronaut.data.repository">GenericRepository</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>,java.util.UUID&gt;</dd>
+<dd><a href="../../../../../io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>,java.lang.Long&gt;, <a href="../../../../../io/micronaut/data/repository/GenericRepository.html" title="interface in io.micronaut.data.repository">GenericRepository</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>,java.lang.Long&gt;</dd>
 </dl>
 <hr>
 <br>
 <pre>public interface <span class="typeNameLabel">MealRepository</span>
-extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>,java.util.UUID&gt;</pre>
+extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a>&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>,java.lang.Long&gt;</pre>
 </li>
 </ul>
 </div>
@@ -124,8 +124,36 @@ extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#findAllByCurrentBloodGlucoseLessThan-int-">findAllByCurrentBloodGlucoseLessThan</a></span>(int&nbsp;currentBloodGlucose)</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#findAllByCurrentBloodGlucoseLessThanForUpdate-int-">findAllByCurrentBloodGlucoseLessThanForUpdate</a></span>(int&nbsp;currentBloodGlucose)</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#findAllForUpdate--">findAllForUpdate</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#findByFoodsPortionGramsGreaterThan-int-">findByFoodsPortionGramsGreaterThan</a></span>(int&nbsp;portionGrams)</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#findByFoodsPortionGramsGreaterThanForUpdate-int-">findByFoodsPortionGramsGreaterThanForUpdate</a></span>(int&nbsp;portionGrams)</code>&nbsp;</td>
+</tr>
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#searchById-java.util.UUID-">searchById</a></span>(java.util.UUID&nbsp;uuid)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#findByIdForUpdate-java.lang.Long-">findByIdForUpdate</a></span>(java.lang.Long&nbsp;id)</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#searchById-java.lang.Long-">searchById</a></span>(java.lang.Long&nbsp;uuid)</code>&nbsp;</td>
+</tr>
+<tr id="i7" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/MealRepository.html#searchByIdForUpdate-java.lang.Long-">searchByIdForUpdate</a></span>(java.lang.Long&nbsp;id)</code>&nbsp;</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -149,13 +177,76 @@ extends <a href="../../../../../io/micronaut/data/repository/CrudRepository.html
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="searchById-java.util.UUID-">
+<a name="searchById-java.lang.Long-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>searchById</h4>
+<pre><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&nbsp;searchById(java.lang.Long&nbsp;uuid)</pre>
+</li>
+</ul>
+<a name="findByIdForUpdate-java.lang.Long-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findByIdForUpdate</h4>
+<pre><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&nbsp;findByIdForUpdate(java.lang.Long&nbsp;id)</pre>
+</li>
+</ul>
+<a name="searchByIdForUpdate-java.lang.Long-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>searchByIdForUpdate</h4>
+<pre><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&nbsp;searchByIdForUpdate(java.lang.Long&nbsp;id)</pre>
+</li>
+</ul>
+<a name="findAllForUpdate--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findAllForUpdate</h4>
+<pre>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;&nbsp;findAllForUpdate()</pre>
+</li>
+</ul>
+<a name="findAllByCurrentBloodGlucoseLessThan-int-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findAllByCurrentBloodGlucoseLessThan</h4>
+<pre>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;&nbsp;findAllByCurrentBloodGlucoseLessThan(int&nbsp;currentBloodGlucose)</pre>
+</li>
+</ul>
+<a name="findAllByCurrentBloodGlucoseLessThanForUpdate-int-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findAllByCurrentBloodGlucoseLessThanForUpdate</h4>
+<pre>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;&nbsp;findAllByCurrentBloodGlucoseLessThanForUpdate(int&nbsp;currentBloodGlucose)</pre>
+</li>
+</ul>
+<a name="findByFoodsPortionGramsGreaterThan-int-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findByFoodsPortionGramsGreaterThan</h4>
+<pre>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;&nbsp;findByFoodsPortionGramsGreaterThan(int&nbsp;portionGrams)</pre>
+</li>
+</ul>
+<a name="findByFoodsPortionGramsGreaterThanForUpdate-int-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
-<h4>searchById</h4>
-<pre><a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&nbsp;searchById(java.util.UUID&nbsp;uuid)</pre>
+<h4>findByFoodsPortionGramsGreaterThanForUpdate</h4>
+<pre>java.lang.Iterable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Meal.html" title="class in io.micronaut.data.tck.entities">Meal</a>&gt;&nbsp;findByFoodsPortionGramsGreaterThanForUpdate(int&nbsp;portionGrams)</pre>
 </li>
 </ul>
 </li>
