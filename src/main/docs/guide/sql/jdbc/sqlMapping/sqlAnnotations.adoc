@@ -25,7 +25,7 @@ The following table summarizes the different annotations and what they enable. I
 |Specifies an embedded ID of an entity
 
 |ann:data.annotation.MappedEntity[]
-|Specifies the entity is mapped to the database
+|Specifies the entity is mapped to the database. If your table name differs from the entity name, pass the name as the `value`. For example: `@MappedEntity( value = "TABLE_NAME" )`.
 
 |ann:data.annotation.MappedProperty[]
 |Used to customize the column name, definition and data type
