@@ -1,7 +1,7 @@
 plugins {
     id "application"
     id "java"
-    id "me.champeau.gradle.jmh" version "0.5.1"
+    id "me.champeau.gradle.jmh" version "0.5.2"
 }
 
 version "0.1"
