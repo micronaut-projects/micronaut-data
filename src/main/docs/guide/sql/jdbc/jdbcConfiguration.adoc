@@ -1,6 +1,6 @@
 Micronaut Data JDBC requires that an appropriate `java.sql.DataSource` bean is configured.
 
-You can either do this manually or use the https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[Micronaut JDBC] module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari, Commons DBCP or Oracle UDP.
+You can either do this manually or use the https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[Micronaut JDBC] module which provides out-of-the-box support for configuring connection pooling with either Tomcat JDBC, Hikari, Commons DBCP or Oracle UCP.
 
 === SQL Logging
 
