@@ -26,6 +26,7 @@ import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
@@ -115,6 +116,11 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
     @Override
     MealRepository getMealRepository() {
         return context.getBean(OracleXEMealRepository)
+    }
+
+    @Override
+    FoodRepository getFoodRepository() {
+        return context.getBean(OracleXEFoodRepository)
     }
 
     void "test save and fetch author with no books"() {

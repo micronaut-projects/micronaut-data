@@ -19,10 +19,23 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Meal;
 
-import java.util.UUID;
-
-public interface MealRepository extends CrudRepository<Meal, UUID> {
+public interface MealRepository extends CrudRepository<Meal, Long> {
 
     @Join("foods")
-    Meal searchById(UUID uuid);
+    Meal searchById(Long uuid);
+
+    Meal findByIdForUpdate(Long id);
+
+    @Join("foods")
+    Meal searchByIdForUpdate(Long id);
+
+    Iterable<Meal> findAllForUpdate();
+
+    Iterable<Meal> findAllByCurrentBloodGlucoseLessThan(int currentBloodGlucose);
+
+    Iterable<Meal> findAllByCurrentBloodGlucoseLessThanForUpdate(int currentBloodGlucose);
+
+    Iterable<Meal> findByFoodsPortionGramsGreaterThan(int portionGrams);
+
+    Iterable<Meal> findByFoodsPortionGramsGreaterThanForUpdate(int portionGrams);
 }

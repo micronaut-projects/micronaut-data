@@ -62,6 +62,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String SEQ_SUFFIX = "_seq";
     private static final String INSERT_INTO = "INSERT INTO ";
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
+    private static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
+    private static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
 
     private Dialect dialect = Dialect.ANSI;
 
@@ -1004,7 +1006,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
 
 
-                        StringBuilder join = joinStringBuilder(joinType,
+                        StringBuilder join = joinStringBuilder(
+                                queryState.getQueryModel(),
+                                joinType,
                                 getTableName(associatedEntity),
                                 joinAliases[i],
                                 alias,
@@ -1030,7 +1034,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String joinTableAlias = joinAliases[i] + joinTableName + "_";
                         String associatedTableName = getTableName(associatedEntity);
 
-                        StringBuilder join = joinStringBuilder(joinType,
+                        StringBuilder join = joinStringBuilder(
+                                queryState.getQueryModel(),
+                                joinType,
                                 joinTableName,
                                 joinTableAlias,
                                 alias,
@@ -1041,7 +1047,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             target.append(joinStr);
                         }
                         target.append(SPACE);
-                        join = joinStringBuilder(joinType,
+                        join = joinStringBuilder(
+                                queryState.getQueryModel(),
+                                joinType,
                                 associatedTableName,
                                 joinAliases[i],
                                 joinTableAlias,
@@ -1062,7 +1070,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     } else {
                         associationColumn = getColumnName(association);
                     }
-                    StringBuilder join = joinStringBuilder(joinType,
+                    StringBuilder join = joinStringBuilder(
+                            queryState.getQueryModel(),
+                            joinType,
                             getTableName(associatedEntity),
                             joinAliases[i],
                             alias,
@@ -1080,24 +1090,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return joinAliases;
     }
 
-    private StringBuilder joinStringBuilder(String joinType,
+    private StringBuilder joinStringBuilder(QueryModel queryModel,
+                                            String joinType,
                                             String tableName,
                                             String tableAlias,
                                             String onTableName,
                                             String onTableColumn,
                                             String tableColumnName) {
-        return new StringBuilder().append(joinType)
-                .append(tableName)
-                .append(SPACE)
-                .append(tableAlias)
-                .append(" ON ")
-                .append(onTableName)
-                .append(DOT)
-                .append(onTableColumn)
-                .append('=')
-                .append(tableAlias)
-                .append(DOT)
-                .append(tableColumnName);
+        StringBuilder builder = new StringBuilder();
+        builder
+            .append(joinType)
+            .append(tableName)
+            .append(SPACE)
+            .append(tableAlias);
+        appendForUpdate(QueryPosition.AFTER_TABLE_NAME, queryModel, builder);
+        builder
+            .append(" ON ")
+            .append(onTableName)
+            .append(DOT)
+            .append(onTableColumn)
+            .append('=')
+            .append(tableAlias)
+            .append(DOT)
+            .append(tableColumnName);
+        return builder;
     }
 
     /**
@@ -1135,6 +1151,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .append(OPEN_BRACKET)
                 .append('*')
                 .append(CLOSE_BRACKET);
+    }
+
+    @Override
+    protected void appendForUpdate(QueryPosition queryPosition, QueryModel query, StringBuilder queryBuilder) {
+        if (query.isForUpdate()) {
+            boolean isSqlServer = Dialect.SQL_SERVER.equals(dialect);
+            if (isSqlServer && queryPosition.equals(QueryPosition.AFTER_TABLE_NAME) ||
+                !isSqlServer && queryPosition.equals(QueryPosition.END_OF_QUERY)) {
+                queryBuilder.append(isSqlServer ? SQL_SERVER_FOR_UPDATE_CLAUSE : STANDARD_FOR_UPDATE_CLAUSE);
+            }
+        }
     }
 
     @Override
@@ -1379,5 +1406,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
         }
         return column;
+    }
+
+    @Override
+    public boolean supportsForUpdate() {
+        return true;
     }
 }

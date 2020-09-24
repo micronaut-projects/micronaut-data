@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.repositories;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Food;
@@ -33,4 +34,7 @@ public interface FoodRepository extends CrudRepository<Food, UUID> {
     @NonNull
     @Join(value = "alternativeMeal", type = Join.Type.LEFT_FETCH)
     Food searchById(@NonNull @NotNull UUID uuid);
+
+    @Join("meal")
+    Food findByMealMidForUpdate(Long mid);
 }

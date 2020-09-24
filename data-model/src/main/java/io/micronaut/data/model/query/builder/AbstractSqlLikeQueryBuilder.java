@@ -529,6 +529,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         StringBuilder select = new StringBuilder(SELECT_CLAUSE);
         buildSelectClause(query, queryState, select);
+        appendForUpdate(QueryPosition.AFTER_TABLE_NAME, query, select);
         queryState.getQuery().insert(0, select.toString());
 
         QueryModel.Junction criteria = query.getCriteria();
@@ -539,6 +540,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
 
         appendOrder(query, queryState);
+        appendForUpdate(QueryPosition.END_OF_QUERY, query, queryState.getQuery());
+
         return QueryResult.of(
                 queryState.getQuery().toString(),
                 parameters,
@@ -988,6 +991,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
         }
+    }
+
+    protected void appendForUpdate(QueryPosition queryPosition, QueryModel query, StringBuilder queryBuilder) {
     }
 
     private void buildWhereClauseForCriterion(
@@ -1904,5 +1910,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         String getPath() {
             return path;
         }
+    }
+
+    protected enum QueryPosition {
+        AFTER_TABLE_NAME, END_OF_QUERY
     }
 }

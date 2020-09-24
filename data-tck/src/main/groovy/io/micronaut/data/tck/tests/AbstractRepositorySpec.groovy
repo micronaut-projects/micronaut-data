@@ -23,10 +23,15 @@ import io.micronaut.data.tck.entities.*
 import io.micronaut.data.tck.jdbc.entities.Role
 import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
+import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.sql.Connection
 import java.time.LocalDate
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractRepositorySpec extends Specification {
 
@@ -45,12 +50,16 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract UserRoleRepository getUserRoleRepository()
     abstract RoleRepository getRoleRepository()
     abstract MealRepository getMealRepository()
+    abstract FoodRepository getFoodRepository()
 
     abstract Map<String, String> getProperties()
 
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
+
+    @Shared
+    SynchronousTransactionManager<Connection> transactionManager = context.getBean(SynchronousTransactionManager)
 
     boolean isOracle() {
         return false
@@ -97,6 +106,11 @@ abstract class AbstractRepositorySpec extends Specification {
         bookRepository.deleteAll()
         authorRepository.deleteAll()
         personRepository.deleteAll()
+    }
+
+    protected void cleanupMeals() {
+        foodRepository.deleteAll()
+        mealRepository.deleteAll()
     }
 
     void "test save one"() {
@@ -863,6 +877,108 @@ abstract class AbstractRepositorySpec extends Specification {
 
         expect:
         mealRepository.findById(meal.mid).get().currentBloodGlucose == 100
+
+        cleanup:
+        cleanupMeals()
+    }
+
+    void "test find one for update"() {
+        given:
+        def meal = mealRepository.save(new Meal(10))
+        def food = foodRepository.save(new Food("food", 80, 200, meal))
+
+        when:
+        def mealById = transactionManager.executeWrite { mealRepository.findByIdForUpdate(meal.mid) }
+        then:
+        meal.currentBloodGlucose == mealById.currentBloodGlucose
+
+        when: "finding with associations"
+        def mealWithFood = transactionManager.executeWrite { mealRepository.searchByIdForUpdate(meal.mid) }
+        then: "the association is fetched"
+        food.carbohydrates == mealWithFood.foods.first().carbohydrates
+
+        cleanup:
+        cleanupMeals()
+    }
+
+    void "test find many for update"() {
+        given:
+        def meals = mealRepository.saveAll([
+                new Meal(10),
+                new Meal(20),
+                new Meal(30)
+        ])
+        foodRepository.saveAll(meals.collect { new Food("food", 10, 100, it) })
+
+        when:
+        def mealsForUpdate = transactionManager.executeWrite { forUpdateMethod.call(*args) }
+
+        then:
+        mealsForUpdate.collect { it.currentBloodGlucose }.sort() ==
+                normalMethod.call(*args).collect { it.currentBloodGlucose }.sort()
+
+        cleanup:
+        cleanupMeals()
+
+        where:
+        forUpdateMethod                                               | normalMethod                                         | args
+        mealRepository::findAllForUpdate                              | mealRepository::findAll                              | []
+        mealRepository::findAllByCurrentBloodGlucoseLessThanForUpdate | mealRepository::findAllByCurrentBloodGlucoseLessThan | [100]
+        mealRepository::findByFoodsPortionGramsGreaterThanForUpdate   | mealRepository::findByFoodsPortionGramsGreaterThan   | [10]
+    }
+
+    void "test find for update locking"() {
+        given:
+        def meal = mealRepository.save(new Meal(10))
+        def threadCount = 2
+
+        when:
+        def latch = new CountDownLatch(threadCount)
+        (1..threadCount).collect {
+            Thread.start {
+                transactionManager.executeWrite {
+                    def mealToUpdate = mealRepository.findByIdForUpdate(meal.mid)
+                    latch.countDown()
+                    latch.await(5, TimeUnit.SECONDS)
+                    mealToUpdate.currentBloodGlucose++
+                    mealRepository.update(mealToUpdate)
+                }
+            }
+        }.forEach { it.join() }
+
+        then:
+        mealRepository.findById(meal.mid).get().currentBloodGlucose == meal.currentBloodGlucose + threadCount
+
+        cleanup:
+        cleanupMeals()
+    }
+
+    void "test find for update locking with associations"() {
+        given:
+        def meal = mealRepository.save(new Meal(10))
+        foodRepository.save(new Food("food", 80, 200, meal))
+        def threadCount = 2
+
+        when:
+        def latch = new CountDownLatch(threadCount)
+        (1..threadCount).collect {
+            Thread.start {
+                transactionManager.executeWrite {
+                    def food = foodRepository.findByMealMidForUpdate(meal.mid)
+                    def mealToUpdate = food.meal
+                    latch.countDown()
+                    latch.await(5, TimeUnit.SECONDS)
+                    mealToUpdate.currentBloodGlucose++
+                    mealRepository.update(mealToUpdate)
+                }
+            }
+        }.forEach { it.join() }
+
+        then:
+        mealRepository.findById(meal.mid).get().currentBloodGlucose == meal.currentBloodGlucose + threadCount
+
+        cleanup:
+        cleanupMeals()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

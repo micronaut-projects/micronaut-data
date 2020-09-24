@@ -24,6 +24,7 @@ import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
 import io.micronaut.data.tck.repositories.CountryRepository
 import io.micronaut.data.tck.repositories.FaceRepository
+import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.MealRepository
 import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.RegionRepository
@@ -82,6 +83,9 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
 
     @Shared
     H2MealRepository mealRepo = context.getBean(H2MealRepository)
+
+    @Shared
+    H2FoodRepository foodRepo = context.getBean(H2FoodRepository)
 
     @Override
     NoseRepository getNoseRepository() {
@@ -156,6 +160,11 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     @Override
     MealRepository getMealRepository() {
         return mealRepo
+    }
+
+    @Override
+    FoodRepository getFoodRepository() {
+        return foodRepo
     }
 
     void "test total dto"() {

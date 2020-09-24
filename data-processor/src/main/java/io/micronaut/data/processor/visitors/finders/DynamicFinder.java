@@ -168,7 +168,9 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         int totalRequiredArguments = 0;
         // get the sequence clauses
         List<Sort.Order> orderList = new ArrayList<>();
-        final String querySequence = matchOrder(match.group(4), orderList);
+        String querySequence = matchForUpdate(matchContext, match.group(4));
+        boolean matchedForUpdate = !Objects.equals(querySequence, match.group(4));
+        querySequence = matchOrder(querySequence, orderList);
         String projectionSequence = match.group(3);
 
         if (projectionSequence.endsWith("Order") && methodName.contains("OrderBy" + querySequence)) {
@@ -279,6 +281,10 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             if (applyJoinSpecs(matchContext, query, entity, joinSpecs)) {
                 return null;
             }
+        }
+
+        if (matchedForUpdate) {
+            applyForUpdate(query);
         }
 
         if (applyOrderBy(matchContext, query, orderList)) {
