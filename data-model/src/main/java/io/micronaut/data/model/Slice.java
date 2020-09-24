@@ -84,7 +84,7 @@ public interface Slice<T> extends Iterable<T> {
     }
 
     /**
-     * @return Whether the slize is empty
+     * @return Whether the slice is empty
      */
     default boolean isEmpty() {
         return getContent().isEmpty();
