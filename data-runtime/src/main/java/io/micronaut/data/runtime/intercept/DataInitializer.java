@@ -45,8 +45,11 @@ class DataInitializer {
         conversionService.addConverter(Timestamp.class, ZonedDateTime.class, timestamp ->
                 timestamp.toLocalDateTime().atZone(ZoneId.systemDefault())
         );
+        conversionService.addConverter(Timestamp.class, OffsetDateTime.class, timestamp ->
+            OffsetDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault())
+        );
         conversionService.addConverter(ZonedDateTime.class, Timestamp.class, zonedDateTime ->
-                new Timestamp(zonedDateTime.toInstant().toEpochMilli())
+                Timestamp.from(zonedDateTime.toInstant())
         );
         conversionService.addConverter(Timestamp.class, LocalDateTime.class, Timestamp::toLocalDateTime);
         conversionService.addConverter(Instant.class, Date.class, instant ->
@@ -60,6 +63,7 @@ class DataInitializer {
         conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime ->
                 new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
         );
+        conversionService.addConverter(LocalDateTime.class, Timestamp.class, Timestamp::valueOf);
         conversionService.addConverter(Date.class, LocalDateTime.class, date ->
                 Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime()
         );
@@ -69,9 +73,8 @@ class DataInitializer {
         conversionService.addConverter(Date.class, LocalDate.class, date ->
                 Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate()
         );
-        conversionService.addConverter(Date.class, Instant.class, date ->
-                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toInstant()
-        );
+        conversionService.addConverter(Date.class, Instant.class, Date::toInstant);
+        conversionService.addConverter(java.sql.Date.class, Instant.class, date -> Instant.ofEpochMilli(date.getTime()));
         conversionService.addConverter(ChronoLocalDate.class, Date.class, localDate ->
                 new Date(localDate.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli())
         );
@@ -82,12 +85,8 @@ class DataInitializer {
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime ->
                 offsetDateTime.toInstant().toEpochMilli()
         );
-        conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime -> {
-                Instant instant = offsetDateTime.toInstant();
-                Timestamp timestamp = new Timestamp(instant.toEpochMilli());
-                timestamp.setNanos(instant.getNano());
-                return timestamp;
-            }
+        conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime ->
+                Timestamp.from(offsetDateTime.toInstant())
         );
         conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, OffsetDateTime::toLocalDateTime);
         conversionService.addConverter(OffsetDateTime.class, LocalDate.class, OffsetDateTime::toLocalDate);

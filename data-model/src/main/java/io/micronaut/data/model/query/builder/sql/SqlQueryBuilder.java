@@ -1241,13 +1241,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                 } else if (dialect == Dialect.SQL_SERVER) {
                     // sql server timestamp is an internal type, use datetime instead
-                    column += " DATETIME";
+                    column += " DATETIME2";
                     if (required) {
                         column += " NOT NULL";
                     }
                 } else if (dialect == Dialect.MYSQL) {
                     // mysql doesn't allow timestamp without default
-                    column += " TIMESTAMP DEFAULT NOW()";
+                    column += " TIMESTAMP(6) DEFAULT NOW(6)";
                 } else {
                     column += " TIMESTAMP";
                     if (required) {
