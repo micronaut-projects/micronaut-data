@@ -25,4 +25,4 @@ To obtain additional support for https://docs.spring.io/spring-data/jpa/docs/cur
 
 dependency:io.micronaut.data:micronaut-data-spring-jpa[version="{version}"]
 
-You can then implement the `JpaSpecificationExecutor` (the generic argument to the inteface should be a domain class) interface as per the https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[Spring Data JPA documentation].
+You can then implement the `JpaSpecificationExecutor` (the generic argument to the interface should be a domain class) interface as per the https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[Spring Data JPA documentation].
