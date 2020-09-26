@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc;
 
+import io.micronaut.data.annotation.DateCreated;
+import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 
@@ -29,6 +31,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.TimeZone;
@@ -66,12 +69,19 @@ public class BasicTypes {
 
     private LocalDateTime localDateTime = LocalDateTime.now();
     private ZonedDateTime zonedDateTime = ZonedDateTime.now();
+    private OffsetDateTime offsetDateTime = OffsetDateTime.now();
     private Instant instant = Instant.now();
     private UUID uuid = UUID.randomUUID();
     @Column(columnDefinition = "DECIMAL(24) NOT NULL")
     private BigDecimal bigDecimal = new BigDecimal(Long.MAX_VALUE + "000");
     private TimeZone timeZone = TimeZone.getTimeZone("GMT");
     private Charset charset = StandardCharsets.UTF_8;
+
+    @DateCreated
+    private Instant dateCreated;
+
+    @DateUpdated
+    private Instant dateUpdated;
 
     public BasicTypes() throws MalformedURLException {
     }
@@ -276,6 +286,14 @@ public class BasicTypes {
         this.zonedDateTime = zonedDateTime;
     }
 
+    public OffsetDateTime getOffsetDateTime() {
+        return offsetDateTime;
+    }
+
+    public void setOffsetDateTime(OffsetDateTime offsetDateTime) {
+        this.offsetDateTime = offsetDateTime;
+    }
+
     public Instant getInstant() {
         return instant;
     }
@@ -314,5 +332,21 @@ public class BasicTypes {
 
     public void setCharset(Charset charset) {
         this.charset = charset;
+    }
+
+    public Instant getDateCreated() {
+        return dateCreated;
+    }
+
+    public void setDateCreated(Instant dateCreated) {
+        this.dateCreated = dateCreated;
+    }
+
+    public Instant getDateUpdated() {
+        return dateUpdated;
+    }
+
+    public void setDateUpdated(Instant dateUpdated) {
+        this.dateUpdated = dateUpdated;
     }
 }

@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Company
+import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -36,6 +37,10 @@ class AutoTimestampSpec extends Specification {
     @Shared
     @Inject
     ProductRepo productRepo
+
+    @Shared
+    @Inject
+    FaceRepo taskRepo
 
     void "test java.util.Date date created and last updated"() {
         when:
@@ -82,5 +87,29 @@ class AutoTimestampSpec extends Specification {
         product.dateCreated == product2.dateCreated
         product2.price == BigDecimal.TEN
         product2.lastUpdated > product2.dateCreated
+    }
+
+    void "test java.time.Instant date created and last updated"() {
+        when:
+        def face = new Face("Foo")
+        taskRepo.save(face)
+        def dateCreated = face.dateCreated
+
+        then:
+        face.id != null
+        dateCreated != null
+        face.dateCreated == face.lastUpdated
+        taskRepo.findById(face.id).get().dateCreated == face.dateCreated
+
+        when:
+        face.setName("Bar")
+        taskRepo.update(face)
+        def task2 = taskRepo.findById(face.id).orElse(null)
+
+        then:
+        face.dateCreated == dateCreated
+        face.dateCreated == task2.dateCreated
+        task2.name == "Bar"
+        task2.lastUpdated > task2.dateCreated
     }
 }

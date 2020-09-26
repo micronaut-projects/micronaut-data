@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2
+package io.micronaut.data.hibernate;
 
-import io.micronaut.test.support.TestPropertyProvider
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.entities.Face;
 
-trait H2TestPropertyProvider implements TestPropertyProvider {
-    @Override
-    Map<String, String> getProperties() {
-        [
-                "datasources.default.url": "jdbc:h2:mem:mydb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
-                "datasources.default.name": "mydb",
-                "datasources.default.schema-generate": "CREATE_DROP",
-                "datasources.default.dialect": "H2",
-        ] as Map<String, String>
-    }
-
+@Repository
+public interface FaceRepo extends CrudRepository<Face, Long> {
 }
