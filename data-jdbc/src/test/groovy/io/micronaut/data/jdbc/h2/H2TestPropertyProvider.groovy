@@ -15,17 +15,34 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.test.support.TestPropertyProvider
+import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
 
-trait H2TestPropertyProvider implements TestPropertyProvider {
+trait H2TestPropertyProvider implements DatabaseTestPropertyProvider {
+
     @Override
-    Map<String, String> getProperties() {
-        [
-                "datasources.default.url": "jdbc:h2:mem:mydb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE",
-                "datasources.default.name": "mydb",
-                "datasources.default.schema-generate": "CREATE_DROP",
-                "datasources.default.dialect": "H2",
-        ] as Map<String, String>
+    String url() {
+        "jdbc:h2:mem:mydb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE"
     }
 
+    @Override
+    String username() {
+        ""
+    }
+
+    @Override
+    String password() {
+        ""
+    }
+
+    @Override
+    Dialect dialect() {
+        Dialect.H2
+    }
+
+    @Override
+    SchemaGenerate schemaGenerate() {
+        SchemaGenerate.CREATE_DROP
+    }
 }

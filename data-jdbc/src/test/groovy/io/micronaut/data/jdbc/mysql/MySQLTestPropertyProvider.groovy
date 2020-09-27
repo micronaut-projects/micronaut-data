@@ -15,21 +15,28 @@
  */
 package io.micronaut.data.jdbc.mysql
 
+import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.test.support.TestPropertyProvider
 
-trait MySQLTestPropertyProvider implements TestPropertyProvider {
+trait MySQLTestPropertyProvider implements DatabaseTestPropertyProvider {
 
     @Override
-    Map<String, String> getProperties() {
-        [
-                "datasources.default.url":MySql.getJdbcUrl(),
-                "datasources.default.username":MySql.getUsername(),
-                "datasources.default.password":MySql.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.MYSQL
-        ] as Map<String, String>
+    String url() {
+        MySql.getJdbcUrl()
     }
 
+    @Override
+    String username() {
+        MySql.getUsername()
+    }
+
+    @Override
+    String password() {
+        MySql.getPassword()
+    }
+
+    @Override
+    Dialect dialect() {
+        Dialect.MYSQL
+    }
 }
