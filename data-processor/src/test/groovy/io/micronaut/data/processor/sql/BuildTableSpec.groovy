@@ -81,7 +81,7 @@ class Test {
 
         where:
         dialect          | statement
-        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`json` JSON NOT NULL);'
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
         Dialect.ORACLE   | '''CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE

@@ -15,13 +15,11 @@
  */
 package io.micronaut.data.processor.sql
 
-
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
@@ -73,7 +71,7 @@ class Test {
         where:
         dialect            | query
         Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" NUMBER(19) PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"NAME" VARCHAR(255) NOT NULL)'
-        Dialect.H2         | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+        Dialect.H2         | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`name` VARCHAR(255) NOT NULL);'
         Dialect.POSTGRES   | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"name" VARCHAR(255) NOT NULL);'
         Dialect.SQL_SERVER | 'CREATE TABLE [test] ([id] BIGINT PRIMARY KEY IDENTITY(1,1) NOT NULL,[name] VARCHAR(255) NOT NULL);'
         Dialect.MYSQL      | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
@@ -175,7 +173,7 @@ class Test {
         where:
         dialect            | query
         Dialect.ORACLE     | 'CREATE TABLE "TEST" ("ID" VARCHAR(36) PRIMARY KEY NOT NULL DEFAULT SYS_GUID(),"NAME" VARCHAR(255) NOT NULL)'
-        Dialect.H2         | 'CREATE TABLE `test` (`id` UUID PRIMARY KEY NOT NULL DEFAULT random_uuid(),`name` VARCHAR(255) NOT NULL);'
+        Dialect.H2         | 'CREATE TABLE `test` (`id` UUID NOT NULL DEFAULT random_uuid() PRIMARY KEY,`name` VARCHAR(255) NOT NULL);'
         Dialect.POSTGRES   | 'CREATE TABLE "test" ("id" UUID PRIMARY KEY NOT NULL DEFAULT uuid_generate_v4(),"name" VARCHAR(255) NOT NULL);'
         Dialect.SQL_SERVER | 'CREATE TABLE [test] ([id] UNIQUEIDENTIFIER PRIMARY KEY NOT NULL DEFAULT newid(),[name] VARCHAR(255) NOT NULL);'
         Dialect.MYSQL      | 'CREATE TABLE `test` (`id` VARCHAR(36) PRIMARY KEY NOT NULL,`name` VARCHAR(255) NOT NULL);'
