@@ -16,10 +16,7 @@
 package io.micronaut.data.tck.entities;
 
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.data.annotation.GeneratedValue;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.DataType;
 
 import java.util.Map;
@@ -34,6 +31,10 @@ public class Sale {
 
     @TypeDef(type = DataType.JSON)
     private Map<String, String> data;
+
+    @TypeDef(type = DataType.JSON)
+    @Nullable
+    private String extraData;
 
     @TypeDef(type = DataType.JSON)
     @Nullable
@@ -69,5 +70,13 @@ public class Sale {
 
     public void setQuantities(Map<String, Integer> quantities) {
         this.quantities = quantities;
+    }
+
+    public String getExtraData() {
+        return extraData;
+    }
+
+    public void setExtraData(String extraData) {
+        this.extraData = extraData;
     }
 }
