@@ -13,30 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2
+package io.micronaut.data.tck.jdbc.entities;
 
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
 
-import io.micronaut.data.tck.repositories.PersonReactiveRepository
-import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
-import io.micronaut.test.annotation.MicronautTest
-import spock.lang.Shared
+import java.util.UUID;
 
-import javax.inject.Inject
+@MappedEntity
+public class Organization {
 
-@MicronautTest(rollback = false)
-@H2DBProperties
-class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec {
+    @Id
+    @GeneratedValue
+    private UUID id;
 
-    @Inject
-    @Shared
-    PersonReactiveRepository personReactiveRepository
-
-    @Override
-    PersonReactiveRepository getPersonRepository() {
-        return personReactiveRepository
+    public UUID getId() {
+        return id;
     }
 
-    @Override
-    void init() {
+    public void setId(UUID id) {
+        this.id = id;
     }
 }
