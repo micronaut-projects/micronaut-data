@@ -15,23 +15,28 @@
  */
 package io.micronaut.data.jdbc.postgres
 
+import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.test.support.TestPropertyProvider
 
-trait PostgresTestPropertyProvider implements TestPropertyProvider {
+trait PostgresTestPropertyProvider implements DatabaseTestPropertyProvider {
 
     @Override
-    Map<String, String> getProperties() {
-        ["datasources.default.schema-generate": SchemaGenerate.CREATE] + postgresProperties as Map<String, String>
+    String url() {
+        Postgres.getJdbcUrl()
     }
 
-    Map<String, Object> getPostgresProperties() {
-        [
-                "datasources.default.url":Postgres.getJdbcUrl(),
-                "datasources.default.username":Postgres.getUsername(),
-                "datasources.default.password":Postgres.getPassword(),
-                "datasources.default.dialect": Dialect.POSTGRES
-        ] as Map<String, Object>
+    @Override
+    String username() {
+        Postgres.getUsername()
+    }
+
+    @Override
+    String password() {
+        Postgres.getPassword()
+    }
+
+    @Override
+    Dialect dialect() {
+        Dialect.POSTGRES
     }
 }

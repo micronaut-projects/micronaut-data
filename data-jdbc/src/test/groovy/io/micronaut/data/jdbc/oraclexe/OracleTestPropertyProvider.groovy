@@ -15,21 +15,28 @@
  */
 package io.micronaut.data.jdbc.oraclexe
 
+import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.test.support.TestPropertyProvider
 
-trait OracleTestPropertyProvider implements TestPropertyProvider {
+trait OracleTestPropertyProvider implements DatabaseTestPropertyProvider {
 
     @Override
-    Map<String, String> getProperties()  {
-        [
-                "datasources.default.url": Oracle.getJdbcUrl(),
-                "datasources.default.username": Oracle.getUsername(),
-                "datasources.default.password": Oracle.getPassword(),
-                "datasources.default.schema-generate": SchemaGenerate.CREATE,
-                "datasources.default.dialect": Dialect.ORACLE
-        ] as Map<String, String>
+    String url() {
+        Oracle.getJdbcUrl()
     }
 
+    @Override
+    String username() {
+        Oracle.getUsername()
+    }
+
+    @Override
+    String password() {
+        Oracle.getPassword()
+    }
+
+    @Override
+    Dialect dialect() {
+        Dialect.ORACLE
+    }
 }

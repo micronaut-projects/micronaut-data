@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.mariadb
+package io.micronaut.data.jdbc.h2
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
-import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MariaTestPropertyProvider implements DatabaseTestPropertyProvider {
+import io.micronaut.data.jdbc.SchemaCreateDropSpec
+import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.repositories.BookRepository
+
+class H2SchemaCreateDropSpec extends SchemaCreateDropSpec implements H2TestPropertyProvider {
 
     @Override
-    String url() {
-        MariaDb.getJdbcUrl()
+    SchemaGenerate schemaGenerate() {
+        SchemaGenerate.CREATE_DROP
     }
 
     @Override
-    String username() {
-        MariaDb.getUsername()
-    }
-
-    @Override
-    String password() {
-        MariaDb.getPassword()
-    }
-
-    @Override
-    Dialect dialect() {
-        Dialect.MYSQL
+    BookRepository getBookRepository() {
+        context.getBean(H2BookRepository)
     }
 }

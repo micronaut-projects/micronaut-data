@@ -15,18 +15,28 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
+import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.test.support.TestPropertyProvider
 
-trait MSSQLTestPropertyProvider implements TestPropertyProvider {
+trait MSSQLTestPropertyProvider implements DatabaseTestPropertyProvider {
 
     @Override
-    Map<String, String> getProperties() {
-        ["datasources.default.url":MSSQL.getJdbcUrl(),
-        "datasources.default.username":MSSQL.getUsername(),
-        "datasources.default.password":MSSQL.getPassword(),
-        "datasources.default.schema-generate": SchemaGenerate.CREATE,
-        "datasources.default.dialect": Dialect.SQL_SERVER] as Map<String, String>
+    String url() {
+        MSSQL.getJdbcUrl()
+    }
+
+    @Override
+    String username() {
+        MSSQL.getUsername()
+    }
+
+    @Override
+    String password() {
+        MSSQL.getPassword()
+    }
+
+    @Override
+    Dialect dialect() {
+        Dialect.SQL_SERVER
     }
 }
