@@ -14,7 +14,7 @@ dependencies {
     testAnnotationProcessor project(":data-processor")
     testImplementation project(":data-processor")
 
-    compileOnly "com.fasterxml.jackson.core:jackson-annotations:2.11.2"
+    compileOnly "com.fasterxml.jackson.core:jackson-annotations:2.11.3"
     testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
     testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.2"
 
