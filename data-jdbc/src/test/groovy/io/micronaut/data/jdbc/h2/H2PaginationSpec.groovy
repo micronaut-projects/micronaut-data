@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.h2
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractPageSpec
 import io.micronaut.test.annotation.MicronautTest
@@ -32,9 +33,18 @@ class H2PaginationSpec extends AbstractPageSpec {
     @Shared
     H2PersonRepository pr
 
+    @Inject
+    @Shared
+    H2BookRepository br
+
     @Override
     PersonRepository getPersonRepository() {
         return pr
+    }
+
+    @Override
+    BookRepository getBookRepository() {
+        return br
     }
 
     @Override

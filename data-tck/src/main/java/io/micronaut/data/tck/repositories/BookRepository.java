@@ -37,6 +37,9 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     @Join("author")
     public abstract Page<Book> findAll(@NonNull Pageable pageable);
 
+    @Join(value = "author", type = Join.Type.LEFT_FETCH)
+    public abstract Page<Book> findByTotalPagesGreaterThan(int totalPages, Pageable pageable);
+
     protected final AuthorRepository authorRepository;
 
     public BookRepository(AuthorRepository authorRepository) {

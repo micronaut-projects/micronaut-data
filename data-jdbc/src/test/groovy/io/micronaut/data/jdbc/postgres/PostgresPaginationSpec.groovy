@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.postgres
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractPageSpec
 import spock.lang.AutoCleanup
@@ -27,6 +28,11 @@ class PostgresPaginationSpec extends AbstractPageSpec implements PostgresTestPro
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(PostgresPersonRepository)
+    }
+
+    @Override
+    BookRepository getBookRepository() {
+        return context.getBean(PostgresBookRepository)
     }
 
     @Override

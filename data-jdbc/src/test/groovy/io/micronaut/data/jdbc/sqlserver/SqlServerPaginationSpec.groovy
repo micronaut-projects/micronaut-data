@@ -16,8 +16,7 @@
 package io.micronaut.data.jdbc.sqlserver
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractPageSpec
 import spock.lang.AutoCleanup
@@ -30,6 +29,11 @@ class SqlServerPaginationSpec extends AbstractPageSpec implements MSSQLTestPrope
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(MSSQLPersonRepository)
+    }
+
+    @Override
+    BookRepository getBookRepository() {
+        return context.getBean(MSBookRepository)
     }
 
     @Override

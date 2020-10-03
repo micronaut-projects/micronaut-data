@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.core.annotation.AnnotationValue
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindPageInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
@@ -25,6 +25,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
@@ -102,6 +103,80 @@ interface MyInterface extends GenericRepository<Person, Long> {
         findMethod.getValue(Query.class, "countQuery", String).get() == "SELECT COUNT($alias) FROM io.micronaut.data.model.entities.Person AS $alias WHERE (${alias}.name = :p1)"
         findMethod.stringValues(DataMethod.class, DataMethod.META_MEMBER_COUNT_PARAMETERS + "Names") == ['p1'] as String[]
 
+    }
+
+    void "test count query with join"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.tck.entities.Book;
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Book, Long> {
+
+    @Join(value = "author", type = Join.Type.${joinType.name()})
+    Page<Book> findAll(Pageable pageable);
+}
+""")
+
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Book))
+
+        when: "the list method is retrieved"
+        def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
+
+        then:"it is configured correctly"
+        findMethod.getValue(Query.class, String).get().contains(expectedJoin)
+        findMethod.getValue(Query.class, "countQuery", String).get().contains("$alias $expectedJoin $alias")
+
+        where:
+        joinType              | expectedJoin
+        Join.Type.DEFAULT     | "JOIN"
+        Join.Type.INNER       | "JOIN"
+        Join.Type.FETCH       | "JOIN"
+        Join.Type.LEFT        | "LEFT JOIN"
+        Join.Type.LEFT_FETCH  | "LEFT JOIN"
+        Join.Type.RIGHT       | "RIGHT JOIN"
+        Join.Type.RIGHT_FETCH | "RIGHT JOIN"
+    }
+
+    void "test count query with join jdbc"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface' , """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Book, Long> {
+
+    @Join(value = "author", type = Join.Type.${joinType.name()})
+    Page<Book> findAll(Pageable pageable);
+}
+""")
+
+        def alias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Book))
+
+        when: "the list method is retrieved"
+        def findMethod = beanDefinition.getRequiredMethod("findAll", Pageable)
+
+        then:"it is configured correctly"
+        findMethod.getValue(Query.class, String).get().contains(expectedJoin)
+        println(findMethod.getValue(Query.class, String).get())
+        findMethod.getValue(Query.class, "countQuery", String).get().contains("$alias $expectedJoin")
+        println(findMethod.getValue(Query.class, "countQuery", String).get())
+
+        where:
+        joinType              | expectedJoin
+        Join.Type.DEFAULT     | "INNER JOIN"
+        Join.Type.INNER       | "INNER JOIN"
+        Join.Type.FETCH       | "INNER JOIN"
+        Join.Type.LEFT        | "LEFT JOIN"
+        Join.Type.LEFT_FETCH  | "LEFT JOIN"
+        Join.Type.RIGHT       | "RIGHT JOIN"
+        Join.Type.RIGHT_FETCH | "RIGHT JOIN"
     }
 
     void "test page with @Query that is missing pageable"() {
