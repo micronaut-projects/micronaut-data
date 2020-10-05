@@ -8,7 +8,7 @@ dependencies {
     api "io.reactivex.rxjava2:rxjava:2.2.19"
     testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
     compileOnly "com.fasterxml.jackson.core:jackson-annotations"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.2"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.3"
 }
 tasks.withType(GroovyCompile) {
     groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
