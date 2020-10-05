@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.annotation.Property
+
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.DataType
@@ -29,9 +29,7 @@ import javax.inject.Inject
 import javax.sql.DataSource
 
 @MicronautTest
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
-@Property(name = "datasources.default.dialect", value = "H2")
+@H2DBProperties
 class H2BasicTypesSpec extends Specification {
 
     @Inject

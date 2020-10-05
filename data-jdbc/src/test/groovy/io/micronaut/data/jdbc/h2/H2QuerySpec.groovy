@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.tests.AbstractQuerySpec
@@ -25,9 +24,7 @@ import spock.lang.Shared
 import javax.inject.Inject
 
 @MicronautTest
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
-@Property(name = "datasources.default.dialect", value = "H2")
+@H2DBProperties
 class H2QuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
