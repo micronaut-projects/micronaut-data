@@ -21,6 +21,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.model.Sort
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.annotation.MicronautTest
 import spock.lang.Shared
@@ -41,6 +42,10 @@ class PageSpec extends Specification {
     @Inject
     @Shared
     PersonCrudRepository crudRepository
+
+    @Inject
+    @Shared
+    BookRepository bookRepository
 
     def setup() {
         populate()
@@ -198,5 +203,20 @@ class PageSpec extends Specification {
         page.totalSize == 50
         page.nextPageable().offset == 20
         page.nextPageable().number == 2
+    }
+
+    void "test total size of find with join"() {
+        given:
+        def books = bookRepository.saveAll([
+            new Book(title: "Book 1"),
+            new Book(title: "Book 2")
+        ])
+
+        when:
+        def page = bookRepository.findAll(Pageable.from(0, books.size()))
+
+        then:
+        page.getContent().isEmpty()
+        page.getTotalSize() == 0
     }
 }

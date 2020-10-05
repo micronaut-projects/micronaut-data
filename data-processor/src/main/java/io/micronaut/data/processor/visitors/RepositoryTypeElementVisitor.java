@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.*;
@@ -26,10 +27,10 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.Sort;
-import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
@@ -45,8 +46,6 @@ import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.inject.ast.*;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -326,6 +325,22 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     QueryModel.Junction junction = queryObject.getCriteria();
                                     for (QueryModel.Criterion criterion : junction.getCriteria()) {
                                         countQuery.add(criterion);
+                                    }
+                                    for (JoinPath joinPath : queryObject.getJoinPaths()) {
+                                        Join.Type joinType = joinPath.getJoinType();
+                                        switch (joinType) {
+                                            case INNER:
+                                            case FETCH:
+                                                joinType = Join.Type.DEFAULT;
+                                                break;
+                                            case LEFT_FETCH:
+                                                joinType = Join.Type.LEFT;
+                                                break;
+                                            case RIGHT_FETCH:
+                                                joinType = Join.Type.RIGHT;
+                                                break;
+                                        }
+                                        countQuery.join(joinPath.getAssociation(), joinType);
                                     }
 
                                     preparedCount = queryEncoder.buildQuery(countQuery);
