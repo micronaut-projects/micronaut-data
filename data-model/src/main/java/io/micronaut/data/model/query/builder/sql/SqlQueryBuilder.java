@@ -34,13 +34,14 @@ import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
-import static io.micronaut.data.annotation.GeneratedValue.Type.*;
 
 import java.sql.Blob;
 import java.sql.Clob;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.micronaut.data.annotation.GeneratedValue.Type.*;
 
 /**
  * Implementation of {@link QueryBuilder} that builds SQL queries.
@@ -443,7 +444,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                 break;
                 default:
-                    if (prop == identity) {
+                    if (dialect != Dialect.H2 && prop == identity) {
                         column += " PRIMARY KEY";
                     }
                     if (type == UUID) {
@@ -455,6 +456,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                     } else {
                         column += " AUTO_INCREMENT";
+                    }
+                    if (dialect == Dialect.H2 && prop == identity) {
+                        column += " PRIMARY KEY";
                     }
             }
         }

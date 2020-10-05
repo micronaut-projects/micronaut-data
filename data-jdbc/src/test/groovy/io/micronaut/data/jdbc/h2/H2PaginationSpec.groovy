@@ -25,9 +25,7 @@ import spock.lang.Shared
 import javax.inject.Inject
 
 @MicronautTest
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
-@Property(name = "datasources.default.dialect", value = "H2")
+@H2DBProperties
 class H2PaginationSpec extends AbstractPageSpec {
     @Inject
     @Shared

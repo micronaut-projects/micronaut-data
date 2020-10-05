@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.annotation.Property
+
 import io.micronaut.data.tck.entities.Food
 import io.micronaut.data.tck.entities.Meal
 import io.micronaut.test.annotation.MicronautTest
@@ -26,9 +26,7 @@ import javax.inject.Inject
 import javax.validation.ConstraintViolationException
 
 @MicronautTest
-@Property(name = "datasources.default.name", value = "mydb")
-@Property(name = "datasources.default.schema-generate", value = "CREATE_DROP")
-@Property(name = "datasources.default.dialect", value = "H2")
+@H2DBProperties
 class H2ValidationSpec extends Specification {
 
     @Inject
