@@ -140,137 +140,84 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
         final Dialect dialect = insert.dialect;
+
+        int index;
+        DataType type;
+        Object value;
         for (int i = 0; i < parameterBinding.length; i++) {
+            index = i + 1;
             String path = parameterBinding[i];
             RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(path);
             if (prop == null) {
                 int j = path.indexOf('.');
-                if (j > -1) {
-                    RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
-                            persistentEntity.getPropertyByPath(path).orElse(null);
-                    if (embeddedProp != null) {
+                if (j < 0) {
+                    continue;
+                }
 
-                        // embedded case
-                        prop = persistentEntity.getPropertyByName(path.substring(0, j));
-                        if (prop instanceof Association) {
-                            Association assoc = (Association) prop;
-                            if (assoc.getKind() == Relation.Kind.EMBEDDED) {
+                RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
+                        persistentEntity.getPropertyByPath(path).orElse(null);
+                if (embeddedProp == null) {
+                    continue;
+                }
 
-                                Object value = prop.getProperty().get(entity);
-                                int index = i + 1;
+                // embedded case
+                prop = persistentEntity.getPropertyByName(path.substring(0, j));
+                if (!(prop instanceof Association)) {
+                    continue;
+                }
 
-                                RuntimePersistentEntity<?> embeddedEntity = entities.get(embeddedProp.getProperty().getType());
+                // association
+                Association assoc = (Association) prop;
+                if (assoc.getKind() != Relation.Kind.EMBEDDED) {
+                    continue;
+                }
 
-                                if (embeddedEntity != null) {
-                                    Object bean = embeddedProp.getProperty().get(value);
-                                    RuntimePersistentProperty embeddedIdentity = embeddedEntity.getIdentity();
-                                    Object beanId = embeddedIdentity.getProperty().get(bean);
-                                    preparedStatementWriter.setDynamic(
-                                            stmt,
-                                            index,
-                                            embeddedIdentity.getDataType(),
-                                            beanId
-                                    );
-                                } else {
-                                    Object embeddedValue = value != null ? embeddedProp.getProperty().get(value) : null;
-                                    preparedStatementWriter.setDynamic(
-                                            stmt,
-                                            index,
-                                            embeddedProp.getDataType(),
-                                            embeddedValue
-                                    );
-                                }
-                            }
-                        }
-                    }
+                value = prop.getProperty().get(entity);
+
+                RuntimePersistentEntity<?> embeddedEntity = entities.get(embeddedProp.getProperty().getType());
+
+                if (embeddedEntity != null) {
+                    Object bean = embeddedProp.getProperty().get(value);
+                    RuntimePersistentProperty embeddedIdentity = embeddedEntity.getIdentity();
+
+                    type = embeddedIdentity.getDataType();
+                    value = embeddedIdentity.getProperty().get(bean);
+                } else {
+                    type = embeddedProp.getDataType();
+                    value = value != null ? embeddedProp.getProperty().get(value) : null;
                 }
             } else {
-                DataType type = prop.getDataType();
+                type = prop.getDataType();
                 BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
-                Object value = beanProperty.get(entity);
-                int index = i + 1;
+                value = beanProperty.get(entity);
 
                 if (prop instanceof Association) {
                     Association association = (Association) prop;
-                    if (!association.isForeignKey()) {
-                        @SuppressWarnings("unchecked")
-                        RuntimePersistentEntity<Object> associatedEntity = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
-                        RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
-                        if (identity == null) {
-                            throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
-                        } else {
-                            type = identity.getDataType();
-                        }
-                        BeanProperty<Object, ?> identityProperty = identity.getProperty();
-                        if (value != null) {
-                            value = identityProperty.get(value);
-                        }
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                        }
-
-                        if (value != null && dialect.requiresStringUUID(type)) {
-                            preparedStatementWriter.setString(
-                                    stmt,
-                                    index,
-                                    value.toString()
-                            );
-                        } else {
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    value
-                            );
-                        }
+                    if (association.isForeignKey()) {
+                        continue;
                     }
 
+                    @SuppressWarnings("unchecked")
+                    RuntimePersistentEntity<Object> associatedEntity = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
+                    RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
+                    if (identity == null) {
+                        throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
+                    } else {
+                        type = identity.getDataType();
+                    }
+                    BeanProperty<Object, ?> identityProperty = identity.getProperty();
+                    value = value != null ? identityProperty.get(value) : null;
                 } else if (!prop.isGenerated()) {
                     if (beanProperty.hasStereotype(AutoPopulated.class)) {
-                        if (beanProperty.hasAnnotation(DateCreated.class)) {
+                        if (beanProperty.hasAnnotation(DateCreated.class) ||
+                                beanProperty.hasAnnotation(DateUpdated.class)) {
                             now = now != null ? now : dateTimeProvider.getNow();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                            }
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    now
-                            );
-                            beanProperty.convertAndSet(entity, now);
-                        } else if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", now, index);
-                            }
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    now
-                            );
-                            beanProperty.convertAndSet(entity, now);
+
+                            value = now;
+                            beanProperty.convertAndSet(entity, value);
                         } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
-                            UUID uuid = UUID.randomUUID();
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", uuid, index);
-                            }
-                            if (dialect.requiresStringUUID(type)) {
-                                preparedStatementWriter.setString(
-                                        stmt,
-                                        index,
-                                        uuid.toString()
-                                );
-                            } else {
-                                preparedStatementWriter.setDynamic(
-                                        stmt,
-                                        index,
-                                        type,
-                                        uuid
-                                );
-                            }
-                            beanProperty.set(entity, uuid);
+                            value = UUID.randomUUID();
+                            beanProperty.set(entity, value);
                         } else {
                             throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                         }
@@ -298,6 +245,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     }
                 }
             }
+
+            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
+            }
+            setStatementParameter(stmt, index, type, value, dialect);
         }
     }
 
@@ -427,25 +379,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
         switch (dataType) {
             case JSON:
-                if (value != null && jsonCodec != null) {
+                if (value != null && jsonCodec != null && !value.getClass().equals(String.class)) {
+                    System.out.print(value);
                     value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                 }
-                preparedStatementWriter.setDynamic(
-                        preparedStatement,
-                        index,
-                        dataType,
-                        value);
-            break;
-            case UUID:
-                if (value != null && dialect.requiresStringUUID(dataType)) {
-                    dataType = DataType.STRING;
-                }
-                preparedStatementWriter.setDynamic(
-                        preparedStatement,
-                        index,
-                        dataType,
-                        value);
-            break;
+                break;
             case ENTITY:
                 if (value != null) {
                     RuntimePersistentProperty<Object> idReader = getIdReader(value);
@@ -456,16 +394,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     value = id;
                     dataType = idReader.getDataType();
                 }
-                // intentional fall through
+                break;
             default:
-                preparedStatementWriter.setDynamic(
-                        preparedStatement,
-                        index,
-                        dataType,
-                        value);
+                break;
         }
-    }
 
+        preparedStatementWriter.setDynamic(
+                preparedStatement,
+                index,
+                dialect.getDataType(dataType),
+                value);
+    }
+    
     /**
      * Resolves a stored insert for the given entity.
      * @param annotationMetadata  The repository annotation metadata

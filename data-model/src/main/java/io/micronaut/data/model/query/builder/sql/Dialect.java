@@ -79,6 +79,20 @@ public enum Dialect {
     }
 
     /**
+     * Returns compatible dialect dataype.
+     * @param type the type
+     * @return The dialect compatible DataType
+     * @since 2.0.1
+     */
+    public final DataType getDataType(@NonNull DataType type) {
+        if (type == DataType.UUID && this.stringUUID) {
+            return DataType.STRING;
+        } else {
+            return type;
+        }
+    }
+
+    /**
      * Determines whether
      * @param type the type
      * @return True if a string UUID is required
