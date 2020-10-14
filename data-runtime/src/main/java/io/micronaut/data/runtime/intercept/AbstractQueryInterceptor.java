@@ -56,6 +56,7 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
+import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
@@ -808,11 +809,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final boolean isNumericPlaceHolder;
         private final boolean hasPageable;
         private final AnnotationMetadata annotationMetadata;
-        private final boolean hasIn;
         private final boolean isCount;
         private final DataType[] indexedDataTypes;
         private final String[] parameterNames;
         private final boolean hasResultConsumer;
+        private boolean hasIn;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
 
@@ -843,6 +844,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.hasPageable = method.stringValue(PREDATOR_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
                                     method.stringValue(PREDATOR_ANN_NAME, TypeRole.SORT).isPresent() ||
                                     method.intValue(PREDATOR_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
+
+            Matcher inMatcher = IN_VARIABLES_PATTERN.matcher(query);
+            StringBuffer sb = new StringBuffer();
+            for (int i = 1; inMatcher.find(); i++) {
+                if (inMatcher.group("inGroup") != null) {
+                    inMatcher.appendReplacement(sb, "\\?\\$IN("+ i + ")");
+                    this.hasIn = true;
+                }
+            }
+            inMatcher.appendTail(sb);
+            query = sb.toString();
 
             if (isNumericPlaceHolder && method.isTrue(Query.class, DataMethod.META_MEMBER_RAW_QUERY)) {
                 Matcher matcher = VARIABLE_PATTERN.matcher(query);
