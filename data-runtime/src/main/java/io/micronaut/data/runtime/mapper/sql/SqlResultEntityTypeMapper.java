@@ -521,6 +521,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     Object nextId(@NonNull RuntimePersistentProperty<R> identity, @NonNull RS resultSet, @NonNull String columnName) {
         if (hasNext(resultSet)) {
             final Object id = resultReader.readDynamic(resultSet, columnName, identity.getDataType());
+            if (id == null) {
+                return null;
+            }
             final Class<?> isType = identity.getType();
             return isType.isInstance(id) ? id : resultReader.convertRequired(id, isType);
         }
