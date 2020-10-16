@@ -21,6 +21,7 @@ import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.test.annotation.MicronautTest
+import spock.lang.Issue
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -40,6 +41,12 @@ class H2BasicTypesSpec extends Specification {
     @Shared
     DataSource dataSource
 
+
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/769")
+    void 'test query that returns null'() {
+        expect:
+        !repository.somethingThatMightSometimesReturnNull().isPresent()
+    }
 
     @Unroll
     void 'test basic type mapping for property #property'() {

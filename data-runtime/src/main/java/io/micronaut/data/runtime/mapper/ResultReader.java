@@ -41,7 +41,7 @@ public interface ResultReader<RS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default <T> T convertRequired(Object value, Class<T> type) {
+    default <T> T convertRequired(@NonNull Object value, Class<T> type) {
 
         return ConversionService.SHARED.convert(
                 value,
@@ -59,7 +59,7 @@ public interface ResultReader<RS, IDX> {
      * @return The converted value
      * @throws DataAccessException if the value cannot be converted
      */
-    default <T> T convertRequired(Object value, Argument<T> type) {
+    default <T> T convertRequired(@NonNull Object value, Argument<T> type) {
 
         return ConversionService.SHARED.convert(
                 value,

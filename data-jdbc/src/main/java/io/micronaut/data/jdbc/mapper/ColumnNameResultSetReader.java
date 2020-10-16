@@ -59,7 +59,11 @@ public final class ColumnNameResultSetReader implements ResultReader<ResultSet, 
     }
 
     @Override
-    public <T> T convertRequired(Object value, Class<T> type) {
+    public <T> T convertRequired(@NonNull Object value, Class<T> type) {
+        //noinspection ConstantConditions
+        if (value == null) {
+            throw new DataAccessException("Cannot convert type null value to target type: " + type + ". Consider defining a TypeConverter bean to handle this case.");
+        }
         Class wrapperType = ReflectionUtils.getWrapperType(type);
         if (wrapperType.isInstance(value)) {
             return (T) value;
