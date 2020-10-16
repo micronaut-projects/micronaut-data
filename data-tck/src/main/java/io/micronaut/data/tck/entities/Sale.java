@@ -30,6 +30,7 @@ public class Sale {
     private String name;
 
     @TypeDef(type = DataType.JSON)
+    @Nullable
     private Map<String, String> data;
 
     @TypeDef(type = DataType.JSON)
