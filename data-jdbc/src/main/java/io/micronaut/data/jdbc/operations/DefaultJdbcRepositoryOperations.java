@@ -211,7 +211,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 return introspectedDataMapper.map(rs, resultType);
                             } else {
                                 Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
-                                if (resultType.isInstance(v)) {
+                                if (v == null) {
+                                    return null;
+                                } else if (resultType.isInstance(v)) {
                                     return (R) v;
                                 } else {
                                     return columnIndexResultSetReader.convertRequired(v, resultType);
@@ -367,13 +369,16 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     try {
                         boolean hasNext = rs.next();
                         if (hasNext) {
-                            Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
+                            Object v = columnIndexResultSetReader
+                                    .readDynamic(rs, 1, preparedQuery.getResultDataType());
                             if (resultType.isInstance(v)) {
                                 //noinspection unchecked
                                 action.accept((R) v);
                             } else {
                                 Object r = columnIndexResultSetReader.convertRequired(v, resultType);
-                                action.accept((R) r);
+                                if (r != null) {
+                                    action.accept((R) r);
+                                }
                             }
                         } else {
                             closeResultSet(ps, rs, finished);
