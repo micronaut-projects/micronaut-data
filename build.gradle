@@ -16,10 +16,6 @@ subprojects { Project subproject ->
     if (subproject.name != 'data-bom' || isExampleOrBenchmark) {
         apply plugin: "io.micronaut.build.common"
 
-        test {
-            environment("TESTCONTAINERS_RYUK_DISABLED", "true")
-        }
-
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"
             options.compilerArgs.addAll([
