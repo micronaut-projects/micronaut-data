@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.postgres
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.PostgreSQLContainer
 
+import java.sql.Connection
+
 class Postgres {
     static PostgreSQLContainer postgres
     static void init() {
@@ -27,6 +29,10 @@ class Postgres {
                     .withUsername("test")
                     .withPassword("test")
             postgres.start()
+            // enable UUID
+            try (Connection connection = postgres.createConnection("")) {
+                connection.prepareCall('CREATE EXTENSION "uuid-ossp";').execute()
+            }
         }
     }
 
