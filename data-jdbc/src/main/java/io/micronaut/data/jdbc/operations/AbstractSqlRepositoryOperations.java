@@ -208,9 +208,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     BeanProperty<Object, ?> identityProperty = identity.getProperty();
                     value = value != null ? identityProperty.get(value) : null;
                 } else if (!prop.isGenerated()) {
-                    if (beanProperty.hasStereotype(AutoPopulated.class)) {
-                        if (beanProperty.hasAnnotation(DateCreated.class) ||
-                                beanProperty.hasAnnotation(DateUpdated.class)) {
+                    if (beanProperty.hasStereotype(AutoPopulated.NAME)) {
+                        if (beanProperty.hasAnnotation(DateCreated.NAME) ||
+                                beanProperty.hasAnnotation(DateUpdated.NAME)) {
                             now = now != null ? now : dateTimeProvider.getNow();
 
                             value = now;

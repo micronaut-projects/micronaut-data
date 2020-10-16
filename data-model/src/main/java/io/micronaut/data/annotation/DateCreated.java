@@ -28,4 +28,8 @@ import java.lang.annotation.*;
 @Documented
 @AutoPopulated(updateable = false)
 public @interface DateCreated {
+    /**
+     * The annotation name.
+     */
+    String NAME = DateCreated.class.getName();
 }

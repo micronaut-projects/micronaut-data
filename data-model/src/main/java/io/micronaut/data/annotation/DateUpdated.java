@@ -30,4 +30,8 @@ import java.time.OffsetDateTime;
 @TypeRole(role = TypeRole.LAST_UPDATED_PROPERTY, type = OffsetDateTime.class)
 @AutoPopulated
 public @interface DateUpdated {
+    /**
+     * The date created name.
+     */
+    String NAME = DateUpdated.class.getName();
 }

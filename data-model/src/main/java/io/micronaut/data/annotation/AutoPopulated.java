@@ -30,6 +30,11 @@ import java.lang.annotation.*;
 @Documented
 public @interface AutoPopulated {
     /**
+     * The annotation name.
+     */
+    String NAME = AutoPopulated.class.getName();
+
+    /**
      * @return Whether the property can be updated following an insert
      */
     boolean updateable() default true;
