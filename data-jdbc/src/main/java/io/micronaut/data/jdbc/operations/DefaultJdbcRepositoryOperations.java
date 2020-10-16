@@ -580,7 +580,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             }
                                         }
                                     }
-                                } else if (dataType == DataType.JSON && jsonCodec != null) {
+                                } else if (dataType == DataType.JSON && jsonCodec != null && newValue != null) {
                                     String value = new String(jsonCodec.encode(newValue), StandardCharsets.UTF_8);
                                     if (QUERY_LOG.isTraceEnabled()) {
                                         QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, value);

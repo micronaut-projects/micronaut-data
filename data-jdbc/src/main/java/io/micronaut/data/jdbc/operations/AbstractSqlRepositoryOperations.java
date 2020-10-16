@@ -278,7 +278,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                             DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
                         }
-                        if (type == DataType.JSON && jsonCodec != null && !prop.getType().equals(String.class)) {
+                        if (type == DataType.JSON && jsonCodec != null && value != null && !prop.getType().equals(String.class)) {
                             value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                         }
                         if (value != null && dialect.requiresStringUUID(type)) {
