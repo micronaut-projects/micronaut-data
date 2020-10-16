@@ -31,7 +31,11 @@ class PostgresSchemaGenerationSpec extends Specification implements PostgresTest
         @Override
         DataSource onCreated(BeanCreatedEvent<DataSource> event) {
             def dataSource = event.getBean()
-            new Sql(dataSource).execute('CREATE EXTENSION "uuid-ossp";')
+            try {
+                new Sql(dataSource).execute('CREATE EXTENSION "uuid-ossp";')
+            } catch (e) {
+                // ignore, probably already exists
+            }
             return dataSource
         }
 
