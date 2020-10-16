@@ -58,7 +58,7 @@ class MariaCatalogRepositorySpec extends Specification implements MariaTestPrope
         retrievedCatalog = catalogRepository.findById(catalog.getId())
 
         then: "The catalog is deleted"
-        retrievedCatalog.isEmpty()
+        !retrievedCatalog.isPresent()
     }
 }
 
