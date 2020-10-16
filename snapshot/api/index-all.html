@@ -486,6 +486,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#beforeTestExecution-io.micronaut.test.context.TestContext-">beforeTestExecution(TestContext)</a></span> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html#begin--">begin()</a></span> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/Criteria.html#between-java.lang.String-io.micronaut.data.model.query.QueryParameter-io.micronaut.data.model.query.QueryParameter-">between(String, QueryParameter, QueryParameter)</a></span> - Method in interface io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a></dt>
 <dd>
 <div class="block">Restricts the results by the given property value range (inclusive).</div>
@@ -819,6 +821,8 @@
 <dd>
 <div class="block">Commit the given transaction, with regard to its status.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html#commit--">commit()</a></span> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#commitTransactionAfterReturning-io.micronaut.transaction.interceptor.TransactionalInterceptor.TransactionInfo-">commitTransactionAfterReturning(TransactionalInterceptor.TransactionInfo)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
 <dd>
 <div class="block">Execute after successful completion of call, but not after an exception was handled.</div>
@@ -1761,6 +1765,12 @@
 <div class="block">Adds support for <code>MicronautTest.transactional()</code> handling.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html#DefaultTestTransactionExecutionListener-io.micronaut.transaction.SynchronousTransactionManager-boolean-">DefaultTestTransactionExecutionListener(SynchronousTransactionManager&lt;Object&gt;, boolean)</a></span> - Constructor for class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionExecutionListener</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html" title="class in io.micronaut.transaction.test"><span class="typeNameLink">DefaultTestTransactionInterceptor</span></a> - Class in <a href="io/micronaut/transaction/test/package-summary.html">io.micronaut.transaction.test</a></dt>
+<dd>
+<div class="block">Adds support for <code>MicronautTest.transactional()</code> handling.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html#DefaultTestTransactionInterceptor-io.micronaut.transaction.SynchronousTransactionManager-">DefaultTestTransactionInterceptor(SynchronousTransactionManager)</a></span> - Constructor for class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/interceptor/DefaultTransactionAttribute.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">DefaultTransactionAttribute</span></a> - Class in <a href="io/micronaut/transaction/interceptor/package-summary.html">io.micronaut.transaction.interceptor</a></dt>
 <dd>&nbsp;</dd>
@@ -8164,6 +8174,8 @@
 <dd>
 <div class="block">Perform a rollback of the given transaction.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html#rollback--">rollback()</a></span> - Method in class io.micronaut.transaction.test.<a href="io/micronaut/transaction/test/DefaultTestTransactionInterceptor.html" title="class in io.micronaut.transaction.test">DefaultTestTransactionInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/DefaultTransactionAttribute.html#rollbackOn-java.lang.Throwable-">rollbackOn(Throwable)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/DefaultTransactionAttribute.html" title="class in io.micronaut.transaction.interceptor">DefaultTransactionAttribute</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionAttribute.html#rollbackOn-java.lang.Throwable-">rollbackOn(Throwable)</a></span> - Method in interface io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionAttribute.html" title="interface in io.micronaut.transaction.interceptor">TransactionAttribute</a></dt>
