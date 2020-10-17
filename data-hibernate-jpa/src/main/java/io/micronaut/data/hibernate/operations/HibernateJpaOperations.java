@@ -31,6 +31,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -155,8 +156,13 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Query<R> q;
 
                 if (preparedQuery.isNative()) {
-                    q = currentSession
-                            .createNativeQuery(query, resultType);
+                    if (DataType.ENTITY.equals(preparedQuery.getResultDataType())) {
+                        q = currentSession
+                                .createNativeQuery(query, resultType);
+                    } else {
+                        q = currentSession
+                                .createNativeQuery(query);
+                    }
                 } else {
                     q = currentSession
                             .createQuery(query, resultType);
