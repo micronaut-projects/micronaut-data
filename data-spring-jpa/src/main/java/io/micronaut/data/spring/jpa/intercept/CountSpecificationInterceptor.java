@@ -68,7 +68,9 @@ public class CountSpecificationInterceptor extends AbstractQueryInterceptor<Obje
             final CriteriaQuery<Long> query = criteriaBuilder.createQuery(Long.class);
             final Root<?> root = query.from(getRequiredRootEntity(context));
             final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
-            query.where(predicate);
+            if (predicate != null) {
+                query.where(predicate);
+            }
             if (query.isDistinct()) {
                 query.select(criteriaBuilder.countDistinct(root));
             } else {
