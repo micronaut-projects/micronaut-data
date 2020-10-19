@@ -21,11 +21,13 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
+import spock.lang.PendingFeature
 import spock.lang.Requires
 import spock.lang.Unroll
 
 @Requires({ javaVersion <= 1.8 })
 class BuildTableSpec extends AbstractDataSpec {
+
 
     void "test build create table table statement for nullable embeddable"() {
         given:
@@ -119,6 +121,25 @@ class Test {
     public void setDateCreated(LocalDateTime ldt) {
         dateCreated = ldt;
     }
+}
+''')
+
+        when:
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        then:
+        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
+    }
+
+    @PendingFeature(reason = "Waiting for https://github.com/micronaut-projects/micronaut-core/pull/4343")
+    void "test custom parent entity with generics"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import java.time.LocalDateTime;
+
+@Entity
+class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
 }
 ''')
 
