@@ -19,6 +19,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.core.annotation.TypeHint;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@TypeHint(Page.class)
 public interface Page<T> extends Slice<T> {
 
     Page<?> EMPTY = new DefaultPage<>(Collections.emptyList(), Pageable.unpaged(), 0);
@@ -77,6 +80,7 @@ public interface Page<T> extends Slice<T> {
      * @return The slice
      */
     @JsonCreator
+    @ReflectiveAccess
     static @NonNull <T> Page<T> of(
             @JsonProperty("content") @NonNull List<T> content,
             @JsonProperty("pageable") @NonNull Pageable pageable,

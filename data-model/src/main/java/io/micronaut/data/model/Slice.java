@@ -18,6 +18,8 @@ package io.micronaut.data.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.ReflectiveAccess;
+import io.micronaut.core.annotation.TypeHint;
 
 import javax.annotation.Nonnull;
 import java.util.Iterator;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
+@TypeHint(Slice.class)
 public interface Slice<T> extends Iterable<T> {
 
     /**
@@ -130,6 +133,7 @@ public interface Slice<T> extends Iterable<T> {
      * @param <T2> The generic type
      * @return The slice
      */
+    @ReflectiveAccess
     static @NonNull <T2> Slice<T2> of(@NonNull List<T2> content, @NonNull Pageable pageable) {
         return new DefaultSlice<>(content, pageable);
     }
