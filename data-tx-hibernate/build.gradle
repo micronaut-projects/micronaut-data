@@ -2,10 +2,10 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
     api project(":data-tx")
-    implementation "com.github.spotbugs:spotbugs-annotations:4.1.2"
+    implementation "com.github.spotbugs:spotbugs-annotations:4.1.4"
     implementation "io.micronaut:micronaut-inject:$micronautVersion"
     compileOnly "org.springframework:spring-orm:5.2.9.RELEASE"
-    api "org.hibernate:hibernate-core:5.4.21.Final", {
+    api "org.hibernate:hibernate-core:5.4.22.Final", {
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
         exclude group: 'org.jboss:jandex', module: 'jar'
