@@ -51,6 +51,7 @@ import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import io.micronaut.test.annotation.MicronautTest
+import spock.lang.IgnoreIf
 
 @MicronautTest
 class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPropertyProvider {
@@ -135,6 +136,7 @@ class MariaRepositorySpec extends AbstractRepositorySpec implements MariaTestPro
         return context.getBean(MySqlFoodRepository)
     }
 
+    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def basicTypesRepo = context.getBean(MySqlBasicTypesRepository)

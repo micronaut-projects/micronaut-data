@@ -21,6 +21,7 @@ import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.test.annotation.MicronautTest
+import spock.lang.IgnoreIf
 import spock.lang.Issue
 import spock.lang.Shared
 import spock.lang.Specification
@@ -74,6 +75,7 @@ class H2BasicTypesSpec extends Specification {
         "uuid"             | DataType.UUID
     }
 
+    @IgnoreIf({ jvm.isJava15Compatible() })
     void "test save and retrieve basic types"() {
         when: "we save a new book"
         def book = repository.save(new BasicTypes())
