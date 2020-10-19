@@ -15,7 +15,12 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 
@@ -30,6 +35,7 @@ import java.util.Objects;
  * @since 1.0.0
  * @param <T> The generic type
  */
+@Introspected
 class DefaultSlice<T> implements Slice<T> {
 
     private final List<T> content;
@@ -40,7 +46,14 @@ class DefaultSlice<T> implements Slice<T> {
      * @param content The content
      * @param pageable The pageable
      */
-    DefaultSlice(List<T> content, Pageable pageable) {
+    @ReflectiveAccess
+    @JsonCreator
+    @Creator
+    DefaultSlice(
+            @JsonProperty("content")
+            List<T> content,
+            @JsonProperty("pageable")
+            Pageable pageable) {
         ArgumentUtils.requireNonNull("pageable", pageable);
         this.content = CollectionUtils.isEmpty(content) ? Collections.emptyList() : content;
         this.pageable = pageable;
@@ -48,12 +61,14 @@ class DefaultSlice<T> implements Slice<T> {
 
     @NonNull
     @Override
+    @ReflectiveAccess
     public List<T> getContent() {
         return content;
     }
 
     @NonNull
     @Override
+    @ReflectiveAccess
     public Pageable getPageable() {
         return pageable;
     }
