@@ -22,7 +22,7 @@ class Oracle {
     static OracleContainer oracleContainer
     static void init() {
          if (oracleContainer == null) {
-             oracleContainer = new OracleContainer("wnameless/oracle-xe-11g-r2")
+             oracleContainer = new OracleContainer("registry.gitlab.com/micronaut-projects/micronaut-graal-tests/oracle-database:18.4.0-xe")
              oracleContainer.start()
          }
     }
