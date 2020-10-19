@@ -87,8 +87,6 @@ import javax.sql.DataSource;
  */
 @SuppressWarnings("serial")
 @EachBean(DataSource.class)
-// only enable if spring transaction management is not present
-@Requires(missingClasses = "org.springframework.jdbc.datasource.DataSourceTransactionManager")
 @TypeHint(DataSourceTransactionManager.class)
 public class DataSourceTransactionManager extends AbstractSynchronousTransactionManager<Connection>
         implements ResourceTransactionManager<DataSource, Connection> {
