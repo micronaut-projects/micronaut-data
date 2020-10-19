@@ -804,6 +804,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {
         return identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
+                                    .map(n -> {
+                                        if (StringUtils.isEmpty(n)) {
+                                            return unescapedTableName + SEQ_SUFFIX;
+                                        } else {
+                                            return n;
+                                        }
+                                    })
                                     .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
     }
 
