@@ -69,7 +69,9 @@ public class FindOneSpecificationInterceptor extends AbstractQueryInterceptor<Ob
             final CriteriaQuery<Object> query = criteriaBuilder.createQuery((Class<Object>) getRequiredRootEntity(context));
             final Root<Object> root = query.from((Class<Object>) getRequiredRootEntity(context));
             final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
-            query.where(predicate);
+            if (predicate != null) {
+                query.where(predicate);
+            }
             query.select(root);
 
             final TypedQuery<?> typedQuery = entityManager.createQuery(query);
