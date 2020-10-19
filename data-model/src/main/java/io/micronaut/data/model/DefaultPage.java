@@ -15,6 +15,12 @@
  */
 package io.micronaut.data.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.ReflectiveAccess;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -25,6 +31,7 @@ import java.util.Objects;
  * @since 1.0.0
  * @param <T> The generic type
  */
+@Introspected
 class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
 
     private final long totalSize;
@@ -35,12 +42,22 @@ class DefaultPage<T> extends DefaultSlice<T> implements Page<T> {
      * @param pageable The pageable
      * @param totalSize The total size
      */
-    DefaultPage(List<T> content, Pageable pageable, long totalSize) {
+    @JsonCreator
+    @Creator
+    @ReflectiveAccess
+    DefaultPage(
+            @JsonProperty("content")
+            List<T> content,
+            @JsonProperty("pageable")
+            Pageable pageable,
+            @JsonProperty("totalSize")
+            long totalSize) {
         super(content, pageable);
         this.totalSize = totalSize;
     }
 
     @Override
+    @ReflectiveAccess
     public long getTotalSize() {
         return totalSize;
     }

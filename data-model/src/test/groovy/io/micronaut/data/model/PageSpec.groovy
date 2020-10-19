@@ -19,10 +19,15 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.inject.Inject
+
+@MicronautTest
 class PageSpec extends Specification {
+    @Inject ObjectMapper mapper
 
     @Unroll
     void "test page for page number #number and size #size"() {
@@ -72,13 +77,13 @@ class PageSpec extends Specification {
                 propertyTwo: 3L,
                 propertyThree: new BigDecimal("3.00")
         )], Pageable.from(0, 3), 14)
-        def mapper = new ObjectMapper()
 
         when:
         def json = mapper.writeValueAsString(page)
 
         then:
-        def deserializedPage = mapper.readValue(json, new TypeReference<Page<Dummy>>() {})
+        def deserializedPage = mapper.readValue(json, mapper.typeFactory.constructParametricType(Page, Dummy))
+        deserializedPage.content.every { it instanceof Dummy }
         deserializedPage == page
     }
 
