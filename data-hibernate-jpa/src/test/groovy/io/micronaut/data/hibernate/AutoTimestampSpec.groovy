@@ -20,6 +20,8 @@ import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.annotation.MicronautTest
+import spock.lang.IgnoreIf
+import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -28,6 +30,7 @@ import javax.inject.Inject
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
 @Property(name = 'jpa.default.properties.hibernate.hbm2ddl.auto', value = 'create-drop')
+@IgnoreIf({ jvm.isJava15Compatible() })
 class AutoTimestampSpec extends Specification {
 
     @Shared
