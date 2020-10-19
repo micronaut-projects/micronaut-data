@@ -62,7 +62,6 @@ public class DataEntityManagerFactoryBean {
     @Replaces(
             factory = io.micronaut.configuration.hibernate.jpa.EntityManagerFactoryBean.class,
             bean = StandardServiceRegistry.class)
-    @Requires(missingClasses = "org.springframework.orm.hibernate5.HibernateTransactionManager")
     protected StandardServiceRegistry hibernateStandardServiceRegistry(
             @Parameter String dataSourceName,
             DataSource dataSource) {

@@ -86,7 +86,6 @@ import java.util.Objects;
  */
 @SuppressWarnings("serial")
 @EachBean(SessionFactory.class)
-@Requires(missingClasses = "org.springframework.orm.hibernate5.HibernateTransactionManager")
 @Replaces(DataSourceTransactionManager.class)
 @TypeHint(HibernateTransactionManager.class)
 public class HibernateTransactionManager extends AbstractSynchronousTransactionManager<Connection>
