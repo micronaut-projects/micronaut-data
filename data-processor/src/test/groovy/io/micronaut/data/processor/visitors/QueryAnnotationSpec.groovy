@@ -37,6 +37,27 @@ import javax.annotation.processing.SupportedAnnotationTypes
 
 class QueryAnnotationSpec extends AbstractDataSpec {
 
+    void "test native query escaping"() {
+        given:
+        def repository = buildRepository('test.MovieRepository', """
+@Repository
+interface MovieRepository extends GenericRepository<Movie, Long> {
+  @Query(value = "SELECT '1'::INTEGER", nativeQuery = true)
+  @io.micronaut.context.annotation.Executable
+  Integer findConstant();
+}
+${entity('Movie', [title: String, enabled: Boolean])}
+""")
+        def method = repository.getRequiredMethod("findConstant")
+        def query = method
+                .stringValue(Query)
+                .get()
+
+
+        expect:
+        query == 'SELECT \'1\'::INTEGER'
+    }
+
     @Unroll
     void "test @Query with update statement #methodName"() {
         given:
