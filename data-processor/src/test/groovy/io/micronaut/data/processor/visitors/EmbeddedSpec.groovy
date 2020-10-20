@@ -239,7 +239,8 @@ class LikeId {
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
 @io.micronaut.context.annotation.Executable
-interface OwnerPetRepository extends CrudRepository<OwnerPet, OwnerPet.InnerOwnerPetKey> {
+interface LikeRepository extends CrudRepository<Like, LikeId> {
+    long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);
 }
 
 """
