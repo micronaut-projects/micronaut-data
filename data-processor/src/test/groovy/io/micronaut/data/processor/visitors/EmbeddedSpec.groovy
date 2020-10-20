@@ -16,8 +16,184 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
+import spock.lang.PendingFeature
 
 class EmbeddedSpec extends AbstractDataSpec {
+
+    @PendingFeature(reason = "Requires https://github.com/micronaut-projects/micronaut-core/pull/4347")
+    void "test compile entity with inner class as embedded key"() {
+        given:
+        def repository = buildRepository('test.OwnerPetRepository', """
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+
+import io.micronaut.core.annotation.Creator;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
+import javax.persistence.Entity;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.validation.constraints.NotNull;
+
+@Entity
+@Table(
+    name = "owners_pets",
+    schema = "myschema",
+    catalog = "mycatalog"
+)
+class OwnerPet {
+    @EmbeddedId
+    private InnerOwnerPetKey id;
+    @Creator
+    public OwnerPet(final InnerOwnerPetKey id) {
+        this.id = id;
+    }
+    public InnerOwnerPetKey getId() {
+        return this.id;
+    }
+    public void setId(final InnerOwnerPetKey id) {
+        this.id = id;
+    }
+    @Embeddable
+    public class InnerOwnerPetKey {
+        @Column(name = "user_id")
+        @ManyToOne(optional = false)
+        private @NotNull Owner owner;
+        @Column(name = "role_name")
+        @ManyToOne(optional = false)
+        private @NotNull Pet pet;
+
+        @Creator
+        public InnerOwnerPetKey(final Owner owner, final Pet pet) {
+            this.owner = owner;
+            this.pet = pet;
+        }
+
+        public Owner getOwner() {
+            return this.owner;
+        }
+
+        public void setOwner(final Owner owner) {
+            this.owner = owner;
+        }
+
+        public Pet getPet() {
+            return this.pet;
+        }
+
+        public void setPet(final Pet pet) {
+            this.pet = pet;
+        }
+    }
+
+}
+
+@Entity
+@Table(
+    name = "owners",
+    schema = "myschema",
+    catalog = "mycatalog"
+)
+class Owner {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    private int age;
+
+    @Creator
+    public Owner(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+  
+}
+
+@Entity
+@Table(
+    name = "pets",
+    schema = "myschema",
+    catalog = "mycatalog"
+)
+class Pet {
+
+    @Id
+    @AutoPopulated
+    private UUID id;
+    private String name;
+    @ManyToOne
+    private Owner owner;
+    private PetType type = PetType.DOG;
+
+    @Creator
+    public Pet(String name, @javax.annotation.Nullable Owner owner) {
+        this.name = name;
+        this.owner = owner;
+    }
+
+    public Owner getOwner() {
+        return owner;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public PetType getType() {
+        return type;
+    }
+
+    public void setType(PetType type) {
+        this.type = type;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+
+    public enum PetType {
+        DOG,
+        CAT
+    }
+}
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
+@io.micronaut.context.annotation.Executable
+interface OwnerPetRepository extends CrudRepository<OwnerPet, OwnerPet.InnerOwnerPetKey> {
+}
+
+"""
+        )
+
+        expect:
+        repository != null
+    }
 
     void "test compile embedded id count query"() {
         given:
@@ -63,9 +239,9 @@ class LikeId {
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class)
 @io.micronaut.context.annotation.Executable
-interface LikeRepository extends CrudRepository<Like, LikeId> {
-    long countByLikeIdImageIdentifier(UUID likeIdImageIdentifier);
+interface OwnerPetRepository extends CrudRepository<OwnerPet, OwnerPet.InnerOwnerPetKey> {
 }
+
 """
         )
 
