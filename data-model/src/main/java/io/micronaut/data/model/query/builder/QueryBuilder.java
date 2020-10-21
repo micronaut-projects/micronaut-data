@@ -46,7 +46,7 @@ public interface QueryBuilder {
     /**
      * A pattern used to find variables in a query string.
      */
-    Pattern VARIABLE_PATTERN = Pattern.compile("(:([a-zA-Z0-9]+))");
+    Pattern VARIABLE_PATTERN = Pattern.compile("[^:](:([a-zA-Z0-9]+))");
 
     /**
      * A pattern used to find in queries in a query string.

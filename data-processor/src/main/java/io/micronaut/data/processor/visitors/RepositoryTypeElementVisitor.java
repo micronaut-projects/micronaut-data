@@ -31,6 +31,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.*;
@@ -50,7 +51,11 @@ import io.micronaut.inject.visitor.VisitorContext;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+
+import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
+import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
  * The main {@link TypeElementVisitor} that visits interfaces annotated with {@link Repository}
@@ -244,7 +249,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 // no need to annotation since already annotated, just replace the
                                 // the computed parameter names
                                 parameterBinding = rawQuery.getParameterBinding();
-                                if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
+                                if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE) || element.isPresent(io.micronaut.data.annotation.Query.class, "countQuery")) {
                                     String cq = matchContext.getAnnotationMetadata().stringValue(io.micronaut.data.annotation.Query.class, "countQuery")
                                             .orElse(null);
 
@@ -339,6 +344,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             case RIGHT_FETCH:
                                                 joinType = Join.Type.RIGHT;
                                                 break;
+                                            default:
+                                                // no-op
                                         }
                                         countQuery.join(joinPath.getAssociation(), joinType);
                                     }
@@ -409,6 +416,15 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                 finalParameterBinding.values().toArray(new String[0])
                                         );
                                     } else if (finalRawCount) {
+                                        String cq = element.stringValue(Query.class, "countQuery").orElse(null);
+                                        if (cq != null) {
+                                            cq = replaceNamedParameters(queryEncoder, cq);
+                                            String finalCq = cq;
+                                            element.annotate(
+                                                    Query.class,
+                                                    (builder) -> builder.member(DataMethod.META_MEMBER_RAW_COUNT_QUERY, finalCq)
+                                            );
+                                        }
                                         parameterBindingToIndex(
                                                 annotationBuilder,
                                                 parameters,
@@ -450,7 +466,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                                 if (queryObject != null) {
                                     if (queryObject instanceof RawQuery) {
-                                        element.annotate(Query.class, (builder) -> builder.member(DataMethod.META_MEMBER_RAW_QUERY, true));
+                                        element.annotate(Query.class, (builder) -> {
+                                            String q = element.stringValue(Query.class).orElse(null);
+                                            q = replaceNamedParameters(queryEncoder, q);
+                                            builder.member(DataMethod.META_MEMBER_RAW_QUERY, q);
+                                        });
                                     }
                                     int max = queryObject.getMax();
                                     if (max > -1) {
@@ -484,6 +504,23 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 context.fail(messageStart + "No possible implementations found.", element);
             }
         }
+    }
+
+    private String replaceNamedParameters(QueryBuilder queryEncoder, String query) {
+        if (queryEncoder instanceof SqlQueryBuilder && StringUtils.isNotEmpty(query)) {
+            Matcher inMatcher = IN_VARIABLES_PATTERN.matcher(query);
+            StringBuffer sb = new StringBuffer();
+            for (int i = 1; inMatcher.find(); i++) {
+                if (inMatcher.group("inGroup") != null) {
+                    inMatcher.appendReplacement(sb, "\\?\\$IN(" + i + ")");
+                }
+            }
+            inMatcher.appendTail(sb);
+            query = sb.toString();
+            Matcher matcher = VARIABLE_PATTERN.matcher(query);
+            query = matcher.replaceAll(" ?");
+        }
+        return query;
     }
 
     private void parameterBindingToIndex(

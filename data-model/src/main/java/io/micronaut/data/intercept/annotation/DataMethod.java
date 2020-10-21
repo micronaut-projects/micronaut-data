@@ -116,10 +116,17 @@ public @interface DataMethod {
      * Whether the user is a raw user specified query.
      */
     String META_MEMBER_RAW_QUERY = "rawQuery";
+
+    /**
+     * Whether the user is a raw user specified query.
+     */
+    String META_MEMBER_RAW_COUNT_QUERY = "rawCountQuery";
+
     /**
      * Meta member for storing the parameter type defs.
      */
     String META_MEMBER_PARAMETER_TYPE_DEFS = "parameterTypeDefs";
+
     /**
      * @return The child interceptor to use for the method execution.
      */
