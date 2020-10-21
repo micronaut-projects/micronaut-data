@@ -18,6 +18,7 @@ package io.micronaut.data.tck.repositories;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
 import io.micronaut.data.tck.entities.Person;
@@ -42,4 +43,7 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
 
 
     Observable<Person> findByNameLike(String name);
+
+    @Query("SELECT MAX(id) FROM person WHERE id = -1")
+    Maybe<Long> getMaxId();
 }

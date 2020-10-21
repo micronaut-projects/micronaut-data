@@ -35,5 +35,6 @@ class SaleRepositorySpec {
         sale = saleRepository.findById(sale.getId()).orElse(sale);
         assertNotNull(sale);
         assertEquals(1, sale.getQuantity().getAmount());
+        assertTrue(saleRepository.findByQuantity(sale.getQuantity()).isPresent());
     }
 }

@@ -37,6 +37,11 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         ]).toList().blockingGet()
     }
 
+    void "test no value"() {
+        expect:
+        personRepository.getMaxId().isEmpty().blockingGet()
+    }
+
     void "test save one"() {
         when:"one is saved"
         def person = new Person(name: "Fred")

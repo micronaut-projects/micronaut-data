@@ -32,4 +32,8 @@ public interface SaleRepository extends CrudRepository<Sale, Long> {
     @Join("product")
     @Join("product.manufacturer")
     Optional<Sale> findById(@NonNull @NotNull Long aLong);
+
+    @Join("product")
+    @Join("product.manufacturer")
+    Optional<Sale> findByQuantity(@NonNull @NotNull Quantity quantity);
 }
