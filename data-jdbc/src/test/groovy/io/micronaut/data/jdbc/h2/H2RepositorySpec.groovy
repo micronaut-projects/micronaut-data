@@ -271,6 +271,25 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         cleanupData()
     }
 
+    void "test In Native Query function"() {
+        given:
+        savePersons(["Cemo", "Deniz", "Utku"])
+
+        when:"using a mix of parameters with collection types with IN queries"
+        def persons = pr.queryNames(
+            ["Ali"],
+            "James",
+            ["Onur"],
+            ["Cemo","Deniz","Olcay"]);
+
+        then:"The result is correct"
+        persons != null
+        persons.size() == 2
+
+        then:
+        cleanupData()
+    }
+
     void "test custom alias"() {
         given:
         saveSampleBooks()
