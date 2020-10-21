@@ -374,7 +374,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             if (resultType.isInstance(v)) {
                                 //noinspection unchecked
                                 action.accept((R) v);
-                            } else {
+                            } else if (v != null){
                                 Object r = columnIndexResultSetReader.convertRequired(v, resultType);
                                 if (r != null) {
                                     action.accept((R) r);
