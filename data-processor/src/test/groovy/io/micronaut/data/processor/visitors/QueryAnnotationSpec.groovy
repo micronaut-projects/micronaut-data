@@ -58,6 +58,35 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         query == 'SELECT \'1\'::INTEGER'
     }
 
+    void "test named parameter parsing"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface PersonRepository extends GenericRepository<Person, Long> {
+  @Query(
+    value = "select * from person person_ where person_.name like :n",
+    countQuery = "select count(*) from person person_ where person_.name like :n")
+  java.util.List<Person> findPeople(String n);
+}
+""")
+        def method = repository.getRequiredMethod("findPeople", String)
+        def query = method
+                .stringValue(Query, DataMethod.META_MEMBER_RAW_QUERY)
+                .get()
+        def countQuery = method
+                .stringValue(Query, DataMethod.META_MEMBER_RAW_COUNT_QUERY)
+                .get()
+
+        expect:
+        query == 'select * from person person_ where person_.name like ?'
+        countQuery == 'select count(*) from person person_ where person_.name like ?'
+    }
+
     @Unroll
     void "test @Query with update statement #methodName"() {
         given:

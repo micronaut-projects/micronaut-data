@@ -296,7 +296,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery, Connection connection) {
-        Class<T> rootEntity = preparedQuery.getRootEntity();
         Class<R> resultType = preparedQuery.getResultType();
 
         PreparedStatement ps;

@@ -57,7 +57,6 @@ import java.util.stream.Collectors;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
-import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
  * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
@@ -856,11 +855,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             inMatcher.appendTail(sb);
             query = sb.toString();
 
-            if (isNumericPlaceHolder && method.isTrue(Query.class, DataMethod.META_MEMBER_RAW_QUERY)) {
-                Matcher matcher = VARIABLE_PATTERN.matcher(query);
-                this.query = matcher.replaceAll("?");
+            if (isCount) {
+                this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
             } else {
-                this.query = query;
+                this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
             }
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
