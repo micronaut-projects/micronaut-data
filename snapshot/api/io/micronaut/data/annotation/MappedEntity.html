@@ -94,6 +94,7 @@
 <pre>@Retention(value=RUNTIME)
  @Target(value={ANNOTATION_TYPE,TYPE,FIELD,METHOD})
  @Documented
+ @Introspected(excludedAnnotations=<a href="../../../../io/micronaut/data/annotation/Transient.html" title="annotation in io.micronaut.data.annotation">Transient.class</a>,indexed={@Introspected.IndexedAnnotation(annotation=<a href="../../../../io/micronaut/data/annotation/Id.html" title="annotation in io.micronaut.data.annotation">Id.class</a>),@Introspected.IndexedAnnotation(annotation=<a href="../../../../io/micronaut/data/annotation/Version.html" title="annotation in io.micronaut.data.annotation">Version.class</a>),@Introspected.IndexedAnnotation(annotation=<a href="../../../../io/micronaut/data/annotation/DateCreated.html" title="annotation in io.micronaut.data.annotation">DateCreated.class</a>),@Introspected.IndexedAnnotation(annotation=<a href="../../../../io/micronaut/data/annotation/DateUpdated.html" title="annotation in io.micronaut.data.annotation">DateUpdated.class</a>),@Introspected.IndexedAnnotation(annotation=<a href="../../../../io/micronaut/data/annotation/MappedProperty.html" title="annotation in io.micronaut.data.annotation">MappedProperty.class</a>,member="value")})
 public @interface <span class="memberNameLabel">MappedEntity</span></pre>
 <div class="block">Designates a class as being persisted. This is a generic annotation to identify a persistent type
  and is typically not used directly but rather mapped to.</div>
