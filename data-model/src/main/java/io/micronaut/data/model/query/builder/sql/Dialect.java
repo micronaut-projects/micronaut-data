@@ -93,7 +93,8 @@ public enum Dialect {
     }
 
     /**
-     * Determines whether
+     * Determines whether the data type requires string based UUIDs.
+     *
      * @param type the type
      * @return True if a string UUID is required
      * @since 1.1.3

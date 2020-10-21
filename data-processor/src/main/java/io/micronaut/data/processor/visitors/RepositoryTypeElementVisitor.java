@@ -54,6 +54,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
+import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
@@ -343,6 +344,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             case RIGHT_FETCH:
                                                 joinType = Join.Type.RIGHT;
                                                 break;
+                                            default:
+                                                // no-op
                                         }
                                         countQuery.join(joinPath.getAssociation(), joinType);
                                     }
@@ -503,12 +506,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         }
     }
 
-    private String replaceNamedParameters(QueryBuilder queryEncoder, String q) {
-        if (queryEncoder instanceof SqlQueryBuilder && StringUtils.isNotEmpty(q)) {
-            Matcher matcher = VARIABLE_PATTERN.matcher(q);
-            q = matcher.replaceAll(" ?");
+    private String replaceNamedParameters(QueryBuilder queryEncoder, String query) {
+        if (queryEncoder instanceof SqlQueryBuilder && StringUtils.isNotEmpty(query)) {
+            Matcher inMatcher = IN_VARIABLES_PATTERN.matcher(query);
+            StringBuffer sb = new StringBuffer();
+            for (int i = 1; inMatcher.find(); i++) {
+                if (inMatcher.group("inGroup") != null) {
+                    inMatcher.appendReplacement(sb, "\\?\\$IN(" + i + ")");
+                }
+            }
+            inMatcher.appendTail(sb);
+            query = sb.toString();
+            Matcher matcher = VARIABLE_PATTERN.matcher(query);
+            query = matcher.replaceAll(" ?");
         }
-        return q;
+        return query;
     }
 
     private void parameterBindingToIndex(

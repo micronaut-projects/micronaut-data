@@ -839,27 +839,16 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.isNumericPlaceHolder = method
                     .classValue(RepositoryConfiguration.class, "queryBuilder")
                     .map(c -> c == SqlQueryBuilder.class).orElse(false);
-            this.hasIn = isNumericPlaceHolder && query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
             this.hasPageable = method.stringValue(PREDATOR_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
                                     method.stringValue(PREDATOR_ANN_NAME, TypeRole.SORT).isPresent() ||
                                     method.intValue(PREDATOR_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
-
-            Matcher inMatcher = IN_VARIABLES_PATTERN.matcher(query);
-            StringBuffer sb = new StringBuffer();
-            for (int i = 1; inMatcher.find(); i++) {
-                if (inMatcher.group("inGroup") != null) {
-                    inMatcher.appendReplacement(sb, "\\?\\$IN("+ i + ")");
-                    this.hasIn = true;
-                }
-            }
-            inMatcher.appendTail(sb);
-            query = sb.toString();
 
             if (isCount) {
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
             } else {
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
             }
+            this.hasIn = isNumericPlaceHolder && this.query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_DTO);
