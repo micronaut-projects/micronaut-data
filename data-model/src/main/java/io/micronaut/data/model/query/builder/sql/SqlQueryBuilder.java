@@ -814,7 +814,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                     .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
     }
 
-
     @NonNull
     @Override
     public QueryResult buildPagination(@NonNull Pageable pageable) {
