@@ -17,8 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 
 import io.micronaut.data.tck.entities.Sale
-import io.micronaut.test.annotation.MicronautTest
-import spock.lang.PendingFeature
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -28,7 +27,6 @@ import javax.inject.Inject
 class H2JSONSpec extends Specification {
     @Inject H2SaleRepository saleRepository
 
-    @PendingFeature(reason = "No released version of H2 supports JSON yet. See https://github.com/h2database/h2database/pull/1828 for future feature.")
     void "test read and write json"() {
         when:
         Sale sale = new Sale()

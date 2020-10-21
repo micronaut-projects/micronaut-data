@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
 import java.lang.annotation.*;
@@ -29,6 +30,16 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.FIELD, ElementType.METHOD})
 @Documented
+@Introspected(
+    excludedAnnotations = Transient.class,
+    indexed = {
+        @Introspected.IndexedAnnotation(annotation = Id.class),
+        @Introspected.IndexedAnnotation(annotation = Version.class),
+        @Introspected.IndexedAnnotation(annotation = DateCreated.class),
+        @Introspected.IndexedAnnotation(annotation = DateUpdated.class),
+        @Introspected.IndexedAnnotation(annotation = MappedProperty.class, member = "value")
+    }
+)
 public @interface MappedEntity {
 
     /**

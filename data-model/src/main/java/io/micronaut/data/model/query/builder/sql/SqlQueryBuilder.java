@@ -814,14 +814,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                     .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
     }
 
-    private boolean addWriteExpression(List<String> values, PersistentProperty property) {
-        if (property.getDataType() == DataType.JSON && dialect == Dialect.POSTGRES) {
-            return values.add("to_json(?::json)");
-        } else {
-            return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
-        }
-    }
-
     @NonNull
     @Override
     public QueryResult buildPagination(@NonNull Pageable pageable) {
@@ -941,11 +933,31 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
     }
 
+    private boolean addWriteExpression(List<String> values, PersistentProperty property) {
+        DataType dt = property.getDataType();
+        if (dt == DataType.JSON) {
+            switch (dialect) {
+                case POSTGRES:
+                    return values.add("to_json(?::json)");
+                case H2:
+                    return values.add("? FORMAT JSON");
+                case MYSQL:
+                    return values.add("CONVERT(? USING UTF8MB4)");
+                default:
+                    return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
+            }
+        }
+        return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
+    }
+
     @Override
     protected void appendUpdateSetParameter(StringBuilder queryString, PersistentProperty prop, Placeholder param) {
         // to_json(?::json)
         if (prop.getDataType() == DataType.JSON) {
             switch (dialect) {
+                case H2:
+                    queryString.append("? FORMAT JSON");
+                    break;
                 case MYSQL:
                     queryString.append("CONVERT(? USING UTF8MB4)");
                     break;
