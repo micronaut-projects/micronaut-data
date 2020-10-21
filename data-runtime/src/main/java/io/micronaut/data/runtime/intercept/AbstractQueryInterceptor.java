@@ -52,11 +52,9 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
-import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 
 /**
  * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
