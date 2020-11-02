@@ -15,6 +15,8 @@ subprojects { Project subproject ->
     boolean isExampleOrBenchmark = subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")
     if (subproject.name != 'data-bom' && !isExampleOrBenchmark) {
         apply plugin: "io.micronaut.build.common"
+        apply plugin: "io.micronaut.build.dependency-updates"
+        apply plugin: "io.micronaut.build.publishing"
 
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"
@@ -27,6 +29,7 @@ subprojects { Project subproject ->
                     "-Amicronaut.processing.module=$project.name",
             ])
         }
+
     } else if(isExampleOrBenchmark) {
         repositories {
             jcenter()
@@ -36,10 +39,10 @@ subprojects { Project subproject ->
     } else {
         apply plugin: "java-platform"
         version projectVersion
-    }
+        apply plugin: "io.micronaut.build.dependency-updates"
+        apply plugin: "io.micronaut.build.publishing"
 
-    apply plugin: "io.micronaut.build.dependency-updates"
-    apply plugin: "io.micronaut.build.publishing"
+    }
 
     if (subproject.name != 'data-bom') {
         dependencies {
