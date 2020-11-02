@@ -13,7 +13,7 @@ subprojects { Project subproject ->
     group "io.micronaut.data"
 
     boolean isExampleOrBenchmark = subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")
-    if (subproject.name != 'data-bom' || isExampleOrBenchmark) {
+    if (subproject.name != 'data-bom' && !isExampleOrBenchmark) {
         apply plugin: "io.micronaut.build.common"
 
         tasks.withType(JavaCompile) {
@@ -27,16 +27,15 @@ subprojects { Project subproject ->
                     "-Amicronaut.processing.module=$project.name",
             ])
         }
+    } else if(isExampleOrBenchmark) {
+        repositories {
+            jcenter()
+            mavenCentral()
+        }
+        apply plugin:'java'
     } else {
         apply plugin: "java-platform"
         version projectVersion
-    }    
-
-
-    if (isExampleOrBenchmark) {
-        checkstyleMain.enabled = false
-        tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) { it.enabled = false }
-        return
     }
 
     apply plugin: "io.micronaut.build.dependency-updates"

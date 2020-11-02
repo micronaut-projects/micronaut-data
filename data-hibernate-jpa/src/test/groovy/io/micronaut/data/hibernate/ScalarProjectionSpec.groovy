@@ -18,8 +18,7 @@ package io.micronaut.data.hibernate
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.entities.Children
 import io.micronaut.data.hibernate.entities.ChildrenId
-import io.micronaut.test.annotation.MicronautTest
-
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 
