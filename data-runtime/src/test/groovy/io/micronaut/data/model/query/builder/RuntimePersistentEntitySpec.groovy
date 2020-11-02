@@ -42,8 +42,8 @@ class RuntimePersistentEntitySpec extends Specification {
         entity.identity.name == 'id'
         entity.persistentProperties
         entity.getPropertyByName("name")
-        !entity.getPropertyByName("name").isReadOnly()
-        entity.getPropertyByName("someId").isReadOnly()
+        !entity.getPropertyByName("name").isGenerated()
+        entity.getPropertyByName("someId").isGenerated()
     }
 
     void "test associations"() {

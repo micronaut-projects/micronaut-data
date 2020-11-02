@@ -84,7 +84,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
 
     @Override
     public boolean isReadOnly() {
-        return property.isReadOnly() || isGenerated();
+        return property.isReadOnly();
     }
 
     /**
