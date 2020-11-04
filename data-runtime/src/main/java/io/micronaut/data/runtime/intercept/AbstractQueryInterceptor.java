@@ -576,6 +576,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.entity = entity;
         }
 
+        @Override
+        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
+            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
+        }
+
         @NonNull
         @Override
         public Class<E> getRootEntity() {
@@ -616,6 +621,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         DefaultUpdateOperation(MethodInvocationContext<?, ?> method, E entity) {
             this.method = method;
             this.entity = entity;
+        }
+
+        @Override
+        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
+            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
         }
 
         @NonNull
@@ -662,6 +672,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.iterable = iterable;
         }
 
+        @Override
+        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
+            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
+        }
+
         @NonNull
         @Override
         public Class<E> getRootEntity() {
@@ -703,6 +718,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         public AllBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
             this.method = method;
             this.rootEntity = rootEntity;
+        }
+
+        @Override
+        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
+            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
         }
 
         @Override

@@ -57,6 +57,17 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
     <S extends E> Publisher<S> saveAll(@Valid @NotNull @NonNull Iterable<S> entities);
 
     /**
+     * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
+     *
+     * @param entity The entity to save. Must not be {@literal null}.
+     * @return The saved entity will never be {@literal null}.
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @param <S> The generic type
+     */
+    @NonNull
+    <S extends E> Publisher<S> update(@Valid @NotNull @NonNull S entity);
+
+    /**
      * Retrieves an entity by its id.
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
@@ -100,6 +111,7 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
     @NonNull
+    @SingleResult
     Publisher<Long> deleteById(@NonNull @NotNull ID id);
 
     /**
@@ -109,6 +121,7 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return A future that executes the delete operation
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
+    @SingleResult
     @NonNull Publisher<Long> delete(@NonNull @NotNull E entity);
 
     /**
@@ -118,6 +131,7 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * @return A future that executes the delete operation
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null}.
      */
+    @SingleResult
     @NonNull Publisher<Long> deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
 
     /**
