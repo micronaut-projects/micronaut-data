@@ -369,7 +369,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             if (resultType.isInstance(v)) {
                                 //noinspection unchecked
                                 action.accept((R) v);
-                            } else if (v != null){
+                            } else if (v != null) {
                                 Object r = columnIndexResultSetReader.convertRequired(v, resultType);
                                 if (r != null) {
                                     action.accept((R) r);
@@ -845,7 +845,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
     }
-
 
     @Nullable
     @Override

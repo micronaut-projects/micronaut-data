@@ -399,7 +399,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     /**
-     * Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC)
+     * Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).
      * @param i The index to shift
      * @return the index
      */
