@@ -20,7 +20,6 @@ import spock.lang.PendingFeature
 
 class EmbeddedSpec extends AbstractDataSpec {
 
-    @PendingFeature(reason = "Requires https://github.com/micronaut-projects/micronaut-core/pull/4347")
     void "test compile entity with inner class as embedded key"() {
         given:
         def repository = buildRepository('test.OwnerPetRepository', """
