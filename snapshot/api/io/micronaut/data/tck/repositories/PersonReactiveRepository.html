@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -124,7 +124,7 @@ extends <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrud
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>io.reactivex.Single&lt;java.lang.Integer&gt;</code></td>
+<td class="colFirst"><code>io.reactivex.Single&lt;java.lang.Long&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#count-java.lang.String-">count</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
@@ -144,19 +144,27 @@ extends <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrud
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#getById-java.lang.Long-">getById</a></span>(java.lang.Long&nbsp;id)</code>&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
+<td class="colFirst"><code>io.reactivex.Single&lt;<a href="../../../../../io/micronaut/data/tck/entities/PersonDto.html" title="class in io.micronaut.data.tck.entities">PersonDto</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#getByName-java.lang.String-">getByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
+</tr>
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>io.reactivex.Maybe&lt;java.lang.Long&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#getMaxId--">getMaxId</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>io.reactivex.Flowable&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#list-io.micronaut.data.model.Pageable-">list</a></span>(<a href="../../../../../io/micronaut/data/model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code>&nbsp;</td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
+<td class="colFirst"><code>io.reactivex.Flowable&lt;<a href="../../../../../io/micronaut/data/tck/entities/PersonDto.html" title="class in io.micronaut.data.tck.entities">PersonDto</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#queryByName-java.lang.String-">queryByName</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
+</tr>
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>io.reactivex.Single&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#save-java.lang.String-int-">save</a></span>(java.lang.String&nbsp;name,
     int&nbsp;age)</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>io.reactivex.Completable</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/PersonReactiveRepository.html#updatePerson-java.lang.Long-java.lang.String-">updatePerson</a></span>(java.lang.Long&nbsp;id,
             java.lang.String&nbsp;name)</code>&nbsp;</td>
@@ -167,7 +175,7 @@ extends <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrud
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.repository.reactive.<a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html" title="interface in io.micronaut.data.repository.reactive">RxJavaCrudRepository</a></h3>
-<code><a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#count--">count</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#delete-E-">delete</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#deleteAll--">deleteAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#deleteAll-java.lang.Iterable-">deleteAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#deleteById-ID-">deleteById</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#existsById-ID-">existsById</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#findAll--">findAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#findById-ID-">findById</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#save-S-">save</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#saveAll-java.lang.Iterable-">saveAll</a></code></li>
+<code><a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#count--">count</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#delete-E-">delete</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#deleteAll--">deleteAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#deleteAll-java.lang.Iterable-">deleteAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#deleteById-ID-">deleteById</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#existsById-ID-">existsById</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#findAll--">findAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#findById-ID-">findById</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#save-S-">save</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#saveAll-java.lang.Iterable-">saveAll</a>, <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#update-S-">update</a></code></li>
 </ul>
 </li>
 </ul>
@@ -229,7 +237,7 @@ extends <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrud
 <ul class="blockList">
 <li class="blockList">
 <h4>count</h4>
-<pre>io.reactivex.Single&lt;java.lang.Integer&gt;&nbsp;count(java.lang.String&nbsp;name)</pre>
+<pre>io.reactivex.Single&lt;java.lang.Long&gt;&nbsp;count(java.lang.String&nbsp;name)</pre>
 </li>
 </ul>
 <a name="findByName-java.lang.String-">
@@ -240,6 +248,24 @@ extends <a href="../../../../../io/micronaut/data/repository/reactive/RxJavaCrud
 <h4>findByName</h4>
 <pre>@Nullable
 io.reactivex.Maybe&lt;<a href="../../../../../io/micronaut/data/tck/entities/Person.html" title="class in io.micronaut.data.tck.entities">Person</a>&gt;&nbsp;findByName(java.lang.String&nbsp;name)</pre>
+</li>
+</ul>
+<a name="getByName-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getByName</h4>
+<pre>io.reactivex.Single&lt;<a href="../../../../../io/micronaut/data/tck/entities/PersonDto.html" title="class in io.micronaut.data.tck.entities">PersonDto</a>&gt;&nbsp;getByName(java.lang.String&nbsp;name)</pre>
+</li>
+</ul>
+<a name="queryByName-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>queryByName</h4>
+<pre>io.reactivex.Flowable&lt;<a href="../../../../../io/micronaut/data/tck/entities/PersonDto.html" title="class in io.micronaut.data.tck.entities">PersonDto</a>&gt;&nbsp;queryByName(java.lang.String&nbsp;name)</pre>
 </li>
 </ul>
 <a name="deleteByNameLike-java.lang.String-">

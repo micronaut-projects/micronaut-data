@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
+var methods = {"i0":18,"i1":6,"i2":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -142,16 +142,23 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>default &lt;RT&gt;&nbsp;java.util.Optional&lt;RT&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a></span>(java.lang.String&nbsp;role,
+                  java.lang.Class&lt;RT&gt;&nbsp;type)</code>
+<div class="block">Return the value of the given parameter if the given role.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRepositoryType--">getRepositoryType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="type parameter in EntityOperation">E</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">The root entity type.</div>
@@ -211,7 +218,7 @@ java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/Entit
 <a name="getRepositoryType--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getRepositoryType</h4>
 <pre>@NonNull
@@ -219,6 +226,28 @@ java.lang.Class&lt;?&gt;&nbsp;getRepositoryType()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The repository type.</dd>
+</dl>
+</li>
+</ul>
+<a name="getParameterInRole-java.lang.String-java.lang.Class-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>getParameterInRole</h4>
+<pre>default&nbsp;&lt;RT&gt;&nbsp;java.util.Optional&lt;RT&gt;&nbsp;getParameterInRole(@NonNull
+                                                       java.lang.String&nbsp;role,
+                                                       @NonNull
+                                                       java.lang.Class&lt;RT&gt;&nbsp;type)</pre>
+<div class="block">Return the value of the given parameter if the given role.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>RT</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>role</code> - The role</dd>
+<dd><code>type</code> - The type</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>An optional value.</dd>
 </dl>
 </li>
 </ul>

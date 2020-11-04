@@ -152,6 +152,8 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">AbstractSqlRepositoryOperations.StatementSupplier</span></a>&lt;<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="type parameter in AbstractSqlRepositoryOperations.StatementSupplier">PS</a>&gt; - Interface in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations"><span class="typeNameLink">AbstractSqlRepositoryOperations.StoredInsert</span></a>&lt;<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="type parameter in AbstractSqlRepositoryOperations.StoredInsert">T</a>&gt; - Class in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
 <dd>
 <div class="block">A stored insert statement.</div>
@@ -1085,6 +1087,8 @@
 <dd>
 <div class="block">Find one method.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html#create-java.lang.String-">create(String)</a></span> - Method in interface io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StatementSupplier</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractTransactionStatus.html#createAndHoldSavepoint--">createAndHoldSavepoint()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractTransactionStatus</a></dt>
 <dd>
 <div class="block">Create a savepoint and hold it for the transaction.</div>
@@ -2502,9 +2506,9 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists(PreparedQuery&lt;T, R&gt;)</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists(PreparedQuery&lt;T, Boolean&gt;)</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists(PreparedQuery&lt;T, R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists(PreparedQuery&lt;T, Boolean&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.Exists.html#Exists-io.micronaut.data.model.query.QueryModel-">Exists(QueryModel)</a></span> - Constructor for class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Exists.html" title="class in io.micronaut.data.model.query">QueryModel.Exists</a></dt>
 <dd>
@@ -2518,7 +2522,7 @@
 <dd>
 <div class="block">Check with an record exists for the given query.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/operations/RepositoryOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists(PreparedQuery&lt;T, R&gt;)</a></span> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/operations/RepositoryOperations.html#exists-io.micronaut.data.model.runtime.PreparedQuery-">exists(PreparedQuery&lt;T, Boolean&gt;)</a></span> - Method in interface io.micronaut.data.operations.<a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></dt>
 <dd>
 <div class="block">Execute a query that checks for existence.</div>
 </dd>
@@ -3344,6 +3348,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html#getById-java.lang.Long-">getById(Long)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonReactiveRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html#getByName-java.lang.String-">getByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonReactiveRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonRepository.html#getByName-java.lang.String-">getByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentProperty.html#getCapitilizedName--">getCapitilizedName()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></dt>
@@ -3683,6 +3689,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/jdbc/entities/User.html#getId--">getId()</a></span> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/User.html" title="class in io.micronaut.data.tck.jdbc.entities">User</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/jdbc/entities/UserRole.html#getId--">getId()</a></span> - Method in class io.micronaut.data.tck.jdbc.entities.<a href="io/micronaut/data/tck/jdbc/entities/UserRole.html" title="class in io.micronaut.data.tck.jdbc.entities">UserRole</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html#getIdentity--">getIdentity()</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getIdentity--">getIdentity()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
@@ -4101,6 +4109,10 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/RawQuery.html#getParameterBinding--">getParameterBinding()</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQuery.html" title="class in io.micronaut.data.processor.visitors.finders">RawQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/EntityOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole(String, Class&lt;RT&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a></dt>
+<dd>
+<div class="block">Return the value of the given parameter if the given role.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/PreparedQuery.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole(String, Class&lt;RT&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a></dt>
 <dd>
 <div class="block">Return the value of the given parameter if the given role.</div>
@@ -7235,6 +7247,10 @@
 <dd>
 <div class="block">Prepares a query for the given context.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#prepareStatement-io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations.StatementSupplier-io.micronaut.data.model.runtime.PreparedQuery-boolean-boolean-">prepareStatement(AbstractSqlRepositoryOperations.StatementSupplier&lt;PS&gt;, PreparedQuery&lt;T, R&gt;, boolean, boolean)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
+<dd>
+<div class="block">Prepare a statement for execution.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#prepareStatement-java.lang.String-io.micronaut.data.jdbc.runtime.PreparedStatementCallback-">prepareStatement(String, PreparedStatementCallback&lt;R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html#prepareStatement-java.lang.String-io.micronaut.data.jdbc.runtime.PreparedStatementCallback-">prepareStatement(String, PreparedStatementCallback&lt;R&gt;)</a></span> - Method in interface io.micronaut.data.jdbc.runtime.<a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime">JdbcOperations</a></dt>
@@ -7392,6 +7408,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a></span> - Variable in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/FaceRepository.html#queryById-java.lang.Long-">queryById(Long)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/FaceRepository.html" title="interface in io.micronaut.data.tck.repositories">FaceRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html#queryByName-java.lang.String-">queryByName(String)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonReactiveRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonReactiveRepository</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/PersonRepository.html#queryByNameLike-java.lang.String-io.micronaut.data.model.Pageable-">queryByNameLike(String, Pageable)</a></span> - Method in interface io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
@@ -9063,6 +9081,10 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/repositories/ShelfRepository.html" title="interface in io.micronaut.data.tck.repositories"><span class="typeNameLink">ShelfRepository</span></a> - Interface in <a href="io/micronaut/data/tck/repositories/package-summary.html">io.micronaut.data.tck.repositories</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#shiftIndex-int-">shiftIndex(int)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
+<dd>
+<div class="block">Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Shipment.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Shipment</span></a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Shipment.html#Shipment-io.micronaut.data.tck.entities.ShipmentId-java.lang.String-">Shipment(ShipmentId, String)</a></span> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Shipment.html" title="class in io.micronaut.data.tck.entities">Shipment</a></dt>
@@ -9880,6 +9902,14 @@
 <div class="block">Updates the entity for the given operation.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/repository/CrudRepository.html#update-S-">update(S)</a></span> - Method in interface io.micronaut.data.repository.<a href="io/micronaut/data/repository/CrudRepository.html" title="interface in io.micronaut.data.repository">CrudRepository</a></dt>
+<dd>
+<div class="block">This method issues an explicit update for the given entity.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html#update-S-">update(S)</a></span> - Method in interface io.micronaut.data.repository.reactive.<a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html" title="interface in io.micronaut.data.repository.reactive">ReactiveStreamsCrudRepository</a></dt>
+<dd>
+<div class="block">This method issues an explicit update for the given entity.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/repository/reactive/RxJavaCrudRepository.html#update-S-">update(S)</a></span> - Method in interface io.micronaut.data.repository.reactive.<a href="io/micronaut/data/repository/reactive/RxJavaCrudRepository.html" title="interface in io.micronaut.data.repository.reactive">RxJavaCrudRepository</a></dt>
 <dd>
 <div class="block">This method issues an explicit update for the given entity.</div>
 </dd>
