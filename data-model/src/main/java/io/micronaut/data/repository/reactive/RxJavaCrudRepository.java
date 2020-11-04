@@ -68,6 +68,17 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
     Maybe<E> findById(@NotNull @NonNull ID id);
 
     /**
+     * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
+     *
+     * @param entity The entity to save. Must not be {@literal null}.
+     * @return The saved entity will never be {@literal null}.
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @param <S> The generic type
+     */
+    @NonNull
+    <S extends E> Single<S> update(@Valid @NotNull @NonNull S entity);
+
+    /**
      * Returns whether an entity with the given id exists.
      *
      * @param id must not be {@literal null}.

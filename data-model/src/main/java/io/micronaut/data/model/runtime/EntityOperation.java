@@ -19,6 +19,8 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 
+import java.util.Optional;
+
 /**
  * An operation on an entity type.
  * @param <E> The entity type
@@ -37,4 +39,15 @@ public interface EntityOperation<E> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Class<?> getRepositoryType();
+
+    /**
+     * Return the value of the given parameter if the given role.
+     * @param role The role
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An optional value.
+     */
+    default <RT> Optional<RT> getParameterInRole(@NonNull String role, @NonNull Class<RT> type) {
+        return Optional.empty();
+    }
 }

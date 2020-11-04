@@ -18,10 +18,11 @@ package io.micronaut.data.jdbc.operations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.beans.BeanWrapper;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -30,13 +31,11 @@ import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.EntityOperation;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -50,6 +49,7 @@ import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -66,6 +66,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
     protected static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
     protected static final String NOT_TRUE_EXPRESSION = "1 = 2";
+    private static final Object IGNORED_PARAMETER = new Object();
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
     @SuppressWarnings("WeakerAccess")
@@ -128,6 +129,150 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     /**
+     * Prepare a statement for execution.
+     * @param statementFunction The statement function
+     * @param preparedQuery The prepared query
+     * @param isUpdate Is this an update
+     * @param isSingleResult Is it a single result
+     * @param <T> The query declaring type
+     * @param <R> The query result type
+     * @return The prepared statement
+     */
+    protected <T, R> PS prepareStatement(
+            StatementSupplier<PS> statementFunction,
+            @NonNull PreparedQuery<T, R> preparedQuery,
+            boolean isUpdate,
+            boolean isSingleResult) {
+        Object[] queryParameters = preparedQuery.getParameterArray();
+        int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
+        DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
+        String query = preparedQuery.getQuery();
+        final Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+        final boolean hasIn = preparedQuery.hasInExpression();
+        if (hasIn) {
+            Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
+            // this has to be done is two passes, one to remove and establish new indexes
+            // and again to expand existing indexes
+            while (matcher.find()) {
+                int inIndex = Integer.valueOf(matcher.group(1));
+                int queryParameterIndex = parameterBinding[inIndex - 1];
+                Object value = queryParameters[queryParameterIndex];
+
+                if (value == null) {
+                    query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
+                    queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
+                } else {
+                    int size = sizeOf(value);
+                    if (size == 0) {
+                        queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
+                        query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
+                    } else {
+                        String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
+                        query = matcher.replaceFirst(replacement);
+                    }
+                }
+                matcher = IN_EXPRESSION_PATTERN.matcher(query);
+            }
+        }
+
+        if (!isUpdate) {
+            Pageable pageable = preparedQuery.getPageable();
+            if (pageable != Pageable.UNPAGED) {
+                Class<T> rootEntity = preparedQuery.getRootEntity();
+                Sort sort = pageable.getSort();
+                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+                if (sort.isSorted()) {
+                    query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
+                } else if (isSqlServerWithoutOrderBy(query, dialect)) {
+                    // SQL server requires order by
+                    RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
+                    sort = sortById(persistentEntity);
+                    query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
+                }
+                if (isSingleResult && pageable.getOffset() > 0) {
+                    pageable = Pageable.from(pageable.getNumber(), 1);
+                }
+                query += queryBuilder.buildPagination(pageable).getQuery();
+            }
+        }
+
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Query: {}", query);
+        }
+        final PS ps;
+        try {
+            ps = statementFunction.create(query);
+        } catch (Exception e) {
+            throw new DataAccessException("Unable to prepare query [" + query + "]: " + e.getMessage(), e);
+        }
+        int index = shiftIndex(0);
+        for (int i = 0; i < parameterBinding.length; i++) {
+            int parameterIndex = parameterBinding[i];
+            DataType dataType = parameterTypes[i];
+            Object value;
+            if (parameterIndex > -1) {
+                value = queryParameters[parameterIndex];
+            } else {
+                String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
+                String propertyPath = indexedParameterPaths[i];
+                if (propertyPath != null) {
+
+                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
+                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
+                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
+                        if (lastUpdatedType == null) {
+                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
+                        }
+                        Object timestamp = ConversionService.SHARED.convert(dateTimeProvider.getNow(), lastUpdatedType).orElse(null);
+                        if (timestamp == null) {
+                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
+                        }
+                        value = timestamp;
+                    } else {
+                        int j = propertyPath.indexOf('.');
+                        if (j > -1) {
+                            String subProp = propertyPath.substring(j + 1);
+                            value = queryParameters[Integer.valueOf(propertyPath.substring(0, j))];
+                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
+                        } else {
+                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                        }
+                    }
+                } else {
+                    throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                }
+            }
+
+            if (QUERY_LOG.isTraceEnabled()) {
+                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+            }
+            if (value == null) {
+                setStatementParameter(ps, index++, dataType, null, dialect);
+            } else if (value != IGNORED_PARAMETER) {
+                if (value instanceof Iterable) {
+                    Iterable iter = (Iterable) value;
+                    for (Object o : iter) {
+                        setStatementParameter(ps, index++, dataType, o, dialect);
+                    }
+                } else if (value.getClass().isArray()) {
+                    if (value instanceof byte[]) {
+                        setStatementParameter(ps, index++, dataType, value, dialect);
+                    } else {
+                        int len = Array.getLength(value);
+                        for (int j = 0; j < len; j++) {
+                            Object o = Array.get(value, j);
+                            setStatementParameter(ps, index++, dataType, o, dialect);
+                        }
+                    }
+                } else {
+                    setStatementParameter(ps, index++, dataType, value, dialect);
+                }
+            }
+        }
+        return ps;
+    }
+
+    /**
      * Sets the insert parameters for the given insert, entity and statement.
      *
      * @param insert The insert
@@ -145,7 +290,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         DataType type;
         Object value;
         for (int i = 0; i < parameterBinding.length; i++) {
-            index = i + 1;
+            index = shiftIndex(i);
             String path = parameterBinding[i];
             RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(path);
             if (prop == null) {
@@ -254,6 +399,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     /**
+     * Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC)
+     * @param i The index to shift
+     * @return the index
+     */
+    protected int shiftIndex(int i) {
+        return i + 1;
+    }
+
+    /**
      * Resolve the INSERT for the given {@link EntityOperation}.
      *
      * @param operation The operation
@@ -261,7 +415,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @return The insert
      */
     @NonNull
-    protected final <T> StoredInsert resolveInsert(@NonNull EntityOperation<T> operation) {
+    protected final <T> StoredInsert<T> resolveInsert(@NonNull EntityOperation<T> operation) {
         return storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
             AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             String insertStatement = annotationMetadata.stringValue(Query.class).orElse(null);
@@ -300,25 +454,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             idReaders.put(type, beanProperty);
         }
         return beanProperty;
-    }
-
-    private <T> Map<String, Integer> buildSqlParameterBinding(AnnotationMetadata annotationMetadata) {
-        AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
-        if (annotation == null) {
-            return Collections.emptyMap();
-        }
-        String[] parameterData = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-        Map<String, Integer> parameterValues;
-        if (ArrayUtils.isNotEmpty(parameterData)) {
-            parameterValues = new HashMap<>(parameterData.length);
-            for (int i = 0; i < parameterData.length; i++) {
-                String p = parameterData[i];
-                parameterValues.put(p, i + 1);
-            }
-        } else {
-            parameterValues = Collections.emptyMap();
-        }
-        return parameterValues;
     }
 
     /**
@@ -513,6 +648,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         });
     }
 
+    @FunctionalInterface
+    protected interface StatementSupplier<PS> {
+        PS create(String ps) throws Exception;
+    }
+
     /**
      * Used to cache queries for entities.
      */
@@ -632,7 +772,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         /**
          * @return The runtime persistent property.
          */
-        RuntimePersistentProperty getIdentity() {
+        public RuntimePersistentProperty getIdentity() {
             return identity;
         }
 
