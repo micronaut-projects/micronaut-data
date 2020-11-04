@@ -17,6 +17,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
+import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -44,11 +45,15 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
     void "test save one"() {
         when:"one is saved"
-        def person = new Person(name: "Fred")
+        def person = new Person(name: "Fred", age: 30)
         personRepository.save(person).blockingGet()
 
         then:"the instance is persisted"
         person.id != null
+        def personDto = personRepository.getByName("Fred").blockingGet()
+        personDto instanceof PersonDto
+        personDto.age == 30
+        personRepository.queryByName("Fred").toList().blockingGet().size() == 1
         personRepository.findById(person.id).blockingGet()
         personRepository.getById(person.id).blockingGet().name == 'Fred'
         personRepository.existsById(person.id).blockingGet()
@@ -133,6 +138,16 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         then:"the person is updated"
         personRepository.findByName("Fred").blockingGet() == null
         personRepository.findByName("Jack").blockingGet() != null
+
+        when:
+        def jack = personRepository.findByName("Jack").blockingGet()
+        jack.setName("Joe")
+        jack = personRepository.update(jack).blockingGet()
+
+        then:
+        jack.name == 'Joe'
+        personRepository.findByName("Jack").blockingGet() == null
+        personRepository.findByName("Joe").blockingGet() != null
     }
 
     void "test delete all"() {

@@ -219,7 +219,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     @Override
-    public <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery) {
+    public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
         return findOne(preparedQuery) != null;
     }
 

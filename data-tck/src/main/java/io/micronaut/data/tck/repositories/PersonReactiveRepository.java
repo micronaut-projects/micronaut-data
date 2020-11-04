@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
 import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.entities.PersonDto;
 import io.reactivex.*;
 
 public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, Long> {
@@ -34,10 +35,14 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
 
     Flowable<Person> list(Pageable pageable);
 
-    Single<Integer> count(String name);
+    Single<Long> count(String name);
 
     @Nullable
     Maybe<Person> findByName(String name);
+
+    Single<PersonDto> getByName(String name);
+
+    Flowable<PersonDto> queryByName(String name);
 
     Single<Long> deleteByNameLike(String name);
 

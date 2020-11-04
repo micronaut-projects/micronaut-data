@@ -34,9 +34,6 @@ dependencies {
     testRuntimeOnly "com.microsoft.sqlserver:mssql-jdbc:$mssqlDriverVersion"
 }
 
-//compileTestJava.options.fork = true
-//compileTestJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
-
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
 }
@@ -52,3 +49,6 @@ micronautBuild {
         }
     }
 }
+
+//compileTestJava.options.fork = true
+//compileTestJava.options.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']

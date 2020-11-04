@@ -70,10 +70,9 @@ public interface RepositoryOperations {
      *
      * @param preparedQuery The prepared query
      * @param <T> The generic resultType
-     * @param <R> The result type
      * @return A result or null
      */
-    <T, R> boolean exists(@NonNull PreparedQuery<T, R> preparedQuery);
+    <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery);
 
     /**
      * Finds all results for the given query.
