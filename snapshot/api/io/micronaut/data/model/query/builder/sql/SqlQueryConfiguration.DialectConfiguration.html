@@ -130,6 +130,10 @@
 <th class="colLast" scope="col">Optional Element and Description</th>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.DialectConfiguration.html#escapeQueries--">escapeQueries</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.DialectConfiguration.html#positionalParameterFormat--">positionalParameterFormat</a></span></code>
 <div class="block">A String format (see <code>String.format(String, Object...)</code> to format the appearance
@@ -171,7 +175,7 @@
 <li class="blockList"><a name="positionalParameterFormat--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>positionalParameterFormat</h4>
 <pre>public abstract&nbsp;java.lang.String&nbsp;positionalParameterFormat</pre>
@@ -184,6 +188,26 @@
 <dl>
 <dt>Default:</dt>
 <dd>"?"</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="escapeQueries--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>escapeQueries</h4>
+<pre>public abstract&nbsp;boolean&nbsp;escapeQueries</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>Whether automatically escape queries.</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>true</dd>
 </dl>
 </li>
 </ul>
