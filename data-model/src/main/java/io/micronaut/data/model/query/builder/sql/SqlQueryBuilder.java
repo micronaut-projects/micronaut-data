@@ -89,9 +89,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (annotation != null) {
                 List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);
                 for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
-                    dialectConfig.enumValue("dialect", Dialect.class).ifPresent(dialect ->
-                            dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
-                                    perDialectConfig.put(dialect, new DialectConfig(format))));
+                    dialectConfig.enumValue("dialect", Dialect.class).ifPresent(dialect -> {
+                        DialectConfig dc = new DialectConfig();
+                        perDialectConfig.put(dialect, dc);
+                        dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
+                            dc.positionalFormatter = format
+                        );
+                        dialectConfig.booleanValue("escapeQueries").ifPresent(escape ->
+                                dc.escapeQueries = escape
+                        );
+                    });
+
                 }
             }
         } else {
@@ -119,6 +127,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      */
     public Dialect getDialect() {
         return dialect;
+    }
+
+    @Override
+    protected boolean shouldEscape(@NonNull PersistentEntity entity) {
+        DialectConfig config = perDialectConfig.get(dialect);
+        if (config != null && config.escapeQueries != null) {
+            return config.escapeQueries;
+        } else {
+            return super.shouldEscape(entity);
+        }
     }
 
     @Override
@@ -1466,14 +1484,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private static class DialectConfig {
-        private final String positionalFormatter;
-
-        public DialectConfig(String positionalFormatter) {
-            this.positionalFormatter = positionalFormatter;
-        }
-
-        public String getPositionalFormatter() {
-            return positionalFormatter;
-        }
+        Boolean escapeQueries;
+        String positionalFormatter;
     }
 }

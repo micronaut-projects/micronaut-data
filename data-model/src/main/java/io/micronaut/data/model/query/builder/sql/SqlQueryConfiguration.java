@@ -43,5 +43,10 @@ public @interface SqlQueryConfiguration {
          * @return The position parameter format.
          */
         String positionalParameterFormat() default "?";
+
+        /**
+         * @return Whether automatically escape queries.
+         */
+        boolean escapeQueries() default true;
     }
 }
