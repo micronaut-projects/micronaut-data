@@ -89,8 +89,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (annotation != null) {
                 List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);
                 for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
-                    dialectConfig.enumValue("dialect", Dialect.class).ifPresent(dialect ->
-                    {
+                    dialectConfig.enumValue("dialect", Dialect.class).ifPresent(dialect -> {
                         DialectConfig dc = new DialectConfig();
                         perDialectConfig.put(dialect, dc);
                         dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
@@ -1485,7 +1484,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private static class DialectConfig {
-        public Boolean escapeQueries;
-        public String positionalFormatter;
+        Boolean escapeQueries;
+        String positionalFormatter;
     }
 }
