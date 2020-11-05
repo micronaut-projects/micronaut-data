@@ -21,6 +21,7 @@ import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.operations.RepositoryOperations;
 import java.lang.annotation.*;
 
@@ -74,4 +75,5 @@ public @interface RepositoryConfiguration {
      * @return True if named parameters are supported
      */
     boolean namedParameters() default true;
+
 }

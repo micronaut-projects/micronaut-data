@@ -299,7 +299,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     }
 
                                 } catch (Exception e) {
-                                    methodMatchContext.fail("Invalid query method [" + element.getName() + "] of repository [" + currentRepository.getName() + "]: " + e.getMessage());
+                                    if (currentRepository != null) {
+                                        methodMatchContext.fail("Invalid query method [" + element.getName() + "] of repository [" + currentRepository.getName() + "]: " + e.getMessage());
+                                    } else {
+                                        methodMatchContext.fail("Invalid query method [" + element.getName() + "]: " + e.getMessage());
+                                    }
                                     this.failing = true;
                                     return;
                                 }

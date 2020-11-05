@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.Association
@@ -38,7 +39,52 @@ import io.micronaut.data.tck.entities.Sale
 import spock.lang.Specification
 import spock.lang.Unroll
 
-class SqlQueryBuilderSpec extends Specification {
+class SqlQueryBuilderSpec extends AbstractTypeElementSpec {
+
+    void 'test configure parameter placeholder format'() {
+        given:
+        def annotationMetadata = buildTypeAnnotationMetadata('''
+package test;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.query.builder.sql.*;
+import java.lang.annotation.*;
+import io.micronaut.data.jdbc.annotation.*;
+import io.micronaut.context.annotation.*;
+
+@MyAnnotation(dialect = Dialect.POSTGRES)
+interface MyRepository {
+}
+
+@RepositoryConfiguration(
+        queryBuilder = SqlQueryBuilder.class
+)
+@SqlQueryConfiguration(
+    @SqlQueryConfiguration.DialectConfiguration(
+        dialect = Dialect.POSTGRES,
+        positionalParameterFormat = "$%s"
+    )
+)
+@Retention(RetentionPolicy.RUNTIME)
+@Repository
+@interface MyAnnotation {
+    @AliasFor(annotation = Repository.class, member = "dialect")
+    Dialect dialect() default Dialect.ANSI;
+}
+''')
+
+        SqlQueryBuilder builder = new SqlQueryBuilder(annotationMetadata)
+        PersistentEntity entity = PersistentEntity.of(Sale)
+        def queryModel = QueryModel.from(entity).eq("name", QueryParameter.of("name"))
+
+        expect:
+        builder.dialect == Dialect.POSTGRES
+        builder.buildQuery(queryModel).query == 'SELECT sale_."id",sale_."name",sale_."data",sale_."quantities",sale_."extra_data" FROM "sale" sale_ WHERE (sale_."name" = $1)'
+        builder.buildDelete(queryModel).query == 'DELETE  FROM "sale"  WHERE ("name" = $1)'
+        builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE "sale" SET "name"=$1 WHERE ("name" = $2)'
+        builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO "sale" ("name","data","quantities","extra_data") VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json))'
+
+    }
+
 
     void "test encode update with JSON and MySQL"() {
         when:"A update is encoded"
