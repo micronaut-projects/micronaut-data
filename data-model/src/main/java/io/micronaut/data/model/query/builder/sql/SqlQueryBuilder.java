@@ -66,7 +66,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
     private static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
 
-    private Dialect dialect = Dialect.ANSI;
+    private final Dialect dialect;
+    private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);
+
 
     /**
      * Constructor with annotation metadata.
@@ -83,6 +85,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .orElse(Dialect.ANSI)
                     );
 
+            AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
+            if (annotation != null) {
+                List<AnnotationValue<SqlQueryConfiguration.DialectConfiguration>> dialectConfigs = annotation.getAnnotations(AnnotationMetadata.VALUE_MEMBER, SqlQueryConfiguration.DialectConfiguration.class);
+                for (AnnotationValue<SqlQueryConfiguration.DialectConfiguration> dialectConfig : dialectConfigs) {
+                    dialectConfig.enumValue("dialect", Dialect.class).ifPresent(dialect ->
+                            dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
+                                    perDialectConfig.put(dialect, new DialectConfig(format))));
+                }
+            }
+        } else {
+            this.dialect = Dialect.ANSI;
         }
     }
 
@@ -90,6 +103,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * Default constructor.
      */
     public SqlQueryBuilder() {
+        this.dialect = Dialect.ANSI;
     }
 
     /**
@@ -98,6 +112,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     public SqlQueryBuilder(Dialect dialect) {
         ArgumentUtils.requireNonNull("dialect", dialect);
         this.dialect = dialect;
+    }
+
+    /**
+     * @return The dialect being used by the builder.
+     */
+    public Dialect getDialect() {
+        return dialect;
     }
 
     @Override
@@ -938,16 +959,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (dt == DataType.JSON) {
             switch (dialect) {
                 case POSTGRES:
-                    return values.add("to_json(?::json)");
+                    return values.add("to_json(" + formatParameter(values.size() + 1).getName() + "::json)");
                 case H2:
-                    return values.add("? FORMAT JSON");
+                    return values.add(formatParameter(values.size() + 1).getName() + " FORMAT JSON");
                 case MYSQL:
-                    return values.add("CONVERT(? USING UTF8MB4)");
+                    return values.add("CONVERT(" + formatParameter(values.size() + 1).getName() + " USING UTF8MB4)");
                 default:
-                    return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
+                    return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElseGet(() -> formatParameter(values.size() + 1).getName()));
             }
         }
-        return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElse("?"));
+        return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElseGet(() -> formatParameter(values.size() + 1).getName()));
     }
 
     @Override
@@ -956,13 +977,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (prop.getDataType() == DataType.JSON) {
             switch (dialect) {
                 case H2:
-                    queryString.append("? FORMAT JSON");
+                    queryString.append(param.getName()).append(" FORMAT JSON");
                     break;
                 case MYSQL:
-                    queryString.append("CONVERT(? USING UTF8MB4)");
+                    queryString.append("CONVERT(").append(param.getName()).append(" USING UTF8MB4)");
                     break;
                 case POSTGRES:
-                    queryString.append("to_json(?::json)");
+                    queryString.append("to_json(").append(param.getName()).append("::json)");
                     break;
                 default:
                     super.appendUpdateSetParameter(queryString, prop, param);
@@ -1199,7 +1220,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected Placeholder formatParameter(int index) {
-        return new Placeholder("?", String.valueOf(index));
+        DialectConfig dialectConfig = perDialectConfig.get(dialect);
+        if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
+            return new Placeholder(
+                    String.format(dialectConfig.positionalFormatter, index),
+                    String.valueOf(index)
+            );
+        } else {
+            return new Placeholder("?", String.valueOf(index));
+        }
     }
 
     /**
@@ -1434,5 +1463,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public boolean supportsForUpdate() {
         return true;
+    }
+
+    private static class DialectConfig {
+        private final String positionalFormatter;
+
+        public DialectConfig(String positionalFormatter) {
+            this.positionalFormatter = positionalFormatter;
+        }
+
+        public String getPositionalFormatter() {
+            return positionalFormatter;
+        }
     }
 }
