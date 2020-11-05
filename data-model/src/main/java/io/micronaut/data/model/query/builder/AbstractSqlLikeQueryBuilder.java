@@ -919,19 +919,23 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             buildWhereClauseForCriterion(queryState, criteria, criterionList);
             String whereStr = whereClause.toString();
             final String additionalWhere = buildAdditionalWhereString(queryState.getEntity(), annotationMetadata);
+            final StringBuffer additionalWhereBuilder = new StringBuffer();
+
             Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(additionalWhere);
 
             while (matcher.find()) {
                 String name = matcher.group(2);
                 queryState.addRequiredParameters(name);
                 final Placeholder ph = queryState.newParameter();
-                queryState.getParameters().put(ph.getKey(), ph.getName());
+                queryState.getParameters().put(ph.getKey(), name);
+                matcher.appendReplacement(additionalWhereBuilder, ph.getName());
             }
+            matcher.appendTail(additionalWhereBuilder);
             if (!whereStr.equals(WHERE_CLAUSE + OPEN_BRACKET)) {
                 final StringBuilder queryBuilder = queryState.getQuery();
                 queryBuilder.append(whereStr);
                 if (StringUtils.isNotEmpty(additionalWhere)) {
-                    queryBuilder.append(LOGICAL_AND).append(OPEN_BRACKET).append(additionalWhere).append(CLOSE_BRACKET);
+                    queryBuilder.append(LOGICAL_AND).append(OPEN_BRACKET).append(additionalWhereBuilder).append(CLOSE_BRACKET);
                 }
                 queryBuilder.append(CLOSE_BRACKET);
             }

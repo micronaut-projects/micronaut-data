@@ -104,7 +104,7 @@ interface TestRepository extends GenericRepository<Person, Long> {
         def parameterBinding = method.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get()
 
         expect:
-        query == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (age > :age))"
+        query == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (age >:p2))"
         parameterBinding.length == 2
     }
 

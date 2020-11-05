@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
@@ -45,4 +46,10 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
             }
     )
     abstract List<Book> findAllByTitleStartsWith(String text);
+
+    @Where(value = "total_pages > :pages")
+    abstract List<Book> findByTitleStartsWith(String title, int pages);
+
+    @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
+    abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 }
