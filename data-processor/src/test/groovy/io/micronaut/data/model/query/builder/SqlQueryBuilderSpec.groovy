@@ -36,11 +36,13 @@ import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends AbstractTypeElementSpec {
 
+    @Requires({ javaVersion <= 1.8 })
     void 'test configure parameter placeholder format'() {
         given:
         def annotationMetadata = buildTypeAnnotationMetadata('''
