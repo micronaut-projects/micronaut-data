@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
@@ -27,6 +28,7 @@ import io.micronaut.data.tck.entities.Book;
 import javax.transaction.Transactional;
 import java.sql.ResultSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -64,4 +66,10 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
             throw new EmptyResultException();
         });
     }
+
+    @Where(value = "total_pages > :pages")
+    abstract List<Book> findByTitleStartsWith(String title, int pages);
+
+    @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
+    abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
 }

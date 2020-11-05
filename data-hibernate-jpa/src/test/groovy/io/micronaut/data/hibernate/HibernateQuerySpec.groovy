@@ -36,6 +36,15 @@ class HibernateQuerySpec extends AbstractQuerySpec {
     @Inject
     AuthorRepository ar
 
+    void "test @Where annotation placehoder"() {
+        given:
+        def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300)
+        def books = bookRepository.findByTitleStartsWith("The", 300)
+
+        expect:
+        books.size() == size
+    }
+
     void "test native query"() {
         given:
         def books = bookRepository.listNativeBooks("The%")

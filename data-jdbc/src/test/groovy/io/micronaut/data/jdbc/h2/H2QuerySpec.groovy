@@ -43,6 +43,15 @@ class H2QuerySpec extends AbstractQuerySpec {
         return ar
     }
 
+    void "test @Where annotation placehoder"() {
+        given:
+        def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300)
+        def books = bookRepository.findByTitleStartsWith("The", 300)
+
+        expect:
+        books.size() == size
+    }
+
     void "test explicit @Query update methods"() {
         when:
         def r = br.setPages(800, "The Border")
