@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":9,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":9,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li>Next&nbsp;Class</li>
+<li><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.html" title="annotation in io.micronaut.data.model.query.builder.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../../index.html?io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" target="_top">Frames</a></li>
@@ -345,55 +345,59 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 </td>
 </tr>
 <tr id="i20" class="altColor">
+<td class="colFirst"><code><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getDialect--">getDialect</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getTableAsKeyword--">getTableAsKeyword</a></span>()</code>
 <div class="block">Get the AS keyword to use for table aliases.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getTableName-io.micronaut.data.model.PersistentEntity-">getTableName</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code>
 <div class="block">Get the table name for the given entity.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isAliasForBatch--">isAliasForBatch</a></span>()</code>
 <div class="block">Should aliases be used in batch statements.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isExpandEmbedded--">isExpandEmbedded</a></span>()</code>
 <div class="block">Should embedded queries by expanded by the implementation.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>static boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#isForeignKeyWithJoinTable-io.micronaut.data.model.Association-">isForeignKeyWithJoinTable</a></span>(<a href="../../../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association)</code>
 <div class="block">Is the given association a foreign key reference that requires a join table.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>protected java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#quote-java.lang.String-">quote</a></span>(java.lang.String&nbsp;persistedName)</code>
 <div class="block">Quote a column name for the dialect.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#resolveJoinType-io.micronaut.data.annotation.Join.Type-">resolveJoinType</a></span>(<a href="../../../../../../../io/micronaut/data/annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;jt)</code>
 <div class="block">Resolves the join type.</div>
 </td>
 </tr>
-<tr id="i27" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#selectAllColumns-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-java.lang.StringBuilder-">selectAllColumns</a></span>(<a href="../../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a>&nbsp;queryState,
                 java.lang.StringBuilder&nbsp;queryBuffer)</code>
 <div class="block">Obtain the string that selects all columns from the entity.</div>
 </td>
 </tr>
-<tr id="i28" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#selectAllColumns-io.micronaut.data.model.PersistentEntity-java.lang.String-java.lang.StringBuilder-">selectAllColumns</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity,
                 java.lang.String&nbsp;alias,
@@ -401,19 +405,19 @@ implements <a href="../../../../../../../io/micronaut/data/model/query/builder/Q
 <div class="block">Selects all columns for the given entity and alias.</div>
 </td>
 </tr>
-<tr id="i29" class="rowColor">
+<tr id="i30" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../../../io/micronaut/data/annotation/GeneratedValue.Type.html" title="enum in io.micronaut.data.annotation">GeneratedValue.Type</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#selectAutoStrategy-io.micronaut.data.model.PersistentProperty-">selectAutoStrategy</a></span>(<a href="../../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code>
 <div class="block">Selects the default fallback strategy.</div>
 </td>
 </tr>
-<tr id="i30" class="altColor">
+<tr id="i31" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#shouldAliasProjections--">shouldAliasProjections</a></span>()</code>
 <div class="block">Whether projections should be aliased.</div>
 </td>
 </tr>
-<tr id="i31" class="rowColor">
+<tr id="i32" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#supportsForUpdate--">supportsForUpdate</a></span>()</code>
 <div class="block">Whether FOR UPDATE queries are supported.</div>
@@ -523,6 +527,19 @@ public&nbsp;SqlQueryBuilder(io.micronaut.core.annotation.AnnotationMetadata&nbsp
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getDialect--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getDialect</h4>
+<pre>public&nbsp;<a href="../../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;getDialect()</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The dialect being used by the builder.</dd>
+</dl>
+</li>
+</ul>
 <a name="shouldAliasProjections--">
 <!--   -->
 </a>
@@ -1143,7 +1160,7 @@ public&nbsp;<a href="../../../../../../../io/micronaut/data/model/query/builder/
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li>Next&nbsp;Class</li>
+<li><a href="../../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryConfiguration.html" title="annotation in io.micronaut.data.model.query.builder.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../../index.html?io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" target="_top">Frames</a></li>
