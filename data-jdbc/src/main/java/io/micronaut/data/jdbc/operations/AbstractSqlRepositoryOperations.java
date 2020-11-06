@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
@@ -27,6 +28,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
@@ -37,14 +39,18 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
+import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -73,8 +79,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final ResultReader<RS, Integer> columnIndexResultSetReader;
     @SuppressWarnings("WeakerAccess")
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
-    protected final Map<Class, Dialect> dialects = new HashMap<>(10);
-    protected final Map<Dialect, SqlQueryBuilder> queryBuilders = new HashMap<>(Dialect.values().length);
+    protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final MediaTypeCodec jsonCodec;
     protected final DateTimeProvider dateTimeProvider;
 
@@ -95,16 +100,28 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param dateTimeProvider           The injected dateTimeProvider instance
      */
     protected AbstractSqlRepositoryOperations(
+            String dataSourceName,
             ResultReader<RS, String> columnNameResultSetReader,
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
-            @NonNull DateTimeProvider dateTimeProvider) {
+            @NonNull DateTimeProvider dateTimeProvider,
+            BeanContext beanContext) {
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
         this.dateTimeProvider = dateTimeProvider;
+        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
+                .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
+        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
+            String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
+            if (targetDs.equalsIgnoreCase(dataSourceName)) {
+                Class<GenericRepository> beanType = beanDefinition.getBeanType();
+                SqlQueryBuilder queryBuilder = new SqlQueryBuilder(beanDefinition.getAnnotationMetadata());
+                queryBuilders.put(beanType, queryBuilder);
+            }
+        }
     }
 
     private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
@@ -147,14 +164,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
         DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
         String query = preparedQuery.getQuery();
-        final Dialect dialect = dialects.getOrDefault(preparedQuery.getRepositoryType(), Dialect.ANSI);
+        SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
+        final Dialect dialect = queryBuilder.getDialect();
         final boolean hasIn = preparedQuery.hasInExpression();
         if (hasIn) {
             Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
             // this has to be done is two passes, one to remove and establish new indexes
             // and again to expand existing indexes
             while (matcher.find()) {
-                int inIndex = Integer.valueOf(matcher.group(1));
+                int inIndex = Integer.parseInt(matcher.group(1));
                 int queryParameterIndex = parameterBinding[inIndex - 1];
                 Object value = queryParameters[queryParameterIndex];
 
@@ -167,8 +185,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
                         query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
                     } else {
-                        String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
-                        query = matcher.replaceFirst(replacement);
+                        if (queryBuilder.positionalParameterFormat().equals(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER)) {
+                            String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
+                            query = matcher.replaceFirst(replacement);
+                        } else {
+                            String[] placeholders = new String[size];
+                            for (int i = 0; i < placeholders.length; i++) {
+                                String name = queryBuilder.formatParameter(queryParameterIndex + i + 1).getName();
+                                placeholders[i] = name;
+                            }
+                            String replacement = " IN(" + String.join(",", Arrays.asList(placeholders)) + ")";
+                            query = matcher.replaceFirst(replacement);
+                        }
                     }
                 }
                 matcher = IN_EXPRESSION_PATTERN.matcher(query);
@@ -180,7 +208,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             if (pageable != Pageable.UNPAGED) {
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 Sort sort = pageable.getSort();
-                QueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
                 if (sort.isSorted()) {
                     query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
                 } else if (isSqlServerWithoutOrderBy(query, dialect)) {
@@ -558,12 +585,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
         //noinspection unchecked
         return entityInserts.computeIfAbsent(new QueryKey(repositoryType, rootEntity), (queryKey) -> {
-            final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.ANSI);
-            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
             final String sql = queryResult.getQuery();
             final Map<String, String> parameters = queryResult.getParameters();
+            Dialect dialect = queryBuilder.getDialect();
             return new StoredInsert<>(
                     sql,
                     persistentEntity,
@@ -592,8 +619,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         final QueryKey key = new QueryKey(repositoryType, rootEntity);
         //noinspection unchecked
         return entityUpdates.computeIfAbsent(key, (queryKey) -> {
-            final Dialect dialect = dialects.getOrDefault(queryKey.repositoryType, Dialect.ANSI);
-            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
 
             final String idName;
             final PersistentProperty identity = persistentEntity.getIdentity();
@@ -619,6 +645,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
             final String sql = queryResult.getQuery();
             final Map<String, String> parameters = queryResult.getParameters();
+            Dialect dialect = queryBuilder.getDialect();
             return new StoredInsert<>(
                     sql,
                     persistentEntity,
@@ -642,12 +669,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             RuntimePersistentEntity<T> persistentEntity,
             RuntimeAssociation<T> association) {
         return associationInserts.computeIfAbsent(association, association1 -> {
-            final Dialect dialect = dialects.getOrDefault(repositoryType, Dialect.ANSI);
-            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(dialect, DEFAULT_SQL_BUILDER);
+            final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
         });
     }
 
+    /**
+     * Functional interface used to supply a statement.
+     * @param <PS> The prepared statement type
+     */
     @FunctionalInterface
     protected interface StatementSupplier<PS> {
         PS create(String ps) throws Exception;

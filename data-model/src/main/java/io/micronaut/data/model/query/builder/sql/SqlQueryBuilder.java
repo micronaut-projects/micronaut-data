@@ -35,6 +35,7 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 
+import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.util.*;
@@ -49,7 +50,7 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.*;
  * @author graemerocher
  * @since 1.0.0
  */
-public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder {
+public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder, SqlQueryConfiguration.DialectConfiguration {
 
     /**
      * The start of an IN expression.
@@ -65,6 +66,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
     private static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
+    public static final String DEFAULT_POSITIONAL_PARAMETER_MARKER = "?";
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);
@@ -1237,7 +1239,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected Placeholder formatParameter(int index) {
+    public Placeholder formatParameter(int index) {
         DialectConfig dialectConfig = perDialectConfig.get(dialect);
         if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
             return new Placeholder(
@@ -1481,6 +1483,34 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     public boolean supportsForUpdate() {
         return true;
+    }
+
+    @Override
+    public Dialect dialect() {
+        return dialect;
+    }
+
+    @Override
+    public String positionalParameterFormat() {
+        DialectConfig dialectConfig = perDialectConfig.get(dialect);
+        if (dialectConfig != null && dialectConfig.positionalFormatter != null) {
+            return dialectConfig.positionalFormatter;
+        }
+        return DEFAULT_POSITIONAL_PARAMETER_MARKER;
+    }
+
+    @Override
+    public boolean escapeQueries() {
+        DialectConfig dialectConfig = perDialectConfig.get(dialect);
+        if (dialectConfig != null && dialectConfig.escapeQueries != null) {
+            return dialectConfig.escapeQueries;
+        }
+        return true;
+    }
+
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return SqlQueryConfiguration.DialectConfiguration.class;
     }
 
     private static class DialectConfig {
