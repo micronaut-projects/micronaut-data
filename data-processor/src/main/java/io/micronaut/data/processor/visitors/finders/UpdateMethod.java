@@ -84,12 +84,12 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
     @Override
     public MethodMatchInfo buildMatchInfo(
             @NonNull MethodMatchContext matchContext) {
-        ParameterElement[] parameters = matchContext.getMethodElement().getParameters();
-        List<ParameterElement> remainingParameters = Arrays.stream(parameters)
+        List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+        List<ParameterElement> remainingParameters = parameters.stream()
                 .filter(p -> !p.hasAnnotation(Id.class))
                 .collect(Collectors.toList());
 
-        ParameterElement idParameter = Arrays.stream(parameters).filter(p -> p.hasAnnotation(Id.class)).findFirst()
+        ParameterElement idParameter = parameters.stream().filter(p -> p.hasAnnotation(Id.class)).findFirst()
                 .orElse(null);
         if (idParameter == null) {
             matchContext.fail("ID required for update method, but not specified");
