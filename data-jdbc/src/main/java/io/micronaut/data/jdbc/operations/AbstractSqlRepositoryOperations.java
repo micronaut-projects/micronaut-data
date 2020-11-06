@@ -192,7 +192,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                             String[] placeholders = new String[size];
                             for (int i = 0; i < placeholders.length; i++) {
                                 String name = queryBuilder.formatParameter(queryParameterIndex + i + 1).getName();
-                                placeholders[i] = name;
+                                placeholders[i] = Matcher.quoteReplacement(name);
                             }
                             String replacement = " IN(" + String.join(",", Arrays.asList(placeholders)) + ")";
                             query = matcher.replaceFirst(replacement);
