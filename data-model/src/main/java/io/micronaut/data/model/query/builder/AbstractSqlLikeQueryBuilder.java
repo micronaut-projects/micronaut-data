@@ -1844,7 +1844,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     /**
      * Represents a placeholder in query.
      */
-    protected class Placeholder {
+    public static final class Placeholder {
         private final String name;
         private final String key;
 

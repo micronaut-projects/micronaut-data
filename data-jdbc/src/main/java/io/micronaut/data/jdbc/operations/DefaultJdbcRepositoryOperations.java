@@ -28,10 +28,8 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
@@ -41,14 +39,12 @@ import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
@@ -60,8 +56,6 @@ import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.http.codec.MediaTypeCodec;
-import io.micronaut.inject.BeanDefinition;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.TransactionOperations;
 
 import javax.annotation.PreDestroy;
@@ -116,29 +110,19 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                               List<MediaTypeCodec> codecs,
                                               @NonNull DateTimeProvider dateTimeProvider) {
         super(
+                dataSourceName,
                 new ColumnNameResultSetReader(),
                 new ColumnIndexResultSetReader(),
                 new JdbcQueryStatement(),
                 codecs,
-                dateTimeProvider
+                dateTimeProvider,
+                beanContext
         );
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
-        Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext.getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
-        for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
-            String targetDs = beanDefinition.stringValue(Repository.class).orElse("default");
-            if (targetDs.equalsIgnoreCase(dataSourceName)) {
-                Dialect dialect = beanDefinition.enumValue(JdbcRepository.class, "dialect", Dialect.class).orElseGet(() -> beanDefinition.enumValue(JdbcRepository.class, "dialectName", Dialect.class).orElse(Dialect.ANSI));
-                dialects.put(beanDefinition.getBeanType(), dialect);
-                QueryBuilder qb = queryBuilders.get(dialect);
-                if (qb == null) {
-                    queryBuilders.put(dialect, new SqlQueryBuilder(dialect));
-                }
-            }
-        }
     }
 
     @NonNull
@@ -1115,5 +1099,4 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         };
         return StreamSupport.stream(iterable.spliterator(), false);
     }
-
 }
