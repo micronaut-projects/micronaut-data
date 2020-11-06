@@ -107,7 +107,7 @@ public class UpdateByMethod extends DynamicFinder {
                     }
                 }
             }
-            List<Element> updateParameters = Arrays.stream(matchContext.getParameters()).filter(p -> !queryParameters.contains(p.getName()))
+            List<Element> updateParameters = matchContext.getParametersNotInRole().stream().filter(p -> !queryParameters.contains(p.getName()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(updateParameters)) {
                 matchContext.fail("At least one parameter required to update");

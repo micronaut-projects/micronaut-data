@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
@@ -38,6 +39,7 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -71,16 +73,17 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
-        return parameters.length == 1 &&
+        return parameters.length > 0 &&
+                Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class)) &&
                 super.isMethodMatch(methodElement, matchContext) && isValidSaveReturnType(matchContext, false);
     }
 
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
-        ParameterElement[] parameters = matchContext.getParameters();
-        if (ArrayUtils.isNotEmpty(parameters)) {
-            if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
+        List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+        if (CollectionUtils.isNotEmpty(parameters)) {
+            if (parameters.stream().anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
                 ClassElement returnType = matchContext.getReturnType();
                 Class<? extends DataInterceptor> interceptor = pickSaveInterceptor(returnType);
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
@@ -106,6 +109,7 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     String[] updateProperties = rootEntity.getPersistentProperties()
                             .stream().filter(p ->
                                     !((p instanceof Association) && ((Association) p).isForeignKey()) &&
+                                            !p.isGenerated() &&
                                             p.booleanValue(AutoPopulated.class, "updateable").orElse(true)
                             )
                             .map(PersistentProperty::getName)
