@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors
 
+import io.micronaut.data.intercept.SaveEntityInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor
@@ -20,7 +21,7 @@ class TypeRoleSpec extends AbstractDataSpec {
     @Unroll
     void "test repository with addition type role as parameter #method"() {
         given:
-        def repository = buildRepository('test.MyInterface', """
+        def repository = buildRepository('test.TypeRoleInterface', """
 
 import io.micronaut.data.model.entities.Person;
 import java.util.concurrent.CompletionStage;
@@ -38,7 +39,7 @@ import java.sql.Connection;
     )
 )
 @io.micronaut.context.annotation.Executable
-interface MyInterface extends GenericRepository<Person, Long> {
+interface TypeRoleInterface extends GenericRepository<Person, Long> {
 
     $returnType $method($arguments, Connection connection);
 }
@@ -68,6 +69,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "existsByName" | "Single<Boolean>"       | "String name"                  | ExistsByReactiveInterceptor
         "findById"     | "Single<Person>"        | "Long id"                      | FindByIdReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
+        "save"         | "Person"                | "Person person"                | SaveEntityInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
         "updateByName" | "Single<Number>"        | "String name, int age"         | UpdateReactiveInterceptor

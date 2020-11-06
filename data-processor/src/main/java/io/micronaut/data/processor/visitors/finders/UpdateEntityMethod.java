@@ -38,6 +38,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -72,7 +73,8 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
-        return parameters.length > 1 &&
+        return parameters.length > 0 &&
+                Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class)) &&
                 super.isMethodMatch(methodElement, matchContext) && isValidSaveReturnType(matchContext, false);
     }
 

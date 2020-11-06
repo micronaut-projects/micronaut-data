@@ -58,11 +58,10 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
     }
 
     @Override
-    public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-
+    public boolean isMethodMatch(@NonNull MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         return parameters.length > 0 &&
-                Arrays.stream(parameters).anyMatch(p -> p.getType().hasAnnotation(MappedEntity.class)) &&
+                Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class)) &&
                 super.isMethodMatch(methodElement, matchContext) && isValidSaveReturnType(matchContext, false);
     }
 
