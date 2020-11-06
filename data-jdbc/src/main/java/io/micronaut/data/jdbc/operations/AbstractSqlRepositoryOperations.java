@@ -28,12 +28,10 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -50,7 +48,6 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -93,11 +90,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     /**
      * Default constructor.
      *
+     * @param dataSourceName             The datasource name
      * @param columnNameResultSetReader  The column name result reader
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
      * @param dateTimeProvider           The injected dateTimeProvider instance
+     * @param beanContext                The bean context
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -147,12 +146,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Prepare a statement for execution.
+     *
      * @param statementFunction The statement function
-     * @param preparedQuery The prepared query
-     * @param isUpdate Is this an update
-     * @param isSingleResult Is it a single result
-     * @param <T> The query declaring type
-     * @param <R> The query result type
+     * @param preparedQuery     The prepared query
+     * @param isUpdate          Is this an update
+     * @param isSingleResult    Is it a single result
+     * @param <T>               The query declaring type
+     * @param <R>               The query result type
      * @return The prepared statement
      */
     protected <T, R> PS prepareStatement(
@@ -427,6 +427,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).
+     *
      * @param i The index to shift
      * @return the index
      */
@@ -485,8 +486,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Build a sort for ID for the given entity.
+     *
      * @param persistentEntity The entity
-     * @param <T> The entity type
+     * @param <T>              The entity type
      * @return The sort
      */
     @NonNull
@@ -502,7 +504,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * In the dialect SQL server and is order by required.
-     * @param query The query
+     *
+     * @param query   The query
      * @param dialect The dialect
      * @return True if it is
      */
@@ -512,6 +515,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Compute the size of the given object.
+     *
      * @param value The value
      * @return The size
      */
@@ -532,11 +536,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Set the parameter value on the given statement.
+     *
      * @param preparedStatement The prepared statement
-     * @param index The index
-     * @param dataType The data type
-     * @param value The value
-     * @param dialect The dialect
+     * @param index             The index
+     * @param dataType          The data type
+     * @param value             The value
+     * @param dialect           The dialect
      */
     protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
         switch (dataType) {
@@ -567,17 +572,19 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 dialect.getDataType(dataType),
                 value);
     }
-    
+
     /**
      * Resolves a stored insert for the given entity.
-     * @param annotationMetadata  The repository annotation metadata
-     * @param repositoryType  The repository type
-     * @param rootEntity The root entity
-     * @param persistentEntity The persistent entity
-     * @param <T> The generic type
+     *
+     * @param annotationMetadata The repository annotation metadata
+     * @param repositoryType     The repository type
+     * @param rootEntity         The root entity
+     * @param persistentEntity   The persistent entity
+     * @param <T>                The generic type
      * @return The insert
      */
-    protected @NonNull <T> StoredInsert<T> resolveEntityInsert(
+    protected @NonNull
+    <T> StoredInsert<T> resolveEntityInsert(
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
             @NonNull Class<?> rootEntity,
@@ -603,14 +610,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Resolves a stored update for the given entity.
-     * @param annotationMetadata  The repository annotation metadata
-     * @param repositoryType  The repository type
-     * @param rootEntity The root entity
-     * @param persistentEntity The persistent entity
-     * @param <T> The generic type
+     *
+     * @param annotationMetadata The repository annotation metadata
+     * @param repositoryType     The repository type
+     * @param rootEntity         The root entity
+     * @param persistentEntity   The persistent entity
+     * @param <T>                The generic type
      * @return The insert
      */
-    protected @NonNull <T> StoredInsert<T> resolveEntityUpdate(
+    protected @NonNull
+    <T> StoredInsert<T> resolveEntityUpdate(
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
             @NonNull Class<?> rootEntity,
@@ -658,10 +667,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Builds a join table insert.
-     * @param repositoryType The repository type
-     * @param persistentEntity  The entity
-     * @param association The association
-     * @param <T> The entity generic type
+     *
+     * @param repositoryType   The repository type
+     * @param persistentEntity The entity
+     * @param association      The association
+     * @param <T>              The entity generic type
      * @return The insert statement
      */
     protected <T> String resolveAssociationInsert(
@@ -676,6 +686,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Functional interface used to supply a statement.
+     *
      * @param <PS> The prepared statement type
      */
     @FunctionalInterface
@@ -730,11 +741,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
         /**
          * Default constructor.
-         *  @param sql              The SQL INSERT
+         *
+         * @param sql              The SQL INSERT
          * @param persistentEntity The entity
          * @param parameterBinding The parameter binding
          * @param supportsBatch    Whether batch insert is supported
-         * @param dialect The dialect
+         * @param dialect          The dialect
          */
         StoredInsert(
                 String sql,
@@ -754,7 +766,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         /**
          * @return The dialect
          */
-        public @NonNull Dialect getDialect() {
+        public @NonNull
+        Dialect getDialect() {
             return dialect;
         }
 
