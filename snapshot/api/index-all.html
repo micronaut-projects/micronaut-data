@@ -148,12 +148,14 @@
 <dd>
 <div class="block">Abstract SQL repository implementation not specifically bound to JDBC.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#AbstractSqlRepositoryOperations-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">AbstractSqlRepositoryOperations(ResultReader&lt;RS, String&gt;, ResultReader&lt;RS, Integer&gt;, QueryStatement&lt;PS, Integer&gt;, List&lt;MediaTypeCodec&gt;, DateTimeProvider)</a></span> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#AbstractSqlRepositoryOperations-java.lang.String-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.context.BeanContext-">AbstractSqlRepositoryOperations(String, ResultReader&lt;RS, String&gt;, ResultReader&lt;RS, Integer&gt;, QueryStatement&lt;PS, Integer&gt;, List&lt;MediaTypeCodec&gt;, DateTimeProvider, BeanContext)</a></span> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">AbstractSqlRepositoryOperations.StatementSupplier</span></a>&lt;<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="type parameter in AbstractSqlRepositoryOperations.StatementSupplier">PS</a>&gt; - Interface in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Functional interface used to supply a statement.</div>
+</dd>
 <dt><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations"><span class="typeNameLink">AbstractSqlRepositoryOperations.StoredInsert</span></a>&lt;<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="type parameter in AbstractSqlRepositoryOperations.StoredInsert">T</a>&gt; - Class in <a href="io/micronaut/data/jdbc/operations/package-summary.html">io.micronaut.data.jdbc.operations</a></dt>
 <dd>
 <div class="block">A stored insert statement.</div>
@@ -280,6 +282,8 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#annotationType--">annotationType()</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/MappedEntityMapper.html#annotationType--">annotationType()</a></span> - Method in class io.micronaut.data.processor.mappers.<a href="io/micronaut/data/processor/mappers/MappedEntityMapper.html" title="class in io.micronaut.data.processor.mappers">MappedEntityMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/support/NullableAnnotationMapper.html#annotationType--">annotationType()</a></span> - Method in class io.micronaut.data.processor.mappers.support.<a href="io/micronaut/data/processor/mappers/support/NullableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.support">NullableAnnotationMapper</a></dt>
@@ -1440,6 +1444,8 @@
 <dd>
 <div class="block">The default position.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#DEFAULT_POSITIONAL_PARAMETER_MARKER">DEFAULT_POSITIONAL_PARAMETER_MARKER</a></span> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SIZE_PARAMETER">DEFAULT_SIZE_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SORT_IGNORE_CASE">DEFAULT_SORT_IGNORE_CASE</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
@@ -2037,7 +2043,7 @@
 <dd>
 <div class="block">The SQL dialect to use.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#dialects">dialects</a></span> - Variable in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#dialect--">dialect()</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html#disconnectOnCompletion-org.hibernate.Session-">disconnectOnCompletion(Session)</a></span> - Method in class io.micronaut.transaction.hibernate5.<a href="io/micronaut/transaction/hibernate5/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate5">HibernateTransactionManager</a></dt>
 <dd>
@@ -2418,6 +2424,8 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#escapeQueries--">escapeQueries()</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/hibernate/event/EventIntegrator.html" title="class in io.micronaut.data.hibernate.event"><span class="typeNameLink">EventIntegrator</span></a> - Class in <a href="io/micronaut/data/hibernate/event/package-summary.html">io.micronaut.data.hibernate.event</a></dt>
 <dd>
 <div class="block">Integrates event handling.</div>
@@ -7158,6 +7166,8 @@
 <dd>
 <div class="block">The position of the visitor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#positionalParameterFormat--">positionalParameterFormat()</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#possiblyFail-java.lang.String-">possiblyFail(String)</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>
 <div class="block">Add a message that indicates a given finder failed.</div>

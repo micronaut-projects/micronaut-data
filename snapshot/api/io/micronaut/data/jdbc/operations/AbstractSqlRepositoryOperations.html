@@ -150,7 +150,9 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected static interface&nbsp;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="type parameter in AbstractSqlRepositoryOperations.StatementSupplier">PS</a>&gt;</span></code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="type parameter in AbstractSqlRepositoryOperations.StatementSupplier">PS</a>&gt;</span></code>
+<div class="block">Functional interface used to supply a statement.</div>
+</td>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>protected class&nbsp;</code></td>
@@ -190,31 +192,27 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a></span></code>&nbsp;</td>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#dialects">dialects</a></span></code>&nbsp;</td>
-</tr>
-<tr class="rowColor">
 <td class="colFirst"><code>protected static java.util.regex.Pattern</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#IN_EXPRESSION_PATTERN">IN_EXPRESSION_PATTERN</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>protected io.micronaut.http.codec.MediaTypeCodec</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#jsonCodec">jsonCodec</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>protected static java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#NOT_TRUE_EXPRESSION">NOT_TRUE_EXPRESSION</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,java.lang.Integer&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>protected static org.slf4j.Logger</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
-<td class="colFirst"><code>protected java.util.Map&lt;<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>,<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt;</code></td>
+<tr class="rowColor">
+<td class="colFirst"><code>protected java.util.Map&lt;java.lang.Class,<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a></span></code>&nbsp;</td>
 </tr>
 </table>
@@ -234,11 +232,13 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#AbstractSqlRepositoryOperations-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">AbstractSqlRepositoryOperations</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,java.lang.String&gt;&nbsp;columnNameResultSetReader,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#AbstractSqlRepositoryOperations-java.lang.String-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.context.BeanContext-">AbstractSqlRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
+                               <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,java.lang.String&gt;&nbsp;columnNameResultSetReader,
                                <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,java.lang.Integer&gt;&nbsp;columnIndexResultSetReader,
                                <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,java.lang.Integer&gt;&nbsp;preparedStatementWriter,
                                java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
-                               <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider)</code>
+                               <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
+                               io.micronaut.context.BeanContext&nbsp;beanContext)</code>
 <div class="block">Default constructor.</div>
 </td>
 </tr>
@@ -449,22 +449,13 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <pre>protected final&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,java.lang.Integer&gt; preparedStatementWriter</pre>
 </li>
 </ul>
-<a name="dialects">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>dialects</h4>
-<pre>protected final&nbsp;java.util.Map&lt;java.lang.Class,<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&gt; dialects</pre>
-</li>
-</ul>
 <a name="queryBuilders">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>queryBuilders</h4>
-<pre>protected final&nbsp;java.util.Map&lt;<a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>,<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt; queryBuilders</pre>
+<pre>protected final&nbsp;java.util.Map&lt;java.lang.Class,<a href="../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&gt; queryBuilders</pre>
 </li>
 </ul>
 <a name="jsonCodec">
@@ -493,26 +484,30 @@ implements <a href="../../../../../io/micronaut/data/operations/RepositoryOperat
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="AbstractSqlRepositoryOperations-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-">
+<a name="AbstractSqlRepositoryOperations-java.lang.String-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.ResultReader-io.micronaut.data.runtime.mapper.QueryStatement-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.context.BeanContext-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>AbstractSqlRepositoryOperations</h4>
-<pre>protected&nbsp;AbstractSqlRepositoryOperations(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,java.lang.String&gt;&nbsp;columnNameResultSetReader,
+<pre>protected&nbsp;AbstractSqlRepositoryOperations(java.lang.String&nbsp;dataSourceName,
+                                          <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,java.lang.String&gt;&nbsp;columnNameResultSetReader,
                                           <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">RS</a>,java.lang.Integer&gt;&nbsp;columnIndexResultSetReader,
                                           <a href="../../../../../io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper">QueryStatement</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>,java.lang.Integer&gt;&nbsp;preparedStatementWriter,
                                           java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
                                           @NonNull
-                                          <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider)</pre>
+                                          <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
+                                          io.micronaut.context.BeanContext&nbsp;beanContext)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>dataSourceName</code> - The datasource name</dd>
 <dd><code>columnNameResultSetReader</code> - The column name result reader</dd>
 <dd><code>columnIndexResultSetReader</code> - The column index result reader</dd>
 <dd><code>preparedStatementWriter</code> - The prepared statement writer</dd>
 <dd><code>codecs</code> - The media type codecs</dd>
 <dd><code>dateTimeProvider</code> - The injected dateTimeProvider instance</dd>
+<dd><code>beanContext</code> - The bean context</dd>
 </dl>
 </li>
 </ul>
