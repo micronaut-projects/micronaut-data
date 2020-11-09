@@ -1,5 +1,0 @@
-profile: service
-defaultPackage: example.jdbc
----
-testFramework: spock
-sourceLanguage: groovy

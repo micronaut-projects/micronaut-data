@@ -14,15 +14,30 @@ Micronaut Data is inspired by [GORM](https://gorm.grails.org) and [Spring Data](
 
 See also the [Micronaut Data Announcement](https://objectcomputing.com/news/2019/07/18/unleashing-predator-precomputed-data-repositories) for details about how and why Micronaut Data was built.
 
+## Quick Start
+
+To get started quickly with Micronaut Data JPA you can use [Micronaut Launch](https://micronaut.io/launch/) either via the web browser or `curl` to create a correctly configured application with a Gradle build:
+
+```bash
+$ curl https://launch.micronaut.io/demo.zip?features=data-jpa -o demo.zip
+$ unzip demo.zip -d demo
+```
+
+Or for Micronaut Data JDBC:
+
+```bash
+$ curl https://launch.micronaut.io/demo.zip?features=data-jdbc -o demo.zip
+$ unzip demo.zip -d demo
+```  
+
+Note that you can append `&build=maven` to the URL to switch to a Maven build. 
+
+
 ## Documentation
 
 See the [Documentation](https://micronaut-projects.github.io/micronaut-data/latest/guide/) for more information. 
 
 See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-data/snapshot/guide/) for the current development docs.
-
-## Examples
-
-Examples can be found in the [examples](https://github.com/micronaut-projects/micronaut-data/tree/master/examples) directory.
 
 ## Snapshots and Releases
 
