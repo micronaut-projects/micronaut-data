@@ -5,7 +5,7 @@ dependencies {
     implementation project(":data-model")
     implementation project(":data-jdbc")
     implementation "org.codehaus.groovy:groovy-dateutil:$groovyVersion"
-    implementation 'jakarta.persistence:jakarta.persistence-api:2.2.3'
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.0.0'
     runtimeOnly "cglib:cglib-nodep:3.3.0"
     runtimeOnly "org.objenesis:objenesis:3.1"
 

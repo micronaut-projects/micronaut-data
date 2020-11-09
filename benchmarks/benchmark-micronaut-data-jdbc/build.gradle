@@ -23,7 +23,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-validation"
     implementation project(":data-jdbc")
-    implementation 'jakarta.persistence:jakarta.persistence-api:2.2.3'
+    implementation 'jakarta.persistence:jakarta.persistence-api:3.0.0'
     implementation "io.micronaut:micronaut-inject"
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-runtime"
