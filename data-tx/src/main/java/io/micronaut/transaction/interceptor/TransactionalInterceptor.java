@@ -22,15 +22,20 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.annotation.TransactionalAdvice;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
-import io.micronaut.transaction.annotation.TransactionalAdvice;
+import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
+import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,9 +64,8 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * (e.g. before and after advice) if the aspect involves more than a
      * single method (as will be the case for around advice).
      */
-    @SuppressWarnings("unchecked")
     private static final ThreadLocal<TransactionInfo> TRANSACTION_INFO_HOLDER =
-            new ThreadLocal() {
+            new ThreadLocal<TransactionInfo>() {
                 @Override
                 public String toString() {
                     return "Current aspect-driven transaction";
@@ -88,32 +92,54 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        final TransactionInvocation transactionInvocation = transactionInvocationMap
+        final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
                 .computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
             final String qualifier = executableMethod.stringValue(TransactionalAdvice.class).orElse(null);
-            SynchronousTransactionManager transactionManager =
-                    beanLocator.getBean(SynchronousTransactionManager.class, qualifier != null ? Qualifiers.byName(qualifier) : null);
-            final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
 
-            return new TransactionInvocation(transactionManager, transactionAttribute);
+            if (context.getReturnType().isReactive()) {
+                ReactiveTransactionOperations<?> reactiveTransactionOperations
+                        = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
+                if (reactiveTransactionOperations == null) {
+                    throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
+                } else {
+                    final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
+                    return new TransactionInvocation(null, reactiveTransactionOperations, transactionAttribute);
+                }
+            } else {
+
+                SynchronousTransactionManager<?> transactionManager =
+                        beanLocator.getBean(SynchronousTransactionManager.class, qualifier != null ? Qualifiers.byName(qualifier) : null);
+                final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
+
+                return new TransactionInvocation<>(transactionManager, null, transactionAttribute);
+            }
         });
+
         final TransactionAttribute definition = transactionInvocation.definition;
-        final SynchronousTransactionManager transactionManager = transactionInvocation.transactionManager;
-        final TransactionInfo transactionInfo = createTransactionIfNecessary(
-                transactionManager,
-                definition,
-                definition.getName());
-        Object retVal;
-        try {
-            retVal = context.proceed();
-        } catch (Throwable ex) {
-            completeTransactionAfterThrowing(transactionInfo, ex);
-            throw ex;
-        } finally {
-            cleanupTransactionInfo(transactionInfo);
+        if (transactionInvocation.reactiveTransactionOperations != null) {
+            return transactionInvocation.reactiveTransactionOperations.withTransaction(definition, (status) -> {
+                context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, status);
+                return Publishers.convertPublisher(context.proceed(), Publisher.class);
+            });
+        } else {
+            final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
+            final TransactionInfo transactionInfo = createTransactionIfNecessary(
+                    transactionManager,
+                    definition,
+                    context.getExecutableMethod()
+            );
+            Object retVal;
+            try {
+                retVal = context.proceed();
+            } catch (Throwable ex) {
+                completeTransactionAfterThrowing(transactionInfo, ex);
+                throw ex;
+            } finally {
+                cleanupTransactionInfo(transactionInfo);
+            }
+            commitTransactionAfterReturning(transactionInfo);
+            return retVal;
         }
-        commitTransactionAfterReturning(transactionInfo);
-        return retVal;
     }
 
     @Nullable
@@ -129,53 +155,55 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * because the method was invoked outside an AOP invocation context
      *
      * @return The current status
+     * @param <T> The connection type
      */
-    public static TransactionStatus currentTransactionStatus() throws NoTransactionException {
+    public static <T> TransactionStatus<T> currentTransactionStatus() throws NoTransactionException {
         TransactionInfo info = currentTransactionInfo();
         if (info == null) {
             throw new NoTransactionException("No transaction aspect-managed TransactionStatus in scope");
         }
+        //noinspection unchecked
         return info.transactionStatus;
     }
-    
+
     /**
      * Create a transaction if necessary based on the given TransactionAttribute.
      * <p>Allows callers to perform custom TransactionAttribute lookups through
      * the TransactionAttributeSource.
      * @param tm The transaction manager
      * @param txAttr the TransactionAttribute (may be {@code null})
-     * @param joinpointIdentification the fully qualified method name
+     * @param executableMethod the method that is being executed
      * (used for monitoring and logging purposes)
      * @return a TransactionInfo object, whether or not a transaction was created.
      * The {@code hasTransaction()} method on TransactionInfo can be used to
      * tell if there was a transaction created.
      */
     @SuppressWarnings("serial")
-    protected TransactionInfo createTransactionIfNecessary(@NonNull SynchronousTransactionManager tm,
+    protected TransactionInfo createTransactionIfNecessary(@NonNull SynchronousTransactionManager<?> tm,
                                                            @NonNull TransactionAttribute txAttr,
-                                                           final String joinpointIdentification) {
+                                                           final ExecutableMethod<Object, Object> executableMethod) {
 
 
-        TransactionStatus status;
+        TransactionStatus<?> status;
         status = tm.getTransaction(txAttr);
-        return prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);
+        return prepareTransactionInfo(tm, txAttr, executableMethod, status);
     }
 
     /**
      * Prepare a TransactionInfo for the given attribute and status object.
      * @param tm The transaction manager
      * @param txAttr the TransactionAttribute (may be {@code null})
-     * @param joinpointIdentification the fully qualified method name
+     * @param executableMethod the fully qualified method name
      * (used for monitoring and logging purposes)
      * @param status the TransactionStatus for the current transaction
      * @return the prepared TransactionInfo object
      */
     protected TransactionInfo prepareTransactionInfo(@NonNull SynchronousTransactionManager tm,
                                                      @NonNull TransactionAttribute txAttr,
-                                                     String joinpointIdentification,
+                                                     ExecutableMethod<Object, Object> executableMethod,
                                                      @NonNull TransactionStatus status) {
 
-        TransactionInfo txInfo = new TransactionInfo(tm, txAttr, joinpointIdentification);
+        TransactionInfo txInfo = new TransactionInfo(tm, txAttr, executableMethod);
         // We need a transaction for this method...
         if (LOG.isTraceEnabled()) {
             LOG.trace("Getting transaction for [" + txInfo.getJoinpointIdentification() + "]");
@@ -280,13 +308,22 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     /**
      * Cached invocation associating a method with a definition a transaction manager.
      */
-    private final class TransactionInvocation {
-        final SynchronousTransactionManager transactionManager;
+    private final class TransactionInvocation<C> {
+        final @Nullable SynchronousTransactionManager<C> transactionManager;
+        final @Nullable ReactiveTransactionOperations<C> reactiveTransactionOperations;
         final TransactionAttribute definition;
 
-        TransactionInvocation(SynchronousTransactionManager transactionManager, TransactionAttribute definition) {
+        TransactionInvocation(
+                SynchronousTransactionManager<C> transactionManager,
+                ReactiveTransactionOperations<C> reactiveTransactionOperations,
+                TransactionAttribute definition) {
             this.transactionManager = transactionManager;
+            this.reactiveTransactionOperations = reactiveTransactionOperations;
             this.definition = definition;
+        }
+
+        boolean isReactive() {
+            return reactiveTransactionOperations != null;
         }
     }
 
@@ -294,39 +331,34 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
      * Opaque object used to hold transaction information. Subclasses
      * must pass it back to methods on this class, but not see its internals.
      */
-    protected final class TransactionInfo {
+    protected static final class TransactionInfo<T> {
 
-        private final SynchronousTransactionManager transactionManager;
+        private final SynchronousTransactionManager<T> transactionManager;
         private final TransactionAttribute transactionAttribute;
-
-        private final String joinpointIdentification;
-
-        @NonNull
-        private TransactionStatus transactionStatus;
-
-        @NonNull
-        private TransactionInfo oldTransactionInfo;
+        private final ExecutableMethod<Object, Object> executableMethod;
+        private TransactionStatus<T> transactionStatus;
+        private TransactionInfo<T> oldTransactionInfo;
 
         /**
          * Constructs a new transaction info.
          * @param transactionManager The transaction manager
          * @param transactionAttribute The transaction attribute
-         * @param joinpointIdentification The joint point identification
+         * @param executableMethod The joint point identification
          */
-        protected TransactionInfo(@NonNull SynchronousTransactionManager transactionManager,
+        protected TransactionInfo(@NonNull SynchronousTransactionManager<T> transactionManager,
                                @NonNull TransactionAttribute transactionAttribute,
-                               @NonNull String joinpointIdentification) {
+                               @NonNull ExecutableMethod<Object, Object> executableMethod) {
 
             this.transactionManager = transactionManager;
             this.transactionAttribute = transactionAttribute;
-            this.joinpointIdentification = joinpointIdentification;
+            this.executableMethod = executableMethod;
         }
 
         /**
          * @return The transaction manager
          */
         @NonNull
-        public SynchronousTransactionManager getTransactionManager() {
+        public SynchronousTransactionManager<T> getTransactionManager() {
             return this.transactionManager;
         }
 
@@ -336,14 +368,14 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
          */
         @NonNull
         public String getJoinpointIdentification() {
-            return this.joinpointIdentification;
+            return executableMethod.getDeclaringType().getName() + " . " + this.executableMethod.toString();
         }
 
         /**
          * Create a new status.
          * @param status The status.
          */
-        public void newTransactionStatus(@NonNull TransactionStatus status) {
+        public void newTransactionStatus(@NonNull TransactionStatus<T> status) {
             this.transactionStatus = status;
         }
 
@@ -351,7 +383,10 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
          * @return The underlying status.
          */
         @NonNull
-        public TransactionStatus getTransactionStatus() {
+        public TransactionStatus<T> getTransactionStatus() {
+            if (transactionStatus == null) {
+                throw new IllegalStateException("Transaction status not yet initialized");
+            }
             return this.transactionStatus;
         }
 

@@ -16,13 +16,15 @@
 package io.micronaut.transaction;
 
 
+import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
  * to use enums, Slf4j and decoupling from Spring.
  *
  * Common representation of the current state of a transaction.
  * Serves as base interface for {@link TransactionStatus} as well as
- * {@link ReactiveTransaction}.
+ * {@link ReactiveTransactionStatus}.
  *
  * @author Juergen Hoeller
  * @since 5.2
