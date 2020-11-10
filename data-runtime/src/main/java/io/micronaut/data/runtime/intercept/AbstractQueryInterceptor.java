@@ -27,6 +27,7 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -45,6 +46,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.transaction.TransactionDefinition;
 
 import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
@@ -567,11 +569,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Default implementation of {@link InsertOperation}.
      * @param <E> The entity type
      */
-    private final class DefaultInsertOperation<E> implements InsertOperation<E> {
+    private final class DefaultInsertOperation<E> extends AbstractPreparedDataOperation<E> implements InsertOperation<E> {
         private final MethodInvocationContext<?, ?> method;
         private final E entity;
 
         DefaultInsertOperation(MethodInvocationContext<?, ?> method, E entity) {
+            //noinspection unchecked
+            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
             this.method = method;
             this.entity = entity;
         }
@@ -604,21 +608,18 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return method.getMethodName();
         }
 
-        @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return method.getAnnotationMetadata();
-        }
     }
 
     /**
      * Default implementation of {@link UpdateOperation}.
      * @param <E> The entity type
      */
-    private final class DefaultUpdateOperation<E> implements UpdateOperation<E> {
+    private final class DefaultUpdateOperation<E> extends AbstractPreparedDataOperation<E> implements UpdateOperation<E> {
         private final MethodInvocationContext<?, ?> method;
         private final E entity;
 
         DefaultUpdateOperation(MethodInvocationContext<?, ?> method, E entity) {
+            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
             this.method = method;
             this.entity = entity;
         }
@@ -649,11 +650,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public String getName() {
             return method.getMethodName();
-        }
-
-        @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return method.getAnnotationMetadata();
         }
     }
 
@@ -661,12 +657,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Default implementation of {@link BatchOperation}.
      * @param <E> The entity type
      */
-    private final class DefaultBatchOperation<E> implements BatchOperation<E> {
+    private final class DefaultBatchOperation<E> extends AbstractPreparedDataOperation<E> implements BatchOperation<E> {
         private final MethodInvocationContext<?, ?> method;
         private final @NonNull Class<E> rootEntity;
         private final Iterable<E> iterable;
 
         public DefaultBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
+            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
             this.method = method;
             this.rootEntity = rootEntity;
             this.iterable = iterable;
@@ -701,8 +698,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return method.getAnnotationMetadata();
+        public List<InsertOperation<E>> split() {
+            List<InsertOperation<E>> inserts = new ArrayList<>(10);
+            for (E e : iterable) {
+                inserts.add(new DefaultInsertOperation<>(method, e));
+            }
+            return inserts;
         }
     }
 
@@ -711,11 +712,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The entity type
      */
-    private final class AllBatchOperation<E> implements BatchOperation<E> {
+    private final class AllBatchOperation<E> extends AbstractPreparedDataOperation<E> implements BatchOperation<E> {
         private final MethodInvocationContext<?, ?> method;
         private final @NonNull Class<E> rootEntity;
 
         public AllBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
+            //noinspection unchecked
+            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
             this.method = method;
             this.rootEntity = rootEntity;
         }
@@ -728,6 +731,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public boolean all() {
             return true;
+        }
+
+        @Override
+        public List<InsertOperation<E>> split() {
+            return Collections.emptyList();
         }
 
         @NonNull
@@ -752,11 +760,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         public Iterator<E> iterator() {
             return Collections.emptyIterator();
         }
-
-        @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return method.getAnnotationMetadata();
-        }
     }
 
     /**
@@ -764,7 +767,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      *
      * @param <E> The paged query
      */
-    private final class DefaultPagedQuery<E> implements PagedQuery<E> {
+    private static final class DefaultPagedQuery<E> implements PagedQuery<E> {
 
         private final ExecutableMethod<?, ?> method;
         private final @NonNull Class<E> rootEntity;
@@ -812,7 +815,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      * @param <RT> The result type
      */
-    private final class DefaultStoredQuery<E, RT> implements StoredQuery<E, RT> {
+    private final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<RT> implements StoredQuery<E, RT> {
         private final @NonNull Class<RT> resultType;
         private final @NonNull Class<E> rootEntity;
         private final @NonNull String query;
@@ -833,6 +836,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private boolean hasIn;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
+        private TransactionDefinition transactionDefinition = null;
 
         /**
          * The default constructor.
@@ -849,6 +853,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 @NonNull String query,
                 @Nullable String parameterBindingMember,
                 boolean isCount) {
+            super(method);
             this.resultType = ReflectionUtils.getWrapperType(resultType);
             this.rootEntity = rootEntity;
             this.annotationMetadata = method.getAnnotationMetadata();
@@ -1016,11 +1021,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return annotationMetadata;
-        }
-
-        @Override
         public boolean isNative() {
             return isNative;
         }
@@ -1154,7 +1154,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param <E> The entity type
      * @param <RT> The result type
      */
-    private final class DefaultPreparedQuery<E, RT> implements PreparedQuery<E, RT> {
+    private final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements PreparedQuery<E, RT> {
         private final Pageable pageable;
         private final StoredQuery<E, RT> storedQuery;
         private final String query;
@@ -1176,6 +1176,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 String finalQuery,
                 @NonNull Pageable pageable,
                 boolean dtoProjection) {
+            super(context);
             this.context = context;
             this.query = finalQuery;
             this.storedQuery = storedQuery;
@@ -1229,11 +1230,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public DataType[] getIndexedParameterTypes() {
             return storedQuery.getIndexedParameterTypes();
-        }
-
-        @Override
-        public AnnotationMetadata getAnnotationMetadata() {
-            return storedQuery.getAnnotationMetadata();
         }
 
         @NonNull
@@ -1354,6 +1350,24 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public String getName() {
             return storedQuery.getName();
+        }
+
+        @NonNull
+        @Override
+        public ConvertibleValues<Object> getAttributes() {
+            return context.getAttributes();
+        }
+
+        @NonNull
+        @Override
+        public Optional<Object> getAttribute(CharSequence name) {
+            return context.getAttribute(name);
+        }
+
+        @NonNull
+        @Override
+        public <T> Optional<T> getAttribute(CharSequence name, Class<T> type) {
+            return context.getAttribute(name, type);
         }
     }
 

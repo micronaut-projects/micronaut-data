@@ -15,27 +15,28 @@
  */
 package io.micronaut.data.model.runtime;
 
-import java.util.List;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.attr.AttributeHolder;
+
+import java.util.Optional;
 
 /**
- * A batch operation is an operation performed on one or more entities of the same type.
+ * An operation that has been prepared for execution with the current context.
  *
- * @param <E> The entity type
  * @author graemerocher
- * @since 1.0.0
+ * @since 2.2.0
+ * @param <R> The result type
  */
-public interface BatchOperation<E> extends EntityOperation<E>, Iterable<E>, PreparedDataOperation<E> {
+public interface PreparedDataOperation<R> extends StoredDataOperation<R>, AttributeHolder {
 
     /**
-     * @return Whether the operation applies to all and not use the iterable values.
+     * Return the value of the given parameter if the given role.
+     * @param role The role
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An optional value.
      */
-    default boolean all() {
-        return false;
+    default <RT> Optional<RT> getParameterInRole(@NonNull String role, @NonNull Class<RT> type) {
+        return Optional.empty();
     }
-
-    /**
-     * Split the batch operation into individual inserts.
-     * @return The separated inserts.
-     */
-    List<InsertOperation<E>> split();
 }

@@ -56,6 +56,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * The start of an IN expression.
      */
     public static final String IN_EXPRESSION_START = " ?$IN(";
+    public static final String DEFAULT_POSITIONAL_PARAMETER_MARKER = "?";
     /**
      * Annotation used to represent join tables.
      */
@@ -66,7 +67,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     private static final String JDBC_REPO_ANNOTATION = "io.micronaut.data.jdbc.annotation.JdbcRepository";
     private static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
     private static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
-    public static final String DEFAULT_POSITIONAL_PARAMETER_MARKER = "?";
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);

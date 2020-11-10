@@ -18,8 +18,6 @@ package io.micronaut.data.runtime.intercept.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -46,15 +44,6 @@ public class DefaultFindOneReactiveInterceptor extends AbstractReactiveIntercept
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
         Publisher<Object> publisher = reactiveOperations.findOptional(preparedQuery);
-        Argument<Object> returnType = context.getReturnType().asArgument();
-        Argument<?> type = returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
-        Publisher<Object> mappedPublisher = Publishers.map(publisher, o -> {
-            if (!type.getType().isInstance(o)) {
-                return ConversionService.SHARED.convert(o, type)
-                        .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + o));
-            }
-            return o;
-        });
-        return Publishers.convertPublisher(mappedPublisher, returnType.getType());
+        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }
 }

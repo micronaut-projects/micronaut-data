@@ -49,9 +49,7 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
             Object o = parameterValues[0];
             if (o != null) {
                 BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, Collections.singletonList(o));
-                Publisher<Number> publisher = Publishers.map(reactiveOperations.deleteAll(batchOperation),
-                        n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument())
-                );
+                Publisher<Number> publisher = reactiveOperations.deleteAll(batchOperation);
                 return Publishers.convertPublisher(
                         publisher,
                         context.getReturnType().getType()

@@ -16,7 +16,6 @@
 package io.micronaut.transaction;
 
 
-import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 
 /**
  * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
@@ -24,9 +23,10 @@ import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
  *
  * Common representation of the current state of a transaction.
  * Serves as base interface for {@link TransactionStatus} as well as
- * {@link ReactiveTransactionStatus}.
+ * {@link io.micronaut.transaction.reactive.ReactiveTransactionStatus}.
  *
  * @author Juergen Hoeller
+ * @author graemerocher
  * @since 5.2
  */
 public interface TransactionExecution {

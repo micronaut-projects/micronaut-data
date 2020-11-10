@@ -29,7 +29,11 @@ public interface ReactiveTransactionStatus<T> extends TransactionExecution {
     /**
      * Attribute that can be used to store this status within context propagation services.
      */
-    String ATTRIBUTE = "io.micronaut.tx.STATUS";
+    String ATTRIBUTE = "io.micronaut.tx.ATTRIBUTE";
+    /**
+     * Attribute that can be used to store the transaction status.
+     */
+    String STATUS = "io.micronaut.tx.STATUS";
 
     /**
      * @return The current connection.

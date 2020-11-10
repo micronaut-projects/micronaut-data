@@ -24,7 +24,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface InsertOperation<E> extends EntityOperation<E> {
+public interface InsertOperation<E> extends EntityOperation<E>, PreparedDataOperation<E> {
 
     /**
      * @return The entity to insert.

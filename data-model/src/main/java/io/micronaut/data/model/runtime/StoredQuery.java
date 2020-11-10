@@ -17,9 +17,9 @@ package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
@@ -37,7 +37,7 @@ import java.util.Set;
  * @param <E> The entity type
  * @param <R> The result type
  */
-public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
+public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
 
     /**
      * The root entity type.
@@ -74,6 +74,14 @@ public interface StoredQuery<E, R> extends Named, AnnotationMetadataProvider {
      */
     @NonNull
     Class<R> getResultType();
+
+    /**
+     * The query result type. This may differ from the root entity type returned by {@link #getRootEntity()}.
+     *
+     * @return The query result type
+     */
+    @NonNull
+    Argument<R> getResultArgument();
 
     /**
      * @return The result data type.

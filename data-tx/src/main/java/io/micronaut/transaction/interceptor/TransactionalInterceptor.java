@@ -21,10 +21,10 @@ import io.micronaut.aop.InterceptPhase;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.SynchronousTransactionManager;
@@ -55,7 +55,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 1.0
  */
 @Singleton
-@Requires(beans = SynchronousTransactionManager.class)
 public class TransactionalInterceptor implements MethodInterceptor<Object, Object> {
     private static final Logger LOG = LoggerFactory.getLogger(TransactionalInterceptor.class);
     /**
@@ -92,11 +91,12 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
+        ReturnType<Object> returnType = context.getReturnType();
         final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
                 .computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
             final String qualifier = executableMethod.stringValue(TransactionalAdvice.class).orElse(null);
 
-            if (context.getReturnType().isReactive()) {
+            if (returnType.isReactive()) {
                 ReactiveTransactionOperations<?> reactiveTransactionOperations
                         = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
                 if (reactiveTransactionOperations == null) {
@@ -117,10 +117,11 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
         final TransactionAttribute definition = transactionInvocation.definition;
         if (transactionInvocation.reactiveTransactionOperations != null) {
-            return transactionInvocation.reactiveTransactionOperations.withTransaction(definition, (status) -> {
-                context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, status);
+            return Publishers.convertPublisher(transactionInvocation.reactiveTransactionOperations.withTransaction(definition, (status) -> {
+                context.setAttribute(ReactiveTransactionStatus.STATUS, status);
+                context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, definition);
                 return Publishers.convertPublisher(context.proceed(), Publisher.class);
-            });
+            }), returnType.getType());
         } else {
             final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
             final TransactionInfo transactionInfo = createTransactionIfNecessary(
@@ -307,8 +308,10 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
     /**
      * Cached invocation associating a method with a definition a transaction manager.
+     *
+     * @param <C> connection type
      */
-    private final class TransactionInvocation<C> {
+    private static final class TransactionInvocation<C> {
         final @Nullable SynchronousTransactionManager<C> transactionManager;
         final @Nullable ReactiveTransactionOperations<C> reactiveTransactionOperations;
         final TransactionAttribute definition;
@@ -330,6 +333,8 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
     /**
      * Opaque object used to hold transaction information. Subclasses
      * must pass it back to methods on this class, but not see its internals.
+     *
+     * @param <T> connection type
      */
     protected static final class TransactionInfo<T> {
 
