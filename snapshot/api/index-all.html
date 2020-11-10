@@ -104,6 +104,12 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">AbstractPreparedDataOperation</span></a>&lt;<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="type parameter in AbstractPreparedDataOperation">R</a>&gt; - Class in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
+<dd>
+<div class="block">Abstract implementation of <a href="io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime"><code>PreparedDataOperation</code></a>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#AbstractPreparedDataOperation-io.micronaut.aop.MethodInvocationContext-io.micronaut.data.model.runtime.StoredDataOperation-">AbstractPreparedDataOperation(MethodInvocationContext&lt;?, R&gt;, StoredDataOperation&lt;R&gt;)</a></span> - Constructor for class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept"><span class="typeNameLink">AbstractQueryInterceptor</span></a>&lt;<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">T</a>,<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="type parameter in AbstractQueryInterceptor">R</a>&gt; - Class in <a href="io/micronaut/data/runtime/intercept/package-summary.html">io.micronaut.data.runtime.intercept</a></dt>
 <dd>
 <div class="block">Abstract interceptor that executes a <a href="io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation"><code>Query</code></a>.</div>
@@ -409,6 +415,10 @@
 <dt><a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><span class="typeNameLink">AsyncRepositoryOperations</span></a> - Interface in <a href="io/micronaut/data/operations/async/package-summary.html">io.micronaut.data.operations.async</a></dt>
 <dd>
 <div class="block">Asynchronous operations for reading data from a backing implementations.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html#ATTRIBUTE">ATTRIBUTE</a></span> - Static variable in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a></dt>
+<dd>
+<div class="block">Attribute that can be used to store this status within context propagation services.</div>
 </dd>
 <dt><a href="io/micronaut/data/tck/entities/Authentication.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Authentication</span></a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
@@ -1169,7 +1179,7 @@
 <dd>
 <div class="block">Initialize the schema for the configuration.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#createTransactionIfNecessary-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-java.lang.String-">createTransactionIfNecessary(SynchronousTransactionManager, TransactionAttribute, String)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#createTransactionIfNecessary-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-">createTransactionIfNecessary(SynchronousTransactionManager&lt;?&gt;, TransactionAttribute, ExecutableMethod&lt;Object, Object&gt;)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
 <dd>
 <div class="block">Create a transaction if necessary based on the given TransactionAttribute.</div>
 </dd>
@@ -1780,6 +1790,12 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">DefaultStoredDataOperation</span></a>&lt;<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="type parameter in DefaultStoredDataOperation">R</a>&gt; - Class in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
+<dd>
+<div class="block">Used as a super class to resolve and potentially cache data about a method.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html#DefaultStoredDataOperation-io.micronaut.inject.ExecutableMethod-">DefaultStoredDataOperation(ExecutableMethod&lt;?, ?&gt;)</a></span> - Constructor for class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime">DefaultStoredDataOperation</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/test/DefaultTestTransactionExecutionListener.html" title="class in io.micronaut.transaction.test"><span class="typeNameLink">DefaultTestTransactionExecutionListener</span></a> - Class in <a href="io/micronaut/transaction/test/package-summary.html">io.micronaut.transaction.test</a></dt>
 <dd>
 <div class="block">Adds support for <code>io.micronaut.test.annotation.MicronautTest#transactional()</code> handling.</div>
@@ -2144,6 +2160,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#doGetTransaction--">doGetTransaction()</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>
 <div class="block">Return a transaction object for the current transaction state.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html#doInTransaction-io.micronaut.transaction.reactive.ReactiveTransactionStatus-">doInTransaction(ReactiveTransactionStatus&lt;C&gt;)</a></span> - Method in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations.TransactionalCallback</a></dt>
+<dd>
+<div class="block">Invokes the given code passing the <a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive"><code>ReactiveTransactionStatus</code></a>.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/jdbc/DataSourceUtils.html#doReleaseConnection-java.sql.Connection-javax.sql.DataSource-">doReleaseConnection(Connection, DataSource)</a></span> - Static method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceUtils.html" title="class in io.micronaut.transaction.jdbc">DataSourceUtils</a></dt>
 <dd>
@@ -3265,6 +3285,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/AbstractPersistentEntity.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime">DefaultStoredDataOperation</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentProperty.html#getAnnotationMetadata--">getAnnotationMetadata()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a></dt>
@@ -3313,6 +3337,12 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getAttribute-java.lang.CharSequence-">getAttribute(CharSequence)</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getAttribute-java.lang.CharSequence-java.lang.Class-">getAttribute(CharSequence, Class&lt;T&gt;)</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getAttributes--">getAttributes()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/tck/entities/Challenge.html#getAuthentication--">getAuthentication()</a></span> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Challenge.html" title="class in io.micronaut.data.tck.entities">Challenge</a></dt>
 <dd>&nbsp;</dd>
@@ -3435,6 +3465,8 @@
 <dd>
 <div class="block">Return the specified Connection as-is.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html#getConnection--">getConnection()</a></span> - Method in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#getConnection-java.lang.Object-">getConnection(Object)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>
 <div class="block">The connection for the given transaction object.</div>
@@ -4119,11 +4151,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/RawQuery.html#getParameterBinding--">getParameterBinding()</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/RawQuery.html" title="class in io.micronaut.data.processor.visitors.finders">RawQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/EntityOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole(String, Class&lt;RT&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a></dt>
-<dd>
-<div class="block">Return the value of the given parameter if the given role.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/PreparedQuery.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole(String, Class&lt;RT&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/PreparedDataOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole(String, Class&lt;RT&gt;)</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a></dt>
 <dd>
 <div class="block">Return the value of the given parameter if the given role.</div>
 </dd>
@@ -4349,6 +4377,16 @@
 <dd>
 <div class="block">Return all resources that are bound to the current thread.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getResultArgument--">getResultArgument()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html#getResultArgument--">getResultArgument()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime">DefaultStoredDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredDataOperation.html#getResultArgument--">getResultArgument()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getResultArgument--">getResultArgument()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
+<dd>
+<div class="block">The query result type.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/DTOMapper.html#getResultReader--">getResultReader()</a></span> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="class in io.micronaut.data.runtime.mapper">DTOMapper</a></dt>
@@ -4548,6 +4586,12 @@
  the specified propagation behavior.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionStatus.html#getTransaction--">getTransaction()</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getTransactionDefinition--">getTransactionDefinition()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html#getTransactionDefinition--">getTransactionDefinition()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime">DefaultStoredDataOperation</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredDataOperation.html#getTransactionDefinition--">getTransactionDefinition()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#getTransactionManager--">getTransactionManager()</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
 <dd>&nbsp;</dd>
@@ -5450,6 +5494,10 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/jpa/package-summary.html">io.micronaut.transaction.jpa</a> - package io.micronaut.transaction.jpa</dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/reactive/package-summary.html">io.micronaut.transaction.reactive</a> - package io.micronaut.transaction.reactive</dt>
+<dd>
+<div class="block">Interfaces for reactive transaction management.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/support/package-summary.html">io.micronaut.transaction.support</a> - package io.micronaut.transaction.support</dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/test/package-summary.html">io.micronaut.transaction.test</a> - package io.micronaut.transaction.test</dt>
@@ -6781,7 +6829,7 @@
 <dd>
 <div class="block">Build a query build from the configured annotation metadata.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#newTransactionStatus-io.micronaut.transaction.TransactionStatus-">newTransactionStatus(TransactionStatus)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#newTransactionStatus-io.micronaut.transaction.TransactionStatus-">newTransactionStatus(TransactionStatus&lt;T&gt;)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
 <dd>
 <div class="block">Create a new status.</div>
 </dd>
@@ -6800,6 +6848,8 @@
 <div class="block">Move the index to the next result if possible.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/Slice.html#nextPageable--">nextPageable()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model">Slice</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html#NO_TRANSACTION">NO_TRANSACTION</a></span> - Static variable in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/DefaultStoredDataOperation.html" title="class in io.micronaut.data.model.runtime">DefaultStoredDataOperation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Nose.html" title="class in io.micronaut.data.tck.entities"><span class="typeNameLink">Nose</span></a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
@@ -7236,6 +7286,10 @@
 <dd>
 <div class="block">Prepares a query for the given context.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedDataOperation</span></a>&lt;<a href="io/micronaut/data/model/runtime/PreparedDataOperation.html" title="type parameter in PreparedDataOperation">R</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
+<dd>
+<div class="block">An operation that has been prepared for execution with the current context.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">PreparedQuery</span></a>&lt;<a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="type parameter in PreparedQuery">E</a>,<a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="type parameter in PreparedQuery">R</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
 <dd>
 <div class="block">Interface that models a prepared query.</div>
@@ -7277,7 +7331,7 @@
 <dd>
 <div class="block">Prepare the transactional <code>Connection</code> right after transaction begin.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#prepareTransactionInfo-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-java.lang.String-io.micronaut.transaction.TransactionStatus-">prepareTransactionInfo(SynchronousTransactionManager, TransactionAttribute, String, TransactionStatus)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html#prepareTransactionInfo-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-io.micronaut.transaction.TransactionStatus-">prepareTransactionInfo(SynchronousTransactionManager, TransactionAttribute, ExecutableMethod&lt;Object, Object&gt;, TransactionStatus)</a></span> - Method in class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor</a></dt>
 <dd>
 <div class="block">Prepare a TransactionInfo for the given attribute and status object.</div>
 </dd>
@@ -7770,6 +7824,18 @@
 <dt><a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html" title="interface in io.micronaut.data.repository.reactive"><span class="typeNameLink">ReactiveStreamsCrudRepository</span></a>&lt;<a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html" title="type parameter in ReactiveStreamsCrudRepository">E</a>,<a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html" title="type parameter in ReactiveStreamsCrudRepository">ID</a>&gt; - Interface in <a href="io/micronaut/data/repository/reactive/package-summary.html">io.micronaut.data.repository.reactive</a></dt>
 <dd>
 <div class="block">Interface for CRUD using Reactive Streams.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive"><span class="typeNameLink">ReactiveTransactionOperations</span></a>&lt;<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html" title="type parameter in ReactiveTransactionOperations">C</a>&gt; - Interface in <a href="io/micronaut/transaction/reactive/package-summary.html">io.micronaut.transaction.reactive</a></dt>
+<dd>
+<div class="block">An interface fo reactive transaction management.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="interface in io.micronaut.transaction.reactive"><span class="typeNameLink">ReactiveTransactionOperations.TransactionalCallback</span></a>&lt;<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">C</a>,<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.TransactionalCallback.html" title="type parameter in ReactiveTransactionOperations.TransactionalCallback">T</a>&gt; - Interface in <a href="io/micronaut/transaction/reactive/package-summary.html">io.micronaut.transaction.reactive</a></dt>
+<dd>
+<div class="block">A transactional callback interface.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive"><span class="typeNameLink">ReactiveTransactionStatus</span></a>&lt;<a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="type parameter in ReactiveTransactionStatus">T</a>&gt; - Interface in <a href="io/micronaut/transaction/reactive/package-summary.html">io.micronaut.transaction.reactive</a></dt>
+<dd>
+<div class="block">Status object for reactive transactions.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/DTOMapper.html#read-S-java.lang.String-">read(S, String)</a></span> - Method in class io.micronaut.data.runtime.mapper.<a href="io/micronaut/data/runtime/mapper/DTOMapper.html" title="class in io.micronaut.data.runtime.mapper">DTOMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -9292,6 +9358,10 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#SPACE">SPACE</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/BatchOperation.html#split--">split()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/BatchOperation.html" title="interface in io.micronaut.data.model.runtime">BatchOperation</a></dt>
+<dd>
+<div class="block">Split the batch operation into individual inserts.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html#SPRING_REPO">SPRING_REPO</a></span> - Static variable in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html" title="class in io.micronaut.data.processor.visitors">RepositoryTypeElementVisitor</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/mappers/spring/SpringCreatedDateMapper.html" title="class in io.micronaut.data.processor.mappers.spring"><span class="typeNameLink">SpringCreatedDateMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/spring/package-summary.html">io.micronaut.data.processor.mappers.spring</a></dt>
@@ -9471,6 +9541,14 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html#STATUS">STATUS</a></span> - Static variable in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionStatus.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionStatus</a></dt>
+<dd>
+<div class="block">Attribute that can be used to store the transaction status.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredDataOperation</span></a>&lt;<a href="io/micronaut/data/model/runtime/StoredDataOperation.html" title="type parameter in StoredDataOperation">R</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
+<dd>
+<div class="block">Common super interface for all stored operations.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">StoredQuery</span></a>&lt;<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">E</a>,<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt; - Interface in <a href="io/micronaut/data/model/runtime/package-summary.html">io.micronaut.data.model.runtime</a></dt>
 <dd>
 <div class="block">A stored computed query.</div>
@@ -9636,7 +9714,7 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionalInterceptor.TransactionInfo</span></a> - Class in <a href="io/micronaut/transaction/interceptor/package-summary.html">io.micronaut.transaction.interceptor</a></dt>
+<dt><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor"><span class="typeNameLink">TransactionalInterceptor.TransactionInfo</span></a>&lt;<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="type parameter in TransactionalInterceptor.TransactionInfo">T</a>&gt; - Class in <a href="io/micronaut/transaction/interceptor/package-summary.html">io.micronaut.transaction.interceptor</a></dt>
 <dd>
 <div class="block">Opaque object used to hold transaction information.</div>
 </dd>
@@ -9682,7 +9760,7 @@
 <div class="block">NOTICE: This is a fork of Spring's <code>PlatformTransactionManager</code> modernizing it
  to use enums, Slf4j and decoupling from Spring.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#TransactionInfo-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-java.lang.String-">TransactionInfo(SynchronousTransactionManager, TransactionAttribute, String)</a></span> - Constructor for class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html#TransactionInfo-io.micronaut.transaction.SynchronousTransactionManager-io.micronaut.transaction.interceptor.TransactionAttribute-io.micronaut.inject.ExecutableMethod-">TransactionInfo(SynchronousTransactionManager&lt;T&gt;, TransactionAttribute, ExecutableMethod&lt;Object, Object&gt;)</a></span> - Constructor for class io.micronaut.transaction.interceptor.<a href="io/micronaut/transaction/interceptor/TransactionalInterceptor.TransactionInfo.html" title="class in io.micronaut.transaction.interceptor">TransactionalInterceptor.TransactionInfo</a></dt>
 <dd>
 <div class="block">Constructs a new transaction info.</div>
 </dd>
@@ -10232,6 +10310,14 @@ the order they are declared.</div>
 <dt><a href="io/micronaut/data/annotation/repeatable/WhereSpecifications.html" title="annotation in io.micronaut.data.annotation.repeatable"><span class="typeNameLink">WhereSpecifications</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/repeatable/package-summary.html">io.micronaut.data.annotation.repeatable</a></dt>
 <dd>
 <div class="block">Repeatable annotation container for <a href="io/micronaut/data/annotation/Where.html" title="annotation in io.micronaut.data.annotation"><code>Where</code></a>.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html#withTransaction-io.micronaut.transaction.TransactionDefinition-io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback-">withTransaction(TransactionDefinition, ReactiveTransactionOperations.TransactionalCallback&lt;C, T&gt;)</a></span> - Method in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a></dt>
+<dd>
+<div class="block">Execute the given handler with a new transaction.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html#withTransaction-io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback-">withTransaction(ReactiveTransactionOperations.TransactionalCallback&lt;C, T&gt;)</a></span> - Method in interface io.micronaut.transaction.reactive.<a href="io/micronaut/transaction/reactive/ReactiveTransactionOperations.html" title="interface in io.micronaut.transaction.reactive">ReactiveTransactionOperations</a></dt>
+<dd>
+<div class="block">Execute the given handler with a new transaction.</div>
 </dd>
 </dl>
 <a href="#I:A">A</a>&nbsp;<a href="#I:B">B</a>&nbsp;<a href="#I:C">C</a>&nbsp;<a href="#I:D">D</a>&nbsp;<a href="#I:E">E</a>&nbsp;<a href="#I:F">F</a>&nbsp;<a href="#I:G">G</a>&nbsp;<a href="#I:H">H</a>&nbsp;<a href="#I:I">I</a>&nbsp;<a href="#I:J">J</a>&nbsp;<a href="#I:K">K</a>&nbsp;<a href="#I:L">L</a>&nbsp;<a href="#I:M">M</a>&nbsp;<a href="#I:N">N</a>&nbsp;<a href="#I:O">O</a>&nbsp;<a href="#I:P">P</a>&nbsp;<a href="#I:Q">Q</a>&nbsp;<a href="#I:R">R</a>&nbsp;<a href="#I:S">S</a>&nbsp;<a href="#I:T">T</a>&nbsp;<a href="#I:U">U</a>&nbsp;<a href="#I:V">V</a>&nbsp;<a href="#I:W">W</a>&nbsp;</div>

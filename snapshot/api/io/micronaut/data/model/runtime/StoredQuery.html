@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":6,"i10":18,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":18,"i19":18,"i20":6,"i21":6};
+var methods = {"i0":18,"i1":18,"i2":18,"i3":18,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":6,"i10":18,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":18,"i20":18,"i21":6,"i22":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -104,7 +104,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd>io.micronaut.core.annotation.AnnotationMetadataProvider, io.micronaut.core.annotation.AnnotationSource, io.micronaut.core.naming.Named</dd>
+<dd>io.micronaut.core.annotation.AnnotationMetadataProvider, io.micronaut.core.annotation.AnnotationSource, io.micronaut.core.naming.Named, <a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</dd>
 </dl>
 <dl>
 <dt>All Known Subinterfaces:</dt>
@@ -113,7 +113,7 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>public interface <span class="typeNameLabel">StoredQuery&lt;E,R&gt;</span>
-extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationMetadataProvider</pre>
+extends io.micronaut.core.naming.Named, <a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;R&gt;</pre>
 <div class="block">A stored computed query. This interface represents the</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
@@ -215,60 +215,66 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 </td>
 </tr>
 <tr id="i11" class="rowColor">
+<td class="colFirst"><code>io.micronaut.core.type.Argument&lt;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultArgument--">getResultArgument</a></span>()</code>
+<div class="block">The query result type.</div>
+</td>
+</tr>
+<tr id="i12" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultType--">getResultType</a></span>()</code>
 <div class="block">The query result type.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">E</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">The root entity type.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a></span>()</code>
 <div class="block">Does the query contain an in expression.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable</a></span>()</code>
 <div class="block">Does the query have a pageable.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasResultConsumer--">hasResultConsumer</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a></span>()</code>
 <div class="block">Returns whether the query returns the actual entity or a Data Transfer Object (DTO) project.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a></span>()</code>
 <div class="block">In cases where one needs to differentiate between at higher level query format (like JPA-QL) and a lower level format (like SQL).</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a></span>()</code>
 <div class="block">Whether the query can be treated as a single result.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></span>()</code>
 <div class="block">Are the placeholders for query set using numeric indices starting from 1.</div>
@@ -281,6 +287,13 @@ extends io.micronaut.core.naming.Named, io.micronaut.core.annotation.AnnotationM
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.core.naming.Named</h3>
 <code>getName</code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredDataOperation">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a></h3>
+<code><a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html#getTransactionDefinition--">getTransactionDefinition</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.annotation.AnnotationMetadataProvider">
@@ -378,6 +391,23 @@ java.lang.String&nbsp;getQuery()</pre>
 java.lang.Class&lt;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;&nbsp;getResultType()</pre>
 <div class="block">The query result type. This may differ from the root entity type returned by <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--"><code>getRootEntity()</code></a>.</div>
 <dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The query result type</dd>
+</dl>
+</li>
+</ul>
+<a name="getResultArgument--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getResultArgument</h4>
+<pre>@NonNull
+io.micronaut.core.type.Argument&lt;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;&nbsp;getResultArgument()</pre>
+<div class="block">The query result type. This may differ from the root entity type returned by <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--"><code>getRootEntity()</code></a>.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html#getResultArgument--">getResultArgument</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="type parameter in StoredQuery">R</a>&gt;</code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The query result type</dd>
 </dl>
@@ -654,7 +684,7 @@ default&nbsp;java.util.Set&lt;<a href="../../../../../io/micronaut/data/model/qu
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">

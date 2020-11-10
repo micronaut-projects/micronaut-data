@@ -103,7 +103,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>All Superinterfaces:</dt>
-<dd>io.micronaut.core.annotation.AnnotationMetadataProvider, io.micronaut.core.annotation.AnnotationSource, <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a>&lt;E&gt;, io.micronaut.core.naming.Named</dd>
+<dd>io.micronaut.core.annotation.AnnotationMetadataProvider, io.micronaut.core.annotation.AnnotationSource, io.micronaut.core.attr.AttributeHolder, <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a>&lt;E&gt;, io.micronaut.core.naming.Named, <a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a>&lt;E&gt;, <a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a>&lt;E&gt;</dd>
 </dl>
 <hr>
 <br>
@@ -159,7 +159,7 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a></h3>
-<code><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a>, <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRepositoryType--">getRepositoryType</a>, <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRootEntity--">getRootEntity</a></code></li>
+<code><a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRepositoryType--">getRepositoryType</a>, <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.html#getRootEntity--">getRootEntity</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.naming.Named">
@@ -167,6 +167,20 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.core.naming.Named</h3>
 <code>getName</code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.PreparedDataOperation">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime">PreparedDataOperation</a></h3>
+<code><a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html#getParameterInRole-java.lang.String-java.lang.Class-">getParameterInRole</a></code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.model.runtime.StoredDataOperation">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html" title="interface in io.micronaut.data.model.runtime">StoredDataOperation</a></h3>
+<code><a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html#getResultArgument--">getResultArgument</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredDataOperation.html#getTransactionDefinition--">getTransactionDefinition</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.annotation.AnnotationMetadataProvider">
@@ -181,6 +195,13 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/EntityOperation.
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.core.annotation.AnnotationSource</h3>
 <code>getAnnotation, getAnnotation, getDeclaredAnnotation, getDeclaredAnnotation</code></li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.attr.AttributeHolder">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.core.attr.AttributeHolder</h3>
+<code>getAttribute, getAttribute, getAttributes</code></li>
 </ul>
 </li>
 </ul>
