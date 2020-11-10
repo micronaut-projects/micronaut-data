@@ -18,7 +18,6 @@ package io.micronaut.transaction.jdbc;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;

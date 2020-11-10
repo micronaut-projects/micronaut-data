@@ -28,16 +28,18 @@ import javax.transaction.Transactional;
 import java.util.List;
 
 @Repository
-@Transactional
 public interface PersonCrudRepository extends JpaRepository<Person, Long>, PersonRepository {
     @Query("from Person p where p.name = :n")
+    @Transactional
     List<Person> listPeople(String n);
 
     @Query(value = "from Person p where p.name like :n",
             countQuery = "select count(p) from Person p where p.name like :n")
+    @Transactional
     Page<Person> findPeople(String n, Pageable pageable);
 
     @Query("from Person p where p.name = :n")
+    @Transactional
     Person queryByName(String n);
 
     @Query(

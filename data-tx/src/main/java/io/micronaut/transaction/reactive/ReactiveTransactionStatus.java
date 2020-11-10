@@ -13,29 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.runtime;
+package io.micronaut.transaction.reactive;
 
-import java.util.List;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.transaction.TransactionExecution;
 
 /**
- * A batch operation is an operation performed on one or more entities of the same type.
+ * Status object for reactive transactions.
  *
- * @param <E> The entity type
+ * @param <T> The connection type.
  * @author graemerocher
- * @since 1.0.0
+ * @since 2.2.0
  */
-public interface BatchOperation<E> extends EntityOperation<E>, Iterable<E>, PreparedDataOperation<E> {
+public interface ReactiveTransactionStatus<T> extends TransactionExecution {
+    /**
+     * Attribute that can be used to store this status within context propagation services.
+     */
+    String ATTRIBUTE = "io.micronaut.tx.ATTRIBUTE";
+    /**
+     * Attribute that can be used to store the transaction status.
+     */
+    String STATUS = "io.micronaut.tx.STATUS";
 
     /**
-     * @return Whether the operation applies to all and not use the iterable values.
+     * @return The current connection.
      */
-    default boolean all() {
-        return false;
-    }
-
-    /**
-     * Split the batch operation into individual inserts.
-     * @return The separated inserts.
-     */
-    List<InsertOperation<E>> split();
+    @NonNull T getConnection();
 }

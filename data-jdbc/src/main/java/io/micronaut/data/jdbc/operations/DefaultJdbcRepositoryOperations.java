@@ -861,41 +861,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
-        @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
+        StoredInsert<T> insert = resolveInsert(operation);
         if (!insert.doesSupportBatch()) {
-            List<T> results = new ArrayList<>();
-            for (T entity : operation) {
-                results.add(persist(new InsertOperation<T>() {
-                    @NonNull
-                    @Override
-                    public T getEntity() {
-                        return entity;
-                    }
-
-                    @NonNull
-                    @Override
-                    public Class<T> getRootEntity() {
-                        return operation.getRootEntity();
-                    }
-
-                    @NonNull
-                    @Override
-                    public Class<?> getRepositoryType() {
-                        return operation.getRepositoryType();
-                    }
-
-                    @Override
-                    public String getName() {
-                        return operation.getName();
-                    }
-
-                    @Override
-                    public AnnotationMetadata getAnnotationMetadata() {
-                        return operation.getAnnotationMetadata();
-                    }
-                }));
-            }
-            return results;
+            return operation.split().stream()
+                    .map(this::persist)
+                    .collect(Collectors.toList());
         } else {
             //noinspection ConstantConditions
             return persistInBatch(

@@ -16,24 +16,34 @@
 package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.core.naming.Named;
+import io.micronaut.core.annotation.AnnotationMetadataProvider;
+import io.micronaut.core.type.Argument;
+import io.micronaut.transaction.TransactionDefinition;
+
+import java.util.Optional;
 
 /**
- * An operation on an entity type.
- * @param <E> The entity type
+ * Common super interface for all stored operations.
+ *
+ * @author graemerocher
+ * @since 2.2.0
+ * @see EntityOperation
+ * @see PreparedQuery
+ * @param <R> the result type
  */
-public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
-    /**
-     * The root entity type.
-     *
-     * @return The root entity type
-     */
-    @NonNull
-    Class<E> getRootEntity();
+public interface StoredDataOperation<R> extends AnnotationMetadataProvider {
 
     /**
-     * @return The repository type.
+     * @return If the operation defines a transaction this method returned it.
+     * @since 2.2.0
+     */
+    default @NonNull Optional<TransactionDefinition> getTransactionDefinition() {
+        return Optional.empty();
+    }
+
+    /**
+     * @return The query result type
      */
     @NonNull
-    Class<?> getRepositoryType();
+    Argument<R> getResultArgument();
 }

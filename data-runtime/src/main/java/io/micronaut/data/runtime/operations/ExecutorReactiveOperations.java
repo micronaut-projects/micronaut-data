@@ -16,7 +16,10 @@
 package io.micronaut.data.runtime.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -96,9 +99,18 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public <T, R> Publisher<R> findOptional(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return Publishers.fromCompletableFuture(() ->
+        return Publishers.map(Publishers.fromCompletableFuture(() ->
                 asyncOperations.findOptional(preparedQuery)
-        );
+        ), r -> {
+            Argument<R> returnType = preparedQuery.getResultArgument();
+            Argument<?> type = returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+            if (!type.getType().isInstance(r)) {
+                //noinspection unchecked
+                return (R) ConversionService.SHARED.convert(r, type)
+                        .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + r));
+            }
+            return r;
+        });
     }
 
     @NonNull
@@ -160,16 +172,39 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public Publisher<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        return Publishers.fromCompletableFuture(() ->
+        return Publishers.map(Publishers.fromCompletableFuture(() ->
                 asyncOperations.executeUpdate(preparedQuery)
-        );
+        ), number -> convertNumberArgumentIfNecessary(number, preparedQuery.getResultArgument()));
     }
 
     @NonNull
     @Override
     public <T> Publisher<Number> deleteAll(BatchOperation<T> operation) {
-        return Publishers.fromCompletableFuture(() ->
+        return Publishers.map(Publishers.fromCompletableFuture(() ->
                 asyncOperations.deleteAll(operation)
-        );
+        ), number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));
+    }
+
+    /**
+     * Convert a number argument if necessary.
+     * @param number The number
+     * @param argument The argument
+     * @return The result
+     */
+    private @Nullable Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
+        Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
+        Class<?> type = firstTypeVar.getType();
+        if (type == Object.class || type == Void.class) {
+            return null;
+        }
+        if (number == null) {
+            number = 0;
+        }
+        if (!type.isInstance(number)) {
+            return (Number) ConversionService.SHARED.convert(number, firstTypeVar)
+                    .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
+        } else {
+            return number;
+        }
     }
 }

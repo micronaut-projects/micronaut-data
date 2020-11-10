@@ -20,7 +20,6 @@ import io.micronaut.core.type.Argument;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Interface that models a prepared query. A prepared query extends from {@link StoredQuery} and includes the bound parameter values.
@@ -30,7 +29,7 @@ import java.util.Optional;
  * @param <E> The entity type
  * @param <R> The result type
  */
-public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
+public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, PreparedDataOperation<R> {
 
     /**
      * @return The repository type.
@@ -62,17 +61,6 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R> {
     @Override
     default Map<String, Object> getQueryHints() {
         return Collections.emptyMap();
-    }
-
-    /**
-     * Return the value of the given parameter if the given role.
-     * @param role The role
-     * @param type The type
-     * @param <RT> The generic type
-     * @return An optional value.
-     */
-    default <RT> Optional<RT> getParameterInRole(@NonNull String role, @NonNull Class<RT> type) {
-        return Optional.empty();
     }
 
 }

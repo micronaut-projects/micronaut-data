@@ -13,27 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.runtime;
-
-import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.core.naming.Named;
-
 /**
- * An operation on an entity type.
- * @param <E> The entity type
+ * Interfaces for reactive transaction management.
  */
-public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
-    /**
-     * The root entity type.
-     *
-     * @return The root entity type
-     */
-    @NonNull
-    Class<E> getRootEntity();
-
-    /**
-     * @return The repository type.
-     */
-    @NonNull
-    Class<?> getRepositoryType();
-}
+package io.micronaut.transaction.reactive;

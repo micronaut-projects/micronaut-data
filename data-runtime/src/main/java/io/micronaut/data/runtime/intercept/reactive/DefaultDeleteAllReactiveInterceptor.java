@@ -49,22 +49,16 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
         Publisher<Number> publisher;
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            publisher = Publishers.map(reactiveOperations.executeUpdate(preparedQuery),
-                    number -> convertNumberArgumentIfNecessary(number, arg)
-            );
+            publisher = reactiveOperations.executeUpdate(preparedQuery);
         } else {
             Object[] parameterValues = context.getParameterValues();
             Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
                 BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, (Iterable<Object>) parameterValues[0]);
-                publisher = Publishers.map(reactiveOperations.deleteAll(batchOperation),
-                        number -> convertNumberArgumentIfNecessary(number, arg)
-                );
+                publisher = reactiveOperations.deleteAll(batchOperation);
             } else if (parameterValues.length == 0) {
                 BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity);
-                publisher = Publishers.map(reactiveOperations.deleteAll(batchOperation),
-                        number -> convertNumberArgumentIfNecessary(number, arg)
-                );
+                publisher = reactiveOperations.deleteAll(batchOperation);
             } else {
                 throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
             }
