@@ -70,5 +70,6 @@ io.micronaut.transaction.interceptor.annotation
 io.micronaut.transaction.jdbc
 io.micronaut.transaction.jdbc.exceptions
 io.micronaut.transaction.jpa
+io.micronaut.transaction.reactive
 io.micronaut.transaction.support
 io.micronaut.transaction.test
