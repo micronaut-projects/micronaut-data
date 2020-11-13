@@ -1,5 +1,5 @@
 ext {
-    testContainersVersion = "1.15.0-rc2"
+    testContainersVersion = "1.15.0"
 }
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
