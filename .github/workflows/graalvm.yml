@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        graalvm: ['20.2.0.java8', '20.2.0.java11']
+        graalvm: ['20.3.0.java8', '20.3.0.java11']
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.2
@@ -24,7 +24,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Setup GraalVM CE
-        uses: DeLaGuardo/setup-graalvm@2.0
+        uses: DeLaGuardo/setup-graalvm@8bbfe44ef9c6f5c07e5af036a1bffd561c037d18
         with:
           graalvm-version: ${{ matrix.graalvm }}
       - name: Install Native Image
