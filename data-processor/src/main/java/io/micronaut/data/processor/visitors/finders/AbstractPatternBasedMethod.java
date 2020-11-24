@@ -650,7 +650,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(queryString);
 
             while (matcher.find()) {
-                String name = matcher.group(2);
+                String name = matcher.group(3);
                 Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
                 if (element.isPresent()) {
                     parameterBinding.put(name, element.get().getName());
@@ -666,7 +666,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
             int index = 1;
             while (matcher.find()) {
-                String name = matcher.group(2);
+                String name = matcher.group(3);
                 Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
                 if (element.isPresent()) {
                     parameterBinding.put(String.valueOf(index++), element.get().getName());

@@ -522,7 +522,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             inMatcher.appendTail(sb);
             query = sb.toString();
             Matcher matcher = VARIABLE_PATTERN.matcher(query);
-            query = matcher.replaceAll(" ?");
+            query = matcher.replaceAll("$1?"); // left first group as it is and replace second group with question mark
         }
         return query;
     }
