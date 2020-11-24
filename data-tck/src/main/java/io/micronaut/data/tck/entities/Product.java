@@ -22,14 +22,19 @@ import io.micronaut.data.annotation.DateUpdated;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 public class Product {
     @Id
     @GeneratedValue
     private Long id;
+
+    @ManyToOne
+    private Category category;
 
     private String name;
 
@@ -54,8 +59,16 @@ public class Product {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public BigDecimal getPrice() {
@@ -80,5 +93,30 @@ public class Product {
 
     public void changePrice(BigDecimal newPrice){
         price = newPrice;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Product product = (Product) o;
+        return id.equals(product.id) &&
+                name.equals(product.name) &&
+                price.equals(product.price) &&
+                Objects.equals(dateCreated, product.dateCreated) &&
+                Objects.equals(lastUpdated, product.lastUpdated);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, price, dateCreated, lastUpdated);
     }
 }
