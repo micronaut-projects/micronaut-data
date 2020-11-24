@@ -209,7 +209,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 Class<T> rootEntity = preparedQuery.getRootEntity();
                 Sort sort = pageable.getSort();
                 if (sort.isSorted()) {
-                    query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
+                    String pageableSort = queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
+                    if (query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE)) {
+                        // pagination is handled later, hopefully "ORDER BY" should be the last clause
+                        // removing the clause and appending the rest
+                        pageableSort = pageableSort.replace(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE, ",");
+                    }
+                    query += pageableSort;
                 } else if (isSqlServerWithoutOrderBy(query, dialect)) {
                     // SQL server requires order by
                     RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);

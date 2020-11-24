@@ -91,6 +91,18 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
 
             }
 
+            boolean hasJoin = false;
+            List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext);
+            if (CollectionUtils.isNotEmpty(joinSpecs)) {
+                if (query == null) {
+                    query = QueryModel.from(rootEntity);
+                }
+                if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
+                    return null;
+                }
+                hasJoin = true;
+            }
+
             String methodName = methodElement.getName();
             Matcher matcher = pattern.matcher(methodName);
 
@@ -106,6 +118,13 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                     applyForUpdate(query);
                 }
                 querySequence = matchOrder(querySequence, orderBys);
+
+                // forcibly order by id for queries with @Join
+                // associated entities mapper requires this ordering
+                if (hasJoin && !orderBys.stream().anyMatch(o -> "id".equalsIgnoreCase(o.getProperty()))) {
+                    orderBys.add(Sort.Order.asc("id"));
+                }
+
                 if (CollectionUtils.isNotEmpty(orderBys)) {
                     if (query == null) {
                         query = QueryModel.from(rootEntity);
@@ -146,19 +165,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                     }
                 }
             }
-
-            List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext);
-            
-            if (CollectionUtils.isNotEmpty(joinSpecs)) {
-                if (query == null) {
-                    query = QueryModel.from(rootEntity);
-                }
-                if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
-                    return null;
-                }
-            }
         }
-
 
         if (query != null) {
             return buildInfo(matchContext, queryResultType, query);
