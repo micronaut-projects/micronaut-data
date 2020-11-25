@@ -1,6 +1,7 @@
-package io.micronaut.data.jdbc.postgres;
+package io.micronaut.data.jdbc.oraclexe;
 
 import io.micronaut.data.annotation.AutoPopulated;
+
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 

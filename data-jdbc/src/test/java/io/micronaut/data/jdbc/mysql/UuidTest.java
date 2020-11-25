@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres;
+package io.micronaut.data.jdbc.mysql;
 
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;

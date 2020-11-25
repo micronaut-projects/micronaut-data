@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.mysql
 
 
 import io.micronaut.context.ApplicationContext
@@ -8,14 +8,14 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
-class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProvider {
+class MySqlUUIDSpec extends Specification implements MySQLTestPropertyProvider {
 
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     @Shared
-    PostgresUuidRepository repository = applicationContext.getBean(PostgresUuidRepository)
+    MySqlUuidRepository repository = applicationContext.getBean(MySqlUuidRepository)
 
     void 'test insert and update with UUID'() {
         when:
@@ -41,7 +41,7 @@ class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProv
         test.name == "John"
 
         when:
-        test = repository.findById(test.uuid).get()
+        test = repository.findById(test.uuid).orElse(null)
 
         then:
         test.name == "John"

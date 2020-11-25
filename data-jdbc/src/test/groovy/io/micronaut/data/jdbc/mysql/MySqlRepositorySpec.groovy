@@ -161,5 +161,46 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
         // stored as a DATE type without time
 //        retrievedBook.date == book.date
 
+        when: "we update the book"
+        book = basicTypesRepo.update(retrievedBook)
+
+        then: "The ID is assigned"
+        book.myId != null
+
+        when:"A book is found"
+        retrievedBook = basicTypesRepo.findById(book.myId).orElse(null)
+
+        then:"The book is correct"
+        retrievedBook.uuid == book.uuid
+        retrievedBook.bigDecimal == book.bigDecimal
+        retrievedBook.byteArray == book.byteArray
+        retrievedBook.charSequence == book.charSequence
+        retrievedBook.charset == book.charset
+        retrievedBook.primitiveBoolean == book.primitiveBoolean
+        retrievedBook.primitiveByte == book.primitiveByte
+        retrievedBook.primitiveChar == book.primitiveChar
+        retrievedBook.primitiveDouble == book.primitiveDouble
+        retrievedBook.primitiveFloat == book.primitiveFloat
+        retrievedBook.primitiveInteger == book.primitiveInteger
+        retrievedBook.primitiveLong == book.primitiveLong
+        retrievedBook.primitiveShort == book.primitiveShort
+        retrievedBook.wrapperBoolean == book.wrapperBoolean
+        retrievedBook.wrapperByte == book.wrapperByte
+        retrievedBook.wrapperChar == book.wrapperChar
+        retrievedBook.wrapperDouble == book.wrapperDouble
+        retrievedBook.wrapperFloat == book.wrapperFloat
+        retrievedBook.wrapperInteger == book.wrapperInteger
+        retrievedBook.wrapperLong == book.wrapperLong
+        retrievedBook.uri == book.uri
+        retrievedBook.url == book.url
+        retrievedBook.instant == book.instant
+        retrievedBook.localDateTime == book.localDateTime
+        retrievedBook.zonedDateTime == book.zonedDateTime
+        retrievedBook.offsetDateTime == book.offsetDateTime
+        retrievedBook.dateCreated == book.dateCreated
+        retrievedBook.dateUpdated == book.dateUpdated
+
+        cleanup:
+        basicTypesRepo.deleteAll()
     }
 }

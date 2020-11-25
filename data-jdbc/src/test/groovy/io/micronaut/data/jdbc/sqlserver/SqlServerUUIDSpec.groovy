@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.sqlserver
 
 
 import io.micronaut.context.ApplicationContext
@@ -8,14 +8,14 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 @MicronautTest(transactional = false)
-class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProvider {
+class SqlServerUUIDSpec extends Specification implements MSSQLTestPropertyProvider {
 
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     @Shared
-    PostgresUuidRepository repository = applicationContext.getBean(PostgresUuidRepository)
+    SqlServerUuidRepository repository = applicationContext.getBean(SqlServerUuidRepository)
 
     void 'test insert and update with UUID'() {
         when:
