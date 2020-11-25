@@ -1,20 +1,16 @@
-ext {
-    springVersion = "5.3.0"
-    springDataVersion = "2.4.0"
-}
 dependencies {
     annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     implementation project(":data-runtime")
     api "org.springframework.data:spring-data-commons:$springDataVersion"
     implementation "org.springframework:spring-jdbc:$springVersion"
-    implementation group:'io.micronaut.spring', name:'micronaut-spring', version: '2.1.1'
-    implementation group:'io.micronaut.sql', name:'micronaut-hibernate-jpa-spring', version:micronautSqlVersion
+    implementation "io.micronaut.spring:micronaut-spring:$micronautSpringVersion"
+    implementation "io.micronaut.sql:micronaut-hibernate-jpa-spring:$micronautSqlVersion"
 
     compileOnly 'io.micronaut:micronaut-http'
     compileOnly "org.springframework.data:spring-data-jpa:$springDataVersion"
     compileOnly "org.springframework:spring-orm:$springVersion"
-    compileOnly "org.hibernate:hibernate-core:5.4.23.Final", {
+    compileOnly "org.hibernate:hibernate-core:$hibernateVersion", {
         exclude group: 'org.jboss.spec.javax.transaction', module: 'jboss-transaction-api_1.2_spec'
         exclude group: 'org.javassist', module: 'javassist'
         exclude group: 'org.jboss:jandex', module: 'jar'
