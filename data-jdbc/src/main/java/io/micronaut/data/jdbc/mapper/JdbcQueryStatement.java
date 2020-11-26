@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.mapper;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
 
@@ -33,7 +34,7 @@ import java.util.Date;
 public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
 
     @Override
-    public QueryStatement<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
+    public QueryStatement<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, @NonNull Dialect dialect, Object value) {
         if (value == null) {
             try {
                 switch (dataType) {
@@ -90,7 +91,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 throw new DataAccessException("Error setting JDBC null value: " + e.getMessage(), e);
             }
         } else {
-            return QueryStatement.super.setDynamic(statement, index, dataType, value);
+            return QueryStatement.super.setDynamic(statement, index, dataType, dialect, value);
         }
     }
 

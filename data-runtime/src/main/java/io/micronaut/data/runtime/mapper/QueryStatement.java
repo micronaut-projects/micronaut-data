@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -51,7 +52,8 @@ public interface QueryStatement<PS, IDX> {
      * @param statement The statement
      * @param index The index
      * @param dataType The data type
-     * @param value the value                 
+     * @param dialect
+     * @param value the value
      * @throws DataAccessException if the value cannot be read
      * @return The writer
      */
@@ -59,6 +61,7 @@ public interface QueryStatement<PS, IDX> {
             @NonNull PS statement,
             @NonNull IDX index,
             @NonNull DataType dataType,
+            @NonNull Dialect dialect,
             Object value) {
         switch (dataType) {
             case STRING:
@@ -105,12 +108,22 @@ public interface QueryStatement<PS, IDX> {
                     return setTimestamp(statement, index, convertRequired(value, Timestamp.class));
                 }
             case UUID:
-                if (value instanceof CharSequence) {
-                    return setValue(statement, index, UUID.fromString(value.toString()));
-                } else if (value instanceof UUID) {
-                    return setValue(statement, index, value);
+                if (dialect.requiresStringUUID(dataType)) {
+                    if (value instanceof CharSequence) {
+                        return setString(statement, index, value.toString());
+                    } else if (value instanceof UUID) {
+                        return setString(statement, index, value.toString());
+                    } else {
+                        throw new DataAccessException("Invalid UUID: " + value);
+                    }
                 } else {
-                    throw new DataAccessException("Invalid UUID: " + value);
+                    if (value instanceof CharSequence) {
+                        return setValue(statement, index, UUID.fromString(value.toString()));
+                    } else if (value instanceof UUID) {
+                        return setValue(statement, index, value);
+                    } else {
+                        throw new DataAccessException("Invalid UUID: " + value);
+                    }
                 }
             case DOUBLE:
                 if (value instanceof Number) {

@@ -411,6 +411,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                                     stmt,
                                     index,
                                     type,
+                                    dialect,
                                     value
                             );
                         }
@@ -570,6 +571,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 preparedStatement,
                 index,
                 dialect.getDataType(dataType),
+                dialect,
                 value);
     }
 
