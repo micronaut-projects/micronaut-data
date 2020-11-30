@@ -1,16 +1,16 @@
 dependencies {
 	api project(":data-model")
-	api "com.github.spotbugs:spotbugs-annotations:4.1.4"
+	api "com.github.spotbugs:spotbugs-annotations:4.2.0"
 	compileOnly "io.micronaut:micronaut-inject:$micronautVersion"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 	testImplementation "io.projectreactor:reactor-core:3.4.0"
 	testImplementation "io.micronaut:micronaut-inject-groovy"
 	testImplementation "io.micronaut:micronaut-inject-java-test"
 	testImplementation 'javax.persistence:javax.persistence-api:2.2'
-	testImplementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
+	testImplementation 'jakarta.transaction:jakarta.transaction-api:2.0.0'
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
 	}
-	testImplementation 'org.springframework.data:spring-data-jpa:2.4.0'
+	testImplementation 'org.springframework.data:spring-data-jpa:2.4.1'
 	testImplementation project(":data-tck")
 }
