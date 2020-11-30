@@ -46,6 +46,15 @@ public class Restrictions {
     }
 
     /**
+     * Restricts the property to be equal to the given value.
+     * @param parameter The parameter that provides the value
+     * @return An instance of Query.Equals
+     */
+    public static QueryModel.VersionEquals versionEq(QueryParameter parameter) {
+        return new QueryModel.VersionEquals(parameter);
+    }
+
+    /**
      * Restricts the property to be not equal to the given value.
      * @param property The property
      * @param parameter The parameter that provides the value

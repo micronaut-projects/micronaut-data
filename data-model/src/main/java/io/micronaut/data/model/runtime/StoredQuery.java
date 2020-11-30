@@ -201,6 +201,33 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
+     * Is with an optimistic lock.
+     *
+     * @return the result
+     */
+    default boolean isOptimisticLock() {
+        return false;
+    }
+
+    /**
+     * The name of the version update parameter name.
+     *
+     * @return The version update parameter name
+     */
+    default @Nullable String getVersionUpdateParameter() {
+        return null;
+    }
+
+    /**
+     * The name of the version match parameter name.
+     *
+     * @return The version match parameter name
+     */
+    default @Nullable String getVersionMatchParameter() {
+        return null;
+    }
+
+    /**
      * @return The join paths that require a fetch
      */
     default @NonNull Set<JoinPath> getJoinFetchPaths() {

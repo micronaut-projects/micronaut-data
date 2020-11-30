@@ -108,6 +108,11 @@ public @interface DataMethod {
     String META_MEMBER_DTO = "dto";
 
     /**
+     * Does the query contains optimistic lock.
+     */
+    String META_MEMBER_OPTIMISTIC_LOCK = "optimisticLock";
+
+    /**
      * The query builder to use.
      */
     String META_MEMBER_QUERY_BUILDER = "queryBuilder";

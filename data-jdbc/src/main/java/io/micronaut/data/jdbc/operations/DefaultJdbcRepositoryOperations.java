@@ -25,15 +25,18 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
+import io.micronaut.data.jdbc.runtime.AutoPopulatedValueProvider;
 import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.Association;
@@ -41,7 +44,14 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -63,8 +73,20 @@ import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -101,6 +123,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param beanContext           The bean context
      * @param codecs                The codecs
      * @param dateTimeProvider      The dateTimeProvider
+     * @param autoPopulatedSetters  The list of {@link AutoPopulatedValueProvider}
      */
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               DataSource dataSource,
@@ -108,7 +131,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
-                                              @NonNull DateTimeProvider dateTimeProvider) {
+                                              @NonNull DateTimeProvider dateTimeProvider,
+                                              List<AutoPopulatedValueProvider> autoPopulatedSetters) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(),
@@ -116,6 +140,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 new JdbcQueryStatement(),
                 codecs,
                 dateTimeProvider,
+                autoPopulatedSetters,
                 beanContext
         );
         ArgumentUtils.requireNonNull("dataSource", dataSource);
@@ -407,6 +432,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", result);
                     }
+                    if (preparedQuery.isOptimisticLock()) {
+                        checkOptimisticLocking(result);
+                    }
                     return Optional.of(result);
                 }
             } catch (SQLException e) {
@@ -426,13 +454,14 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
         final String query = annotationMetadata.stringValue(Query.class).orElse(null);
+        final boolean isOptimisticLock = annotationMetadata.booleanValue(DataMethod.class, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).orElse(false);
         final T entity = operation.getEntity();
         final Set persisted = new HashSet(10);
         final Class<?> repositoryType = operation.getRepositoryType();
-        return updateOne(repositoryType, annotationMetadata, query, params, entity, persisted);
+        return updateOne(repositoryType, annotationMetadata, query, params, entity, persisted, isOptimisticLock);
     }
 
-    private <T> T updateOne(Class<?> repositoryType, AnnotationMetadata annotationMetadata, String query, String[] params, T entity, Set persisted) {
+    private <T> T updateOne(Class<?> repositoryType, AnnotationMetadata annotationMetadata, String query, String[] params, T entity, Set persisted, boolean isOptimisticLock) {
         Objects.requireNonNull(entity, "Passed entity cannot be null");
         if (StringUtils.isNotEmpty(query) && ArrayUtils.isNotEmpty(params)) {
             final RuntimePersistentEntity<T> persistentEntity =
@@ -443,11 +472,32 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing SQL UPDATE: {}", query);
                     }
+                    String versionMatchParam = null;
+                    Object lastVersionValue = null;
+                    RuntimePersistentProperty<T> version = null;
+                    if (isOptimisticLock) {
+                        version = persistentEntity.getVersion();
+                        if (version != null) {
+                            versionMatchParam = annotationMetadata.stringValue(DataMethod.class, TypeRole.VERSION_MATCH).orElse(null);
+                            lastVersionValue = version.getProperty().get(entity);
+                        }
+                    }
                     try (PreparedStatement ps = connection.prepareStatement(query)) {
                         for (int i = 0; i < params.length; i++) {
                             String propertyName = params[i];
-                            RuntimePersistentProperty<T> pp =
-                                    persistentEntity.getPropertyByName(propertyName);
+                            if (versionMatchParam != null && versionMatchParam.equals(propertyName)) {
+                                if (QUERY_LOG.isTraceEnabled()) {
+                                    QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, lastVersionValue);
+                                }
+                                preparedStatementWriter.setDynamic(
+                                        ps,
+                                        i + 1,
+                                        version.getDataType(),
+                                        lastVersionValue
+                                );
+                                continue;
+                            }
+                            RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(propertyName);
                             if (pp == null) {
                                 int j = propertyName.indexOf('.');
                                 if (j > -1) {
@@ -479,21 +529,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                                 }
                             } else {
-
-                                final Object newValue;
-                                final BeanProperty<T, ?> beanProperty = pp.getProperty();
-                                if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                                    newValue = dateTimeProvider.getNow();
-                                    beanProperty.convertAndSet(entity, newValue);
-                                } else {
-                                    newValue = beanProperty.get(entity);
-                                }
+                                final Object value = getPropertyValue(entity, pp);
                                 final DataType dataType = pp.getDataType();
-                                if (dataType == DataType.ENTITY && newValue != null && pp instanceof Association) {
-                                    final RuntimePersistentProperty<Object> idReader = getIdReader(newValue);
+                                if (dataType == DataType.ENTITY && value != null && pp instanceof Association) {
+                                    final RuntimePersistentProperty<Object> idReader = getIdReader(value);
                                     final Association association = (Association) pp;
                                     final BeanProperty<Object, ?> idReaderProperty = idReader.getProperty();
-                                    final Object id = idReaderProperty.get(newValue);
+                                    final Object id = idReaderProperty.get(value);
                                     if (QUERY_LOG.isTraceEnabled()) {
                                         QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, id);
                                     }
@@ -505,13 +547,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                 idReader.getDataType(),
                                                 id
                                         );
-                                        if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
+                                        if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(value)) {
                                             final Relation.Kind kind = association.getKind();
                                             final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
                                             switch (kind) {
                                                 case ONE_TO_ONE:
                                                 case MANY_TO_ONE:
-                                                    persisted.add(newValue);
+                                                    persisted.add(value);
                                                     final StoredInsert<Object> updateStatement = resolveEntityUpdate(
                                                             annotationMetadata,
                                                             repositoryType,
@@ -523,8 +565,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                             annotationMetadata,
                                                             updateStatement.getSql(),
                                                             updateStatement.getParameterBinding(),
-                                                            newValue,
-                                                            persisted
+                                                            value,
+                                                            persisted,
+                                                            false
                                                     );
                                                     break;
                                                 case MANY_TO_MANY:
@@ -537,7 +580,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             }
                                         }
                                     } else {
-                                        if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
+                                        if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(value)) {
                                             final RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) association.getAssociatedEntity();
 
                                             StoredInsert associatedInsert = resolveEntityInsert(
@@ -550,10 +593,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                     annotationMetadata,
                                                     repositoryType,
                                                     associatedInsert,
-                                                    newValue,
+                                                    value,
                                                     persisted
                                             );
-                                            final Object assignedId = idReaderProperty.get(newValue);
+                                            final Object assignedId = idReaderProperty.get(value);
                                             if (assignedId != null) {
                                                 preparedStatementWriter.setDynamic(
                                                         ps,
@@ -564,8 +607,18 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             }
                                         }
                                     }
-                                } else if (dataType == DataType.JSON && jsonCodec != null && newValue != null) {
-                                    String value = new String(jsonCodec.encode(newValue), StandardCharsets.UTF_8);
+                                } else if (dataType == DataType.JSON && jsonCodec != null && value != null) {
+                                    String jsonValue = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
+                                    if (QUERY_LOG.isTraceEnabled()) {
+                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, jsonValue);
+                                    }
+                                    preparedStatementWriter.setDynamic(
+                                            ps,
+                                            i + 1,
+                                            dataType,
+                                            jsonValue
+                                    );
+                                } else {
                                     if (QUERY_LOG.isTraceEnabled()) {
                                         QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, value);
                                     }
@@ -575,20 +628,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             dataType,
                                             value
                                     );
-                                } else {
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
-                                    }
-                                    preparedStatementWriter.setDynamic(
-                                            ps,
-                                            i + 1,
-                                            dataType,
-                                            newValue
-                                    );
                                 }
                             }
                         }
-                        ps.executeUpdate();
+                        int result = ps.executeUpdate();
+                        if (isOptimisticLock) {
+                            checkOptimisticLocking(result);
+                        }
                         return entity;
                     }
                 } catch (SQLException e) {
@@ -597,6 +643,20 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
         }
         return entity;
+    }
+
+    private <T> Object getPropertyValue(T entity, RuntimePersistentProperty<T> pp) {
+        final BeanProperty beanProperty = pp.getProperty();
+        if (beanProperty.hasStereotype(AutoPopulated.NAME)) {
+            for (AutoPopulatedValueProvider autoPopulatedSetter : autoPopulatedSetters) {
+                if (autoPopulatedSetter.supportsUpdate(pp, pp.getType())) {
+                    Object value = autoPopulatedSetter.provideOnUpdate(pp, pp.getType(), beanProperty.get(entity));
+                    beanProperty.set(entity, value);
+                    return value;
+                }
+            }
+        }
+        return beanProperty.get(entity);
     }
 
     @NonNull
@@ -631,7 +691,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 PreparedStatement stmt;
                 if (hasGeneratedID && (insert.getDialect() == Dialect.ORACLE || insert.getDialect() == Dialect.SQL_SERVER)) {
                     stmt = connection
-                            .prepareStatement(insertSql, new String[] { insert.getIdentity().getPersistedName() });
+                            .prepareStatement(insertSql, new String[]{insert.getIdentity().getPersistedName()});
                 } else {
                     stmt = connection
                             .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
@@ -734,7 +794,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             final Object many = association.getProperty().get(entity);
                             final RuntimeAssociation<?> inverse
                                     = association.getInverseSide().orElse(null);
-                            associatedInsert  = resolveEntityInsert(
+                            associatedInsert = resolveEntityInsert(
                                     annotationMetadata,
                                     repositoryType,
                                     associationType,
@@ -1068,5 +1128,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         };
         return StreamSupport.stream(iterable.spliterator(), false);
+    }
+
+    private void checkOptimisticLocking(int result) {
+        if (result != 1) {
+            throw new OptimisticLockException("Execute update returned unexpected row count. Expected: 1 got: " + result);
+        }
     }
 }

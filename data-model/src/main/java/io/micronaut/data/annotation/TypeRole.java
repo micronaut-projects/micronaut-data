@@ -50,6 +50,16 @@ public @interface TypeRole {
     String ID = "id";
 
     /**
+     * The version update parameter.
+     */
+    String VERSION_UPDATE = "versionUpdate";
+
+    /**
+     * The version match parameter.
+     */
+    String VERSION_MATCH = "versionMatch";
+
+    /**
      * The parameter that defines an instance of the entity.
      */
     String ENTITY = "entity";

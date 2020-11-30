@@ -15,10 +15,10 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.MealRepository
+import io.micronaut.data.tck.repositories.StudentRepository
 import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
@@ -38,7 +38,7 @@ import io.micronaut.data.tck.tests.AbstractRepositorySpec
 import spock.lang.IgnoreIf
 
 class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresTestPropertyProvider {
-    
+
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(PostgresPersonRepository)
@@ -119,6 +119,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         return context.getBean(PostgresFoodRepository)
     }
 
+    @Override
+    StudentRepository getStudentRepository() {
+        return context.getBean(PostgresStudentRepository)
+    }
+
     void "test save and fetch author with no books"() {
 
         given:
@@ -192,7 +197,7 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         when:
         a5 = carRepo.findById(a5.id).orElse(null)
         carRepo.getById(a5.id).parts.size() == 0
-        
+
         then:
         a5.id
         a5.name == 'A5'

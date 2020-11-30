@@ -17,6 +17,7 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.EmptyResultException
+import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.*
@@ -51,6 +52,7 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract RoleRepository getRoleRepository()
     abstract MealRepository getMealRepository()
     abstract FoodRepository getFoodRepository()
+    abstract StudentRepository getStudentRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -979,6 +981,80 @@ abstract class AbstractRepositorySpec extends Specification {
 
         cleanup:
         cleanupMeals()
+    }
+
+    void "test optimistic locking"() {
+        given:
+            def student = new Student("Denis")
+        when:
+            studentRepository.save(student)
+        then:
+            student.version == 0
+        when:
+            student.setVersion(5)
+            student.setName("Xyz")
+            studentRepository.update(student)
+        then:
+            def e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            studentRepository.updateByIdAndVersion(student.getId(), student.getVersion(), student.getName())
+        then:
+            e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            studentRepository.delete(student)
+        then:
+            e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            studentRepository.deleteByIdAndVersionAndName(student.getId(), student.getVersion(), student.getName())
+        then:
+            e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            studentRepository.deleteByIdAndVersion(student.getId(), student.getVersion())
+        then:
+            e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            studentRepository.deleteAll([student])
+        then:
+            e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            student = studentRepository.findById(student.getId()).get()
+        then:
+            student.name == "Denis"
+            student.version == 0
+        when:
+            student.setName("Abc")
+            studentRepository.update(student)
+            def student2 = studentRepository.findById(student.getId()).get()
+        then:
+            student.version == 1
+            student2.name == "Abc"
+            student2.version == 1
+        when:
+            studentRepository.updateByIdAndVersion(student2.getId(), student2.getVersion(), "Joe")
+            def student3 = studentRepository.findById(student2.getId()).get()
+        then:
+            student3.name == "Joe"
+            student3.version == 2
+        when:
+            studentRepository.updateById(student2.getId(), "Joe2")
+            def student4 = studentRepository.findById(student2.getId()).get()
+        then:
+            student4.name == "Joe2"
+            student4.version == 2
+        when:
+            studentRepository.deleteByIdAndVersionAndName(student4.getId(), student4.getVersion(), student4.getName())
+            def student5 = studentRepository.findById(student2.getId())
+        then:
+            !student5.isPresent()
+
+        cleanup:
+            studentRepository.deleteAll()
     }
 
     private GregorianCalendar getYearMonthDay(Date dateCreated) {

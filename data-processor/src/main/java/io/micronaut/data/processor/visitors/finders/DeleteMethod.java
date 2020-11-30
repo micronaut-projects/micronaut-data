@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -103,18 +104,29 @@ public class DeleteMethod extends AbstractListMethod {
                         matchContext.fail("Delete all not supported for entities with no ID");
                         return null;
                     }
+                    SourcePersistentProperty version = rootEntity.getVersion();
+
                     QueryParameter queryParameter = new QueryParameter(parameters[0].getName());
                     if (interceptor.getSimpleName().startsWith("DeleteAll") && !(identity instanceof Embedded)) {
                         queryModel.inList(identity.getName(), queryParameter);
                     } else {
                         queryModel.idEq(queryParameter);
                     }
-                    return new MethodMatchInfo(
+                    if (version != null) {
+                        queryModel.versionEq(queryParameter);
+                    }
+                    MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                             null,
                             queryModel,
                             getInterceptorElement(matchContext, interceptor),
                             getOperationType()
                     );
+                    if (version != null) {
+                        methodMatchInfo.setOptimisticLock(true);
+                        methodMatchInfo.addParameterRole(TypeRole.VERSION_MATCH, version.getName());
+                        methodMatchInfo.addQueryToMethodParameterBinding(version.getName(), queryParameter.getName());
+                    }
+                    return methodMatchInfo;
                 }
             }
         }

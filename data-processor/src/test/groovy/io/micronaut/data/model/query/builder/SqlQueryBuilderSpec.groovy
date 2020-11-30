@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.entities.Bike
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonAssignedId
 import io.micronaut.data.model.naming.NamingStrategies
@@ -185,6 +186,19 @@ interface MyRepository {
         expect:
         result.query == 'INSERT INTO "person" ("name","age","enabled","public_id") VALUES (?,?,?,?)'
         result.parameters.equals('1': 'name', '2': 'age', '3': 'enabled', '4': "publicId")
+    }
+
+    void "test insert statement with version"() {
+        given:
+        PersistentEntity entity = new RuntimePersistentEntity(Bike)
+        QueryBuilder encoder = new SqlQueryBuilder()
+
+        when:
+        def insertResult = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity)
+
+        then:
+        insertResult.query == 'INSERT INTO "bike" ("version","name","age","enabled","public_id") VALUES (?,?,?,?,?)'
+        insertResult.parameters.equals('1': 'version', '2': 'name', '3': 'age', '4': "enabled", '5': "publicId")
     }
 
     void "test encode insert statement for embedded"() {

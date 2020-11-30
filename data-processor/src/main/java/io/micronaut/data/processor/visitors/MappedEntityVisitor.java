@@ -102,6 +102,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (identity != null) {
             computeMappingDefaults(namingStrategy, identity, dataTypes);
         }
+        SourcePersistentProperty version = entity.getVersion();
+        if (version != null) {
+            computeMappingDefaults(namingStrategy, version, dataTypes);
+        }
     }
 
     private boolean isMappedEntity() {

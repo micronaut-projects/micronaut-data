@@ -103,6 +103,15 @@ public interface Criteria  {
     @NonNull Criteria idEq(QueryParameter parameter);
 
     /**
+     * Creates an "equals" Criterion based on the specified property name and value.
+     *
+     * @param parameter The parameter that provides the value
+     *
+     * @return The criteria
+     */
+    @NonNull Criteria versionEq(QueryParameter parameter);
+
+    /**
      * Creates a "not equals" Criterion based on the specified property name and value.
      *
      * @param propertyName The property name

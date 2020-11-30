@@ -64,6 +64,8 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
+    protected static final String VERSION_MATCH_PARAMETER = "$versionMatchParameter";
+    protected static final String VERSION_UPDATE_PARAMETER = "$versionUpdateParameter";
     private static final Pattern ORDER_BY_PATTERN = Pattern.compile("(.*)OrderBy([\\w\\d]+)");
     private static final Pattern FOR_UPDATE_PATTERN = Pattern.compile("(.*)ForUpdate$");
     private static final String DELETE = "delete";

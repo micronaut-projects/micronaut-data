@@ -22,6 +22,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -66,6 +67,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         MethodElement methodElement = matchContext.getMethodElement();
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         ClassElement queryResultType = rootEntity.getClassElement();
+        ParameterElement versionParameter = null;
 
         if (methodElement.hasAnnotation(Query.class)) {
             query = buildRawQuery(matchContext);
@@ -79,13 +81,19 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                         SourcePersistentProperty identity = rootEntity.getIdentity();
                         if (identity != null && identity.getName().equals(paramName)) {
                             query.idEq(new QueryParameter(queryParam.getName()));
-                        } else {
+                        } else  {
                             matchContext.fail(
                                     "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName);
                             return null;
                         }
                     } else {
-                        query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
+                        SourcePersistentProperty version = rootEntity.getVersion();
+                        if (version != null && version.getName().equals(paramName)) {
+                            versionParameter = queryParam;
+                            query.versionEq(new QueryParameter(VERSION_MATCH_PARAMETER));
+                        } else {
+                            query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
+                        }
                     }
                 }
 
@@ -159,16 +167,26 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
             }
         }
 
-
+        MethodMatchInfo methodMatchInfo;
         if (query != null) {
-            return buildInfo(matchContext, queryResultType, query);
+            methodMatchInfo = buildInfo(matchContext, queryResultType, query);
         } else {
             if (matchContext.supportsImplicitQueries() && hasNoWhereDeclaration(matchContext)) {
-                return buildInfo(matchContext, queryResultType, null);
+                methodMatchInfo = buildInfo(matchContext, queryResultType, null);
             } else {
-                return buildInfo(matchContext, queryResultType, QueryModel.from(rootEntity));
+                methodMatchInfo = buildInfo(matchContext, queryResultType, QueryModel.from(rootEntity));
             }
         }
+
+        if (versionParameter != null && methodMatchInfo != null) {
+            methodMatchInfo.setOptimisticLock(true);
+            methodMatchInfo.addParameterRole(
+                    TypeRole.VERSION_MATCH,
+                    versionParameter.getName()
+            );
+            methodMatchInfo.addQueryToMethodParameterBinding(VERSION_MATCH_PARAMETER, versionParameter.getName());
+        }
+        return methodMatchInfo;
     }
 
     private boolean hasNoWhereDeclaration(@NonNull MethodMatchContext matchContext) {

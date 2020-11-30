@@ -268,6 +268,20 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             );
         });
 
+        queryHandlers.put(QueryModel.VersionEquals.class, (queryState, criterion) -> {
+            PersistentProperty prop = queryState.getEntity().getVersion();
+            if (prop == null) {
+                throw new IllegalStateException("No Version found for entity: " + queryState.getEntity().getName());
+            }
+            appendCriteriaForOperator(
+                    queryState,
+                    prop,
+                    prop.getName(),
+                    ((QueryModel.VersionEquals) criterion).getValue(),
+                    " = "
+            );
+        });
+
         queryHandlers.put(QueryModel.NotEquals.class, (queryState, criterion) -> {
             QueryModel.NotEquals eq = (QueryModel.NotEquals) criterion;
             final String name = eq.getProperty();

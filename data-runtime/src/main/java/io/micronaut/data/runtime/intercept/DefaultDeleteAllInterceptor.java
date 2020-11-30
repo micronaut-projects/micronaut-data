@@ -24,6 +24,7 @@ import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -54,7 +55,9 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
             if (isBatch) {
-                final RuntimePersistentProperty<?> identity = operations.getEntity(preparedQuery.getRootEntity()).getIdentity();
+                RuntimePersistentEntity<?> entity = operations.getEntity(preparedQuery.getRootEntity());
+                final RuntimePersistentProperty<?> identity = entity.getIdentity();
+                final RuntimePersistentProperty<?> version = entity.getVersion();
                 if (identity instanceof Embedded) {
                     Iterable iterable = (Iterable) parameterValues[0];
                     int deleteCount = 0;
@@ -65,6 +68,15 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
                             throw new IllegalStateException("Cannot delete an entity with null ID: " + o);
                         }
                         preparedQuery.getParameterArray()[0] = idValue;
+                        if (version != null && preparedQuery.getParameterArray().length > 1) {
+                            final BeanProperty versionProp = version.getProperty();
+                            final Object versionValue = versionProp.get(o);
+                            if (versionValue == null) {
+                                throw new IllegalStateException("Cannot delete an entity with null version: " + o);
+                            }
+                            preparedQuery.getParameterArray()[1] = versionValue;
+                        }
+
                         operations.executeDelete(preparedQuery);
                         deleteCount++;
                     }

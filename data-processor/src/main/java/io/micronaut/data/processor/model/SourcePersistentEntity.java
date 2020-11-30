@@ -78,6 +78,7 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
                 }
             } else if (beanProperty.hasStereotype(Version.class)) {
                 version = new SourcePersistentProperty(this, beanProperty);
+                this.beanProperties.put(beanProperty.getName(), beanProperty);
             } else {
                 this.beanProperties.put(beanProperty.getName(), beanProperty);
             }

@@ -438,6 +438,13 @@ public class DefaultQuery implements QueryModel {
         return this;
     }
 
+    @Override
+    public @NonNull
+    DefaultQuery versionEq(@NonNull QueryParameter value) {
+        criteria.add(Restrictions.versionEq(value));
+        return this;
+    }
+
     @NonNull
     @Override
     public QueryModel ne(@NonNull String propertyName, @NonNull QueryParameter parameter) {

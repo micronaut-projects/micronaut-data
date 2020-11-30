@@ -824,6 +824,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final @Nullable String[] parameterPaths;
         private final ExecutableMethod<?, ?> method;
         private final String lastUpdatedProp;
+        private final boolean isOptimisticLock;
+        private final String versionMatchParameterName;
+        private final String versionUpdateParameterName;
         private final boolean isDto;
         private final boolean isNative;
         private final boolean isNumericPlaceHolder;
@@ -874,7 +877,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             this.hasIn = isNumericPlaceHolder && this.query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
+            this.versionMatchParameterName = method.stringValue(PREDATOR_ANN_NAME, TypeRole.VERSION_MATCH).orElse(null);
+            this.versionUpdateParameterName = method.stringValue(PREDATOR_ANN_NAME, TypeRole.VERSION_UPDATE).orElse(null);
             this.isDto = method.isTrue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_DTO);
+            this.isOptimisticLock = method.isTrue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_OPTIMISTIC_LOCK);
 
             this.isCount = isCount;
             AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
@@ -1130,6 +1136,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
+        public boolean isOptimisticLock() {
+            return isOptimisticLock;
+        }
+
+        @Override
+        public String getVersionMatchParameter() {
+            return versionMatchParameterName;
+        }
+
+        @Override
+        public String getVersionUpdateParameter() {
+            return versionUpdateParameterName;
+        }
+
+        @Override
         public boolean equals(Object o) {
             if (this == o) {
                 return true;
@@ -1344,6 +1365,21 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public String getLastUpdatedProperty() {
             return storedQuery.getLastUpdatedProperty();
+        }
+
+        @Override
+        public boolean isOptimisticLock() {
+            return storedQuery.isOptimisticLock();
+        }
+
+        @Override
+        public String getVersionMatchParameter() {
+            return storedQuery.getVersionMatchParameter();
+        }
+
+        @Override
+        public String getVersionUpdateParameter() {
+            return storedQuery.getVersionUpdateParameter();
         }
 
         @Nonnull

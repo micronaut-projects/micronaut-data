@@ -15,12 +15,13 @@
  */
 package io.micronaut.data.hibernate
 
-
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import spock.lang.Shared
 
 import javax.inject.Inject
+import javax.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
@@ -31,6 +32,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     AuthorRepository ar
+
+    @Shared
+    @Inject
+    JpaStudentRepository studentRepository
 
     void "test @Where annotation placehoder"() {
         given:
@@ -125,6 +130,73 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         then:
         author != null
         author.books.size() == 2
+    }
+
+    void "test optimistic locking"() {
+        given:
+            def student = new Student("Denis")
+        when:
+            studentRepository.save(student)
+        then:
+            student.version == 0
+        when:
+            student.setVersion(5)
+            student.setName("Xyz")
+            studentRepository.update(student)
+        then:
+            thrown(OptimisticLockException)
+// Unable to establish parameter value for parameter at position: 1
+//        when:
+//            studentRepository.updateById(student.getId(), student.getVersion(), student.getName())
+//        then:
+//            thrown(OptimisticLockException)
+//        when:
+//            studentRepository.updateStudentName(student.getId(), student.getVersion(), student.getName())
+//        then:
+//            thrown(OptimisticLockException)
+        when:
+            studentRepository.delete(student)
+        then:
+            thrown(OptimisticLockException)
+//        when:
+//            studentRepository.delete(student.getId(), student.getVersion(), student.getName())
+//        then:
+//            thrown(OptimisticLockException)
+        when:
+            studentRepository.deleteAll([student])
+        then:
+            thrown(OptimisticLockException)
+        when:
+            student = studentRepository.findById(student.getId()).get()
+        then:
+            student.name == "Denis"
+            student.version == 0
+        when:
+            student.setName("Abc")
+            studentRepository.update(student)
+            def student2 = studentRepository.findById(student.getId()).get()
+        then:
+            student.version == 0 // Hibernate doesn't update the entity instance
+            student2.name == "Abc"
+            student2.version == 1
+        when:
+            studentRepository.updateStudentName(student2.getId(), "Joe")
+            def student3 = studentRepository.findById(student2.getId()).get()
+        then:
+            student3.name == "Joe"
+            student3.version == 1
+        when:
+            studentRepository.updateStudentName(student2.getId(), student2.getVersion(), "Joe2")
+            student3 = studentRepository.findById(student2.getId()).get()
+        then:
+            thrown(IllegalStateException) // TODO: Update version for Hibernate
+        when:
+            studentRepository.delete(student3.getId(), student3.getVersion(), student3.getName())
+            def student4 = studentRepository.findById(student2.getId())
+        then:
+            !student4.isPresent()
+        cleanup:
+            studentRepository.deleteAll()
     }
 
     @Override

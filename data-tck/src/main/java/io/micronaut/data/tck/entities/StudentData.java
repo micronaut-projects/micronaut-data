@@ -15,29 +15,34 @@
  */
 package io.micronaut.data.tck.entities;
 
+
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Version;
 
-import javax.persistence.Entity;
 import java.util.Date;
 
-@Entity
-public class Student {
-    @javax.persistence.Id
-    @javax.persistence.GeneratedValue
+@MappedEntity
+public class StudentData {
+    @Id
+    @GeneratedValue
     private Long id;
-    @javax.persistence.Version
-    private Long version;
     private String name;
+    @Version
+    private Long version;
+
     @DateCreated
     private Date creationTime;
     @DateUpdated
     private Date lastUpdatedTime;
 
-    public Student() {
+    public StudentData() {
     }
 
-    public Student(String name) {
+    public StudentData(String name) {
         this.name = name;
     }
 

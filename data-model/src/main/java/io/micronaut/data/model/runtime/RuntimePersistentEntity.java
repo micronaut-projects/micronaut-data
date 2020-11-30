@@ -44,7 +44,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private final Map<String, RuntimePersistentProperty<T>> persistentProperties;
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private final String aliasName;
-    private RuntimePersistentProperty<T> version;
+    private final RuntimePersistentProperty<T> version;
 
     /**
      * Default constructor.
@@ -78,7 +78,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         this.persistentProperties = new LinkedHashMap<>(beanProperties.size());
 
         for (BeanProperty<T, Object> bp : beanProperties) {
-            if (!bp.hasStereotype(Id.class, Version.class)) {
+            if (!bp.hasStereotype(Id.class)) {
                 RuntimePersistentProperty<T> prop;
                 if (bp.hasAnnotation(Relation.class)) {
                     if (isEmbedded(bp)) {

@@ -104,8 +104,14 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     } else {
                         idName = TypeRole.ID;
                     }
-                    final QueryModel queryModel = QueryModel.from(rootEntity)
+                    QueryModel queryModel = QueryModel.from(rootEntity)
                             .idEq(new QueryParameter(idName));
+                    final SourcePersistentProperty version = rootEntity.getVersion();
+                    QueryParameter versionMatchMethodParameter = null;
+                    if (version != null) {
+                        versionMatchMethodParameter = new QueryParameter(VERSION_MATCH_PARAMETER);
+                        queryModel = queryModel.versionEq(versionMatchMethodParameter);
+                    }
                     String[] updateProperties = rootEntity.getPersistentProperties()
                             .stream().filter(p ->
                                     !((p instanceof Association) && ((Association) p).isForeignKey()) &&
@@ -122,13 +128,22 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                                 MethodMatchInfo.OperationType.UPDATE
                         );
                     } else {
-                        return new MethodMatchInfo(
+                        MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                                 returnType,
                                 queryModel,
                                 getInterceptorElement(matchContext, interceptor),
                                 MethodMatchInfo.OperationType.UPDATE,
                                 updateProperties
                         );
+                        if (versionMatchMethodParameter != null) {
+                            methodMatchInfo.setOptimisticLock(true);
+                            methodMatchInfo.addParameterRole(
+                                    TypeRole.VERSION_MATCH,
+                                    versionMatchMethodParameter.getName()
+                            );
+                            methodMatchInfo.addQueryToMethodParameterBinding(VERSION_MATCH_PARAMETER, versionMatchMethodParameter.getName());
+                        }
+                        return methodMatchInfo;
                     }
 
                 }

@@ -71,6 +71,10 @@ public interface QueryModel extends Criteria {
 
     @NonNull
     @Override
+    QueryModel versionEq(QueryParameter parameter);
+
+    @NonNull
+    @Override
     QueryModel ne(@NonNull String propertyName, @NonNull QueryParameter parameter);
 
     @NonNull
@@ -914,6 +918,22 @@ public interface QueryModel extends Criteria {
          */
         public IdEquals(QueryParameter value) {
             super(ID, value);
+        }
+    }
+
+    /**
+     * A criterion that restricts the results based on the equality of the version.
+     */
+    class VersionEquals extends PropertyCriterion {
+
+        private static final String VERSION = "version";
+
+        /**
+         * Default constructor.
+         * @param value The parameter
+         */
+        public VersionEquals(QueryParameter value) {
+            super(VERSION, value);
         }
     }
 

@@ -389,6 +389,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     annotationBuilder.member(DataMethod.META_MEMBER_DTO, true);
                                 }
 
+                                if (methodInfo.isOptimisticLock()) {
+                                    annotationBuilder.member(DataMethod.META_MEMBER_OPTIMISTIC_LOCK, true);
+                                }
+
                                 TypedElement resultType = methodInfo.getResultType();
                                 if (resultType != null) {
                                     annotationBuilder.member(DataMethod.META_MEMBER_RESULT_TYPE, new AnnotationClassValue<>(resultType.getName()));
@@ -433,7 +437,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                 annotationBuilder,
                                                 parameters,
                                                 finalParameterBinding,
-                                                methodMatchContext,
+                                                methodInfo,
                                                 supportsImplicitQueries,
                                                 DataMethod.META_MEMBER_COUNT_PARAMETERS,
                                                 DataMethod.META_MEMBER_PARAMETER_BINDING);
@@ -442,7 +446,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                 annotationBuilder,
                                                 parameters,
                                                 finalParameterBinding,
-                                                methodMatchContext,
+                                                methodInfo,
                                                 supportsImplicitQueries,
                                                 DataMethod.META_MEMBER_PARAMETER_BINDING
                                         );
@@ -453,7 +457,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             annotationBuilder,
                                             parameters,
                                             finalPreparedCount1.getParameters(),
-                                            methodMatchContext,
+                                            methodInfo,
                                             supportsImplicitQueries,
                                             DataMethod.META_MEMBER_COUNT_PARAMETERS
                                     );
@@ -531,7 +535,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             AnnotationValueBuilder<DataMethod> annotationBuilder,
             ParameterElement[] parameters,
             Map<String, String> finalParameterBinding,
-            MethodMatchContext methodMatchContext,
+            MethodMatchInfo methodMatchInfo,
             boolean includeNames,
             String... members) {
         List<String> parameterNames = Arrays.stream(parameters).map(parameterElement ->
@@ -541,12 +545,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         String[] parameterPaths = new String[len];
         String[] nameIndex = new String[len];
         AtomicInteger ai = new AtomicInteger(0);
+        Collection<String> parametersInRole = methodMatchInfo.getParameterRoles().values();
         int[] parameterIndices = finalParameterBinding.entrySet().stream().map(entry -> {
             String parameterName = entry.getValue();
+            parameterName = methodMatchInfo.getQueryToMethodParameterBinding().getOrDefault(parameterName, parameterName);
             int pathIndex = ai.getAndIncrement();
             parameterPaths[pathIndex] = "";
             nameIndex[pathIndex] = entry.getKey();
             int i = parameterNames.indexOf(parameterName);
+            // Always include parameterPath for parameters in role
+            for (String name : parametersInRole) {
+                if (name.equals(parameterName)) {
+                    parameterPaths[pathIndex] = name;
+                    break;
+                }
+            }
             if (i > -1) {
                 return i;
             } else {
@@ -558,17 +571,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     return -1;
                 } else {
                     // -1 indicates special handling for parameters in roles etc.
-                    Map<String, Element> parametersInRole = methodMatchContext.getParametersInRole();
-                    for (Map.Entry<String, Element> roleEntry : parametersInRole.entrySet()) {
-                        Element element = roleEntry.getValue();
-                        if (element instanceof PropertyElement) {
-                            String name = element.getName();
-                            if (name.equals(parameterName)) {
-                                parameterPaths[pathIndex] = name;
-                                break;
-                            }
-                        }
-                    }
                     return -1;
                 }
 

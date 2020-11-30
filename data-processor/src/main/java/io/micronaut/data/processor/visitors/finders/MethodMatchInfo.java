@@ -41,7 +41,9 @@ public class MethodMatchInfo {
     private final String[] updateProperties;
 
     private Map<String, String> parameterRoles = new HashMap<>(2);
+    private Map<String, String> queryToMethodParameterBinding = new HashMap<>(2);
     private boolean dto;
+    private boolean optimisticLock;
 
     /**
      * Creates a method info.
@@ -102,6 +104,24 @@ public class MethodMatchInfo {
     }
 
     /**
+     * Gets optimistic lock value.
+     *
+     * @return the value
+     */
+    public boolean isOptimisticLock() {
+        return optimisticLock;
+    }
+
+    /**
+     * Sets optimistic lock value.
+     *
+     * @param optimisticLock new value
+     */
+    public void setOptimisticLock(boolean optimisticLock) {
+        this.optimisticLock = optimisticLock;
+    }
+
+    /**
      * Adds a parameter role. This indicates that a parameter is involved
      * somehow in the query.
      * @param role The role name
@@ -113,10 +133,27 @@ public class MethodMatchInfo {
     }
 
     /**
+     * Adds query to method parameter binding.
+     *
+     * @param queryParameterName the query parameter
+     * @param methodParameterName the method parameter
+     */
+    public void addQueryToMethodParameterBinding(String queryParameterName, String methodParameterName) {
+        queryToMethodParameterBinding.put(queryParameterName, methodParameterName);
+    }
+
+    /**
      * @return The parameter roles
      */
     public Map<String, String> getParameterRoles() {
         return Collections.unmodifiableMap(parameterRoles);
+    }
+
+    /**
+     * @return The query to method parameter binding
+     */
+    public Map<String, String> getQueryToMethodParameterBinding() {
+        return queryToMethodParameterBinding;
     }
 
     /**

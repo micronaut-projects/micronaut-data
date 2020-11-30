@@ -24,6 +24,7 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.*;
@@ -89,7 +90,10 @@ public class UpdateByMethod extends DynamicFinder {
             matchContext.fail("Projections are not supported on batch updates");
             return null;
         }
-        String[] updateProperties;
+        final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+        SourcePersistentProperty version = rootEntity.getVersion();
+        QueryParameter versionMatchParameter = null;
+        List<String> updateProperties;
         if (!(query instanceof RawQuery)) {
 
             List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
@@ -103,7 +107,11 @@ public class UpdateByMethod extends DynamicFinder {
                     QueryModel.PropertyCriterion pc = (QueryModel.PropertyCriterion) criterion;
                     Object v = pc.getValue();
                     if (v instanceof QueryParameter) {
-                        queryParameters.add(((QueryParameter) v).getName());
+                        QueryParameter queryParameter = (QueryParameter) v;
+                        queryParameters.add(queryParameter.getName());
+                        if (criterion instanceof QueryModel.VersionEquals) {
+                           versionMatchParameter = queryParameter;
+                        }
                     }
                 }
             }
@@ -113,32 +121,40 @@ public class UpdateByMethod extends DynamicFinder {
                 matchContext.fail("At least one parameter required to update");
                 return null;
             }
-            Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
-            if (element instanceof PropertyElement) {
-                updateParameters.add(element);
+            Element lastUpdatedProperty = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
+            if (lastUpdatedProperty instanceof PropertyElement) {
+                updateParameters.add(lastUpdatedProperty);
             }
             SourcePersistentEntity entity = matchContext.getRootEntity();
-            updateProperties = new String[updateParameters.size()];
-            for (int i = 0; i < updateProperties.length; i++) {
-                Element parameter = updateParameters.get(i);
+            updateProperties = new ArrayList<>(updateParameters.size() + 1);
+            for (Element parameter : updateParameters) {
                 String parameterName = parameter.stringValue(Parameter.class).orElse(parameter.getName());
                 Optional<String> path = entity.getPath(parameterName);
                 if (path.isPresent()) {
-                    updateProperties[i] = path.get();
+                    updateProperties.add(path.get());
                 } else {
                     matchContext.fail("Cannot perform batch update for non-existent property: " + parameterName);
                     return null;
                 }
             }
+            if (versionMatchParameter != null && !updateProperties.contains(version.getName())) {
+                updateProperties.add(version.getName());
+            }
         } else {
-            updateProperties = StringUtils.EMPTY_STRING_ARRAY;
+            updateProperties = Collections.emptyList();
         }
-        return new MethodMatchInfo(
+        MethodMatchInfo methodMatchInfo =  new MethodMatchInfo(
                 queryResultType,
                 query,
                 getInterceptorElement(matchContext, UpdateMethod.pickUpdateInterceptor(matchContext.getReturnType())),
                 MethodMatchInfo.OperationType.UPDATE,
-                updateProperties
+                updateProperties.toArray(new String[0])
         );
+        if (versionMatchParameter != null) {
+            methodMatchInfo.setOptimisticLock(true);
+            methodMatchInfo.addParameterRole(TypeRole.VERSION_UPDATE, VERSION_UPDATE_PARAMETER);
+            methodMatchInfo.addQueryToMethodParameterBinding(version.getName(), VERSION_UPDATE_PARAMETER);
+        }
+        return methodMatchInfo;
     }
 }

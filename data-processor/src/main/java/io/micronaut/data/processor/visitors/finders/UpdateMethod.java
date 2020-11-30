@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
@@ -86,7 +87,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             @NonNull MethodMatchContext matchContext) {
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         List<ParameterElement> remainingParameters = parameters.stream()
-                .filter(p -> !p.hasAnnotation(Id.class))
+                .filter(p -> !p.hasAnnotation(Id.class) && !p.hasAnnotation(Version.class))
                 .collect(Collectors.toList());
 
         ParameterElement idParameter = parameters.stream().filter(p -> p.hasAnnotation(Id.class)).findFirst()
@@ -97,6 +98,16 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         }
 
         SourcePersistentEntity entity = matchContext.getRootEntity();
+        List<String> properiesToUpdate = new ArrayList<>(remainingParameters.size());
+
+        ParameterElement versionMatchMethodParameter = null;
+        SourcePersistentProperty version = entity.getVersion();
+        if (version != null) {
+            versionMatchMethodParameter = parameters.stream().filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
+            if (versionMatchMethodParameter != null) {
+                properiesToUpdate.add(version.getName());
+            }
+        }
 
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity == null) {
@@ -113,7 +124,9 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
 
         QueryModel query = QueryModel.from(entity);
         query.idEq(new QueryParameter(idParameter.getName()));
-        List<String> properiesToUpdate = new ArrayList<>(remainingParameters.size());
+        if (versionMatchMethodParameter != null) {
+            query.versionEq(new QueryParameter(VERSION_MATCH_PARAMETER));
+        }
         for (ParameterElement parameter : remainingParameters) {
             String name = parameter.stringValue(Parameter.class).orElse(parameter.getName());
             SourcePersistentProperty prop = entity.getPropertyByName(name);
@@ -130,9 +143,9 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             }
         }
 
-        Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
-        if (element instanceof PropertyElement) {
-            properiesToUpdate.add(element.getName());
+        Element lastUpdatedProperty = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
+        if (lastUpdatedProperty instanceof PropertyElement) {
+            properiesToUpdate.add(lastUpdatedProperty.getName());
         }
 
         ClassElement returnType = matchContext.getReturnType();
@@ -152,6 +165,19 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                 TypeRole.ID,
                 idParameter.getName()
         );
+        if (versionMatchMethodParameter != null) {
+            info.setOptimisticLock(true);
+            info.addParameterRole(
+                    TypeRole.VERSION_UPDATE,
+                    VERSION_UPDATE_PARAMETER
+            );
+            info.addParameterRole(
+                    TypeRole.VERSION_MATCH,
+                    versionMatchMethodParameter.getName()
+            );
+            info.addQueryToMethodParameterBinding(VERSION_MATCH_PARAMETER, versionMatchMethodParameter.getName());
+            info.addQueryToMethodParameterBinding(version.getName(), VERSION_UPDATE_PARAMETER);
+        }
         return info;
     }
 

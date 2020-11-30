@@ -21,21 +21,33 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.*;
+import io.micronaut.data.jdbc.runtime.AutoPopulatedValueProvider;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.EntityOperation;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -50,11 +62,18 @@ import org.slf4j.Logger;
 
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Abstract SQL repository implementation not specifically bound to JDBC.
@@ -79,6 +98,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final MediaTypeCodec jsonCodec;
     protected final DateTimeProvider dateTimeProvider;
+    protected final List<AutoPopulatedValueProvider> autoPopulatedSetters;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
@@ -96,6 +116,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
      * @param dateTimeProvider           The injected dateTimeProvider instance
+     * @param autoPopulatedSetters       The list of {@link AutoPopulatedValueProvider}
      * @param beanContext                The bean context
      */
     protected AbstractSqlRepositoryOperations(
@@ -105,12 +126,14 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
             @NonNull DateTimeProvider dateTimeProvider,
+            List<AutoPopulatedValueProvider> autoPopulatedSetters,
             BeanContext beanContext) {
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
         this.dateTimeProvider = dateTimeProvider;
+        this.autoPopulatedSetters = autoPopulatedSetters;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -243,23 +266,29 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
                 String propertyPath = indexedParameterPaths[i];
                 if (propertyPath != null) {
-
+                    String versionUpdateParameter = preparedQuery.getVersionUpdateParameter();
                     String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
-                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
-                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
-                        if (lastUpdatedType == null) {
-                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
+                    RuntimePersistentEntity<T> entity = getEntity(preparedQuery.getRootEntity());
+                    if (versionUpdateParameter != null && versionUpdateParameter.equals(propertyPath)) {
+                        String versionMatchParameter = preparedQuery.getVersionMatchParameter();
+                        if (versionMatchParameter != null) {
+                            Object previousValue = IntStream.range(0, parameterBinding.length)
+                                    .filter(inx -> versionMatchParameter.equals(indexedParameterPaths[inx]))
+                                    .mapToObj(inx -> queryParameters[parameterBinding[inx]])
+                                    .findFirst()
+                                    .orElseThrow(() -> new IllegalStateException("Cannot find version match property"));
+                            RuntimePersistentProperty<T> version = entity.getVersion();
+                            value = provideAutoPopulatedParameter(version, previousValue);
+                        } else {
+                           throw new IllegalStateException("Version match parameter is required");
                         }
-                        Object timestamp = ConversionService.SHARED.convert(dateTimeProvider.getNow(), lastUpdatedType).orElse(null);
-                        if (timestamp == null) {
-                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                        }
-                        value = timestamp;
+                    } else if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
+                        value = provideAutoPopulatedParameter(entity.getPropertyByName(lastUpdatedProperty), null);
                     } else {
                         int j = propertyPath.indexOf('.');
                         if (j > -1) {
                             String subProp = propertyPath.substring(j + 1);
-                            value = queryParameters[Integer.valueOf(propertyPath.substring(0, j))];
+                            value = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
                             value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
                         } else {
                             throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
@@ -299,6 +328,15 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return ps;
     }
 
+    private <T> Object provideAutoPopulatedParameter(RuntimePersistentProperty<T> property, Object previousValue) {
+        for (AutoPopulatedValueProvider autoPopulatedSetter : autoPopulatedSetters) {
+            if (autoPopulatedSetter.supportsUpdate(property, property.getType())) {
+                return autoPopulatedSetter.provideOnUpdate(property, property.getType(), previousValue);
+            }
+        }
+        return null;
+    }
+
     /**
      * Sets the insert parameters for the given insert, entity and statement.
      *
@@ -308,7 +346,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T>    The entity type
      */
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
-        Object now = null;
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
         final Dialect dialect = insert.dialect;
@@ -381,18 +418,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     value = value != null ? identityProperty.get(value) : null;
                 } else if (!prop.isGenerated()) {
                     if (beanProperty.hasStereotype(AutoPopulated.NAME)) {
-                        if (beanProperty.hasAnnotation(DateCreated.NAME) ||
-                                beanProperty.hasAnnotation(DateUpdated.NAME)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
-
-                            value = now;
-                            beanProperty.convertAndSet(entity, value);
-                        } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
-                            value = UUID.randomUUID();
-                            beanProperty.set(entity, value);
-                        } else {
-                            throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
-                        }
+                        value = provideAutoPopulatedParameter(prop, beanProperty, entity);
                     } else {
                         if (DataSettings.QUERY_LOG.isTraceEnabled()) {
                             DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
@@ -423,6 +449,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             }
             setStatementParameter(stmt, index, type, value, dialect);
         }
+    }
+
+    private <T> Object provideAutoPopulatedParameter(RuntimePersistentProperty<T> prop, BeanProperty<T, Object> beanProperty, T entity) {
+        for (AutoPopulatedValueProvider autoPopulatedSetter : autoPopulatedSetters) {
+            if (autoPopulatedSetter.supportsCreate(prop, prop.getType())) {
+                Object value = autoPopulatedSetter.provideOnCreate(prop, (BeanProperty<Object, Object>) beanProperty, entity);
+                beanProperty.set(entity, value);
+                return value;
+            }
+        }
+        throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
     }
 
     /**
@@ -637,8 +674,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             } else {
                 idName = TypeRole.ID;
             }
-            final QueryModel queryModel = QueryModel.from(persistentEntity)
+            QueryModel queryModel = QueryModel.from(persistentEntity)
                     .idEq(new QueryParameter(idName));
+            final PersistentProperty version = persistentEntity.getVersion();
+            if (version != null) {
+                queryModel = queryModel.versionEq(new QueryParameter(version.getName()));
+            }
+
             List<String> updateProperties = persistentEntity.getPersistentProperties()
                     .stream().filter(p ->
                             !((p instanceof Association) && ((Association) p).isForeignKey()) &&

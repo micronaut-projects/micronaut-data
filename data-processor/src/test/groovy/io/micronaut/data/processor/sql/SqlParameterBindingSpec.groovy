@@ -111,6 +111,6 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
 
         expect:"The repository compiles"
         repository != null
-        updatePaths == ['', "lastUpdated", ""] as String[]
+        updatePaths == ['', "lastUpdated", "id"] as String[]
     }
 }

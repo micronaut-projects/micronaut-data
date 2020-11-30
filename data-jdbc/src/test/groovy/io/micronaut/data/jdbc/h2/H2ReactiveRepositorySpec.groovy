@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
+import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
@@ -31,9 +32,18 @@ class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec {
     @Shared
     PersonReactiveRepository personReactiveRepository
 
+    @Inject
+    @Shared
+    StudentReactiveRepository studentReactiveRepository
+
     @Override
     PersonReactiveRepository getPersonRepository() {
         return personReactiveRepository
+    }
+
+    @Override
+    StudentReactiveRepository getStudentRepository() {
+        return studentReactiveRepository
     }
 
     @Override

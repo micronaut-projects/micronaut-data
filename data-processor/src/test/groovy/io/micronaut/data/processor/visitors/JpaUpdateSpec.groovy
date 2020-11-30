@@ -120,7 +120,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
         updateQuery.value() == "UPDATE $Company.name ${alias} SET ${alias}.name=:p1,${alias}.lastUpdated=:p2 WHERE (${alias}.myId = :p3)"
         updateAnn.id() == 'myId'
         updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['p1', 'p2', 'p3'] as String[]
-        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") == ['', 'lastUpdated', ''] as String[]
+        updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") == ['', 'lastUpdated', 'myId'] as String[]
         updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get() == [1,-1,0] as int[]
 
         updateByAnn.interceptor() == UpdateInterceptor

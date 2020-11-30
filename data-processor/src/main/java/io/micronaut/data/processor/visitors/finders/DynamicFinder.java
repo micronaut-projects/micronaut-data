@@ -305,6 +305,8 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             }
         }
 
+        QueryParameter versionMatchParameter = null;
+
         if ("Or".equalsIgnoreCase(operatorInUse)) {
             QueryModel.Disjunction disjunction = new QueryModel.Disjunction();
             for (CriterionMethodExpression expression : expressions) {
@@ -319,8 +321,12 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                     QueryModel.Equals equals = (QueryModel.Equals) criterion;
                     String property = equals.getProperty();
                     SourcePersistentProperty identity = entity.getIdentity();
+                    SourcePersistentProperty version = entity.getVersion();
                     if (identity != null && identity.getName().equals(property)) {
                         query.idEq((QueryParameter) equals.getValue());
+                    } else if (version != null && version.getName().equals(property)) {
+                        versionMatchParameter = (QueryParameter) equals.getValue();
+                        query.versionEq(new QueryParameter(VERSION_MATCH_PARAMETER));
                     } else {
                         query.add(criterion);
                     }
@@ -330,11 +336,17 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             }
         }
 
-        return buildInfo(
+        MethodMatchInfo methodMatchInfo = buildInfo(
                 matchContext,
                 queryResultType,
                 query
         );
+        if (versionMatchParameter != null && methodMatchInfo != null) {
+            methodMatchInfo.setOptimisticLock(true);
+            methodMatchInfo.addParameterRole(TypeRole.VERSION_MATCH, versionMatchParameter.getName());
+            methodMatchInfo.addQueryToMethodParameterBinding(VERSION_MATCH_PARAMETER, versionMatchParameter.getName());
+        }
+        return methodMatchInfo;
     }
 
     private void verifyFinderParameter(String methodName, SourcePersistentEntity entity, CriterionMethodExpression methodExpression, ParameterElement parameter) {
