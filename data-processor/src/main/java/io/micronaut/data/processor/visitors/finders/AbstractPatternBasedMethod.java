@@ -709,6 +709,11 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             return new DynamicClassElement((Class<? extends DataInterceptor>) Array.newInstance(type, 0).getClass());
         }
 
+        @Override
+        public ClassElement fromArray() {
+            return new DynamicClassElement((Class<? extends DataInterceptor>) type.getComponentType());
+        }
+
         @Nonnull
         @Override
         public String getName() {

@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.Qualifier;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.exceptions.NoTransactionException;
@@ -35,7 +36,7 @@ import java.sql.SQLException;
  * @author graemerocher
  * @since 1.0
  */
-@Singleton
+@Prototype
 public final class TransactionalConnectionInterceptor implements MethodInterceptor<Connection, Object> {
 
     private final DataSource dataSource;

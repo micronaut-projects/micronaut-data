@@ -2,23 +2,31 @@ package io.micronaut.transaction.jdbc
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.jdbc.DataSourceResolver
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
+import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionStatus
 import io.micronaut.transaction.exceptions.NoTransactionException
 import spock.lang.Specification
 
 import javax.inject.Inject
+import javax.inject.Named
 import javax.sql.DataSource
 import java.sql.Connection
+import java.sql.ResultSet
 
 @MicronautTest(transactional = false)
 @Property(name = "datasources.default.name", value = "mydb")
+@Property(name = "datasources.other.name", value = "other")
 class DataSourceProxySpec extends Specification {
 
     @Inject
     DataSource dataSource
+
+    @Inject
+    @Named("other")
+    DataSource otherSource
 
     @Inject
     DataSourceResolver dataSourceResolver
@@ -27,7 +35,43 @@ class DataSourceProxySpec extends Specification {
     SynchronousTransactionManager<Connection> transactionManager
 
     @Inject
+    @Named("other")
+    SynchronousTransactionManager<Connection> otherTransactionManager
+
+    @Inject
     TestService testService
+
+    void "test within transaction"() {
+        when:"executing a transaction with the default datasource"
+        def result = transactionManager.execute(TransactionDefinition.DEFAULT, (connection) -> {
+            def ps = dataSource.connection.prepareStatement("select 1")
+            ps.withCloseable {
+                def rs = it.executeQuery()
+                rs.with {
+                    rs.next()
+                    return rs.getInt(1)
+                }
+            }
+        })
+
+        then:"the transaction executes successfully"
+        result == 1
+
+        when:"executing a transaction with another datasource"
+        result = otherTransactionManager.execute(TransactionDefinition.DEFAULT, (connection) -> {
+            def ps = otherSource.connection.prepareStatement("select 1")
+            ps.withCloseable {
+                def rs = it.executeQuery()
+                rs.with {
+                    rs.next()
+                    return rs.getInt(1)
+                }
+            }
+        })
+
+        then:"the transaction executes successfully"
+        result == 1
+    }
 
     void "test rollback"() {
         given:
