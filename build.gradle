@@ -18,10 +18,6 @@ subprojects { Project subproject ->
         apply plugin: "io.micronaut.build.dependency-updates"
         apply plugin: "io.micronaut.build.publishing"
 
-        repositories {
-            maven { url "https://oss.jfrog.org/oss-snapshot-local" }
-        }
-
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"
             options.compilerArgs.addAll([
