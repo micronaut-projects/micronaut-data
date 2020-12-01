@@ -18,6 +18,13 @@ subprojects { Project subproject ->
         apply plugin: "io.micronaut.build.dependency-updates"
         apply plugin: "io.micronaut.build.publishing"
 
+        micronautBuild {
+            resolutionStrategy {
+                force "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+                force "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
+            }
+        }
+
         tasks.withType(JavaCompile) {
             options.encoding = "UTF-8"
             options.compilerArgs.addAll([
