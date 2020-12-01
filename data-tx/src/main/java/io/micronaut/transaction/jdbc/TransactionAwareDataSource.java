@@ -26,7 +26,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.SQLException;
 
 /**
  * Transaction aware data source implementation.
@@ -35,12 +34,9 @@ import java.sql.SQLException;
  * @since 1.0.1
  */
 @Singleton
-@Requires(missingClasses = "org.springframework.jdbc.datasource.DataSourceTransactionManager")
+@Requires(missingBeans = io.micronaut.jdbc.spring.DataSourceTransactionManagerFactory.class)
 public class TransactionAwareDataSource implements BeanCreatedEventListener<DataSource> {
     private final BeanLocator beanLocator;
-
-    private Connection transactionAwareConnection;
-    private String qualifier;
 
     /**
      * Create a new DelegatingDataSource.
@@ -59,17 +55,7 @@ public class TransactionAwareDataSource implements BeanCreatedEventListener<Data
         if (name.equalsIgnoreCase("primary")) {
             name = "default";
         }
-        this.qualifier = name;
-        return new DataSourceProxy(event.getBean());
-    }
-
-    private Connection getTransactionAwareConnection() {
-        if (transactionAwareConnection == null) {
-            transactionAwareConnection
-                    = beanLocator.getBean(Connection.class, Qualifiers.byName(qualifier));
-
-        }
-        return transactionAwareConnection;
+        return new DataSourceProxy(event.getBean(), name);
     }
 
     /**
@@ -79,19 +65,32 @@ public class TransactionAwareDataSource implements BeanCreatedEventListener<Data
      * @since 1.0.1
      */
     private final class DataSourceProxy extends DelegatingDataSource {
+        private final String qualifier;
+        private Connection transactionAwareConnection;
 
         /**
          * Create a new DelegatingDataSource.
          *
          * @param targetDataSource the target DataSource
+         * @param qualifier        The qualifier
          */
-        DataSourceProxy(@NonNull DataSource targetDataSource) {
+        DataSourceProxy(@NonNull DataSource targetDataSource, String qualifier) {
             super(targetDataSource);
+            this.qualifier = qualifier;
         }
 
         @Override
-        public Connection getConnection() throws SQLException {
+        public Connection getConnection() {
             return getTransactionAwareConnection();
+        }
+
+        private Connection getTransactionAwareConnection() {
+            if (transactionAwareConnection == null) {
+                transactionAwareConnection
+                        = beanLocator.getBean(Connection.class, Qualifiers.byName(qualifier));
+
+            }
+            return transactionAwareConnection;
         }
     }
 }
