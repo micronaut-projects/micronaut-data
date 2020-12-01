@@ -280,11 +280,12 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
             ["Ali"],
             "James",
             ["Onur"],
-            ["Cemo","Deniz","Olcay"]);
+            ["Cemo","Deniz","Olcay"],
+            "Utku");
 
         then:"The result is correct"
         persons != null
-        persons.size() == 2
+        persons.size() == 3
 
         then:
         cleanupData()

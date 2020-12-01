@@ -24,6 +24,7 @@ import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
+import javax.annotation.Nullable;
 import javax.transaction.Transactional;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,15 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query(value = "select * from book b where b.title like :t limit 5", nativeQuery = true)
     abstract List<Book> listNativeBooks(String t);
+
+    @Query(value = "select * from book where CASE WHEN :t is not null THEN title = :t ELSE true END", nativeQuery = true)
+    abstract List<Book> listNativeBooksNullableSearch(@Nullable String t);
+
+    @Query(value = "select * from book where CASE WHEN exists ( select :t ) THEN title in :t ELSE true END", nativeQuery = true)
+    abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> t);
+
+    @Query(value = "select * from book where CASE WHEN exists ( select :t ) THEN title in :t ELSE true END", nativeQuery = true)
+    abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] t);
 
     @EntityGraph(
             attributePaths = {

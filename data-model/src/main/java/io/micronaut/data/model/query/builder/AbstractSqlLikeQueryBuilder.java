@@ -924,7 +924,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(additionalWhere);
 
             while (matcher.find()) {
-                String name = matcher.group(2);
+                String name = matcher.group(3);
                 queryState.addRequiredParameters(name);
                 final Placeholder ph = queryState.newParameter();
                 queryState.getParameters().put(ph.getKey(), name);

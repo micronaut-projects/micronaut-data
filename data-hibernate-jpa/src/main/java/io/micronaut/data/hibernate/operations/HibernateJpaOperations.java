@@ -50,6 +50,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
+import org.hibernate.type.Type;
 
 import javax.inject.Named;
 import javax.persistence.EntityManager;
@@ -61,6 +62,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -204,7 +206,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                         int j = propertyPath.indexOf('.');
                         if (j > -1) {
                             String subProp = propertyPath.substring(j + 1);
-                            value = parameterArray[Integer.valueOf(propertyPath.substring(0, j))];
+                            value = parameterArray[Integer.parseInt(propertyPath.substring(0, j))];
                             value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
                         } else {
                             throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
@@ -212,6 +214,26 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     }
                 } else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
+                }
+            }
+            if (preparedQuery.isNative()) {
+                Argument<?> argument = preparedQuery.getArguments()[i];
+                Class<?> argumentType = argument.getType();
+                if (Collection.class.isAssignableFrom(argumentType)) {
+                    Type valueType = sessionFactory.getTypeHelper().heuristicType(argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT).getType().getName());
+                    if (valueType != null) {
+                        q.setParameterList(parameterName, value == null ? Collections.emptyList() : (Collection<?>) value, valueType);
+                        return;
+                    }
+                } else if (Object[].class.isAssignableFrom(argumentType)) {
+                    q.setParameterList(parameterName, value == null ? ArrayUtils.EMPTY_OBJECT_ARRAY : (Object[]) value);
+                    return;
+                } else if (value == null) {
+                    Type type = sessionFactory.getTypeHelper().heuristicType(argumentType.getName());
+                    if (type != null) {
+                        q.setParameter(parameterName, null, type);
+                        return;
+                    }
                 }
             }
             q.setParameter(parameterName, value);
