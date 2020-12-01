@@ -112,7 +112,7 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>@Singleton
- @Requires(missingClasses="org.springframework.jdbc.datasource.DataSourceTransactionManager")
+ @Requires(missingBeans=io.micronaut.jdbc.spring.DataSourceTransactionManagerFactory.class)
 public class <span class="typeNameLabel">TransactionAwareDataSource</span>
 extends java.lang.Object
 implements io.micronaut.context.event.BeanCreatedEventListener&lt;javax.sql.DataSource&gt;</pre>
