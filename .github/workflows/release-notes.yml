@@ -37,12 +37,17 @@ jobs:
         id: release_notes
         with:
           token: ${{ secrets.GH_TOKEN }}
-          branch: ${{ env.githubBranch }}
+      - name: Determine current branch
+        id: branch
+        run: |
+          branch=$(git rev-parse --abbrev-ref HEAD)
+          echo "Current branch: ${branch}"
+          echo ::set-output name=branch::${branch}
       - uses: ncipollo/release-action@v1
         if: steps.check_release_drafter.outputs.has_release_drafter == 'false' && steps.release_notes.outputs.generated_changelog == 'true'
         with:
           allowUpdates: true
-          commit: ${{ env.githubBranch }}
+          commit: ${{ steps.branch.outputs.branch }}
           draft: true
           name: ${{ env.title }} ${{ steps.release_notes.outputs.next_version }}
           tag: v${{ steps.release_notes.outputs.next_version }}
