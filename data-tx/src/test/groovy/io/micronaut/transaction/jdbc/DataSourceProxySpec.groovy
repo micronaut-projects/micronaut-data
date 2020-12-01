@@ -8,6 +8,8 @@ import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionStatus
 import io.micronaut.transaction.exceptions.NoTransactionException
+import spock.lang.Issue
+import spock.lang.PendingFeature
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -41,6 +43,8 @@ class DataSourceProxySpec extends Specification {
     @Inject
     TestService testService
 
+    @PendingFeature(reason = "Requires upgrade to Micronaut 2.2.1")
+    @Issue('https://github.com/micronaut-projects/micronaut-data/issues/822')
     void "test within transaction"() {
         when:"executing a transaction with the default datasource"
         def result = transactionManager.execute(TransactionDefinition.DEFAULT, (connection) -> {
