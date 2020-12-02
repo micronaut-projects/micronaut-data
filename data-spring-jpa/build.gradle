@@ -3,7 +3,8 @@ dependencies {
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     implementation project(":data-spring")
     api project(":data-hibernate-jpa")
-    api 'org.springframework.data:spring-data-jpa:2.4.0'
+    api "org.springframework.data:spring-data-jpa:$springDataVersion"
+    api "io.micronaut.sql:micronaut-hibernate-jpa:$micronautSqlVersion"
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     testAnnotationProcessor project(":data-processor")
@@ -12,6 +13,6 @@ dependencies {
     testImplementation project(":data-hibernate-jpa")
     testImplementation project(":data-tck")
     testRuntimeOnly "com.h2database:h2:1.4.200"
-    testRuntimeOnly group:'io.micronaut.sql', name:'micronaut-hibernate-jpa-spring', version:micronautSqlVersion
+    testRuntimeOnly "io.micronaut.sql:micronaut-hibernate-jpa-spring:$micronautSqlVersion"
     testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
 }
