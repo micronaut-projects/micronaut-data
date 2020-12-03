@@ -203,10 +203,8 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
                     }
                 } else {
                     if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
-                        if (!(query instanceof RawQuery)) {
-                            if (!attemptProjection(matchContext, queryResultType, query, returnType)) {
-                                return null;
-                            }
+                        if (!ignoreAttemptProjection(query) && !attemptProjection(matchContext, queryResultType, query, returnType)) {
+                            return null;
                         }
 
                         return new MethodMatchInfo(returnType, query, getInterceptorElement(matchContext, FindOneInterceptor.class), true);
@@ -271,7 +269,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
 
                         if ((typeArgument.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class))) {
                             QueryModel projectionQuery = query != null ? query : QueryModel.from(matchContext.getRootEntity());
-                            if (!attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
+                            if (!ignoreAttemptProjection(query) && !attemptProjection(matchContext, queryResultType, projectionQuery, typeArgument)) {
                                 return null;
                             }
                             query = projectionQuery;
@@ -480,6 +478,9 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
             @NonNull ClassElement returnType) {
         if (!TypeUtils.areTypesCompatible(returnType, queryResultType)) {
             if (query != null && returnType.hasStereotype(Introspected.class) && queryResultType.hasStereotype(MappedEntity.class)) {
+                if (ignoreAttemptProjection(query)) {
+                    return true;
+                }
                 if (attemptProjection(matchContext, queryResultType, query, returnType)) {
                     return true;
                 }
@@ -687,6 +688,10 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     protected @NonNull
     MethodMatchInfo.OperationType getOperationType() {
         return MethodMatchInfo.OperationType.QUERY;
+    }
+
+    private boolean ignoreAttemptProjection(@Nullable QueryModel query) {
+        return query instanceof RawQuery;
     }
 
     /**

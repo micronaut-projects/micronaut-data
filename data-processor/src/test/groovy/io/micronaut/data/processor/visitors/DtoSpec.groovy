@@ -58,6 +58,39 @@ class TotalDto {
         repository != null
     }
 
+    void "test build a list of DTO with raw @Query method doesn't fail to compile"() {
+        when:
+        def repository = buildRepository('test.MyInterface', """
+
+import io.micronaut.data.model.entities.Person;
+import io.micronaut.core.annotation.Introspected;
+
+@Repository
+interface MyInterface extends GenericRepository<Person, Long> {
+
+    @Query("select name as fullName from person")
+    List<FullNameDto> getFullName();
+}
+
+@Introspected
+class FullNameDto {
+    private String fullName;
+    
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+    
+}
+""")
+
+        then:
+        repository != null
+    }
+
     void "test build repository with DTO projection - invalid types"() {
         when:
         buildRepository('test.MyInterface' , """
