@@ -50,7 +50,7 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
     }
 
     @Override
-    BookRepository getBookRepository() {
+    OracleXEBookRepository getBookRepository() {
         return context.getBean(OracleXEBookRepository)
     }
 
@@ -182,6 +182,37 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleTes
 
         cleanup:
         basicTypesRepo.deleteAll()
+    }
+
+    void "test ANY queries"() {
+        given:
+            saveSampleBooks()
+        when:
+            def books1 = bookRepository.listNativeBooksWithTitleAnyCollection(null)
+        then:
+            books1.size() == 0
+        when:
+            def books2 = bookRepository.listNativeBooksWithTitleAnyCollection(["The Stand", "Along Came a Spider", "FFF"])
+        then:
+            books2.size() == 2
+        when:
+            def books3 = bookRepository.listNativeBooksWithTitleAnyCollection([])
+        then:
+            books3.size() == 0
+        when:
+            def books4 = bookRepository.listNativeBooksWithTitleAnyArray(null)
+        then:
+            books4.size() == 0
+        when:
+            def books5 = bookRepository.listNativeBooksWithTitleAnyArray(new String[] {"The Stand", "Along Came a Spider", "FFF"})
+        then:
+            books5.size() == 2
+        when:
+            def books6 = bookRepository.listNativeBooksWithTitleAnyArray(new String[0])
+        then:
+            books6.size() == 0
+        cleanup:
+            cleanupBooks()
     }
 
 }

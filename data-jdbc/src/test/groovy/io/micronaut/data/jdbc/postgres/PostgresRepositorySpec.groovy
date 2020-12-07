@@ -45,7 +45,7 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     }
 
     @Override
-    BookRepository getBookRepository() {
+    PostgresBookRepository getBookRepository() {
         return context.getBean(PostgresBookRepository)
     }
 
@@ -210,4 +210,66 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
         then:"It was deleted"
         !carRepo.findById(a5.id).isPresent()
     }
+
+    void "test native query with nullable property"() {
+        given:
+            setupBooks()
+        when:
+            def books1 = bookRepository.listNativeBooksNullableSearch(null)
+        then:
+            books1.size() == 8
+
+        when:
+            def books2 = bookRepository.listNativeBooksNullableSearch("The Stand")
+        then:
+            books2.size() == 1
+
+        when:
+            def books3 = bookRepository.listNativeBooksNullableSearch("Xyz")
+        then:
+            books3.size() == 0
+
+        when:
+            def books4 = bookRepository.listNativeBooksNullableListSearch(["The Stand", "FFF"])
+        then:
+            books4.size() == 1
+
+        when:
+            def books5 = bookRepository.listNativeBooksNullableListSearch(["Xyz", "FFF"])
+        then:
+            books5.size() == 0
+        when:
+            def books6 = bookRepository.listNativeBooksNullableListSearch([])
+        then:
+            books6.size() == 0
+
+        when:
+            def books7 = bookRepository.listNativeBooksNullableListSearch(null)
+        then:
+            books7.size() == 0
+
+        when:
+            def books8 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"Xyz", "Ffff", "zzz"})
+        then:
+            books8.size() == 0
+
+        when:
+            def books9 = bookRepository.listNativeBooksNullableArraySearch(new String[] {})
+        then:
+            books9.size() == 0
+
+        when:
+            def books11 = bookRepository.listNativeBooksNullableArraySearch(null)
+        then:
+            books11.size() == 0
+
+        then:
+            def books12 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"The Stand"})
+        then:
+            books12.size() == 1
+
+        cleanup:
+            cleanupBooks()
+    }
+
 }

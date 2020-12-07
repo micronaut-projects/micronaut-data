@@ -37,18 +37,6 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
         super(authorRepository);
     }
 
-    @Query(value = "select * from book b where b.title like :t limit 5", nativeQuery = true)
-    abstract List<Book> listNativeBooks(String t);
-
-    @Query(value = "select * from book where CASE WHEN :t is not null THEN title = :t ELSE true END", nativeQuery = true)
-    abstract List<Book> listNativeBooksNullableSearch(@Nullable String t);
-
-    @Query(value = "select * from book where CASE WHEN exists ( select :t ) THEN title in :t ELSE true END", nativeQuery = true)
-    abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> t);
-
-    @Query(value = "select * from book where CASE WHEN exists ( select :t ) THEN title in :t ELSE true END", nativeQuery = true)
-    abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] t);
-
     @EntityGraph(
             attributePaths = {
                     "totalPages",
@@ -62,4 +50,14 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query(value = "select count(*) from book b where b.title like :title and b.total_pages > :pages", nativeQuery = true)
     abstract int countNativeByTitleWithPagesGreaterThan(String title, int pages);
+
+    @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableSearch(@Nullable String arg0);
+
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
+
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] arg0);
+
 }

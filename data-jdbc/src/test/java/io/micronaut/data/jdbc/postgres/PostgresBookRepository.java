@@ -15,13 +15,27 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public abstract class PostgresBookRepository extends BookRepository {
     public PostgresBookRepository(PostgresAuthorRepository authorRepository) {
         super(authorRepository);
     }
+
+    @Query(value = "select * from book where (CASE WHEN :arg0 is not null THEN title = :arg0 ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableSearch(@Nullable String arg0);
+
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
+
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] arg0);
 }

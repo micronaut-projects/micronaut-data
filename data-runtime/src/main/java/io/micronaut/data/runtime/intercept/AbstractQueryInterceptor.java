@@ -833,7 +833,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final DataType[] indexedDataTypes;
         private final String[] parameterNames;
         private final boolean hasResultConsumer;
-        private boolean hasIn;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
         private TransactionDefinition transactionDefinition = null;
@@ -871,7 +870,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             } else {
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
             }
-            this.hasIn = isNumericPlaceHolder && this.query.contains(SqlQueryBuilder.IN_EXPRESSION_START);
             this.method = method;
             this.lastUpdatedProp = method.stringValue(PREDATOR_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(PREDATOR_ANN_NAME, DataMethod.META_MEMBER_DTO);
@@ -1085,8 +1083,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
          * @return True if it does
          */
         @Override
+        @Deprecated
         public boolean hasInExpression() {
-            return hasIn;
+            return false;
         }
 
         @Override
@@ -1309,6 +1308,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
+        @Deprecated
         public boolean hasInExpression() {
             return storedQuery.hasInExpression();
         }

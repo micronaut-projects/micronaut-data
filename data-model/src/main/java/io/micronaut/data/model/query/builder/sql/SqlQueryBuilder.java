@@ -55,7 +55,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     /**
      * The start of an IN expression.
      */
-    public static final String IN_EXPRESSION_START = " ?$IN(";
     public static final String DEFAULT_POSITIONAL_PARAMETER_MARKER = "?";
     /**
      * Annotation used to represent join tables.
@@ -907,14 +906,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     Collections.emptySet()
             );
         }
-    }
-
-    @Override
-    protected void encodeInExpression(StringBuilder whereClause, Placeholder placeholder) {
-        whereClause
-                .append(IN_EXPRESSION_START)
-                .append(placeholder.getKey())
-                .append(CLOSE_BRACKET);
     }
 
     @Override
