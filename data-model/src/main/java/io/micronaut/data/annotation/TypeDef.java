@@ -21,7 +21,7 @@ import io.micronaut.data.model.DataType;
 import java.lang.annotation.*;
 
 /**
- * Type definitions allow associated existing types with a specify {@link DataType}. Can be applied
+ * Type definitions allow associated existing types with a specific {@link DataType}. Can be applied
  * as a stereotype (meta-annotation) to other {@link Repository} and/or {@link MappedEntity} to provide
  * additional type information for custom types.
  *
