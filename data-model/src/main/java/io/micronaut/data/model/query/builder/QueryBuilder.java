@@ -51,6 +51,7 @@ public interface QueryBuilder {
     /**
      * A pattern used to find in queries in a query string.
      */
+    @Deprecated
     Pattern IN_VARIABLES_PATTERN = Pattern.compile("(?<singleGroup>:[a-zA-Z0-9]+)|(?<inGroup>IN\\((:[a-zA-Z0-9]+)\\))");
 
     /**

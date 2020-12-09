@@ -512,15 +512,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private String replaceNamedParameters(QueryBuilder queryEncoder, String query) {
         if (queryEncoder instanceof SqlQueryBuilder && StringUtils.isNotEmpty(query)) {
-            Matcher inMatcher = IN_VARIABLES_PATTERN.matcher(query);
-            StringBuffer sb = new StringBuffer();
-            for (int i = 1; inMatcher.find(); i++) {
-                if (inMatcher.group("inGroup") != null) {
-                    inMatcher.appendReplacement(sb, "\\?\\$IN(" + i + ")");
-                }
-            }
-            inMatcher.appendTail(sb);
-            query = sb.toString();
             Matcher matcher = VARIABLE_PATTERN.matcher(query);
             query = matcher.replaceAll("$1?"); // left first group as it is and replace second group with question mark
         }

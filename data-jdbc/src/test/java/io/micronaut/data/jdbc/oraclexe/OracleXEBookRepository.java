@@ -15,13 +15,26 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
+
+import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 public abstract class OracleXEBookRepository extends BookRepository {
     public OracleXEBookRepository(OracleXEAuthorRepository authorRepository) {
         super(authorRepository);
     }
+
+    @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+
+    @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Nullable String[] arg0);
+
 }

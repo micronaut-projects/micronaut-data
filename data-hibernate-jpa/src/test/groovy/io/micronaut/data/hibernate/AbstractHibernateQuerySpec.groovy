@@ -52,70 +52,88 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
 
     void "test native query with nullable property"() {
         when:
-        def books1 = bookRepository.listNativeBooksNullableSearch(null)
-
+            def books1 = bookRepository.listNativeBooksNullableSearch(null)
         then:
-        books1.size() == 8
+            books1.size() == 8
 
         when:
-        def books2 = bookRepository.listNativeBooksNullableSearch("The Stand")
-
+            def books2 = bookRepository.listNativeBooksNullableSearch("The Stand")
         then:
-        books2.size() == 1
+            books2.size() == 1
 
         when:
-        def books3 = bookRepository.listNativeBooksNullableSearch("Xyz")
-
+            def books3 = bookRepository.listNativeBooksNullableSearch("Xyz")
         then:
-        books3.size() == 0
+            books3.size() == 0
 
         when:
-        def books4 = bookRepository.listNativeBooksNullableListSearch(["The Stand"])
-
+            def books4 = bookRepository.listNativeBooksNullableListSearch(["The Stand", "FFF"])
         then:
-        books4.size() == 1
+            books4.size() == 1
 
         when:
-        def books5 = bookRepository.listNativeBooksNullableListSearch(["Xyz"])
-
+            def books5 = bookRepository.listNativeBooksNullableListSearch(["Xyz", "FFF"])
         then:
-        books5.size() == 0
+            books5.size() == 0
+        when:
+            def books6 = bookRepository.listNativeBooksNullableListSearch([])
+        then:
+            books6.size() == 0
 
         when:
-        def books6 = bookRepository.listNativeBooksNullableListSearch([])
-
+            def books7 = bookRepository.listNativeBooksNullableListSearch(null)
         then:
-        books6.size() == 0
+            books7.size() == 0
 
         when:
-        def books7 = bookRepository.listNativeBooksNullableListSearch(null)
-
+            def books8 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"Xyz", "Ffff", "zzz"})
         then:
-        books7.size() == 0
+            books8.size() == 0
 
         when:
-        def books8 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"Xyz"})
-
+            def books9 = bookRepository.listNativeBooksNullableArraySearch(new String[] {})
         then:
-        books8.size() == 0
+            books9.size() == 0
 
         when:
-        def books9 = bookRepository.listNativeBooksNullableArraySearch(new String[] {})
+            def books11 = bookRepository.listNativeBooksNullableArraySearch(null)
+        then:
+            books11.size() == 0
 
         then:
-        books9.size() == 0
+            def books12 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"The Stand"})
+        then:
+            books12.size() == 1
 
+        then:
+            books12.size() == 1
+    }
+
+    void "test IN queries"() {
         when:
-        def books11 = bookRepository.listNativeBooksNullableArraySearch(null)
-
+            def books1 = bookRepository.listNativeBooksWithTitleInCollection(null)
         then:
-        books11.size() == 0
-
+            books1.size() == 0
+        when:
+            def books2 = bookRepository.listNativeBooksWithTitleInCollection(["The Stand", "Along Came a Spider", "FFF"])
         then:
-        def books12 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"The Stand"})
-
+            books2.size() == 2
+        when:
+            def books3 = bookRepository.listNativeBooksWithTitleInCollection([])
         then:
-        books12.size() == 1
+            books3.size() == 0
+        when:
+            def books4 = bookRepository.listNativeBooksWithTitleInArray(null)
+        then:
+            books4.size() == 0
+        when:
+            def books5 = bookRepository.listNativeBooksWithTitleInArray(new String[] {"The Stand", "Along Came a Spider", "FFF"})
+        then:
+            books5.size() == 2
+        when:
+            def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0])
+        then:
+            books6.size() == 0
     }
 
     void "test join on many ended association"() {

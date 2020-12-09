@@ -67,9 +67,8 @@ import java.util.stream.Collectors;
 public abstract class AbstractSqlRepositoryOperations<RS, PS> implements RepositoryOperations {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
-    protected static final Pattern IN_EXPRESSION_PATTERN = Pattern.compile("\\s\\?\\$IN\\((\\d+)\\)");
-    protected static final String NOT_TRUE_EXPRESSION = "1 = 2";
     private static final Object IGNORED_PARAMETER = new Object();
+    private static final Pattern PARAMETERS_IN_QUERY = Pattern.compile(Pattern.quote(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER));
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
     @SuppressWarnings("WeakerAccess")
@@ -166,41 +165,50 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         String query = preparedQuery.getQuery();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
         final Dialect dialect = queryBuilder.getDialect();
-        final boolean hasIn = preparedQuery.hasInExpression();
-        if (hasIn) {
-            Matcher matcher = IN_EXPRESSION_PATTERN.matcher(query);
-            // this has to be done is two passes, one to remove and establish new indexes
-            // and again to expand existing indexes
-            while (matcher.find()) {
-                int inIndex = Integer.parseInt(matcher.group(1));
-                int queryParameterIndex = parameterBinding[inIndex - 1];
-                Object value = queryParameters[queryParameterIndex];
 
-                if (value == null) {
-                    query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
-                    queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
-                } else {
-                    int size = sizeOf(value);
-                    if (size == 0) {
-                        queryParameters[queryParameterIndex] = IGNORED_PARAMETER;
-                        query = matcher.replaceFirst(NOT_TRUE_EXPRESSION);
-                    } else {
-                        if (queryBuilder.positionalParameterFormat().equals(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER)) {
-                            String replacement = " IN(" + String.join(",", Collections.nCopies(size, "?")) + ")";
-                            query = matcher.replaceFirst(replacement);
-                        } else {
-                            String[] placeholders = new String[size];
-                            for (int i = 0; i < placeholders.length; i++) {
-                                String name = queryBuilder.formatParameter(queryParameterIndex + i + 1).getName();
-                                placeholders[i] = Matcher.quoteReplacement(name);
-                            }
-                            String replacement = " IN(" + String.join(",", Arrays.asList(placeholders)) + ")";
-                            query = matcher.replaceFirst(replacement);
-                        }
-                    }
-                }
-                matcher = IN_EXPRESSION_PATTERN.matcher(query);
+        int[] parametersListSizes = null;
+        for (int i = 0; i < parameterBinding.length; i++) {
+            int parameterIndex = parameterBinding[i];
+            DataType dataType = parameterTypes[i];
+            if (parameterIndex == -1) {
+                continue;
             }
+            if (dataType == DataType.BYTE_ARRAY) {
+                continue;
+            }
+            Object value = queryParameters[parameterIndex];
+            if (value == null) {
+                continue;
+            }
+            int size = sizeOf(value);
+            if (size == 1) {
+                continue;
+            }
+            if (parametersListSizes == null) {
+                parametersListSizes = new int[parameterBinding.length];
+                Arrays.fill(parametersListSizes, 1);
+            }
+            parametersListSizes[i] = size;
+        }
+        if (parametersListSizes != null) {
+            String[] queryParametersSplit;
+            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
+            if (positionalParameterFormat.equals(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER)) {
+                queryParametersSplit = PARAMETERS_IN_QUERY.split(query);
+            } else {
+                queryParametersSplit = query.split(Pattern.quote(positionalParameterFormat));
+            }
+            StringBuilder sb = new StringBuilder(queryParametersSplit[0]);
+            int inx = 1;
+            for (int i = 0; i < parameterBinding.length; i++) {
+                int parameterSetSize = parametersListSizes[i];
+                sb.append(positionalParameterFormat);
+                for (int sx = 1; sx < parameterSetSize; sx++) {
+                    sb.append(",").append(positionalParameterFormat);
+                }
+                sb.append(queryParametersSplit[inx++]);
+            }
+            query = sb.toString();
         }
 
         if (!isUpdate) {
@@ -270,25 +278,30 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 }
             }
 
-            if (QUERY_LOG.isTraceEnabled()) {
-                QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
-            }
             if (value == null) {
                 setStatementParameter(ps, index++, dataType, null, dialect);
             } else if (value != IGNORED_PARAMETER) {
                 if (value instanceof Iterable) {
-                    Iterable iter = (Iterable) value;
-                    for (Object o : iter) {
-                        setStatementParameter(ps, index++, dataType, o, dialect);
+                    Iterator<?> iterator = ((Iterable<?>) value).iterator();
+                    if (!iterator.hasNext()) {
+                        setStatementParameter(ps, index++, dataType, null, dialect);
+                    } else {
+                        while (iterator.hasNext()) {
+                            setStatementParameter(ps, index++, dataType, iterator.next(), dialect);
+                        }
                     }
-                } else if (value.getClass().isArray()) {
+                } else if (value.getClass().isArray() && dataType != DataType.BYTE_ARRAY) {
                     if (value instanceof byte[]) {
                         setStatementParameter(ps, index++, dataType, value, dialect);
                     } else {
                         int len = Array.getLength(value);
-                        for (int j = 0; j < len; j++) {
-                            Object o = Array.get(value, j);
-                            setStatementParameter(ps, index++, dataType, o, dialect);
+                        if (len == 0) {
+                            setStatementParameter(ps, index++, dataType, null, dialect);
+                        } else {
+                            for (int j = 0; j < len; j++) {
+                                Object o = Array.get(value, j);
+                                setStatementParameter(ps, index++, dataType, o, dialect);
+                            }
                         }
                     }
                 } else {
@@ -544,10 +557,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param dialect           The dialect
      */
     protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+        if (QUERY_LOG.isTraceEnabled()) {
+            QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
+        }
         switch (dataType) {
             case JSON:
                 if (value != null && jsonCodec != null && !value.getClass().equals(String.class)) {
-                    System.out.print(value);
                     value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
                 }
                 break;

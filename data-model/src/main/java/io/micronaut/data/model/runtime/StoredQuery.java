@@ -51,6 +51,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * Does the query contain an in expression.
      * @return True if it does
      */
+    @Deprecated
     boolean hasInExpression();
 
     /**

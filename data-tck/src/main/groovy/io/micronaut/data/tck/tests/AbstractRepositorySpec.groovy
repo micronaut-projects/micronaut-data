@@ -981,6 +981,37 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupMeals()
     }
 
+    void "test IN queries"() {
+        given:
+            setupBooks()
+        when:
+            def books1 = bookRepository.listNativeBooksWithTitleInCollection(null)
+        then:
+            books1.size() == 0
+        when:
+            def books2 = bookRepository.listNativeBooksWithTitleInCollection(["The Stand", "Along Came a Spider", "FFF"])
+        then:
+            books2.size() == 2
+        when:
+            def books3 = bookRepository.listNativeBooksWithTitleInCollection([])
+        then:
+            books3.size() == 0
+        when:
+            def books4 = bookRepository.listNativeBooksWithTitleInArray(null)
+        then:
+            books4.size() == 0
+        when:
+            def books5 = bookRepository.listNativeBooksWithTitleInArray(new String[] {"The Stand", "Along Came a Spider", "FFF"})
+        then:
+            books5.size() == 2
+        when:
+            def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0])
+        then:
+            books6.size() == 0
+        cleanup:
+            cleanupBooks()
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

@@ -16,8 +16,10 @@
 package io.micronaut.data.tck.repositories;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.PageableRepository;
@@ -26,7 +28,9 @@ import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -65,6 +69,21 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     public abstract Book findByTitle(String title);
 
     public abstract Author findAuthorById(@Id Long id);
+
+    @Query(value = "select * from book b where b.title like :arg0 limit 5", nativeQuery = true)
+    public abstract List<Book> listNativeBooks(String arg0);
+
+    @Query(value = "select * from book b where b.title in (:arg0)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksWithTitleInCollection(@Nullable Collection<String> arg0);
+
+    @Query(value = "select * from book b where b.title IN (:arg0)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksWithTitleInArray(@Nullable String[] arg0);
+
+    @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
+
+    @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Nullable String[] arg0);
 
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();
