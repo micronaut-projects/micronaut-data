@@ -1449,7 +1449,9 @@
 <div class="block">The default position.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#DEFAULT_POSITIONAL_PARAMETER_MARKER">DEFAULT_POSITIONAL_PARAMETER_MARKER</a></span> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">The start of an IN expression.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SIZE_PARAMETER">DEFAULT_SIZE_PARAMETER</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html#DEFAULT_SORT_IGNORE_CASE">DEFAULT_SORT_IGNORE_CASE</a></span> - Static variable in class io.micronaut.data.runtime.config.<a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></dt>
@@ -2294,8 +2296,6 @@
 <dd>
 <div class="block">Placeholders for IN queries in SQL require special treatment.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#encodeInExpression-java.lang.StringBuilder-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">encodeInExpression(StringBuilder, AbstractSqlLikeQueryBuilder.Placeholder)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.EndingWith.html#EndingWith-java.lang.String-">EndingWith(String)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.EndingWith.html" title="class in io.micronaut.data.processor.visitors.finders">CriterionMethodExpression.EndingWith</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
@@ -4834,7 +4834,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></dt>
 <dd>
-<div class="block">Does the query contain an in expression.</div>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html#hasNext-S-">hasNext(S)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlDTOMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -5031,15 +5031,9 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#IN_EXPRESSION_PATTERN">IN_EXPRESSION_PATTERN</a></span> - Static variable in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#IN_EXPRESSION_START">IN_EXPRESSION_START</a></span> - Static variable in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
-<dd>
-<div class="block">The start of an IN expression.</div>
-</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/QueryBuilder.html#IN_VARIABLES_PATTERN">IN_VARIABLES_PATTERN</a></span> - Static variable in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder">QueryBuilder</a></dt>
 <dd>
-<div class="block">A pattern used to find in queries in a query string.</div>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span></div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html#init-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.String-">init(MethodMatchContext, String)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html" title="class in io.micronaut.data.processor.visitors.finders">ProjectionMethodExpression</a></dt>
 <dd>
@@ -6298,6 +6292,16 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooks-java.lang.String-">listNativeBooks(String)</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleAnyArray-java.lang.String:A-">listNativeBooksWithTitleAnyArray(String[])</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleAnyCollection-java.util.Collection-">listNativeBooksWithTitleAnyCollection(Collection&lt;String&gt;)</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleInArray-java.lang.String:A-">listNativeBooksWithTitleInArray(String[])</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleInCollection-java.util.Collection-">listNativeBooksWithTitleInCollection(Collection&lt;String&gt;)</a></span> - Method in class io.micronaut.data.tck.repositories.<a href="io/micronaut/data/tck/repositories/BookRepository.html" title="class in io.micronaut.data.tck.repositories">BookRepository</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/page/ListPageMethod.html" title="class in io.micronaut.data.processor.visitors.finders.page"><span class="typeNameLink">ListPageMethod</span></a> - Class in <a href="io/micronaut/data/processor/visitors/finders/page/package-summary.html">io.micronaut.data.processor.visitors.finders.page</a></dt>
 <dd>
 <div class="block">Handles a return type of type <a href="io/micronaut/data/model/Page.html" title="interface in io.micronaut.data.model"><code>Page</code></a>.</div>
@@ -6866,8 +6870,6 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#NOT_CLAUSE">NOT_CLAUSE</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#NOT_EQUALS">NOT_EQUALS</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#NOT_TRUE_EXPRESSION">NOT_TRUE_EXPRESSION</a></span> - Static variable in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.NotEqual.html#NotEqual-java.lang.String-">NotEqual(String)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.NotEqual.html" title="class in io.micronaut.data.processor.visitors.finders">CriterionMethodExpression.NotEqual</a></dt>
 <dd>
