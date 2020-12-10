@@ -1264,7 +1264,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (definition != null) {
             return column + " " + definition;
         }
-
         switch (dataType) {
             case STRING:
                 column += " VARCHAR(255)";
@@ -1422,6 +1421,85 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     default:
                         column += " JSON";
                         break;
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case STRING_ARRAY:
+            case CHARACTER_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else {
+                    column += " VARCHAR(255) ARRAY";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case SHORT_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else if (dialect == Dialect.POSTGRES) {
+                    column += " SMALLINT ARRAY";
+                } else {
+                    column += " TINYINT ARRAY";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case INTEGER_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else if (dialect == Dialect.POSTGRES) {
+                    column += " INTEGER ARRAY";
+                } else {
+                    column += " INT ARRAY";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case LONG_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else {
+                    column += " BIGINT ARRAY";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case FLOAT_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else if (dialect == Dialect.POSTGRES) {
+                    column += " REAL ARRAY";
+                } else {
+                    column += " FLOAT ARRAY";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case DOUBLE_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else if (dialect == Dialect.POSTGRES) {
+                    column += " DOUBLE PRECISION ARRAY";
+                } else {
+                    column += " DOUBLE ARRAY";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
+            case BOOLEAN_ARRAY:
+                if (dialect == Dialect.H2) {
+                    column += " ARRAY";
+                } else {
+                    column += " BOOLEAN ARRAY";
                 }
                 if (required) {
                     column += " NOT NULL";

@@ -256,15 +256,11 @@ public class TypeUtils {
             if (type.isPrimitive() || typeName.startsWith("java.lang")) {
                 Class primitiveType = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
                 if (primitiveType != null && primitiveType != void.class) {
-                    String wrapperName = ReflectionUtils.getWrapperType(primitiveType).getSimpleName();
-                    DataType dt = DataType.valueOf(wrapperName.toUpperCase(Locale.ENGLISH));
-                    if (type.isArray()) {
-                        if (dt == DataType.BYTE) {
-                            return DataType.BYTE_ARRAY;
-                        }
-                    } else {
-                        return dt;
+                    String wrapperName = ReflectionUtils.getWrapperType(primitiveType).getSimpleName().toUpperCase(Locale.ENGLISH);
+                    if (type.isArray())   {
+                        wrapperName += "_ARRAY";
                     }
+                    return DataType.valueOf(wrapperName);
                 }
             }
 
@@ -279,6 +275,33 @@ public class TypeUtils {
 
             if (type.hasStereotype(MappedEntity.class)) {
                 return DataType.ENTITY;
+            }
+
+            if (type.isArray()) {
+                if (type.isAssignable(String.class)) {
+                    return DataType.STRING_ARRAY;
+                }
+                if (type.isAssignable(Short.class)) {
+                    return DataType.SHORT_ARRAY;
+                }
+                if (type.isAssignable(Integer.class)) {
+                    return DataType.INTEGER_ARRAY;
+                }
+                if (type.isAssignable(Long.class)) {
+                    return DataType.LONG_ARRAY;
+                }
+                if (type.isAssignable(Float.class)) {
+                    return DataType.FLOAT_ARRAY;
+                }
+                if (type.isAssignable(Double.class)) {
+                    return DataType.DOUBLE_ARRAY;
+                }
+                if (type.isAssignable(Character.class)) {
+                    return DataType.CHARACTER_ARRAY;
+                }
+                if (type.isAssignable(Boolean.class)) {
+                    return DataType.BOOLEAN_ARRAY;
+                }
             }
 
             try {

@@ -52,7 +52,6 @@ import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -67,7 +66,6 @@ import java.util.stream.Collectors;
 public abstract class AbstractSqlRepositoryOperations<RS, PS> implements RepositoryOperations {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
-    private static final Object IGNORED_PARAMETER = new Object();
     private static final Pattern PARAMETERS_IN_QUERY = Pattern.compile(Pattern.quote(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER));
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
@@ -173,11 +171,11 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             if (parameterIndex == -1) {
                 continue;
             }
-            if (dataType == DataType.BYTE_ARRAY) {
+            if (dataType.isArray()) {
                 continue;
             }
             Object value = queryParameters[parameterIndex];
-            if (value == null) {
+            if (value == null || value instanceof byte[]) {
                 continue;
             }
             int size = sizeOf(value);
@@ -267,7 +265,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         int j = propertyPath.indexOf('.');
                         if (j > -1) {
                             String subProp = propertyPath.substring(j + 1);
-                            value = queryParameters[Integer.valueOf(propertyPath.substring(0, j))];
+                            value = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
                             value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
                         } else {
                             throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
@@ -278,35 +276,29 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 }
             }
 
-            if (value == null) {
-                setStatementParameter(ps, index++, dataType, null, dialect);
-            } else if (value != IGNORED_PARAMETER) {
-                if (value instanceof Iterable) {
-                    Iterator<?> iterator = ((Iterable<?>) value).iterator();
-                    if (!iterator.hasNext()) {
-                        setStatementParameter(ps, index++, dataType, null, dialect);
-                    } else {
-                        while (iterator.hasNext()) {
-                            setStatementParameter(ps, index++, dataType, iterator.next(), dialect);
-                        }
-                    }
-                } else if (value.getClass().isArray() && dataType != DataType.BYTE_ARRAY) {
-                    if (value instanceof byte[]) {
-                        setStatementParameter(ps, index++, dataType, value, dialect);
-                    } else {
-                        int len = Array.getLength(value);
-                        if (len == 0) {
-                            setStatementParameter(ps, index++, dataType, null, dialect);
-                        } else {
-                            for (int j = 0; j < len; j++) {
-                                Object o = Array.get(value, j);
-                                setStatementParameter(ps, index++, dataType, o, dialect);
-                            }
-                        }
-                    }
+            if (value == null || dataType.isArray() || value instanceof byte[]) {
+                setStatementParameter(ps, index++, dataType, value, dialect);
+            } else if (value instanceof Iterable) {
+                Iterator<?> iterator = ((Iterable<?>) value).iterator();
+                if (!iterator.hasNext()) {
+                    setStatementParameter(ps, index++, dataType, null, dialect);
                 } else {
-                    setStatementParameter(ps, index++, dataType, value, dialect);
+                    while (iterator.hasNext()) {
+                        setStatementParameter(ps, index++, dataType, iterator.next(), dialect);
+                    }
                 }
+            } else if (value.getClass().isArray()) {
+                int len = Array.getLength(value);
+                if (len == 0) {
+                    setStatementParameter(ps, index++, dataType, null, dialect);
+                } else {
+                    for (int j = 0; j < len; j++) {
+                        Object o = Array.get(value, j);
+                        setStatementParameter(ps, index++, dataType, o, dialect);
+                    }
+                }
+            } else {
+                setStatementParameter(ps, index++, dataType, value, dialect);
             }
         }
         return ps;
@@ -406,34 +398,10 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                         } else {
                             throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                         }
-                    } else {
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-                        }
-                        if (type == DataType.JSON && jsonCodec != null && value != null && !prop.getType().equals(String.class)) {
-                            value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
-                        }
-                        if (value != null && dialect.requiresStringUUID(type)) {
-                            preparedStatementWriter.setString(
-                                    stmt,
-                                    index,
-                                    value.toString()
-                            );
-                        } else {
-                            preparedStatementWriter.setDynamic(
-                                    stmt,
-                                    index,
-                                    type,
-                                    value
-                            );
-                        }
                     }
                 }
             }
 
-            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                DataSettings.QUERY_LOG.trace("Binding value {} to parameter at position: {}", value, index);
-            }
             setStatementParameter(stmt, index, type, value, dialect);
         }
     }
@@ -557,10 +525,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param dialect           The dialect
      */
     protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
-        if (QUERY_LOG.isTraceEnabled()) {
-            QUERY_LOG.trace("Binding parameter at position {} to value {}", index, value);
-        }
         switch (dataType) {
+            case UUID:
+                if (value != null && dialect.requiresStringUUID(dataType)) {
+                    value = value.toString();
+                }
+                break;
             case JSON:
                 if (value != null && jsonCodec != null && !value.getClass().equals(String.class)) {
                     value = new String(jsonCodec.encode(value), StandardCharsets.UTF_8);
@@ -573,18 +543,23 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     if (id == null) {
                         throw new DataAccessException("Supplied entity is a transient instance: " + value);
                     }
-                    value = id;
-                    dataType = idReader.getDataType();
+                    setStatementParameter(preparedStatement, index, idReader.getDataType(), id, dialect);
+                    return;
                 }
                 break;
             default:
                 break;
         }
 
+        dataType = dialect.getDataType(dataType);
+
+        if (QUERY_LOG.isTraceEnabled()) {
+            QUERY_LOG.trace("Binding parameter at position {} to value {} with data type: {}", index, value, dataType);
+        }
         preparedStatementWriter.setDynamic(
                 preparedStatement,
                 index,
-                dialect.getDataType(dataType),
+                dataType,
                 value);
     }
 

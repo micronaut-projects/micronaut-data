@@ -16,7 +16,9 @@
 package io.micronaut.data.jdbc.oraclexe;
 
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
@@ -35,6 +37,6 @@ public abstract class OracleXEBookRepository extends BookRepository {
     public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
 
 }

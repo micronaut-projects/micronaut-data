@@ -53,7 +53,7 @@ public enum DataType {
     /**
      * A byte array. Often stored as binary.
      */
-    BYTE_ARRAY(byte[].class),
+    BYTE_ARRAY(true, byte[].class),
     /**
      * A character.
      */
@@ -105,7 +105,39 @@ public enum DataType {
     /**
      * The UUID type.
      */
-    UUID(java.util.UUID.class);
+    UUID(java.util.UUID.class),
+    /**
+     * A string array.
+     */
+    STRING_ARRAY(true, String[].class),
+    /**
+     * A short array.
+     */
+    SHORT_ARRAY(true, short[].class, Short[].class),
+    /**
+     * An integer array.
+     */
+    INTEGER_ARRAY(true, int[].class, Integer[].class),
+    /**
+     * A long array.
+     */
+    LONG_ARRAY(true, long[].class, Long[].class),
+    /**
+     * A long array.
+     */
+    FLOAT_ARRAY(true, float[].class, Float[].class),
+    /**
+     * A double array.
+     */
+    DOUBLE_ARRAY(true, double[].class, Double[].class),
+    /**
+     * A character array.
+     */
+    CHARACTER_ARRAY(true, char[].class, Character[].class),
+    /**
+     * A boolean array.
+     */
+    BOOLEAN_ARRAY(true, boolean[].class, Boolean[].class);
 
     /**
      * Empty array of data types.
@@ -123,13 +155,33 @@ public enum DataType {
     }
 
     private final Set<Class<?>> javaTypes;
+    private final boolean isArray;
 
     /**
      * Default constructor.
      * @param javaTypes Associated data types.
      */
     DataType(Class<?>...javaTypes) {
+        this(false, javaTypes);
+    }
+
+    /**
+     * Default constructor.
+     * @param isArray Is an array type.
+     * @param javaTypes Associated data types.
+     */
+    DataType(boolean isArray, Class<?>...javaTypes) {
+        this.isArray = isArray;
         this.javaTypes = CollectionUtils.setOf(javaTypes);
+    }
+
+    /**
+     * Is an array type.
+     *
+     * @return true if an array type
+     */
+    public boolean isArray() {
+        return isArray;
     }
 
     /**

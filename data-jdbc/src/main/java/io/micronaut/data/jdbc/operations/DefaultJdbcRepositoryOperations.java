@@ -62,7 +62,6 @@ import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -437,6 +436,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (StringUtils.isNotEmpty(query) && ArrayUtils.isNotEmpty(params)) {
             final RuntimePersistentEntity<T> persistentEntity =
                     (RuntimePersistentEntity<T>) getEntity(entity.getClass());
+            final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
             return transactionOperations.executeWrite(status -> {
                 try {
                     Connection connection = status.getConnection();
@@ -464,11 +464,12 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
                                                 Object embeddedValue = embeddedInstance != null ? embeddedProp.getProperty().get(embeddedInstance) : null;
                                                 int index = i + 1;
-                                                preparedStatementWriter.setDynamic(
+                                                setStatementParameter(
                                                         ps,
                                                         index,
                                                         embeddedProp.getDataType(),
-                                                        embeddedValue
+                                                        embeddedValue,
+                                                        dialect
                                                 );
                                             }
                                         }
@@ -494,16 +495,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     final Association association = (Association) pp;
                                     final BeanProperty<Object, ?> idReaderProperty = idReader.getProperty();
                                     final Object id = idReaderProperty.get(newValue);
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, id);
-                                    }
                                     if (id != null) {
-
-                                        preparedStatementWriter.setDynamic(
+                                        setStatementParameter(
                                                 ps,
                                                 i + 1,
                                                 idReader.getDataType(),
-                                                id
+                                                id,
+                                                dialect
                                         );
                                         if (association.doesCascade(Relation.Cascade.PERSIST) && !persisted.contains(newValue)) {
                                             final Relation.Kind kind = association.getKind();
@@ -555,35 +553,23 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                             );
                                             final Object assignedId = idReaderProperty.get(newValue);
                                             if (assignedId != null) {
-                                                preparedStatementWriter.setDynamic(
+                                                setStatementParameter(
                                                         ps,
                                                         i + 1,
                                                         idReader.getDataType(),
-                                                        assignedId
+                                                        assignedId,
+                                                        dialect
                                                 );
                                             }
                                         }
                                     }
-                                } else if (dataType == DataType.JSON && jsonCodec != null && newValue != null) {
-                                    String value = new String(jsonCodec.encode(newValue), StandardCharsets.UTF_8);
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, value);
-                                    }
-                                    preparedStatementWriter.setDynamic(
-                                            ps,
-                                            i + 1,
-                                            dataType,
-                                            value
-                                    );
                                 } else {
-                                    if (QUERY_LOG.isTraceEnabled()) {
-                                        QUERY_LOG.trace("Binding parameter at position {} to value {}", i + 1, newValue);
-                                    }
-                                    preparedStatementWriter.setDynamic(
+                                    setStatementParameter(
                                             ps,
                                             i + 1,
                                             dataType,
-                                            newValue
+                                            newValue,
+                                            dialect
                                     );
                                 }
                             }
@@ -679,7 +665,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             Connection connection,
             BeanProperty<T, Object> identity) throws SQLException {
         if (identity != null) {
-
+            Dialect dialect = insert.getDialect();
             final RuntimePersistentEntity<T> persistentEntity = (RuntimePersistentEntity<T>) getEntity(entity.getClass());
             for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
                 if (association.doesCascade(Relation.Cascade.PERSIST)) {
@@ -802,22 +788,18 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                         final Object parentId = identity.get(entity);
                                         for (Object o : batchResult) {
                                             final Object childId = associatedIdProperty.get(o);
-                                            if (QUERY_LOG.isTraceEnabled()) {
-                                                QUERY_LOG.trace("Binding parameter at position {} to value {}", 1, parentId);
-                                            }
-                                            preparedStatementWriter.setDynamic(
+                                            setStatementParameter(
                                                     ps,
                                                     1,
                                                     persistentEntity.getIdentity().getDataType(),
-                                                    parentId);
-                                            if (QUERY_LOG.isTraceEnabled()) {
-                                                QUERY_LOG.trace("Binding parameter at position {} to value {}", 2, childId);
-                                            }
-                                            preparedStatementWriter.setDynamic(
+                                                    parentId,
+                                                    dialect);
+                                            setStatementParameter(
                                                     ps,
                                                     2,
                                                     associatedId.getDataType(),
-                                                    childId);
+                                                    childId,
+                                                    dialect);
                                             ps.addBatch();
                                         }
                                         ps.executeBatch();

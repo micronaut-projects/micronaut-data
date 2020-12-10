@@ -83,7 +83,11 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                         return this;
 
                     default:
-                        statement.setNull(index, Types.NULL);
+                        if (dataType.isArray()) {
+                            statement.setNull(index, Types.ARRAY);
+                        } else {
+                            statement.setNull(index, Types.NULL);
+                        }
                         return this;
                 }
             } catch (SQLException e) {
@@ -118,6 +122,8 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                 statement.setClob(index, (Clob) value);
             } else if (value instanceof Blob) {
                 statement.setBlob(index, (Blob) value);
+            } else if (value instanceof Array) {
+                statement.setArray(index, (Array) value);
             } else if (value != null) {
                 if (value.getClass().isEnum()) {
                     statement.setString(index, ((Enum) value).name());
@@ -264,6 +270,23 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
     public QueryStatement<PreparedStatement, Integer> setBytes(PreparedStatement statement, Integer name, byte[] bytes) {
         try {
             statement.setBytes(name, bytes);
+        } catch (SQLException e) {
+            throw newDataAccessException(e);
+        }
+        return this;
+    }
+
+    @NonNull
+    @Override
+    public QueryStatement<PreparedStatement, Integer> setArray(PreparedStatement statement, Integer name, Object array) {
+        try {
+            if (array == null) {
+                statement.setNull(name, Types.ARRAY);
+            } else if (array instanceof Array) {
+                statement.setArray(name, (Array) array);
+            } else {
+                statement.setObject(name, array);
+            }
         } catch (SQLException e) {
             throw newDataAccessException(e);
         }
