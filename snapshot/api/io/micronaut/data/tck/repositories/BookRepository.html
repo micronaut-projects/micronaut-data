@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":10,"i19":10,"i20":10};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":6,"i18":6,"i19":6,"i20":10,"i21":10,"i22":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -229,31 +229,39 @@ implements <a href="../../../../../io/micronaut/data/repository/PageableReposito
 </tr>
 <tr id="i14" class="altColor">
 <td class="colFirst"><code>abstract java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleAnyArray-java.lang.String:A-">listNativeBooksWithTitleAnyArray</a></span>(java.lang.String[]&nbsp;arg0)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksNullableArrayAsStringArray-java.lang.String:A-">listNativeBooksNullableArrayAsStringArray</a></span>(java.lang.String[]&nbsp;arg0)</code>&nbsp;</td>
 </tr>
 <tr id="i15" class="rowColor">
 <td class="colFirst"><code>abstract java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleAnyCollection-java.util.Collection-">listNativeBooksWithTitleAnyCollection</a></span>(java.util.Collection&lt;java.lang.String&gt;&nbsp;arg0)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksNullableListAsStringArray-java.util.List-">listNativeBooksNullableListAsStringArray</a></span>(java.util.List&lt;java.lang.String&gt;&nbsp;arg0)</code>&nbsp;</td>
 </tr>
 <tr id="i16" class="altColor">
 <td class="colFirst"><code>abstract java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleInArray-java.lang.String:A-">listNativeBooksWithTitleInArray</a></span>(java.lang.String[]&nbsp;arg0)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleAnyArray-java.lang.String:A-">listNativeBooksWithTitleAnyArray</a></span>(java.lang.String[]&nbsp;arg0)</code>&nbsp;</td>
 </tr>
 <tr id="i17" class="rowColor">
 <td class="colFirst"><code>abstract java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleInCollection-java.util.Collection-">listNativeBooksWithTitleInCollection</a></span>(java.util.Collection&lt;java.lang.String&gt;&nbsp;arg0)</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleAnyCollection-java.util.Collection-">listNativeBooksWithTitleAnyCollection</a></span>(java.util.Collection&lt;java.lang.String&gt;&nbsp;arg0)</code>&nbsp;</td>
 </tr>
 <tr id="i18" class="altColor">
+<td class="colFirst"><code>abstract java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleInArray-java.lang.String:A-">listNativeBooksWithTitleInArray</a></span>(java.lang.String[]&nbsp;arg0)</code>&nbsp;</td>
+</tr>
+<tr id="i19" class="rowColor">
+<td class="colFirst"><code>abstract java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#listNativeBooksWithTitleInCollection-java.util.Collection-">listNativeBooksWithTitleInCollection</a></span>(java.util.Collection&lt;java.lang.String&gt;&nbsp;arg0)</code>&nbsp;</td>
+</tr>
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#newAuthor-java.lang.String-">newAuthor</a></span>(java.lang.String&nbsp;name)</code>&nbsp;</td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#newBook-io.micronaut.data.tck.entities.Author-java.lang.String-int-">newBook</a></span>(<a href="../../../../../io/micronaut/data/tck/entities/Author.html" title="class in io.micronaut.data.tck.entities">Author</a>&nbsp;author,
        java.lang.String&nbsp;title,
        int&nbsp;pages)</code>&nbsp;</td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/tck/repositories/BookRepository.html#saveAuthorBooks-java.util.List-">saveAuthorBooks</a></span>(java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/AuthorBooksDto.html" title="class in io.micronaut.data.tck.entities">AuthorBooksDto</a>&gt;&nbsp;authorBooksDtos)</code>&nbsp;</td>
 </tr>
@@ -489,7 +497,7 @@ public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data
 <h4>listNativeBooksWithTitleInArray</h4>
 <pre><a href="../../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation">@Query</a>(<a href="../../../../../io/micronaut/data/annotation/Query.html#value--">value</a>="select * from book b where b.title IN (:arg0)",
        <a href="../../../../../io/micronaut/data/annotation/Query.html#nativeQuery--">nativeQuery</a>=true)
-public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;&nbsp;listNativeBooksWithTitleInArray(@Nullable
+public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;&nbsp;listNativeBooksWithTitleInArray(<a href="../../../../../io/micronaut/data/annotation/TypeDef.html" title="annotation in io.micronaut.data.annotation">@TypeDef</a>(<a href="../../../../../io/micronaut/data/annotation/TypeDef.html#type--">type</a>=<a href="../../../../../io/micronaut/data/model/DataType.html#STRING">STRING</a>) @Nullable
                                                                                                                                                             java.lang.String[]&nbsp;arg0)</pre>
 </li>
 </ul>
@@ -513,8 +521,32 @@ public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data
 <h4>listNativeBooksWithTitleAnyArray</h4>
 <pre><a href="../../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation">@Query</a>(<a href="../../../../../io/micronaut/data/annotation/Query.html#value--">value</a>="select * from book b where b.title = ANY (:arg0)",
        <a href="../../../../../io/micronaut/data/annotation/Query.html#nativeQuery--">nativeQuery</a>=true)
-public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;&nbsp;listNativeBooksWithTitleAnyArray(@Nullable
+public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;&nbsp;listNativeBooksWithTitleAnyArray(<a href="../../../../../io/micronaut/data/annotation/TypeDef.html" title="annotation in io.micronaut.data.annotation">@TypeDef</a>(<a href="../../../../../io/micronaut/data/annotation/TypeDef.html#type--">type</a>=<a href="../../../../../io/micronaut/data/model/DataType.html#STRING">STRING</a>) @Nullable
                                                                                                                                                                 java.lang.String[]&nbsp;arg0)</pre>
+</li>
+</ul>
+<a name="listNativeBooksNullableListAsStringArray-java.util.List-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>listNativeBooksNullableListAsStringArray</h4>
+<pre><a href="../../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation">@Query</a>(<a href="../../../../../io/micronaut/data/annotation/Query.html#value--">value</a>="select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)",
+       <a href="../../../../../io/micronaut/data/annotation/Query.html#nativeQuery--">nativeQuery</a>=true)
+public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;&nbsp;listNativeBooksNullableListAsStringArray(@Nullable <a href="../../../../../io/micronaut/data/annotation/TypeDef.html" title="annotation in io.micronaut.data.annotation">@TypeDef</a>(<a href="../../../../../io/micronaut/data/annotation/TypeDef.html#type--">type</a>=<a href="../../../../../io/micronaut/data/model/DataType.html#STRING_ARRAY">STRING_ARRAY</a>)
+                                                                                                                                                                                                                             java.util.List&lt;java.lang.String&gt;&nbsp;arg0)</pre>
+</li>
+</ul>
+<a name="listNativeBooksNullableArrayAsStringArray-java.lang.String:A-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>listNativeBooksNullableArrayAsStringArray</h4>
+<pre><a href="../../../../../io/micronaut/data/annotation/Query.html" title="annotation in io.micronaut.data.annotation">@Query</a>(<a href="../../../../../io/micronaut/data/annotation/Query.html#value--">value</a>="select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)",
+       <a href="../../../../../io/micronaut/data/annotation/Query.html#nativeQuery--">nativeQuery</a>=true)
+public abstract&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/tck/entities/Book.html" title="class in io.micronaut.data.tck.entities">Book</a>&gt;&nbsp;listNativeBooksNullableArrayAsStringArray(@Nullable <a href="../../../../../io/micronaut/data/annotation/TypeDef.html" title="annotation in io.micronaut.data.annotation">@TypeDef</a>(<a href="../../../../../io/micronaut/data/annotation/TypeDef.html#type--">type</a>=<a href="../../../../../io/micronaut/data/model/DataType.html#STRING_ARRAY">STRING_ARRAY</a>)
+                                                                                                                                                                                                                              java.lang.String[]&nbsp;arg0)</pre>
 </li>
 </ul>
 <a name="saveAuthorBooks-java.util.List-">
