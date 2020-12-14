@@ -167,6 +167,11 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         return foodRepo
     }
 
+    @Override
+    boolean isSupportsArrays() {
+        return true
+    }
+
     void "test total dto"() {
         given:
         savePersons(["Jeff", "James"])

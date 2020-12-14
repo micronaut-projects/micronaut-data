@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.runtime.mapper.sql;
 
+import java.sql.Array;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -538,6 +540,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             DataType dataType) {
         Class<?> propertyType = rpp.getType();
         final Object r;
+        if (v instanceof Array) {
+            try {
+                v = ((Array) v).getArray();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error getting an array value: " + e.getMessage(), e);
+            }
+        }
         if (propertyType.isInstance(v)) {
             r = v;
         } else {

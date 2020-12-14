@@ -28,46 +28,42 @@ public enum Dialect {
     /**
      * H2 database.
      */
-    H2,
+    H2(true, false, true),
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL(false, true),
+    MYSQL(false, true, false),
     /**
      * Postgres 9.5 or later.
      */
-    POSTGRES,
+    POSTGRES(true, false, true),
     /**
      * SQL server 2012 or above.
      */
-    SQL_SERVER(false, false),
+    SQL_SERVER(false, false, false),
     /**
      * Oracle 12c or above.
      */
-    ORACLE(true, true),
+    ORACLE(true, true, false),
     /**
      * Ansi compliant SQL.
      */
-    ANSI;
+    ANSI(true, false, true);
 
     private final boolean supportsBatch;
     private final boolean stringUUID;
-
-    /**
-     * Default constructor.
-     */
-    Dialect() {
-        this(true, false);
-    }
+    private final boolean supportsArrays;
 
     /**
      * Allows customization of batch support.
      * @param supportsBatch If batch is supported
      * @param stringUUID Does the dialect require a string UUID
+     * @param supportsArrays Does the dialect supports arrays
      */
-    Dialect(boolean supportsBatch, boolean stringUUID) {
+    Dialect(boolean supportsBatch, boolean stringUUID, boolean supportsArrays) {
         this.supportsBatch = supportsBatch;
         this.stringUUID = stringUUID;
+        this.supportsArrays = supportsArrays;
     }
 
     /**
@@ -76,6 +72,14 @@ public enum Dialect {
      */
     public final boolean allowBatch() {
         return supportsBatch;
+    }
+
+    /**
+     * Some databases support arrays and the use of {@link java.sql.Connection#createArrayOf(String, Object[])}.
+     * @return True if arrays are supported.
+     */
+    public final boolean supportsArrays() {
+        return supportsArrays;
     }
 
     /**

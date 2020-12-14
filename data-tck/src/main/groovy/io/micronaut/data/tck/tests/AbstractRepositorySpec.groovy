@@ -65,6 +65,10 @@ abstract class AbstractRepositorySpec extends Specification {
         return false
     }
 
+    boolean isSupportsArrays() {
+        return false
+    }
+
     protected void savePersons(List<String> names) {
         personRepository.saveAll(names.collect { new Person(name: it) })
     }
@@ -1008,6 +1012,48 @@ abstract class AbstractRepositorySpec extends Specification {
             def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0])
         then:
             books6.size() == 0
+        cleanup:
+            cleanupBooks()
+    }
+
+    void "test string array data type"() {
+        if (!isSupportsArrays()) {
+            return
+        }
+        given:
+            setupBooks()
+        when:
+            def books4 = bookRepository.listNativeBooksNullableListAsStringArray(["The Stand", "FFF"])
+        then:
+            books4.size() == 1
+        when:
+            def books5 = bookRepository.listNativeBooksNullableListAsStringArray(["Xyz", "FFF"])
+        then:
+            books5.size() == 0
+        when:
+            def books6 = bookRepository.listNativeBooksNullableListAsStringArray([])
+        then:
+            books6.size() == 0
+        when:
+            def books7 = bookRepository.listNativeBooksNullableListAsStringArray(null)
+        then:
+            books7.size() == 0
+        when:
+            def books8 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[] {"Xyz", "Ffff", "zzz"})
+        then:
+            books8.size() == 0
+        when:
+            def books9 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[] {})
+        then:
+            books9.size() == 0
+        when:
+            def books11 = bookRepository.listNativeBooksNullableArrayAsStringArray(null)
+        then:
+            books11.size() == 0
+        then:
+            def books12 = bookRepository.listNativeBooksNullableArrayAsStringArray(new String[] {"The Stand"})
+        then:
+            books12.size() == 1
         cleanup:
             cleanupBooks()
     }

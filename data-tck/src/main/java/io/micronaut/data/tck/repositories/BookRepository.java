@@ -20,6 +20,8 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.PageableRepository;
@@ -77,13 +79,19 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     public abstract List<Book> listNativeBooksWithTitleInCollection(@Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title IN (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleInArray(@Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleInArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
 
     @Query(value = "select * from book b where b.title = any (:arg0)", nativeQuery = true)
     public abstract List<Book> listNativeBooksWithTitleAnyCollection(@Nullable Collection<String> arg0);
 
     @Query(value = "select * from book b where b.title = ANY (:arg0)", nativeQuery = true)
-    public abstract List<Book> listNativeBooksWithTitleAnyArray(@Nullable String[] arg0);
+    public abstract List<Book> listNativeBooksWithTitleAnyArray(@TypeDef(type = DataType.STRING) @Nullable String[] arg0);
+
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableListAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) List<String> arg0);
+
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableArrayAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
 
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();

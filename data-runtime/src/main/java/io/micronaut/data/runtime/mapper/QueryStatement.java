@@ -22,6 +22,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 
 import java.math.BigDecimal;
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -194,6 +195,40 @@ public interface QueryStatement<PS, IDX> {
                 }
             case OBJECT:
             default:
+                if (dataType.isArray()) {
+                    if (value != null && !(value instanceof Array)) {
+                        // Always convert primitive arrays to wrappers array. H2 doesn't support primitive arrays.
+                        if (!value.getClass().isArray() || value.getClass().getComponentType().isPrimitive()) {
+                            switch (dataType) {
+                                case SHORT_ARRAY:
+                                    value = convertRequired(value, Short[].class);
+                                    break;
+                                case LONG_ARRAY:
+                                    value = convertRequired(value, Long[].class);
+                                    break;
+                                case FLOAT_ARRAY:
+                                    value = convertRequired(value, Float[].class);
+                                    break;
+                                case INTEGER_ARRAY:
+                                    value = convertRequired(value, Integer[].class);
+                                    break;
+                                case DOUBLE_ARRAY:
+                                    value = convertRequired(value, Double[].class);
+                                    break;
+                                case BOOLEAN_ARRAY:
+                                    value = convertRequired(value, Boolean[].class);
+                                    break;
+                                case STRING_ARRAY:
+                                case CHARACTER_ARRAY:
+                                    value = convertRequired(value, String[].class);
+                                    break;
+                            }
+                        } else if (value.getClass() == Character[].class) {
+                            value = convertRequired(value, String[].class);
+                        }
+                    }
+                    return setArray(statement, index, value);
+                }
                 return setValue(statement, index, value);
         }
     }
@@ -209,6 +244,9 @@ public interface QueryStatement<PS, IDX> {
     default @Nullable <T> T convertRequired(@Nullable Object value, Class<T> type) {
         if (value == null) {
             return null;
+        }
+        if (type.isInstance(value)) {
+            return (T) value;
         }
         return ConversionService.SHARED.convert(
                 value,
@@ -373,4 +411,17 @@ public interface QueryStatement<PS, IDX> {
     QueryStatement<PS, IDX> setBytes(PS statement, IDX name, byte[] bytes) {
         return setValue(statement, name, bytes);
     }
+
+    /**
+     * Sets an array value for the given name.
+     * @param statement The statement
+     * @param name The name (such as the column name)
+     * @param array the array
+     * @return This writer
+     */
+    default @NonNull
+    QueryStatement<PS, IDX> setArray(PS statement, IDX name, Object array) {
+        return setValue(statement, name, array);
+    }
+
 }
