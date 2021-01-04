@@ -46,7 +46,7 @@ import java.util.function.Function;
  * @author graemerocher
  * @since 1.0.0
  */
-public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Object> {
+public class  MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Object> {
     /**
      * The position of the visitor.
      */
