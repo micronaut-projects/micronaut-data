@@ -626,7 +626,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 setInsertParameters(insert, entity, stmt);
                 stmt.executeUpdate();
                 persisted.add(entity);
-                if (hasGeneratedID) {
+                if (hasGeneratedID && !identity.isReadOnly()) {
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
@@ -897,7 +897,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 stmt.executeBatch();
 
 
-                if (hasGeneratedID) {
+                if (hasGeneratedID && !identity.isReadOnly()) {
                     Iterator<T> resultIterator = results.iterator();
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     while (resultIterator.hasNext()) {

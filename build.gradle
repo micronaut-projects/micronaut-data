@@ -13,6 +13,7 @@ subprojects { Project subproject ->
     group "io.micronaut.data"
 
     boolean isExampleOrBenchmark = subproject.parent.name == "docs-examples" || subproject.name.contains("example") || subproject.name.contains("benchmark")
+
     if (subproject.name != 'data-bom' && !isExampleOrBenchmark) {
         apply plugin: "io.micronaut.build.common"
         apply plugin: "io.micronaut.build.dependency-updates"
@@ -43,12 +44,19 @@ subprojects { Project subproject ->
             mavenCentral()
         }
         apply plugin:'java'
+
     } else {
         apply plugin: "java-platform"
         version projectVersion
         apply plugin: "io.micronaut.build.dependency-updates"
         apply plugin: "io.micronaut.build.publishing"
 
+    }
+
+    tasks.withType(Test) {
+        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
+            jvmArgs "--enable-preview"
+        }
     }
 
     if (subproject.name != 'data-bom') {
