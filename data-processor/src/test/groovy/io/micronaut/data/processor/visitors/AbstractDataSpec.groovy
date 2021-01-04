@@ -51,6 +51,19 @@ $source
         return TestUtils.sourcePersistentEntity(classElement)
     }
 
+    SourcePersistentEntity buildEntity(String name, String source) {
+        def pkg = NameUtils.getPackageName(name)
+        ClassElement classElement = buildClassElement("""
+package $pkg;
+
+import io.micronaut.data.annotation.*;
+
+$source
+""")
+
+        return TestUtils.sourcePersistentEntity(classElement)
+    }
+
     BeanDefinition<?> buildRepository(String name, String source) {
         def pkg = NameUtils.getPackageName(name)
         return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """

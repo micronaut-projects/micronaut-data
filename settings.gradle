@@ -26,6 +26,9 @@ include 'doc-examples:example-kotlin'
 include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
+if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
+    include 'doc-examples:jdbc-example-records'
+}
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

@@ -61,8 +61,12 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
     public boolean isMethodMatch(@NonNull MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         return parameters.length > 0 &&
-                Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class)) &&
+                hasMatchingParameters(parameters) &&
                 super.isMethodMatch(methodElement, matchContext) && isValidSaveReturnType(matchContext, false);
+    }
+
+    private boolean hasMatchingParameters(ParameterElement[] parameters) {
+        return Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class));
     }
 
     @Nullable
@@ -71,7 +75,7 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
         VisitorContext visitorContext = matchContext.getVisitorContext();
         ParameterElement[] parameters = matchContext.getParameters();
         if (ArrayUtils.isNotEmpty(parameters)) {
-            if (Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
+            if (hasMatchingParameters(parameters)) {
                 ClassElement returnType = matchContext.getReturnType();
                 Class<? extends DataInterceptor> interceptor = pickSaveInterceptor(returnType);
                 if (TypeUtils.isReactiveOrFuture(returnType)) {
