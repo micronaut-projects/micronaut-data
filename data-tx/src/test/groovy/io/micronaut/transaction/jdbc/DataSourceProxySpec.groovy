@@ -43,7 +43,6 @@ class DataSourceProxySpec extends Specification {
     @Inject
     TestService testService
 
-    @PendingFeature(reason = "Requires upgrade to Micronaut 2.2.1")
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/822')
     void "test within transaction"() {
         when:"executing a transaction with the default datasource"
