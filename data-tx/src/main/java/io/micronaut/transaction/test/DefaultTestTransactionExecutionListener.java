@@ -17,12 +17,14 @@ package io.micronaut.transaction.test;
 
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.test.context.TestContext;
 import io.micronaut.test.context.TestExecutionListener;
 import io.micronaut.test.extensions.AbstractMicronautExtension;
+import io.micronaut.test.transaction.spring.SpringTransactionTestExecutionListener;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
@@ -38,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @EachBean(SynchronousTransactionManager.class)
 @Requires(classes = TestExecutionListener.class)
 @Requires(property = AbstractMicronautExtension.TEST_TRANSACTIONAL, value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
+@Replaces(SpringTransactionTestExecutionListener.class)
 @Internal
 public class DefaultTestTransactionExecutionListener implements TestExecutionListener {
     private final SynchronousTransactionManager<Object> transactionManager;

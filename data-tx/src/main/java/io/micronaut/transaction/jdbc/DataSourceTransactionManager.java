@@ -18,7 +18,10 @@ package io.micronaut.transaction.jdbc;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.jdbc.spring.DataSourceTransactionManagerFactory;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
@@ -84,9 +87,9 @@ import javax.sql.DataSource;
  * @see DataSourceUtils#applyTransactionTimeout
  * @see DataSourceUtils#releaseConnection
  */
-@SuppressWarnings("serial")
 @EachBean(DataSource.class)
 @TypeHint(DataSourceTransactionManager.class)
+@Requires(missingBeans = DataSourceTransactionManagerFactory.class)
 public class DataSourceTransactionManager extends AbstractSynchronousTransactionManager<Connection>
         implements ResourceTransactionManager<DataSource, Connection> {
 
