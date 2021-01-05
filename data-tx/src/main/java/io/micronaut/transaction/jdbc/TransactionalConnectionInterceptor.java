@@ -25,7 +25,6 @@ import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException;
 
-import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
