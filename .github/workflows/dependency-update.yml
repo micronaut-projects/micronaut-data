@@ -6,7 +6,7 @@
 name: Update Dependencies
 on:
   schedule:
-    - cron: '0 4 * * MON-FRI'
+    - cron: '0 4 * * SUN'
 jobs:
   dependency-updates:
     runs-on: ubuntu-latest
