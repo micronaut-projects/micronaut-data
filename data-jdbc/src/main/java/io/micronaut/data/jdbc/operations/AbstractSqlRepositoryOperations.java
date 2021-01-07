@@ -189,20 +189,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             parametersListSizes[i] = size;
         }
         if (parametersListSizes != null) {
-            String[] queryParametersSplit;
             String positionalParameterFormat = queryBuilder.positionalParameterFormat();
-            if (positionalParameterFormat.equals(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER)) {
-                queryParametersSplit = PARAMETERS_IN_QUERY.split(query);
-            } else {
-                queryParametersSplit = query.split(Pattern.quote(positionalParameterFormat));
-            }
+            Pattern positionalParameterPattern = queryBuilder.positionalParameterPattern();
+            String[] queryParametersSplit = positionalParameterPattern.split(query);
             StringBuilder sb = new StringBuilder(queryParametersSplit[0]);
             int inx = 1;
             for (int i = 0; i < parameterBinding.length; i++) {
                 int parameterSetSize = parametersListSizes[i];
-                sb.append(positionalParameterFormat);
+                sb.append(String.format(positionalParameterFormat, inx));
                 for (int sx = 1; sx < parameterSetSize; sx++) {
-                    sb.append(",").append(positionalParameterFormat);
+                    sb.append(",").append(String.format(positionalParameterFormat, inx + sx));
                 }
                 sb.append(queryParametersSplit[inx++]);
             }

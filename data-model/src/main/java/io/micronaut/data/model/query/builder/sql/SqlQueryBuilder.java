@@ -39,6 +39,7 @@ import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,6 +70,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private final Dialect dialect;
     private final Map<Dialect, DialectConfig> perDialectConfig = new HashMap<>(3);
+    private Pattern positionalParameterPattern;
 
 
     /**
@@ -1566,6 +1568,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             return dialectConfig.positionalFormatter;
         }
         return DEFAULT_POSITIONAL_PARAMETER_MARKER;
+    }
+
+    /**
+     * @return The regex pattern for positional parameters.
+     */
+    public Pattern positionalParameterPattern() {
+        if (this.positionalParameterPattern == null) {
+            String positionalParameterFormat = positionalParameterFormat();
+            boolean messageFormat = positionalParameterFormat.endsWith("%s");
+            if (messageFormat) {
+                String pattern = positionalParameterFormat.substring(0, positionalParameterFormat.length() - 2);
+                pattern = java.util.regex.Pattern.quote(pattern) + "\\d";
+                this.positionalParameterPattern = Pattern.compile(pattern);
+            } else {
+                this.positionalParameterPattern = Pattern.compile(Pattern.quote(positionalParameterFormat));
+            }
+        }
+        return this.positionalParameterPattern;
     }
 
     @Override
