@@ -78,6 +78,11 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
 
     /**
+     * The member name that holds parameter auto populated property paths.
+     */
+    String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPropertyPaths";
+
+    /**
      * The ID type.
      */
     String META_MEMBER_ID_TYPE = "idType";

@@ -748,14 +748,33 @@ abstract class AbstractRepositorySpec extends Specification {
         author = authorRepository.save(author)
 
         then: "They are saved correctly"
-        println(author)
         author.id
+        book1.prePersist == 1
+        book1.postPersist == 1
+        book2.prePersist == 1
+        book2.postPersist == 1
+        book3.prePersist == 1
+        book3.postPersist == 1
+        book3.preUpdate == 0
+        book3.postUpdate == 0
+        book3.preRemove == 0
+        book3.postRemove == 0
+        book3.postLoad == 0
 
         when:"retrieving an author"
         author = authorRepository.findById(author.id).orElse(null)
 
         then:"the associations are correct"
         author.getBooks().size() == 3
+        author.getBooks()[0].postLoad == 1
+        author.getBooks()[1].postLoad == 1
+        author.getBooks()[2].postLoad == 1
+        author.getBooks()[0].prePersist == 0
+        author.getBooks()[0].postPersist == 0
+        author.getBooks()[0].preUpdate == 0
+        author.getBooks()[0].postUpdate == 0
+        author.getBooks()[0].preRemove == 0
+        author.getBooks()[0].postRemove == 0
 
         def result1 = author.getBooks().find {book -> book.title == "Book1" }
         result1.pages.size() == 1
@@ -771,6 +790,18 @@ abstract class AbstractRepositorySpec extends Specification {
         result3.pages.find {page -> page.num = 31}
         result3.pages.find {page -> page.num = 32}
         result3.pages.find {page -> page.num = 33}
+
+        when:
+        authorRepository.delete(author)
+        then:
+        author.getBooks().size() == 3
+        author.getBooks()[0].postLoad == 1
+        author.getBooks()[0].prePersist == 0
+        author.getBooks()[0].postPersist == 0
+        author.getBooks()[0].preUpdate == 0
+        author.getBooks()[0].postUpdate == 0
+        author.getBooks()[0].preRemove == 1
+        author.getBooks()[0].postRemove == 1
 
         cleanup:
         bookRepository.deleteAll()

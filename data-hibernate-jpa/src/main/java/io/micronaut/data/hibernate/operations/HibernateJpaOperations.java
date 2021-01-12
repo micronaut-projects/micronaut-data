@@ -29,6 +29,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.autopopulated.EntityAutoPopulatedPropertyProvider;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.DataType;
@@ -60,13 +61,13 @@ import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.sql.Connection;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -89,18 +90,22 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     private final TransactionOperations<Connection> transactionOperations;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
+    private final List<EntityAutoPopulatedPropertyProvider> entityAutoPopulatedPropertyProviders;
+    private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
 
     /**
      * Default constructor.
-     *
-     * @param sessionFactory        The session factory
+     *  @param sessionFactory        The session factory
      * @param transactionOperations The transaction operations
      * @param executorService       The executor service for I/O tasks to use
+     * @param entityAutoPopulatedPropertyProviders The auto populated providers
      */
     protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
-            @Named("io") @Nullable ExecutorService executorService) {
+            @Named("io") @Nullable ExecutorService executorService,
+            List<EntityAutoPopulatedPropertyProvider> entityAutoPopulatedPropertyProviders) {
+        this.entityAutoPopulatedPropertyProviders = entityAutoPopulatedPropertyProviders;
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
         this.sessionFactory = sessionFactory;
         this.transactionOperations = transactionOperations;
@@ -188,30 +193,21 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             if (parameterIndex > -1) {
                 value = parameterArray[parameterIndex];
             } else {
+                String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
                 String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
                 String propertyPath = i < indexedParameterPaths.length ? indexedParameterPaths[i] : null;
-                if (propertyPath != null) {
-                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
-                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
-                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
-                        if (lastUpdatedType == null) {
-                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
-                        }
-                        Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
-                        if (timestamp == null) {
-                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                        }
-                        value = timestamp;
-                    } else {
-                        int j = propertyPath.indexOf('.');
-                        if (j > -1) {
-                            String subProp = propertyPath.substring(j + 1);
-                            value = parameterArray[Integer.parseInt(propertyPath.substring(0, j))];
-                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
-                        } else {
-                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
-                        }
+                String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
+                if (autoPopulatedPropertyPath != null) {
+                    RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
+                    RuntimePersistentProperty<T> persistentProperty = persistentEntity.getRuntimePropertyByPath(autoPopulatedPropertyPath)
+                            .orElseThrow(() -> new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath));
+                    Object previousValue = null;
+                    if (propertyPath != null) {
+                        previousValue = resolveQueryParameterByPath(query, i, parameterArray, propertyPath);
                     }
+                    value = autoPopulate(persistentProperty, previousValue);
+                } else if (propertyPath != null) {
+                    value = resolveQueryParameterByPath(query, i, parameterArray, propertyPath);
                 } else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
                 }
@@ -238,6 +234,26 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             }
             q.setParameter(parameterName, value);
         }
+    }
+
+    private Object resolveQueryParameterByPath(String query, int i, Object[] queryParameters, String propertyPath) {
+        int j = propertyPath.indexOf('.');
+        if (j > -1) {
+            String subProp = propertyPath.substring(j + 1);
+            Object indexedValue = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
+            return BeanWrapper.getWrapper(indexedValue).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
+        } else {
+            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+        }
+    }
+
+    private Object autoPopulate(RuntimePersistentProperty<?> autoPopulateProperty, Object previousValue) {
+        for (EntityAutoPopulatedPropertyProvider entityAutoPopulatedPropertyProvider : entityAutoPopulatedPropertyProviders) {
+            if (entityAutoPopulatedPropertyProvider.supports(autoPopulateProperty)) {
+                return entityAutoPopulatedPropertyProvider.autoPopulate(autoPopulateProperty, previousValue);
+            }
+        }
+        throw new IllegalStateException("Cannot auto populate property: " + autoPopulateProperty.getName()  + " for entity: " + autoPopulateProperty.getOwner().getName());
     }
 
     @Override
@@ -386,10 +402,20 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         });
     }
 
+    @Override
+    public <T> int delete(@NonNull DeleteOperation<T> operation) {
+        return transactionOperations.executeWrite(status -> {
+            EntityManager session = sessionFactory.getCurrentSession();
+            session.remove(operation.getEntity());
+            flushIfNecessary(session, operation.getAnnotationMetadata());
+            return 1;
+        });
+    }
+
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
-    public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
+    public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             if (operation != null) {
                 EntityManager entityManager = sessionFactory.getCurrentSession();
@@ -430,7 +456,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     @Override
-    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
+    public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
         if (operation.all()) {
             return transactionOperations.executeWrite(status -> {
                 Class<T> entityType = operation.getRootEntity();
@@ -462,7 +488,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             String query = preparedQuery.getQuery();
-            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
             Pageable pageable = preparedQuery.getPageable();
             Session currentSession = getCurrentSession();
             Class<R> resultType = preparedQuery.getResultType();
@@ -659,6 +684,23 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     return null;
                 }
         );
+    }
+
+    @NonNull
+    @Override
+    public final <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+        ArgumentUtils.requireNonNull("type", type);
+        RuntimePersistentEntity<T> entity = entities.get(type);
+        if (entity == null) {
+            entity = new RuntimePersistentEntity<T>(type) {
+                @Override
+                protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
+                    return HibernateJpaOperations.this.getEntity(type);
+                }
+            };
+            entities.put(type, entity);
+        }
+        return entity;
     }
 
 }

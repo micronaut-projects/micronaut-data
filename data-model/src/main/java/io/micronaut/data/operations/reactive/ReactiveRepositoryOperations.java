@@ -139,7 +139,7 @@ public interface ReactiveRepositoryOperations {
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> Publisher<T> persistAll(@NonNull BatchOperation<T> operation);
+    @NonNull <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -154,14 +154,24 @@ public interface ReactiveRepositoryOperations {
     );
 
     /**
-     * Deletes all the entities of the given type.
+     * Deletes the entity.
      * @param operation The batch operation
      * @param <T> The generic type
-     * @return A publisher that emits a boolean true if the update was successful
+     * @return A publisher that emits the number of entities deleted
      */
     @SingleResult
     @NonNull
-    <T> Publisher<Number> deleteAll(BatchOperation<T> operation);
+    <T> Publisher<Number> delete(@NonNull DeleteOperation<T> operation);
+
+    /**
+     * Deletes all the entities of the given type.
+     * @param operation The batch operation
+     * @param <T> The generic type
+     * @return A publisher that emits the number of entities deleted
+     */
+    @SingleResult
+    @NonNull
+    <T> Publisher<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
     /**
      * Find a page for the given entity and pageable.

@@ -39,6 +39,7 @@ public class MethodMatchInfo {
     private final ClassElement interceptor;
     private final OperationType operationType;
     private final String[] updateProperties;
+    private final String[] autoPopulateForUpdateProperties;
 
     private Map<String, String> parameterRoles = new HashMap<>(2);
     private boolean dto;
@@ -78,19 +79,37 @@ public class MethodMatchInfo {
      * @param query The query, can be null for interceptors that don't execute queries.
      * @param interceptor The interceptor type to execute at runtime
      * @param operationType The operation type
+     */
+    public MethodMatchInfo(
+            @Nullable TypedElement resultType,
+            @Nullable QueryModel query,
+            @Nullable ClassElement interceptor,
+            @NonNull OperationType operationType) {
+        this(resultType, query, interceptor, operationType, null, null);
+    }
+
+    /**
+     * Creates a method info.
+     * @param resultType The result type, can be null for void etc.
+     * @param query The query, can be null for interceptors that don't execute queries.
+     * @param interceptor The interceptor type to execute at runtime
+     * @param operationType The operation type
      * @param updateProperties the update properties
+     * @param autoPopulateForUpdateProperties the auto-populate properties
      */
     public MethodMatchInfo(
             @Nullable TypedElement resultType,
             @Nullable QueryModel query,
             @Nullable ClassElement interceptor,
             @NonNull OperationType operationType,
-            String... updateProperties) {
+            String[] updateProperties,
+            String[] autoPopulateForUpdateProperties) {
         this.query = query;
         this.interceptor = interceptor;
         this.operationType = operationType;
         this.resultType = resultType;
         this.updateProperties = updateProperties;
+        this.autoPopulateForUpdateProperties = autoPopulateForUpdateProperties;
     }
 
     /**
@@ -131,6 +150,17 @@ public class MethodMatchInfo {
     }
 
     /**
+     * @return The properties to auto-populate for an update operation.
+     */
+    @NonNull public List<String> getAutoPopulateForUpdateProperties() {
+        if (autoPopulateForUpdateProperties == null) {
+            return Collections.emptyList();
+        } else {
+            return Arrays.asList(autoPopulateForUpdateProperties);
+        }
+    }
+
+    /**
      * The computed result type.
      * @return The result type.
      */
@@ -163,6 +193,7 @@ public class MethodMatchInfo {
     public OperationType getOperationType() {
         return operationType;
     }
+
 
     /**
      * Describes the operation type.

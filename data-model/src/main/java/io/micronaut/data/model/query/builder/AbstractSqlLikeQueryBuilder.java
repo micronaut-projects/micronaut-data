@@ -35,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An abstract class for builders that build SQL-like queries.
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
+    public static final String AUTO_POPULATED_PARAMETER_PREFIX = "$";
     public static final String ORDER_BY_CLAUSE = " ORDER BY ";
     protected static final String SELECT_CLAUSE = "SELECT ";
     protected static final String AS_CLAUSE = " AS ";
@@ -1249,14 +1251,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private void buildUpdateStatement(
             QueryState queryState,
-            List<String> propertiesToUpdate) {
+            List<String> propertiesToUpdate,
+            List<String> autoPopulatePropertiesToUpdate) {
         StringBuilder queryString = queryState.getQuery();
         Map<String, String> parameters = queryState.getParameters();
         queryString.append(SPACE).append("SET").append(SPACE);
 
         // keys need to be sorted before query is built
 
-        Iterator<String> iterator = propertiesToUpdate.iterator();
+        Iterator<String> iterator = Stream.concat(propertiesToUpdate.stream(), autoPopulatePropertiesToUpdate.stream()).iterator();
         boolean addComma = false; // skip first comma
         while (iterator.hasNext()) {
             String propertyName = iterator.next();
@@ -1327,7 +1330,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryString.append(columnName).append('=');
             Placeholder param = queryState.newParameter();
             appendUpdateSetParameter(queryString, prop, param);
-            parameters.put(param.key, prop.getName());
+            String name = prop.getName();
+            if (autoPopulatePropertiesToUpdate.contains(name)) {
+                name  = AUTO_POPULATED_PARAMETER_PREFIX + name;
+            }
+            parameters.put(param.key, name);
         }
     }
 
@@ -1432,8 +1439,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected abstract boolean computePropertyPaths();
 
     @Override
-    public QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull List<String> propertiesToUpdate) {
-        if (propertiesToUpdate.isEmpty()) {
+    public QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata,
+                                   @NonNull QueryModel query,
+                                   @NonNull List<String> propertiesToUpdate) {
+        return buildUpdate(annotationMetadata, query, propertiesToUpdate, Collections.emptyList());
+    }
+
+    @Override
+    public QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata,
+                                   @NonNull QueryModel query,
+                                   @NonNull List<String> propertiesToUpdate,
+                                   @NonNull List<String> autoPopulatePropertiesToUpdate) {
+        if (propertiesToUpdate.isEmpty() && autoPopulatePropertiesToUpdate.isEmpty()) {
             throw new IllegalArgumentException("No properties specified to update");
         }
         PersistentEntity entity = query.getPersistentEntity();
@@ -1450,7 +1467,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             queryString.append(SPACE)
                     .append(currentAlias);
         }
-        buildUpdateStatement(queryState, propertiesToUpdate);
+        buildUpdateStatement(queryState, propertiesToUpdate, autoPopulatePropertiesToUpdate);
         buildWhereClause(annotationMetadata, query.getCriteria(), queryState);
         return QueryResult.of(
                 queryString.toString(),

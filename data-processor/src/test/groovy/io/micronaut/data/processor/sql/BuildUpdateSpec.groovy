@@ -20,6 +20,7 @@ import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
+import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Unroll
 
@@ -200,4 +201,42 @@ interface PersonRepository extends CrudRepository<Person, Long> {
       expect:
       updateQuery == 'UPDATE `student` SET `name`=?,`creation_time`=? WHERE (`id` = ?)'
     }
+
+    void "test build update with multiple fields"() {
+        given:
+            def repository = buildRepository('test.CompanyRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Company;
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface CompanyRepository extends CrudRepository<Company, Long> {
+
+    void updateByName(String name, @io.micronaut.context.annotation.Parameter("name") String xxx);
+
+    void updateByLastUpdated(java.time.Instant lastUpdated, @io.micronaut.context.annotation.Parameter("lastUpdated") java.time.Instant xxx);
+
+}
+""")
+        when:
+            def updateByNameMethod = repository.findPossibleMethods("updateByName").findFirst().get()
+
+        then:
+            updateByNameMethod.stringValue(Query).get() == "UPDATE `company` SET `last_updated`=? WHERE (`name` = ?)"
+            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", ""]
+            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["lastUpdated", ""]
+            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"]
+            updateByNameMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.TIMESTAMP, DataType.STRING]
+
+        when:
+            def updateByLastUpdatedMethod = repository.findPossibleMethods("updateByLastUpdated").findFirst().get()
+
+        then:
+            updateByLastUpdatedMethod.stringValue(Query).get() == "UPDATE `company` SET `last_updated`=? WHERE (`last_updated` = ?)"
+            updateByLastUpdatedMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", ""]
+            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["lastUpdated", ""]
+            updateByLastUpdatedMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"]
+            updateByLastUpdatedMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.TIMESTAMP, DataType.TIMESTAMP]
+    }
+
 }

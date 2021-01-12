@@ -16,7 +16,6 @@
 package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
@@ -193,12 +192,12 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     }
 
     /**
-     * The name of the last updated property on the entity if any.
+     * The mapping between query parameters and auto populated properties that the parameter represents.
      *
-     * @return The last updated property
+     * @return The auto populated properties.
      */
-    default @Nullable String getLastUpdatedProperty() {
-        return null;
+    default String[] getIndexedParameterAutoPopulatedPropertyPaths() {
+        return StringUtils.EMPTY_STRING_ARRAY;
     }
 
     /**

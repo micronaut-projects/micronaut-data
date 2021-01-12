@@ -21,7 +21,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
-import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -48,25 +48,28 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
     @Override
     public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
         Argument<CompletionStage<Number>> arg = context.getReturnType().asArgument();
-        if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            return asyncDatastoreOperations.executeUpdate(preparedQuery)
-                        .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
-        } else {
-            Object[] parameterValues = context.getParameterValues();
-            Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
-            if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
-                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, (Iterable<Object>) parameterValues[0]);
-                return asyncDatastoreOperations.deleteAll(batchOperation)
-                        .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
-            } else if (parameterValues.length == 0) {
-                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity);
+        Object[] parameterValues = context.getParameterValues();
+        if (parameterValues.length == 1) {
+            if (parameterValues[0] instanceof Iterable) {
+                DeleteBatchOperation<Object> batchOperation = getDeleteBatchOperation(context, (Iterable<Object>) parameterValues[0]);
                 return asyncDatastoreOperations.deleteAll(batchOperation)
                         .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
             } else {
-                throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
+                if (context.hasAnnotation(Query.class)) {
+                    PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+                    // TODO: there should be executeDelete
+                    return asyncDatastoreOperations.executeUpdate(preparedQuery)
+                            .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
+                }
+                return asyncDatastoreOperations.delete(getDeleteOperation(context, parameterValues[0]))
+                        .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
             }
+        } else if (parameterValues.length == 0) {
+            DeleteBatchOperation<Object> batchOperation = getDeleteAllBatchOperation(context);
+            return asyncDatastoreOperations.deleteAll(batchOperation)
+                    .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
         }
+        throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
     }
 
 }

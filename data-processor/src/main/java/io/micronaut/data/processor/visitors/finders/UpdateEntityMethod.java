@@ -127,7 +127,8 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                                 queryModel,
                                 getInterceptorElement(matchContext, interceptor),
                                 MethodMatchInfo.OperationType.UPDATE,
-                                updateProperties
+                                updateProperties,
+                                null
                         );
                     }
 

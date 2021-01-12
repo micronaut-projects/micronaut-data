@@ -21,11 +21,11 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.autopopulated.EntityAutoPopulatedPropertyProvider;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
@@ -40,6 +40,7 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.event.EntityLifecycleEventService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.http.MediaType;
@@ -76,6 +77,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final MediaTypeCodec jsonCodec;
     protected final DateTimeProvider dateTimeProvider;
+    protected final EntityLifecycleEventService entityLifecycleEventService;
+    protected final List<EntityAutoPopulatedPropertyProvider> entityAutoPopulatedPropertyProviders;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
@@ -86,7 +89,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
     /**
      * Default constructor.
-     *
      * @param dataSourceName             The datasource name
      * @param columnNameResultSetReader  The column name result reader
      * @param columnIndexResultSetReader The column index result reader
@@ -94,6 +96,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param codecs                     The media type codecs
      * @param dateTimeProvider           The injected dateTimeProvider instance
      * @param beanContext                The bean context
+     * @param entityLifecycleEventService The entityLifecycleEventService
+     * @param entityAutoPopulatedPropertyProviders The auto-populated property providers
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -102,12 +106,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
             @NonNull DateTimeProvider dateTimeProvider,
-            BeanContext beanContext) {
+            BeanContext beanContext,
+            EntityLifecycleEventService entityLifecycleEventService,
+            List<EntityAutoPopulatedPropertyProvider> entityAutoPopulatedPropertyProviders) {
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
         this.dateTimeProvider = dateTimeProvider;
+        this.entityLifecycleEventService = entityLifecycleEventService;
+        this.entityAutoPopulatedPropertyProviders = entityAutoPopulatedPropertyProviders;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -160,9 +168,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         Object[] queryParameters = preparedQuery.getParameterArray();
         int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
         DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
+        String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
+        String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
+
         String query = preparedQuery.getQuery();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
         final Dialect dialect = queryBuilder.getDialect();
+        RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
 
         int[] parametersListSizes = null;
         for (int i = 0; i < parameterBinding.length; i++) {
@@ -214,7 +226,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
                 } else if (isSqlServerWithoutOrderBy(query, dialect)) {
                     // SQL server requires order by
-                    RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
                     sort = sortById(persistentEntity);
                     query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                 }
@@ -234,6 +245,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         } catch (Exception e) {
             throw new DataAccessException("Unable to prepare query [" + query + "]: " + e.getMessage(), e);
         }
+
         int index = shiftIndex(0);
         for (int i = 0; i < parameterBinding.length; i++) {
             int parameterIndex = parameterBinding[i];
@@ -242,31 +254,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             if (parameterIndex > -1) {
                 value = queryParameters[parameterIndex];
             } else {
-                String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
                 String propertyPath = indexedParameterPaths[i];
-                if (propertyPath != null) {
-
-                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
-                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
-                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
-                        if (lastUpdatedType == null) {
-                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
-                        }
-                        Object timestamp = ConversionService.SHARED.convert(dateTimeProvider.getNow(), lastUpdatedType).orElse(null);
-                        if (timestamp == null) {
-                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                        }
-                        value = timestamp;
-                    } else {
-                        int j = propertyPath.indexOf('.');
-                        if (j > -1) {
-                            String subProp = propertyPath.substring(j + 1);
-                            value = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
-                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
-                        } else {
-                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
-                        }
+                String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
+                if (autoPopulatedPropertyPath != null) {
+                    RuntimePersistentProperty<T> persistentProperty = persistentEntity.getRuntimePropertyByPath(autoPopulatedPropertyPath)
+                            .orElseThrow(() -> new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath));
+                    Object previousValue = null;
+                    if (propertyPath != null) {
+                        previousValue = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
                     }
+                    value = autoPopulate(persistentProperty, previousValue);
+                } else if (propertyPath != null) {
+                    value = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
                 } else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
                 }
@@ -300,6 +299,26 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return ps;
     }
 
+    private Object resolveQueryParameterByPath(String query, int i, Object[] queryParameters, String propertyPath) {
+        int j = propertyPath.indexOf('.');
+        if (j > -1) {
+            String subProp = propertyPath.substring(j + 1);
+            Object indexedValue = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
+            return BeanWrapper.getWrapper(indexedValue).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
+        } else {
+            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+        }
+    }
+
+    private Object autoPopulate(RuntimePersistentProperty<?> autoPopulateProperty, Object previousValue) {
+        for (EntityAutoPopulatedPropertyProvider entityAutoPopulatedPropertyProvider : entityAutoPopulatedPropertyProviders) {
+            if (entityAutoPopulatedPropertyProvider.supports(autoPopulateProperty)) {
+                return entityAutoPopulatedPropertyProvider.autoPopulate(autoPopulateProperty, previousValue);
+            }
+        }
+        throw new IllegalStateException("Cannot auto populate property: " + autoPopulateProperty.getName()  + " for entity: " + autoPopulateProperty.getOwner().getName());
+    }
+
     /**
      * Sets the insert parameters for the given insert, entity and statement.
      *
@@ -309,7 +328,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T>    The entity type
      */
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
-        Object now = null;
         RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
         final Dialect dialect = insert.dialect;
@@ -380,21 +398,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     }
                     BeanProperty<Object, ?> identityProperty = identity.getProperty();
                     value = value != null ? identityProperty.get(value) : null;
-                } else if (!prop.isGenerated()) {
-                    if (beanProperty.hasStereotype(AutoPopulated.NAME)) {
-                        if (beanProperty.hasAnnotation(DateCreated.NAME) ||
-                                beanProperty.hasAnnotation(DateUpdated.NAME)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
-
-                            value = now;
-                            beanProperty.convertAndSet(entity, value);
-                        } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
-                            value = UUID.randomUUID();
-                            beanProperty.set(entity, value);
-                        } else {
-                            throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
-                        }
-                    }
+                } else if (!prop.isGenerated() && beanProperty.hasStereotype(AutoPopulated.NAME) && value == null) {
+                    throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
                 }
             }
 

@@ -102,7 +102,25 @@ public interface QueryBuilder {
      * @param propertiesToUpdate The property names to update
      * @return The encoded query
      */
-    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata, @NonNull QueryModel query, @NonNull List<String> propertiesToUpdate);
+    QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata,
+                            @NonNull QueryModel query,
+                            @NonNull List<String> propertiesToUpdate);
+
+    /**
+     * Encode the given query into the encoded query instance.
+     *
+     * @param annotationMetadata The annotation metadata
+     * @param query The query
+     * @param propertiesToUpdate The property names to update
+     * @param autoPopulatePropertiesToUpdate The property names to update
+     * @return The encoded query
+     */
+    default QueryResult buildUpdate(@NonNull AnnotationMetadata annotationMetadata,
+                                    @NonNull QueryModel query,
+                                    @NonNull List<String> propertiesToUpdate,
+                                    @NonNull List<String> autoPopulatePropertiesToUpdate) {
+        return buildUpdate(annotationMetadata, query, propertiesToUpdate);
+    }
 
     /**
      * Encode the given query into the encoded query instance.

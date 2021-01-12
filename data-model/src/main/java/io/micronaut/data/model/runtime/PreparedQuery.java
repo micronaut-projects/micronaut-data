@@ -52,11 +52,6 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
      */
     Argument[] getArguments();
 
-    /**
-     * @return The last updated type.
-     */
-    Class<?> getLastUpdatedType();
-
     @NonNull
     @Override
     default Map<String, Object> getQueryHints() {

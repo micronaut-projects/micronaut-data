@@ -34,6 +34,8 @@ public @interface AutoPopulated {
      */
     String NAME = AutoPopulated.class.getName();
 
+    String UPDATEABLE = "updateable";
+
     /**
      * @return Whether the property can be updated following an insert
      */

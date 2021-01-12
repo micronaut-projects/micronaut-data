@@ -48,6 +48,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     /**
      * Default constructor.
+     *
      * @param type The type
      */
     public RuntimePersistentEntity(@NonNull Class<T> type) {
@@ -56,6 +57,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     /**
      * Default constructor.
+     *
      * @param introspection The introspection
      */
     public RuntimePersistentEntity(@NonNull BeanIntrospection<T> introspection) {
@@ -183,6 +185,16 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             }
         }
         return property;
+    }
+
+    /**
+     * Return a property for a dot separated property path such as {@code foo.bar.prop}.
+     *
+     * @param path The path
+     * @return The property
+     */
+    public Optional<RuntimePersistentProperty<T>> getRuntimePropertyByPath(String path) {
+        return (Optional) super.getPropertyByPath(path);
     }
 
     @NonNull

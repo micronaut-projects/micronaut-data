@@ -16,12 +16,14 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.UpdateInterceptor;
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -130,10 +132,11 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             }
         }
 
-        Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
-        if (element instanceof PropertyElement) {
-            properiesToUpdate.add(element.getName());
-        }
+        String[] autoPopulateProperties = entity.getPersistentProperties()
+                .stream()
+                .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+                .map(PersistentProperty::getName)
+                .toArray(String[]::new);
 
         ClassElement returnType = matchContext.getReturnType();
         Class<? extends DataInterceptor> interceptor = pickUpdateInterceptor(returnType);
@@ -145,7 +148,8 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                 query,
                 getInterceptorElement(matchContext, interceptor),
                 MethodMatchInfo.OperationType.UPDATE,
-                properiesToUpdate.toArray(new String[0])
+                properiesToUpdate.toArray(new String[0]),
+                autoPopulateProperties
         );
 
         info.addParameterRole(

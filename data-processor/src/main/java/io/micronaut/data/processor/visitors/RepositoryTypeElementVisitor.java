@@ -53,7 +53,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.AUTO_POPULATED_PARAMETER_PREFIX;
 import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
@@ -273,15 +275,24 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             encodedQuery = queryEncoder.buildDelete(annotationMetadataHierarchy, queryObject);
                                             break;
                                         case UPDATE:
-                                            encodedQuery = queryEncoder
-                                                    .buildUpdate(
-                                                            annotationMetadataHierarchy,
-                                                            queryObject,
-                                                            methodInfo.getUpdateProperties());
-
                                             final boolean isEntityArgument = parameters.length == 1 && parameters[0].getGenericType().getName().equals(entity.getName());
                                             if (isEntityArgument) {
                                                 encodeEntityParameters = true;
+                                                encodedQuery = queryEncoder
+                                                        .buildUpdate(
+                                                                annotationMetadataHierarchy,
+                                                                queryObject,
+                                                                Stream.concat(
+                                                                        methodInfo.getUpdateProperties().stream(),
+                                                                        methodInfo.getAutoPopulateForUpdateProperties().stream()
+                                                                ).collect(Collectors.toList()));
+                                            } else {
+                                                encodedQuery = queryEncoder
+                                                        .buildUpdate(
+                                                                annotationMetadataHierarchy,
+                                                                queryObject,
+                                                                methodInfo.getUpdateProperties(),
+                                                                methodInfo.getAutoPopulateForUpdateProperties());
                                             }
                                             break;
                                         case INSERT:
@@ -433,7 +444,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                 annotationBuilder,
                                                 parameters,
                                                 finalParameterBinding,
-                                                methodMatchContext,
+                                                methodInfo,
                                                 supportsImplicitQueries,
                                                 DataMethod.META_MEMBER_COUNT_PARAMETERS,
                                                 DataMethod.META_MEMBER_PARAMETER_BINDING);
@@ -442,7 +453,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                 annotationBuilder,
                                                 parameters,
                                                 finalParameterBinding,
-                                                methodMatchContext,
+                                                methodInfo,
                                                 supportsImplicitQueries,
                                                 DataMethod.META_MEMBER_PARAMETER_BINDING
                                         );
@@ -453,7 +464,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             annotationBuilder,
                                             parameters,
                                             finalPreparedCount1.getParameters(),
-                                            methodMatchContext,
+                                            methodInfo,
                                             supportsImplicitQueries,
                                             DataMethod.META_MEMBER_COUNT_PARAMETERS
                                     );
@@ -522,16 +533,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             AnnotationValueBuilder<DataMethod> annotationBuilder,
             ParameterElement[] parameters,
             Map<String, String> finalParameterBinding,
-            MethodMatchContext methodMatchContext,
+            MethodMatchInfo methodMatchInfo,
             boolean includeNames,
             String... members) {
+
         List<String> parameterNames = Arrays.stream(parameters).map(parameterElement ->
                 parameterElement.stringValue(Parameter.class).orElse(parameterElement.getName())).collect(Collectors.toList()
         );
         int len = finalParameterBinding.size();
         String[] parameterPaths = new String[len];
         String[] nameIndex = new String[len];
+        String[] autoPopulatedProperties = new String[len];
+        Arrays.fill(autoPopulatedProperties, "");
+
         AtomicInteger ai = new AtomicInteger(0);
+        Collection<String> parametersNeedPath = methodMatchInfo.getParameterRoles().values();
         int[] parameterIndices = finalParameterBinding.entrySet().stream().map(entry -> {
             String parameterName = entry.getValue();
             int pathIndex = ai.getAndIncrement();
@@ -548,16 +564,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     parameterPaths[pathIndex] = paramIndex + "." + parameterName.substring(j + 1);
                     return -1;
                 } else {
+                    if (parameterName.startsWith(AUTO_POPULATED_PARAMETER_PREFIX)) {
+                        String autoPopulatedProperty = parameterName.substring(AUTO_POPULATED_PARAMETER_PREFIX.length());
+                        autoPopulatedProperties[pathIndex] = autoPopulatedProperty;
+                        return -1;
+                    }
                     // -1 indicates special handling for parameters in roles etc.
-                    Map<String, Element> parametersInRole = methodMatchContext.getParametersInRole();
-                    for (Map.Entry<String, Element> roleEntry : parametersInRole.entrySet()) {
-                        Element element = roleEntry.getValue();
-                        if (element instanceof PropertyElement) {
-                            String name = element.getName();
-                            if (name.equals(parameterName)) {
-                                parameterPaths[pathIndex] = name;
-                                break;
-                            }
+                    for (String name : parametersNeedPath) {
+                        if (name.equals(parameterName)) {
+                            parameterPaths[pathIndex] = name;
+                            break;
                         }
                     }
                     return -1;
@@ -568,6 +584,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         for (String member : members) {
             annotationBuilder.member(member, parameterIndices);
             annotationBuilder.member(member + "Paths", parameterPaths);
+            annotationBuilder.member(member + "AutoPopulatedPropertyPaths", autoPopulatedProperties);
             if (includeNames) {
                 annotationBuilder.member(member + "Names", nameIndex);
             }
@@ -628,6 +645,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                             parameterDataTypes[i++] = DataType.OBJECT;
                         }
                     } else {
+                        if (value.startsWith(AUTO_POPULATED_PARAMETER_PREFIX)) {
+                            value = value.substring(AUTO_POPULATED_PARAMETER_PREFIX.length());
+                        }
                         SourcePersistentProperty prop = findProp(matchContext, value);
                         if (prop != null) {
                             parameterDataTypes[i++] = prop.getDataType();

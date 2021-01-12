@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import java.util.List;
-
 /**
  * A batch operation is an operation performed on one or more entities of the same type.
  *
@@ -33,9 +31,4 @@ public interface BatchOperation<E> extends EntityOperation<E>, Iterable<E>, Prep
         return false;
     }
 
-    /**
-     * Split the batch operation into individual inserts.
-     * @return The separated inserts.
-     */
-    List<InsertOperation<E>> split();
 }

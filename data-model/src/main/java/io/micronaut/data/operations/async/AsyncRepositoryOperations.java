@@ -138,7 +138,7 @@ public interface AsyncRepositoryOperations {
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull BatchOperation<T> operation);
+    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull InsertBatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -152,12 +152,20 @@ public interface AsyncRepositoryOperations {
     );
 
     /**
+     * Deletes the entity.
+     * @param operation The batch operation
+     * @param <T> The generic type
+     * @return A completion that emits the number of entities deleted
+     */
+    @NonNull <T> CompletionStage<Number> delete(@NonNull DeleteOperation<T> operation);
+
+    /**
      * Deletes all the entities of the given type.
      * @param operation The batch operation
      * @param <T> The generic type
-     * @return A completion that emits a boolean true if successful
+     * @return A completion that emits the number of entities deleted
      */
-    @NonNull <T> CompletionStage<Number> deleteAll(@NonNull BatchOperation<T> operation);
+    @NonNull <T> CompletionStage<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
     /**
      * Find a page for the given entity and pageable.

@@ -19,8 +19,9 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Query;
-import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -89,14 +90,15 @@ public class UpdateByMethod extends DynamicFinder {
             matchContext.fail("Projections are not supported on batch updates");
             return null;
         }
-        String[] updateProperties;
         if (!(query instanceof RawQuery)) {
-
             List<QueryModel.Criterion> criterionList = query.getCriteria().getCriteria();
             if (CollectionUtils.isEmpty(criterionList)) {
                 matchContext.fail("Cannot implement batch update operation that doesn't perform a query");
                 return null;
             }
+
+            SourcePersistentEntity entity = matchContext.getRootEntity();
+
             Set<String> queryParameters = new HashSet<>();
             for (QueryModel.Criterion criterion : criterionList) {
                 if (criterion instanceof QueryModel.PropertyCriterion) {
@@ -107,38 +109,49 @@ public class UpdateByMethod extends DynamicFinder {
                     }
                 }
             }
-            List<Element> updateParameters = matchContext.getParametersNotInRole().stream().filter(p -> !queryParameters.contains(p.getName()))
+
+            List<String> updateProperties = matchContext.getParametersNotInRole()
+                    .stream()
+                    .map(p -> p.stringValue(Parameter.class).orElse(p.getName()))
+                    .filter(parameterName -> !queryParameters.contains(parameterName))
+                    .map(parameterName -> {
+                        Optional<String> path = entity.getPath(parameterName);
+                        if (path.isPresent()) {
+                            return path.get();
+                        } else {
+                            matchContext.fail("Cannot perform batch update for non-existent property: " + parameterName);
+                            return null;
+                        }
+                    })
                     .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(updateParameters)) {
+
+            Set<String> autoPopulateProperties = entity.getPersistentProperties()
+                    .stream()
+                    .filter(p -> p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+                    .map(PersistentProperty::getName)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+
+            if (CollectionUtils.isEmpty(updateProperties) && CollectionUtils.isEmpty(autoPopulateProperties)) {
                 matchContext.fail("At least one parameter required to update");
                 return null;
             }
-            Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
-            if (element instanceof PropertyElement) {
-                updateParameters.add(element);
-            }
-            SourcePersistentEntity entity = matchContext.getRootEntity();
-            updateProperties = new String[updateParameters.size()];
-            for (int i = 0; i < updateProperties.length; i++) {
-                Element parameter = updateParameters.get(i);
-                String parameterName = parameter.stringValue(Parameter.class).orElse(parameter.getName());
-                Optional<String> path = entity.getPath(parameterName);
-                if (path.isPresent()) {
-                    updateProperties[i] = path.get();
-                } else {
-                    matchContext.fail("Cannot perform batch update for non-existent property: " + parameterName);
-                    return null;
-                }
-            }
-        } else {
-            updateProperties = StringUtils.EMPTY_STRING_ARRAY;
+
+            autoPopulateProperties.removeAll(updateProperties);
+
+            return new MethodMatchInfo(
+                    queryResultType,
+                    query,
+                    getInterceptorElement(matchContext, UpdateMethod.pickUpdateInterceptor(matchContext.getReturnType())),
+                    MethodMatchInfo.OperationType.UPDATE,
+                    updateProperties.toArray(new String[0]),
+                    autoPopulateProperties.toArray(new String[0])
+            );
         }
         return new MethodMatchInfo(
                 queryResultType,
                 query,
                 getInterceptorElement(matchContext, UpdateMethod.pickUpdateInterceptor(matchContext.getReturnType())),
-                MethodMatchInfo.OperationType.UPDATE,
-                updateProperties
-        );
+                MethodMatchInfo.OperationType.UPDATE);
+
     }
 }

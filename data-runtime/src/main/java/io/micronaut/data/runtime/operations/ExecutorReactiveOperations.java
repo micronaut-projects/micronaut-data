@@ -163,7 +163,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<T> persistAll(@NonNull BatchOperation<T> operation) {
+    public <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
                 asyncOperations.persistAll(operation)
         )).flatMap(Flowable::fromIterable);
@@ -179,7 +179,15 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
-    public <T> Publisher<Number> deleteAll(BatchOperation<T> operation) {
+    public <T> Publisher<Number> delete(@NonNull DeleteOperation<T> operation) {
+        return Publishers.map(Publishers.fromCompletableFuture(() ->
+                asyncOperations.delete(operation)
+        ), number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));
+    }
+
+    @NonNull
+    @Override
+    public <T> Publisher<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
         return Publishers.map(Publishers.fromCompletableFuture(() ->
                 asyncOperations.deleteAll(operation)
         ), number -> convertNumberArgumentIfNecessary(number, operation.getResultArgument()));

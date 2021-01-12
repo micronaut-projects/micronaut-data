@@ -22,7 +22,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
-import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
@@ -47,21 +47,25 @@ public class DefaultDeleteAllReactiveInterceptor extends AbstractReactiveInterce
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Argument<Object> arg = context.getReturnType().asArgument();
         Publisher<Number> publisher;
-        if (context.hasAnnotation(Query.class)) {
-            PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            publisher = reactiveOperations.executeUpdate(preparedQuery);
-        } else {
-            Object[] parameterValues = context.getParameterValues();
-            Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
-            if (parameterValues.length == 1 && parameterValues[0] instanceof Iterable) {
-                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, (Iterable<Object>) parameterValues[0]);
-                publisher = reactiveOperations.deleteAll(batchOperation);
-            } else if (parameterValues.length == 0) {
-                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity);
+        Object[] parameterValues = context.getParameterValues();
+        Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
+        if (parameterValues.length == 1) {
+            if (parameterValues[0] instanceof Iterable) {
+                DeleteBatchOperation<Object> batchOperation = getDeleteBatchOperation(context, rootEntity, (Iterable<Object>) parameterValues[0]);
                 publisher = reactiveOperations.deleteAll(batchOperation);
             } else {
-                throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
+                if (context.hasAnnotation(Query.class)) {
+                    PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
+                    // TODO: there should be executeDelete
+                    publisher = reactiveOperations.executeUpdate(preparedQuery);
+                } else {
+                    publisher = reactiveOperations.delete(getDeleteOperation(context, parameterValues[0]));
+                }
             }
+        } else if (parameterValues.length == 0) {
+            publisher = reactiveOperations.deleteAll(getDeleteAllBatchOperation(context));
+        } else {
+            throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
         }
         return Publishers.convertPublisher(publisher, arg.getType());
     }

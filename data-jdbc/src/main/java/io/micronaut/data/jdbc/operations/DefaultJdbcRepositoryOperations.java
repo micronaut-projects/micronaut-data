@@ -25,9 +25,9 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.autopopulated.EntityAutoPopulatedPropertyProvider;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
@@ -38,6 +38,7 @@ import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -46,6 +47,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.event.EntityLifecycleEventService;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultConsumer;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -100,6 +102,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param beanContext           The bean context
      * @param codecs                The codecs
      * @param dateTimeProvider      The dateTimeProvider
+     * @param entityAutoPopulatedPropertyProviders The auto-populated property providers
      */
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               DataSource dataSource,
@@ -107,7 +110,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
-                                              @NonNull DateTimeProvider dateTimeProvider) {
+                                              @NonNull DateTimeProvider dateTimeProvider,
+                                              List<EntityAutoPopulatedPropertyProvider> entityAutoPopulatedPropertyProviders) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(),
@@ -115,8 +119,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 new JdbcQueryStatement(),
                 codecs,
                 dateTimeProvider,
-                beanContext
-        );
+                beanContext,
+                new EntityLifecycleEventService(beanContext),
+                entityAutoPopulatedPropertyProviders);
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
@@ -177,6 +182,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
                                         .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
                             }
+                            triggerCascadeEvent(entityLifecycleEventService::onPostLoad, persistentEntity, result);
                             return result;
                         } else {
                             if (preparedQuery.isDtoProjection()) {
@@ -302,15 +308,16 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (isEntity || dtoProjection) {
             SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
             SqlTypeMapper<ResultSet, R> mapper;
+            RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
             if (dtoProjection) {
                 mapper = new SqlDTOMapper<>(
-                        getEntity(resultType),
+                        persistentEntity,
                         columnNameResultSetReader,
                         jsonCodec
                 );
             } else {
                 mapper = new SqlResultEntityTypeMapper<>(
-                        getEntity(resultType),
+                        persistentEntity,
                         columnNameResultSetReader,
                         preparedQuery.getJoinFetchPaths(),
                         jsonCodec
@@ -328,6 +335,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         R o = mapper.map(rs, resultType);
                         if (sqlMappingConsumer != null) {
                             sqlMappingConsumer.accept(rs, o);
+                        }
+                        if (isEntity) {
+                            triggerCascadeEvent(entityLifecycleEventService::onPostLoad, persistentEntity, o);
                         }
                         action.accept(o);
                     } else {
@@ -414,9 +424,59 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         });
     }
 
+    @NonNull
     @Override
-    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
-        throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
+    public Optional<Number> executeDelete(@NonNull PreparedQuery<?, Number> preparedQuery) {
+        //noinspection ConstantConditions
+        return transactionOperations.executeWrite(status -> {
+            try {
+                Connection connection = status.getConnection();
+                try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
+                    int result = ps.executeUpdate();
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Delete operation updated {} records", result);
+                    }
+                    return Optional.of(result);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+            }
+        });
+    }
+
+    @Override
+    public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
+        if (operation.all()) {
+            final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+            final String query = annotationMetadata.stringValue(Query.class).orElse(null);
+            if (query == null) {
+                throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
+            }
+            final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+            if (params.length != 0) {
+                throw new IllegalStateException("Unexpected parameters: " + Arrays.toString(params));
+            }
+
+            return transactionOperations.executeWrite(status -> {
+                try {
+                    Connection connection = status.getConnection();
+                    if (QUERY_LOG.isDebugEnabled()) {
+                        QUERY_LOG.debug("Executing SQL DELETE ALL: {}", query);
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement(query)) {
+                        return Optional.of(ps.executeUpdate());
+                    }
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+                }
+            });
+
+        }
+        return Optional.of(
+                operation.split().stream()
+                        .mapToInt(this::delete)
+                        .sum()
+        );
     }
 
     @NonNull
@@ -439,6 +499,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
             return transactionOperations.executeWrite(status -> {
                 try {
+                    entityLifecycleEventService.onPreUpdate(entity);
+
                     Connection connection = status.getConnection();
                     if (QUERY_LOG.isDebugEnabled()) {
                         QUERY_LOG.debug("Executing SQL UPDATE: {}", query);
@@ -480,15 +542,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                     throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                                 }
                             } else {
-
-                                final Object newValue;
                                 final BeanProperty<T, ?> beanProperty = pp.getProperty();
-                                if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                                    newValue = dateTimeProvider.getNow();
-                                    beanProperty.convertAndSet(entity, newValue);
-                                } else {
-                                    newValue = beanProperty.get(entity);
-                                }
+                                final Object newValue = beanProperty.get(entity);
                                 final DataType dataType = pp.getDataType();
                                 if (dataType == DataType.ENTITY && newValue != null && pp instanceof Association) {
                                     final RuntimePersistentProperty<Object> idReader = getIdReader(newValue);
@@ -575,6 +630,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             }
                         }
                         ps.executeUpdate();
+                        entityLifecycleEventService.onPostUpdate(entity);
                         return entity;
                     }
                 } catch (SQLException e) {
@@ -583,6 +639,67 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
         }
         return entity;
+    }
+
+    @Override
+    public <T> int delete(@NonNull DeleteOperation<T> operation) {
+        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        final String query = annotationMetadata.stringValue(Query.class).orElse(null);
+        final Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+
+        Objects.requireNonNull(query, "Query cannot be null");
+
+        final Object finalEntity = operation.getEntity();
+        Objects.requireNonNull(finalEntity, "Passed entity cannot be null");
+        final RuntimePersistentEntity<Object> finalPersistentEntity = (RuntimePersistentEntity<Object>) getEntity(finalEntity.getClass());
+
+        return transactionOperations.executeWrite(status -> {
+            try {
+                triggerCascadeEvent(entityLifecycleEventService::onPreRemove, finalPersistentEntity, finalEntity);
+
+                Connection connection = status.getConnection();
+                if (QUERY_LOG.isDebugEnabled()) {
+                    QUERY_LOG.debug("Executing SQL DELETE: {}", query);
+                }
+                Object entity = finalEntity;
+                RuntimePersistentEntity<Object> persistentEntity = finalPersistentEntity;
+                final RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
+                if (identity != null) {
+                    if (identity instanceof Embedded) {
+                        final BeanProperty idProp = identity.getProperty();
+                        final Object idEntity = idProp.get(entity);
+                        if (idEntity == null) {
+                            throw new IllegalStateException("Cannot delete an entity with null ID: " + entity);
+                        }
+                        entity = idEntity;
+                        persistentEntity = (RuntimePersistentEntity<Object>) getEntity(idEntity.getClass());
+                    }
+                }
+                try (PreparedStatement ps = connection.prepareStatement(query)) {
+                    for (int i = 0; i < params.length; i++) {
+                        String propertyName = params[i];
+                        if (propertyName.isEmpty()) {
+                            setStatementParameter(ps, i + 1, DataType.ENTITY, entity, dialect);
+                        } else {
+                            if (propertyName.startsWith("0.")) {
+                                propertyName = propertyName.replace("0.", "");
+                            }
+                            RuntimePersistentProperty<Object> pp = persistentEntity.getPropertyByName(propertyName);
+                            if (pp == null) {
+                                throw new IllegalStateException("Cannot perform delete for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
+                            }
+                            setStatementParameter(ps, i + 1, pp.getDataType(), pp.getProperty().get(entity), dialect);
+                        }
+                    }
+                    int updated = ps.executeUpdate();
+                    triggerCascadeEvent(entityLifecycleEventService::onPostRemove, finalPersistentEntity, finalEntity);
+                    return updated;
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+            }
+        });
     }
 
     @NonNull
@@ -604,6 +721,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         //noinspection ConstantConditions
         return transactionOperations.executeWrite((status) -> {
             try {
+                entityLifecycleEventService.onPrePersist(entity);
+
                 Connection connection = status.getConnection();
                 boolean generateId = insert.isGenerateId();
                 String insertSql = insert.getSql();
@@ -649,6 +768,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         connection,
                         identity
                 );
+                entityLifecycleEventService.onPostPersist(entity);
                 return entity;
             } catch (SQLException e) {
                 throw new DataAccessException("SQL Error executing INSERT: " + e.getMessage(), e);
@@ -842,7 +962,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @NonNull
     @Override
-    public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
+    public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         StoredInsert<T> insert = resolveInsert(operation);
         if (!insert.doesSupportBatch()) {
             return operation.split().stream()
@@ -890,6 +1010,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     if (persisted.contains(entity)) {
                         continue;
                     }
+                    entityLifecycleEventService.onPrePersist(entity);
                     setInsertParameters(insert, entity, stmt);
                     stmt.addBatch();
                     results.add(entity);
@@ -916,6 +1037,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     }
                 }
                 for (T result : results) {
+                    entityLifecycleEventService.onPostPersist(result);
                     cascadeInserts(
                             annotationMetadata,
                             repositoryType,
@@ -1050,5 +1172,34 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         };
         return StreamSupport.stream(iterable.spliterator(), false);
+    }
+
+    private void triggerCascadeEvent(Consumer<Object> action, RuntimePersistentEntity<?> persistentEntity, Object instance) {
+        triggerCascadeEvent(action, persistentEntity, instance, new HashSet<>());
+    }
+
+    private void triggerCascadeEvent(Consumer<Object> action, RuntimePersistentEntity<?> persistentEntity, Object instance, Set<Object> processed) {
+        if (instance == null) {
+            return;
+        }
+        processed.add(instance);
+        for (RuntimePersistentProperty pp : persistentEntity.getPersistentProperties()) {
+            if (pp instanceof Association) {
+                Association association = (Association) pp;
+                Object associationInstance = pp.getProperty().get(instance);
+                RuntimePersistentEntity<?> associatedEntity = (RuntimePersistentEntity<?>) association.getAssociatedEntity();
+                if (associationInstance instanceof Iterable) {
+                    for (Object o : (Iterable) associationInstance) {
+                        if (processed.contains(o)) {
+                            continue;
+                        }
+                        triggerCascadeEvent(action, associatedEntity, o, processed);
+                    }
+                } else if (associationInstance != null && !processed.contains(associationInstance)) {
+                    triggerCascadeEvent(action, associatedEntity, associationInstance, processed);
+                }
+            }
+        }
+        action.accept(instance);
     }
 }

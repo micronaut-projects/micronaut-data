@@ -41,7 +41,6 @@ public final class EntityAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
-
         return Arrays.asList(
                 MappedEntityMapper.buildIntrospectionConfiguration(),
                 AnnotationValue.builder(MappedEntity.class).build()

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.annotation;
 
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -40,6 +41,7 @@ import java.lang.annotation.*;
         @Introspected.IndexedAnnotation(annotation = MappedProperty.class, member = "value")
     }
 )
+@Prototype
 public @interface MappedEntity {
 
     /**
