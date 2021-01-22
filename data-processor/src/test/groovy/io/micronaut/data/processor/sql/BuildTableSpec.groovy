@@ -87,7 +87,7 @@ class Test {
         Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`json` JSON NOT NULL);'
         Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"json" JSONB NOT NULL);'
         Dialect.ORACLE   | '''CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE
-CREATE TABLE "TEST" ("ID" NUMBER(19) PRIMARY KEY NOT NULL,"JSON" CLOB NOT NULL)'''
+CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"JSON" CLOB NOT NULL)'''
     }
 
     void "test custom column definition"() {
@@ -132,7 +132,7 @@ class Test {
         sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
     }
 
-    @PendingFeature(reason = "Waiting for https://github.com/micronaut-projects/micronaut-core/pull/4343")
+//    @PendingFeature(reason = "Waiting for https://github.com/micronaut-projects/micronaut-core/pull/4343")
     void "test custom parent entity with generics"() {
         given:
         def entity = buildJpaEntity('test.Test', '''
@@ -148,6 +148,6 @@ class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"date_created" TIMESTAMP WITH TIME ZONE);'
+        sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"created_date" TIMESTAMP,"updated_date" TIMESTAMP);'
     }
 }
