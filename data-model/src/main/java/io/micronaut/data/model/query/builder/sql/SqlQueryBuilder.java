@@ -468,9 +468,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     }
                     break;
                 case ORACLE:
-                    if (prop == identity) {
-                        column += " PRIMARY KEY";
-                    }
+
                     // for Oracle we use sequences so just add NOT NULL
                     // then alter the table for sequences
                     if (type == UUID) {
@@ -483,6 +481,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         }
                     } else {
                         column += " NOT NULL";
+                    }
+                    if (prop == identity) {
+                        column += " PRIMARY KEY";
                     }
                 break;
                 default:
