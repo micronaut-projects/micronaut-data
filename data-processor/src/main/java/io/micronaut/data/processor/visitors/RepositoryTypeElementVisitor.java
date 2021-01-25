@@ -56,7 +56,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.AUTO_POPULATED_PARAMETER_PREFIX;
-import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**

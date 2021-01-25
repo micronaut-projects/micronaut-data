@@ -16,6 +16,8 @@
 package io.micronaut.data.runtime.event;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanMethod;
 import io.micronaut.data.annotation.event.PostLoad;
 import io.micronaut.data.annotation.event.PostPersist;
 import io.micronaut.data.annotation.event.PostRemove;
@@ -62,7 +64,7 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPrePersist(@NotNull Object entity) {
-        triggerInternalEvent(PrePersist.class, entity);
+        triggerEvent(PrePersist.class, entity);
     }
 
     /**
@@ -71,7 +73,7 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPostPersist(@NotNull Object entity) {
-        triggerInternalEvent(PostPersist.class, entity);
+        triggerEvent(PostPersist.class, entity);
     }
 
     /**
@@ -80,7 +82,7 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPreUpdate(@NotNull Object entity) {
-        triggerInternalEvent(PreUpdate.class, entity);
+        triggerEvent(PreUpdate.class, entity);
     }
 
     /**
@@ -89,7 +91,7 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPostUpdate(@NotNull Object entity) {
-        triggerInternalEvent(PostUpdate.class, entity);
+        triggerEvent(PostUpdate.class, entity);
     }
 
     /**
@@ -98,7 +100,7 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPreRemove(@NotNull Object entity) {
-        triggerInternalEvent(PreRemove.class, entity);
+        triggerEvent(PreRemove.class, entity);
     }
 
     /**
@@ -107,7 +109,7 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPostRemove(@NotNull Object entity) {
-        triggerInternalEvent(PostRemove.class, entity);
+        triggerEvent(PostRemove.class, entity);
     }
 
     /**
@@ -116,10 +118,26 @@ public class EntityLifecycleEventService {
      * @param entity the entity instance
      */
     public void onPostLoad(@NotNull Object entity) {
-        triggerInternalEvent(PostLoad.class, entity);
+        triggerEvent(PostLoad.class, entity);
     }
 
-    private void triggerInternalEvent(Class<? extends Annotation> annotation, @NotNull Object entity) {
+    private void triggerEvent(Class<? extends Annotation> annotation, @NotNull Object entity) {
+        triggerDefaultEntityListeners(annotation, entity);
+        // TODO: trigger @javax.persistence.EntityListeners listeners of the top level entity class -> actual entity class
+        triggerInternalCallbackMethods(annotation, entity);
+    }
+
+    private void triggerInternalCallbackMethods(Class<? extends Annotation> annotation, @NotNull Object entity) {
+        // TODO: JPA spec should trigger first methods from the top level entity class -> actual entity class
+        for (BeanMethod beanMethod : BeanIntrospection.getIntrospection(entity.getClass()).getBeanMethods()) {
+            if (beanMethod.isAnnotationPresent(annotation)) {
+                beanMethod.invoke(entity);
+            }
+        }
+    }
+
+    private void triggerDefaultEntityListeners(Class<? extends Annotation> annotation, @NotNull Object entity) {
+        // TODO: support @javax.persistence.ExcludeDefaultListeners
         Collection<BeanDefinition<EntityListener>> beanDefinitions = beanContext.getBeanDefinitions(EntityListener.class, Qualifiers.byTypeArguments(entity.getClass()));
         Collection<EntityEventHandler> handlers = new ArrayList<>(beanDefinitions.size());
 
