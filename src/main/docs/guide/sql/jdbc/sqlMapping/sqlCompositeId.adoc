@@ -1,13 +1,12 @@
-You can define a composite primary key using either JPA or Micronaut Data annotations.
-
-A composite ID requires an additional class for example:
+Composite primary keys can be defined using either JPA or Micronaut Data annotations. A composite ID requires an additional class to represent the key. The class should define fields that correspond to the columns making up the composite key. For example:
 
 snippet::example.ProjectId[project-base="doc-examples/jdbc-example", source="main"]
 
-It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
+TIP: It is recommended that the ID class be immutable and implement `equals`/`hashCode`.
+TIP: When using Java, be sure to define getters for the fields making up your composite key.
 
-You should then declare the `id` property of the entity with either JPA's `@EmbeddedId` or ann:data.annotation.EmbeddedId[]:
+You can then declare the `id` property of the entity using either JPA's `@EmbeddedId` or ann:data.annotation.EmbeddedId[]:
 
 snippet::example.Project[project-base="doc-examples/jdbc-example", source="main"]
 
-TIP: To alter the column mappings for the ID you use `@Column` in the `ProjectId` class
+TIP: To alter the column mappings for the ID, you may use the `@Column` annotation on the fields within the `ProjectId` class
