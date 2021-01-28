@@ -4638,10 +4638,7 @@ public class Country {
 
 
 <div class="paragraph">
-<p>You can define a composite primary key using either JPA or Micronaut Data annotations.</p>
-</div>
-<div class="paragraph">
-<p>A composite ID requires an additional class for example:</p>
+<p>Composite primary keys can be defined using either JPA or Micronaut Data annotations. A composite ID requires an additional class to represent the key. The class should define fields that correspond to the columns making up the composite key. For example:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4718,11 +4715,21 @@ import javax.persistence.Embeddable
 data class ProjectId(val departmentId: Int, val projectId: Int)</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>It is recommended that the ID class be immutable and implement <code>equals</code>/<code>hashCode</code>.</p>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+It is recommended that the ID class be immutable and implement <code>equals</code>/<code>hashCode</code>.
+TIP: When using Java, be sure to define getters for the fields making up your composite key.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
-<p>You should then declare the <code>id</code> property of the entity with either JPA&#8217;s <code>@EmbeddedId</code> or <a href="../api/io/micronaut/data/annotation/EmbeddedId.html">@EmbeddedId</a>:</p>
+<p>You can then declare the <code>id</code> property of the entity using either JPA&#8217;s <code>@EmbeddedId</code> or <a href="../api/io/micronaut/data/annotation/EmbeddedId.html">@EmbeddedId</a>:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -4801,7 +4808,7 @@ class Project(
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-To alter the column mappings for the ID you use <code>@Column</code> in the <code>ProjectId</code> class
+To alter the column mappings for the ID, you may use the <code>@Column</code> annotation on the fields within the <code>ProjectId</code> class
 </td>
 </tr>
 </table>
