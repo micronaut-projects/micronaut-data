@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -66,20 +67,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     private final Map<String, JoinPath> joinPaths;
     private final String startingPrefix;
     private final MediaTypeCodec jsonCodec;
+    private final BiFunction<RuntimePersistentEntity<R>, R, R> eventListener;
     private boolean callNext = true;
-
-    /**
-     * Default constructor.
-     * @param entity The entity
-     * @param resultReader The result reader
-     * @param jsonCodec The json codec
-     */
-    public SqlResultEntityTypeMapper(
-            @NonNull RuntimePersistentEntity<R> entity,
-            @NonNull ResultReader<RS, String> resultReader,
-            @Nullable MediaTypeCodec jsonCodec) {
-        this(entity, resultReader, Collections.emptySet(), jsonCodec);
-    }
 
     /**
      * Default constructor.
@@ -93,7 +82,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull RuntimePersistentEntity<R> entity,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable MediaTypeCodec jsonCodec) {
-        this(entity, resultReader, Collections.emptySet(), prefix, jsonCodec);
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonCodec, null);
     }
 
     /**
@@ -108,7 +97,24 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             @Nullable MediaTypeCodec jsonCodec) {
-        this(entity, resultReader, joinPaths, null, jsonCodec);
+        this(entity, resultReader, joinPaths, null, jsonCodec, null);
+    }
+
+    /**
+     * Constructor used to customize the join paths.
+     * @param entity The entity
+     * @param resultReader The result reader
+     * @param joinPaths The join paths
+     * @param jsonCodec The JSON codec
+     * @param loadListener The event listener
+     */
+    public SqlResultEntityTypeMapper(
+            @NonNull RuntimePersistentEntity<R> entity,
+            @NonNull ResultReader<RS, String> resultReader,
+            @Nullable Set<JoinPath> joinPaths,
+            @Nullable MediaTypeCodec jsonCodec,
+            @Nullable BiFunction<RuntimePersistentEntity<R>, R, R> loadListener) {
+        this(entity, resultReader, joinPaths, null, jsonCodec, loadListener);
     }
 
     /**
@@ -122,12 +128,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             @NonNull ResultReader<RS, String> resultReader,
             @Nullable Set<JoinPath> joinPaths,
             String startingPrefix,
-            @Nullable MediaTypeCodec jsonCodec) {
+            @Nullable MediaTypeCodec jsonCodec,
+            @Nullable BiFunction<RuntimePersistentEntity<R>, R, R> eventListener) {
         ArgumentUtils.requireNonNull("entity", entity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.entity = entity;
         this.jsonCodec = jsonCodec;
         this.resultReader = resultReader;
+        this.eventListener = eventListener;
         if (CollectionUtils.isNotEmpty(joinPaths)) {
             this.joinPaths = new HashMap<>(joinPaths.size());
             for (JoinPath joinPath : joinPaths) {
@@ -492,7 +500,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     });
                 }
             }
-            return entity;
+            R finalEntity;
+            if (eventListener != null && persistentEntity.hasPostLoadEventListeners()) {
+                //noinspection unchecked
+                finalEntity = eventListener.apply(persistentEntity, entity);
+            } else {
+                finalEntity = entity;
+            }
+            return finalEntity;
         } catch (InstantiationException e) {
             throw new DataAccessException("Error instantiating entity [" + persistentEntity.getName() + "]: " + e.getMessage(), e);
         }

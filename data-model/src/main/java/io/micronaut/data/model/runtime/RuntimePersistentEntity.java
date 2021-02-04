@@ -45,6 +45,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private final String aliasName;
     private RuntimePersistentProperty<T> version;
+    private Boolean hasAutoPopulatedProperties;
 
     /**
      * Default constructor.
@@ -107,6 +108,67 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
+    }
+
+    /**
+     * Does the entity have pre-persist event listeners.
+     * @return True if it does
+     */
+    public boolean hasPrePersistEventListeners() {
+        return false;
+    }
+
+    /**
+     * Does the entity have pre-remove event listeners.
+     * @return True if it does
+     */
+    public boolean hasPreRemoveEventListeners() {
+        return false;
+    }
+
+    /**
+     * Does the entity have pre-update event listeners.
+     * @return True if it does
+     */
+    public boolean hasPreUpdateEventListeners() {
+        return false;
+    }
+
+    /**
+     * Does the entity have post-persist event listeners.
+     * @return True if it does
+     */
+    public boolean hasPostPersistEventListeners() {
+        return false;
+    }
+
+    /**
+     * Does the entity have post-update event listeners.
+     * @return True if it does
+     */
+    public boolean hasPostUpdateEventListeners() {
+        return false;
+    }
+
+    /**
+     * Does the entity have post-remove event listeners.
+     * @return True if it does
+     */
+    public boolean hasPostRemoveEventListeners() {
+        return false;
+    }
+
+    /**
+     * Does the entity have post-load event listeners.
+     * @return True if it does
+     */
+    public boolean hasPostLoadEventListeners() {
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 
     @NonNull
@@ -221,5 +283,26 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     public RuntimePersistentProperty<T>[] getConstructorArguments() {
         return constructorArguments;
+    }
+
+    /**
+     * @return Returns true if the entity has auto-populated properties.
+     */
+    public boolean hasAutoPopulatedProperties() {
+        if (this.hasAutoPopulatedProperties == null) {
+            final RuntimePersistentProperty<T> identity = getIdentity();
+            boolean hasAutoPopulated = isAutoPopulatedProperty(identity);
+
+            if (!hasAutoPopulated) {
+                hasAutoPopulated = persistentProperties.values().stream()
+                        .anyMatch(PersistentProperty::isAutoPopulated);
+            }
+            this.hasAutoPopulatedProperties = hasAutoPopulated;
+        }
+        return this.hasAutoPopulatedProperties;
+    }
+
+    private boolean isAutoPopulatedProperty(RuntimePersistentProperty<T> identity) {
+        return identity != null && identity.isAutoPopulated();
     }
 }

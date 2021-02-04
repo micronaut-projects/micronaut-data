@@ -21,7 +21,9 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
@@ -38,7 +40,9 @@ import io.micronaut.data.jdbc.runtime.ConnectionCallback;
 import io.micronaut.data.jdbc.runtime.PreparedStatementCallback;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.*;
@@ -100,14 +104,17 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
      * @param beanContext           The bean context
      * @param codecs                The codecs
      * @param dateTimeProvider      The dateTimeProvider
+     * @param entityRegistry        The entity registry
      */
+    @Internal
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
                                               DataSource dataSource,
                                               @Parameter TransactionOperations<Connection> transactionOperations,
                                               @Named("io") @Nullable ExecutorService executorService,
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
-                                              @NonNull DateTimeProvider dateTimeProvider) {
+                                              @NonNull DateTimeProvider dateTimeProvider,
+                                              RuntimeEntityRegistry entityRegistry) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(),
@@ -115,6 +122,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 new JdbcQueryStatement(),
                 codecs,
                 dateTimeProvider,
+                entityRegistry,
                 beanContext
         );
         ArgumentUtils.requireNonNull("dataSource", dataSource);
@@ -166,11 +174,20 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         Class<R> resultType = preparedQuery.getResultType();
                         if (preparedQuery.getResultDataType() == DataType.ENTITY) {
                             RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
+
+                            final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
                             TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                     persistentEntity,
                                     columnNameResultSetReader,
-                                    preparedQuery.getJoinFetchPaths(),
-                                    jsonCodec
+                                    joinFetchPaths,
+                                    jsonCodec,
+                                    (loadedEntity, o) -> {
+                                        if (loadedEntity.hasPostLoadEventListeners()) {
+                                            return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
+                                        } else {
+                                            return o;
+                                        }
+                                    }
                             );
                             R result = mapper.map(rs, resultType);
                             if (preparedQuery.hasResultConsumer()) {
@@ -250,7 +267,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @Override
     public <T> boolean exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
-        //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             try {
                 Connection connection = status.getConnection();
@@ -266,8 +282,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery) {
-
-        //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             Connection connection = status.getConnection();
             return findStream(preparedQuery, connection);
@@ -302,18 +316,26 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (isEntity || dtoProjection) {
             SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
             SqlTypeMapper<ResultSet, R> mapper;
+            final RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
             if (dtoProjection) {
                 mapper = new SqlDTOMapper<>(
-                        getEntity(resultType),
+                        persistentEntity,
                         columnNameResultSetReader,
                         jsonCodec
                 );
             } else {
                 mapper = new SqlResultEntityTypeMapper<>(
-                        getEntity(resultType),
+                        persistentEntity,
                         columnNameResultSetReader,
                         preparedQuery.getJoinFetchPaths(),
-                        jsonCodec
+                        jsonCodec,
+                        (loadedEntity, o) -> {
+                            if (loadedEntity.hasPostLoadEventListeners()) {
+                                return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
+                            } else {
+                                return o;
+                            }
+                        }
                 );
             }
             spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
@@ -397,7 +419,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        //noinspection ConstantConditions
         return transactionOperations.executeWrite(status -> {
             try {
                 Connection connection = status.getConnection();
@@ -415,8 +436,109 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     }
 
     @Override
-    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
-        throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
+    public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
+        if (operation.all()) {
+            final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+            final String query = annotationMetadata.stringValue(Query.class).orElse(null);
+            if (query == null) {
+                throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
+            }
+            final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+            if (params.length != 0) {
+                throw new IllegalStateException("Unexpected parameters: " + Arrays.toString(params));
+            }
+
+            return transactionOperations.executeWrite(status -> {
+                try {
+                    Connection connection = status.getConnection();
+                    if (QUERY_LOG.isDebugEnabled()) {
+                        QUERY_LOG.debug("Executing SQL DELETE ALL: {}", query);
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement(query)) {
+                        return Optional.of(ps.executeUpdate());
+                    }
+                } catch (SQLException e) {
+                    throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+                }
+            });
+
+        }
+        return Optional.of(
+                operation.split().stream()
+                        .mapToInt(this::delete)
+                        .sum()
+        );
+    }
+
+    @Override
+    public <T> int delete(@NonNull DeleteOperation<T> operation) {
+        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        final String query = annotationMetadata.stringValue(Query.class).orElse(null);
+        final Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+
+        Objects.requireNonNull(query, "Query cannot be null");
+
+        final Object opEntity = operation.getEntity();
+        Objects.requireNonNull(opEntity, "Passed entity cannot be null");
+
+        final RuntimePersistentEntity<Object> finalPersistentEntity = (RuntimePersistentEntity<Object>) getEntity(opEntity.getClass());
+        final Object finalEntity;
+        if (finalPersistentEntity.hasPreRemoveEventListeners()) {
+            finalEntity = triggerPreRemove(opEntity, finalPersistentEntity, annotationMetadata);
+            if (finalEntity == null) {
+                // operation vetoed
+                return 0;
+            }
+        } else {
+            finalEntity = opEntity;
+        }
+        return transactionOperations.executeWrite(status -> {
+            try {
+                Connection connection = status.getConnection();
+                if (QUERY_LOG.isDebugEnabled()) {
+                    QUERY_LOG.debug("Executing SQL DELETE: {}", query);
+                }
+                Object entity = finalEntity;
+                RuntimePersistentEntity<Object> persistentEntity = finalPersistentEntity;
+                final RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
+                if (identity != null) {
+                    if (identity instanceof Embedded) {
+                        final BeanProperty idProp = identity.getProperty();
+                        final Object idEntity = idProp.get(entity);
+                        if (idEntity == null) {
+                            throw new IllegalStateException("Cannot delete an entity with null ID: " + entity);
+                        }
+                        entity = idEntity;
+                        persistentEntity = (RuntimePersistentEntity<Object>) getEntity(idEntity.getClass());
+                    }
+                }
+                try (PreparedStatement ps = connection.prepareStatement(query)) {
+                    for (int i = 0; i < params.length; i++) {
+                        String propertyName = params[i];
+                        if (propertyName.isEmpty()) {
+                            setStatementParameter(ps, i + 1, DataType.ENTITY, entity, dialect);
+                        } else {
+                            if (propertyName.startsWith("0.")) {
+                                propertyName = propertyName.replace("0.", "");
+                            }
+                            RuntimePersistentProperty<Object> pp = persistentEntity.getPropertyByName(propertyName);
+                            if (pp == null) {
+                                throw new IllegalStateException("Cannot perform delete for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
+                            }
+                            setStatementParameter(ps, i + 1, pp.getDataType(), pp.getProperty().get(entity), dialect);
+                        }
+                    }
+                    int updated = ps.executeUpdate();
+                    if (updated > 0 && persistentEntity.hasPostRemoveEventListeners()) {
+                        triggerPostRemove(finalEntity, persistentEntity, annotationMetadata);
+                    }
+                    return updated;
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+            }
+        });
     }
 
     @NonNull
@@ -588,7 +710,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
     @NonNull
     @Override
     public <T> T persist(@NonNull InsertOperation<T> operation) {
-        @SuppressWarnings("unchecked") StoredInsert<T> insert = resolveInsert(operation);
+        StoredInsert<T> insert = resolveInsert(operation);
         final Class<?> repositoryType = operation.getRepositoryType();
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         T entity = operation.getEntity();
@@ -601,7 +723,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             StoredInsert<T> insert,
             T entity,
             Set persisted) {
-        //noinspection ConstantConditions
         return transactionOperations.executeWrite((status) -> {
             try {
                 Connection connection = status.getConnection();
@@ -623,37 +744,80 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
                 }
 
-                setInsertParameters(insert, entity, stmt);
+                final RuntimePersistentEntity<T> pe = insert.getPersistentEntity();
+                T resolvedEntity;
+                if (pe.hasPrePersistEventListeners()) {
+                    final T newEntity = triggerPrePersist(entity, pe, annotationMetadata);
+                    if (newEntity == null) {
+                        // operation evicted
+                        return entity;
+                    } else {
+                        resolvedEntity = newEntity;
+                    }
+                } else {
+                    resolvedEntity = entity;
+                }
+                setInsertParameters(insert, resolvedEntity, stmt);
                 stmt.executeUpdate();
-                persisted.add(entity);
-                if (hasGeneratedID && !identity.isReadOnly()) {
+
+                persisted.add(resolvedEntity);
+                if (hasGeneratedID) {
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     if (generatedKeys.next()) {
                         Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
-
-                        if (identity.getType().isInstance(id)) {
-                            identity.set(entity, id);
-                        } else {
-                            identity.convertAndSet(entity, id);
-                        }
+                        resolvedEntity = updateEntityId(identity, resolvedEntity, id);
                     } else {
                         throw new DataAccessException("ID failed to generate. No result returned.");
                     }
+                }
+                if (pe.hasPostPersistEventListeners()) {
+                    resolvedEntity = triggerPostPersist(resolvedEntity, insert.getPersistentEntity(), annotationMetadata);
                 }
                 cascadeInserts(
                         annotationMetadata,
                         repositoryType,
                         insert,
-                        entity,
+                        resolvedEntity,
                         persisted,
                         connection,
                         identity
                 );
-                return entity;
+                return resolvedEntity;
             } catch (SQLException e) {
                 throw new DataAccessException("SQL Error executing INSERT: " + e.getMessage(), e);
             }
         });
+    }
+
+    private <T> T updateEntityId(BeanProperty<T, Object> identity, T resolvedEntity, Object id) {
+        if (id == null) {
+            return resolvedEntity;
+        }
+        if (identity.getType().isInstance(id)) {
+            if (identity.isReadOnly()) {
+                if (identity.hasSetterOrConstructorArgument()) {
+                    resolvedEntity = identity.withValue(resolvedEntity, id);
+                } else {
+                    return resolvedEntity;
+                }
+            } else {
+                identity.set(resolvedEntity, id);
+            }
+        } else {
+            if (identity.isReadOnly()) {
+                if (identity.hasSetterOrConstructorArgument()) {
+                    final Object converted = ConversionService.SHARED.convert(id, identity.asArgument()).orElse(null);
+                    if (converted != null) {
+                        resolvedEntity = identity.withValue(resolvedEntity, converted);
+                    }
+                } else {
+                    return resolvedEntity;
+                }
+            } else {
+                identity.convertAndSet(resolvedEntity, id);
+            }
+        }
+        return resolvedEntity;
     }
 
     private <T> void cascadeInserts(
@@ -842,7 +1006,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @NonNull
     @Override
-    public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
+    public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         StoredInsert<T> insert = resolveInsert(operation);
         if (!insert.doesSupportBatch()) {
             return operation.split().stream()
@@ -873,7 +1037,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             String insertSql = insert.getSql();
             BeanProperty<T, Object> identity = insert.getIdentityProperty();
             final boolean hasGeneratedID = generateId && identity != null;
-
+            final RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
             try {
                 PreparedStatement stmt;
                 if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
@@ -886,9 +1050,20 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
                 }
+                final boolean hasPrePersistEventListeners = persistentEntity.hasPrePersistEventListeners();
                 for (T entity : entities) {
                     if (persisted.contains(entity)) {
                         continue;
+                    }
+                    if (hasPrePersistEventListeners) {
+                        final T eventResult = triggerPrePersist(entity, persistentEntity, annotationMetadata);
+                        if (eventResult == null) {
+                            // operation evicted
+                            results.add(entity);
+                            continue;
+                        } else {
+                            entity = eventResult;
+                        }
                     }
                     setInsertParameters(insert, entity, stmt);
                     stmt.addBatch();
@@ -898,7 +1073,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
 
                 if (hasGeneratedID && !identity.isReadOnly()) {
-                    Iterator<T> resultIterator = results.iterator();
+                    ListIterator<T> resultIterator = results.listIterator();
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     while (resultIterator.hasNext()) {
                         T entity = resultIterator.next();
@@ -906,16 +1081,18 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             throw new DataAccessException("Failed to generate ID for entity: " + entity);
                         } else {
                             Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
-
-                            if (identity.getType().isInstance(id)) {
-                                identity.set(entity, id);
-                            } else {
-                                identity.convertAndSet(entity, id);
+                            final T resolvedEntity = updateEntityId(identity, entity, id);
+                            if (resolvedEntity != entity) {
+                                resultIterator.set(resolvedEntity);
                             }
                         }
                     }
                 }
+                final boolean hasPostPersistEventListeners = persistentEntity.hasPostPersistEventListeners();
                 for (T result : results) {
+                    if (hasPostPersistEventListeners) {
+                        result = triggerPostPersist(result, persistentEntity, annotationMetadata);
+                    }
                     cascadeInserts(
                             annotationMetadata,
                             repositoryType,

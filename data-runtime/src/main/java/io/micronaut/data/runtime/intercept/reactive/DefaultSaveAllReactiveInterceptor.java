@@ -21,7 +21,7 @@ import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
-import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -46,8 +46,8 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractReactiveIntercept
         Object[] parameterValues = context.getParameterValues();
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked
-            BatchOperation<Object> batchOperation = getBatchOperation(context, (Iterable<Object>) parameterValues[0]);
-            Publisher<Object> publisher = reactiveOperations.persistAll(batchOperation);
+            final InsertBatchOperation<Object> insertBatchOperation = getInsertBatchOperation(context, (Iterable<Object>) parameterValues[0]);
+            Publisher<Object> publisher = reactiveOperations.persistAll(insertBatchOperation);
             return Publishers.convertPublisher(publisher, context.getReturnType().getType());
         } else {
             throw new IllegalArgumentException("First argument should be an iterable");

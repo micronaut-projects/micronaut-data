@@ -37,6 +37,60 @@ public class Book {
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "book")
     private List<Page> pages = new ArrayList<>();
 
+    @Transient
+    public int prePersist, postPersist, preUpdate, postUpdate, preRemove, postRemove, postLoad;
+
+    @PrePersist
+    protected void onPrePersist() {
+        prePersist++;
+    }
+// Hibernate doesn't support multiple pre persist
+//    @PrePersist
+//    protected void onPrePersist2() {
+//    }
+
+    @PostPersist
+    protected void onPostPersist() {
+        postPersist++;
+    }
+
+    @PreUpdate
+    protected void onPreUpdate() {
+        preUpdate++;
+    }
+
+    @PostUpdate
+    protected void onPostUpdate() {
+        postUpdate++;
+    }
+
+    @PreRemove
+    protected void onPreRemove() {
+        preRemove++;
+    }
+
+    @PostRemove
+    protected void onPostRemove() {
+        postRemove++;
+    }
+
+    @PostLoad
+    protected void onPostLoad() {
+        postLoad++;
+    }
+
+    @Transient
+    public void resetEventCounters() {
+        prePersist = 0;
+        postPersist = 0;
+        preUpdate = 0;
+        postUpdate = 0;
+        preRemove = 0;
+        postRemove = 0;
+        postLoad = 0;
+    }
+
+
     public List<Page> getPages() {
         return pages;
     }

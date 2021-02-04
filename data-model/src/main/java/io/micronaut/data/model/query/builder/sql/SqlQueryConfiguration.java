@@ -30,6 +30,9 @@ public @interface SqlQueryConfiguration {
      */
     DialectConfiguration[] value() default {};
 
+    /**
+     * Configuration specific to a dialect.
+     */
     @interface DialectConfiguration {
         /**
          * @return Format for a specific dialect.

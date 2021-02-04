@@ -18,12 +18,14 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.annotation.event.EntityEventMapping;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
@@ -33,6 +35,7 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -52,7 +55,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
-    private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
         @Override
         public SourcePersistentEntity apply(ClassElement classElement) {
@@ -101,6 +104,20 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
             computeMappingDefaults(namingStrategy, identity, dataTypes);
+        }
+    }
+
+    @Override
+    public void visitMethod(MethodElement element, VisitorContext context) {
+        final String eventMapping = element.getAnnotationNameByStereotype(EntityEventMapping.class).orElse(null);
+        if (eventMapping != null) {
+            // validate signature
+            if (element.isPrivate() || element.isStatic()) {
+                context.fail("Method annotated with @" + NameUtils.getSimpleName(eventMapping) + " must be a non-private instance method", element);
+            }
+            if (!element.getReturnType().getName().equals("void") || element.getParameters().length != 0) {
+                context.fail("Method annotated with @" + NameUtils.getSimpleName(eventMapping) + " must return void and declare no arguments", element);
+            }
         }
     }
 

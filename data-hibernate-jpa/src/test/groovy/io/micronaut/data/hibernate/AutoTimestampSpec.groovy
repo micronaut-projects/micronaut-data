@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Company
 import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.IgnoreIf
 import spock.lang.Requires
 import spock.lang.Shared
