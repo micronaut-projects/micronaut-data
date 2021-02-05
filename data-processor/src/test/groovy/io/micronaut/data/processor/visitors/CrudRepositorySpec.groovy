@@ -111,7 +111,7 @@ interface MyInterface extends CrudRepository<Person, Long> {
 
         then:"The method is correctly configured"
         existsMethod
-        existsMethod.getArguments()[0].getFirstTypeVariable().get().type == Long
+        existsMethod.getArguments()[0].type == Long
         existsMethod.synthesize(DataMethod).rootEntity() == Person
         existsMethod.synthesize(DataMethod).idType() == Long
         existsMethod.synthesize(DataMethod).interceptor() == ExistsByInterceptor

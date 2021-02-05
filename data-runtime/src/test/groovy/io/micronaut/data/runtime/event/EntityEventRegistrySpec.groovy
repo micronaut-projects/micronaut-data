@@ -50,10 +50,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire pre persist event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
 
         when:
         eventRegistry.prePersist(mockEvent)
@@ -80,11 +78,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire pre update event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
-
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
 
         when:
         eventRegistry.preUpdate(mockEvent)
@@ -108,10 +103,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire pre remove event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
 
         when:
         eventRegistry.preRemove(mockEvent)
@@ -135,10 +128,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post load event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
 
         when:
         eventRegistry.postLoad(mockEvent)
@@ -162,10 +153,9 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post update event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+
 
         when:
         eventRegistry.postUpdate(mockEvent)
@@ -189,10 +179,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post remove event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
 
         when:
         eventRegistry.postRemove(mockEvent)
@@ -216,10 +204,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post persist event"() {
         given:
-        def mockEvent = Mock(EntityEventContext)
         def entity = new EventTest1()
-        mockEvent.getPersistentEntity() >> RuntimePersistentEntity.of(EventTest1)
-        mockEvent.getEntity() >> entity
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
 
         when:
         eventRegistry.postPersist(mockEvent)
