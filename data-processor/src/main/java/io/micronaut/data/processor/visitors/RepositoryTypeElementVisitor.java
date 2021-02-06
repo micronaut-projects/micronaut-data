@@ -55,7 +55,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**

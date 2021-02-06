@@ -61,6 +61,7 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
             Annotation>, EntityEventListener<Object>>> entityToEventListeners = new ConcurrentHashMap<>(50);
     private final BeanContext beanContext;
     private final Map<Class<? extends Annotation>, BeanDefinitionMethodReference<Object, Object>> beanEventHandlers = new HashMap<>(10);
+
     /**
      * Default constructor.
      *
@@ -285,11 +286,15 @@ public class EntityEventRegistry implements EntityEventListener<Object>, Executa
     public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
         final Argument[] arguments = method.getArguments();
         if (arguments.length == 1) {
-            final List<Class<? extends Annotation>> eventTypes = method.getAnnotationTypesByStereotype(EntityEventMapping.class);
+            final List<Class<? extends Annotation>> eventTypes = method
+                    .getAnnotationTypesByStereotype(EntityEventMapping.class);
 
             for (Class<? extends Annotation> eventType : eventTypes) {
                 @SuppressWarnings("unchecked") final BeanDefinitionMethodReference<Object, Object> ref =
-                        BeanDefinitionMethodReference.of((BeanDefinition<Object>)beanDefinition, (ExecutableMethod<Object,Object>) method);
+                        BeanDefinitionMethodReference.of(
+                                (BeanDefinition<Object>) beanDefinition,
+                                (ExecutableMethod<Object, Object>) method
+                        );
                 beanEventHandlers.put(eventType, ref);
             }
         }
