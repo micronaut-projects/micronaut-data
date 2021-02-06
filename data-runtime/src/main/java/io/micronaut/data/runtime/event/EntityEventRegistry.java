@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.event;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Primary;
+import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.event.*;
@@ -25,8 +26,11 @@ import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.event.PersistenceEventException;
 import io.micronaut.data.event.QueryEventContext;
+import io.micronaut.data.event.listeners.*;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.BeanDefinitionMethodReference;
+import io.micronaut.inject.ExecutableMethod;
 
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
@@ -42,7 +46,7 @@ import java.util.stream.Collectors;
  */
 @Singleton
 @Primary
-public class EntityEventRegistry implements EntityEventListener<Object> {
+public class EntityEventRegistry implements EntityEventListener<Object>, ExecutableMethodProcessor<EntityEventMapping> {
     public static final List<Class<? extends Annotation>> EVENT_TYPES = Arrays.asList(
             PostLoad.class,
             PostPersist.class,
@@ -56,7 +60,7 @@ public class EntityEventRegistry implements EntityEventListener<Object> {
     private final Map<RuntimePersistentEntity<Object>, Map<Class<? extends
             Annotation>, EntityEventListener<Object>>> entityToEventListeners = new ConcurrentHashMap<>(50);
     private final BeanContext beanContext;
-
+    private final Map<Class<? extends Annotation>, BeanDefinitionMethodReference<Object, Object>> beanEventHandlers = new HashMap<>(10);
     /**
      * Default constructor.
      *
@@ -177,7 +181,10 @@ public class EntityEventRegistry implements EntityEventListener<Object> {
     private Map<Class<? extends Annotation>, EntityEventListener<Object>> initListeners(RuntimePersistentEntity<Object> entity) {
         Map<Class<? extends Annotation>, Collection<EntityEventListener<Object>>> listeners = new HashMap<>(8);
         for (BeanDefinition<EntityEventListener> beanDefinition : allEventListeners) {
-            final List<Argument<?>> typeArguments = beanDefinition.getTypeArguments(EntityEventListener.class);
+            List<Argument<?>> typeArguments = beanDefinition.getTypeArguments();
+            if (typeArguments.isEmpty()) {
+                typeArguments = beanDefinition.getTypeArguments(EntityEventListener.class);
+            }
             if (isApplicableListener(entity, typeArguments)) {
                 @SuppressWarnings("unchecked")
                 final EntityEventListener<Object> eventListener = beanContext.getBean(beanDefinition);
@@ -190,6 +197,65 @@ public class EntityEventRegistry implements EntityEventListener<Object> {
                 }
             }
         }
+        beanEventHandlers.forEach((annotation, reference) -> {
+            if (isApplicableListener(entity, Arrays.asList(reference.getArguments()))) {
+                final Object bean = beanContext.getBean(reference.getBeanDefinition());
+                final Collection<EntityEventListener<Object>> eventListeners =
+                        listeners.computeIfAbsent(annotation, (t) -> new ArrayList<>(5));
+                if (annotation == PrePersist.class) {
+                    eventListeners.add((PrePersistEventListener<Object>) entity1 -> {
+                        try {
+                            reference.invoke(bean, entity1);
+                        } catch (Exception e) {
+                            throw new PersistenceEventException("An error occurred invoking pre-persist event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                        }
+                        return true;
+                    });
+                } else if (annotation == PreRemove.class) {
+                    eventListeners.add((PreRemoveEventListener<Object>) entity1 -> {
+                        try {
+                            reference.invoke(bean, entity1);
+                        } catch (Exception e) {
+                            throw new PersistenceEventException("An error occurred invoking pre-remove event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                        }
+                        return true;
+                    });
+                } else if (annotation == PreUpdate.class) {
+                    eventListeners.add((PreUpdateEventListener<Object>) entity1 -> {
+                        try {
+                            reference.invoke(bean, entity1);
+                        } catch (Exception e) {
+                            throw new PersistenceEventException("An error occurred invoking pre-update event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                        }
+                        return true;
+                    });
+                } else if (annotation == PostPersist.class) {
+                    eventListeners.add((PostPersistEventListener<Object>) entity1 -> {
+                        try {
+                            reference.invoke(bean, entity1);
+                        } catch (Exception e) {
+                            throw new PersistenceEventException("An error occurred invoking post-persist event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                        }
+                    });
+                } else if (annotation == PostRemove.class) {
+                    eventListeners.add((PostRemoveEventListener<Object>) entity1 -> {
+                        try {
+                            reference.invoke(bean, entity1);
+                        } catch (Exception e) {
+                            throw new PersistenceEventException("An error occurred invoking post-remove event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                        }
+                    });
+                } else if (annotation == PostUpdate.class) {
+                    eventListeners.add((PostUpdateEventListener<Object>) entity1 -> {
+                        try {
+                            reference.invoke(bean, entity1);
+                        } catch (Exception e) {
+                            throw new PersistenceEventException("An error occurred invoking post-update event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                        }
+                    });
+                }
+            }
+        });
         Map<Class<? extends Annotation>, EntityEventListener<Object>> finalListeners;
         if (listeners.isEmpty()) {
             finalListeners = Collections.emptyMap();
@@ -213,6 +279,20 @@ public class EntityEventRegistry implements EntityEventListener<Object> {
 
     private boolean isApplicableListener(RuntimePersistentEntity<Object> entity, List<Argument<?>> typeArguments) {
         return typeArguments.isEmpty() || typeArguments.get(0).getType().isAssignableFrom(entity.getIntrospection().getBeanType());
+    }
+
+    @Override
+    public void process(BeanDefinition<?> beanDefinition, ExecutableMethod<?, ?> method) {
+        final Argument[] arguments = method.getArguments();
+        if (arguments.length == 1) {
+            final List<Class<? extends Annotation>> eventTypes = method.getAnnotationTypesByStereotype(EntityEventMapping.class);
+
+            for (Class<? extends Annotation> eventType : eventTypes) {
+                @SuppressWarnings("unchecked") final BeanDefinitionMethodReference<Object, Object> ref =
+                        BeanDefinitionMethodReference.of((BeanDefinition<Object>)beanDefinition, (ExecutableMethod<Object,Object>) method);
+                beanEventHandlers.put(eventType, ref);
+            }
+        }
     }
 
     private static final class CompositeEventListener implements EntityEventListener<Object> {

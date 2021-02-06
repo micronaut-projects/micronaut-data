@@ -34,6 +34,6 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 @Documented
 @Retention(RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE})
-@Executable
+@Executable(processOnStartup = true)
 public @interface EntityEventMapping {
 }

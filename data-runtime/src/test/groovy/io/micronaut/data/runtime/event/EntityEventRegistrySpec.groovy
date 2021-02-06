@@ -1,11 +1,6 @@
 package io.micronaut.data.runtime.event
 
 import edu.umd.cs.findbugs.annotations.NonNull
-import io.micronaut.data.annotation.AutoPopulated
-import io.micronaut.data.annotation.DateCreated
-import io.micronaut.data.annotation.DateUpdated
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.event.*
 import io.micronaut.data.event.EntityEventContext
 import io.micronaut.data.event.EntityEventListener
@@ -18,7 +13,6 @@ import spock.lang.Unroll
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.lang.annotation.Annotation
-import java.time.LocalDateTime
 
 @MicronautTest
 @Stepwise
@@ -32,6 +26,8 @@ class EntityEventRegistrySpec extends Specification {
     @Inject MyPostPersist myPostPersist
     @Inject MyPostRemove myPostRemove
     @Inject MyPostUpdate myPostUpdate
+    @Inject TestEventListenerFactory testEventListenerFactory
+    @Inject TestEventBean testEventAdapter
 
     @Unroll
     void "test supports method for event type #eventType"() {
@@ -61,10 +57,16 @@ class EntityEventRegistrySpec extends Specification {
         entity.dateCreated != null
         entity.dateUpdated == entity.dateCreated
         entity.prePersist == 1
+        testEventListenerFactory.prePersist == 1
+        testEventAdapter.prePersist == 1
         entity.preRemove == 0
+        testEventListenerFactory.preRemove == 0
         entity.preUpdate == 0
+        testEventListenerFactory.preUpdate == 0
         entity.postRemove == 0
+        testEventListenerFactory.postRemove == 0
         entity.postUpdate == 0
+        testEventListenerFactory.preUpdate == 0
         entity.postLoad == 0
         entity.postPersist == 0
         myPrePersist.count == 1
@@ -86,9 +88,12 @@ class EntityEventRegistrySpec extends Specification {
 
         then:
         entity.prePersist == 0
+        testEventListenerFactory.prePersist == 1
         entity.preRemove == 0
         entity.preUpdate == 1
+        testEventListenerFactory.preUpdate == 1
         entity.postRemove == 0
+        testEventListenerFactory.preRemove == 0
         entity.postUpdate == 0
         entity.postLoad == 0
         entity.postPersist == 0
@@ -111,8 +116,11 @@ class EntityEventRegistrySpec extends Specification {
 
         then:
         entity.prePersist == 0
+        testEventListenerFactory.prePersist == 1
         entity.preRemove == 1
+        testEventListenerFactory.preRemove == 1
         entity.preUpdate == 0
+        testEventListenerFactory.preUpdate == 1
         entity.postRemove == 0
         entity.postUpdate == 0
         entity.postLoad == 0
@@ -328,63 +336,8 @@ class EntityEventRegistrySpec extends Specification {
         }
     }
 
-    @MappedEntity
-    static class EventTest1 {
-        @Id
-        @AutoPopulated
-        UUID uuid
 
-        @DateCreated
-        LocalDateTime dateCreated
-
-        @DateUpdated
-        LocalDateTime dateUpdated
-
-        private int prePersist
-        @PrePersist
-        void prePersist() {
-            prePersist++
-        }
-
-        private int postPersist
-        @PostPersist
-        void postPersist() {
-            postPersist++
-        }
-
-        private int preRemove
-        @PreRemove
-        void preRemove() {
-            preRemove++
-        }
-
-        private int postRemove
-        @PostRemove
-        void postRemove() {
-            postRemove++
-        }
-
-        private int preUpdate
-        @PreUpdate
-        void preUpdate() {
-            preUpdate++
-        }
-
-        private int postUpdate
-        @PostUpdate
-        void postUpdate() {
-            postUpdate++
-        }
-
-        private int postLoad
-        @PostLoad
-        void postLoad() {
-            postLoad++
-        }
-    }
-
-    @MappedEntity
-    static class EventLess {
-
-    }
 }
+
+
+

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -82,6 +83,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     public int getOrder() {
         // higher priority than the default
         return POSITION;
+    }
+
+    @NonNull
+    @Override
+    public VisitorKind getVisitorKind() {
+        return VisitorKind.ISOLATING;
     }
 
     @Override

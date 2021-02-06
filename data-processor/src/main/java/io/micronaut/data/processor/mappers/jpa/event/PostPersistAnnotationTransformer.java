@@ -18,6 +18,7 @@ package io.micronaut.data.processor.mappers.jpa.event;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
+import io.micronaut.inject.annotation.NamedAnnotationTransformer;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.annotation.Annotation;
@@ -30,7 +31,7 @@ import java.util.List;
  * @author Denis Stepanov
  * @since 2.3.0
  */
-public final class PostPersistAnnotationMapper implements NamedAnnotationMapper {
+public final class PostPersistAnnotationTransformer implements NamedAnnotationTransformer {
 
     @NonNull
     @Override
@@ -39,7 +40,7 @@ public final class PostPersistAnnotationMapper implements NamedAnnotationMapper 
     }
 
     @Override
-    public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
+    public List<AnnotationValue<?>> transform(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         return Collections.singletonList(
                 AnnotationValue.builder(io.micronaut.data.annotation.event.PostPersist.class)
                         .build()

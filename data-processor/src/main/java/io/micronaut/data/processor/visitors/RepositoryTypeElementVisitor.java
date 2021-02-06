@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Property;
@@ -93,6 +94,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         typeRoles.put(Sort.class.getName(), TypeRole.SORT);
         typeRoles.put(Page.class.getName(), TypeRole.PAGE);
         typeRoles.put(Slice.class.getName(), TypeRole.SLICE);
+    }
+
+    @NonNull
+    @Override
+    public VisitorKind getVisitorKind() {
+        return VisitorKind.ISOLATING;
     }
 
     @Override
