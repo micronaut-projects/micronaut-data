@@ -114,20 +114,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
     }
 
-    @Override
-    public void visitMethod(MethodElement element, VisitorContext context) {
-        final String eventMapping = element.getAnnotationNameByStereotype(EntityEventMapping.class).orElse(null);
-        if (eventMapping != null) {
-            // validate signature
-            if (element.isPrivate() || element.isStatic()) {
-                context.fail("Method annotated with @" + NameUtils.getSimpleName(eventMapping) + " must be a non-private instance method", element);
-            }
-            if (!element.getReturnType().getName().equals("void") || element.getParameters().length != 0) {
-                context.fail("Method annotated with @" + NameUtils.getSimpleName(eventMapping) + " must return void and declare no arguments", element);
-            }
-        }
-    }
-
     private boolean isMappedEntity() {
         return mappedEntity;
     }

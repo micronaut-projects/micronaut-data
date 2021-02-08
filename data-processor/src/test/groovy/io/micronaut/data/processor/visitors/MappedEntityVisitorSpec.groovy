@@ -25,6 +25,27 @@ import io.micronaut.data.model.DataType
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
 
+    void 'test fail compilation for a bean method that does not meet requirements'() {
+        when:
+        buildBeanIntrospection('test.BadBean', '''
+package test;
+
+import javax.persistence.*;
+import javax.inject.*;
+
+@Singleton
+class BadBean {
+    @PrePersist
+    String junk() {
+        return null;
+    }
+}
+''')
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Method annotated with @PrePersist must return void and declare exactly one argument that represents the entity type to listen for')
+    }
+
     void 'test fail compilation for entity event methods that dont meet requirements'() {
         when:
         buildBeanIntrospection('test.BadEventEntity', '''
