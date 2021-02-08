@@ -24,4 +24,10 @@ io.micronaut.data.processor.mappers.spring.SpringTransientMapper
 io.micronaut.data.processor.mappers.spring.SpringVersionMapper
 io.micronaut.data.processor.mappers.spring.SpringTransactionalEventListenerMapper
 io.micronaut.data.processor.mappers.spring.SpringRepositoryMapper
-
+io.micronaut.data.processor.mappers.jpa.event.PostLoadAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.event.PrePersistAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.event.PostPersistAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.event.PreUpdateAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.event.PostUpdateAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.event.PreRemoveAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.event.PostRemoveAnnotationMapper

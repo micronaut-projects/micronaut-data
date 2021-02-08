@@ -1,7 +1,0 @@
-io.micronaut.data.processor.mappers.jpa.event.PostLoadAnnotationTransformer
-io.micronaut.data.processor.mappers.jpa.event.PrePersistAnnotationTransformer
-io.micronaut.data.processor.mappers.jpa.event.PostPersistAnnotationTransformer
-io.micronaut.data.processor.mappers.jpa.event.PreUpdateAnnotationTransformer
-io.micronaut.data.processor.mappers.jpa.event.PostUpdateAnnotationTransformer
-io.micronaut.data.processor.mappers.jpa.event.PreRemoveAnnotationTransformer
-io.micronaut.data.processor.mappers.jpa.event.PostRemoveAnnotationTransformer

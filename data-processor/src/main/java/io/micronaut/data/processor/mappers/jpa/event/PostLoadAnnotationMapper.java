@@ -17,7 +17,7 @@ package io.micronaut.data.processor.mappers.jpa.event;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.inject.annotation.NamedAnnotationTransformer;
+import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.annotation.Annotation;
@@ -25,23 +25,23 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Maps JPA's {@code PrePersist} annotation to Micronaut's.
+ * Maps JPA's {@code PostLoad} annotation to Micronaut's.
  *
  * @author Denis Stepanov
  * @since 2.3.0
  */
-public final class PrePersistAnnotationTransformer implements NamedAnnotationTransformer {
+public final class PostLoadAnnotationMapper implements NamedAnnotationMapper {
 
     @NonNull
     @Override
     public String getName() {
-        return "javax.persistence.PrePersist";
+        return "javax.persistence.PostLoad";
     }
 
     @Override
-    public List<AnnotationValue<?>> transform(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
+    public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
         return Collections.singletonList(
-                AnnotationValue.builder(io.micronaut.data.annotation.event.PrePersist.class)
+                AnnotationValue.builder(io.micronaut.data.annotation.event.PostLoad.class)
                         .build()
         );
     }
