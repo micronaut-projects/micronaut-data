@@ -120,7 +120,6 @@ source of truth for certain files. It is used as a template to create new repos,
 template repo will get propagated automatically. The files propagated are:
 
 * Workflow files (`.github/workflows/*`). They are copied using rsync"
-  * `bintray-publish.yml`.
   * `central-sync.yml`.
   * `dependency-update.yml`.
   * `graalvm.yml`.
@@ -175,23 +174,16 @@ will kick off, performing the following steps:
 
 * Pre-release: sets the `projectVersion` property in `gradle.properties` to the release version, and commit and pushes 
   the result.
-* Uploads and publishes to Bintray.
 * Generates documentation guide and publishes it to the `gh-pages` branch.
 * Sends a pull request to Core to update the BOM.
 * Post-release: 
   * Determines the next patch version, and sets it as a `SNAPSHOT` version.
   * Closes the milestone that matches the release version, and creates a new one for the next patch.
 
-Note that there are repos (like Core, that has a lot of modules) where uploading and publishing in the same Gradle execution 
-fails. If you want to upload, but not publish, define a repo secret `BINTRAY_PUBLISH` and set its value to `false`. Then, 
-once the release workflow has finished, you need to manually trigger the Bintray Publish workflow through the GitHub UI.
-
 If everything goes well, you now need to manually trigger the Maven Central publishing workflow via the GitHub UI.
 
 If there is an issue with the release, it's important not to trigger the Maven Central publishing workflow because once 
-we publish a version to Maven Central we cannot change or remove it anymore. On the other hand, if something failed during 
-the Bintray upload, docs publication,... we can manually log in into Bintray UI, delete the artifacts, and then restart 
-the workflow.
+we publish a version to Maven Central we cannot change or remove it anymore.
 
 There are some properties in `gradle.properties` that affect the release process:
 
