@@ -1,9 +1,10 @@
 buildscript {
     repositories {
+        mavenCentral()
         maven { url "https://repo.grails.org/grails/core" }
     }
     dependencies {
-        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:3.0.2"
+        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:3.0.3"
     }
 }
 
