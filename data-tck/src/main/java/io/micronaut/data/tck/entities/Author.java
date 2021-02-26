@@ -70,4 +70,14 @@ public class Author {
     public void setNickName(String nickName) {
         this.nickName = nickName;
     }
+
+    @Override
+    public String toString() {
+        return "Author{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", nickName='" + nickName + '\'' +
+                ", books=" + books +
+                '}';
+    }
 }

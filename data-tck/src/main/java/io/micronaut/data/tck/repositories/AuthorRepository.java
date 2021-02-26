@@ -54,8 +54,16 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
     @Join("books")
     Author searchByName(String name);
 
+    // Various list all authors with different join types:
+
     @Join("books")
     List<Author> listAll();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    List<Author> findByIdIsNotNull();
+
+    @Join(value = "books", type = Join.Type.RIGHT_FETCH)
+    List<Author> findByNameIsNotNull();
 
     void updateNickname(@Id Long id, @Parameter("nickName") @Nullable String nickName);
 }

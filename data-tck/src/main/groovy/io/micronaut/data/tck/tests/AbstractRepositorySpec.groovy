@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.util.CollectionUtils
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -27,6 +28,7 @@ import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.sql.Connection
 import java.time.LocalDate
@@ -524,15 +526,37 @@ abstract class AbstractRepositorySpec extends Specification {
         author.books.find { it.title == "Pet Cemetery"}
 
         when:
-        def authors = authorRepository.listAll()
+        def allAuthors = CollectionUtils.iterableToList(authorRepository.findAll())
 
         then:
-        authors.size() == 3
-        authors.collect { [authorName: it.name, books: it.books.size()] }.every { it.books == 2 }
-
+        allAuthors.size() == 3
+        allAuthors.collect {it.books }.every { it.isEmpty() }
 
         cleanup:
         cleanupBooks()
+    }
+
+    @Unroll
+    void "test different join types on many ended association"(String methodName) {
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = authorRepository."$methodName"()
+
+        then:
+            authors.size() == 3
+            authors.collect { [authorName: it.name, books: it.books.size()] }.every { it.books == 2 }
+
+        cleanup:
+            cleanupBooks()
+
+        where:
+            methodName << [
+                    "listAll", // DEFAULT
+                    "findByIdIsNotNull", // LEFT_FETCH
+                    "findByNameIsNotNull" // RIGHT_FETCH
+            ]
     }
 
     void "test query across multiple associations"() {
