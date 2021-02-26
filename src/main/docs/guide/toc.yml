@@ -29,6 +29,7 @@ dataUpdates:
   batchUpdates: Batch Updates
   batchDeletes: Batch Deletes
   timestamps: Entity Timestamps
+  entityEvents: Entity Events
 howItWorks:
   title: How Micronaut Data Works
 sql:

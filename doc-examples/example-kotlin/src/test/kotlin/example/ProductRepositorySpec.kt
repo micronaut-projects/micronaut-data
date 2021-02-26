@@ -1,6 +1,6 @@
 package example
 
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.*
 import java.util.concurrent.TimeUnit
@@ -47,7 +47,7 @@ internal class ProductRepositorySpec {
                 .thenCompose { product -> productRepository.countByManufacturerName(product.manufacturer.name) }
                 .get(1000, TimeUnit.SECONDS)
 
-        Assertions.assertEquals(
+        assertEquals(
                 2,
                 total
         )
@@ -66,7 +66,7 @@ internal class ProductRepositorySpec {
                 .defaultIfEmpty(0L)
                 .blockingGet()
 
-        Assertions.assertEquals(
+        assertEquals(
                 2,
                 total
         )
