@@ -37,7 +37,7 @@ class BookRepositorySpec {
                 .orElse(null);
 
         assertEquals( // <4>
-                "SELECT book_.`id`,book_.`title`,book_.`pages` FROM `book` book_ WHERE (book_.`title` = ?)",
+                "SELECT book_.`id`,book_.`date_created`,book_.`title`,book_.`pages` FROM `book` book_ WHERE (book_.`title` = ?)",
                 query
         );
 
@@ -50,10 +50,10 @@ class BookRepositorySpec {
 
         // Create: Save a new book
         // tag::save[]
-        Book book = new Book(null,"The Stand", 1000);
+        Book book = new Book(null,null, "The Stand", 1000);
         book = bookRepository.save(book);
         // end::save[]
-        Long id = bookRepository.findByTitle("The Stand").id();
+        Long id = book.id();
         assertNotNull(id);
 
         // Read: Read a book from the database
@@ -85,14 +85,14 @@ class BookRepositorySpec {
     void testPageable() {
         // tag::saveall[]
         bookRepository.saveAll(Arrays.asList(
-                new Book(null, "The Stand", 1000),
-                new Book(null, "The Shining", 600),
-                new Book(null, "The Power of the Dog", 500),
-                new Book(null, "The Border", 700),
-                new Book(null, "Along Came a Spider", 300),
-                new Book(null, "Pet Cemetery", 400),
-                new Book(null, "A Game of Thrones", 900),
-                new Book(null, "A Clash of Kings", 1100)
+                new Book(null, null,"The Stand", 1000),
+                new Book(null, null,"The Shining", 600),
+                new Book(null, null,"The Power of the Dog", 500),
+                new Book(null, null,"The Border", 700),
+                new Book(null, null,"Along Came a Spider", 300),
+                new Book(null, null,"Pet Cemetery", 400),
+                new Book(null, null,"A Game of Thrones", 900),
+                new Book(null, null,"A Clash of Kings", 1100)
         ));
         // end::saveall[]
 
@@ -124,7 +124,7 @@ class BookRepositorySpec {
 
     @Test
     void testDto() {
-        bookRepository.save(new Book(null, "The Shining", 400));
+        bookRepository.save(new Book(null, null,"The Shining", 400));
         BookDTO book = bookRepository.findOne("The Shining");
 
         assertEquals("The Shining", book.getTitle());

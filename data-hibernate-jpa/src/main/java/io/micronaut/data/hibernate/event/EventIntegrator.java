@@ -16,31 +16,22 @@
 package io.micronaut.data.hibernate.event;
 
 import io.micronaut.context.annotation.Primary;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.convert.ConversionService;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.DateCreated;
-import io.micronaut.data.annotation.DateUpdated;
-import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.event.EntityEventListener;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import org.hibernate.boot.Metadata;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
-import org.hibernate.event.spi.AbstractPreDatabaseOperationEvent;
-import org.hibernate.event.spi.EventType;
-import org.hibernate.event.spi.PreInsertEventListener;
-import org.hibernate.event.spi.PreUpdateEventListener;
+import org.hibernate.event.spi.*;
 import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.mapping.PersistentClass;
+import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 import org.hibernate.tuple.entity.EntityMetamodel;
 
 import javax.inject.Singleton;
-import javax.validation.constraints.NotNull;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Integrates event handling.
@@ -50,17 +41,18 @@ import java.util.Map;
  */
 @Primary
 @Singleton
+@Internal
 public class EventIntegrator implements Integrator {
 
-    private final DateTimeProvider dateTimeProvider;
+    private final RuntimeEntityRegistry entityRegistry;
 
     /**
      * Constructor.
      *
-     * @param dateTimeProvider dependency that will provide the time.
+     * @param entityRegistry the entity registry
      */
-    public EventIntegrator(@NotNull DateTimeProvider dateTimeProvider) {
-        this.dateTimeProvider = dateTimeProvider;
+    public EventIntegrator(RuntimeEntityRegistry entityRegistry) {
+        this.entityRegistry = entityRegistry;
     }
 
     @Override
@@ -70,103 +62,138 @@ public class EventIntegrator implements Integrator {
             SessionFactoryServiceRegistry serviceRegistry) {
         EventListenerRegistry eventListenerRegistry =
                 serviceRegistry.getService(EventListenerRegistry.class);
-
-        Collection<PersistentClass> entityBindings = metadata.getEntityBindings();
-        Map<Class, BeanProperty> lastUpdates = new HashMap<>(entityBindings.size());
-        Map<Class, BeanProperty> dateCreated = new HashMap<>(entityBindings.size());
-
-        entityBindings.forEach(e -> {
-                    Class<?> mappedClass = e.getMappedClass();
-                    if (mappedClass != null) {
-                        BeanIntrospection<?> introspection = BeanIntrospector.SHARED.findIntrospection(mappedClass).orElse(null);
-                        if (introspection != null) {
-                            introspection.getIndexedProperty(DateCreated.class).ifPresent(bp ->
-                                    dateCreated.put(mappedClass, bp)
-                            );
-                            introspection.getIndexedProperty(DateUpdated.class).ifPresent(bp ->
-                                    lastUpdates.put(mappedClass, bp)
-                            );
-                        }
-                    }
-                }
-        );
-
-        ConversionService<?> conversionService = ConversionService.SHARED;
-
-        if (CollectionUtils.isNotEmpty(dateCreated)) {
-
-            eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT)
-                    .appendListener((PreInsertEventListener) event -> {
+        final EntityEventListener<Object> entityEventListener = entityRegistry.getEntityEventListener();
+        eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT)
+                .appendListener((PreInsertEventListener) event -> {
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    if (entity.hasPrePersistEventListeners()) {
                         Object[] state = event.getState();
-                        timestampIfNecessary(
-                                dateCreated,
-                                lastUpdates,
-                                conversionService,
-                                event,
-                                state,
-                                true
-                        );
-                        return false;
-                    });
-        }
+                        final DefaultEntityEventContext<Object> context = new StatefulHibernateEventContext<>(entity, event, state);
+                        return !entityEventListener.prePersist(context);
+                    }
+                    return false;
+                });
 
-        if (CollectionUtils.isNotEmpty(lastUpdates)) {
-
-            eventListenerRegistry.getEventListenerGroup(EventType.PRE_UPDATE)
-                    .appendListener((PreUpdateEventListener) event -> {
-                        timestampIfNecessary(
-                                dateCreated, lastUpdates,
-                                conversionService,
-                                event,
-                                event.getState(),
-                                false
-                        );
-                        return false;
-                    });
-        }
-    }
-
-    private void timestampIfNecessary(
-            Map<Class, BeanProperty> dateCreated,
-            Map<Class, BeanProperty> lastUpdates,
-            ConversionService<?> conversionService,
-            AbstractPreDatabaseOperationEvent event,
-            Object[] state,
-            boolean isInsert) {
-        Object entity = event.getEntity();
-        Object now = null;
-        if (isInsert) {
-            BeanProperty dateCreatedProp = dateCreated.get(entity.getClass());
-            if (dateCreatedProp != null) {
-                now = dateTimeProvider.getNow();
-                conversionService.convert(now, dateCreatedProp.getType()).ifPresent(o -> {
-                            dateCreatedProp.set(entity, o);
-                            EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
-                            int i = entityMetamodel.getPropertyIndex(dateCreatedProp.getName());
-                            state[i] = o;
+        eventListenerRegistry.getEventListenerGroup(EventType.POST_INSERT)
+                .appendListener(new PostInsertEventListener() {
+                    @Override
+                    public void onPostInsert(PostInsertEvent event) {
+                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                        if (entity.hasPostPersistEventListeners()) {
+                            final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
+                            entityEventListener.postPersist(context);
                         }
-
-                );
-            }
-        }
-
-        BeanProperty lastUpdatedProp = lastUpdates.get(entity.getClass());
-        if (lastUpdatedProp != null) {
-            now = now != null ? now : dateTimeProvider.getNow();
-            conversionService.convert(now, lastUpdatedProp.getType()).ifPresent(o -> {
-                        lastUpdatedProp.set(entity, o);
-                        EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
-                        int i = entityMetamodel.getPropertyIndex(lastUpdatedProp.getName());
-                        state[i] = o;
                     }
 
-            );
-        }
+                    @Override
+                    public boolean requiresPostCommitHanding(EntityPersister persister) {
+                        return false;
+                    }
+                });
 
+        eventListenerRegistry.getEventListenerGroup(EventType.PRE_DELETE)
+                .appendListener((PreDeleteEventListener) event -> {
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    if (entity.hasPreRemoveEventListeners()) {
+                        Object[] state = event.getDeletedState();
+                        final DefaultEntityEventContext<Object> context = new StatefulHibernateEventContext<>(entity, event, state);
+                        return !entityEventListener.preRemove(context);
+                    }
+                    return false;
+                });
+
+        eventListenerRegistry.getEventListenerGroup(EventType.POST_DELETE)
+                .appendListener(new PostDeleteEventListener() {
+                    @Override
+                    public boolean requiresPostCommitHanding(EntityPersister persister) {
+                        return false;
+                    }
+
+                    @Override
+                    public void onPostDelete(PostDeleteEvent event) {
+                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                        if (entity.hasPostPersistEventListeners()) {
+                            final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
+                            entityEventListener.postRemove(context);
+                        }
+                    }
+                });
+
+        eventListenerRegistry.getEventListenerGroup(EventType.PRE_UPDATE)
+                .appendListener((PreUpdateEventListener) event -> {
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    if (entity.hasPreUpdateEventListeners()) {
+                        Object[] state = event.getState();
+                        final DefaultEntityEventContext<Object> context = new StatefulHibernateEventContext<>(entity, event, state);
+                        return !entityEventListener.preUpdate(context);
+                    }
+                    return false;
+                });
+
+        eventListenerRegistry.getEventListenerGroup(EventType.POST_UPDATE)
+                .appendListener(new PostUpdateEventListener() {
+                    @Override
+                    public boolean requiresPostCommitHanding(EntityPersister persister) {
+                        return false;
+                    }
+
+                    @Override
+                    public void onPostUpdate(PostUpdateEvent event) {
+                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                        if (entity.hasPostPersistEventListeners()) {
+                            final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
+                            entityEventListener.postUpdate(context);
+                        }
+                    }
+                });
+
+        eventListenerRegistry.getEventListenerGroup(EventType.POST_LOAD)
+                .appendListener((PostLoadEventListener) event -> {
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    if (entity.hasPreUpdateEventListeners()) {
+                        final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
+                        entityEventListener.postLoad(context);
+                    }
+                });
     }
 
     @Override
     public void disintegrate(SessionFactoryImplementor sessionFactory, SessionFactoryServiceRegistry serviceRegistry) {
         // no-op
+    }
+
+    private static class StatefulHibernateEventContext<T> extends DefaultEntityEventContext<T> {
+        private final AbstractPreDatabaseOperationEvent event;
+        private final Object[] state;
+
+        public StatefulHibernateEventContext(RuntimePersistentEntity<T> entity, AbstractPreDatabaseOperationEvent event, Object[] state) {
+            super(entity, (T) event.getEntity());
+            this.event = event;
+            this.state = state;
+        }
+
+        @Override
+        public <P> void setProperty(BeanProperty<T, P> property, P newValue) {
+            super.setProperty(property, newValue);
+            EntityMetamodel entityMetamodel = event.getPersister().getEntityMetamodel();
+            int i = entityMetamodel.getPropertyIndex(property.getName());
+            state[i] = newValue;
+        }
+
+        @Override
+        public final boolean supportsEventSystem() {
+            return false;
+        }
+    }
+
+    private static class SimpleHibernateEventContext<T> extends DefaultEntityEventContext<T> {
+        public SimpleHibernateEventContext(RuntimePersistentEntity<T> entity, T object) {
+            super(entity, (T) object);
+        }
+
+        @Override
+        public final boolean supportsEventSystem() {
+            return false;
+        }
     }
 }

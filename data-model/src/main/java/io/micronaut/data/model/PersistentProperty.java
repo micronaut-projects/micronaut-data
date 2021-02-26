@@ -107,6 +107,13 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
+     * @return True if the property is autopopulated
+     */
+    default boolean isAutoPopulated() {
+        return !isGenerated() && getAnnotationMetadata().hasStereotype(AutoPopulated.class);
+    }
+
+    /**
      * Is the property assignable to the given type name.
      * @param type The type name
      * @return True if it is

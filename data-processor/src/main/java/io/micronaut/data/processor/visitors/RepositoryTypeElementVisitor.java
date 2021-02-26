@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Property;
@@ -54,7 +55,6 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-import static io.micronaut.data.model.query.builder.QueryBuilder.IN_VARIABLES_PATTERN;
 import static io.micronaut.data.model.query.builder.QueryBuilder.VARIABLE_PATTERN;
 
 /**
@@ -93,6 +93,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         typeRoles.put(Sort.class.getName(), TypeRole.SORT);
         typeRoles.put(Page.class.getName(), TypeRole.PAGE);
         typeRoles.put(Slice.class.getName(), TypeRole.SLICE);
+    }
+
+    @NonNull
+    @Override
+    public VisitorKind getVisitorKind() {
+        return VisitorKind.ISOLATING;
     }
 
     @Override
@@ -308,64 +314,67 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     return;
                                 }
 
-                                parameterBinding = encodedQuery.getParameters();
-                                parameterTypes = encodedQuery.getParameterTypes();
-                                final Set<String> requiredParams = encodedQuery.getAdditionalRequiredParameters();
-                                if (CollectionUtils.isNotEmpty(requiredParams)) {
-                                    for (String requiredParam : requiredParams) {
-                                        final boolean hasNoParameter = Arrays.stream(parameters)
-                                                .noneMatch(p ->
-                                                        p.stringValue(Parameter.class)
-                                                                .orElse(p.getName())
-                                                                .equals(requiredParam)
-                                                );
-                                        if (hasNoParameter) {
-                                            methodMatchContext.fail("A @Where(..) definition requires a parameter called [" + requiredParam + "] which is not present in the method signature.");
-                                        }
-                                    }
-                                }
+                                if (encodedQuery != null) {
 
-                                if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
-                                    genericReturnType = genericReturnType.getFirstTypeArgument().orElse(entity.getType());
-                                }
-                                if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
-                                    countQuery = QueryModel.from(queryObject.getPersistentEntity());
-                                    countQuery.projections().count();
-                                    QueryModel.Junction junction = queryObject.getCriteria();
-                                    for (QueryModel.Criterion criterion : junction.getCriteria()) {
-                                        countQuery.add(criterion);
-                                    }
-                                    for (JoinPath joinPath : queryObject.getJoinPaths()) {
-                                        Join.Type joinType = joinPath.getJoinType();
-                                        switch (joinType) {
-                                            case INNER:
-                                            case FETCH:
-                                                joinType = Join.Type.DEFAULT;
-                                                break;
-                                            case LEFT_FETCH:
-                                                joinType = Join.Type.LEFT;
-                                                break;
-                                            case RIGHT_FETCH:
-                                                joinType = Join.Type.RIGHT;
-                                                break;
-                                            default:
-                                                // no-op
-                                        }
-                                        countQuery.join(joinPath.getAssociation(), joinType);
-                                    }
-
-                                    preparedCount = queryEncoder.buildQuery(countQuery);
-
-                                    QueryResult finalPreparedCount = preparedCount;
-                                    element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
-                                                annotationBuilder.value(encodedQuery.getQuery());
-                                                annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, finalPreparedCount.getQuery());
+                                    parameterBinding = encodedQuery.getParameters();
+                                    parameterTypes = encodedQuery.getParameterTypes();
+                                    final Set<String> requiredParams = encodedQuery.getAdditionalRequiredParameters();
+                                    if (CollectionUtils.isNotEmpty(requiredParams)) {
+                                        for (String requiredParam : requiredParams) {
+                                            final boolean hasNoParameter = Arrays.stream(parameters)
+                                                    .noneMatch(p ->
+                                                            p.stringValue(Parameter.class)
+                                                                    .orElse(p.getName())
+                                                                    .equals(requiredParam)
+                                                    );
+                                            if (hasNoParameter) {
+                                                methodMatchContext.fail("A @Where(..) definition requires a parameter called [" + requiredParam + "] which is not present in the method signature.");
                                             }
-                                    );
-                                } else {
-                                    element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
-                                            annotationBuilder.value(encodedQuery.getQuery())
-                                    );
+                                        }
+                                    }
+
+                                    if (TypeUtils.isReactiveOrFuture(genericReturnType)) {
+                                        genericReturnType = genericReturnType.getFirstTypeArgument().orElse(entity.getType());
+                                    }
+                                    if (matchContext.isTypeInRole(genericReturnType, TypeRole.PAGE)) {
+                                        countQuery = QueryModel.from(queryObject.getPersistentEntity());
+                                        countQuery.projections().count();
+                                        QueryModel.Junction junction = queryObject.getCriteria();
+                                        for (QueryModel.Criterion criterion : junction.getCriteria()) {
+                                            countQuery.add(criterion);
+                                        }
+                                        for (JoinPath joinPath : queryObject.getJoinPaths()) {
+                                            Join.Type joinType = joinPath.getJoinType();
+                                            switch (joinType) {
+                                                case INNER:
+                                                case FETCH:
+                                                    joinType = Join.Type.DEFAULT;
+                                                    break;
+                                                case LEFT_FETCH:
+                                                    joinType = Join.Type.LEFT;
+                                                    break;
+                                                case RIGHT_FETCH:
+                                                    joinType = Join.Type.RIGHT;
+                                                    break;
+                                                default:
+                                                    // no-op
+                                            }
+                                            countQuery.join(joinPath.getAssociation(), joinType);
+                                        }
+
+                                        preparedCount = queryEncoder.buildQuery(countQuery);
+
+                                        QueryResult finalPreparedCount = preparedCount;
+                                        element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder -> {
+                                                    annotationBuilder.value(encodedQuery.getQuery());
+                                                    annotationBuilder.member(DataMethod.META_MEMBER_COUNT_QUERY, finalPreparedCount.getQuery());
+                                                }
+                                        );
+                                    } else {
+                                        element.annotate(io.micronaut.data.annotation.Query.class, annotationBuilder ->
+                                                annotationBuilder.value(encodedQuery.getQuery())
+                                        );
+                                    }
                                 }
                             }
                         }

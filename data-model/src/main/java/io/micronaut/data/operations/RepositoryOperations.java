@@ -20,10 +20,12 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.*;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -150,7 +152,11 @@ public interface RepositoryOperations {
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation);
+    default @NonNull <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
+        return operation.split().stream()
+                .map(this::persist)
+                .collect(Collectors.toList());
+    }
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -175,12 +181,21 @@ public interface RepositoryOperations {
     }
 
     /**
+     * Deletes the entity.
+     *
+     * @param operation The operation
+     * @param <T> The generic type
+     * @return The number of entities deleted
+     */
+    <T> int delete(@NonNull DeleteOperation<T> operation);
+
+    /**
      * Deletes all the entities of the given type.
      * @param operation The operation
      * @param <T> The generic type
      * @return The number of entities deleted
      */
-    <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation);
+    <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
     /**
      * Obtain any custom query hints for this method and repository implementation.

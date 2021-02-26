@@ -48,7 +48,7 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
         if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
             //noinspection unchecked
             Iterable<R> iterable = (Iterable<R>) parameterValues[0];
-            Iterable<R> rs = operations.persistAll(getBatchOperation(context, iterable));
+            Iterable<R> rs = operations.persistAll(getInsertBatchOperation(context, iterable));
             ReturnType<Iterable<R>> rt = context.getReturnType();
             if (!rt.getType().isInstance(rs)) {
                 return ConversionService.SHARED.convert(rs, rt.asArgument())

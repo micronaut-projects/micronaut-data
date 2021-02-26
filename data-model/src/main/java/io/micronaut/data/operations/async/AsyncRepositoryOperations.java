@@ -17,6 +17,7 @@ package io.micronaut.data.operations.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
+import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 
@@ -133,12 +134,22 @@ public interface AsyncRepositoryOperations {
     @NonNull <T> CompletionStage<T> update(@NonNull UpdateOperation<T> operation);
 
     /**
+     * Deletes the entity.
+     * @param operation The batch operation
+     * @param <T> The generic type
+     * @return A publisher that emits the number of entities deleted
+     */
+    @SingleResult
+    @NonNull
+    <T> CompletionStage<Number> delete(@NonNull DeleteOperation<T> operation);
+
+    /**
      * Persist all the given entities.
      * @param operation The batch operation
      * @param <T> The generic type
      * @return The entities, possibly mutated
      */
-    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull BatchOperation<T> operation);
+    @NonNull <T> CompletionStage<Iterable<T>> persistAll(@NonNull InsertBatchOperation<T> operation);
 
     /**
      * Executes an update for the given query and parameter values. If it is possible to
@@ -152,12 +163,25 @@ public interface AsyncRepositoryOperations {
     );
 
     /**
+     * Executes a delete batch for the given query and parameter values. If it is possible to
+     * return the number of objects updated, then do so.
+     * @param preparedQuery The prepared query
+     * @return A completion that emits a boolean true if successful
+     */
+    @NonNull
+    default CompletionStage<Number> executeDelete(
+            @NonNull PreparedQuery<?, Number> preparedQuery
+    ) {
+        return executeUpdate(preparedQuery);
+    }
+
+    /**
      * Deletes all the entities of the given type.
      * @param operation The batch operation
      * @param <T> The generic type
      * @return A completion that emits a boolean true if successful
      */
-    @NonNull <T> CompletionStage<Number> deleteAll(@NonNull BatchOperation<T> operation);
+    @NonNull <T> CompletionStage<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation);
 
     /**
      * Find a page for the given entity and pageable.
@@ -168,3 +192,4 @@ public interface AsyncRepositoryOperations {
     @NonNull <R> CompletionStage<Page<R>> findPage(@NonNull PagedQuery<R> pagedQuery);
 
 }
+

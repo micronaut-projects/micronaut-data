@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -52,7 +53,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      */
     public static final int POSITION = 100;
 
-    private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
         @Override
         public SourcePersistentEntity apply(ClassElement classElement) {
@@ -79,6 +80,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     public int getOrder() {
         // higher priority than the default
         return POSITION;
+    }
+
+    @NonNull
+    @Override
+    public VisitorKind getVisitorKind() {
+        return VisitorKind.ISOLATING;
     }
 
     @Override

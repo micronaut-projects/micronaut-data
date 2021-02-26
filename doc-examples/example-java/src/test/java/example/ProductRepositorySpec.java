@@ -1,7 +1,6 @@
 package example;
 
-import io.micronaut.test.annotation.MicronautTest;
-import io.reactivex.Single;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -10,11 +9,7 @@ import org.junit.jupiter.api.TestInstance;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 
 @MicronautTest(transactional = false, rollback = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

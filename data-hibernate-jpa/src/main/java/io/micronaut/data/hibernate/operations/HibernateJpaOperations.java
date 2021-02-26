@@ -389,7 +389,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
-    public <T> Iterable<T> persistAll(@NonNull BatchOperation<T> operation) {
+    public <T> Iterable<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return transactionOperations.executeWrite(status -> {
             if (operation != null) {
                 EntityManager entityManager = sessionFactory.getCurrentSession();
@@ -420,7 +420,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public Optional<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
-        //noinspection ConstantConditions
         return transactionOperations.executeWrite(status -> {
             String query = preparedQuery.getQuery();
             Query<?> q = getCurrentSession().createQuery(query);
@@ -430,7 +429,15 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     @Override
-    public <T> Optional<Number> deleteAll(@NonNull BatchOperation<T> operation) {
+    public <T> int delete(@NonNull DeleteOperation<T> operation) {
+        return transactionOperations.executeWrite(status -> {
+            getCurrentSession().remove(operation.getEntity());
+            return 1;
+        });
+    }
+
+    @Override
+    public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
         if (operation.all()) {
             return transactionOperations.executeWrite(status -> {
                 Class<T> entityType = operation.getRootEntity();
