@@ -16,6 +16,7 @@
 package io.micronaut.transaction.annotation;
 
 import io.micronaut.aop.Around;
+import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.transaction.TransactionDefinition;
@@ -44,6 +45,7 @@ public @interface TransactionalAdvice {
      * @return The transaction manager
      * @see #transactionManager
      */
+    @AliasFor(member = "transactionManager")
     String value() default "";
 
     /**
@@ -57,6 +59,7 @@ public @interface TransactionalAdvice {
      * @see #value
      * @since 4.2
      */
+    @AliasFor(member = "value")
     String transactionManager() default "";
 
     /**
