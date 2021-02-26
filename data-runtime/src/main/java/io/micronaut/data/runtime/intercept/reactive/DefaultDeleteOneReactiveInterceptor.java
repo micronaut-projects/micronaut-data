@@ -20,11 +20,9 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
-import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
-
-import java.util.Collections;
 
 /**
  * Default implementation of {@link DeleteOneReactiveInterceptor}.
@@ -45,11 +43,10 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         Object[] parameterValues = context.getParameterValues();
         if (parameterValues.length == 1) {
-            Class<Object> rootEntity = (Class<Object>) getRequiredRootEntity(context);
             Object o = parameterValues[0];
             if (o != null) {
-                BatchOperation<Object> batchOperation = getBatchOperation(context, rootEntity, Collections.singletonList(o));
-                Publisher<Number> publisher = reactiveOperations.deleteAll(batchOperation);
+                DeleteOperation<Object> batchOperation = getDeleteOperation(context, o);
+                Publisher<Number> publisher = reactiveOperations.delete(batchOperation);
                 return Publishers.convertPublisher(
                         publisher,
                         context.getReturnType().getType()
@@ -62,3 +59,4 @@ public class DefaultDeleteOneReactiveInterceptor extends AbstractReactiveInterce
         }
     }
 }
+

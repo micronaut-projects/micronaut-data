@@ -222,6 +222,8 @@ public interface QueryStatement<PS, IDX> {
                                 case CHARACTER_ARRAY:
                                     value = convertRequired(value, String[].class);
                                     break;
+                                default:
+                                    // no-op
                             }
                         } else if (value.getClass() == Character[].class) {
                             value = convertRequired(value, String[].class);

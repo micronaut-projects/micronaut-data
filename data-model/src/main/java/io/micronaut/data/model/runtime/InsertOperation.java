@@ -15,8 +15,6 @@
  */
 package io.micronaut.data.model.runtime;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * An insert operation that inserts a record.
  *
@@ -24,11 +22,5 @@ import edu.umd.cs.findbugs.annotations.NonNull;
  * @author graemerocher
  * @since 1.0.0
  */
-public interface InsertOperation<E> extends EntityOperation<E>, PreparedDataOperation<E> {
-
-    /**
-     * @return The entity to insert.
-     */
-    @NonNull E getEntity();
-
+public interface InsertOperation<E> extends EntityInstanceOperation<E>, PreparedDataOperation<E> {
 }

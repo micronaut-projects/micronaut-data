@@ -18,11 +18,10 @@ package io.micronaut.data.runtime.intercept.async;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.BatchOperation;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.operations.RepositoryOperations;
 
-import java.util.Collections;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -49,9 +48,9 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
         if (parameterValues.length == 1) {
             Object o = parameterValues[0];
             if (o != null) {
-                BatchOperation<Object> batchOperation = getBatchOperation(context, Collections.singletonList(o));
-                return asyncDatastoreOperations.deleteAll(batchOperation)
-                        .thenApply(n -> convertNumberArgumentIfNecessary(n, context.getReturnType().asArgument()));
+                final DeleteOperation<Object> deleteOperation = getDeleteOperation(context, o);
+                return asyncDatastoreOperations.delete(deleteOperation)
+                        .thenApply(n -> 1);
             } else {
                 throw new IllegalArgumentException("Entity to delete cannot be null");
             }
@@ -60,3 +59,4 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
         }
     }
 }
+

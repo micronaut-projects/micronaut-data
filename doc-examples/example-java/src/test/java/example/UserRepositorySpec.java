@@ -1,7 +1,7 @@
 package example;
 
 import io.micronaut.context.annotation.Property;
-import io.micronaut.test.annotation.MicronautTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;

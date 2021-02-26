@@ -31,7 +31,7 @@ import io.micronaut.data.model.PersistentProperty;
  * @param <T> The owner type
  */
 public class RuntimePersistentProperty<T> implements PersistentProperty {
-
+    public static final RuntimePersistentProperty<Object>[] EMPTY_PROPERTY_ARRAY = new RuntimePersistentProperty[0];
     private final RuntimePersistentEntity<T> owner;
     private final BeanProperty<T, ?> property;
     private final Class<?> type;

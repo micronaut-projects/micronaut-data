@@ -23,9 +23,10 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.event.EntityEventContext;
+import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.*;
@@ -40,8 +41,11 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.event.DefaultEntityEventContext;
+import io.micronaut.data.runtime.event.EntityEventRegistry;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.support.DefaultRuntimeEntityRegistry;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
@@ -63,10 +67,10 @@ import java.util.stream.Collectors;
  * @author graemerocher
  * @since 1.0.0
  */
+@SuppressWarnings("unchecked")
 public abstract class AbstractSqlRepositoryOperations<RS, PS> implements RepositoryOperations {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
-    private static final Pattern PARAMETERS_IN_QUERY = Pattern.compile(Pattern.quote(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER));
     @SuppressWarnings("WeakerAccess")
     protected final ResultReader<RS, String> columnNameResultSetReader;
     @SuppressWarnings("WeakerAccess")
@@ -75,14 +79,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final QueryStatement<PS, Integer> preparedStatementWriter;
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final MediaTypeCodec jsonCodec;
+    protected final EntityEventListener<Object> entityEventRegistry;
     protected final DateTimeProvider dateTimeProvider;
 
     private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, StoredInsert> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
-    private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
+    private final RuntimeEntityRegistry runtimeEntityRegistry;
+
 
     /**
      * Default constructor.
@@ -92,7 +98,41 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
-     * @param dateTimeProvider           The injected dateTimeProvider instance
+     * @param dateTimeProvider           The date time provider
+     * @param beanContext                The bean context
+     * @deprecated Use {@link #AbstractSqlRepositoryOperations(String, ResultReader, ResultReader, QueryStatement, List, DateTimeProvider, RuntimeEntityRegistry, BeanContext)}
+     */
+    @Deprecated
+    protected AbstractSqlRepositoryOperations(
+            String dataSourceName,
+            ResultReader<RS, String> columnNameResultSetReader,
+            ResultReader<RS, Integer> columnIndexResultSetReader,
+            QueryStatement<PS, Integer> preparedStatementWriter,
+            List<MediaTypeCodec> codecs,
+            DateTimeProvider<Object> dateTimeProvider,
+            BeanContext beanContext) {
+        this(
+                dataSourceName,
+                columnNameResultSetReader,
+                columnIndexResultSetReader,
+                preparedStatementWriter,
+                codecs,
+                dateTimeProvider,
+                new DefaultRuntimeEntityRegistry(new EntityEventRegistry(beanContext)),
+                beanContext
+        );
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param dataSourceName             The datasource name
+     * @param columnNameResultSetReader  The column name result reader
+     * @param columnIndexResultSetReader The column index result reader
+     * @param preparedStatementWriter    The prepared statement writer
+     * @param codecs                     The media type codecs
+     * @param dateTimeProvider           The date time provider
+     * @param runtimeEntityRegistry      The entity registry
      * @param beanContext                The bean context
      */
     protected AbstractSqlRepositoryOperations(
@@ -101,13 +141,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
-            @NonNull DateTimeProvider dateTimeProvider,
+            DateTimeProvider<Object> dateTimeProvider,
+            RuntimeEntityRegistry runtimeEntityRegistry,
             BeanContext beanContext) {
+        this.dateTimeProvider = dateTimeProvider;
+        this.runtimeEntityRegistry = runtimeEntityRegistry;
+        this.entityEventRegistry = runtimeEntityRegistry.getEntityEventListener();
         this.columnNameResultSetReader = columnNameResultSetReader;
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
-        this.dateTimeProvider = dateTimeProvider;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -127,18 +170,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     @NonNull
     @Override
     public final <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
-        ArgumentUtils.requireNonNull("type", type);
-        RuntimePersistentEntity<T> entity = entities.get(type);
-        if (entity == null) {
-            entity = new RuntimePersistentEntity<T>(type) {
-                @Override
-                protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
-                    return AbstractSqlRepositoryOperations.this.getEntity(type);
-                }
-            };
-            entities.put(type, entity);
-        }
-        return entity;
+        return runtimeEntityRegistry.getEntity(type);
     }
 
     /**
@@ -309,8 +341,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param <T>    The entity type
      */
     protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
-        Object now = null;
-        RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
+        final RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
         final String[] parameterBinding = insert.getParameterBinding();
         final Dialect dialect = insert.dialect;
 
@@ -347,18 +378,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
 
                 value = prop.getProperty().get(entity);
 
-                RuntimePersistentEntity<?> embeddedEntity = entities.get(embeddedProp.getProperty().getType());
-
-                if (embeddedEntity != null) {
-                    Object bean = embeddedProp.getProperty().get(value);
-                    RuntimePersistentProperty embeddedIdentity = embeddedEntity.getIdentity();
-
-                    type = embeddedIdentity.getDataType();
-                    value = embeddedIdentity.getProperty().get(bean);
-                } else {
-                    type = embeddedProp.getDataType();
-                    value = value != null ? embeddedProp.getProperty().get(value) : null;
-                }
+                final BeanProperty embeddedBeanProperty = embeddedProp.getProperty();
+                type = embeddedProp.getDataType();
+                value = value != null ? embeddedBeanProperty.get(value) : null;
             } else {
                 type = prop.getDataType();
                 BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
@@ -380,26 +402,119 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     }
                     BeanProperty<Object, ?> identityProperty = identity.getProperty();
                     value = value != null ? identityProperty.get(value) : null;
-                } else if (!prop.isGenerated()) {
-                    if (beanProperty.hasStereotype(AutoPopulated.NAME)) {
-                        if (beanProperty.hasAnnotation(DateCreated.NAME) ||
-                                beanProperty.hasAnnotation(DateUpdated.NAME)) {
-                            now = now != null ? now : dateTimeProvider.getNow();
-
-                            value = now;
-                            beanProperty.convertAndSet(entity, value);
-                        } else if (UUID.class.isAssignableFrom(beanProperty.getType())) {
-                            value = UUID.randomUUID();
-                            beanProperty.set(entity, value);
-                        } else {
-                            throw new DataAccessException("Unsupported auto-populated annotation type: " + beanProperty.getAnnotationTypeByStereotype(AutoPopulated.class).orElse(null));
-                        }
-                    }
                 }
             }
 
             setStatementParameter(stmt, index, type, value, dialect);
         }
+    }
+
+    /**
+     * Trigger the pre persist event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     * @return The entity or null if the operation was vetoed
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> T triggerPrePersist(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
+        if (entityEventRegistry.prePersist((EntityEventContext<Object>) event)) {
+            return event.getEntity();
+        }
+        return null;
+    }
+
+    /**
+     * Trigger the post persist event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     * @return The entity possibly modified
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> T triggerPostPersist(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
+        entityEventRegistry.postPersist((EntityEventContext<Object>) event);
+        return event.getEntity();
+    }
+
+    /**
+     * Trigger the pre remove event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     * @return The entity or null if the operation was vetoed
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> T triggerPreRemove(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
+        if (entityEventRegistry.preRemove((EntityEventContext<Object>) event)) {
+            return event.getEntity();
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Trigger the post remove event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> void triggerPostRemove(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
+        entityEventRegistry.postRemove((EntityEventContext<Object>) event);
+    }
+
+    /**
+     * Trigger the pre update event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     * @return The entity or null if the operation was vetoed
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> T triggerPreUpdate(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
+        if (entityEventRegistry.preUpdate((EntityEventContext<Object>) event)) {
+            return event.getEntity();
+        }
+        return null;
+    }
+
+    /**
+     * Trigger the post update event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> void triggerPostUpdate(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final RuntimePersistentEntity<Object> simple = (RuntimePersistentEntity<Object>) pe;
+        entityEventRegistry.postUpdate(new DefaultEntityEventContext<>(simple, entity));
+    }
+
+    /**
+     * Trigger the post load event.
+     * @param entity The entity
+     * @param pe The persistent entity
+     * @param annotationMetadata The annotation metadata
+     * @param <T> The generic type
+     * @return The entity, possibly modified
+     */
+    @SuppressWarnings("unchecked")
+    protected <T> T triggerPostLoad(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(pe, entity);
+        entityEventRegistry.postLoad((EntityEventContext<Object>) event);
+        return event.getEntity();
     }
 
     /**

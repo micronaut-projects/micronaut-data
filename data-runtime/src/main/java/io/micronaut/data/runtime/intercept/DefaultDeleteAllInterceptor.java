@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -81,12 +81,12 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
         } else {
             Class<?> rootEntity = getRequiredRootEntity(context);
             if (isBatch) {
-                Iterable iterable = (Iterable) parameterValues[0];
-                BatchOperation<?> batchOperation = getBatchOperation(context, rootEntity, iterable);
+                Iterable<Object> iterable = (Iterable<Object>) parameterValues[0];
+                final DeleteBatchOperation<Object> batchOperation = getDeleteBatchOperation(context, iterable);
                 Number deleted = operations.deleteAll(batchOperation).orElse(0);
                 return convertIfNecessary(resultType, deleted);
             } else if (parameterValues.length == 0) {
-                BatchOperation<?> batchOperation = getBatchOperation(context, rootEntity);
+                final DeleteBatchOperation<?> batchOperation = getDeleteAllBatchOperation(context, rootEntity);
                 Number result = operations.deleteAll(batchOperation).orElse(0);
                 return convertIfNecessary(resultType, result);
             } else {

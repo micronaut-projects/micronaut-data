@@ -29,6 +29,7 @@ dataUpdates:
   batchUpdates: Batch Updates
   batchDeletes: Batch Deletes
   timestamps: Entity Timestamps
+  entityEvents: Entity Events
 howItWorks:
   title: How Micronaut Data Works
 sql:
@@ -51,6 +52,7 @@ sql:
       sqlAssociations: Association Fetching
       columnTransformer: Using @ColumnTransformer
       sqlJsonType: JSON Column Support
+      javaRecords: Support for Java 14+ Records
     jdbcJoinQueries: JDBC Join Queries
     jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
