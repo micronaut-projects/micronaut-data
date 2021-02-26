@@ -27,7 +27,7 @@ include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
-    include 'doc-examples:jdbc-example-records'
+    include 'doc-examples:jdbc-example-records-java'
 }
 
 // benchmarks

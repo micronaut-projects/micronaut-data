@@ -1,0 +1,15 @@
+Since 2.3.0, Micronaut Data JDBC has support for using Java 14+ records to model entities.
+
+The following record class demonstrates this capability:
+
+snippet::example.Book[project-base="doc-examples/jdbc-example-records", source="main"]
+
+<1> The ann:data.annotation.MappedEntity[] annotation is used on the record
+<2> The database identifier is annotated with ann:data.annotation.Id[] and ann:data.annotation.GeneratedValue[] plus marked as `@Nullable`
+
+Since records are immutable constructor arguments that are generated values need to be marked as `@Nullable` and you should pass `null` for those arguments. The following presents an example:
+
+snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example-records", tags="save", indent="0"]
+
+It is important to note that the returned instance is not the same as the instance passed to the `save` method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the `save` method.
+
