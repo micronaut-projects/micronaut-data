@@ -548,7 +548,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
             final Dialect dialect = annotationMetadata.enumValue(Repository.class, "dialect", Dialect.class)
                     .orElse(Dialect.ANSI);
-            boolean supportsBatch = dialect != Dialect.SQL_SERVER;
+            boolean supportsBatch = isSupportsBatch(persistentEntity, dialect);
             return new StoredInsert<>(insertStatement, persistentEntity, parameterBinding, supportsBatch, dialect);
         });
     }
@@ -703,7 +703,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     sql,
                     persistentEntity,
                     parameters.values().toArray(new String[0]),
-                    dialect != Dialect.SQL_SERVER,
+                    isSupportsBatch(persistentEntity, dialect),
                     dialect
             );
         });
@@ -760,7 +760,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     sql,
                     persistentEntity,
                     parameters.values().toArray(new String[0]),
-                    dialect != Dialect.SQL_SERVER,
+                    isSupportsBatch(persistentEntity, dialect),
                     dialect
             );
         });
@@ -783,6 +783,21 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             return queryBuilder.buildJoinTableInsert(persistentEntity, association1);
         });
+    }
+
+    private boolean isSupportsBatch(PersistentEntity persistentEntity, Dialect dialect) {
+        switch (dialect) {
+            case SQL_SERVER:
+                return false;
+            case ORACLE:
+                if (persistentEntity.getIdentity() != null) {
+                    // Oracle doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+                    return !persistentEntity.getIdentity().isGenerated();
+                }
+                return false;
+            default:
+                return true;
+        }
     }
 
     /**

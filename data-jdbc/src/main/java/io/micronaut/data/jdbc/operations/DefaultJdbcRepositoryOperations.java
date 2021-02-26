@@ -270,9 +270,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return transactionOperations.executeRead(status -> {
             try {
                 Connection connection = status.getConnection();
-                PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true);
-                ResultSet rs = ps.executeQuery();
-                return rs.next();
+                try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
+                    try (ResultSet rs = ps.executeQuery()) {
+                        return rs.next();
+                    }
+                }
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL query: " + e.getMessage(), e);
             }
@@ -290,6 +292,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> preparedQuery, Connection connection) {
         Class<R> resultType = preparedQuery.getResultType();
+        AtomicBoolean finished = new AtomicBoolean();
 
         PreparedStatement ps;
         try {
@@ -298,109 +301,143 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
         }
 
+        ResultSet openedRs = null;
         ResultSet rs;
         try {
-            rs = ps.executeQuery();
-        } catch (SQLException e) {
-            try {
-                ps.close();
-            } catch (SQLException e2) {
-                // ignore
-            }
-            throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
-        }
-        boolean dtoProjection = preparedQuery.isDtoProjection();
-        boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
-        Spliterator<R> spliterator;
-        AtomicBoolean finished = new AtomicBoolean();
-        if (isEntity || dtoProjection) {
-            SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
-            SqlTypeMapper<ResultSet, R> mapper;
-            final RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
-            if (dtoProjection) {
-                mapper = new SqlDTOMapper<>(
-                        persistentEntity,
-                        columnNameResultSetReader,
-                        jsonCodec
-                );
-            } else {
-                mapper = new SqlResultEntityTypeMapper<>(
-                        persistentEntity,
-                        columnNameResultSetReader,
-                        preparedQuery.getJoinFetchPaths(),
-                        jsonCodec,
-                        (loadedEntity, o) -> {
-                            if (loadedEntity.hasPostLoadEventListeners()) {
-                                return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
-                            } else {
-                                return o;
-                            }
-                        }
-                );
-            }
-            spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                @Override
-                public boolean tryAdvance(Consumer<? super R> action) {
-                    if (finished.get()) {
-                        return false;
-                    }
-                    boolean hasNext = mapper.hasNext(rs);
-                    if (hasNext) {
-                        R o = mapper.map(rs, resultType);
-                        if (sqlMappingConsumer != null) {
-                            sqlMappingConsumer.accept(rs, o);
-                        }
-                        action.accept(o);
-                    } else {
-                        closeResultSet(ps, rs, finished);
-                    }
-                    return hasNext;
-                }
-            };
-        } else {
-            spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
-                    Spliterator.ORDERED | Spliterator.IMMUTABLE) {
-                @Override
-                public boolean tryAdvance(Consumer<? super R> action) {
-                    if (finished.get()) {
-                        return false;
-                    }
-                    try {
-                        boolean hasNext = rs.next();
-                        if (hasNext) {
-                            Object v = columnIndexResultSetReader
-                                    .readDynamic(rs, 1, preparedQuery.getResultDataType());
-                            if (resultType.isInstance(v)) {
-                                //noinspection unchecked
-                                action.accept((R) v);
-                            } else if (v != null) {
-                                Object r = columnIndexResultSetReader.convertRequired(v, resultType);
-                                if (r != null) {
-                                    action.accept((R) r);
+            openedRs = ps.executeQuery();
+            rs = openedRs;
+
+            boolean dtoProjection = preparedQuery.isDtoProjection();
+            boolean isEntity = preparedQuery.getResultDataType() == DataType.ENTITY;
+            Spliterator<R> spliterator;
+
+            if (isEntity || dtoProjection) {
+                SqlResultConsumer sqlMappingConsumer = preparedQuery.hasResultConsumer() ? preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class).orElse(null) : null;
+                SqlTypeMapper<ResultSet, R> mapper;
+                final RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
+                if (dtoProjection) {
+                    mapper = new SqlDTOMapper<>(
+                            persistentEntity,
+                            columnNameResultSetReader,
+                            jsonCodec
+                    );
+                } else {
+                    Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
+                    SqlResultEntityTypeMapper<ResultSet, R> entityTypeMapper = new SqlResultEntityTypeMapper<>(
+                            persistentEntity,
+                            columnNameResultSetReader,
+                            joinFetchPaths,
+                            jsonCodec,
+                            (loadedEntity, o) -> {
+                                if (loadedEntity.hasPostLoadEventListeners()) {
+                                    return triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata());
+                                } else {
+                                    return o;
                                 }
                             }
+                    );
+                    // Cannot stream ResultSet for joined query
+                    if (!joinFetchPaths.isEmpty()) {
+                        Map<Object, Object> processedEntities = new HashMap<>();
+                        List<R> values = new ArrayList<>();
+                        try {
+                            while (entityTypeMapper.hasNext(rs)) {
+                                Object id = entityTypeMapper.readId(rs);
+                                if (id != null) {
+                                    Object processedEntity = processedEntities.get(id);
+                                    if (processedEntity != null) {
+                                        entityTypeMapper.readChildren(rs, (R) processedEntity);
+                                        continue;
+                                    }
+                                }
+                                R o = entityTypeMapper.map(rs, resultType);
+                                if (sqlMappingConsumer != null) {
+                                    sqlMappingConsumer.accept(rs, o);
+                                }
+                                values.add(o);
+                                if (id != null) {
+                                    processedEntities.put(id, o);
+                                }
+                            }
+                            return values.stream();
+                        } finally {
+                            closeResultSet(ps, rs, finished);
+                        }
+                    } else {
+                        mapper = entityTypeMapper;
+                    }
+                }
+                spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
+                        Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+                    @Override
+                    public boolean tryAdvance(Consumer<? super R> action) {
+                        if (finished.get()) {
+                            return false;
+                        }
+                        boolean hasNext = mapper.hasNext(rs);
+                        if (hasNext) {
+                            R o = mapper.map(rs, resultType);
+                            if (sqlMappingConsumer != null) {
+                                sqlMappingConsumer.accept(rs, o);
+                            }
+                            action.accept(o);
                         } else {
                             closeResultSet(ps, rs, finished);
                         }
                         return hasNext;
-                    } catch (SQLException e) {
-                        throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
                     }
-                }
-            };
-        }
+                };
+            } else {
+                spliterator = new Spliterators.AbstractSpliterator<R>(Long.MAX_VALUE,
+                        Spliterator.ORDERED | Spliterator.IMMUTABLE) {
+                    @Override
+                    public boolean tryAdvance(Consumer<? super R> action) {
+                        if (finished.get()) {
+                            return false;
+                        }
+                        try {
+                            boolean hasNext = rs.next();
+                            if (hasNext) {
+                                Object v = columnIndexResultSetReader
+                                        .readDynamic(rs, 1, preparedQuery.getResultDataType());
+                                if (resultType.isInstance(v)) {
+                                    //noinspection unchecked
+                                    action.accept((R) v);
+                                } else if (v != null) {
+                                    Object r = columnIndexResultSetReader.convertRequired(v, resultType);
+                                    if (r != null) {
+                                        action.accept((R) r);
+                                    }
+                                }
+                            } else {
+                                closeResultSet(ps, rs, finished);
+                            }
+                            return hasNext;
+                        } catch (SQLException e) {
+                            throw new DataAccessException("Error retrieving next JDBC result: " + e.getMessage(), e);
+                        }
+                    }
+                };
+            }
 
-        return StreamSupport.stream(spliterator, false).onClose(() -> {
-            closeResultSet(ps, rs, finished);
-        });
+            return StreamSupport.stream(spliterator, false).onClose(() -> {
+                closeResultSet(ps, rs, finished);
+            });
+        } catch (Exception e) {
+            closeResultSet(ps, openedRs, finished);
+            throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
+        }
     }
 
     private void closeResultSet(PreparedStatement ps, ResultSet rs, AtomicBoolean finished) {
         if (finished.compareAndSet(false, true)) {
             try {
-                rs.close();
-                ps.close();
+                if (rs != null) {
+                    rs.close();
+                }
+                if (ps != null) {
+                    ps.close();
+                }
             } catch (SQLException e) {
                 throw new DataAccessException("Error closing JDBC result stream: " + e.getMessage(), e);
             }
@@ -735,54 +772,48 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
                 }
 
-                PreparedStatement stmt;
-                if (hasGeneratedID && (insert.getDialect() == Dialect.ORACLE || insert.getDialect() == Dialect.SQL_SERVER)) {
-                    stmt = connection
-                            .prepareStatement(insertSql, new String[] { insert.getIdentity().getPersistedName() });
-                } else {
-                    stmt = connection
-                            .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                }
+                try (PreparedStatement stmt = persistOnePreparedStatement(insert, connection, generateId, insertSql, hasGeneratedID)) {
 
-                final RuntimePersistentEntity<T> pe = insert.getPersistentEntity();
-                T resolvedEntity;
-                if (pe.hasPrePersistEventListeners()) {
-                    final T newEntity = triggerPrePersist(entity, pe, annotationMetadata);
-                    if (newEntity == null) {
-                        // operation evicted
-                        return entity;
+                    final RuntimePersistentEntity<T> pe = insert.getPersistentEntity();
+                    T resolvedEntity;
+                    if (pe.hasPrePersistEventListeners()) {
+                        final T newEntity = triggerPrePersist(entity, pe, annotationMetadata);
+                        if (newEntity == null) {
+                            // operation evicted
+                            return entity;
+                        } else {
+                            resolvedEntity = newEntity;
+                        }
                     } else {
-                        resolvedEntity = newEntity;
+                        resolvedEntity = entity;
                     }
-                } else {
-                    resolvedEntity = entity;
-                }
-                setInsertParameters(insert, resolvedEntity, stmt);
-                stmt.executeUpdate();
+                    setInsertParameters(insert, resolvedEntity, stmt);
+                    stmt.executeUpdate();
 
-                persisted.add(resolvedEntity);
-                if (hasGeneratedID) {
-                    ResultSet generatedKeys = stmt.getGeneratedKeys();
-                    if (generatedKeys.next()) {
-                        Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
-                        resolvedEntity = updateEntityId(identity, resolvedEntity, id);
-                    } else {
-                        throw new DataAccessException("ID failed to generate. No result returned.");
+                    persisted.add(resolvedEntity);
+                    if (hasGeneratedID) {
+                        ResultSet generatedKeys = stmt.getGeneratedKeys();
+                        if (generatedKeys.next()) {
+                            Object id = getEntityId(generatedKeys, insert.getIdentity().getDataType(), identity.getType());
+                            resolvedEntity = updateEntityId(identity, resolvedEntity, id);
+                        } else {
+                            throw new DataAccessException("ID failed to generate. No result returned.");
+                        }
                     }
+                    if (pe.hasPostPersistEventListeners()) {
+                        resolvedEntity = triggerPostPersist(resolvedEntity, insert.getPersistentEntity(), annotationMetadata);
+                    }
+                    cascadeInserts(
+                            annotationMetadata,
+                            repositoryType,
+                            insert,
+                            resolvedEntity,
+                            persisted,
+                            connection,
+                            identity
+                    );
+                    return resolvedEntity;
                 }
-                if (pe.hasPostPersistEventListeners()) {
-                    resolvedEntity = triggerPostPersist(resolvedEntity, insert.getPersistentEntity(), annotationMetadata);
-                }
-                cascadeInserts(
-                        annotationMetadata,
-                        repositoryType,
-                        insert,
-                        resolvedEntity,
-                        persisted,
-                        connection,
-                        identity
-                );
-                return resolvedEntity;
             } catch (SQLException e) {
                 throw new DataAccessException("SQL Error executing INSERT: " + e.getMessage(), e);
             }
@@ -818,6 +849,18 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
         return resolvedEntity;
+    }
+
+    private <T> PreparedStatement persistOnePreparedStatement(StoredInsert<T> insert, Connection connection, boolean generateId, String insertSql, boolean hasGeneratedID) throws SQLException {
+        PreparedStatement stmt;
+        if (hasGeneratedID && (insert.getDialect() == Dialect.ORACLE || insert.getDialect() == Dialect.SQL_SERVER)) {
+            stmt = connection
+                    .prepareStatement(insertSql, new String[] { insert.getIdentity().getPersistedName() });
+        } else {
+            stmt = connection
+                    .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+        }
+        return stmt;
     }
 
     private <T> void cascadeInserts(
@@ -1038,15 +1081,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             BeanProperty<T, Object> identity = insert.getIdentityProperty();
             final boolean hasGeneratedID = generateId && identity != null;
             final RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
-            try {
-                PreparedStatement stmt;
-                if (hasGeneratedID && insert.getDialect() == Dialect.ORACLE) {
-                    stmt = connection
-                            .prepareStatement(insertSql, new String[] { identity.getName() });
-                } else {
-                    stmt = connection
-                            .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
-                }
+
+            try (PreparedStatement stmt = connection
+                    .prepareStatement(insertSql, generateId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS)) {
+
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing Batch SQL Insert: {}", insertSql);
                 }
@@ -1163,8 +1201,8 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Query: {}", sql);
         }
-        try {
-            return callback.call(transactionOperations.getConnection().prepareStatement(sql));
+        try (PreparedStatement ps = transactionOperations.getConnection().prepareStatement(sql)) {
+            return callback.call(ps);
         } catch (SQLException e) {
             throw new DataAccessException("Error preparing SQL statement: " + e.getMessage(), e);
         }
