@@ -41,13 +41,17 @@ class MultipleDataSourceSpec extends Specification {
         otherPersonRepository.findAll().toList()[0].name == "Joe"
 
         when:
-        otherPersonRepository.saveTwo(
+        otherPersonRepository.saveTwoOtherDb(
                 new Person(name:"One"),
                 new Person(name:"Two")
         )
+        otherPersonRepository.saveTwoOtherDb2(
+                new Person(name:"Three"),
+                new Person(name:"Four")
+        )
 
         then:
-        otherPersonRepository.count() == 3
+        otherPersonRepository.count() == 5
     }
 
 
@@ -63,6 +67,16 @@ class MultipleDataSourceSpec extends Specification {
 
         @Transactional
         @TransactionalAdvice("other")
+        void saveTwoOtherDb(Person one, Person two) {
+            saveTwo(one, two)
+        }
+
+        @Transactional
+        @TransactionalAdvice(transactionManager = "other")
+        void saveTwoOtherDb2(Person one, Person two) {
+            saveTwo(one, two)
+        }
+
         void saveTwo(Person one, Person two) {
             jdbcOperations.prepareStatement("INSERT INTO `person` (`enabled`,`age`,`name`) VALUES (?,?,?)", {
                 it.setBoolean(1, one.isEnabled())
