@@ -140,6 +140,8 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-timestamps"><a href="#timestamps"><strong>6.4</strong><span>Entity Timestamps</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-entityEvents"><a href="#entityEvents"><strong>6.5</strong><span>Entity Events</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>7</strong><span>How Micronaut Data Works</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-sql"><a href="#sql"><strong>8</strong><span>Micronaut Data with SQL</span></a></div>
@@ -173,6 +175,8 @@
         <div class="toc-item" style="margin-left:30px" id="toc-item-columnTransformer"><a href="#columnTransformer"><strong>8.1.4.7</strong><span>Using @ColumnTransformer</span></a></div>
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-sqlJsonType"><a href="#sqlJsonType"><strong>8.1.4.8</strong><span>JSON Column Support</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-javaRecords"><a href="#javaRecords"><strong>8.1.4.9</strong><span>Support for Java 14+ Records</span></a></div>
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcJoinQueries"><a href="#jdbcJoinQueries"><strong>8.1.5</strong><span>JDBC Join Queries</span></a></div>
         
@@ -426,7 +430,7 @@ fun testAnnotationMetadata() {
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -436,7 +440,7 @@ fun testAnnotationMetadata() {
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -462,7 +466,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-hibernate-jpa:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -470,7 +474,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-hibernate-jpa&lt;/artifactId&gt;
-    &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -785,7 +789,7 @@ bookRepository.save(book)</code></pre>
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -795,7 +799,7 @@ bookRepository.save(book)</code></pre>
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -2489,7 +2493,7 @@ total == 2</code></pre>
         .thenCompose { product -&gt; productRepository.countByManufacturerName(product.manufacturer.name) }
         .get(1000, TimeUnit.SECONDS)
 
-Assertions.assertEquals(
+assertEquals(
         2,
         total
 )</code></pre>
@@ -2593,7 +2597,7 @@ total == 2</code></pre>
         .defaultIfEmpty(0L)
         .blockingGet()
 
-Assertions.assertEquals(
+assertEquals(
         2,
         total
 )</code></pre>
@@ -3390,6 +3394,388 @@ If you update the entity with an external SQL statement or custom logic you will
 </table>
 </div>
 
+<h2 id="entityEvents"><a class="anchor" href="#entityEvents"></a>6.5 Entity Events</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/dataUpdates/entityEvents.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Since 2.3, Micronaut Data supports defining entity event listeners for either JPA or JDBC using either annotations or by implementation the <a href="../api/io/micronaut/data/event/EntityEventListener.html">EntityEventListener</a> interface.</p>
+</div>
+<div class="paragraph">
+<p>The following table lists the available event annotations:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Entity Event Listener Annotations</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Annotation</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/event/PrePersist.html">@PrePersist</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered prior to persisting an object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/event/PostPersist.html">@PostPersist</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered after persisting an object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/event/PreRemove.html">@PreRemove</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered prior to deleting an object (note: doesn&#8217;t apply to batch deletes)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/event/PostRemove.html">@PostRemove</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered after to deleting an object (note: doesn&#8217;t apply to batch deletes)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/event/PreUpdate.html">@PreUpdate</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered prior to updating an object (note: doesn&#8217;t apply to batch updates)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/event/PostUpdate.html">@PostUpdate</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered after updating an object (note: doesn&#8217;t apply to batch updates)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+You can also use the JPA annotations in the <code>javax.persistence</code> package if you prefer.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Each event listener annotation can be applied to an instance method of an entity class (a JPA entity or a class annotated with ann:data.annotation.MappedEntity) in which case the method must return <code>void</code> and have zero arguments for example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import javax.persistence.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+@Entity
+public class Account {
+    @GeneratedValue
+    @Id
+    private Long id;
+    private String username;
+    private String password;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    @PrePersist
+    void encodePassword() {
+        this.password = Base64.getEncoder()
+                .encodeToString(this.password.getBytes(StandardCharsets.UTF_8));
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import javax.persistence.*
+import java.nio.charset.StandardCharsets
+
+@Entity
+class Account {
+    @GeneratedValue
+    @Id
+    Long id
+    String username
+    String password
+
+    @PrePersist
+    void encodePassword() {
+        this.password = Base64.encoder
+                .encodeToString(this.password.getBytes(StandardCharsets.UTF_8))
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import java.nio.charset.StandardCharsets
+import java.util.*
+import javax.persistence.*
+
+@Entity
+data class Account(@GeneratedValue @Id
+                   var id: Long? = null,
+                   val username: String,
+                   var password: String) {
+
+    @PrePersist
+    fun encodePassword() {
+        password = Base64.getEncoder()
+            .encodeToString(password.toByteArray(StandardCharsets.UTF_8))
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above example defines a <code>@PrePersist</code> listener that encodes the password (in a not very secure base64 format, clearly not recommended!) prior to inserting into the database.</p>
+</div>
+<div class="paragraph">
+<p>In addition, the annotations can be applied to any instance method of a Micronaut bean, in which case the method must return <code>void</code> and have a single argument that is the entity type (note the type can be <code>Object</code> to listener for all events). For example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.data.annotation.event.PrePersist;
+
+import javax.inject.Singleton;
+
+@Singleton
+public class AccountUsernameValidator {
+    @PrePersist
+    void validateUsername(Account account) {
+        final String username = account.getUsername();
+        if (username == null || !username.matches("[a-z0-9]+")) {
+            throw new IllegalArgumentException("Invalid username");
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.event.PrePersist
+
+import javax.inject.Singleton
+
+@Singleton
+class AccountUsernameValidator {
+    @PrePersist
+    void validateUsername(Account account) {
+        final String username = account.username
+        if (!username || !(username ==~ /[a-z0-9]+/)) {
+            throw new IllegalArgumentException("Invalid username")
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.event.PrePersist
+import javax.inject.Singleton
+
+@Singleton
+class AccountUsernameValidator {
+    @PrePersist
+    fun validateUsername(account: Account) {
+        val username: String = account.username
+        require(username.matches("[a-z0-9]+".toRegex())) { "Invalid username" }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The above listener serves to validate the account username prior to any insert.</p>
+</div>
+<div class="paragraph">
+<p>Finally, it is also possible to define a Micronaut bean that implements the <a href="../api/io/micronaut/data/event/EntityEventListener.html">EntityEventListener</a> interface or one of the functional interfaces that are sub-interfaces of the <a href="../api/io/micronaut/data/event/EntityEventListener.html">EntityEventListener</a> listed in the following table:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. Entity Event Listener Interfaces</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Interface</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/event/listeners/PrePersistListener.html">PrePersistListener</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered prior to persisting an object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/event/listeners/PostPersistListener.html">@PostPersistListener</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered after persisting an object</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/event/listeners/PreRemoveListener.html">@PreRemoveListener</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered prior to deleting an object (note: doesn&#8217;t apply to batch deletes)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/event/listeners/PostRemoveListener.html">@PostRemoveListener</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered after to deleting an object (note: doesn&#8217;t apply to batch deletes)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/event/listeners/PreUpdateListener.html">@PreUpdateListener</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered prior to updating an object (note: doesn&#8217;t apply to batch updates)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/event/listeners/PostUpdateListener.html">@PostUpdateListener</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Triggered after updating an object (note: doesn&#8217;t apply to batch updates)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>For example the following Micronaut factory bean defines listeners that are executed before and after the <code>Book</code> entity is persisted:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.data.event.listeners.PostPersistEventListener;
+import io.micronaut.data.event.listeners.PrePersistEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Singleton;
+
+@Factory
+public class BookListeners {
+    private static final Logger LOG = LoggerFactory.getLogger(BookListeners.class);
+
+    @Singleton
+    PrePersistEventListener&lt;Book&gt; beforeBookPersist() { <b class="conum">(1)</b>
+        return (book) -&gt; {
+            LOG.debug("Inserting book: {}", book.getTitle() );
+            return true; <b class="conum">(2)</b>
+        };
+    }
+
+    @Singleton
+    PostPersistEventListener&lt;Book&gt; afterBookPersist() { <b class="conum">(3)</b>
+        return (book) -&gt; LOG.debug("Book inserted: {}", book.getTitle() );
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.context.annotation.Factory
+import io.micronaut.data.event.listeners.PostPersistEventListener
+import io.micronaut.data.event.listeners.PrePersistEventListener
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+import javax.inject.Singleton
+
+@Factory
+class BookListeners {
+    private static final Logger LOG = LoggerFactory.getLogger(BookListeners)
+
+    @Singleton
+    PrePersistEventListener&lt;Book&gt; beforeBookPersist() { <b class="conum">(1)</b>
+        return (book) -&gt; {
+            LOG.debug "Inserting book: ${book.title}"
+            return true <b class="conum">(2)</b>
+        }
+    }
+
+    @Singleton
+    PostPersistEventListener&lt;Book&gt; afterBookPersist() { <b class="conum">(3)</b>
+        return (book) -&gt; LOG.debug("Book inserted: ${book.title}")
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.context.annotation.Factory
+import io.micronaut.data.event.listeners.PostPersistEventListener
+import io.micronaut.data.event.listeners.PrePersistEventListener
+import org.slf4j.LoggerFactory
+import javax.inject.Singleton
+
+@Factory
+class BookListeners {
+    @Singleton
+    fun beforeBookPersist(): PrePersistEventListener&lt;Book&gt; { <b class="conum">(1)</b>
+        return PrePersistEventListener { book: Book -&gt;
+            LOG.debug("Inserting book: ${book.title}")
+            true <b class="conum">(2)</b>
+        }
+    }
+
+    @Singleton
+    fun afterBookPersist(): PostPersistEventListener&lt;Book&gt; { <b class="conum">(3)</b>
+        return PostPersistEventListener { book: Book -&gt;
+            LOG.debug("Book inserted: ${book.title}")
+        }
+    }
+
+    companion object {
+        private val LOG = LoggerFactory.getLogger(BookListeners::class.java)
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The factory returns a bean of type <a href="../api/io/micronaut/data/event/listeners/PrePersistListener.html">PrePersistListener</a> that includes <code>Book</code> as the generic argument</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>PrePersistListener</code> can return <code>false</code> if the operation should not proceed, if this case <code>true</code> is returned</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>An additional <a href="../api/io/micronaut/data/event/listeners/PostPersistListener.html">@PostPersistListener</a> event listener is defined</td>
+</tr>
+</table>
+</div>
+
 <h1 id="howItWorks"><a class="anchor" href="#howItWorks"></a>7 How Micronaut Data Works</h1>
 
 <div class='contribute-btn'>
@@ -3538,7 +3924,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">annotationProcessor(<span class="hljs-string">"io.micronaut.data:micronaut-data-processor:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3548,7 +3934,7 @@ Micronaut Data JDBC is useful for implementing the majority of the simple SQL qu
     &lt;path&gt;
         &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
         &lt;artifactId&gt;micronaut-data-processor&lt;/artifactId&gt;
-        &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+        &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
     &lt;/path&gt;
 &lt;/annotationProcessorPaths&gt;</code></pre>
 </div>
@@ -3574,7 +3960,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-jdbc:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -3582,7 +3968,7 @@ For Kotlin the dependency should be in the <code>kapt</code> scope and for Groov
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-jdbc&lt;/artifactId&gt;
-    &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -5155,6 +5541,64 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 </table>
 </div>
 
+<h2 id="javaRecords"><a class="anchor" href="#javaRecords"></a>8.1.4.9 Support for Java 14+ Records</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/jdbc/javaRecords.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Since 2.3.0, Micronaut Data JDBC has support for using Java 14+ records to model entities.</p>
+</div>
+<div class="paragraph">
+<p>The following record class demonstrates this capability:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.data.annotation.*;
+import java.util.Date;
+
+@MappedEntity <b class="conum">(1)</b>
+record Book(
+        @Id @GeneratedValue @Nullable Long id, <b class="conum">(2)</b>
+        @DateCreated @Nullable Date dateCreated,
+        String title,
+        int pages) {
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <a href="../api/io/micronaut/data/annotation/MappedEntity.html">@MappedEntity</a> annotation is used on the record</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The database identifier is annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a> and <a href="../api/io/micronaut/data/annotation/GeneratedValue.html">@GeneratedValue</a> plus marked as <code>@Nullable</code></td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Since records are immutable constructor arguments that are generated values need to be marked as <code>@Nullable</code> and you should pass <code>null</code> for those arguments. The following presents an example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Book book = new Book(null,null, "The Stand", 1000);
+book = bookRepository.save(book);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It is important to note that the returned instance is not the same as the instance passed to the <code>save</code> method. When a write operation is performed Micronaut Data will use a copy-constructor approach to populate the database identifier and return a new instance from the <code>save</code> method.</p>
+</div>
+
 <h2 id="jdbcJoinQueries"><a class="anchor" href="#jdbcJoinQueries"></a>8.1.5 JDBC Join Queries</h2>
 
 <div class='contribute-btn'>
@@ -5756,7 +6200,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5764,7 +6208,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring&lt;/artifactId&gt;
-    &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -5831,7 +6275,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <p>        <div class="listingblock multi-language-sample">
 <div class="title"></div>
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:2.2.5-SNAPSHOT")</span></code></pre>
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="gradle">implementation(<span class="hljs-string">"io.micronaut.data:micronaut-data-spring-jpa:2.3.0-SNAPSHOT")</span></code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
@@ -5839,7 +6283,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="maven">&lt;dependency&gt;
     &lt;groupId&gt;io.micronaut.data&lt;/groupId&gt;
     &lt;artifactId&gt;micronaut-data-spring-jpa&lt;/artifactId&gt;
-    &lt;version&gt;2.2.5-SNAPSHOT&lt;/version&gt;
+    &lt;version&gt;2.3.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
