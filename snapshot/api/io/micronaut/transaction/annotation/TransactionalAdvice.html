@@ -188,7 +188,8 @@ public @interface <span class="memberNameLabel">TransactionalAdvice</span></pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>value</h4>
-<pre>public abstract&nbsp;java.lang.String&nbsp;value</pre>
+<pre>@AliasFor(member="transactionManager")
+public abstract&nbsp;java.lang.String&nbsp;value</pre>
 <div class="block">Alias for <a href="../../../../io/micronaut/transaction/annotation/TransactionalAdvice.html#transactionManager--"><code>transactionManager()</code></a>.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
@@ -211,7 +212,8 @@ public @interface <span class="memberNameLabel">TransactionalAdvice</span></pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>transactionManager</h4>
-<pre>public abstract&nbsp;java.lang.String&nbsp;transactionManager</pre>
+<pre>@AliasFor(member="value")
+public abstract&nbsp;java.lang.String&nbsp;transactionManager</pre>
 <div class="block">A <em>qualifier</em> value for the specified transaction.
  <p>May be used to determine the target transaction manager,
  matching the qualifier value (or the bean name) of a specific
