@@ -103,7 +103,7 @@ public class SchemaGenerator {
                                             ps.executeUpdate();
                                         } catch (SQLException e) {
                                             if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                                DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
+                                                DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
                                             }
                                         }
                                     case CREATE:
@@ -132,7 +132,7 @@ public class SchemaGenerator {
                                                 }
                                             } catch (SQLException e) {
                                                 if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                                    DataSettings.QUERY_LOG.trace("Drop Failed: " + e.getMessage());
+                                                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
                                                 }
                                             }
                                         }
@@ -149,7 +149,7 @@ public class SchemaGenerator {
                                                     ps.executeUpdate();
                                                 } catch (SQLException e) {
                                                     if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                                        DataSettings.QUERY_LOG.warn("CREATE Statement Failed: " + e.getMessage());
+                                                        DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
                                                     }
                                                 }
                                             }

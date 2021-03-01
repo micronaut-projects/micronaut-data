@@ -255,6 +255,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 id = resolveId;
             }
 
+            if (id == null && isAssociation && allowNull) {
+                return null;
+            }
+
             if (ArrayUtils.isEmpty(constructorArguments)) {
                 entity = introspection.instantiate();
             } else {
