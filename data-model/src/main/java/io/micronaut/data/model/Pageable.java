@@ -47,7 +47,7 @@ public interface Pageable extends Sort {
 
         @Override
         public int getSize() {
-            return 0;
+            return -1;
         }
     };
 
@@ -67,7 +67,11 @@ public interface Pageable extends Sort {
      * @return offset in the requested collection
      */
     default long getOffset() {
-        return (long) getNumber() * (long) getSize();
+        int size = getSize();
+        if (size < 0) {
+            return 0; // unpaged
+        }
+        return (long) getNumber() * (long) size;
     }
 
     /**
@@ -83,6 +87,10 @@ public interface Pageable extends Sort {
      */
     default @NonNull Pageable next() {
         int size = getSize();
+        if (size < 0) {
+            // unpaged
+            return Pageable.from(0, size, getSort());
+        }
         int newNumber = getNumber() + 1;
         // handle overflow
         if (newNumber < 0) {
@@ -97,6 +105,10 @@ public interface Pageable extends Sort {
      */
     default @NonNull Pageable previous() {
         int size = getSize();
+        if (size < 0) {
+            // unpaged
+            return Pageable.from(0, size, getSort());
+        }
         int newNumber = getNumber() - 1;
         // handle overflow
         if (newNumber < 0) {
@@ -190,7 +202,7 @@ public interface Pageable extends Sort {
 
                 @Override
                 public int getSize() {
-                    return 0;
+                    return -1;
                 }
 
                 @NonNull

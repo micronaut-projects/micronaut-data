@@ -20,15 +20,13 @@ import io.micronaut.data.model.Page
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Slice
 import io.micronaut.data.model.Sort
-import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
-import javax.transaction.Transactional
 
 @MicronautTest(rollback = false, transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")
@@ -85,6 +83,30 @@ class PageSpec extends Specification {
         then:"The results are correct"
         results.size() == 10
         results[0].name.startsWith("Z")
+    }
+
+    void "test unpaged pageable with order"() {
+        when:
+        def results = personRepository.list(Pageable.UNPAGED.order(Sort.Order.asc("name")))
+
+        then:
+        results.size() == 1300
+        results.first().name == "AAAAA0"
+        results.last().name == "ZZZZZ9"
+
+        when:
+        def next = Pageable.UNPAGED.next()
+
+        then:
+        next.size == -1
+        next.number == 0
+
+        when:
+        def previous = Pageable.UNPAGED.previous()
+
+        then:
+        previous.size == -1
+        previous.number == 0
     }
 
     void "test sortMultiple"() {
