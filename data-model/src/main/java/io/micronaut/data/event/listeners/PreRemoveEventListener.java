@@ -16,7 +16,6 @@
 package io.micronaut.data.event.listeners;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;

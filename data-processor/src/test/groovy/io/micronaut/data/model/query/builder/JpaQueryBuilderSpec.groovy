@@ -15,13 +15,18 @@
  */
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
-import io.micronaut.data.model.query.QueryModel
-import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Person
+import io.micronaut.data.model.query.QueryModel
+import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.tck.entities.Shipment
+import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.jdbc.entities.UserRole
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -197,5 +202,46 @@ class JpaQueryBuilderSpec extends Specification {
         Person | 'isNotNull'  | 'name'   | 'IS NOT NULL'
         Person | 'isEmpty'    | 'name'   | "IS NULL OR person_.$property = \'\'"
         Person | 'isNotEmpty' | 'name'   | "IS NOT NULL AND person_.$property <> \'\'"
+    }
+
+    @Shared
+    def shipment = new RuntimePersistentEntity(Shipment)
+    @Shared
+    def userRole = new RuntimePersistentEntity(UserRole)
+    @Shared
+    def uuidEntity = new RuntimePersistentEntity(UuidEntity)
+
+    @Unroll
+    void "test embedded"() {
+        when:
+            QueryBuilder encoder = new JpaQueryBuilder()
+            QueryResult encodedQuery = encoder.buildQuery(queryModel)
+
+        then:
+            encodedQuery.query == query
+
+        where:
+            queryModel << [
+                    QueryModel.from(shipment).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(shipment).eq("shipmentId.country", new QueryParameter("xyz")),
+                    {
+                        def qm = QueryModel.from(userRole)
+                        qm.join(userRole.getPropertyByPath("id.user").get() as Association)
+                        qm
+                    }.call(),
+                    {
+                        def qm = QueryModel.from(userRole)
+                        qm.join(userRole.getPropertyByPath("id.user").get() as Association)
+                        qm.eq("id.user", new QueryParameter("xyz"))
+                    }.call(),
+                    QueryModel.from(uuidEntity).idEq(new QueryParameter("xyz")),
+            ]
+            query << [
+                    "SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId = :p1)",
+                    "SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId.country = :p1)",
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRoleId_user_',
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRoleId_user_ WHERE (userRole_.id.user = :p1)',
+                    'SELECT uid FROM io.micronaut.data.tck.entities.UuidEntity AS uid WHERE (uid.uuid = :p1)'
+            ]
     }
 }

@@ -59,4 +59,9 @@ public @interface MappedEntity {
      * @return Whether to escape identifiers in generated queries. Defaults to true.
      */
     boolean escape() default true;
+
+    /**
+     * @return The alias to use for the query
+     */
+    String alias() default "";
 }

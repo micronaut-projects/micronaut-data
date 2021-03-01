@@ -29,14 +29,23 @@ class WhereAnnotationSpec extends AbstractDataSpec {
 @io.micronaut.context.annotation.Executable
 interface TestRepository extends CrudRepository<User, Long> {
     int countByIdGreaterThan(Long id);
+    @Join("category") 
+    List<User> list();
+    
+    @Join("category") 
+    @Where("@.xyz = true")
+    @Where("@.abc > 12")
+    List<User> findByIdIsNotNull();
 }
 
 @MappedEntity
-@Where("enabled = true")
+@Where("@.enabled = true")
 class User {
     @Id
     private Long id;
     private boolean enabled;
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    private Category category;
     
     public Long getId() {
         return id;
@@ -52,23 +61,52 @@ class User {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
-    }        
+    }   
+     
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }     
+}
+
+@MappedEntity
+@Where("@.archived = true")
+class Category {
+    @Id
+    private Long id;
+    
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
 }
 ''')
         expect:
         repository.getRequiredMethod("findAll")
-                .stringValue(Query).get() == 'SELECT user_ FROM test.User AS user_ WHERE (enabled = true)'
+                .stringValue(Query).get() == 'SELECT user_ FROM test.User AS user_ WHERE (user_.enabled = true)'
         repository.getRequiredMethod("findById", Long)
-                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.id = :p1 AND (enabled = true))"
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.id = :p1 AND (user_.enabled = true))"
         repository.getRequiredMethod("deleteById", Long)
-                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.id = :p1 AND (enabled = true))"
+                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.id = :p1 AND (user_.enabled = true))"
         repository.getRequiredMethod("deleteAll")
-                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (enabled = true)"
+                .stringValue(Query).get() == "DELETE test.User  AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("count")
-                .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (enabled = true)"
-
+                .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (user_.enabled = true)"
         repository.getRequiredMethod("countByIdGreaterThan", Long)
-                .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (user_.id > :p1 AND (enabled = true))"
+                .stringValue(Query).get() == "SELECT COUNT(user_) FROM test.User AS user_ WHERE (user_.id > :p1 AND (user_.enabled = true))"
+        repository.getRequiredMethod("list")
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.enabled = true)"
+        repository.getRequiredMethod("findAll")
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ WHERE (user_.enabled = true)"
+        repository.getRequiredMethod("findByIdIsNotNull")
+                .stringValue(Query).get() == "SELECT user_ FROM test.User AS user_ JOIN FETCH user_.category user_category_ WHERE (user_.id IS NOT NULL  AND (user_.xyz = true AND user_.abc > 12))"
     }
 
     void "test parameterized @Where declaration - fails compile"() {

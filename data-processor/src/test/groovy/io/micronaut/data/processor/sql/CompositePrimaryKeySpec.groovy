@@ -131,7 +131,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
 
         where:
         methodName               | query
-        'findRoleByUser'         | 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."id_role"=user_role_id_role_."id" WHERE (user_role_.id_user = ?)'
+        'findRoleByUser'         | 'SELECT user_role_id_role_."id",user_role_id_role_."name" FROM "user_role" user_role_ INNER JOIN "role" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id" WHERE (user_role_."id_user_id" = ?)'
     }
 
     void "test create table"() {
@@ -167,7 +167,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def sql = builder.buildQuery(model).query
 
         then:
-        sql.endsWith('WHERE (project_.department_id = ? AND project_.project_id_project_id = ?)')
+        sql == 'SELECT project_."department_id",project_."project_id_project_id",project_."name" FROM "project" project_ WHERE (project_."department_id" = ? AND project_."project_id_project_id" = ?)'
     }
 
     void "test build query projection"() {

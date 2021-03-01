@@ -18,6 +18,7 @@ package io.micronaut.data.tck.jdbc.entities;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.jdbc.annotation.ColumnTransformer;
 
+import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 
@@ -26,14 +27,20 @@ public class Project {
     @EmbeddedId
     private ProjectId projectId;
     @ColumnTransformer(
-            read = "UPPER(org)"
+            read = "UPPER(@.org)"
     )
     @Nullable
     private String org;
     @ColumnTransformer(
-            write = "UPPER(?)"
+            write = "UPPER(?)",
+            read = "LOWER(@.name)"
     )
     private String name;
+    @Nullable
+    @ColumnTransformer(
+            read = "@.name"
+    )
+    private String dbName;
 
     public Project(ProjectId projectId, String name) {
         this.projectId = projectId;
@@ -46,6 +53,14 @@ public class Project {
 
     public String getName() {
         return name;
+    }
+
+    public String getDbName() {
+        return dbName;
+    }
+
+    public void setDbName(@Nullable String dbName) {
+        this.dbName = dbName;
     }
 
     @Nullable

@@ -20,6 +20,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
@@ -102,7 +103,8 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     public String getAliasName(PersistentEntity entity) {
-        return entity.getDecapitalizedName() + "_";
+        return entity.getAnnotationMetadata().stringValue(MappedEntity.class, "alias")
+                .orElseGet(() -> entity.getDecapitalizedName() + "_");
     }
 
     @Override

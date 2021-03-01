@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.postgres
 
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -14,13 +15,12 @@ class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProv
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(properties)
 
-
     @Shared
     PostgresUuidRepository repository = applicationContext.getBean(PostgresUuidRepository)
 
     void 'test insert and update with UUID'() {
         when:
-        def test = repository.save(new UuidTest("Fred"))
+        def test = repository.save(new UuidEntity("Fred"))
 
         def uuid = test.uuid
         then:

@@ -381,6 +381,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 final BeanProperty embeddedBeanProperty = embeddedProp.getProperty();
                 type = embeddedProp.getDataType();
                 value = value != null ? embeddedBeanProperty.get(value) : null;
+                if (value == null && type == DataType.ENTITY) {
+                    type = getEntity(embeddedBeanProperty.getType()).getIdentity().getDataType();
+                }
             } else {
                 type = prop.getDataType();
                 BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
