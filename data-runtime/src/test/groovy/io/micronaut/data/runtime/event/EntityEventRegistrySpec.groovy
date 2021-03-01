@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.event.*
 import io.micronaut.data.event.EntityEventContext
 import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.tck.entities.DomainEvents
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -32,7 +33,7 @@ class EntityEventRegistrySpec extends Specification {
     @Unroll
     void "test supports method for event type #eventType"() {
         given:
-        def eventTest1 = RuntimePersistentEntity.of(EventTest1)
+        def eventTest1 = RuntimePersistentEntity.of(DomainEvents)
         def eventLess = RuntimePersistentEntity.of(EventLess)
 
         expect:
@@ -46,8 +47,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire pre persist event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.prePersist(mockEvent)
@@ -80,8 +81,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire pre update event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.preUpdate(mockEvent)
@@ -108,8 +109,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire pre remove event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.preRemove(mockEvent)
@@ -136,8 +137,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post load event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.postLoad(mockEvent)
@@ -161,8 +162,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post update event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
 
         when:
@@ -187,8 +188,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post remove event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.postRemove(mockEvent)
@@ -212,8 +213,8 @@ class EntityEventRegistrySpec extends Specification {
 
     void "test fire post persist event"() {
         given:
-        def entity = new EventTest1()
-        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(EventTest1), entity)
+        def entity = new DomainEvents()
+        def mockEvent = new DefaultEntityEventContext(RuntimePersistentEntity.of(DomainEvents), entity)
 
         when:
         eventRegistry.postPersist(mockEvent)
@@ -236,102 +237,102 @@ class EntityEventRegistrySpec extends Specification {
     }
 
     @Singleton
-    static class MyPrePersist implements EntityEventListener<EventTest1> {
+    static class MyPrePersist implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             return eventType == PrePersist
         }
 
         @Override
-        boolean prePersist(@NonNull EntityEventContext<EventTest1> context) {
+        boolean prePersist(@NonNull EntityEventContext<DomainEvents> context) {
             count++
             return true
         }
     }
 
     @Singleton
-    static class MyPreRemove implements EntityEventListener<EventTest1> {
+    static class MyPreRemove implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             return eventType == PreRemove
         }
 
         @Override
-        boolean preRemove(@NonNull EntityEventContext<EventTest1> context) {
+        boolean preRemove(@NonNull EntityEventContext<DomainEvents> context) {
             count++
             return true
         }
     }
 
     @Singleton
-    static class MyPreUpdate implements EntityEventListener<EventTest1> {
+    static class MyPreUpdate implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             return eventType == PreUpdate
         }
 
         @Override
-        boolean preUpdate(@NonNull EntityEventContext<EventTest1> context) {
+        boolean preUpdate(@NonNull EntityEventContext<DomainEvents> context) {
             count++
             return true
         }
     }
 
     @Singleton
-    static class MyPostUpdate implements EntityEventListener<EventTest1> {
+    static class MyPostUpdate implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             eventType == PostUpdate
         }
 
         @Override
-        void postUpdate(@NonNull EntityEventContext<EventTest1> context) {
+        void postUpdate(@NonNull EntityEventContext<DomainEvents> context) {
             count++
         }
     }
 
     @Singleton
-    static class MyPostLoad implements EntityEventListener<EventTest1> {
+    static class MyPostLoad implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             eventType == PostLoad
         }
 
         @Override
-        void postLoad(@NonNull EntityEventContext<EventTest1> context) {
+        void postLoad(@NonNull EntityEventContext<DomainEvents> context) {
             count++
         }
     }
 
     @Singleton
-    static class MyPostRemove implements EntityEventListener<EventTest1> {
+    static class MyPostRemove implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             eventType == PostRemove
         }
 
         @Override
-        void postRemove(@NonNull EntityEventContext<EventTest1> context) {
+        void postRemove(@NonNull EntityEventContext<DomainEvents> context) {
             count++
         }
     }
 
     @Singleton
-    static class MyPostPersist implements EntityEventListener<EventTest1> {
+    static class MyPostPersist implements EntityEventListener<DomainEvents> {
         int count = 0
         @Override
-        boolean supports(RuntimePersistentEntity<EventTest1> entity, Class<? extends Annotation> eventType) {
+        boolean supports(RuntimePersistentEntity<DomainEvents> entity, Class<? extends Annotation> eventType) {
             eventType == PostPersist
         }
 
         @Override
-        void postPersist(@NonNull EntityEventContext<EventTest1> context) {
+        void postPersist(@NonNull EntityEventContext<DomainEvents> context) {
             count++
         }
     }

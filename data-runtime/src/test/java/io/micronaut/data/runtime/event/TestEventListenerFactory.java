@@ -1,8 +1,8 @@
 package io.micronaut.data.runtime.event;
 
 import io.micronaut.context.annotation.Factory;
-import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.listeners.*;
+import io.micronaut.data.tck.entities.DomainEvents;
 
 import javax.inject.Singleton;
 
@@ -17,7 +17,7 @@ public class TestEventListenerFactory {
     private int postRemove;
 
     @Singleton
-    PrePersistEventListener<EventTest1> prePersistEventListener() {
+    PrePersistEventListener<DomainEvents> prePersistEventListener() {
         return entity -> {
             prePersist++;
             return true;
@@ -25,7 +25,7 @@ public class TestEventListenerFactory {
     }
 
     @Singleton
-    PreUpdateEventListener<EventTest1> preUpdateEventListener() {
+    PreUpdateEventListener<DomainEvents> preUpdateEventListener() {
         return entity -> {
             preUpdate++;
             return true;
@@ -33,7 +33,7 @@ public class TestEventListenerFactory {
     }
 
     @Singleton
-    PreRemoveEventListener<EventTest1> preRemoveEventListener() {
+    PreRemoveEventListener<DomainEvents> preRemoveEventListener() {
         return entity -> {
             preRemove++;
             return true;
@@ -41,21 +41,21 @@ public class TestEventListenerFactory {
     }
 
     @Singleton
-    PostPersistEventListener<EventTest1> postPersistEventListener() {
+    PostPersistEventListener<DomainEvents> postPersistEventListener() {
         return entity -> {
             postPersist++;
         };
     }
 
     @Singleton
-    PostUpdateEventListener<EventTest1> postUpdateEventListener() {
+    PostUpdateEventListener<DomainEvents> postUpdateEventListener() {
         return entity -> {
             postUpdate++;
         };
     }
 
     @Singleton
-    PostRemoveEventListener<EventTest1> postRemoveEventListener() {
+    PostRemoveEventListener<DomainEvents> postRemoveEventListener() {
         return entity -> {
             preRemove++;
         };
