@@ -9,4 +9,5 @@ dependencies {
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
 	testAnnotationProcessor project(":data-processor")
 	testImplementation 'io.micronaut:micronaut-http'
+	testImplementation project(":data-tck")
 }

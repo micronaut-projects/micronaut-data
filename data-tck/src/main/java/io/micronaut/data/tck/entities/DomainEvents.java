@@ -1,10 +1,6 @@
-package io.micronaut.data.runtime.event;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.annotation.AutoPopulated;
-import io.micronaut.data.annotation.DateCreated;
-import io.micronaut.data.annotation.DateUpdated;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.*;
 import io.micronaut.data.annotation.event.PostLoad;
 import io.micronaut.data.annotation.event.PostPersist;
 import io.micronaut.data.annotation.event.PostRemove;
@@ -17,7 +13,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @MappedEntity
-class EventTest1 {
+public class DomainEvents {
     @Id
     @AutoPopulated
     UUID uuid;
@@ -27,6 +23,16 @@ class EventTest1 {
 
     @DateUpdated
     LocalDateTime dateUpdated;
+
+    private String name = "test";
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public UUID getUuid() {
         return uuid;
@@ -54,43 +60,78 @@ class EventTest1 {
 
     private int prePersist;
     @PrePersist
-    void prePersist() {
+    public void prePersist() {
         prePersist++;
     }
 
     private int postPersist;
     @PostPersist
-    void postPersist() {
+    public void postPersist() {
         postPersist++;
     }
 
     private int preRemove;
     @PreRemove
-    void preRemove() {
+    public void preRemove() {
         preRemove++;
     }
 
     private int postRemove;
     @PostRemove
-    void postRemove() {
+    public void postRemove() {
         postRemove++;
     }
 
     private int preUpdate;
     @PreUpdate
-    void preUpdate() {
+    public void preUpdate() {
         preUpdate++;
     }
 
     private int postUpdate;
     @PostUpdate
-    void postUpdate() {
+    public void postUpdate() {
         postUpdate++;
     }
 
     private int postLoad;
     @PostLoad
-    void postLoad() {
+    public void postLoad() {
         postLoad++;
+    }
+
+    @Transient
+    public int getPrePersist() {
+        return prePersist;
+    }
+
+    @Transient
+    public int getPostPersist() {
+        return postPersist;
+    }
+
+    @Transient
+    public int getPreRemove() {
+        return preRemove;
+    }
+
+    @Transient
+    public int getPostRemove() {
+        return postRemove;
+    }
+
+    @Transient
+    public int getPreUpdate() {
+        return preUpdate;
+    }
+
+    @Transient
+    public int getPostUpdate() {
+        return postUpdate;
+    }
+
+    @Transient
+    public int getPostLoad() {
+        return postLoad;
     }
 }

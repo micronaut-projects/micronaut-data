@@ -596,6 +596,15 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             final RuntimePersistentEntity<T> persistentEntity =
                     (RuntimePersistentEntity<T>) getEntity(entity.getClass());
             final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
+            final T resolvedEntity;
+            if (persistentEntity.hasPreUpdateEventListeners()) {
+                resolvedEntity = triggerPreUpdate(entity, persistentEntity, annotationMetadata);
+                if (resolvedEntity == null) {
+                    return entity;
+                }
+            } else {
+                resolvedEntity = entity;
+            }
             return transactionOperations.executeWrite(status -> {
                 try {
                     Connection connection = status.getConnection();
@@ -619,7 +628,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                         if (pp instanceof Association) {
                                             Association assoc = (Association) pp;
                                             if (assoc.getKind() == Relation.Kind.EMBEDDED) {
-                                                Object embeddedInstance = pp.getProperty().get(entity);
+                                                Object embeddedInstance = pp.getProperty().get(resolvedEntity);
 
                                                 Object embeddedValue = embeddedInstance != null ? embeddedProp.getProperty().get(embeddedInstance) : null;
                                                 int index = i + 1;
@@ -644,9 +653,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 final BeanProperty<T, ?> beanProperty = pp.getProperty();
                                 if (beanProperty.hasAnnotation(DateUpdated.class)) {
                                     newValue = dateTimeProvider.getNow();
-                                    beanProperty.convertAndSet(entity, newValue);
+                                    beanProperty.convertAndSet(resolvedEntity, newValue);
                                 } else {
-                                    newValue = beanProperty.get(entity);
+                                    newValue = beanProperty.get(resolvedEntity);
                                 }
                                 final DataType dataType = pp.getDataType();
                                 if (dataType == DataType.ENTITY && newValue != null && pp instanceof Association) {
@@ -734,7 +743,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             }
                         }
                         ps.executeUpdate();
-                        return entity;
+                        if (persistentEntity.hasPostUpdateEventListeners()) {
+                            triggerPostUpdate(resolvedEntity, persistentEntity, annotationMetadata);
+                        }
+                        return resolvedEntity;
                     }
                 } catch (SQLException e) {
                     throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
