@@ -247,7 +247,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             boolean hasPrefix = prefix != null;
             boolean hasPath = path != null;
             final boolean isAssociation = association != null;
-            final boolean nullableEmbedded = association instanceof Embedded && association.isOptional();
+            final boolean nullableEmbedded = isEmbedded && isAssociation && association.isOptional();
             Object id;
             if (resolveId == null) {
                 id = readEntityId(prefix, path, rs, isEmbedded, identity, hasPrefix, hasPath);
@@ -255,7 +255,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 id = resolveId;
             }
 
-            if (id == null && isAssociation && allowNull) {
+            if (id == null && !isEmbedded && isAssociation && allowNull) {
                 return null;
             }
 

@@ -17,7 +17,7 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.ShipmentId
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject
