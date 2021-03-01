@@ -1267,9 +1267,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (definition != null) {
             return column + " " + definition;
         }
+        OptionalInt precision = annotationMetadata.intValue("javax.persistence.Column", "precision");
+        OptionalInt scale = annotationMetadata.intValue("javax.persistence.Column", "scale");
+
         switch (dataType) {
             case STRING:
-                column += " VARCHAR(255)";
+                int stringLength = annotationMetadata.findAnnotation("javax.validation.constraints.Size$List")
+                        .flatMap(v -> {
+                            Optional value = v.getValue(AnnotationValue.class);
+                            return (Optional<AnnotationValue<Annotation>>) value;
+                        }).map(v -> v.intValue("max"))
+                        .orElseGet(() -> annotationMetadata.intValue("javax.persistence.Column", "length"))
+                        .orElse(255);
+
+                column += " VARCHAR(" + stringLength + ")";
                 if (required) {
                     column += " NOT NULL";
                 }
@@ -1337,7 +1348,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case CHARACTER:
-            case INTEGER:
                 if (dialect == Dialect.ORACLE) {
                     column += " NUMBER(10)";
                 } else if (dialect == Dialect.POSTGRES) {
@@ -1349,8 +1359,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     column += " NOT NULL";
                 }
                 break;
+            case INTEGER:
+                if (precision.isPresent()) {
+                    String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                    column += " " + numericName + "(" + precision.getAsInt() + ")";
+                } else if (dialect == Dialect.ORACLE) {
+                    column += " NUMBER(10)";
+                } else if (dialect == Dialect.POSTGRES) {
+                    column += " INTEGER";
+                } else {
+                    column += " INT";
+                }
+                if (required) {
+                    column += " NOT NULL";
+                }
+                break;
             case BIGDECIMAL:
-                if (dialect == Dialect.ORACLE) {
+                if (precision.isPresent()) {
+                    if (scale.isPresent()) {
+                        String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                        column += " " + numericName + "(" + precision.getAsInt() + "," + scale.getAsInt() + ")";
+                    } else {
+                        column += " FLOAT(" + precision.getAsInt() + ")";
+                    }
+                } else if (dialect == Dialect.ORACLE) {
                     column += " FLOAT(126)";
                 } else {
                     column += " DECIMAL";
@@ -1360,7 +1392,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case FLOAT:
-                if (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER) {
+                if (precision.isPresent()) {
+                    if (scale.isPresent()) {
+                        String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                        column += " " + numericName + "(" + precision.getAsInt() + "," + scale.getAsInt() + ")";
+                    } else {
+                        column += " FLOAT(" + precision.getAsInt() + ")";
+                    }
+                } else if (dialect == Dialect.ORACLE || dialect == Dialect.SQL_SERVER) {
                     column += " FLOAT(53)";
                 } else if (dialect == Dialect.POSTGRES) {
                     column += " REAL";
@@ -1386,7 +1425,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 break;
             case DOUBLE:
-                if (dialect == Dialect.ORACLE) {
+                if (precision.isPresent()) {
+                    if (scale.isPresent()) {
+                        String numericName = dialect == Dialect.ORACLE ? "NUMBER" : "NUMERIC";
+                        column += " " + numericName + "(" + precision.getAsInt() + "," + scale.getAsInt() + ")";
+                    } else {
+                        column += " FLOAT(" + precision.getAsInt() + ")";
+                    }
+                } else if (dialect == Dialect.ORACLE) {
                     column += " FLOAT(23)";
                 } else if (dialect == Dialect.MYSQL || dialect == Dialect.H2) {
                     column += " DOUBLE";
