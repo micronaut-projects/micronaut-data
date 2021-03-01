@@ -42,6 +42,27 @@ interface MyInterface extends CrudRepository<Author, Long> {
         repository != null
     }
 
+    void "test POSTGRES quoted syntax"() {
+        given:
+            def repository = buildRepository('test.MyInterface2', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.CustomBook;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MyInterface2 extends CrudRepository<CustomBook, Long> {
+}
+"""
+            )
+
+        when:
+            String query = repository.getRequiredMethod("findById", Long).stringValue(Query).get()
+
+        then:
+            query == 'SELECT custom_book_."id",custom_book_."title" FROM "CustomBooK" custom_book_ WHERE (custom_book_."id" = ?)'
+    }
+
     void "test to-one join on repository type that inherits from CrudRepository"() {
         given:
         def repository = buildRepository('test.MyInterface', """

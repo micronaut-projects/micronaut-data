@@ -625,11 +625,6 @@ abstract class AbstractRepositorySpec extends Specification {
         results[1].countryRegion.country.name == "Spain"
 
         when:"A join that uses a join table is executed"
-        //TODO: Figure out why this join fails on mysql
-        def specName = specificationContext.currentSpec.name
-        if (specName.contains("MySql") || specName.contains("Maria")) {
-            return
-        }
         def region = regionRepository.findByCitiesName("Bilbao")
 
         then:"The result is correct"

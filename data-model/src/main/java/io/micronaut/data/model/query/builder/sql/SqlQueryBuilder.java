@@ -1092,10 +1092,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         String joinTableAlias = joinAliases[i] + joinTableName + "_";
                         String associatedTableName = getTableName(associatedEntity);
 
+                        if (escape) {
+                            joinColumnNames = Arrays.stream(joinColumnNames).map(this::quote).toArray(String[]::new);
+                        }
+
                         StringBuilder join = joinStringBuilder(
                                 queryState.getQueryModel(),
                                 joinType,
-                                joinTableName,
+                                escape ? quote(joinTableName) : joinTableName,
                                 joinTableAlias,
                                 alias,
                                 escape ? quote(getColumnName(associatedId)) : getColumnName(associatedId),
@@ -1190,9 +1194,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             case ORACLE:
                 // Oracle requires quoted identifiers to be in upper case
                 return '"' + persistedName.toUpperCase(Locale.ENGLISH) + '"';
-            case POSTGRES:
-                // Postgres requires quoted identifiers to be in lower case
-                return '"' + persistedName.toLowerCase(Locale.ENGLISH) + '"';
             default:
                 return '"' + persistedName + '"';
         }

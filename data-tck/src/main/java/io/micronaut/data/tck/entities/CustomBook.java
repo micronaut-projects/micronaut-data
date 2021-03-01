@@ -16,26 +16,32 @@
 package io.micronaut.data.tck.entities;
 
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.model.naming.NamingStrategies;
 
-@MappedEntity(namingStrategy = NamingStrategies.Raw.class, value = "countryRegionCity")
-public class CountryRegionCity {
-    private final CountryRegion countryRegion;
-    private final City city;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
-    public CountryRegionCity(CountryRegion countryRegion, City city) {
-        this.countryRegion = countryRegion;
-        this.city = city;
+@MappedEntity(value = "CustomBooK")
+public class CustomBook {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+
+    public Long getId() {
+        return id;
     }
 
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    public CountryRegion getCountryRegion() {
-        return countryRegion;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    public City getCity() {
-        return city;
+    public String getTitle() {
+        return title;
     }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
 }
