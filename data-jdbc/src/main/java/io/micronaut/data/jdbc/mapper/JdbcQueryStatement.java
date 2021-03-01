@@ -38,6 +38,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
             try {
                 switch (dataType) {
                     case ENTITY:
+                        throw new IllegalStateException("Cannot set null value as ENTITY data type!");
                     case LONG:
                         statement.setNull(index, Types.BIGINT);
                         return this;

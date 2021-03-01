@@ -2,7 +2,7 @@ package io.micronaut.data.jdbc.postgres
 
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -18,7 +18,7 @@ class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProv
     @Shared
     PostgresUuidRepository repository = applicationContext.getBean(PostgresUuidRepository)
 
-    void 'test insert with UUID'() {
+    void 'test insert and update with UUID'() {
         when:
         def test = repository.save(new UuidTest("Fred"))
 
@@ -33,6 +33,16 @@ class PostgresUUIDSpec extends Specification implements PostgresTestPropertyProv
         test.uuid != null
         test.uuid == uuid
         test.name == 'Fred'
+        test.child == null
+
+        when: "update of missing child shouldn't trigger an error"
+        test = repository.update(test)
+
+        then:
+        test.uuid != null
+        test.uuid == uuid
+        test.name == 'Fred'
+        test.child == null
 
         cleanup:
         repository.deleteAll()
