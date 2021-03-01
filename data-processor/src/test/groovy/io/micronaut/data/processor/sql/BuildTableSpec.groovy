@@ -18,10 +18,8 @@ package io.micronaut.data.processor.sql
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
-import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
-import spock.lang.PendingFeature
 import spock.lang.Requires
 import spock.lang.Unroll
 
@@ -149,5 +147,146 @@ class Test extends io.micronaut.data.tck.entities.BaseEntity<Long> {
 
         then:
         sql == 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"created_date" TIMESTAMP,"updated_date" TIMESTAMP);'
+    }
+
+    @Unroll
+    void "test custom column restrictions #dialect"() {
+        given:
+            def entity = buildJpaEntity('test.Test', '''
+import java.time.LocalDateTime;
+import java.math.BigDecimal;
+
+@Entity
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+
+    @Column
+    private String text1;
+    @Column(length=10)
+    private String text2;
+    @javax.validation.constraints.Size(min=5, max=7)
+    private String text3;
+    
+    private BigDecimal amount1;
+    @Column(precision = 11, scale = 2)
+    private BigDecimal amount2;
+    @javax.validation.constraints.Size(min=5, max=7)
+    private BigDecimal amount3;
+    
+    private Float floatAmount1;
+    @Column(precision = 11, scale = 2)
+    private Float floatAmount2;
+    
+    private Double doubleAmount1;
+    @Column(precision = 11, scale = 2)
+    private Double doubleAmount2;
+    
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getText1() {
+        return text1;
+    }
+
+    public void setText1(String text1) {
+        this.text1 = text1;
+    }
+
+    public String getText2() {
+        return text2;
+    }
+
+    public void setText2(String text2) {
+        this.text2 = text2;
+    }
+    
+    public String getText3() {
+        return text3;
+    }
+
+    public void setText3(String text3) {
+        this.text3 = text3;
+    }
+
+    public BigDecimal getAmount1() {
+        return amount1;
+    }
+
+    public void setAmount1(BigDecimal amount1) {
+        this.amount1 = amount1;
+    }
+
+    public BigDecimal getAmount2() {
+        return amount2;
+    }
+
+    public void setAmount2(BigDecimal amount2) {
+        this.amount2 = amount2;
+    }
+    
+    public BigDecimal getAmount3() {
+        return amount3;
+    }
+
+    public void setAmount3(BigDecimal amount3) {
+        this.amount3 = amount3;
+    }
+
+    public Float getFloatAmount1() {
+        return floatAmount1;
+    }
+
+    public void setFloatAmount1(Float floatAmount1) {
+        this.floatAmount1 = floatAmount1;
+    }
+
+    public Float getFloatAmount2() {
+        return floatAmount2;
+    }
+
+    public void setFloatAmount2(Float floatAmount2) {
+        this.floatAmount2 = floatAmount2;
+    }
+
+    public Double getDoubleAmount1() {
+        return doubleAmount1;
+    }
+
+    public void setDoubleAmount1(Double doubleAmount1) {
+        this.doubleAmount1 = doubleAmount1;
+    }
+
+    public Double getDoubleAmount2() {
+        return doubleAmount2;
+    }
+
+    public void setDoubleAmount2(Double doubleAmount2) {
+        this.doubleAmount2 = doubleAmount2;
+    }
+}
+''')
+
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect)
+        def sql = builder.buildBatchCreateTableStatement(entity)
+
+        expect:
+        sql == statement
+
+        where:
+        dialect          | statement
+        Dialect.H2       | 'CREATE TABLE `test` (`id` BIGINT AUTO_INCREMENT PRIMARY KEY,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
+        Dialect.MYSQL    | 'CREATE TABLE `test` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`text1` VARCHAR(255) NOT NULL,`text2` VARCHAR(10) NOT NULL,`text3` VARCHAR(7) NOT NULL,`amount1` DECIMAL NOT NULL,`amount2` NUMERIC(11,2) NOT NULL,`amount3` DECIMAL NOT NULL,`float_amount1` FLOAT NOT NULL,`float_amount2` NUMERIC(11,2) NOT NULL,`double_amount1` DOUBLE NOT NULL,`double_amount2` NUMERIC(11,2) NOT NULL);'
+        Dialect.POSTGRES | 'CREATE TABLE "test" ("id" BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,"text1" VARCHAR(255) NOT NULL,"text2" VARCHAR(10) NOT NULL,"text3" VARCHAR(7) NOT NULL,"amount1" DECIMAL NOT NULL,"amount2" NUMERIC(11,2) NOT NULL,"amount3" DECIMAL NOT NULL,"float_amount1" REAL NOT NULL,"float_amount2" NUMERIC(11,2) NOT NULL,"double_amount1" DOUBLE PRECISION NOT NULL,"double_amount2" NUMERIC(11,2) NOT NULL);'
+        Dialect.ORACLE   | 'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 NOCACHE NOCYCLE\n' +
+                'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"TEXT1" VARCHAR(255) NOT NULL,"TEXT2" VARCHAR(10) NOT NULL,"TEXT3" VARCHAR(7) NOT NULL,"AMOUNT1" FLOAT(126) NOT NULL,"AMOUNT2" NUMBER(11,2) NOT NULL,"AMOUNT3" FLOAT(126) NOT NULL,"FLOAT_AMOUNT1" FLOAT(53) NOT NULL,"FLOAT_AMOUNT2" NUMBER(11,2) NOT NULL,"DOUBLE_AMOUNT1" FLOAT(23) NOT NULL,"DOUBLE_AMOUNT2" NUMBER(11,2) NOT NULL)'
     }
 }
