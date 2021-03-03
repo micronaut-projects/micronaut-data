@@ -123,14 +123,18 @@ public @interface <span class="memberNameLabel">MappedEntity</span></pre>
 <th class="colLast" scope="col">Optional Element and Description</th>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedEntity.html#alias--">alias</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedEntity.html#escape--">escape</a></span></code>&nbsp;</td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code>java.lang.Class&lt;? extends <a href="../../../../io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedEntity.html#namingStrategy--">namingStrategy</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedEntity.html#value--">value</a></span></code>
 <div class="block">The destination the type is persisted to.</div>
@@ -196,7 +200,7 @@ public @interface <span class="memberNameLabel">MappedEntity</span></pre>
 <li class="blockList"><a name="escape--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>escape</h4>
 <pre>public abstract&nbsp;boolean&nbsp;escape</pre>
@@ -207,6 +211,26 @@ public @interface <span class="memberNameLabel">MappedEntity</span></pre>
 <dl>
 <dt>Default:</dt>
 <dd>true</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="alias--">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>alias</h4>
+<pre>public abstract&nbsp;java.lang.String&nbsp;alias</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The alias to use for the query</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>""</dd>
 </dl>
 </li>
 </ul>
