@@ -54,7 +54,7 @@ class H2CompositePrimaryKeySpec extends Specification {
         project != null
         project.projectId.departmentId == 10
         project.projectId.projectId == 1
-        project.name == "PROJECT 1"
+        project.name == "project 1"
         projectRepository.existsById(id)
 
         when: "An update is executed"
@@ -62,8 +62,8 @@ class H2CompositePrimaryKeySpec extends Specification {
         project = projectRepository.findById(id).orElse(null)
 
         then:"The object is updated"
-        project.name == "PROJECT CHANGED"
-
+        project.name == "project changed"
+        project.dbName == "PROJECT CHANGED"
 
         when:"A delete is executed"
         projectRepository.deleteById(id)

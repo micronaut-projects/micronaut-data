@@ -332,10 +332,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 PersistentEntity embeddedEntity = embedded.getAssociatedEntity();
                 Collection<? extends PersistentProperty> embeddedProperties = embeddedEntity.getPersistentProperties();
                 for (PersistentProperty embeddedProperty : embeddedProperties) {
-                    String explicitColumn = embeddedProperty.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
-                    String column = explicitColumn != null ? explicitColumn : entity.getNamingStrategy().mappedName(
-                            prop.getName() + embeddedProperty.getCapitilizedName()
-                    );
+                    String column = embeddedProperty.getAnnotationMetadata()
+                            .stringValue(MappedProperty.class)
+                            .orElseGet(() -> entity.getNamingStrategy().mappedName(embedded, embeddedProperty));
 
                     if (escape) {
                         column = quote(column);
@@ -369,10 +368,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             PersistentEntity embeddedId = embedded.getAssociatedEntity();
             List<String> primaryKeyColumns = new ArrayList<>();
             for (PersistentProperty embeddedProperty : embeddedId.getPersistentProperties()) {
-                String explicitColumn = embeddedProperty.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
-                String column = explicitColumn != null ? explicitColumn : entity.getNamingStrategy().mappedName(
-                        identity.getName() + embeddedProperty.getCapitilizedName()
-                );
+                String column = embeddedProperty.getAnnotationMetadata()
+                        .stringValue(MappedProperty.class)
+                        .orElseGet(() -> entity.getNamingStrategy().mappedName(embedded, embeddedProperty));
                 if (escape) {
                     column = quote(column);
                 }
@@ -630,7 +628,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 List<PersistentProperty> embeddedProps = getPropertiesThatAreColumns(embeddedEntity);
                                 return embeddedProps.stream().map(ep -> {
                                             String columnName = ep.getAnnotationMetadata().stringValue(MappedProperty.class).orElseGet(() ->
-                                                    entity.getNamingStrategy().mappedName(association.getName() + ep.getCapitilizedName())
+                                                    entity.getNamingStrategy().mappedName((Embedded) association, ep)
                                             );
                                             if (escape) {
                                                 columnName = quote(columnName);
@@ -640,7 +638,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 ).collect(Collectors.joining(","));
                             }
                         }
-                        return p.getAnnotationMetadata().stringValue(DataTransformer.class, "read")
+                        return getDataTransformerReadValue(alias, p)
                                     .map(str -> str + AS_CLAUSE + p.getPersistedName())
                                     .orElseGet(() -> {
                                         String columnName = getColumnName(p);
@@ -718,25 +716,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                             PersistentEntity embeddedEntity = association.getAssociatedEntity();
                             Collection<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                             for (PersistentProperty embeddedProp : embeddedProps) {
-                                String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                                String columnName = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                                 addWriteExpression(values, prop);
                                 parameters.put(String.valueOf(values.size()), prop.getName() + "." + embeddedProp.getName());
-                                if (explicitColumn != null) {
-                                    if (escape) {
-                                        explicitColumn = quote(explicitColumn);
-                                    }
-                                    columnNames.add(explicitColumn);
-                                } else {
-                                    NamingStrategy namingStrategy = entity.getNamingStrategy();
-                                    String columnName = namingStrategy.mappedName(
-                                            embedded,
-                                            embeddedProp
-                                    );
-                                    if (escape) {
-                                        columnName = quote(columnName);
-                                    }
-                                    columnNames.add(columnName);
+                                if (columnName == null) {
+                                    columnName = entity.getNamingStrategy().mappedName(embedded, embeddedProp);
                                 }
+                                if (escape) {
+                                    columnName = quote(columnName);
+                                }
+                                columnNames.add(columnName);
                             }
                         } else if (!association.isForeignKey()) {
                             parameterTypes.put(prop.getName(), prop.getDataType());
@@ -791,22 +780,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     PersistentEntity embeddedEntity = ((Embedded) identity).getAssociatedEntity();
                     Collection<? extends PersistentProperty> embeddedProps = embeddedEntity.getPersistentProperties();
                     for (PersistentProperty embeddedProp : embeddedProps) {
-                        String explicitColumn = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                        String columnName = embeddedProp.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
                         addWriteExpression(values, embeddedProp);
                         parameters.put(String.valueOf(values.size()), identity.getName() + "." + embeddedProp.getName());
-                        if (explicitColumn != null) {
-                            if (escape) {
-                                explicitColumn = quote(explicitColumn);
-                            }
-                            columnNames.add(explicitColumn);
-                        } else {
-                            NamingStrategy namingStrategy = entity.getNamingStrategy();
-                            String columnName = namingStrategy.mappedName(identity.getName() + embeddedProp.getCapitilizedName());
-                            if (escape) {
-                                columnName = quote(columnName);
-                            }
-                            columnNames.add(columnName);
+                        if (columnName == null) {
+                            columnName = entity.getNamingStrategy().mappedName((Embedded) identity, embeddedProp);
                         }
+                        if (escape) {
+                            columnName = quote(columnName);
+                        }
+                        columnNames.add(columnName);
                     }
                     builder.append(String.join(",", columnNames));
 
@@ -970,6 +953,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private boolean addWriteExpression(List<String> values, PersistentProperty property) {
         DataType dt = property.getDataType();
+        String transformer = getDataTransformerWriteValue(null, property).orElse(null);
+        if (transformer != null) {
+            return values.add(transformer);
+        }
         if (dt == DataType.JSON) {
             switch (dialect) {
                 case POSTGRES:
@@ -979,31 +966,35 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 case MYSQL:
                     return values.add("CONVERT(" + formatParameter(values.size() + 1).getName() + " USING UTF8MB4)");
                 default:
-                    return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElseGet(() -> formatParameter(values.size() + 1).getName()));
+                    return values.add(formatParameter(values.size() + 1).getName());
             }
         }
-        return values.add(property.getAnnotationMetadata().stringValue(DataTransformer.class, "write").orElseGet(() -> formatParameter(values.size() + 1).getName()));
+        return values.add(formatParameter(values.size() + 1).getName());
     }
 
     @Override
-    protected void appendUpdateSetParameter(StringBuilder queryString, PersistentProperty prop, Placeholder param) {
-        // to_json(?::json)
+    protected void appendUpdateSetParameter(StringBuilder sb, String alias, PersistentProperty prop, Placeholder param) {
+        String transformed = getDataTransformerWriteValue(alias, prop).orElse(null);
+        if (transformed != null) {
+            sb.append(transformed);
+            return;
+        }
         if (prop.getDataType() == DataType.JSON) {
             switch (dialect) {
                 case H2:
-                    queryString.append(param.getName()).append(" FORMAT JSON");
+                    sb.append(param.getName()).append(" FORMAT JSON");
                     break;
                 case MYSQL:
-                    queryString.append("CONVERT(").append(param.getName()).append(" USING UTF8MB4)");
+                    sb.append("CONVERT(").append(param.getName()).append(" USING UTF8MB4)");
                     break;
                 case POSTGRES:
-                    queryString.append("to_json(").append(param.getName()).append("::json)");
+                    sb.append("to_json(").append(param.getName()).append("::json)");
                     break;
                 default:
-                    super.appendUpdateSetParameter(queryString, prop, param);
+                    super.appendUpdateSetParameter(sb, alias, prop, param);
             }
         } else {
-            super.appendUpdateSetParameter(queryString, prop, param);
+            super.appendUpdateSetParameter(sb, alias, prop, param);
         }
     }
 
@@ -1128,7 +1119,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     if (associationOwner.isEmbeddable() &&
                             rootIdentity instanceof Embedded &&
                             ((Embedded) rootIdentity).getAssociatedEntity() == associationOwner) {
-                        associationColumn = computeEmbeddedName(rootIdentity, rootIdentity.getName(), association);
+                        associationColumn = computeEmbeddedName((Embedded) rootIdentity, rootIdentity.getName(), association);
                     } else {
                         associationColumn = getColumnName(association);
                     }
@@ -1201,7 +1192,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     public String getColumnName(PersistentProperty persistentProperty) {
-        return persistentProperty.getPersistedName();
+        return persistentProperty.getOwner().getNamingStrategy().mappedName(persistentProperty);
     }
 
     @Override

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.DataTransformer
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.QueryModel
+import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.jdbc.entities.Project
@@ -64,7 +65,7 @@ class Project {
         def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         expect:
-        sql == 'INSERT INTO "project" ("name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?)'
+        sql == 'INSERT INTO "project" ("name","db_name","org","project_id_department_id","project_id_project_id") VALUES (UPPER(?),?,?,?,?)'
 
     }
 
@@ -86,6 +87,31 @@ class Project {
         def sql = builder.buildQuery(QueryModel.from(entity)).query
 
         expect:
-        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",project_."name",UPPER(org) AS org FROM "project" project_'
+        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_'
+    }
+
+    void "test build query with column reader in where"() {
+        given:
+        def entity = PersistentEntity.of(Project)
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildQuery(QueryModel.from(entity).eq("name", new QueryParameter("xyz"))).query
+
+        expect:
+        sql == 'SELECT project_."project_id_department_id",project_."project_id_project_id",LOWER(project_.name) AS name,project_.name AS db_name,UPPER(project_.org) AS org FROM "project" project_ WHERE (LOWER(project_.name) = ?)'
+    }
+
+    void "test update query with column readers and writers"() {
+        given:
+        def entity = PersistentEntity.of(Project)
+        SqlQueryBuilder builder = new SqlQueryBuilder()
+        def sql = builder.buildUpdate(
+                QueryModel.from(entity)
+                    .eq("name", new QueryParameter("abc"))
+                    .eq("org", new QueryParameter("xyz")),
+                Arrays.asList("name", "org")
+        ).query
+
+        expect:
+        sql == 'UPDATE "project" SET "name"=UPPER(?),"org"=? WHERE (LOWER(name) = ? AND UPPER(org) = ?)'
     }
 }

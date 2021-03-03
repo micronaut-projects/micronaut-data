@@ -13,18 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2;
+package io.micronaut.data.tck.entities;
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.tck.entities.Shipment;
-import io.micronaut.data.tck.entities.ShipmentId;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
 
-@JdbcRepository(dialect = Dialect.H2)
-public interface ShipmentRepository extends CrudRepository<Shipment, ShipmentId> {
+import java.util.UUID;
 
-    Shipment findByShipmentIdCountry(String country);
+@MappedEntity
+public class UuidChildEntity {
+    @GeneratedValue
+    @Id
+    private UUID uuid;
 
-    Shipment findByShipmentIdCountryAndShipmentIdCity(String country, String city);
+    private String name;
+
+    public UuidChildEntity(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public UUID getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
+    }
 }

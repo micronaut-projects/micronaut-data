@@ -4,7 +4,7 @@ package example;
 import io.micronaut.data.annotation.*;
 
 @MappedEntity
-@Where("enabled = true") // <1>
+@Where("@.enabled = true") // <1>
 public class User {
     @GeneratedValue
     @Id

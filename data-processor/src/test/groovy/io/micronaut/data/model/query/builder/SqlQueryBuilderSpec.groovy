@@ -36,8 +36,11 @@ import io.micronaut.data.tck.entities.City
 import io.micronaut.data.tck.entities.CountryRegion
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
+import io.micronaut.data.tck.entities.Shipment
+import io.micronaut.data.tck.entities.UuidEntity
+import io.micronaut.data.tck.jdbc.entities.UserRole
 import spock.lang.Requires
-import spock.lang.Specification
+import spock.lang.Shared
 import spock.lang.Unroll
 
 class SqlQueryBuilderSpec extends AbstractTypeElementSpec {
@@ -85,7 +88,6 @@ interface MyRepository {
         builder.buildDelete(queryModel).query == 'DELETE  FROM sale  WHERE (name = $1)'
         builder.buildUpdate(queryModel, Arrays.asList("name")).query == 'UPDATE sale SET name=$1 WHERE (name = $2)'
         builder.buildInsert(annotationMetadata, entity).query == 'INSERT INTO sale (name,data,quantities,extra_data) VALUES ($1,to_json($2::json),to_json($3::json),to_json($4::json))'
-
     }
 
 
@@ -313,4 +315,105 @@ interface MyRepository {
         Person | 'ge'   | 'name'   | '>='     | 'avg'
         Person | 'le'   | 'name'   | '<='     | 'distinct'
     }
+
+    @Unroll
+    void "test build query embedded"() {
+        when:
+            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryResult encodedQuery = encoder.buildQuery(queryModel)
+
+        then:
+            encodedQuery.query == query
+
+        where:
+            queryModel << [
+                    QueryModel.from(getRuntimePersistentEntity(Shipment)).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(getRuntimePersistentEntity(Shipment)).eq("shipmentId.country", new QueryParameter("xyz")),
+                    {
+                        def entity = getRuntimePersistentEntity(UserRole)
+                        def qm = QueryModel.from(entity)
+                        qm.join("role", entity.getPropertyByPath("id.role").get() as Association, Join.Type.DEFAULT, null)
+                        qm
+                    }.call(),
+                    {
+                        def entity = getRuntimePersistentEntity(UserRole)
+                        def qm = QueryModel.from(entity)
+                        qm.join("user", entity.getPropertyByPath("id.user").get() as Association, Join.Type.DEFAULT, null)
+                        qm.eq("user", new QueryParameter("xyz"))
+                    }.call(),
+                    QueryModel.from(getRuntimePersistentEntity(UuidEntity)).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(getRuntimePersistentEntity(UserRole)).idEq(new QueryParameter("xyz")),
+            ]
+            query << [
+                    'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ? AND shipment_."sp_city" = ?)',
+                    'SELECT shipment_."sp_country",shipment_."sp_city",shipment_."field" FROM "Shipment1" shipment_ WHERE (shipment_."sp_country" = ?)',
+                    'SELECT * FROM "user_role_composite" user_role_ INNER JOIN "role_composite" user_role_id_role_ ON user_role_."id_role_id"=user_role_id_role_."id"',
+                    'SELECT * FROM "user_role_composite" user_role_ INNER JOIN "user_composite" user_role_id_user_ ON user_role_."id_user_id"=user_role_id_user_."id" WHERE (user_role_."id_user_id" = ?)',
+                    'SELECT uid."uuid",uid."name",uid."child_id",uid."xyz",uid."embedded_child_embedded_child2_id" FROM "uuid_entity" uid WHERE (uid."uuid" = ?)',
+                    'SELECT * FROM "user_role_composite" user_role_ WHERE (user_role_."id_user_id" = ? AND user_role_."id_role_id" = ?)'
+            ]
+    }
+
+    @Unroll
+    void "test build insert embedded"() {
+        when:
+            QueryBuilder encoder = new SqlQueryBuilder()
+            QueryResult encodedQuery = encoder.buildInsert(entity.getAnnotationMetadata(), entity)
+
+        then:
+            encodedQuery.query == query
+
+        where:
+            entity << [
+                    getRuntimePersistentEntity(Shipment),
+                    getRuntimePersistentEntity(UuidEntity),
+                    getRuntimePersistentEntity(UserRole)
+            ]
+            query << [
+                    'INSERT INTO "Shipment1" ("field","sp_country","sp_city") VALUES (?,?,?)',
+                    'INSERT INTO "uuid_entity" ("name","child_id","xyz","embedded_child_embedded_child2_id") VALUES (?,?,?,?)',
+                    'INSERT INTO "user_role_composite" ("id_user_id","id_role_id") VALUES (?,?)'
+            ]
+    }
+
+    @Unroll
+    void "test build create embedded"() {
+        when:
+            QueryBuilder encoder = new SqlQueryBuilder()
+            def statements = encoder.buildCreateTableStatements(entity)
+
+        then:
+            statements.join("\n") == query
+
+        where:
+            entity << [
+                    getRuntimePersistentEntity(Shipment),
+                    getRuntimePersistentEntity(UuidEntity),
+                    getRuntimePersistentEntity(UserRole)
+            ]
+            query << [
+                    'CREATE TABLE "Shipment1" ("sp_country" VARCHAR(255) NOT NULL,"sp_city" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL, PRIMARY KEY("sp_country","sp_city"));',
+                    'CREATE TABLE "uuid_entity" ("uuid" UUID PRIMARY KEY NOT NULL DEFAULT random_uuid(),"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID);',
+                    'CREATE TABLE "user_role_composite" ("id_user_id" BIGINT NOT NULL,"id_role_id" BIGINT NOT NULL, PRIMARY KEY("id_user_id","id_role_id"));'
+            ]
+    }
+
+    @Shared
+    Map<Class, RuntimePersistentEntity> entities = [:]
+
+    // entities have instance compare in some cases
+    RuntimePersistentEntity getRuntimePersistentEntity(Class type) {
+        RuntimePersistentEntity entity = entities.get(type)
+        if (entity == null) {
+            entity = new RuntimePersistentEntity(type) {
+                @Override
+                protected RuntimePersistentEntity getEntity(Class t) {
+                    return getRuntimePersistentEntity(t)
+                }
+            }
+            entities.put(type, entity)
+        }
+        return entity
+    }
+
 }

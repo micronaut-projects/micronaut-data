@@ -77,6 +77,22 @@ class H2EmbeddedIdSpec extends Specification {
         then:"all is correct"
         all.size() == 2
 
+        when:"Find by country"
+        def foundByCountry = repository.findByShipmentIdCountry("g")
+
+        then:
+        foundByCountry.field == "test4"
+        foundByCountry.shipmentId.country == "g"
+        foundByCountry.shipmentId.city == "h"
+
+        when:"Find by country and city"
+        def foundByCountryAndCIty = repository.findByShipmentIdCountryAndShipmentIdCity("g", "h")
+
+        then:
+        foundByCountryAndCIty.field == "test4"
+        foundByCountryAndCIty.shipmentId.country == "g"
+        foundByCountryAndCIty.shipmentId.city == "h"
+
         when:"deleteAll is used with an iterable"
         repository.deleteAll([all.first()])
 

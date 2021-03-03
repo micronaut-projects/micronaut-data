@@ -7,7 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
 @Entity
-@Where("enabled = true")
+@Where("@.enabled = true")
 public class User {
     @GeneratedValue
     @Id

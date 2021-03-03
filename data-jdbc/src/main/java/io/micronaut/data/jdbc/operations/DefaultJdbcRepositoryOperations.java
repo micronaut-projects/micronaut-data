@@ -631,11 +631,17 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                                 Object embeddedInstance = pp.getProperty().get(resolvedEntity);
 
                                                 Object embeddedValue = embeddedInstance != null ? embeddedProp.getProperty().get(embeddedInstance) : null;
+                                                DataType dataType;
+                                                if (embeddedValue == null) {
+                                                    dataType = getEntity(embeddedProp.getProperty().getType()).getIdentity().getDataType();
+                                                } else {
+                                                    dataType = embeddedProp.getDataType();
+                                                }
                                                 int index = i + 1;
                                                 setStatementParameter(
                                                         ps,
                                                         index,
-                                                        embeddedProp.getDataType(),
+                                                        dataType,
                                                         embeddedValue,
                                                         dialect
                                                 );

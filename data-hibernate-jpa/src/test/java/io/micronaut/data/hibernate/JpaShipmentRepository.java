@@ -22,4 +22,9 @@ import io.micronaut.data.tck.entities.ShipmentId;
 
 @Repository
 public interface JpaShipmentRepository extends CrudRepository<Shipment, ShipmentId> {
+
+    Shipment findByShipmentIdCountry(String country);
+
+    Shipment findByShipmentIdCountryAndShipmentIdCity(String country, String city);
+
 }

@@ -17,10 +17,12 @@ package io.micronaut.data.model.naming;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
@@ -65,7 +67,7 @@ public interface NamingStrategy {
     }
 
     /**
-     * Return the mapped name given an {@link Embedded} association and the property of the assocation. The
+     * Return the mapped name given an {@link Embedded} association and the property of the association. The
      * default strategy takes the parent embedded property name and combines it underscore separated with the child parent property name.
      *
      * <p>For example given:</p>
@@ -80,7 +82,7 @@ public interface NamingStrategy {
      * @return The mapped name
      */
     default @NonNull String mappedName(Embedded embedded, PersistentProperty property) {
-        return mappedName(embedded.getName() + property.getCapitilizedName());
+        return mappedName(embedded.getName() + NameUtils.capitalize(property.getPersistedName()));
     }
 
     /**
@@ -90,27 +92,36 @@ public interface NamingStrategy {
      */
     default @NonNull String mappedName(@NonNull PersistentProperty property) {
         ArgumentUtils.requireNonNull("property", property);
-        Supplier<String> defaultNameSupplier = () -> mappedName(property.getName());
         if (property instanceof Association) {
-            Association association = (Association) property;
-            if (association.isForeignKey()) {
-                return mappedName(association.getOwner().getDecapitalizedName() +
-                                    association.getAssociatedEntity().getSimpleName());
-            } else {
-                switch (association.getKind()) {
-                    case ONE_TO_ONE:
-                    case MANY_TO_ONE:
-                        return property.getAnnotationMetadata().stringValue(MappedProperty.class)
-                                .orElseGet(() -> mappedName(property.getName() + getForeignKeySuffix()));
-                    default:
-                        return property.getAnnotationMetadata().stringValue(MappedProperty.class)
-                                .orElseGet(defaultNameSupplier);
-                }
-            }
+            return mappedName((Association) property);
         } else {
+            Supplier<String> defaultNameSupplier = () -> mappedName(property.getName());
             return property.getAnnotationMetadata().stringValue(MappedProperty.class)
                     .map(s -> StringUtils.isEmpty(s) ? defaultNameSupplier.get() : s)
                     .orElseGet(defaultNameSupplier);
+        }
+    }
+
+    /**
+     * Return the mapped name for the given association.
+     * @param association The association
+     * @return The mapped name
+     */
+    default @NonNull String mappedName(Association association) {
+        Supplier<String> defaultNameSupplier = () -> mappedName(association.getName());
+        if (association.isForeignKey()) {
+            return mappedName(association.getOwner().getDecapitalizedName() +
+                                association.getAssociatedEntity().getSimpleName());
+        } else {
+            switch (association.getKind()) {
+                case ONE_TO_ONE:
+                case MANY_TO_ONE:
+                    return association.getAnnotationMetadata().stringValue(MappedProperty.class)
+                            .orElseGet(() -> mappedName(association.getName() + getForeignKeySuffix()));
+                default:
+                    return association.getAnnotationMetadata().stringValue(MappedProperty.class)
+                            .orElseGet(defaultNameSupplier);
+            }
         }
     }
 
