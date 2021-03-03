@@ -5,11 +5,11 @@ This feature can be used to encrypt/decrypt values or invoke any arbitrary datab
 .Applying a read transformation
 [source,java]
 ----
-@ColumnTransformer(read = "UPPER(name)")
+@ColumnTransformer(read = "UPPER(@.name)")
 private String name;
 ----
 
-NOTE: You may need to use the alias before the column name which is the table name followed by underscore. Example: `project_.name`.
+NOTE: `@` is a query alias placeholder and will be replaced with one if the query specifies it. Example: `"UPPER(@.name)` is going to become `UPPER(project_.name).`
 
 To apply a write transformation you should use the `write` member and include exactly one `?` placeholder:
 

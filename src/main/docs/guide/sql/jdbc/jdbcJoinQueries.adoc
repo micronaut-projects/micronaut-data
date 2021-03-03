@@ -15,7 +15,7 @@ snippet::example.ProductRepository[project-base="doc-examples/jdbc-example", sou
 
 Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple time for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.
 
-Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the `alias` member of the ann:data.annotation.Join[] annotation.
+Finally, by default Micronaut Data will generate aliases to use for selecting columns in joins and querying. However, if at any point you experience a conflict you can specify an alias for a particular join using the `alias` member of the ann:data.annotation.Join[] annotation. You can override the default entity alias using the `alias` member of the ann:data.annotation.MappedEntity[] annotation.
 
 WARNING: Some databases like Oracle limit the length of alias names in SQL queries so another reason you may want to set custom aliases is to avoid exceeding the alias name length restriction in Oracle.
 

@@ -26,3 +26,13 @@ In this case you should set the `escape` member of the ann:data.annotation.Mappe
 ----
 
 Micronaut Data will generate SQL statements that escape table and column names within queries using the escape character that is appropriate for the configured SQL dialect.
+
+==== Overriding default query alias
+
+The default query alias is the table name followed by an underscore. If you want to change it, specify it in the ann:data.annotation.MappedEntity[] annotation:
+
+[source,java]
+----
+@MappedEntity(alias="my_table_")
+----
+

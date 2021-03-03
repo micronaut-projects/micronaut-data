@@ -4,7 +4,7 @@ A common use case for this is to implement soft delete. For example considering 
 
 snippet::example.User[project-base="doc-examples/jdbc-example", source="main"]
 
-<1> The ann:data.annotation.Where[] annotation is used to declare that all queries should include `enabled = true`.
+<1> The ann:data.annotation.Where[] annotation is used to declare that all queries should include `enabled = true` and `@` is a placeholder for the query's alias.
 <2> An `enabled` property exists on the entity
 
 You can then easily modify the `delete` operations to instead issue an update. For example, consider the following repository implementation:

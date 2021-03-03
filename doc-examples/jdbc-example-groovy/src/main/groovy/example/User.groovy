@@ -5,7 +5,7 @@ import groovy.transform.EqualsAndHashCode
 import io.micronaut.data.annotation.*
 
 @MappedEntity
-@Where("enabled = true") // <1>
+@Where("@.enabled = true") // <1>
 @EqualsAndHashCode(includes = "name")
 class User {
     @GeneratedValue
