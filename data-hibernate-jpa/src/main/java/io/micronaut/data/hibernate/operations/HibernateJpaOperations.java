@@ -64,6 +64,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -150,10 +151,12 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
-                q.setMaxResults(1);
-                return q.uniqueResultOptional()
-                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType))
-                        .orElse(null);
+
+                Tuple tuple = first(q.list().iterator());
+                if (tuple != null) {
+                    return ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, resultType);
+                }
+                return null;
             } else {
                 Query<R> q;
 
@@ -171,10 +174,17 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
-                q.setMaxResults(1);
-                return q.uniqueResultOptional().orElse(null);
+
+                return first(q.list().iterator());
             }
         });
+    }
+
+    private <T> T first(Iterator<T> iterator) {
+        if (iterator.hasNext()) {
+            return iterator.next();
+        }
+        return null;
     }
 
     private <T, R> void bindParameters(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, String query) {
