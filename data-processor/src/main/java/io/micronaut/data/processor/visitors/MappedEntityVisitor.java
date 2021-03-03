@@ -148,7 +148,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 .orElse(null);
 
         if (dataType == null) {
-            ClassElement type = propertyElement.getType();
+            ClassElement type = propertyElement.getGenericType();
             dataType = TypeUtils.resolveDataType(type, dataTypes);
         }
 
@@ -191,8 +191,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (mappedEntity && !mapping.isPresent()) {
             propertyElement.annotate(MappedProperty.class, builder -> builder.value(namingStrategy.mappedName(spp)));
         }
-        DataType finalDataType = dataType;
-        propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", finalDataType));
+
+        if (dataType != DataType.OBJECT) {
+            DataType finalDataType = dataType;
+            propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", finalDataType));
+        }
     }
 
     private NamingStrategy resolveNamingStrategy(ClassElement element) {

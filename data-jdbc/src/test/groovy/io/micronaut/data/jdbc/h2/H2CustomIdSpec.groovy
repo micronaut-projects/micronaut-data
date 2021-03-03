@@ -17,7 +17,9 @@ package io.micronaut.data.jdbc.h2
 
 
 import io.micronaut.data.tck.entities.Task
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.data.tck.entities.TaskGenericEntity
+import io.micronaut.data.tck.entities.TaskGenericEntity2
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -31,6 +33,13 @@ class H2CustomIdSpec extends Specification {
     @Shared
     H2TaskRepository taskRepository
 
+    @Inject
+    @Shared
+    H2TaskGenericEntityRepository taskGenericEntityRepository
+    @Inject
+    @Shared
+    H2TaskGenericEntity2Repository taskGenericEntity2Repository
+
     void "test save and read entity"() {
         when:"an entity is saved"
         def task = taskRepository.save(new Task("Task 1"))
@@ -43,6 +52,36 @@ class H2CustomIdSpec extends Specification {
 
         then:"The entity is correct"
         task.taskId
+        task.name == "Task 1"
+    }
+
+    void "test save and read generic entity"() {
+        when:
+        def task = taskGenericEntityRepository.save(new TaskGenericEntity("Task 1"))
+
+        then:
+        task.id
+
+        when:
+        task = taskGenericEntityRepository.findById(task.id).orElse(null)
+
+        then:
+        task.id
+        task.name == "Task 1"
+    }
+
+    void "test save and read generic entity2 "() {
+        when:
+        def task = taskGenericEntity2Repository.save(new TaskGenericEntity2("Task 1"))
+
+        then:
+        task.id
+
+        when:
+        task = taskGenericEntity2Repository.findById(task.id).orElse(null)
+
+        then:
+        task.id
         task.name == "Task 1"
     }
 
