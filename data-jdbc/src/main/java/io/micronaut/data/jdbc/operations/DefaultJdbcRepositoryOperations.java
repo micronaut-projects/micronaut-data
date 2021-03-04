@@ -26,6 +26,7 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.Query;
@@ -42,6 +43,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -614,39 +616,33 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     try (PreparedStatement ps = connection.prepareStatement(query)) {
                         for (int i = 0; i < params.length; i++) {
                             String propertyName = params[i];
-                            RuntimePersistentProperty<T> pp =
-                                    persistentEntity.getPropertyByName(propertyName);
+                            RuntimePersistentProperty<T> pp = persistentEntity.getPropertyByName(propertyName);
                             if (pp == null) {
                                 int j = propertyName.indexOf('.');
                                 if (j > -1) {
-                                    RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
-                                            persistentEntity.getPropertyByPath(propertyName).orElse(null);
-                                    if (embeddedProp != null) {
-
-                                        // embedded case
-                                        pp = persistentEntity.getPropertyByName(propertyName.substring(0, j));
-                                        if (pp instanceof Association) {
-                                            Association assoc = (Association) pp;
-                                            if (assoc.getKind() == Relation.Kind.EMBEDDED) {
-                                                Object embeddedInstance = pp.getProperty().get(resolvedEntity);
-
-                                                Object embeddedValue = embeddedInstance != null ? embeddedProp.getProperty().get(embeddedInstance) : null;
-                                                DataType dataType;
-                                                if (embeddedValue == null) {
-                                                    dataType = getEntity(embeddedProp.getProperty().getType()).getIdentity().getDataType();
-                                                } else {
-                                                    dataType = embeddedProp.getDataType();
-                                                }
-                                                int index = i + 1;
-                                                setStatementParameter(
-                                                        ps,
-                                                        index,
-                                                        dataType,
-                                                        embeddedValue,
-                                                        dialect
-                                                );
+                                    List<PersistentProperty> embeddedProperties = persistentEntity.getPropertiesInPath(propertyName);
+                                    if (!embeddedProperties.isEmpty()) {
+                                        Object value = resolvedEntity;
+                                        for (PersistentProperty embeddedProperty : embeddedProperties) {
+                                            pp = (RuntimePersistentProperty) embeddedProperty;
+                                            BeanProperty beanProperty = pp.getProperty();
+                                            value = beanProperty.get(value);
+                                            if (value == null) {
+                                                break;
                                             }
                                         }
+                                        RuntimePersistentProperty<Object> property = (RuntimePersistentProperty) CollectionUtils.last(embeddedProperties);
+                                        DataType dataType = property.getDataType();
+                                        if (value == null && dataType == DataType.ENTITY) {
+                                            dataType = getEntity(property.getType()).getIdentity().getDataType();
+                                        }
+                                        setStatementParameter(
+                                                ps,
+                                                i + 1,
+                                                dataType,
+                                                value,
+                                                dialect
+                                        );
                                     } else {
                                         throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                                     }
@@ -760,7 +756,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 }
                             }
                         }
-                        ps.executeUpdate();
+                        int result = ps.executeUpdate();
+                        if (QUERY_LOG.isTraceEnabled()) {
+                            QUERY_LOG.trace("Update operation updated {} records", result);
+                        }
                         if (persistentEntity.hasPostUpdateEventListeners()) {
                             triggerPostUpdate(resolvedEntity, persistentEntity, annotationMetadata);
                         }

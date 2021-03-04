@@ -142,7 +142,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def sql = builder.buildBatchCreateTableStatement(entity)
 
         then:
-        sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id_project_id" INT NOT NULL,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id_project_id"));'
+        sql == 'CREATE TABLE "project" ("department_id" INT NOT NULL,"project_id_project_id" INT AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL, PRIMARY KEY("department_id","project_id_project_id"));'
     }
 
     void "test build insert"() {
@@ -153,7 +153,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def sql = builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, entity).query
 
         then:
-        sql == 'INSERT INTO "project" ("name","department_id","project_id_project_id") VALUES (?,?,?)'
+        sql == 'INSERT INTO "project" ("name","department_id") VALUES (?,?)'
     }
 
     void "test build query"() {
@@ -183,7 +183,7 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         def sql = builder.buildQuery(model).query
 
         then:
-        sql.startsWith('SELECT project_."department_id", project_."project_id_project_id"')
+        sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
 
         when:"an id project ins used"
         model = QueryModel.from(entity)
@@ -193,6 +193,6 @@ interface UserRoleRepository extends GenericRepository<UserRole, UserRoleId> {
         sql = builder.buildQuery(model).query
 
         then:
-        sql.startsWith('SELECT project_."department_id", project_."project_id_project_id"')
+        sql.startsWith('SELECT project_."department_id",project_."project_id_project_id"')
     }
 }

@@ -28,6 +28,7 @@ import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 
@@ -108,21 +109,65 @@ public interface NamingStrategy {
      * @return The mapped name
      */
     default @NonNull String mappedName(Association association) {
-        Supplier<String> defaultNameSupplier = () -> mappedName(association.getName());
+        String providedName = association.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+        if (providedName != null) {
+            return providedName;
+        }
         if (association.isForeignKey()) {
-            return mappedName(association.getOwner().getDecapitalizedName() +
-                                association.getAssociatedEntity().getSimpleName());
+            return mappedName(association.getOwner().getDecapitalizedName() + association.getAssociatedEntity().getSimpleName());
         } else {
             switch (association.getKind()) {
                 case ONE_TO_ONE:
                 case MANY_TO_ONE:
-                    return association.getAnnotationMetadata().stringValue(MappedProperty.class)
-                            .orElseGet(() -> mappedName(association.getName() + getForeignKeySuffix()));
+                    return mappedName(association.getName() + getForeignKeySuffix());
                 default:
-                    return association.getAnnotationMetadata().stringValue(MappedProperty.class)
-                            .orElseGet(defaultNameSupplier);
+                    return mappedName(association.getName());
             }
         }
+    }
+
+    default @NonNull String mappedName(@NonNull List<Association> associations, @NonNull PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return mappedName(property);
+        }
+        StringBuilder sb = new StringBuilder();
+        Association foreignAssociation = null;
+        for (Association association : associations) {
+            if (association.getKind() != Relation.Kind.EMBEDDED) {
+                if (foreignAssociation == null) {
+                    foreignAssociation = association;
+                }
+            }
+            if (sb.length() > 0) {
+                sb.append(NameUtils.capitalize(association.getName()));
+            } else {
+                sb.append(association.getName());
+            }
+        }
+        if (foreignAssociation != null) {
+            if (foreignAssociation.getAssociatedEntity() == property.getOwner()
+                    && foreignAssociation.getAssociatedEntity().getIdentity() == property) {
+                String providedName = foreignAssociation.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+                if (providedName != null) {
+                    return providedName;
+                }
+                sb.append(getForeignKeySuffix());
+                return mappedName(sb.toString());
+            } else if (foreignAssociation.isForeignKey()) {
+                throw new IllegalStateException("Foreign association cannot be mapped!");
+            }
+        } else {
+            String providedName = property.getAnnotationMetadata().stringValue(MappedProperty.class).orElse(null);
+            if (providedName != null) {
+                return providedName;
+            }
+        }
+        if (sb.length() > 0) {
+            sb.append(NameUtils.capitalize(property.getName()));
+        } else {
+            sb.append(property.getName());
+        }
+        return mappedName(sb.toString());
     }
 
     /**
