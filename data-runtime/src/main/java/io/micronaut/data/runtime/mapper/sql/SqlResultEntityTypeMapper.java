@@ -546,13 +546,15 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     RuntimePersistentProperty<R> joinAssociation = (RuntimePersistentProperty<R>) key;
                     @SuppressWarnings("unchecked")
                     BeanProperty<R, Object> property = (BeanProperty<R, Object>) joinAssociation.getProperty();
-                    Object associationValue = property.get(entity);
-                    if (associationValue instanceof Collection) {
-                        //noinspection unchecked
-                        ((Collection<?>) associationValue).addAll((List) value);
-                    } else {
-                        convertAndSet(entity, joinAssociation, property, value, joinAssociation.getDataType());
+                    Object previousValue = property.get(entity);
+                    if (previousValue instanceof Collection) {
+                        Collection<Object> previousCollection = (Collection) previousValue;
+                        List<Object> newCollection = new ArrayList<>(previousCollection.size() + value.size());
+                        newCollection.addAll(previousCollection);
+                        newCollection.addAll(value);
+                        value = newCollection;
                     }
+                    convertAndSet(entity, joinAssociation, property, value, joinAssociation.getDataType());
                 });
             }
         }
