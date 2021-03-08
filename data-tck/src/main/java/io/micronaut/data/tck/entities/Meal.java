@@ -23,8 +23,8 @@ import javax.persistence.Id;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 
 @MappedEntity
@@ -47,7 +47,7 @@ public class Meal {
     @Relation(
             value = Relation.Kind.ONE_TO_MANY,
             mappedBy = "meal")
-    private Set<Food> foods = new HashSet<>();
+    private Set<Food> foods = Collections.emptySet();
 
     public Meal(@NotNull @Max(999) int currentBloodGlucose, Date createdOn, Date updatedOn) {
         this.currentBloodGlucose = currentBloodGlucose;
