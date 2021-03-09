@@ -16,11 +16,11 @@
 package io.micronaut.data.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
 
 import java.util.Map;
@@ -36,7 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class AbstractPersistentEntity implements PersistentEntity {
 
     private static final Map<String, NamingStrategy> NAMING_STRATEGIES = new ConcurrentHashMap<>(3);
+
     private final AnnotationMetadataProvider annotationMetadataProvider;
+    @Nullable
     private final NamingStrategy namingStrategy;
 
     /**
@@ -45,8 +47,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
      */
     protected AbstractPersistentEntity(AnnotationMetadataProvider annotationMetadataProvider) {
         this.annotationMetadataProvider = annotationMetadataProvider;
-        AnnotationMetadata annotationMetadata = annotationMetadataProvider.getAnnotationMetadata();
-        this.namingStrategy = getNamingStrategy(annotationMetadata);
+        this.namingStrategy = getNamingStrategy(annotationMetadataProvider.getAnnotationMetadata());
     }
 
     @NonNull
@@ -56,31 +57,23 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
                 .orElseGet(() -> NamingStrategy.DEFAULT.mappedName(getSimpleName()) + "_");
     }
 
-    @NonNull
     private NamingStrategy getNamingStrategy(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
-                .classValue(MappedEntity.class, "namingStrategy")
-                .flatMap(aClass -> {
-                    @SuppressWarnings("unchecked")
-                    Object o = InstantiationUtils.tryInstantiate(aClass).orElse(null);
-                    if (o instanceof NamingStrategy) {
-                        return Optional.of((NamingStrategy) o);
-                    }
-                    return Optional.empty();
-                }).orElseGet(() -> annotationMetadata.stringValue(MappedEntity.class, "namingStrategy").flatMap(this::getNamingStrategy).orElse(new NamingStrategies.UnderScoreSeparatedLowerCase()));
+                .stringValue(MappedEntity.class, "namingStrategy")
+                .flatMap(className -> getNamingStrategy(className, getClass().getClassLoader()))
+                .orElse(null);
     }
 
     @NonNull
-    private Optional<NamingStrategy> getNamingStrategy(String name) {
-        NamingStrategy namingStrategy = NAMING_STRATEGIES.get(name);
+    private static Optional<NamingStrategy> getNamingStrategy(String className, ClassLoader classLoader) {
+        NamingStrategy namingStrategy = NAMING_STRATEGIES.get(className);
         if (namingStrategy != null) {
             return Optional.of(namingStrategy);
         } else {
-
-            Object o = InstantiationUtils.tryInstantiate(name, getClass().getClassLoader()).orElse(null);
+            Object o = InstantiationUtils.tryInstantiate(className, classLoader).orElse(null);
             if (o instanceof NamingStrategy) {
                 NamingStrategy ns = (NamingStrategy) o;
-                NAMING_STRATEGIES.put(name, ns);
+                NAMING_STRATEGIES.put(className, ns);
                 return Optional.of(ns);
             }
             return Optional.empty();
@@ -98,13 +91,19 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
      */
     @Override
     public @NonNull NamingStrategy getNamingStrategy() {
-        return namingStrategy;
+        return namingStrategy == null ? NamingStrategy.DEFAULT : namingStrategy;
+    }
+
+    @NonNull
+    @Override
+    public Optional<NamingStrategy> findNamingStrategy() {
+        return Optional.ofNullable(namingStrategy);
     }
 
     @NonNull
     @Override
     public String getPersistedName() {
-        return namingStrategy.mappedName(this);
+        return getNamingStrategy().mappedName(this);
     }
 
     @Override

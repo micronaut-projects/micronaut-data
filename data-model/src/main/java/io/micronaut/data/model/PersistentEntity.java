@@ -321,6 +321,13 @@ public interface PersistentEntity extends PersistentElement {
     NamingStrategy getNamingStrategy();
 
     /**
+     * Find the naming strategy that is defined for the entity.
+     * @return The optional naming strategy
+     */
+    @NonNull
+    Optional<NamingStrategy> findNamingStrategy();
+
+    /**
      * Creates a new persistent entity representation of the given type. The type
      * must be annotated with {@link io.micronaut.core.annotation.Introspected}. This method will create a new instance on demand and does not cache.
      *

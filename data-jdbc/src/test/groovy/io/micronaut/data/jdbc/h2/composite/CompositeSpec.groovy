@@ -166,25 +166,24 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             def entity = getRuntimePersistentEntity(Settlement)
             def res = encoder.buildUpdate(
                     QueryModel.from(entity).idEq(new QueryParameter("xyz")),
-                    entity.getPersistentPropertyNames() + [
-                            'id.code', 'id.county.id.id', 'id.county.id.state.id'
-                    ]
+                    entity.getPersistentPropertyNames()
             )
 
         then:
-            res.query == 'UPDATE "comp_settlement" SET "code"=?,"code_id"=?,"id_county_id"=?,"description"=?,"settlement_type_id"=?,"zone_id"=?,"is_enabled"=? WHERE ("code" = ? AND "code_id" = ? AND "id_county_id_id" = ? AND "id_county_id_state_id" = ?)'
+            res.query == 'UPDATE "comp_settlement" SET "code"=?,"code_id"=?,"id_county_id_id"=?,"id_county_id_state_id"=?,"description"=?,"settlement_type_id"=?,"zone_id"=?,"is_enabled"=? WHERE ("code" = ? AND "code_id" = ? AND "id_county_id_id" = ? AND "id_county_id_state_id" = ?)'
             res.parameters == [
                     '1': 'id.code',
                     '2': 'id.codeId',
-                    '3': 'id.county',
-                    '4': 'description',
-                    '5': 'settlementType',
-                    '6': 'zone',
-                    '7': 'enabled',
-                    '8': 'xyz.code',
-                    '9': 'xyz.codeId',
-                    '10': 'xyz.county.id.id',
-                    '11': 'xyz.county.id.state.id'
+                    '3': 'id.county.id.id',
+                    '4': 'id.county.id.state.id',
+                    '5': 'description',
+                    '6': 'settlementType.id',
+                    '7': 'zone.id',
+                    '8': 'enabled',
+                    '9': 'xyz.code',
+                    '10': 'xyz.codeId',
+                    '11': 'xyz.county.id.id',
+                    '12': 'xyz.county.id.state.id'
             ]
     }
 
