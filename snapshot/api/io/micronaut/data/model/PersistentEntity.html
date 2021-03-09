@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":18,"i10":6,"i11":6,"i12":6,"i13":18,"i14":18,"i15":18,"i16":6,"i17":18,"i18":6,"i19":18,"i20":18,"i21":17,"i22":17};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":18,"i10":6,"i11":6,"i12":18,"i13":6,"i14":18,"i15":18,"i16":18,"i17":6,"i18":18,"i19":6,"i20":18,"i21":18,"i22":17,"i23":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -220,64 +220,71 @@ extends <a href="../../../../io/micronaut/data/model/PersistentElement.html" tit
 </td>
 </tr>
 <tr id="i12" class="altColor">
+<td class="colFirst"><code>default java.util.List&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertiesInPath-java.lang.String-">getPropertiesInPath</a></span>(java.lang.String&nbsp;path)</code>
+<div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
+ .</div>
+</td>
+</tr>
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyByName-java.lang.String-">getPropertyByName</a></span>(java.lang.String&nbsp;name)</code>
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>default java.util.Optional&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyByPath-java.lang.String-">getPropertyByPath</a></span>(java.lang.String&nbsp;path)</code>
 <div class="block">Return a property for a dot separated property path such as <code>foo.bar.prop</code>
  .</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">Obtains the root entity of an inheritance hierarchy.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getSimpleName--">getSimpleName</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getVersion--">getVersion</a></span>()</code>
 <div class="block">Returns the version property.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isEmbeddable--">isEmbeddable</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isOwningEntity-io.micronaut.data.model.PersistentEntity-">isOwningEntity</a></span>(<a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code>
 <div class="block">Returns whether the specified entity asserts ownership over this
  entity.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isRoot--">isRoot</a></span>()</code>
 <div class="block">Whether this entity is a root entity.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isVersioned--">isVersioned</a></span>()</code>
 <div class="block">Is the entity versioned for optimistic locking.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#of-io.micronaut.core.beans.BeanIntrospection-">of</a></span>(io.micronaut.core.beans.BeanIntrospection&lt;T&gt;&nbsp;introspection)</code>
 <div class="block">Creates a new persistent entity representation of the given type.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#of-java.lang.Class-">of</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Creates a new persistent entity representation of the given type.</div>
@@ -620,6 +627,25 @@ default&nbsp;<a href="../../../../io/micronaut/data/model/PersistentEntity.html"
 <dd><code>path</code> - The path</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The property</dd>
+</dl>
+</li>
+</ul>
+<a name="getPropertiesInPath-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPropertiesInPath</h4>
+<pre>@NonNull
+default&nbsp;java.util.List&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;getPropertiesInPath(@NonNull
+                                                                        java.lang.String&nbsp;path)</pre>
+<div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
+ .</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>path</code> - The path</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The properties</dd>
 </dl>
 </li>
 </ul>

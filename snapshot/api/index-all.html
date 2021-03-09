@@ -396,6 +396,14 @@
 <dd>
 <div class="block">Creates a new order for the given property in ascending order.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#asPath-java.util.List-">asPath(List&lt;Association&gt;)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Join associations and property as path.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#asPath-java.util.List-io.micronaut.data.model.PersistentProperty-">asPath(List&lt;Association&gt;, PersistentProperty)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Join associations and property as path.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model"><span class="typeNameLink">Association</span></a> - Interface in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
 <dd>
 <div class="block">A property that represents an association.</div>
@@ -2196,7 +2204,7 @@
 </dd>
 <dt><a href="io/micronaut/data/processor/mappers/jpa/EmbeddedIdAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">EmbeddedIdAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
 <dd>
-<div class="block">Maps JPA's embedded ID to <a href="io/micronaut/data/annotation/Id.html" title="annotation in io.micronaut.data.annotation"><code>Id</code></a>.</div>
+<div class="block">Maps JPA's embedded ID to <a href="io/micronaut/data/annotation/EmbeddedId.html" title="annotation in io.micronaut.data.annotation"><code>EmbeddedId</code></a>.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/EmbeddedIdAnnotationMapper.html#EmbeddedIdAnnotationMapper--">EmbeddedIdAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/EmbeddedIdAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">EmbeddedIdAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
@@ -3172,6 +3180,8 @@
 <dd>
 <div class="block">A list of the associations for this entity.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
@@ -3910,6 +3920,11 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/TransactionDefinition.html#getPropagationBehavior--">getPropagationBehavior()</a></span> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a></dt>
 <dd>
 <div class="block">Return the propagation behavior.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getPropertiesInPath-java.lang.String-">getPropertiesInPath(String)</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
+<dd>
+<div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
+ .</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#getProperty--">getProperty()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
 <dd>&nbsp;</dd>
@@ -6158,6 +6173,8 @@
 <dd>
 <div class="block">Return the mapped name for the given association.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategy.html#mappedName-java.util.List-io.micronaut.data.model.PersistentProperty-">mappedName(List&lt;Association&gt;, PersistentProperty)</a></span> - Method in interface io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/MappedProperty.html" title="annotation in io.micronaut.data.annotation"><span class="typeNameLink">MappedProperty</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
 <div class="block">Designates a method or field that is mapped as a persistent property.</div>
@@ -7213,7 +7230,7 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#PropertyPath-io.micronaut.data.model.PersistentProperty-java.lang.String-">PropertyPath(PersistentProperty, String)</a></span> - Constructor for class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#PropertyPath-java.util.List-io.micronaut.data.model.PersistentProperty-java.lang.String-">PropertyPath(List&lt;Association&gt;, PersistentProperty, String)</a></span> - Constructor for class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
@@ -9353,6 +9370,18 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/TransientAnnotationMapper.html#TransientAnnotationMapper--">TransientAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/TransientAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">TransientAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#traversePersistentProperties-io.micronaut.data.model.PersistentProperty-java.util.function.BiConsumer-">traversePersistentProperties(PersistentProperty, BiConsumer&lt;List&lt;Association&gt;, PersistentProperty&gt;)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Traverses properties that should be persisted.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#traversePersistentProperties-io.micronaut.data.model.PersistentEntity-java.util.function.BiConsumer-">traversePersistentProperties(PersistentEntity, BiConsumer&lt;List&lt;Association&gt;, PersistentProperty&gt;)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Traverses properties that should be persisted.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#traversePersistentProperties-io.micronaut.data.model.PersistentEntity-boolean-java.util.function.BiConsumer-">traversePersistentProperties(PersistentEntity, boolean, BiConsumer&lt;List&lt;Association&gt;, PersistentProperty&gt;)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Traverses properties that should be persisted.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/TransactionSynchronizationUtils.html#triggerAfterCommit--">triggerAfterCommit()</a></span> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationUtils.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationUtils</a></dt>
 <dd>
 <div class="block">Trigger <code>afterCommit</code> callbacks on all currently registered synchronizations.</div>
