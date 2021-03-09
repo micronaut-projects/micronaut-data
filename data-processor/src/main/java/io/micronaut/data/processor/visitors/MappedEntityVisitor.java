@@ -103,11 +103,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
         for (PersistentProperty property : properties) {
-            computeMappingDefaults(namingStrategy, property, dataTypes);
+            computeMappingDefaults(namingStrategy, property, dataTypes, context);
         }
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
-            computeMappingDefaults(namingStrategy, identity, dataTypes);
+            computeMappingDefaults(namingStrategy, identity, dataTypes, context);
         }
     }
 
@@ -139,7 +139,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     private void computeMappingDefaults(
             NamingStrategy namingStrategy,
             PersistentProperty property,
-            Map<String, DataType> dataTypes) {
+            Map<String, DataType> dataTypes,
+            VisitorContext context) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
         PropertyElement propertyElement = spp.getPropertyElement();
@@ -159,6 +160,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             );
         } else if (isRelation) {
             Relation.Kind kind = propertyElement.enumValue(Relation.class, Relation.Kind.class).orElse(Relation.Kind.MANY_TO_ONE);
+            if (kind == Relation.Kind.EMBEDDED || kind == Relation.Kind.MANY_TO_ONE) {
+                if (propertyElement.stringValue(Relation.class, "mappedBy").isPresent()) {
+                    context.fail("Relation " + kind + " doesn't support 'mappedBy'.", propertyElement);
+                }
+            }
             if (kind == Relation.Kind.EMBEDDED) {
                 // handled embedded
                 SourcePersistentEntity embeddedEntity = entityResolver.apply(propertyElement.getType());

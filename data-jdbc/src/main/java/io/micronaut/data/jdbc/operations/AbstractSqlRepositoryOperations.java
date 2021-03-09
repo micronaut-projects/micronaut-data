@@ -292,9 +292,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     } else {
                         int j = propertyPath.indexOf('.');
                         if (j > -1) {
-                            String subProp = propertyPath.substring(j + 1);
-                            value = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
-                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
+                            String[] properties = propertyPath.split("\\.");
+                            value = queryParameters[Integer.parseInt(properties[0])];
+                            for (int k = 1; k < properties.length && value != null; k++) {
+                                String property = properties[k];
+                                value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
+                            }
                         } else {
                             throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
                         }
@@ -357,32 +360,27 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 if (j < 0) {
                     continue;
                 }
-
-                RuntimePersistentProperty embeddedProp = (RuntimePersistentProperty)
-                        persistentEntity.getPropertyByPath(path).orElse(null);
-                if (embeddedProp == null) {
-                    continue;
+                List<PersistentProperty> embeddedProperties = persistentEntity.getPropertiesInPath(path);
+                if (embeddedProperties.isEmpty()) {
+                    throw new IllegalStateException("Unrecognized path: " + path);
+                }
+                RuntimePersistentProperty<?> property;
+                value = entity;
+                for (PersistentProperty embeddedProperty : embeddedProperties) {
+                    property = (RuntimePersistentProperty) embeddedProperty;
+                    BeanProperty beanProperty = property.getProperty();
+                    value = beanProperty.get(value);
+                    if (value == null) {
+                        break;
+                    }
                 }
 
-                // embedded case
-                prop = persistentEntity.getPropertyByName(path.substring(0, j));
-                if (!(prop instanceof Association)) {
-                    continue;
-                }
-
-                // association
-                Association assoc = (Association) prop;
-                if (assoc.getKind() != Relation.Kind.EMBEDDED) {
-                    continue;
-                }
-
-                value = prop.getProperty().get(entity);
-
-                final BeanProperty embeddedBeanProperty = embeddedProp.getProperty();
-                type = embeddedProp.getDataType();
-                value = value != null ? embeddedBeanProperty.get(value) : null;
+                property = (RuntimePersistentProperty) CollectionUtils.last(embeddedProperties);
+                type = property.getDataType();
                 if (value == null && type == DataType.ENTITY) {
-                    type = getEntity(embeddedBeanProperty.getType()).getIdentity().getDataType();
+                    RuntimePersistentEntity<?> entity1 = getEntity(property.getType());
+                    RuntimePersistentProperty<?> identity = entity1.getIdentity();
+                    type = identity.getDataType();
                 }
             } else {
                 type = prop.getDataType();
@@ -567,7 +565,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         Class<Object> type = (Class<Object>) o.getClass();
         RuntimePersistentProperty beanProperty = idReaders.get(type);
         if (beanProperty == null) {
-
             RuntimePersistentEntity<Object> entity = getEntity(type);
             RuntimePersistentProperty<Object> identity = entity.getIdentity();
             if (identity == null) {

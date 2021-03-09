@@ -26,6 +26,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.jdbc.entities.UserRole
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -239,8 +240,8 @@ class JpaQueryBuilderSpec extends Specification {
             query << [
                     "SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId = :p1)",
                     "SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId.country = :p1)",
-                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRoleId_user_',
-                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRoleId_user_ WHERE (userRole_.id.user = :p1)',
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRole_user_',
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRole_user_ WHERE (userRole_.id.user = :p1)',
                     'SELECT uid FROM io.micronaut.data.tck.entities.UuidEntity AS uid WHERE (uid.uuid = :p1)'
             ]
     }

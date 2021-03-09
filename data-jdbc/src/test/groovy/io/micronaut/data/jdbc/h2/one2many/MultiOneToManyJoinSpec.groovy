@@ -8,11 +8,13 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
-import io.micronaut.data.jdbc.postgres.PostgresSaleRepository
-import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
+import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
+import io.micronaut.data.model.query.builder.QueryBuilder
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -21,11 +23,10 @@ import javax.inject.Inject
 
 @MicronautTest
 @H2DBProperties
-class MultiOneToManyJoinSpec extends Specification implements PostgresTestPropertyProvider {
+class MultiOneToManyJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
-
 
     @Shared
     @Inject CategoryRepository categoryRepository = applicationContext.getBean(CategoryRepository)
@@ -35,10 +36,9 @@ class MultiOneToManyJoinSpec extends Specification implements PostgresTestProper
         categoryRepository.findAll().isEmpty()
     }
 
-
 }
 
-@JdbcRepository(dialect = Dialect.POSTGRES)
+@JdbcRepository(dialect = Dialect.H2)
 interface CategoryRepository extends CrudRepository<Category, Long> {
 
     @Join(value = "productList", alias =  "p_", type =  Join.Type.LEFT_FETCH)

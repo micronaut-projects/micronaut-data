@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.BiFunction;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -39,7 +40,6 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -47,6 +47,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -165,7 +166,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     @NonNull
     @Override
     public R map(@NonNull RS object, @NonNull Class<R> type) throws DataAccessException {
-        final R entity = readEntity(startingPrefix, null, object, this.entity, false, false, null, null, null);
+        final R entity = readEntity(Collections.emptyList(), Collections.emptyList(), null, startingPrefix, object, this.entity, null, null);
         if (entity == null) {
             throw new DataAccessException("Unable to map result to entity of type [" + type.getName() + "]. Missing result data.");
         }
@@ -226,17 +227,16 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     public Object readId(@NonNull RS object) {
-        return readEntityId(startingPrefix, null, object, false, entity.getIdentity(), startingPrefix != null, false);
+        return readEntityId(Collections.emptyList(), Collections.emptyList(), entity, entity.getIdentity(), null, object);
     }
 
     private @Nullable R readEntity(
+            List<Association> joinPath,
+            List<Association> propertyPath,
+            Association association,
             String prefix,
-            String path,
             RS rs,
             RuntimePersistentEntity<R> persistentEntity,
-            boolean isEmbedded,
-            boolean allowNull,
-            @Nullable Association association,
             @Nullable Object parent,
             @Nullable Object resolveId) {
         BeanIntrospection<R> introspection = persistentEntity.getIntrospection();
@@ -244,18 +244,18 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         try {
             R entity;
             RuntimePersistentProperty<R> identity = persistentEntity.getIdentity();
-            boolean hasPrefix = prefix != null;
-            boolean hasPath = path != null;
             final boolean isAssociation = association != null;
-            final boolean nullableEmbedded = isEmbedded && isAssociation && association.isOptional();
+            final boolean isEmbedded = association instanceof Embedded;
+            final boolean nullableEmbedded = isEmbedded && association.isOptional();
+
             Object id;
             if (resolveId == null) {
-                id = readEntityId(prefix, path, rs, isEmbedded, identity, hasPrefix, hasPath);
+                id = readEntityId(joinPath, propertyPath, persistentEntity, identity, prefix, rs);
             } else {
                 id = resolveId;
             }
 
-            if (id == null && !isEmbedded && isAssociation && allowNull) {
+            if (id == null && !isEmbedded && isAssociation) {
                 return null;
             }
 
@@ -277,12 +277,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             } else {
                                 Object resolvedId = null;
                                 if (!constructorAssociation.isForeignKey() && !(constructorAssociation instanceof Embedded)) {
-                                    String columnName = resolveColumnName(
-                                            prop,
-                                            prefix,
-                                            isEmbedded,
-                                            hasPrefix
-                                    );
+                                    String columnName = resolveColumnName(propertyPath, persistentEntity, prop, prefix);
+
                                     resolvedId = resultReader.readDynamic(
                                             rs,
                                             columnName,
@@ -291,12 +287,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                 }
                                 if (kind.isSingleEnded()) {
                                     args[i] = readAssociation(
+                                            joinPath,
+                                            propertyPath,
                                             parent,
-                                            hasPrefix ? prefix : "",
-                                            (hasPath ? path : ""), rs,
+                                            prefix,
+                                            rs,
                                             constructorAssociation,
-                                            resolvedId,
-                                            hasPrefix
+                                            resolvedId
                                     );
                                 }
                             }
@@ -306,12 +303,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             if (resolveId != null && prop.equals(identity)) {
                                 v = resolveId;
                             } else {
-                                String columnName = resolveColumnName(
-                                        prop,
-                                        prefix,
-                                        isEmbedded,
-                                        hasPrefix
-                                );
+                                String columnName = resolveColumnName(propertyPath, persistentEntity, prop, prefix);
                                 v = resultReader.readDynamic(
                                         rs,
                                         columnName,
@@ -336,11 +328,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 }
 
                 if (nullableEmbedded && args.length > 0 && Arrays.stream(args).allMatch(Objects::isNull)) {
-                    if (allowNull) {
-                        return null;
-                    } else {
-                        throw new DataAccessException("Unable to read entity of type [" + persistentEntity.getName() + "]. No data to read");
-                    }
+                    return null;
                 } else {
                     entity = introspection.instantiate(args);
                 }
@@ -352,14 +340,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 if (!idProperty.isReadOnly()) {
                     id = convertAndSet(entity, identity, idProperty, id, identity.getDataType());
                 }
-
-
             }
 
-            Map<Association, List<Object>> toManyJoins = getJoins(rs, entity, id, persistentEntity, isEmbedded, prefix, path, hasPrefix, hasPath);
+            Map<Association, List<Object>> toManyJoins = getJoins(joinPath, propertyPath, rs, entity, id, persistentEntity, prefix);
 
             if (id != null) {
-                readChildren(rs, entity, id, identity, toManyJoins, isEmbedded, prefix, path, hasPrefix, hasPath);
+                readChildren(joinPath, propertyPath, rs, persistentEntity, entity, id, identity, toManyJoins, prefix);
             }
 
             R finalEntity;
@@ -374,11 +360,30 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
     }
 
-    private Map<Association, List<Object>> getJoins(RS rs, R entity, @Nullable Object id,
+    private List<Association> associated(List<Association> associations, Association association) {
+        List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
+        newAssociations.addAll(associations);
+        newAssociations.add(association);
+        return newAssociations;
+    }
+
+    private String asPath(List<Association> associations, PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return property.getName();
+        }
+        StringJoiner joiner = new StringJoiner(".");
+        for (Association association : associations) {
+            joiner.add(association.getName());
+        }
+        joiner.add(property.getName());
+        return joiner.toString();
+    }
+
+    private Map<Association, List<Object>> getJoins(List<Association> joinPath,
+                                                    List<Association> propertyPath,
+                                                    RS rs, R entity, @Nullable Object id,
                                                     RuntimePersistentEntity<R> persistentEntity,
-                                                    boolean isEmbedded,
-                                                    String prefix, String path,
-                                                    boolean hasPrefix, boolean hasPath) {
+                                                    String prefix) {
         Map<Association, List<Object>> toManyJoins = null;
         for (RuntimePersistentProperty<R> rpp : persistentEntity.getPersistentProperties()) {
             if (rpp.isReadOnly()) {
@@ -398,29 +403,21 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             BeanProperty<R, Object> property = (BeanProperty<R, Object>) rpp.getProperty();
             if (rpp instanceof Association) {
                 Association entityAssociation = (Association) rpp;
+                List<Association> newPropertyPath = associated(propertyPath, entityAssociation);
                 if (!entityAssociation.isForeignKey()) {
                     if (!(entityAssociation instanceof Embedded)) {
-
-                        String columnName = resolveColumnName(
-                                rpp,
-                                prefix,
-                                isEmbedded,
-                                hasPrefix
-                        );
-                        Object resolvedId = resultReader.readDynamic(
-                                rs,
-                                columnName,
-                                rpp.getDataType()
-                        );
+                        RuntimePersistentEntity associatedEntity = (RuntimePersistentEntity) entityAssociation.getAssociatedEntity();
+                        RuntimePersistentProperty identity = associatedEntity.getIdentity();
+                        Object resolvedId = readEntityId(joinPath, newPropertyPath, persistentEntity, identity, prefix, rs);
                         if (resolvedId != null) {
                             Object associated = readAssociation(
+                                    joinPath,
+                                    propertyPath,
                                     entity,
                                     prefix,
-                                    (hasPath ? path : ""),
                                     rs,
                                     entityAssociation,
-                                    resolvedId,
-                                    hasPrefix
+                                    resolvedId
                             );
                             if (associated != null) {
                                 property.set(entity, associated);
@@ -428,13 +425,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         }
                     } else {
                         Object associated = readAssociation(
+                                joinPath,
+                                propertyPath,
                                 entity,
                                 prefix,
-                                (hasPath ? path : ""),
                                 rs,
                                 entityAssociation,
-                                null,
-                                hasPrefix
+                                null
                         );
                         if (associated != null) {
                             property.set(entity, associated);
@@ -442,17 +439,21 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
 
                 } else {
-                    boolean hasJoin = joinPaths.containsKey((hasPath ? path : "") + entityAssociation.getName());
+                    boolean hasJoin = false;
+                    if (!joinPaths.isEmpty()) {
+                        hasJoin = joinPaths.containsKey(asPath(joinPath, entityAssociation));
+                    }
                     if (hasJoin) {
                         Relation.Kind kind = entityAssociation.getKind();
                         if (kind == Relation.Kind.ONE_TO_ONE && entityAssociation.isForeignKey()) {
                             Object associated = readAssociation(
+                                    joinPath,
+                                    propertyPath,
                                     entity,
-                                    prefix, (hasPath ? path : ""),
+                                    prefix,
                                     rs,
                                     entityAssociation,
-                                    null,
-                                    hasPrefix
+                                    null
                             );
                             if (associated != null) {
                                 property.set(entity, associated);
@@ -466,13 +467,9 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 }
             } else {
-                String columnName = resolveColumnName(
-                        rpp,
-                        prefix,
-                        isEmbedded,
-                        hasPrefix
-                );
-                final DataType dataType = rpp.getDataType();
+                String columnName = resolveColumnName(propertyPath, persistentEntity, rpp, prefix);
+                DataType dataType = rpp.getDataType();
+
                 Object v = resultReader.readDynamic(
                         rs,
                         columnName,
@@ -489,25 +486,22 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     public void readChildren(RS rs, R object) {
         Object id = entity.getIdentity().getProperty().get(object);
-        Map<Association, List<Object>> joins = getJoins(rs, object, id,
+        Map<Association, List<Object>> joins = getJoins(Collections.emptyList(), Collections.emptyList(), rs, object, id,
                 entity,
-                false,
-                startingPrefix, null,
-                startingPrefix != null, false);
-        readChildren(rs, object, id,
+                startingPrefix);
+        readChildren(Collections.emptyList(), Collections.emptyList(),
+                rs, entity, object, id,
                 entity.getIdentity(),
                 joins,
-                false,
-                startingPrefix, null,
-                startingPrefix != null, false);
+                startingPrefix);
     }
 
-    private void readChildren(RS rs, R entity, Object id,
+    private void readChildren(List<Association> joinPath,
+                              List<Association> propertyPath,
+                              RS rs, RuntimePersistentEntity<R> persistentEntity, R entity, Object id,
                               RuntimePersistentProperty<R> identity,
                               Map<Association, List<Object>> toManyJoins,
-                              boolean isEmbedded,
-                              String prefix, String path,
-                              boolean hasPrefix, boolean hasPath) {
+                              String prefix) {
         if (id != null) {
             Object currentId = id;
             if (CollectionUtils.isNotEmpty(toManyJoins)) {
@@ -515,24 +509,20 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 while (id.equals(currentId)) {
                     for (Map.Entry<Association, List<Object>> entry : toManyJoins.entrySet()) {
                         Object associated = readAssociation(
+                                joinPath,
+                                Collections.emptyList(),
                                 entity,
-                                hasPrefix ? prefix : "", (hasPath ? path : ""),
+                                prefix,
                                 rs,
                                 entry.getKey(),
-                                null,
-                                hasPrefix
+                                null
                         );
                         if (associated != null) {
                             entry.getValue().add(associated);
                         }
                     }
 
-                    String columnName = resolveColumnName(
-                            identity,
-                            prefix,
-                            isEmbedded,
-                            hasPrefix
-                    );
+                    String columnName = resolveColumnName(propertyPath, persistentEntity, identity, prefix);
 
                     currentId = nextId(identity, rs, columnName);
                 }
@@ -560,7 +550,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
     }
 
-    private @Nullable Object readEntityId(String prefix, String path, RS rs, boolean isEmbedded, RuntimePersistentProperty<R> identity, boolean hasPrefix, boolean hasPath) {
+    private @Nullable Object readEntityId(List<Association> joinPath,
+                                          List<Association> propertyPath,
+                                          RuntimePersistentEntity persistentEntity,
+                                          RuntimePersistentProperty identity,
+                                          String prefix, RS rs) {
         if (identity == null) {
             return null;
         }
@@ -568,39 +562,34 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             PersistentEntity embeddedEntity = ((Embedded) identity).getAssociatedEntity();
             //noinspection unchecked
             return readEntity(
-                    identity.getPersistedName() + "_",
-                    (hasPath ? path : "") + identity.getName() + '.',
+                    joinPath,
+                    associated(propertyPath, (Association) identity),
+                    (Embedded) identity,
+                    prefix,
                     rs,
                     (RuntimePersistentEntity<R>) embeddedEntity,
-                    true,
-                    true,
-                    null,
                     null,
                     null
             );
         } else {
-            String columnName = resolveColumnName(
+
+            String columnName = resolveColumnName(propertyPath,
+                    persistentEntity,
                     identity,
-                    prefix,
-                    isEmbedded,
-                    hasPrefix
+                    prefix
             );
 
-            return resultReader.readDynamic(rs, columnName, DataType.OBJECT);
+            return resultReader.readDynamic(rs, columnName, identity.getDataType());
         }
     }
 
-    private String resolveColumnName(RuntimePersistentProperty<R> identity, String prefix, boolean isEmbedded, boolean hasPrefix) {
-        final String persistedName = identity.getPersistedName();
-        final String columnName;
-        if (hasPrefix) {
-            if (isEmbedded && identity.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()) {
-                columnName = persistedName;
-            } else {
-                columnName = prefix + persistedName;
-            }
-        } else {
-            columnName = persistedName;
+    private String resolveColumnName(List<Association> associations,
+                                     RuntimePersistentEntity owner,
+                                     RuntimePersistentProperty<R> property,
+                                     String prefix) {
+        String columnName = owner.getNamingStrategy().mappedName(associations, property);
+        if (prefix != null && prefix.length() != 0) {
+            return prefix + columnName;
         }
         return columnName;
     }
@@ -655,79 +644,79 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     @Nullable
     private Object readAssociation(
+            List<Association> joinPath,
+            List<Association> propertyPath,
             Object parent,
             String prefix,
-            String path,
             RS resultSet,
             @NonNull Association association,
-            @Nullable Object resolvedId,
-            boolean hasPrefix) {
+            @Nullable Object resolvedId) {
         @SuppressWarnings("unchecked")
         RuntimePersistentEntity<R> associatedEntity = (RuntimePersistentEntity<R>) association.getAssociatedEntity();
-        Object associated = null;
-        String associationName = association.getName();
+        List<Association> newPropertyPath = associated(propertyPath, association);
         if (association instanceof Embedded) {
-            associated = readEntity(
-                    association.getPersistedName() + "_",
-                    path + associationName + '.',
+            return readEntity(
+                    joinPath,
+                    newPropertyPath,
+                    association,
+                    prefix,
                     resultSet,
                     associatedEntity,
-                    true,
-                    true,
-                    association,
                     null,
                     null);
-        } else {
-            String persistedName = association.getPersistedName();
-            RuntimePersistentProperty<R> identity = associatedEntity.getIdentity();
-            String joinPath = path + associationName;
-            if (joinPaths.containsKey(joinPath)) {
-                JoinPath jp = joinPaths.get(joinPath);
-                String newPrefix = jp.getAlias().orElse(
-                        !hasPrefix ? association.getAliasName() : prefix + association.getAliasName()
-                );
-                associated = readEntity(
-                        newPrefix,
-                        path + associationName + '.',
-                        resultSet,
-                        associatedEntity,
-                        false,
-                        true,
-                        association,
-                        parent,
-                        resolvedId
-                );
-            } else {
-
-                BeanIntrospection<R> associatedIntrospection = associatedEntity.getIntrospection();
-                Argument<?>[] constructorArgs = associatedIntrospection.getConstructorArguments();
-                if (constructorArgs.length == 0) {
-                    associated = associatedIntrospection.instantiate();
-                    if (identity != null) {
-                        String columnToRead = hasPrefix ? prefix + persistedName : persistedName;
-
-                        Object v = resultReader.readDynamic(
-                                resultSet,
-                                columnToRead,
-                                identity.getDataType()
-                        );
-                        BeanWrapper.getWrapper(associated).setProperty(
-                                identity.getName(),
-                                v
-                        );
-                    }
-                } else {
-                    if (constructorArgs.length == 1 && identity != null) {
-                        Argument<?> arg = constructorArgs[0];
-                        if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
-                            Object v = resultReader.readDynamic(resultSet, hasPrefix ? prefix + persistedName : persistedName, identity.getDataType());
-                            associated = associatedIntrospection.instantiate(resultReader.convertRequired(v, identity.getType()));
+        }
+        JoinPath jp = null;
+        if (!joinPaths.isEmpty()) {
+            jp = joinPaths.get(asPath(joinPath, association));
+            if (jp == null) {
+                jp = joinPaths.get(asPath(propertyPath, association));
+            }
+        }
+        if (jp != null) {
+            String newPrefix = jp.getAlias().orElseGet(() -> {
+                    String alias = association.getAliasName();
+                    if (!propertyPath.isEmpty()) {
+                        StringBuilder sb = prefix == null ? new StringBuilder() : new StringBuilder(prefix);
+                        for (Association embedded : propertyPath) {
+                            sb.append(embedded.getName());
+                            sb.append('_');
                         }
+                        sb.append(alias);
+                        return sb.toString();
+                    }
+                    return prefix == null ? alias : prefix +  alias;
+            });
+            return readEntity(
+                    associated(joinPath, association),
+                    Collections.emptyList(), // Reset path
+                    association,
+                    newPrefix,
+                    resultSet,
+                    associatedEntity,
+                    parent,
+                    resolvedId
+            );
+        }
+        RuntimePersistentProperty<R> identity = associatedEntity.getIdentity();
+        if (identity != null) {
+            BeanIntrospection<R> associatedIntrospection = associatedEntity.getIntrospection();
+            Argument<?>[] constructorArgs = associatedIntrospection.getConstructorArguments();
+            if (constructorArgs.length == 0) {
+                Object associated = associatedIntrospection.instantiate();
+                Object identityValue = readEntityId(joinPath, newPropertyPath, identity.getOwner(), identity, prefix, resultSet);
+                BeanWrapper.getWrapper(associated).setProperty(identity.getName(), identityValue);
+                return associated;
+            } else {
+                if (constructorArgs.length == 1) {
+                    Argument<?> arg = constructorArgs[0];
+                    if (arg.getName().equals(identity.getName()) && arg.getType() == identity.getType()) {
+                        Object identityValue = readEntityId(joinPath, newPropertyPath, identity.getOwner(), identity, prefix, resultSet);
+                        return associatedIntrospection.instantiate(resultReader.convertRequired(identityValue, identity.getType()));
                     }
                 }
             }
         }
-        return associated;
+        return null;
     }
 
     public RuntimePersistentEntity<R> getPersistentEntity() {

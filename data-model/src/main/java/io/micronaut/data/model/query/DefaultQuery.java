@@ -118,30 +118,32 @@ public class DefaultQuery implements QueryModel {
     public JoinPath join(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType, String alias) {
         PersistentEntity entity = getEntity();
         String[] elements = path.split("\\.");
-        Association[] associations = new Association[elements.length];
-        for (int i = 0; i < elements.length; i++) {
-            PersistentProperty property = entity.getPropertyByName(elements[i]);
+        List<Association> associations = new ArrayList<>(elements.length + 1);
+        for (String element : elements) {
+            PersistentProperty property = entity.getPropertyByName(element);
             if (property == null) {
                 final PersistentProperty identity = entity.getIdentity();
                 if (identity != null) {
-                    if (elements[i].equals(identity.getName())) {
+                    if (element.equals(identity.getName())) {
                         property = identity;
                     } else if (identity instanceof Embedded) {
-                        property = ((Embedded) identity).getAssociatedEntity().getPropertyByName(elements[i]);
+                        associations.add((Association) identity);
+                        property = ((Embedded) identity).getAssociatedEntity().getPropertyByName(element);
                     }
                 }
             }
             if (property instanceof Association) {
                 Association a = (Association) property;
                 entity = a.getAssociatedEntity();
-                associations[i] = a;
+                associations.add(a);
             } else {
-                throw new IllegalArgumentException("Invalid association path. Element [" + elements[i] + "] is not an association.");
+                throw new IllegalArgumentException("Invalid association path. Element [" + element + "] is not an association.");
             }
 
         }
 
-        JoinPath jp = new JoinPath(path, associations, joinType, alias);
+        Association[] associationPath = associations.toArray(new Association[0]);
+        JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
         joinPaths.put(path, jp);
         return jp;
     }

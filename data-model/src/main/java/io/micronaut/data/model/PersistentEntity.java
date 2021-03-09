@@ -252,17 +252,64 @@ public interface PersistentEntity extends PersistentElement {
                     PersistentProperty identity = startingEntity.getIdentity();
                     if (identity != null && identity.getName().equals(token)) {
                         prop = identity;
-                        if (prop instanceof Association) {
-                            startingEntity = ((Association) prop).getAssociatedEntity();
-                        }
                     } else {
                         return Optional.empty();
                     }
-                } else if (prop instanceof Association) {
+                }
+                if (prop instanceof Association) {
                     startingEntity = ((Association) prop).getAssociatedEntity();
                 }
             }
             return Optional.ofNullable(prop);
+        }
+    }
+
+    /**
+     * Return a properties for a dot separated property path such as {@code foo.bar.prop}
+     * .
+     * @param path The path
+     * @return The properties
+     */
+    @NonNull
+    default List<PersistentProperty> getPropertiesInPath(@NonNull String path) {
+        if (path.indexOf('.') == -1) {
+            PersistentProperty pp = getPropertyByName(path);
+            if (pp == null) {
+                PersistentProperty identity = getIdentity();
+                if (identity != null) {
+                    if (identity.getName().equals(path)) {
+                        pp = identity;
+                    } else if (identity instanceof Embedded) {
+                        PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
+                        pp = idEntity.getPropertyByName(path);
+                        if (pp != null) {
+                            return Arrays.asList(identity, pp);
+                        }
+                    }
+                }
+            }
+            return pp == null ? Collections.emptyList() : Collections.singletonList(pp);
+        } else {
+            String[] tokens = path.split("\\.");
+            List<PersistentProperty> properties = new ArrayList<>(tokens.length);
+            PersistentEntity startingEntity = this;
+            PersistentProperty prop;
+            for (String token : tokens) {
+                prop = startingEntity.getPropertyByName(token);
+                if (prop == null) {
+                    PersistentProperty identity = startingEntity.getIdentity();
+                    if (identity != null && identity.getName().equals(token)) {
+                        prop = identity;
+                    } else {
+                        return Collections.emptyList();
+                    }
+                }
+                if (prop instanceof Association) {
+                    startingEntity = ((Association) prop).getAssociatedEntity();
+                }
+                properties.add(prop);
+            }
+            return properties;
         }
     }
 
