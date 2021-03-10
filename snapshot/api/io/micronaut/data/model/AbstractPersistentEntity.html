@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -184,26 +184,32 @@ implements <a href="../../../../io/micronaut/data/model/PersistentEntity.html" t
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#equals-java.lang.Object-">equals</a></span>(java.lang.Object&nbsp;o)</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.util.Optional&lt;<a href="../../../../io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#findNamingStrategy--">findNamingStrategy</a></span>()</code>
+<div class="block">Find the naming strategy that is defined for the entity.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#getAliasName--">getAliasName</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>io.micronaut.core.annotation.AnnotationMetadata</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#getAnnotationMetadata--">getAnnotationMetadata</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#getNamingStrategy--">getNamingStrategy</a></span>()</code>
 <div class="block">Obtain the naming strategy for the entity.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#getPersistedName--">getPersistedName</a></span>()</code>
 <div class="block">The persisted name is the fully qualified name including potential schema definitions.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/AbstractPersistentEntity.html#hashCode--">hashCode</a></span>()</code>&nbsp;</td>
 </tr>
@@ -315,6 +321,24 @@ public&nbsp;<a href="../../../../io/micronaut/data/model/naming/NamingStrategy.h
 <dd><code><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getNamingStrategy--">getNamingStrategy</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The naming strategy</dd>
+</dl>
+</li>
+</ul>
+<a name="findNamingStrategy--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>findNamingStrategy</h4>
+<pre>@NonNull
+public&nbsp;java.util.Optional&lt;<a href="../../../../io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&gt;&nbsp;findNamingStrategy()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../io/micronaut/data/model/PersistentEntity.html#findNamingStrategy--">PersistentEntity</a></code></span></div>
+<div class="block">Find the naming strategy that is defined for the entity.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../io/micronaut/data/model/PersistentEntity.html#findNamingStrategy--">findNamingStrategy</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The optional naming strategy</dd>
 </dl>
 </li>
 </ul>
