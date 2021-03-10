@@ -334,10 +334,38 @@ interface TestBookPageRepository extends io.micronaut.data.tck.repositories.Book
 }
 """)
 
+        def method = beanDefinition.findPossibleMethods("save").findFirst().get()
         expect:
-        beanDefinition.findPossibleMethods("save")
-                .findFirst().get()
-                .stringValue(Query)
+
+            method.stringValue(Query)
                 .orElse(null) == 'INSERT INTO "shelf_book" ("shelf_id","book_id") VALUES (?,?)'
+            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
+                    ['name', 'age', 'enabled', 'publicId'] as String[]
+    }
+
+    void "test build SQL update"() {
+        given:
+            BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.tck.entities.Food;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends CrudRepository<Food, Long> {
+}
+""")
+
+        def method = beanDefinition.findPossibleMethods("update").findFirst().get()
+        expect:
+
+            method.stringValue(Query)
+                .orElse(null) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=? WHERE ("fid" = ?)'
+            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
+                    ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "fid"] as String[]
     }
 }

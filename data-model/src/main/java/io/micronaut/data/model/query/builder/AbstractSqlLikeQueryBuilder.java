@@ -1215,78 +1215,57 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         // keys need to be sorted before query is built
 
-        Iterator<String> iterator = propertiesToUpdate.iterator();
-        boolean addComma = false; // skip first comma
-        while (iterator.hasNext()) {
-            String propertyName = iterator.next();
-            PersistentProperty prop = queryState.getEntity().getPropertyByName(propertyName);
-            if (prop == null || prop.isGenerated()) {
-                continue;
-            }
-
-            if (prop instanceof Association) {
-                if (prop instanceof Embedded) {
-                    if (isExpandEmbedded()) {
-
-                        Embedded embedded = (Embedded) prop;
-                        final String embeddedName = embedded.getName();
-                        final Collection<? extends PersistentProperty> embeddedProps = embedded.getAssociatedEntity().getPersistentProperties();
-
-
-                        final Iterator<? extends PersistentProperty> eIter = embeddedProps.iterator();
-                        while (eIter.hasNext()) {
-                            final PersistentProperty embeddedProp = eIter.next();
-                            String propertyPath = embeddedName + '.' + embeddedProp.getName();
-                            queryState.addParameterType(propertyPath, embeddedProp.getDataType());
-
-                            String currentAlias = queryState.getCurrentAlias();
-                            if (addComma) {
-                                queryString.append(COMMA);
-                            }
-                            addComma = true;
-                            if (currentAlias != null) {
-                                queryString.append(currentAlias).append(DOT);
-                            }
-
-                            String columnName = embeddedProp.getAnnotationMetadata().stringValue(
-                                    MappedProperty.class
-                            ).orElseGet(() ->
-                                    queryState.getEntity().getNamingStrategy()
-                                        .mappedName(embedded, embeddedProp)
-                            );
-                            if (queryState.escape) {
-                                columnName = quote(columnName);
-                            }
-                            queryString.append(columnName).append('=');
-                            Placeholder param = queryState.newParameter();
-                            appendUpdateSetParameter(queryString, currentAlias, prop, param);
-                            parameters.put(param.key, propertyPath);
-
-                        }
-                        continue;
+        List<PropertyPath> properties = propertiesToUpdate.stream()
+                .map(property -> {
+                    PropertyPath propertyPath = findProperty(queryState, property, null);
+                    if (propertyPath instanceof Association && ((Association) propertyPath).isForeignKey()) {
+                        throw new IllegalArgumentException("Foreign key associations cannot be updated as part of a batch update statement");
                     }
-                } else if (((Association) prop).isForeignKey()) {
-                    throw new IllegalArgumentException("Foreign key associations cannot be updated as part of a batch update statement");
-                }
-            }
+                    return propertyPath;
+                })
+                .filter(propertyPath -> !propertyPath.getProperty().isGenerated())
+                .collect(Collectors.toList());
 
-            queryState.addParameterType(propertyName, prop.getDataType());
-            String currentAlias = queryState.getCurrentAlias();
-            if (addComma) {
+        int length = queryString.length();
+        if (!computePropertyPaths()) {
+            for (PropertyPath propertyPath : properties) {
+                PersistentProperty prop = propertyPath.getProperty();
+                queryState.addParameterType(propertyPath.path, prop.getDataType());
+                String currentAlias = queryState.getCurrentAlias();
+                if (currentAlias != null) {
+                    queryString.append(currentAlias).append(DOT);
+                }
+                queryString.append(propertyPath.path).append('=');
+                Placeholder param = queryState.newParameter();
+                appendUpdateSetParameter(queryString, currentAlias, prop, param);
+                parameters.put(param.key, prop.getName());
                 queryString.append(COMMA);
             }
-            addComma = true;
-            if (currentAlias != null) {
-                queryString.append(currentAlias).append(DOT);
+        } else {
+            NamingStrategy namingStrategy = queryState.getEntity().getNamingStrategy();
+            for (PropertyPath propertyPath : properties) {
+                traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), (associations, property) -> {
+                    String propertyPathRef = asPath(associations, property);
+                    queryState.addParameterType(propertyPathRef, property.getDataType());
+                    String currentAlias = queryState.getCurrentAlias();
+                    if (currentAlias != null) {
+                        queryString.append(currentAlias).append(DOT);
+                    }
+                    String columnName = namingStrategy.mappedName(associations, property);
+                    if (queryState.escape) {
+                        columnName = quote(columnName);
+                    }
+                    queryString.append(columnName).append('=');
+                    Placeholder param = queryState.newParameter();
+                    appendUpdateSetParameter(queryString, currentAlias, property, param);
+                    parameters.put(param.key, propertyPathRef);
+                    queryString.append(COMMA);
+                });
             }
-            String columnName = getColumnName(prop);
-            if (queryState.escape) {
-                columnName = quote(columnName);
-            }
-            queryString.append(columnName).append('=');
-            Placeholder param = queryState.newParameter();
-            appendUpdateSetParameter(queryString, currentAlias, prop, param);
-            parameters.put(param.key, prop.getName());
+        }
+        int newLength = queryString.length();
+        if (length != newLength) {
+            queryString.setLength(newLength - 1);
         }
     }
 
@@ -1356,7 +1335,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     Association foreignAssociation = null;
                     for (PersistentProperty pp : propertiesInPath) {
                         if (foreignAssociation != null) {
-                            if (pp == entity.getIdentity()) {
+                            if (pp == foreignAssociation.getAssociatedEntity().getIdentity()) {
                                 foreignAssociation = null;
                                 // We don't need to join to access id of the relation
                                 continue;
@@ -1397,7 +1376,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (name.equals("id") && identity != null) {
                 return new PropertyPath(associations == null ? Collections.emptyList() : associations, identity, identity.getName());
             } else {
-                if (criterionType == Sort.Order.class) {
+                if (criterionType == null || criterionType == Sort.Order.class) {
                     throw new IllegalArgumentException("Cannot order on non-existent property path: " + name);
                 } else {
                     throw new IllegalArgumentException("Cannot use [" + criterionType.getSimpleName() + "] criterion on non-existent property path: " + name);
