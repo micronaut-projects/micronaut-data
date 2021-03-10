@@ -29,7 +29,6 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 
 /**
@@ -96,10 +95,10 @@ public interface NamingStrategy {
         if (property instanceof Association) {
             return mappedName((Association) property);
         } else {
-            Supplier<String> defaultNameSupplier = () -> mappedName(property.getName());
-            return property.getAnnotationMetadata().stringValue(MappedProperty.class)
-                    .map(s -> StringUtils.isEmpty(s) ? defaultNameSupplier.get() : s)
-                    .orElseGet(defaultNameSupplier);
+            return property.getAnnotationMetadata()
+                    .stringValue(MappedProperty.class)
+                    .filter(StringUtils::isNotEmpty)
+                    .orElseGet(() -> mappedName(property.getName()));
         }
     }
 
@@ -166,6 +165,20 @@ public interface NamingStrategy {
             sb.append(NameUtils.capitalize(property.getName()));
         } else {
             sb.append(property.getName());
+        }
+        return mappedName(sb.toString());
+    }
+
+    default String mappedJoinTableColumn(PersistentEntity associated, List<Association> associations, PersistentProperty property) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(associated.getDecapitalizedName());
+        for (Association association : associations) {
+            sb.append(NameUtils.capitalize(association.getName()));
+        }
+        if (associations.isEmpty()) {
+            sb.append(getForeignKeySuffix());
+        } else {
+            sb.append(NameUtils.capitalize(property.getName()));
         }
         return mappedName(sb.toString());
     }

@@ -7,6 +7,7 @@ import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.QueryBuilder
@@ -20,6 +21,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
+import javax.persistence.CascadeType
+import javax.persistence.OneToMany
 
 @MicronautTest
 @H2DBProperties
@@ -43,6 +46,10 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
     @Shared
     @Inject
     CountryRepository countryRepository = applicationContext.getBean(CountryRepository)
+
+    @Shared
+    @Inject
+    CitizenRepository citizenRepository = applicationContext.getBean(CitizenRepository)
 
     void 'test insert'() {
         given:
@@ -130,15 +137,105 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             settlement.settlementType.name == "Some"
             settlement.description == "New settlement MODIFIED"
             settlement.enabled
+
+        when: "joined table citizen is added"
+            Citizen citizen = new Citizen(settlements: [settlement])
+            citizenRepository.save(citizen)
+
+        then:
+            citizen.id
+
+        when:
+            citizenRepository.findById(citizen.id).get()
+
+        then:
+            citizen.id
+            verifyAll(citizen.settlements[0]) {
+                settlement.id
+                settlement.id.code == "20010"
+                settlement.id.codeId == 9
+                settlement.id.county.countyName == "Czech Republic"
+                settlement.id.county.id
+                settlement.id.county.id.id == 44
+                settlement.id.county.id.state.id == 12
+                settlement.zone.id == 1
+                settlement.zone.name == "Danger"
+                settlement.settlementType.id == 1
+                settlement.settlementType.name == "Some"
+                settlement.description == "New settlement MODIFIED"
+                settlement.enabled
+            }
+
+        when:
+            citizenRepository.update(citizen)
+            citizen = citizenRepository.queryById(citizen.id).get()
+
+        then:
+            citizen.id
+            citizen.settlements == null
+
+        when:
+            citizenRepository.update(citizen)
+            citizen = citizenRepository.findById(citizen.id).get()
+
+        then:
+            citizen.id
+            verifyAll(citizen.settlements[0]) {
+                settlement.id
+                settlement.id.code == "20010"
+                settlement.id.codeId == 9
+                settlement.id.county.countyName == "Czech Republic"
+                settlement.id.county.id
+                settlement.id.county.id.id == 44
+                settlement.id.county.id.state.id == 12
+                settlement.zone.id == 1
+                settlement.zone.name == "Danger"
+                settlement.settlementType.id == 1
+                settlement.settlementType.name == "Some"
+                settlement.description == "New settlement MODIFIED"
+                settlement.enabled
+            }
+
+        when:
+            def settlements = settlementRepository.findAll(Pageable.from(0, 10))
+
+        then:
+            settlements.size() == 1
+            verifyAll(settlements[0]) {
+                settlement.id
+                settlement.id.code == "20010"
+                settlement.id.codeId == 9
+                settlement.id.county.countyName == "Czech Republic"
+                settlement.id.county.id
+                settlement.id.county.id.id == 44
+                settlement.id.county.id.state.id == 12
+                settlement.zone.id == 1
+                settlement.zone.name == "Danger"
+                settlement.settlementType.id == 1
+                settlement.settlementType.name == "Some"
+                settlement.description == "New settlement MODIFIED"
+                settlement.enabled
+            }
     }
 
-    void "test build create"() {
+    void "test build create Settlement"() {
         when:
             QueryBuilder encoder = new SqlQueryBuilder()
             def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Settlement))
 
         then:
             statements.join("\n") == 'CREATE TABLE "comp_settlement" ("code" VARCHAR(255) NOT NULL,"code_id" INT NOT NULL,"id_county_id_id" INT NOT NULL,"id_county_id_state_id" INT NOT NULL,"description" VARCHAR(255) NOT NULL,"settlement_type_id" BIGINT NOT NULL,"zone_id" BIGINT NOT NULL,"is_enabled" BOOLEAN NOT NULL, PRIMARY KEY("code","code_id","id_county_id_id","id_county_id_state_id"));'
+    }
+    
+    void "test build create Citizen"() {
+        when:
+            QueryBuilder encoder = new SqlQueryBuilder()
+            def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(Citizen))
+
+        then:
+            statements.length == 2
+            statements[0] == 'CREATE TABLE "citizen_settlement" ("citizen_id" BIGINT NOT NULL,"settlement_id_code" VARCHAR(255) NOT NULL,"settlement_id_code_id" INT NOT NULL,"settlement_id_county_id_id" INT NOT NULL,"settlement_id_county_id_state_id" INT NOT NULL);'
+            statements[1] == 'CREATE TABLE "comp_citizen" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT);'
     }
 
     void "test build insert"() {
@@ -237,6 +334,20 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             ]
     }
 
+    void "test build query 4"() {
+        when:
+//            DefaultAnnotationMetadata annotationMetadata = new DefaultAnnotationMetadata()
+            QueryBuilder encoder = new SqlQueryBuilder()
+            def queryModel = QueryModel.from(getRuntimePersistentEntity(Citizen))
+            queryModel.join("settlements", null, Join.Type.FETCH, null)
+            def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
+        then:
+            q.query == 'SELECT citizen_."id",citizen_settlements_."code" AS settlements_code,citizen_settlements_."code_id" AS settlements_code_id,citizen_settlements_."id_county_id_id" AS settlements_id_county_id_id,citizen_settlements_."id_county_id_state_id" AS settlements_id_county_id_state_id,citizen_settlements_."description" AS settlements_description,citizen_settlements_."settlement_type_id" AS settlements_settlement_type_id,citizen_settlements_."zone_id" AS settlements_zone_id,citizen_settlements_."is_enabled" AS settlements_is_enabled FROM "comp_citizen" citizen_ INNER JOIN "citizen_settlement" citizen_settlements_citizen_settlement_ ON citizen_."id"=citizen_settlements_citizen_settlement_."citizen_id"  INNER JOIN "comp_settlement" citizen_settlements_ ON citizen_settlements_citizen_settlement_."settlement_id_code"=citizen_settlements_."code" AND citizen_settlements_citizen_settlement_."settlement_id_code_id"=citizen_settlements_."code_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_id"=citizen_settlements_."id_county_id_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_state_id"=citizen_settlements_."id_county_id_state_id" WHERE (citizen_."id" = ?)'
+            q.parameters == [
+                    '1': 'xyz'
+            ]
+    }
+
     @Shared
     Map<Class, RuntimePersistentEntity> entities = [:]
 
@@ -270,6 +381,11 @@ interface SettlementRepository extends CrudRepository<Settlement, SettlementPk> 
     @Join(value = "id.county", type = Join.Type.FETCH)
     Optional<Settlement> queryById(@NonNull SettlementPk settlementPk);
 
+    @Join(value = "settlementType", type = Join.Type.FETCH)
+    @Join(value = "zone", type = Join.Type.FETCH)
+    @Join(value = "id.county", type = Join.Type.FETCH)
+    List<Settlement> findAll(Pageable pageable);
+
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -282,6 +398,17 @@ interface ZoneRepository extends CrudRepository<Zone, Long> {
 
 @JdbcRepository(dialect = Dialect.H2)
 interface CountryRepository extends CrudRepository<County, CountyPk> {
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface CitizenRepository extends CrudRepository<Citizen, Long> {
+
+    @Join(value = "settlements", type = Join.Type.FETCH)
+    @Override
+    Optional<Citizen> findById(@NonNull Long id);
+
+    Optional<Citizen> queryById(@NonNull Long id);
+
 }
 
 @MappedEntity("comp_state")
@@ -355,4 +482,14 @@ class Zone {
     Long id
     @MappedProperty
     String name
+}
+
+@MappedEntity("comp_citizen")
+class Citizen {
+    @Id
+    @GeneratedValue
+    Long id
+
+    @OneToMany(cascade = CascadeType.PERSIST)
+    List<Settlement> settlements
 }
