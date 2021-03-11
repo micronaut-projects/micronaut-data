@@ -36,6 +36,70 @@ class MultiOneToManyJoinSpec extends Specification implements H2TestPropertyProv
         categoryRepository.findAll().isEmpty()
     }
 
+    void 'test one-to-many hierarchy'() {
+        given:
+            Category category = new Category(name: "Cats", productList: [
+                    new Product(name: "Food", productOption: [
+                            new ProductOption(name: "Pork", option: [new Option(name: "X"), new Option(name: "Y"), new Option(name: "Z")]),
+                            new ProductOption(name: "Beef", option: [new Option(name: "A"), new Option(name: "B"), new Option(name: "C")])
+                    ]),
+                    new Product(name: "Toys", productOption:  [
+                            new ProductOption(name: "Ffff", option: [new Option(name: "F1"), new Option(name: "F2"), new Option(name: "F3")]),
+                            new ProductOption(name: "Pfff", option: [new Option(name: "P1"), new Option(name: "P2"), new Option(name: "P3")])
+                    ])
+            ])
+        when:
+            categoryRepository.save(category)
+            category = categoryRepository.findById(category.id).get()
+        then:
+            category.id
+            category.name == "Cats"
+            category.productList.size() == 2
+            category.productList[0].name == "Food"
+            category.productList[0].productOption[0].name == "Pork"
+            category.productList[0].productOption[0].option.size() == 3
+            category.productList[0].productOption[1].name == "Beef"
+            category.productList[0].productOption[1].option.size() == 3
+            category.productList[1].name == "Toys"
+            category.productList[1].productOption[0].name == "Ffff"
+            category.productList[1].productOption[0].option.size() == 3
+            category.productList[1].productOption[1].name == "Pfff"
+            category.productList[1].productOption[1].option.size() == 3
+        when:
+            categoryRepository.update(category)
+            category = categoryRepository.findById(category.id).get()
+        then:
+            category.id
+            category.name == "Cats"
+            category.productList.size() == 2
+            category.productList[0].name == "Food"
+            category.productList[0].productOption[0].name == "Pork"
+            category.productList[0].productOption[0].option.size() == 3
+            category.productList[0].productOption[1].name == "Beef"
+            category.productList[0].productOption[1].option.size() == 3
+            category.productList[1].name == "Toys"
+            category.productList[1].productOption[0].name == "Ffff"
+            category.productList[1].productOption[0].option.size() == 3
+            category.productList[1].productOption[1].name == "Pfff"
+            category.productList[1].productOption[1].option.size() == 3
+        when:
+            category = categoryRepository.findAll().first()
+        then:
+            category.id
+            category.name == "Cats"
+            category.productList.size() == 2
+            category.productList[0].name == "Food"
+            category.productList[0].productOption[0].name == "Pork"
+            category.productList[0].productOption[0].option.size() == 3
+            category.productList[0].productOption[1].name == "Beef"
+            category.productList[0].productOption[1].option.size() == 3
+            category.productList[1].name == "Toys"
+            category.productList[1].productOption[0].name == "Ffff"
+            category.productList[1].productOption[0].option.size() == 3
+            category.productList[1].productOption[1].name == "Pfff"
+            category.productList[1].productOption[1].option.size() == 3
+    }
+
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -46,21 +110,22 @@ interface CategoryRepository extends CrudRepository<Category, Long> {
     @Join(value = "productList.productOption.option", alias =  "opno_", type =  Join.Type.LEFT_FETCH)
     @Override
     List<Category> findAll()
+
+    @Join(value = "productList", alias =  "p_", type =  Join.Type.LEFT_FETCH)
+    @Join(value = "productList.productOption", alias =  "op_", type =  Join.Type.LEFT_FETCH)
+    @Join(value = "productList.productOption.option", alias =  "opno_", type =  Join.Type.LEFT_FETCH)
+    @Override
+    Optional<Category> findById(Long id);
 }
+
 @MappedEntity("mo2m_category")
 class Category {
     @Id
     @GeneratedValue
     Long id
     String name
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "categoryId")
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "category", cascade = Relation.Cascade.ALL)
     List<Product> productList
-
-    Category(Long id, String name, List<Product> productList) {
-        this.id = id
-        this.name = name
-        this.productList = productList
-    }
 }
 
 @MappedEntity("mo2m_product")
@@ -69,16 +134,10 @@ class Product {
     @GeneratedValue
     Long id
     String name
-    Long categoryId
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "productId")
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    Category category
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "product", cascade = Relation.Cascade.ALL)
     List<ProductOption> productOption
-
-    Product(Long id, String name, Long categoryId, List<ProductOption> productOption) {
-        this.id = id
-        this.name = name
-        this.categoryId = categoryId
-        this.productOption = productOption
-    }
 }
 
 @MappedEntity("mo2m_product_option")
@@ -87,16 +146,10 @@ class ProductOption {
     @GeneratedValue
     Long id
     String name
-    Long productId
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "productOptionId")
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    Product product
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "productOption", cascade = Relation.Cascade.ALL)
     List<Option> option
-
-    ProductOption(Long id, String name, Long productId, List<Option> option) {
-        this.id = id
-        this.name = name
-        this.productId = productId
-        this.option = option
-    }
 }
 
 @MappedEntity("mo2m_option")
@@ -105,11 +158,6 @@ class Option {
     @GeneratedValue
     Long id
     String name
-    Long productOptionId
-
-    Option(Long id, String name, Long productOptionId) {
-        this.id = id
-        this.name = name
-        this.productOptionId = productOptionId
-    }
+    @Relation(value = Relation.Kind.MANY_TO_ONE)
+    ProductOption productOption
 }

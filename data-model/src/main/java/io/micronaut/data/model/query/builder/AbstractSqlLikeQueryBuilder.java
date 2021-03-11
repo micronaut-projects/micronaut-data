@@ -1636,7 +1636,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             PersistentEntity associatedEntity = association.getAssociatedEntity();
             PersistentProperty assocIdentity = associatedEntity.getIdentity();
             if (assocIdentity == null) {
-                throw new IllegalStateException("Identity cannot be missing for: " + association);
+                throw new IllegalStateException("Identity cannot be missing for: " + associatedEntity);
             }
             if (assocIdentity instanceof Association) {
                 traversePersistentProperties(newAssociations, assocIdentity, consumerProperty);

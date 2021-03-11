@@ -270,13 +270,26 @@ public interface QueryModel extends Criteria {
     /**
      * Join on the given association.
      * @param path The join path
-     * @param association The association, never null
+     * @param association The association
      * @param joinType The join type
      * @param alias The alias to use.
      * @return The query
      */
     @NonNull
-    JoinPath join(String path, @NonNull Association association, @NonNull Join.Type joinType, @Nullable String alias);
+    @Deprecated
+    JoinPath join(String path, Association association, @NonNull Join.Type joinType, @Nullable String alias);
+
+    /**
+     * Join on the given association.
+     * @param path The join path
+     * @param joinType The join type
+     * @param alias The alias to use.
+     * @return The query
+     */
+    @NonNull
+    default JoinPath join(String path, @NonNull Join.Type joinType, @Nullable String alias) {
+        return join(path, joinType, alias);
+    }
 
     /**
      * Join on the given association.
@@ -286,6 +299,9 @@ public interface QueryModel extends Criteria {
      */
     @NonNull
     default JoinPath join(@NonNull Association association, @NonNull Join.Type joinType) {
+        if (getPersistentEntity() != association.getOwner()) {
+            throw new IllegalArgumentException("The association " + association + " must be owned by: " + getPersistentEntity());
+        }
         return join(association.getName(), association, joinType, null);
     }
 

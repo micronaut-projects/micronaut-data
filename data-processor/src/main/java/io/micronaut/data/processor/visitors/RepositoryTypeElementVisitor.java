@@ -359,7 +359,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                 default:
                                                     // no-op
                                             }
-                                            countQuery.join(joinPath.getAssociation(), joinType);
+                                            countQuery.join(joinPath.getPath(), joinType, null);
                                         }
 
                                         preparedCount = queryEncoder.buildQuery(countQuery);

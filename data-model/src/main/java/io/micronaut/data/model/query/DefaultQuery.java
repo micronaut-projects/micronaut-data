@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.*;
@@ -111,41 +112,36 @@ public class DefaultQuery implements QueryModel {
     /**
      * Specifies whether a join query should be used (if join queries are supported by the underlying datastore).
      *
-     * @param association The property
+     * @param path The path
+     * @param joinType The joinType
+     * @param alias The alias
      * @return The query
      */
     @Override
-    public JoinPath join(@NonNull String path, @NonNull Association association, @NonNull Join.Type joinType, String alias) {
+    public JoinPath join(@NonNull String path, @NonNull Join.Type joinType, String alias) {
         PersistentEntity entity = getEntity();
-        String[] elements = path.split("\\.");
-        List<Association> associations = new ArrayList<>(elements.length + 1);
-        for (String element : elements) {
-            PersistentProperty property = entity.getPropertyByName(element);
-            if (property == null) {
-                final PersistentProperty identity = entity.getIdentity();
-                if (identity != null) {
-                    if (element.equals(identity.getName())) {
-                        property = identity;
-                    } else if (identity instanceof Embedded) {
-                        associations.add((Association) identity);
-                        property = ((Embedded) identity).getAssociatedEntity().getPropertyByName(element);
-                    }
-                }
-            }
-            if (property instanceof Association) {
-                Association a = (Association) property;
-                entity = a.getAssociatedEntity();
-                associations.add(a);
-            } else {
-                throw new IllegalArgumentException("Invalid association path. Element [" + element + "] is not an association.");
-            }
-
+        List<PersistentProperty> propertiesInPath = entity.getPropertiesInPath(path);
+        if (propertiesInPath.isEmpty()) {
+            throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association.");
         }
-
+        List<Association> associations = new ArrayList<>(propertiesInPath.size());
+        for (PersistentProperty property : propertiesInPath) {
+            if (property instanceof Association) {
+                associations.add((Association) property);
+            } else {
+                throw new IllegalArgumentException("Invalid association path. Property [" + property + "] is not an association.");
+            }
+        }
         Association[] associationPath = associations.toArray(new Association[0]);
         JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
         joinPaths.put(path, jp);
         return jp;
+    }
+
+    @NonNull
+    @Override
+    public JoinPath join(String path, Association association, @NonNull Join.Type joinType, @Nullable String alias) {
+        return join(path, joinType, alias);
     }
 
     /**
