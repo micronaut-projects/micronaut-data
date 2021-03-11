@@ -85,7 +85,7 @@ class User {
                 .stringValue(Query).get()
 
         expect:
-        query == 'SELECT user_.*,user_authorities_."name12345" AS authorities_name12345 FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."name12345" WHERE (user_."id" = ?)'
+        query == 'SELECT user_."id",user_authorities_."name12345" AS authorities_name12345 FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."name12345" WHERE (user_."id" = ?)'
     }
 
     @Unroll

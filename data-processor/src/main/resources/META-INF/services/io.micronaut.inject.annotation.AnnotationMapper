@@ -14,6 +14,8 @@ io.micronaut.data.processor.mappers.jpa.OneToManyMapper
 io.micronaut.data.processor.mappers.jpa.ManyToOneMapper
 io.micronaut.data.processor.mappers.jpa.OneToOneMapper
 io.micronaut.data.processor.mappers.jpa.EmbeddedIdAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.JoinTableAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.JoinColumnAnnotationMapper
 io.micronaut.data.processor.mappers.spring.SpringTransactionalMapper
 io.micronaut.data.processor.mappers.spring.SpringCreatedDateMapper
 io.micronaut.data.processor.mappers.spring.SpringIdMapper

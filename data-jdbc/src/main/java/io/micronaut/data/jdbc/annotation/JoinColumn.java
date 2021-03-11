@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.annotation;
 
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
@@ -23,33 +24,35 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.
+ * Subset of the JPA join column annotation.
  *
- * <p>Unlike the JPA version this is simplification and relies on a thid</p>
- *
- * @author graemerocher
- * @since 1.0.0
+ * @author Denis Stepanov
+ * @since 2.4.0
  */
 @Target({METHOD, FIELD})
 @Retention(RUNTIME)
-public @interface JoinTable {
+@Repeatable(JoinColumns.class)
+public @interface JoinColumn {
+
     /**
-     * @return The name of the join table
+     * The name of the foreign column.
+     *
+     * @return The name of the foreign column
      */
     String name() default "";
 
     /**
-     * @return The join columns to use.
+     * The name of the column referenced by this foreign column.
+     *
+     * @return The referenced column name
      */
-    JoinColumn[] joinColumns() default {};
+    String referencedColumnName() default "";
 
     /**
-     * @return The inverse join columns to use.
+     * Used to define the mapping. For example in the case of SQL this would be the column definition. Example: BLOB NOT NULL.
+     *
+     * @return A string-based definition of the property type.
      */
-    JoinColumn[] inverseJoinColumns() default {};
+    String columnDefinition() default "";
 
-    /**
-     * @return The alias to use for the query
-     */
-    String alias() default "";
 }

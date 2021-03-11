@@ -23,33 +23,18 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.
+ * The repeatable container of @{@link io.micronaut.data.jdbc.annotation.JoinColumn}.
  *
- * <p>Unlike the JPA version this is simplification and relies on a thid</p>
- *
- * @author graemerocher
- * @since 1.0.0
+ * @author Denis Stepanov
+ * @since 2.4.0
  */
 @Target({METHOD, FIELD})
 @Retention(RUNTIME)
-public @interface JoinTable {
-    /**
-     * @return The name of the join table
-     */
-    String name() default "";
+public @interface JoinColumns {
 
     /**
-     * @return The join columns to use.
+     * The join columns that map the relationship.
      */
-    JoinColumn[] joinColumns() default {};
+    JoinColumn[] value();
 
-    /**
-     * @return The inverse join columns to use.
-     */
-    JoinColumn[] inverseJoinColumns() default {};
-
-    /**
-     * @return The alias to use for the query
-     */
-    String alias() default "";
 }
