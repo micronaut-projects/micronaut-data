@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.query.builder
 
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -22,7 +23,11 @@ import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.tck.entities.Challenge
+import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -205,15 +210,8 @@ class JpaQueryBuilderSpec extends Specification {
         Person | 'isNotEmpty' | 'name'   | "IS NOT NULL AND person_.$property <> \'\'"
     }
 
-    @Shared
-    def shipment = new RuntimePersistentEntity(Shipment)
-    @Shared
-    def userRole = new RuntimePersistentEntity(UserRole)
-    @Shared
-    def uuidEntity = new RuntimePersistentEntity(UuidEntity)
-
     @Unroll
-    void "test embedded"() {
+    void "test queries"() {
         when:
             QueryBuilder encoder = new JpaQueryBuilder()
             QueryResult encodedQuery = encoder.buildQuery(queryModel)
@@ -223,26 +221,75 @@ class JpaQueryBuilderSpec extends Specification {
 
         where:
             queryModel << [
-                    QueryModel.from(shipment).idEq(new QueryParameter("xyz")),
-                    QueryModel.from(shipment).eq("shipmentId.country", new QueryParameter("xyz")),
+                    QueryModel.from(getRuntimePersistentEntity(Shipment)).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(getRuntimePersistentEntity(Shipment)).eq("shipmentId.country", new QueryParameter("xyz")),
                     {
-                        def qm = QueryModel.from(userRole)
-                        qm.join(userRole.getPropertyByPath("id.user").get() as Association)
+                        def entity = getRuntimePersistentEntity(UserRole)
+                        def qm = QueryModel.from(entity)
+                        qm.join("role", entity.getPropertyByPath("id.role").get() as Association, Join.Type.DEFAULT, null)
                         qm
                     }.call(),
                     {
-                        def qm = QueryModel.from(userRole)
-                        qm.join(userRole.getPropertyByPath("id.user").get() as Association)
-                        qm.eq("id.user", new QueryParameter("xyz"))
+                        def entity = getRuntimePersistentEntity(UserRole)
+                        def qm = QueryModel.from(entity)
+                        qm.join("user", entity.getPropertyByPath("id.user").get() as Association, Join.Type.DEFAULT, null)
+                        qm.eq("user", new QueryParameter("xyz"))
                     }.call(),
-                    QueryModel.from(uuidEntity).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(getRuntimePersistentEntity(UuidEntity)).idEq(new QueryParameter("xyz")),
+                    QueryModel.from(getRuntimePersistentEntity(UserRole)).idEq(new QueryParameter("xyz")),
+                    {
+                        def entity = getRuntimePersistentEntity(Challenge)
+                        def qm = QueryModel.from(entity)
+                        qm.join("authentication", null, Join.Type.FETCH, null)
+                        qm.join("authentication.device", null, Join.Type.FETCH, null)
+                        qm.join("authentication.device.user", null, Join.Type.FETCH, null)
+                        qm.idEq(new QueryParameter("xyz"))
+                        qm
+                    }.call(),
+                    {
+                        def entity = getRuntimePersistentEntity(UserRole)
+                        def qm = QueryModel.from(entity)
+                        qm.projections().add(Projections.property("role"))
+                        qm.join("role", null, Join.Type.FETCH, null)
+                        qm.eq("user", new QueryParameter("xyz"))
+                        qm
+                    }.call(),
+                    {
+                        def entity = getRuntimePersistentEntity(Meal)
+                        def qm = QueryModel.from(entity)
+                        qm.join("foods", null, Join.Type.FETCH, null)
+                        qm.idEq(new QueryParameter("xyz"))
+                        qm
+                    }.call()
             ]
             query << [
-                    "SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId = :p1)",
-                    "SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId.country = :p1)",
-                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRole_user_',
-                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRole_user_ WHERE (userRole_.id.user = :p1)',
-                    'SELECT uid FROM io.micronaut.data.tck.entities.UuidEntity AS uid WHERE (uid.uuid = :p1)'
+                    'SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId = :p1)',
+                    'SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId.country = :p1)',
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.role userRole_id_role_',
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRole_id_user_ WHERE (userRole_.user = :p1)',
+                    'SELECT uid FROM io.micronaut.data.tck.entities.UuidEntity AS uid WHERE (uid.uuid = :p1)',
+                    'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ WHERE (userRole_.id = :p1)',
+                    'SELECT challenge_ FROM io.micronaut.data.tck.entities.Challenge AS challenge_ JOIN FETCH challenge_.authentication challenge_authentication_ JOIN FETCH challenge_authentication_.device challenge_authentication_device_ JOIN FETCH challenge_authentication_device_.user challenge_authentication_device_user_ WHERE (challenge_.id = :p1)',
+                    'SELECT userRole_.role FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN FETCH userRole_.role userRole_id_role_ WHERE (userRole_.user = :p1)',
+                    'SELECT meal_ FROM io.micronaut.data.tck.entities.Meal AS meal_ JOIN FETCH meal_.foods meal_foods_ WHERE (meal_.mid = :p1)'
             ]
+    }
+
+    @Shared
+    Map<Class, RuntimePersistentEntity> entities = [:]
+
+    // entities have instance compare in some cases
+    RuntimePersistentEntity getRuntimePersistentEntity(Class type) {
+        RuntimePersistentEntity entity = entities.get(type)
+        if (entity == null) {
+            entity = new RuntimePersistentEntity(type) {
+                @Override
+                protected RuntimePersistentEntity getEntity(Class t) {
+                    return getRuntimePersistentEntity(t)
+                }
+            }
+            entities.put(type, entity)
+        }
+        return entity
     }
 }

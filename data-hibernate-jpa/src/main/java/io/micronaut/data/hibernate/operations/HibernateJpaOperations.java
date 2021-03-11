@@ -48,6 +48,7 @@ import io.micronaut.transaction.TransactionOperations;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.RootGraph;
+import org.hibernate.graph.SubGraph;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.hibernate.type.Type;
@@ -142,12 +143,9 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
                 if (preparedQuery.isNative()) {
-                    q = currentSession
-                            .createNativeQuery(query, Tuple.class);
-
+                    q = currentSession.createNativeQuery(query, Tuple.class);
                 } else {
-                    q = currentSession
-                            .createQuery(query, Tuple.class);
+                    q = currentSession.createQuery(query, Tuple.class);
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
@@ -159,18 +157,14 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 return null;
             } else {
                 Query<R> q;
-
                 if (preparedQuery.isNative()) {
                     if (DataType.ENTITY.equals(preparedQuery.getResultDataType())) {
-                        q = currentSession
-                                .createNativeQuery(query, resultType);
+                        q = currentSession.createNativeQuery(query, resultType);
                     } else {
-                        q = currentSession
-                                .createNativeQuery(query);
+                        q = currentSession.createNativeQuery(query);
                     }
                 } else {
-                    q = currentSession
-                            .createQuery(query, resultType);
+                    q = currentSession.createQuery(query, resultType);
                 }
                 bindParameters(q, preparedQuery, query);
                 bindQueryHints(q, preparedQuery, currentSession);
@@ -354,10 +348,33 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                         RootGraph<?> entityGraph = session.getEntityGraph(graphName);
                         q.setHint(hintName, entityGraph);
                     } else if (value instanceof String[]) {
-                        String[] paths = (String[]) value;
-                        if (ArrayUtils.isNotEmpty(paths)) {
+                        String[] pathsDefinitions = (String[]) value;
+                        if (ArrayUtils.isNotEmpty(pathsDefinitions)) {
                             RootGraph<T> entityGraph = session.createEntityGraph(preparedQuery.getRootEntity());
-                            entityGraph.addAttributeNodes(paths);
+                            for (String pathsDefinition : pathsDefinitions)  {
+                                String[] paths = pathsDefinition.split("\\.");
+                                if (paths.length == 1) {
+                                    entityGraph.addAttributeNode(paths[0]);
+                                } else {
+                                    SubGraph<T> subGraph = null;
+                                    for (int i = 0; i < paths.length; i++) {
+                                        String path = paths[i];
+                                        if (subGraph == null) {
+                                            if (i + 1 == paths.length) {
+                                                entityGraph.addAttributeNode(path);
+                                            } else {
+                                                subGraph = entityGraph.addSubGraph(path);
+                                            }
+                                        } else {
+                                            if (i + 1 == paths.length) {
+                                                subGraph.addAttributeNode(path);
+                                            } else {
+                                                subGraph = subGraph.addSubGraph(path);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             q.setHint(hintName, entityGraph);
                         }
                     }

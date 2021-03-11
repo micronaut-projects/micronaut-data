@@ -15,12 +15,22 @@
  */
 package io.micronaut.data.hibernate;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Author;
 
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
+import java.util.Optional;
 
 @Repository
 @Transactional
-public interface AuthorRepository extends io.micronaut.data.tck.repositories.AuthorRepository {}
+public interface AuthorRepository extends io.micronaut.data.tck.repositories.AuthorRepository {
+
+    @NonNull
+    @EntityGraph(attributePaths = {"books", "books.pages"})
+    Optional<Author> queryById(@NonNull @NotNull Long aLong);
+
+}
