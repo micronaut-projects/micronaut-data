@@ -3630,6 +3630,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/IdAnnotationMapper.html#getName--">getName()</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/IdAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">IdAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html#getName--">getName()</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">JoinColumnAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html#getName--">getName()</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">JoinTableAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/ManyToManyMapper.html#getName--">getName()</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/ManyToManyMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">ManyToManyMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/ManyToOneMapper.html#getName--">getName()</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/ManyToOneMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">ManyToOneMapper</a></dt>
@@ -5769,6 +5773,20 @@
 <dd>
 <div class="block">The type of join.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/JoinColumn.html" title="annotation in io.micronaut.data.jdbc.annotation"><span class="typeNameLink">JoinColumn</span></a> - Annotation Type in <a href="io/micronaut/data/jdbc/annotation/package-summary.html">io.micronaut.data.jdbc.annotation</a></dt>
+<dd>
+<div class="block">Subset of the JPA join column annotation.</div>
+</dd>
+<dt><a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">JoinColumnAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
+<dd>
+<div class="block">Maps JPA's <code>JoinColumn</code> annotation to Micronaut's.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html#JoinColumnAnnotationMapper--">JoinColumnAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">JoinColumnAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/annotation/JoinColumns.html" title="annotation in io.micronaut.data.jdbc.annotation"><span class="typeNameLink">JoinColumns</span></a> - Annotation Type in <a href="io/micronaut/data/jdbc/annotation/package-summary.html">io.micronaut.data.jdbc.annotation</a></dt>
+<dd>
+<div class="block">The repeatable container of @<a href="io/micronaut/data/jdbc/annotation/JoinColumn.html" title="annotation in io.micronaut.data.jdbc.annotation"><code>JoinColumn</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query"><span class="typeNameLink">JoinPath</span></a> - Class in <a href="io/micronaut/data/model/query/package-summary.html">io.micronaut.data.model.query</a></dt>
 <dd>
 <div class="block">A join path represents a path, association and join type for performing a join with a query.</div>
@@ -5787,6 +5805,12 @@
 <dd>
 <div class="block">Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.</div>
 </dd>
+<dt><a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">JoinTableAnnotationMapper</span></a> - Class in <a href="io/micronaut/data/processor/mappers/jpa/package-summary.html">io.micronaut.data.processor.mappers.jpa</a></dt>
+<dd>
+<div class="block">Maps JPA's <code>JoinTable</code> annotation to Micronaut's.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html#JoinTableAnnotationMapper--">JoinTableAnnotationMapper()</a></span> - Constructor for class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">JoinTableAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa"><span class="typeNameLink">JpaQueryBuilder</span></a> - Class in <a href="io/micronaut/data/model/query/builder/jpa/package-summary.html">io.micronaut.data.model.query.builder.jpa</a></dt>
 <dd>
 <div class="block">Builds JPA 1.0 String-based queries from the Query model.</div>
@@ -6083,6 +6107,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/IdAnnotationMapper.html#map-io.micronaut.core.annotation.AnnotationValue-io.micronaut.inject.visitor.VisitorContext-">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/IdAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">IdAnnotationMapper</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html#map-io.micronaut.core.annotation.AnnotationValue-io.micronaut.inject.visitor.VisitorContext-">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/JoinColumnAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">JoinColumnAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html#map-io.micronaut.core.annotation.AnnotationValue-io.micronaut.inject.visitor.VisitorContext-">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/JoinTableAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">JoinTableAnnotationMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/ManyToManyMapper.html#map-io.micronaut.core.annotation.AnnotationValue-io.micronaut.inject.visitor.VisitorContext-">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/ManyToManyMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">ManyToManyMapper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/mappers/jpa/ManyToOneMapper.html#map-io.micronaut.core.annotation.AnnotationValue-io.micronaut.inject.visitor.VisitorContext-">map(AnnotationValue&lt;Annotation&gt;, VisitorContext)</a></span> - Method in class io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/ManyToOneMapper.html" title="class in io.micronaut.data.processor.mappers.jpa">ManyToOneMapper</a></dt>
@@ -6147,6 +6175,8 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategy.html#mappedJoinTableColumn-io.micronaut.data.model.PersistentEntity-java.util.List-io.micronaut.data.model.PersistentProperty-">mappedJoinTableColumn(PersistentEntity, List&lt;Association&gt;, PersistentProperty)</a></span> - Method in interface io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategies.KebabCase.html#mappedName-java.lang.String-">mappedName(String)</a></span> - Method in class io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategies.KebabCase.html" title="class in io.micronaut.data.model.naming">NamingStrategies.KebabCase</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/naming/NamingStrategies.LowerCase.html#mappedName-java.lang.String-">mappedName(String)</a></span> - Method in class io.micronaut.data.model.naming.<a href="io/micronaut/data/model/naming/NamingStrategies.LowerCase.html" title="class in io.micronaut.data.model.naming">NamingStrategies.LowerCase</a></dt>
