@@ -32,6 +32,28 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Inject
     AuthorRepository ar
 
+    void "author find by id with joins"() {
+        when:
+        def author = authorRepository.searchByName("Stephen King")
+        author = authorRepository.findById(author.id).get()
+
+        then:
+        author.books.size() == 2
+        author.books[0].pages.size() == 0
+        author.books[1].pages.size() == 0
+    }
+
+    void "author find by id with EntityGraph"() {
+        when:
+        def author = authorRepository.searchByName("Stephen King")
+        author = authorRepository.queryById(author.id).get()
+
+        then:
+        author.books.size() == 2
+        author.books[0].pages.size() == 0
+        author.books[1].pages.size() == 0
+    }
+
     void "test @Where annotation placehoder"() {
         given:
         def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300)

@@ -19,9 +19,12 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -31,7 +34,11 @@ import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * Builds JPA 1.0 String-based queries from the Query model.
@@ -109,15 +116,50 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected String[] buildJoin(String alias, JoinPath joinPath, String joinType, StringBuilder target, Map<String, String> appliedJoinPaths, QueryState queryState) {
-        Association association = joinPath.getAssociation();
-        String joinAlias = getAliasName(joinPath);
-        target.append(joinType)
-                .append(alias)
-                .append(DOT)
-                .append(association.getName())
-                .append(SPACE)
-                .append(joinAlias);
-        return new String[] { joinAlias };
+        Association[] associationPath = joinPath.getAssociationPath();
+        String[] joinAliases;
+        if (ArrayUtils.isEmpty(associationPath)) {
+            throw new IllegalArgumentException("Invalid association path [" + joinPath.getPath() + "]");
+        }
+        List<Association> joinAssociationsPath = new ArrayList<>(associationPath.length);
+        joinAliases = new String[associationPath.length];
+        StringJoiner pathSoFar = new StringJoiner(".");
+        List<String> aliases = new ArrayList<>();
+        for (int i = 0; i < associationPath.length; i++) {
+            Association association = associationPath[i];
+            pathSoFar.add(association.getName());
+            if (association instanceof Embedded) {
+                joinAssociationsPath.add(association);
+                continue;
+            }
+            String currentPath = pathSoFar.toString();
+            String existingAlias = appliedJoinPaths.get(alias + DOT + currentPath);
+            if (existingAlias != null) {
+                joinAliases[i] = existingAlias;
+                aliases.add(existingAlias);
+            } else {
+                int finalI = i;
+                JoinPath joinPathToUse = queryState.getQueryModel().getJoinPath(currentPath)
+                        .orElseGet(() ->
+                                new JoinPath(
+                                        currentPath,
+                                        Arrays.copyOfRange(associationPath, 0, finalI + 1),
+                                        joinPath.getJoinType(),
+                                        joinPath.getAlias().orElse(null))
+                        );
+                String currentAlias = getAliasName(joinPathToUse);
+                joinAliases[i] = currentAlias;
+                String lastJoinAlias = aliases.isEmpty() ? alias : CollectionUtils.last(aliases);
+                target.append(joinType)
+                    .append(lastJoinAlias).append(DOT)
+                    .append(association.getName())
+                    .append(SPACE)
+                    .append(joinAliases[i]);
+                aliases.add(currentAlias);
+            }
+            joinAssociationsPath.clear();
+        }
+        return joinAliases;
     }
 
     @Override
