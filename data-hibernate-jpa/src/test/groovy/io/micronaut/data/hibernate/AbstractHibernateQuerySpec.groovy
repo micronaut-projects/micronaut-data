@@ -59,6 +59,28 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.books[1].pages.size() == 0
     }
 
+    void "author dto"() {
+        when:
+        def authors = authorRepository.getAuthors()
+
+        then:
+        authors.size() == 3
+        authors[0].authorId
+        authors[0].authorName
+        authors[1].authorId
+        authors[1].authorName
+        authors[2].authorId
+        authors[2].authorName
+
+        when:
+        def author = authorRepository.getAuthorsById(authors[0].authorId)
+
+        then:
+        author
+        author.authorId
+        author.authorName
+    }
+
     void "entity with id class"() {
         given:
         EntityWithIdClass e = new EntityWithIdClass()
