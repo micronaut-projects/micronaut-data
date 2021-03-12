@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10,"i39":10,"i40":10,"i41":10,"i42":10,"i43":10,"i44":10,"i45":10,"i46":10,"i47":10,"i48":10,"i49":10,"i50":10,"i51":10,"i52":10,"i53":10,"i54":10,"i55":10,"i56":10,"i57":10,"i58":10,"i59":10,"i60":10,"i61":10,"i62":10,"i63":10,"i64":10,"i65":10,"i66":10,"i67":10,"i68":10,"i69":10,"i70":10,"i71":10,"i72":10,"i73":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10,"i30":10,"i31":10,"i32":10,"i33":10,"i34":10,"i35":10,"i36":10,"i37":10,"i38":10,"i39":10,"i40":10,"i41":10,"i42":10,"i43":10,"i44":10,"i45":10,"i46":10,"i47":10,"i48":10,"i49":10,"i50":10,"i51":10,"i52":10,"i53":10,"i54":10,"i55":10,"i56":10,"i57":10,"i58":10,"i59":10,"i60":10,"i61":10,"i62":10,"i63":10,"i64":10,"i65":10,"i66":10,"i67":10,"i68":10,"i69":10,"i70":10,"i71":10,"i72":10,"i73":10,"i74":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -459,197 +459,205 @@ implements <a href="../../../../../io/micronaut/data/model/query/QueryModel.html
     <a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
     <a href="../../../../../io/micronaut/data/annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
     java.lang.String&nbsp;alias)</code>
-<div class="block">Specifies whether a join query should be used (if join queries are supported by the underlying datastore).</div>
+<div class="block">Join on the given association.</div>
 </td>
 </tr>
 <tr id="i45" class="rowColor">
+<td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#join-java.lang.String-io.micronaut.data.annotation.Join.Type-java.lang.String-">join</a></span>(java.lang.String&nbsp;path,
+    <a href="../../../../../io/micronaut/data/annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
+    java.lang.String&nbsp;alias)</code>
+<div class="block">Specifies whether a join query should be used (if join queries are supported by the underlying datastore).</div>
+</td>
+</tr>
+<tr id="i46" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#le-java.lang.String-io.micronaut.data.model.query.QueryParameter-">le</a></span>(java.lang.String&nbsp;property,
   <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;value)</code>
 <div class="block">Used to restrict a value to be less than or equal to the given value.</div>
 </td>
 </tr>
-<tr id="i46" class="altColor">
+<tr id="i47" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#leAll-java.lang.String-io.micronaut.data.model.query.Criteria-">leAll</a></span>(java.lang.String&nbsp;propertyName,
      <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
 <div class="block">Creates a subquery criterion that ensures the given property is less than or equal to all the given returned values.</div>
 </td>
 </tr>
-<tr id="i47" class="rowColor">
+<tr id="i48" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#leProperty-java.lang.String-java.lang.String-">leProperty</a></span>(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code>
 <div class="block">Constrains a property to be less than or equal to a specified other property.</div>
 </td>
 </tr>
-<tr id="i48" class="altColor">
+<tr id="i49" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#leSome-java.lang.String-io.micronaut.data.model.query.Criteria-">leSome</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
 <div class="block">Creates a subquery criterion that ensures the given property is less than or equal to some of the given values.</div>
 </td>
 </tr>
-<tr id="i49" class="rowColor">
+<tr id="i50" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#like-java.lang.String-io.micronaut.data.model.query.QueryParameter-">like</a></span>(java.lang.String&nbsp;propertyName,
     <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
 <div class="block">Creates a like Criterion based on the specified property name and value.</div>
 </td>
 </tr>
-<tr id="i50" class="altColor">
+<tr id="i51" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#lt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lt</a></span>(java.lang.String&nbsp;property,
   <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;value)</code>
 <div class="block">Used to restrict a value to be less than the given value.</div>
 </td>
 </tr>
-<tr id="i51" class="rowColor">
+<tr id="i52" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#ltAll-java.lang.String-io.micronaut.data.model.query.Criteria-">ltAll</a></span>(java.lang.String&nbsp;propertyName,
      <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
 <div class="block">Creates a subquery criterion that ensures the given property is less than all the given returned values.</div>
 </td>
 </tr>
-<tr id="i52" class="altColor">
+<tr id="i53" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#lte-java.lang.String-io.micronaut.data.model.query.QueryParameter-">lte</a></span>(java.lang.String&nbsp;property,
    <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;value)</code>
 <div class="block">Used to restrict a value to be less than or equal to the given value.</div>
 </td>
 </tr>
-<tr id="i53" class="rowColor">
+<tr id="i54" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#ltProperty-java.lang.String-java.lang.String-">ltProperty</a></span>(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code>
 <div class="block">Constrains a property to be less than a specified other property.</div>
 </td>
 </tr>
-<tr id="i54" class="altColor">
+<tr id="i55" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#ltSome-java.lang.String-io.micronaut.data.model.query.Criteria-">ltSome</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;propertyValue)</code>
 <div class="block">Creates a subquery criterion that ensures the given property is less than some of the given values.</div>
 </td>
 </tr>
-<tr id="i55" class="rowColor">
+<tr id="i56" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#max-int-">max</a></span>(int&nbsp;max)</code>
 <div class="block">Defines the maximum number of results to return.</div>
 </td>
 </tr>
-<tr id="i56" class="altColor">
+<tr id="i57" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#ne-java.lang.String-io.micronaut.data.model.query.QueryParameter-">ne</a></span>(java.lang.String&nbsp;propertyName,
   <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
 <div class="block">Creates a "not equals" Criterion based on the specified property name and value.</div>
 </td>
 </tr>
-<tr id="i57" class="rowColor">
+<tr id="i58" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.Junction.html" title="class in io.micronaut.data.model.query">QueryModel.Junction</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#negation--">negation</a></span>()</code>
 <div class="block">Creates a negation of several criterion.</div>
 </td>
 </tr>
-<tr id="i58" class="altColor">
+<tr id="i59" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#neProperty-java.lang.String-java.lang.String-">neProperty</a></span>(java.lang.String&nbsp;propertyName,
           java.lang.String&nbsp;otherPropertyName)</code>
 <div class="block">Constrains a property to be not equal to a specified other property.</div>
 </td>
 </tr>
-<tr id="i59" class="rowColor">
+<tr id="i60" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#not-io.micronaut.data.model.query.Criteria-">not</a></span>(<a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</code>
 <div class="block">Creates a logical negation.</div>
 </td>
 </tr>
-<tr id="i60" class="altColor">
+<tr id="i61" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#notIn-java.lang.String-io.micronaut.data.model.query.QueryModel-">notIn</a></span>(java.lang.String&nbsp;propertyName,
      <a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;subquery)</code>
 <div class="block">Creates a negated "in" Criterion using a subquery.</div>
 </td>
 </tr>
-<tr id="i61" class="rowColor">
+<tr id="i62" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#offset-long-">offset</a></span>(long&nbsp;offset)</code>
 <div class="block">Defines the offset (the first result index) of the query.</div>
 </td>
 </tr>
-<tr id="i62" class="altColor">
+<tr id="i63" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#or-io.micronaut.data.model.query.Criteria-">or</a></span>(<a href="../../../../../io/micronaut/data/model/query/Criteria.html" title="interface in io.micronaut.data.model.query">Criteria</a>&nbsp;other)</code>
 <div class="block">Creates a logical disjunction.</div>
 </td>
 </tr>
-<tr id="i63" class="rowColor">
+<tr id="i64" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#or-io.micronaut.data.model.query.QueryModel.Criterion-io.micronaut.data.model.query.QueryModel.Criterion-">or</a></span>(<a href="../../../../../io/micronaut/data/model/query/QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a>&nbsp;a,
   <a href="../../../../../io/micronaut/data/model/query/QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a>&nbsp;b)</code>
 <div class="block">Creates a disjunction using two specified criterion.</div>
 </td>
 </tr>
-<tr id="i64" class="altColor">
+<tr id="i65" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/ProjectionList.html" title="interface in io.micronaut.data.model.query">ProjectionList</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#projections--">projections</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i65" class="rowColor">
+<tr id="i66" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#rlike-java.lang.String-io.micronaut.data.model.query.QueryParameter-">rlike</a></span>(java.lang.String&nbsp;propertyName,
      <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
 <div class="block">Creates an rlike Criterion based on the specified property name and value.</div>
 </td>
 </tr>
-<tr id="i66" class="altColor">
+<tr id="i67" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sizeEq-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeEq</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
 <div class="block">Creates a Criterion that constrains a collection property by size.</div>
 </td>
 </tr>
-<tr id="i67" class="rowColor">
+<tr id="i68" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sizeGe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGe</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
 <div class="block">Creates a Criterion that constrains a collection property to be greater than or equal to the given size.</div>
 </td>
 </tr>
-<tr id="i68" class="altColor">
+<tr id="i69" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sizeGt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeGt</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
 <div class="block">Creates a Criterion that constrains a collection property to be greater than the given size.</div>
 </td>
 </tr>
-<tr id="i69" class="rowColor">
+<tr id="i70" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sizeLe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLe</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
 <div class="block">Creates a Criterion that constrains a collection property to be less than or equal to the given size.</div>
 </td>
 </tr>
-<tr id="i70" class="altColor">
+<tr id="i71" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sizeLt-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeLt</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
 <div class="block">Creates a Criterion that constrains a collection property to be less than to the given size.</div>
 </td>
 </tr>
-<tr id="i71" class="rowColor">
+<tr id="i72" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sizeNe-java.lang.String-io.micronaut.data.model.query.QueryParameter-">sizeNe</a></span>(java.lang.String&nbsp;propertyName,
       <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;size)</code>
 <div class="block">Creates a Criterion that constrains a collection property to be not equal to the given size.</div>
 </td>
 </tr>
-<tr id="i72" class="altColor">
+<tr id="i73" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#sort-io.micronaut.data.model.Sort-">sort</a></span>(<a href="../../../../../io/micronaut/data/model/Sort.html" title="interface in io.micronaut.data.model">Sort</a>&nbsp;sort)</code>
 <div class="block">Apply the given sort.</div>
 </td>
 </tr>
-<tr id="i73" class="rowColor">
+<tr id="i74" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/query/DefaultQuery.html#startsWith-java.lang.String-io.micronaut.data.model.query.QueryParameter-">startsWith</a></span>(java.lang.String&nbsp;propertyName,
           <a href="../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;parameter)</code>
@@ -804,7 +812,7 @@ public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/qu
 </dl>
 </li>
 </ul>
-<a name="join-java.lang.String-io.micronaut.data.model.Association-io.micronaut.data.annotation.Join.Type-java.lang.String-">
+<a name="join-java.lang.String-io.micronaut.data.annotation.Join.Type-java.lang.String-">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -813,17 +821,42 @@ public&nbsp;java.util.List&lt;<a href="../../../../../io/micronaut/data/model/qu
 <pre>public&nbsp;<a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;join(@NonNull
                      java.lang.String&nbsp;path,
                      @NonNull
-                     <a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
-                     @NonNull
                      <a href="../../../../../io/micronaut/data/annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
                      java.lang.String&nbsp;alias)</pre>
 <div class="block">Specifies whether a join query should be used (if join queries are supported by the underlying datastore).</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#join-java.lang.String-io.micronaut.data.annotation.Join.Type-java.lang.String-">join</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>path</code> - The path</dd>
+<dd><code>joinType</code> - The joinType</dd>
+<dd><code>alias</code> - The alias</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The query</dd>
+</dl>
+</li>
+</ul>
+<a name="join-java.lang.String-io.micronaut.data.model.Association-io.micronaut.data.annotation.Join.Type-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>join</h4>
+<pre>@NonNull
+public&nbsp;<a href="../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;join(java.lang.String&nbsp;path,
+                              <a href="../../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&nbsp;association,
+                              @NonNull
+                              <a href="../../../../../io/micronaut/data/annotation/Join.Type.html" title="enum in io.micronaut.data.annotation">Join.Type</a>&nbsp;joinType,
+                              @Nullable
+                              java.lang.String&nbsp;alias)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#join-java.lang.String-io.micronaut.data.model.Association-io.micronaut.data.annotation.Join.Type-java.lang.String-">QueryModel</a></code></span></div>
+<div class="block">Join on the given association.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html#join-java.lang.String-io.micronaut.data.model.Association-io.micronaut.data.annotation.Join.Type-java.lang.String-">join</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>association</code> - The property</dd>
 <dd><code>path</code> - The join path</dd>
+<dd><code>association</code> - The association</dd>
 <dd><code>joinType</code> - The join type</dd>
 <dd><code>alias</code> - The alias to use.</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
