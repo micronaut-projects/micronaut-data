@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":18,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":18,"i11":6,"i12":6,"i13":18,"i14":6,"i15":18,"i16":18,"i17":18,"i18":6,"i19":18,"i20":6,"i21":18,"i22":18,"i23":17,"i24":17};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":18,"i5":6,"i6":6,"i7":18,"i8":6,"i9":6,"i10":6,"i11":18,"i12":6,"i13":6,"i14":18,"i15":6,"i16":18,"i17":18,"i18":18,"i19":6,"i20":18,"i21":18,"i22":18,"i23":6,"i24":18,"i25":18,"i26":17,"i27":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -190,107 +190,125 @@ extends <a href="../../../../io/micronaut/data/model/PersistentElement.html" tit
 </td>
 </tr>
 <tr id="i7" class="rowColor">
+<td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getIdentityByName-java.lang.String-">getIdentityByName</a></span>(java.lang.String&nbsp;name)</code>
+<div class="block">Obtains an identity PersistentProperty instance by name.</div>
+</td>
+</tr>
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getName--">getName</a></span>()</code>
 <div class="block">The entity name including any package prefix.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getNamingStrategy--">getNamingStrategy</a></span>()</code>
 <div class="block">Obtain the naming strategy for the entity.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getParentEntity--">getParentEntity</a></span>()</code>
 <div class="block">Returns the parent entity of this entity.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>default java.util.Optional&lt;java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPath-java.lang.String-">getPath</a></span>(java.lang.String&nbsp;camelCasePath)</code>
 <div class="block">Computes a dot separated property path for the given camel case path.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentProperties--">getPersistentProperties</a></span>()</code>
 <div class="block">A list of properties to be persisted.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>java.util.Collection&lt;java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentPropertyNames--">getPersistentPropertyNames</a></span>()</code>
 <div class="block">A list of property names that a persistent.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>default java.util.List&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertiesInPath-java.lang.String-">getPropertiesInPath</a></span>(java.lang.String&nbsp;path)</code>
 <div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
  .</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyByName-java.lang.String-">getPropertyByName</a></span>(java.lang.String&nbsp;name)</code>
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>default java.util.Optional&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyByPath-java.lang.String-">getPropertyByPath</a></span>(java.lang.String&nbsp;path)</code>
 <div class="block">Return a property for a dot separated property path such as <code>foo.bar.prop</code>
  .</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getRootEntity--">getRootEntity</a></span>()</code>
 <div class="block">Obtains the root entity of an inheritance hierarchy.</div>
 </td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getSimpleName--">getSimpleName</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getVersion--">getVersion</a></span>()</code>
 <div class="block">Returns the version property.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#hasCompositeIdentity--">hasCompositeIdentity</a></span>()</code>
+<div class="block">Has composite identity.</div>
+</td>
+</tr>
+<tr id="i21" class="rowColor">
+<td class="colFirst"><code>default boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#hasIdentity--">hasIdentity</a></span>()</code>
+<div class="block">Has identity.</div>
+</td>
+</tr>
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isEmbeddable--">isEmbeddable</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isOwningEntity-io.micronaut.data.model.PersistentEntity-">isOwningEntity</a></span>(<a href="../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;owner)</code>
 <div class="block">Returns whether the specified entity asserts ownership over this
  entity.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isRoot--">isRoot</a></span>()</code>
 <div class="block">Whether this entity is a root entity.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code>default boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#isVersioned--">isVersioned</a></span>()</code>
 <div class="block">Is the entity versioned for optimistic locking.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#of-io.micronaut.core.beans.BeanIntrospection-">of</a></span>(io.micronaut.core.beans.BeanIntrospection&lt;T&gt;&nbsp;introspection)</code>
 <div class="block">Creates a new persistent entity representation of the given type.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>static &lt;T&gt;&nbsp;<a href="../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#of-java.lang.Class-">of</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Creates a new persistent entity representation of the given type.</div>
@@ -360,6 +378,34 @@ java.lang.String&nbsp;getAliasName()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>A name to use when referring to this element via an alias.</dd>
+</dl>
+</li>
+</ul>
+<a name="hasCompositeIdentity--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>hasCompositeIdentity</h4>
+<pre>default&nbsp;boolean&nbsp;hasCompositeIdentity()</pre>
+<div class="block">Has composite identity.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The true if composite identity present</dd>
+</dl>
+</li>
+</ul>
+<a name="hasIdentity--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>hasIdentity</h4>
+<pre>default&nbsp;boolean&nbsp;hasIdentity()</pre>
+<div class="block">Has identity.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The true if identity present</dd>
 </dl>
 </li>
 </ul>
@@ -481,6 +527,23 @@ java.util.Collection&lt;<a href="../../../../io/micronaut/data/model/Embedded.ht
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>name</code> - The name of the property</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The PersistentProperty or null if it doesn't exist</dd>
+</dl>
+</li>
+</ul>
+<a name="getIdentityByName-java.lang.String-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getIdentityByName</h4>
+<pre>@Nullable
+default&nbsp;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;getIdentityByName(java.lang.String&nbsp;name)</pre>
+<div class="block">Obtains an identity PersistentProperty instance by name.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>name</code> - The name of the identity property</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The PersistentProperty or null if it doesn't exist</dd>
 </dl>
