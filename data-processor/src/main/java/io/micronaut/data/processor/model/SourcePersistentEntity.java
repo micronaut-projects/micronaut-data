@@ -134,19 +134,26 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
         return classElement.getNativeType();
     }
 
+    @Override
+    public boolean hasCompositeIdentity() {
+        return id.length > 1;
+    }
+
+    @Override
+    public boolean hasIdentity() {
+        return id.length == 1;
+    }
+
     @Nullable
     @Override
-    public PersistentProperty[] getCompositeIdentity() {
-        return id;
+    public SourcePersistentProperty[] getCompositeIdentity() {
+        return id.length > 1 ? id : null;
     }
 
     @Nullable
     @Override
     public SourcePersistentProperty getIdentity() {
-        if (ArrayUtils.isNotEmpty(id)) {
-            return id[0];
-        }
-        return null;
+        return id.length == 1 ? id[0] : null;
     }
 
     @Nullable
@@ -197,6 +204,12 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
             }
         }
         return null;
+    }
+
+    @Nullable
+    @Override
+    public SourcePersistentProperty getIdentityByName(String name) {
+        return (SourcePersistentProperty) super.getIdentityByName(name);
     }
 
     /**

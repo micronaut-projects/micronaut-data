@@ -49,6 +49,14 @@ public abstract class AutoPopulatedEntityEventListener implements EntityEventLis
                 if (identity != null && identity.isAutoPopulated()) {
                     propertyList.add(identity);
                 }
+                final RuntimePersistentProperty<Object>[] compositeIdentity = entity.getCompositeIdentity();
+                if (compositeIdentity != null) {
+                    for (RuntimePersistentProperty<Object> compositeId : compositeIdentity) {
+                        if (compositeId.isAutoPopulated()) {
+                            propertyList.add(compositeId);
+                        }
+                    }
+                }
                 propertyList.addAll(persistentProperties.stream()
                         .filter(PersistentProperty::isAutoPopulated)
                         .collect(Collectors.toList()));

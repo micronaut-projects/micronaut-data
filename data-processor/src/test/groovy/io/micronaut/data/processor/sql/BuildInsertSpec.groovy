@@ -352,11 +352,12 @@ import io.micronaut.data.tck.entities.Food;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.repository.*;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import java.util.UUID;
 
 @Repository
 @RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
 @io.micronaut.context.annotation.Executable
-interface MyInterface extends CrudRepository<Food, Long> {
+interface MyInterface extends CrudRepository<Food, UUID> {
 }
 """)
 

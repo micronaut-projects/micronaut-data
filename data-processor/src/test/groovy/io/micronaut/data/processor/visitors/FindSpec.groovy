@@ -369,7 +369,7 @@ import java.util.UUID;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @io.micronaut.context.annotation.Executable
-interface RestaurantRepository extends CrudRepository<Restaurant, UUID> {
+interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
 
     Restaurant findByAddressZipCodeLike(String name);
     

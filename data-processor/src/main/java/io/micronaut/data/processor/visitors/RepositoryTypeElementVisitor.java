@@ -656,14 +656,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private SourcePersistentProperty findProp(SourcePersistentEntity rootEntity, String name) {
-        SourcePersistentProperty prop = rootEntity.getPropertyByName(name);
-        if (prop == null) {
-            SourcePersistentProperty identity = rootEntity.getIdentity();
-            if (identity != null && identity.getName().equals(name)) {
-                prop = identity;
-            }
-        }
-        return prop;
+        return rootEntity.getPropertyByName(name);
     }
 
     private AnnotationValue<?>[] parameterBindingToAnnotationValues(Map<String, String> finalParameterBinding) {

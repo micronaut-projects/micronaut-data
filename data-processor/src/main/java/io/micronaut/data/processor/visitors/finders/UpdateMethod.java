@@ -97,19 +97,17 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         }
 
         SourcePersistentEntity entity = matchContext.getRootEntity();
-
-        SourcePersistentProperty identity = entity.getIdentity();
-        if (identity == null) {
-            matchContext.fail("Cannot update by ID for entity that has no ID");
-            return null;
-        } else {
+        // Validate @IdClass for composite entity
+        if (entity.hasIdentity()) {
+            SourcePersistentProperty identity = entity.getIdentity();
             String idType = TypeUtils.getTypeName(identity.getType());
             String idParameterType = TypeUtils.getTypeName(idParameter.getType());
             if (!idType.equals(idParameterType)) {
                 matchContext.fail("ID type of method [" + idParameterType + "] does not match ID type of entity: " + idType);
             }
+        } else {
+            matchContext.fail("Cannot update by ID for entity that has no ID");
         }
-
 
         QueryModel query = QueryModel.from(entity);
         query.idEq(new QueryParameter(idParameter.getName()));

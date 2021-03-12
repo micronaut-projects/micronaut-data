@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.hibernate
 
-
+import io.micronaut.data.tck.entities.EntityIdClass
+import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import spock.lang.Shared
@@ -31,6 +32,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     AuthorRepository ar
+
+    @Shared
+    @Inject
+    EntityWithIdClassRepository entityWithIdClassRepository
 
     void "author find by id with joins"() {
         when:
@@ -54,7 +59,44 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.books[1].pages.size() == 0
     }
 
-    void "test @Where annotation placehoder"() {
+    void "entity with id class"() {
+        given:
+        EntityWithIdClass e = new EntityWithIdClass()
+        e.id1 = 11
+        e.id2 = 22
+        e.name = "Xyz"
+        EntityIdClass k = new EntityIdClass()
+        k.id1 = 11
+        k.id2 = 22
+
+        when:
+        entityWithIdClassRepository.save(e)
+        e = entityWithIdClassRepository.findById(k).get()
+
+        then:
+        e.id1 == 11
+        e.id2 == 22
+        e.name == "Xyz"
+
+        when:
+        e.name = "abc"
+        entityWithIdClassRepository.update(e)
+        e = entityWithIdClassRepository.findById(k).get()
+
+        then:
+        e.id1 == 11
+        e.id2 == 22
+        e.name == "abc"
+
+        when:
+        entityWithIdClassRepository.delete(e)
+        def result = entityWithIdClassRepository.findById(k)
+
+        then:
+        !result.isPresent()
+    }
+
+    void "test @Where annotation placeholder"() {
         given:
         def size = bookRepository.countNativeByTitleWithPagesGreaterThan("The%", 300)
         def books = bookRepository.findByTitleStartsWith("The", 300)

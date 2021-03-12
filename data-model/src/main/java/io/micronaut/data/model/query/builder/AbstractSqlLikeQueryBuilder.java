@@ -253,16 +253,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         });
 
         queryHandlers.put(QueryModel.IdEquals.class, (queryState, criterion) -> {
-            PersistentProperty prop = queryState.getEntity().getIdentity();
-            if (prop == null) {
-                throw new IllegalStateException("No ID found for entity: " + queryState.getEntity().getName());
+            PersistentEntity persistentEntity = queryState.getEntity();
+            if (persistentEntity.hasCompositeIdentity()) {
+                StringBuilder sb = queryState.getWhereClause();
+                for (PersistentProperty prop : persistentEntity.getCompositeIdentity()) {
+                    Object value = ((QueryModel.IdEquals) criterion).getValue();
+                    if (value instanceof QueryParameter) {
+                        QueryParameter qp = (QueryParameter) value;
+                        appendCriteriaForOperator(
+                                queryState,
+                                new PropertyPath(Collections.emptyList(), prop, prop.getName()),
+                                new QueryParameter(qp.getName() + "." + prop.getName()),
+                                " = "
+                        );
+                    }
+                    sb.append(LOGICAL_AND);
+                }
+                sb.setLength(sb.length() - LOGICAL_AND.length());
+            } else if (persistentEntity.hasIdentity()) {
+                PersistentProperty prop = persistentEntity.getIdentity();
+                appendCriteriaForOperator(
+                        queryState,
+                        new PropertyPath(Collections.emptyList(), prop, prop.getName()),
+                        ((QueryModel.IdEquals) criterion).getValue(),
+                        " = "
+                );
+            } else {
+                throw new IllegalStateException("No ID found for entity: " + persistentEntity.getName());
             }
-            appendCriteriaForOperator(
-                    queryState,
-                    new PropertyPath(Collections.emptyList(), prop, prop.getName()),
-                    ((QueryModel.IdEquals) criterion).getValue(),
-                    " = "
-            );
         });
 
         queryHandlers.put(QueryModel.NotEquals.class, (queryState, criterion) -> {
@@ -693,11 +711,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                             .append(logicalName)
                             .append(CLOSE_BRACKET);
                 } else if (projection instanceof QueryModel.IdProjection) {
-                    PersistentProperty identity = entity.getIdentity();
-                    if (identity == null) {
+                    if (entity.hasCompositeIdentity()) {
+                        for (PersistentProperty identity : entity.getCompositeIdentity()) {
+                            appendPropertyProjection(queryString, logicalName, Collections.emptyList(), identity, identity.getName(), queryState);
+                            queryString.append(COMMA);
+                        }
+                        queryString.setLength(queryString.length() - 1);
+                    } else if (entity.hasIdentity()) {
+                        PersistentProperty identity = entity.getIdentity();
+                        if (identity == null) {
+                            throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
+                        }
+                        appendPropertyProjection(queryString, logicalName, Collections.emptyList(), identity, identity.getName(), queryState);
+                    } else {
                         throw new IllegalArgumentException("Cannot query on ID with entity that has no ID");
                     }
-                    appendPropertyProjection(queryString, logicalName, Collections.emptyList(), identity, identity.getName(), queryState);
                 } else if (projection instanceof QueryModel.PropertyProjection) {
                     QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
                     String alias = pp.getAlias().orElse(null);

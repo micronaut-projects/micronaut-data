@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors
 
 
-import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.intercept.annotation.DataMethod
 
 class ParameterTypeDefSpec extends AbstractDataSpec {

@@ -22,14 +22,13 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.AnnotationMetadataHierarchy;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -74,21 +73,20 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                 query = QueryModel.from(rootEntity);
                 for (ParameterElement queryParam : queryParams) {
                     String paramName = queryParam.getName();
-                    PersistentProperty prop = ((PersistentEntity) rootEntity).getPropertyByName(paramName);
+                    PersistentProperty prop = rootEntity.getPropertyByName(paramName);
                     if (prop == null) {
-                        SourcePersistentProperty identity = rootEntity.getIdentity();
-                        if (identity != null && identity.getName().equals(paramName)) {
+                        if (TypeRole.ID.equals(paramName) && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                             query.idEq(new QueryParameter(queryParam.getName()));
                         } else {
-                            matchContext.fail(
-                                    "Cannot query entity [" + ((PersistentEntity) rootEntity).getSimpleName() + "] on non-existent property: " + paramName + " (" + getClass().getSimpleName() + ")");
+                            matchContext.fail("Cannot query persistentEntity [" + rootEntity.getSimpleName() + "] on non-existent property: " + paramName);
                             return null;
                         }
+                    } else if (prop == rootEntity.getIdentity()) {
+                        query.idEq(new QueryParameter(queryParam.getName()));
                     } else {
                         query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
                     }
                 }
-
             }
 
             String methodName = methodElement.getName();

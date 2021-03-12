@@ -30,8 +30,8 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.AssociationQuery;
 import io.micronaut.data.model.query.QueryModel;
-import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
@@ -318,8 +318,15 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                 if (criterion instanceof QueryModel.Equals) {
                     QueryModel.Equals equals = (QueryModel.Equals) criterion;
                     String property = equals.getProperty();
-                    SourcePersistentProperty identity = entity.getIdentity();
-                    if (identity != null && identity.getName().equals(property)) {
+                    SourcePersistentProperty persistentProperty = entity.getPropertyByName(property);
+                    if (persistentProperty == null) {
+                        if (TypeRole.ID.equals(property) && (entity.hasIdentity() || entity.hasCompositeIdentity())) {
+                            query.idEq((QueryParameter) equals.getValue());
+                        } else {
+                            // Unknown property...
+                            query.add(criterion);
+                        }
+                    } else if (persistentProperty == entity.getIdentity()) {
                         query.idEq((QueryParameter) equals.getValue());
                     } else {
                         query.add(criterion);
@@ -340,21 +347,31 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     private void verifyFinderParameter(String methodName, SourcePersistentEntity entity, CriterionMethodExpression methodExpression, ParameterElement parameter) {
         String propertyName = methodExpression.propertyName;
         boolean isID = propertyName.equals(TypeRole.ID);
-        SourcePersistentProperty persistentProperty = (SourcePersistentProperty) entity.getPropertyByPath(propertyName).orElseGet(() -> {
-            if (isID) {
-                SourcePersistentProperty identity = entity.getIdentity();
-                if (identity != null) {
-                    return identity;
+        ClassElement genericType = parameter.getGenericType();
+        if (TypeUtils.isContainerType(genericType)) {
+            genericType = genericType.getFirstTypeArgument().orElse(genericType);
+        }
+        if (isID) {
+            if (entity.hasCompositeIdentity()) {
+                // Validate composite identity
+                return;
+            }
+            SourcePersistentProperty identity = entity.getIdentity();
+            if (identity != null && !TypeUtils.areTypesCompatible(genericType, identity.getType())) {
+                throw new IllegalArgumentException("Parameter [" + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + identity.getName() + "] of entity: " + entity.getName());
+            }
+            return;
+        }
+        SourcePersistentProperty persistentProperty = (SourcePersistentProperty) entity.getPropertyByPath(propertyName).orElse(null);
+        if (persistentProperty != null) {
+            if (!TypeUtils.areTypesCompatible(genericType, persistentProperty.getType())) {
+                if (!genericType.isAssignable(Iterable.class)) {
+                    throw new IllegalArgumentException("Parameter [" + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + persistentProperty.getName() + "] of entity: " + entity.getName());
                 }
             }
-            throw new IllegalArgumentException("Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + propertyName);
-        });
-        ClassElement genericType = parameter.getGenericType();
-        if (!TypeUtils.areTypesCompatible(genericType, persistentProperty.getType())) {
-            if (!isID && !genericType.isAssignable(Iterable.class)) {
-                throw new IllegalArgumentException("Parameter [" + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + persistentProperty.getName() + "] of entity: " + entity.getName());
-            }
+            return;
         }
+        throw new IllegalArgumentException("Cannot query entity [" + entity.getSimpleName() + "] on non-existent property: " + propertyName);
     }
 
     private void initializeExpression(CriterionMethodExpression currentExpression, String[] currentArguments) {

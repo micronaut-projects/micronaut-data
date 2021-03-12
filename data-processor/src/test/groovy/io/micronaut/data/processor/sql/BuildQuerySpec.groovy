@@ -99,13 +99,13 @@ import java.util.UUID;
 
 @JdbcRepository(dialect= Dialect.MYSQL)
 @io.micronaut.context.annotation.Executable
-interface MealRepository extends CrudRepository<Meal, UUID> {
+interface MealRepository extends CrudRepository<Meal, Long> {
     @Join("foods")
-    Meal searchById(UUID uuid);
+    Meal searchById(Long id);
 }
 """)
 
-        def query = repository.getRequiredMethod("searchById", UUID)
+        def query = repository.getRequiredMethod("searchById", Long)
                 .stringValue(Query).get()
 
         expect:"The query contains the correct join"

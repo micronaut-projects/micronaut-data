@@ -109,6 +109,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (identity != null) {
             computeMappingDefaults(namingStrategy, identity, dataTypes, context);
         }
+        SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
+        if (compositeIdentities != null) {
+            for (SourcePersistentProperty compositeIdentity : compositeIdentities) {
+                computeMappingDefaults(namingStrategy, compositeIdentity, dataTypes, context);
+            }
+        }
     }
 
     private boolean isMappedEntity() {
