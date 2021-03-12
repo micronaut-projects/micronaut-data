@@ -7,5 +7,5 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.UUID;
 
 @Repository
-public interface EventTestRepo extends CrudRepository<EventTest, UUID> {
+public interface EventTestRepo extends CrudRepository<EventTest, Long> {
 }

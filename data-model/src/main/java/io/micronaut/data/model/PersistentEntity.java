@@ -55,6 +55,24 @@ public interface PersistentEntity extends PersistentElement {
     String getAliasName();
 
     /**
+     * Has composite identity.
+     *
+     * @return The true if composite identity present
+     */
+    default boolean hasCompositeIdentity() {
+        return getCompositeIdentity() != null;
+    }
+
+    /**
+     * Has identity.
+     *
+     * @return The true if identity present
+     */
+    default boolean hasIdentity() {
+        return getIdentity() != null;
+    }
+
+    /**
      * The composite id.
      *
      * @return The composite id or null if there isn't one
@@ -114,6 +132,28 @@ public interface PersistentEntity extends PersistentElement {
      * @return The PersistentProperty or null if it doesn't exist
      */
     @Nullable PersistentProperty getPropertyByName(String name);
+
+    /**
+     * Obtains an identity PersistentProperty instance by name.
+     *
+     * @param name The name of the identity property
+     * @return The PersistentProperty or null if it doesn't exist
+     */
+    default @Nullable PersistentProperty getIdentityByName(String name) {
+        PersistentProperty identity = getIdentity();
+        if (identity != null && identity.getName().equals(name)) {
+            return identity;
+        }
+        PersistentProperty[] compositeIdentities = getCompositeIdentity();
+        if (compositeIdentities != null) {
+            for (PersistentProperty compositeIdentity : compositeIdentities) {
+                if (compositeIdentity.getName().equals(name)) {
+                    return compositeIdentity;
+                }
+            }
+        }
+        return null;
+    }
 
     /**
      * A list of property names that a persistent.

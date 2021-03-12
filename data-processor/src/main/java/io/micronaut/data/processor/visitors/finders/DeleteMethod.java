@@ -98,16 +98,16 @@ public class DeleteMethod extends AbstractListMethod {
                     );
                 } else {
                     QueryModel queryModel = QueryModel.from(rootEntity);
-                    SourcePersistentProperty identity = rootEntity.getIdentity();
-                    if (identity == null) {
+                    if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
                         matchContext.fail("Delete all not supported for entities with no ID");
                         return null;
                     }
                     QueryParameter queryParameter = new QueryParameter(parameters[0].getName());
-                    if (interceptor.getSimpleName().startsWith("DeleteAll") && !(identity instanceof Embedded)) {
-                        queryModel.inList(identity.getName(), queryParameter);
-                    } else {
+                    SourcePersistentProperty identity = rootEntity.getIdentity();
+                    if (rootEntity.hasCompositeIdentity() || identity instanceof Embedded) {
                         queryModel.idEq(queryParameter);
+                    } else if (identity != null && interceptor.getSimpleName().startsWith("DeleteAll")) {
+                        queryModel.inList(identity.getName(), queryParameter);
                     }
                     return new MethodMatchInfo(
                             null,

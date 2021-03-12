@@ -40,11 +40,11 @@ import java.util.stream.Collectors;
 public class RuntimePersistentEntity<T> extends AbstractPersistentEntity implements PersistentEntity {
 
     private final BeanIntrospection<T> introspection;
-    private final RuntimePersistentProperty<T> identity;
+    private final RuntimePersistentProperty<T>[] identity;
     private final Map<String, RuntimePersistentProperty<T>> persistentProperties;
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private final String aliasName;
-    private RuntimePersistentProperty<T> version;
+    private final RuntimePersistentProperty<T> version;
     private Boolean hasAutoPopulatedProperties;
 
     /**
@@ -65,15 +65,14 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         this.introspection = introspection;
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
-        identity = introspection.getIndexedProperty(Id.class).map(bp -> {
+        identity = introspection.getIndexedProperties(Id.class).stream().map(bp -> {
             if (bp.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
                 return new RuntimeEmbedded<>(this, bp, constructorArgumentNames.contains(bp.getName()));
             } else {
                 return new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
             }
-        }).orElse(null);
-        version = introspection.getIndexedProperty(Version.class).map(bp ->
-                new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()))
+        }).toArray(RuntimePersistentProperty[]::new);
+        version = introspection.getIndexedProperty(Version.class).map(bp -> new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()))
         ).orElse(null);
         Collection<BeanProperty<T, Object>> beanProperties = introspection.getBeanProperties();
         this.persistentProperties = new LinkedHashMap<>(beanProperties.size());
@@ -100,10 +99,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             String argumentName = constructorArgument.getName();
             RuntimePersistentProperty<T> prop = getPropertyByName(argumentName);
             if (prop == null) {
-                RuntimePersistentProperty<T> identity = getIdentity();
-                if (identity != null && !identity.getName().equals(argumentName)) {
-                    throw new MappingException("Constructor argument [" + argumentName + "] for type [" + getName() + "] must have an associated getter");
-                }
+                throw new MappingException("Constructor argument [" + argumentName + "] for type [" + getName() + "] must have an associated getter");
             }
             this.constructorArguments[i] = prop;
         }
@@ -190,16 +186,26 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         return introspection.getBeanType().getName();
     }
 
+    @Override
+    public boolean hasCompositeIdentity() {
+        return identity.length > 1;
+    }
+
+    @Override
+    public boolean hasIdentity() {
+        return identity.length == 1;
+    }
+
     @Nullable
     @Override
-    public PersistentProperty[] getCompositeIdentity() {
-        return new PersistentProperty[0];
+    public RuntimePersistentProperty<T>[] getCompositeIdentity() {
+        return identity.length > 1 ? identity : null;
     }
 
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getIdentity() {
-        return identity;
+        return identity.length == 1 ? identity[0] : null;
     }
 
     @Nullable
@@ -239,12 +245,15 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     public RuntimePersistentProperty<T> getPropertyByName(String name) {
         RuntimePersistentProperty<T> property = persistentProperties.get(name);
         if (property == null) {
-            RuntimePersistentProperty<T> identity = getIdentity();
-            if (identity != null && identity.getName().equals(name)) {
-                return identity;
-            }
+            return getIdentityByName(name);
         }
         return property;
+    }
+
+    @Nullable
+    @Override
+    public RuntimePersistentProperty<T> getIdentityByName(String name) {
+        return (RuntimePersistentProperty<T>) super.getIdentityByName(name);
     }
 
     @NonNull

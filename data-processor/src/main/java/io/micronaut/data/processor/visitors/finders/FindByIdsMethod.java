@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors.finders;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.intercept.FindAllInterceptor;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -60,20 +61,21 @@ public class FindByIdsMethod extends AbstractPatternBasedMethod {
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+        QueryModel query = QueryModel.from(rootEntity);
         SourcePersistentProperty identity = rootEntity.getIdentity();
-        if (identity != null) {
-
-            QueryModel query = QueryModel.from(rootEntity);
-            query.inList(identity.getName(), new QueryParameter(matchContext.getParameters()[0].getName()));
-
-            return new MethodMatchInfo(
-                    matchContext.getReturnType(),
-                    query,
-                    getInterceptorElement(matchContext, FindAllInterceptor.class));
+        QueryParameter queryParameter = new QueryParameter(matchContext.getParameters()[0].getName());
+        if (rootEntity.hasCompositeIdentity() || identity instanceof Embedded) {
+            query.idEq(queryParameter);
+        } else if (identity != null) {
+            query.inList(identity.getName(), queryParameter);
         } else {
             matchContext.fail("Cannot query by ID on entity that defines no ID");
             return null;
         }
+        return new MethodMatchInfo(
+                matchContext.getReturnType(),
+                query,
+                getInterceptorElement(matchContext, FindAllInterceptor.class));
     }
 
     private boolean areParametersValid(@NonNull MatchContext matchContext) {

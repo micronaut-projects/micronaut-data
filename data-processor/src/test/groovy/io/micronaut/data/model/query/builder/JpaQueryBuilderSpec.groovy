@@ -17,21 +17,21 @@ package io.micronaut.data.model.query.builder
 
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.Association
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.QueryModel
 import io.micronaut.data.model.query.QueryParameter
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.query.factory.Projections
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.tck.entities.Challenge
+import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.jdbc.entities.UserRole
-import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -273,6 +273,45 @@ class JpaQueryBuilderSpec extends Specification {
                     'SELECT userRole_.role FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN FETCH userRole_.role userRole_id_role_ WHERE (userRole_.user = :p1)',
                     'SELECT meal_ FROM io.micronaut.data.tck.entities.Meal AS meal_ JOIN FETCH meal_.foods meal_foods_ WHERE (meal_.mid = :p1)'
             ]
+    }
+
+    void "test composite id query"() {
+        when:
+            QueryBuilder encoder = new JpaQueryBuilder()
+            def entity = getRuntimePersistentEntity(EntityWithIdClass)
+            def qm = QueryModel.from(entity)
+            qm.idEq(new QueryParameter("xyz"))
+            def result = encoder.buildQuery(qm)
+        then:
+            result.query == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
+            result.parameters == ['p1': 'xyz.id1', 'p2': 'xyz.id2']
+            result.parameterTypes == ['xyz.id1': DataType.LONG, 'xyz.id2': DataType.LONG]
+    }
+
+    void "test composite id delete"() {
+        when:
+            QueryBuilder encoder = new JpaQueryBuilder()
+            def entity = getRuntimePersistentEntity(EntityWithIdClass)
+            def qm = QueryModel.from(entity)
+            qm.idEq(new QueryParameter("xyz"))
+            def result = encoder.buildDelete(qm)
+        then:
+            result.query == 'DELETE io.micronaut.data.tck.entities.EntityWithIdClass  AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
+            result.parameters == ['p1': 'xyz.id1', 'p2': 'xyz.id2']
+            result.parameterTypes == ['xyz.id1': DataType.LONG, 'xyz.id2': DataType.LONG]
+    }
+
+    void "test composite id update"() {
+        when:
+            QueryBuilder encoder = new JpaQueryBuilder()
+            def entity = getRuntimePersistentEntity(EntityWithIdClass)
+            def qm = QueryModel.from(entity)
+            qm.idEq(new QueryParameter("xyz"))
+            def result = encoder.buildUpdate(qm, ['name'])
+        then:
+            result.query == 'UPDATE io.micronaut.data.tck.entities.EntityWithIdClass entityWithIdClass_ SET entityWithIdClass_.name=:p1 WHERE (entityWithIdClass_.id1 = :p2 AND entityWithIdClass_.id2 = :p3)'
+            result.parameters == ['p1': 'name', 'p2': 'xyz.id1', 'p3': 'xyz.id2']
+            result.parameterTypes == ['name': DataType.STRING, 'xyz.id1': DataType.LONG, 'xyz.id2': DataType.LONG]
     }
 
     @Shared
