@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres;
+package io.micronaut.data.jdbc.sqlserver
 
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.tck.repositories.UuidRepository;
+import io.micronaut.context.ApplicationContext
+import io.micronaut.data.tck.tests.AbstractUUIDSpec
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 
-@JdbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresUuidRepository extends UuidRepository {
+@MicronautTest
+class SqlServerUUIDSpec extends AbstractUUIDSpec implements MSSQLTestPropertyProvider {
+
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext = ApplicationContext.run(properties)
+
+    MSUuidRepository uuidRepository = applicationContext.getBean(MSUuidRepository)
 
 }

@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres
+package io.micronaut.data.jdbc.mariadb
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.jdbc.mysql.MySqlUuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 
 @MicronautTest
-class PostgresUUIDSpec extends AbstractUUIDSpec implements PostgresTestPropertyProvider {
+class MariaUUIDSpec extends AbstractUUIDSpec implements MariaTestPropertyProvider {
 
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(properties)
 
-    PostgresUuidRepository uuidRepository = applicationContext.getBean(PostgresUuidRepository)
+    MySqlUuidRepository uuidRepository = applicationContext.getBean(MySqlUuidRepository)
 
 }

@@ -267,7 +267,7 @@ class JpaQueryBuilderSpec extends Specification {
                     'SELECT shipment_ FROM io.micronaut.data.tck.entities.Shipment AS shipment_ WHERE (shipment_.shipmentId.country = :p1)',
                     'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.role userRole_id_role_',
                     'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN userRole_.user userRole_id_user_ WHERE (userRole_.user = :p1)',
-                    'SELECT uid FROM io.micronaut.data.tck.entities.UuidEntity AS uid WHERE (uid.uuid = :p1)',
+                    'SELECT uidx FROM io.micronaut.data.tck.entities.UuidEntity AS uidx WHERE (uidx.uuid = :p1)',
                     'SELECT userRole_ FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ WHERE (userRole_.id = :p1)',
                     'SELECT challenge_ FROM io.micronaut.data.tck.entities.Challenge AS challenge_ JOIN FETCH challenge_.authentication challenge_authentication_ JOIN FETCH challenge_authentication_.device challenge_authentication_device_ JOIN FETCH challenge_authentication_device_.user challenge_authentication_device_user_ WHERE (challenge_.id = :p1)',
                     'SELECT userRole_.role FROM io.micronaut.data.tck.jdbc.entities.UserRole AS userRole_ JOIN FETCH userRole_.role userRole_id_role_ WHERE (userRole_.user = :p1)',
