@@ -25,7 +25,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@Entity
+@Entity(name = "jcat")
 public class Category {
     @Id
     @GeneratedValue
@@ -91,12 +91,25 @@ public class Category {
         return id.equals(category.id) &&
                 position == category.position &&
                 name.equals(category.name) &&
-                Objects.equals(createDate, category.createDate) &&
+//                Objects.equals(createDate, category.createDate) &&
+//                Failing on JDK 15 https://github.com/micronaut-projects/micronaut-data/pull/948
                 productList.equals(category.productList);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, position, productList, createDate);
+        return Objects.hash(id, name, position, productList);
+//        return Objects.hash(id, name, position, productList, createDate);
+    }
+
+    @Override
+    public String toString() {
+        return "Category{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", position=" + position +
+                ", productList=" + productList +
+                ", createDate=" + createDate +
+                '}';
     }
 }

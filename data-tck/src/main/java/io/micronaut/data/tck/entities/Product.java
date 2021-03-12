@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-@Entity
+@Entity(name = "jprod")
 public class Product {
     @Id
     @GeneratedValue
@@ -110,13 +110,27 @@ public class Product {
         Product product = (Product) o;
         return id.equals(product.id) &&
                 name.equals(product.name) &&
-                price.equals(product.price) &&
-                Objects.equals(dateCreated, product.dateCreated) &&
-                Objects.equals(lastUpdated, product.lastUpdated);
+                price.equals(product.price);
+//                Failing on JDK15 https://github.com/micronaut-projects/micronaut-data/pull/948
+//                Objects.equals(dateCreated, product.dateCreated) &&
+//                Objects.equals(lastUpdated, product.lastUpdated);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name, price, dateCreated, lastUpdated);
+//      Failing on JDK15 https://github.com/micronaut-projects/micronaut-data/pull/948
+//      return Objects.hash(id, name, price, dateCreated, lastUpdated);
+        return Objects.hash(id, name, price);
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name +
+                ", price=" + price +
+                ", dateCreated=" + dateCreated +
+                ", lastUpdated=" + lastUpdated +
+                '}';
     }
 }

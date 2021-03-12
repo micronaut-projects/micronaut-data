@@ -15,23 +15,15 @@
  */
 package io.micronaut.data.tck.tests
 
-import edu.umd.cs.findbugs.annotations.NonNull
-import io.micronaut.data.annotation.Join
-import io.micronaut.data.model.Page
+
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
-import io.micronaut.data.runtime.config.SchemaGenerate
-import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Category
 import io.micronaut.data.tck.entities.Product
-import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.CategoryRepository
-import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.ProductRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
-
-import javax.inject.Inject
 
 import static java.util.stream.Collectors.toMap
 
