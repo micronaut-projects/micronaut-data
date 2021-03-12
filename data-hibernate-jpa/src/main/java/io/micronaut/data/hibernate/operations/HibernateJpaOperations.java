@@ -67,6 +67,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -144,6 +145,11 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Query<Tuple> q;
                 if (preparedQuery.isNative()) {
                     q = currentSession.createNativeQuery(query, Tuple.class);
+                } else if (query.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
+                    Query<R> dtoQuery = currentSession.createQuery(query, resultType);
+                    bindParameters(dtoQuery, preparedQuery, query);
+                    bindQueryHints(dtoQuery, preparedQuery, currentSession);
+                    return dtoQuery.uniqueResult();
                 } else {
                     q = currentSession.createQuery(query, Tuple.class);
                 }
@@ -299,16 +305,16 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             }
             if (preparedQuery.isDtoProjection()) {
                 Query<Tuple> q;
-
                 if (preparedQuery.isNative()) {
-                    q = entityManager
-                            .createNativeQuery(queryStr, Tuple.class);
-
+                    q = entityManager.createNativeQuery(queryStr, Tuple.class);
+                } else if (queryStr.toLowerCase(Locale.ENGLISH).startsWith("select new ")) {
+                    Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
+                    Query<R> query = entityManager.createQuery(queryStr, wrapperType);
+                    bindPreparedQuery(query, preparedQuery, entityManager, queryStr);
+                    return query.list();
                 } else {
-                    q = entityManager
-                            .createQuery(queryStr, Tuple.class);
+                    q = entityManager.createQuery(queryStr, Tuple.class);
                 }
-
                 bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
                 return q.stream()
                         .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()))
@@ -317,12 +323,10 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 Query<R> q;
                 if (preparedQuery.isNative()) {
-                    q = entityManager
-                            .createNativeQuery(queryStr, wrapperType);
+                    q = entityManager.createNativeQuery(queryStr, wrapperType);
 
                 } else {
-                    q = entityManager
-                            .createQuery(queryStr, wrapperType);
+                    q = entityManager.createQuery(queryStr, wrapperType);
                 }
                 bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
                 return q.list();
