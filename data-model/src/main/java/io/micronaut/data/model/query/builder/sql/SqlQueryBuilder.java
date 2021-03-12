@@ -1128,7 +1128,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     } else {
                         PersistentProperty associatedProperty = association.getAssociatedEntity().getIdentity();
                         if (associatedProperty == null) {
-                            throw new IllegalArgumentException("Associated entity [" + association.getOwner().getName() + "] defines no ID. Cannot join.");
+                            throw new IllegalArgumentException("Associated entity [" + association.getAssociatedEntity().getName() + "] defines no ID. Cannot join.");
                         }
                         join(target,
                                 joinType,

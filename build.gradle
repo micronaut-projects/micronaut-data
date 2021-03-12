@@ -36,7 +36,7 @@ subprojects { Project subproject ->
                     '-parameters',
                     // enables incremental compilation
                     '-Amicronaut.processing.incremental=true',
-                    '-Amicronaut.processing.annotations=io.micronaut.data.*',
+                    '-Amicronaut.processing.annotations=io.micronaut.data.*,io.micronaut.core.annotation.*',
                     "-Amicronaut.processing.group=$project.group",
                     "-Amicronaut.processing.module=$project.name",
             ])
