@@ -22,14 +22,19 @@ import io.micronaut.data.annotation.DateUpdated;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
-@Entity
+@Entity(name = "jprod")
 public class Product {
     @Id
     @GeneratedValue
     private Long id;
+
+    @ManyToOne
+    private Category category;
 
     private String name;
 
@@ -54,8 +59,16 @@ public class Product {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public BigDecimal getPrice() {
@@ -80,5 +93,44 @@ public class Product {
 
     public void changePrice(BigDecimal newPrice){
         price = newPrice;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Product product = (Product) o;
+        return id.equals(product.id) &&
+                name.equals(product.name) &&
+                price.equals(product.price);
+//                Failing on JDK15 https://github.com/micronaut-projects/micronaut-data/pull/948
+//                Objects.equals(dateCreated, product.dateCreated) &&
+//                Objects.equals(lastUpdated, product.lastUpdated);
+    }
+
+    @Override
+    public int hashCode() {
+//      Failing on JDK15 https://github.com/micronaut-projects/micronaut-data/pull/948
+//      return Objects.hash(id, name, price, dateCreated, lastUpdated);
+        return Objects.hash(id, name, price);
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "id=" + id +
+                ", name='" + name +
+                ", price=" + price +
+                ", dateCreated=" + dateCreated +
+                ", lastUpdated=" + lastUpdated +
+                '}';
     }
 }
