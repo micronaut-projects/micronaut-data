@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.entities;
 
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
@@ -24,9 +25,9 @@ import javax.persistence.Embedded;
 import javax.persistence.ManyToOne;
 import java.util.UUID;
 
-@MappedEntity(alias = "uid")
+@MappedEntity(alias = "uidx") // UID is reserved word in Oracle DB
 public class UuidEntity {
-    @GeneratedValue
+    @AutoPopulated
     @Id
     private UUID uuid;
 

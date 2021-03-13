@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres;
+package io.micronaut.data.jdbc.sqlserver;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.tck.repositories.UuidRepository;
 
-@JdbcRepository(dialect = Dialect.POSTGRES)
-public interface PostgresUuidRepository extends UuidRepository {
-
+@JdbcRepository(dialect = Dialect.SQL_SERVER)
+public interface MSUuidRepository extends UuidRepository {
 }
