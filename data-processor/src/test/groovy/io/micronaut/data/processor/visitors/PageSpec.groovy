@@ -49,7 +49,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('Unable to implement Repository method: MyInterface.findAllByNameNotStartsWith(Pageable pageable,String name). Parameter [pageable] of method [findAllByNameNotStartsWith] is not compatible with property [name] of entity: io.micronaut.data.model.entities.Person')
+        e.message.contains('Unable to implement Repository method: MyInterface.findAllByNameNotStartsWith(Pageable pageable,String name). Parameter [io.micronaut.data.model.Pageable pageable] of method [findAllByNameNotStartsWith] is not compatible with property [java.lang.String name] of entity: io.micronaut.data.model.entities.Person')
     }
 
     void "test compile error on incorrect property order with multiple items"() {
@@ -67,7 +67,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('Unable to implement Repository method: MyInterface.findByNameOrAge(Pageable pageable,String name,int age). Parameter [pageable] of method [findByNameOrAge] is not compatible with property [name] of entity')
+        e.message.contains('Unable to implement Repository method: MyInterface.findByNameOrAge(Pageable pageable,String name,int age). Parameter [io.micronaut.data.model.Pageable pageable] of method [findByNameOrAge] is not compatible with property [java.lang.String name] of entity')
     }
 
     void "test page method match"() {

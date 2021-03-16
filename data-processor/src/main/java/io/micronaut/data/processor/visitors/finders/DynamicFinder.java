@@ -358,7 +358,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             }
             SourcePersistentProperty identity = entity.getIdentity();
             if (identity != null && !TypeUtils.areTypesCompatible(genericType, identity.getType())) {
-                throw new IllegalArgumentException("Parameter [" + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + identity.getName() + "] of entity: " + entity.getName());
+                throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + identity.getType().getName() + " " + identity.getName() + "] of entity: " + entity.getName());
             }
             return;
         }
@@ -366,7 +366,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
         if (persistentProperty != null) {
             if (!TypeUtils.areTypesCompatible(genericType, persistentProperty.getType())) {
                 if (!genericType.isAssignable(Iterable.class)) {
-                    throw new IllegalArgumentException("Parameter [" + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + persistentProperty.getName() + "] of entity: " + entity.getName());
+                    throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] of method [" + methodName + "] is not compatible with property [" + persistentProperty.getType().getName() + " " + persistentProperty.getName() + "] of entity: " + entity.getName());
                 }
             }
             return;

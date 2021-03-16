@@ -155,7 +155,7 @@ class Authority {
     @Id
     private Long id;
     private String name;
-    $usersAnnotated
+    $authoritiesAnnotated
     private List<User> users;
 
     public Long getId() {
@@ -190,7 +190,7 @@ class User {
     @Id
     @GeneratedValue
     private Long id;
-    $authoritiesAnnotated
+    $usersAnnotated
     private Set<Authority> authorities = new HashSet<>();
     
     public Long getId() {
@@ -240,10 +240,10 @@ class User {
                     'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
                     'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
                     'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
-                    'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "some_users_authorities" user_authorities_some_users_authorities_ ON user_."id"=user_authorities_some_users_authorities_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_some_users_authorities_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
                     'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
                     'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "some_users_authorities" user_authorities_some_users_authorities_ ON user_."id"=user_authorities_some_users_authorities_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_some_users_authorities_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
-                    'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "ua" user_authorities_ua_ ON user_."a_id"=user_authorities_ua_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_ua_."authority_id"=user_authorities_."a_id" WHERE (user_."id" = ?)',
+                    'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "some_users_authorities" user_authorities_some_users_authorities_ ON user_."id"=user_authorities_some_users_authorities_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_some_users_authorities_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
+                    'SELECT user_."id",user_authorities_."id" AS authorities_id,user_authorities_."name" AS authorities_name FROM "user" user_ INNER JOIN "user_authority" user_authorities_user_authority_ ON user_."id"=user_authorities_user_authority_."user_id"  INNER JOIN "authority" user_authorities_ ON user_authorities_user_authority_."authority_id"=user_authorities_."id" WHERE (user_."id" = ?)',
             ]
     }
 
