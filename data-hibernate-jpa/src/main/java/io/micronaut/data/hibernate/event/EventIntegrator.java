@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate.event;
 
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -65,7 +66,11 @@ public class EventIntegrator implements Integrator {
         final EntityEventListener<Object> entityEventListener = entityRegistry.getEntityEventListener();
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_INSERT)
                 .appendListener((PreInsertEventListener) event -> {
-                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    Class mappedClass = event.getPersister().getMappedClass();
+                    if (isNotSupportedMappedClass(mappedClass)) {
+                        return false;
+                    }
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                     if (entity.hasPrePersistEventListeners()) {
                         Object[] state = event.getState();
                         final DefaultEntityEventContext<Object> context = new StatefulHibernateEventContext<>(entity, event, state);
@@ -78,7 +83,11 @@ public class EventIntegrator implements Integrator {
                 .appendListener(new PostInsertEventListener() {
                     @Override
                     public void onPostInsert(PostInsertEvent event) {
-                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                        Class mappedClass = event.getPersister().getMappedClass();
+                        if (isNotSupportedMappedClass(mappedClass)) {
+                            return;
+                        }
+                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                         if (entity.hasPostPersistEventListeners()) {
                             final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                             entityEventListener.postPersist(context);
@@ -93,7 +102,11 @@ public class EventIntegrator implements Integrator {
 
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_DELETE)
                 .appendListener((PreDeleteEventListener) event -> {
-                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    Class mappedClass = event.getPersister().getMappedClass();
+                    if (isNotSupportedMappedClass(mappedClass)) {
+                        return false;
+                    }
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                     if (entity.hasPreRemoveEventListeners()) {
                         Object[] state = event.getDeletedState();
                         final DefaultEntityEventContext<Object> context = new StatefulHibernateEventContext<>(entity, event, state);
@@ -111,7 +124,11 @@ public class EventIntegrator implements Integrator {
 
                     @Override
                     public void onPostDelete(PostDeleteEvent event) {
-                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                        Class mappedClass = event.getPersister().getMappedClass();
+                        if (isNotSupportedMappedClass(mappedClass)) {
+                            return;
+                        }
+                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                         if (entity.hasPostPersistEventListeners()) {
                             final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                             entityEventListener.postRemove(context);
@@ -121,7 +138,11 @@ public class EventIntegrator implements Integrator {
 
         eventListenerRegistry.getEventListenerGroup(EventType.PRE_UPDATE)
                 .appendListener((PreUpdateEventListener) event -> {
-                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    Class mappedClass = event.getPersister().getMappedClass();
+                    if (isNotSupportedMappedClass(mappedClass)) {
+                        return false;
+                    }
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                     if (entity.hasPreUpdateEventListeners()) {
                         Object[] state = event.getState();
                         final DefaultEntityEventContext<Object> context = new StatefulHibernateEventContext<>(entity, event, state);
@@ -139,7 +160,11 @@ public class EventIntegrator implements Integrator {
 
                     @Override
                     public void onPostUpdate(PostUpdateEvent event) {
-                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                        Class mappedClass = event.getPersister().getMappedClass();
+                        if (isNotSupportedMappedClass(mappedClass)) {
+                            return;
+                        }
+                        final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                         if (entity.hasPostPersistEventListeners()) {
                             final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                             entityEventListener.postUpdate(context);
@@ -149,12 +174,20 @@ public class EventIntegrator implements Integrator {
 
         eventListenerRegistry.getEventListenerGroup(EventType.POST_LOAD)
                 .appendListener((PostLoadEventListener) event -> {
-                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(event.getPersister().getMappedClass());
+                    Class mappedClass = event.getPersister().getMappedClass();
+                    if (isNotSupportedMappedClass(mappedClass)) {
+                        return;
+                    }
+                    final RuntimePersistentEntity<Object> entity = entityRegistry.getEntity(mappedClass);
                     if (entity.hasPreUpdateEventListeners()) {
                         final DefaultEntityEventContext<Object> context = new SimpleHibernateEventContext<>(entity, event.getEntity());
                         entityEventListener.postLoad(context);
                     }
                 });
+    }
+
+    private static boolean isNotSupportedMappedClass(Class<?> clazz) {
+        return !BeanIntrospector.SHARED.findIntrospection(clazz).isPresent();
     }
 
     @Override
