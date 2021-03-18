@@ -23,7 +23,11 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -48,7 +52,17 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -69,8 +83,25 @@ import javax.annotation.PreDestroy;
 import javax.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
-import java.sql.*;
-import java.util.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -179,7 +210,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                             RuntimePersistentEntity<R> persistentEntity = getEntity(resultType);
 
                             final Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
-                            TypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
+                            SqlResultEntityTypeMapper<ResultSet, R> mapper = new SqlResultEntityTypeMapper<>(
                                     persistentEntity,
                                     columnNameResultSetReader,
                                     joinFetchPaths,
@@ -192,7 +223,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                         }
                                     }
                             );
-                            R result = mapper.map(rs, resultType);
+                            R result = mapper.readOneWithJoins(rs);
                             if (preparedQuery.hasResultConsumer()) {
                                 preparedQuery.getParameterInRole(SqlResultConsumer.ROLE, SqlResultConsumer.class)
                                         .ifPresent(consumer -> consumer.accept(result, newMappingContext(rs)));
@@ -245,13 +276,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             @Override
             public <E> E readEntity(String prefix, Class<E> type) throws DataAccessException {
                 RuntimePersistentEntity<E> entity = getEntity(type);
-                TypeMapper<ResultSet, E> mapper = new SqlResultEntityTypeMapper<>(
+                SqlResultEntityTypeMapper<ResultSet, E> mapper = new SqlResultEntityTypeMapper<>(
                         prefix,
                         entity,
                         columnNameResultSetReader,
                         jsonCodec
                 );
-                return mapper.map(rs, type);
+                return mapper.readOneWithJoins(rs);
             }
 
             @NonNull
@@ -339,30 +370,13 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 }
                             }
                     );
-                    // Cannot stream ResultSet for joined query
-                    if (!joinFetchPaths.isEmpty()) {
-                        Map<Object, Object> processedEntities = new HashMap<>();
-                        List<R> values = new ArrayList<>();
+                    boolean onlySingleEndedJoins = joinFetchPaths.stream()
+                            .flatMap(jp -> Arrays.stream(jp.getAssociationPath()))
+                            .anyMatch(association -> association.getKind().isSingleEnded());
+                    // Cannot stream ResultSet for "many" joined query
+                    if (!onlySingleEndedJoins) {
                         try {
-                            while (entityTypeMapper.hasNext(rs)) {
-                                Object id = entityTypeMapper.readId(rs);
-                                if (id != null) {
-                                    Object processedEntity = processedEntities.get(id);
-                                    if (processedEntity != null) {
-                                        entityTypeMapper.readChildren(rs, (R) processedEntity);
-                                        continue;
-                                    }
-                                }
-                                R o = entityTypeMapper.map(rs, resultType);
-                                if (sqlMappingConsumer != null) {
-                                    sqlMappingConsumer.accept(rs, o);
-                                }
-                                values.add(o);
-                                if (id != null) {
-                                    processedEntities.put(id, o);
-                                }
-                            }
-                            return values.stream();
+                            return entityTypeMapper.readAllWithJoins(rs).stream();
                         } finally {
                             closeResultSet(ps, rs, finished);
                         }
@@ -623,6 +637,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                 throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                             }
                             property = (RuntimePersistentProperty) CollectionUtils.last(embeddedProperties);
+                            List<Association> associations = new ArrayList<>();
                             for (PersistentProperty embeddedProperty : embeddedProperties) {
                                 if (embeddedProperty instanceof Association) {
                                     Association association = (Association) embeddedProperty;
@@ -631,8 +646,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                                         if (value != null) {
                                             value = p.getProperty().get(value);
                                         }
-                                        cascadeUpdate(connection, repositoryType, annotationMetadata, association, value, persisted);
+                                        cascadeUpdate(connection, repositoryType, annotationMetadata, associations, association, value, persisted);
                                         continue;
+                                    } else {
+                                        associations.add(association);
                                     }
                                 }
                                 if (value == null || property == embeddedProperty) {
@@ -684,7 +701,12 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return entity;
     }
 
-    private void cascadeUpdate(Connection connection, Class<?> repositoryType, AnnotationMetadata annotationMetadata, Association association, Object value, Set<Object> persisted) {
+    private void cascadeUpdate(Connection connection, Class<?> repositoryType,
+                               AnnotationMetadata annotationMetadata,
+                               List<Association> associations,
+                               Association association,
+                               Object value,
+                               Set<Object> persisted) {
         if (value == null || persisted.contains(value)) {
             return;
         }
@@ -734,6 +756,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         annotationMetadata,
                         repositoryType,
                         associatedInsert,
+                        associations,
                         value,
                         persisted
                 );
@@ -749,7 +772,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         T entity = operation.getEntity();
         return transactionOperations.executeWrite((status) ->
-                persistOne(status.getConnection(), annotationMetadata, repositoryType, insert, entity, new HashSet<>(5)));
+                persistOne(status.getConnection(), annotationMetadata, repositoryType, insert, Collections.emptyList(), entity, new HashSet<>(5)));
     }
 
     private <T> T persistOne(
@@ -757,17 +780,19 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
             StoredInsert<T> insert,
+            List<Association> associations,
             T entity,
             Set<Object> persisted) {
         try {
-            cascadePrePersist(
+            entity = cascadePrePersist(
                     connection,
                     annotationMetadata,
                     repositoryType,
-                    insert,
+                    insert.getPersistentEntity(),
+                    associations,
                     entity,
                     persisted,
-                    insert.getIdentity()
+                    (RuntimePersistentProperty<T>) insert.getIdentity()
             );
 
             boolean generateId = insert.isGenerateId();
@@ -778,13 +803,11 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL Insert: {}", insertSql);
             }
-
+            final RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
             T resolvedEntity;
             try (PreparedStatement stmt = persistOnePreparedStatement(insert, connection, generateId, insertSql, hasGeneratedID)) {
-
-                final RuntimePersistentEntity<T> pe = insert.getPersistentEntity();
-                if (pe.hasPrePersistEventListeners()) {
-                    final T newEntity = triggerPrePersist(entity, pe, annotationMetadata);
+                if (persistentEntity.hasPrePersistEventListeners()) {
+                    final T newEntity = triggerPrePersist(entity, persistentEntity, annotationMetadata);
                     if (newEntity == null) {
                         // operation evicted
                         return entity;
@@ -807,20 +830,23 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         throw new DataAccessException("ID failed to generate. No result returned.");
                     }
                 }
-                if (pe.hasPostPersistEventListeners()) {
+                if (persistentEntity.hasPostPersistEventListeners()) {
                     resolvedEntity = triggerPostPersist(resolvedEntity, insert.getPersistentEntity(), annotationMetadata);
                 }
             }
-            cascadePostPersist(
+            if (identity == null) {
+                return resolvedEntity;
+            }
+            return cascadePostPersist(
                     connection,
                     annotationMetadata,
                     repositoryType,
-                    insert,
+                    insert.getDialect(),
+                    persistentEntity,
+                    associations,
                     resolvedEntity,
-                    persisted,
-                    insert.getIdentity()
-            );
-            return resolvedEntity;
+                    identity.get(resolvedEntity),
+                    persisted);
         } catch (SQLException e) {
             throw new DataAccessException("SQL Error executing INSERT: " + e.getMessage(), e);
         }
@@ -831,30 +857,23 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return resolvedEntity;
         }
         if (identity.getType().isInstance(id)) {
-            if (identity.isReadOnly()) {
-                if (identity.hasSetterOrConstructorArgument()) {
-                    resolvedEntity = identity.withValue(resolvedEntity, id);
-                } else {
-                    return resolvedEntity;
-                }
-            } else {
-                identity.set(resolvedEntity, id);
-            }
-        } else {
-            if (identity.isReadOnly()) {
-                if (identity.hasSetterOrConstructorArgument()) {
-                    final Object converted = ConversionService.SHARED.convert(id, identity.asArgument()).orElse(null);
-                    if (converted != null) {
-                        resolvedEntity = identity.withValue(resolvedEntity, converted);
-                    }
-                } else {
-                    return resolvedEntity;
-                }
-            } else {
-                identity.convertAndSet(resolvedEntity, id);
-            }
+            return setProperty(identity, resolvedEntity, id);
         }
-        return resolvedEntity;
+        return convertAndSetWithValue(identity, resolvedEntity, id);
+    }
+
+    private <B, T> B convertAndSetWithValue(BeanProperty<B, T> beanProperty, B bean, T value) {
+        if (beanProperty.isReadOnly()) {
+            Argument<T> argument = beanProperty.asArgument();
+            final ArgumentConversionContext<T> context = ConversionContext.of(argument);
+            Object convertedValue = ConversionService.SHARED.convert(value, context).orElseThrow(() ->
+                    new ConversionErrorException(argument, context.getLastError()
+                            .orElse(() -> new IllegalArgumentException("Value [" + value + "] cannot be converted to type : " + beanProperty.getType())))
+            );
+            return beanProperty.withValue(bean, (T) convertedValue);
+        }
+        beanProperty.convertAndSet(bean, value);
+        return bean;
     }
 
     private <T> PreparedStatement persistOnePreparedStatement(StoredInsert<T> insert, Connection connection, boolean generateId, String insertSql, boolean hasGeneratedID) throws SQLException {
@@ -869,162 +888,227 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return stmt;
     }
 
-    private <T> void cascadePrePersist(
+    private <T> T cascadePrePersist(
             Connection connection,
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
-            StoredInsert<T> insert,
-            T entity,
+            RuntimePersistentEntity<T> persistentEntity,
+            List<Association> associations,
+            T parent,
             Set<Object> persisted,
             RuntimePersistentProperty<T> identityProperty) throws SQLException {
         if (identityProperty == null) {
-            return;
+            return parent;
         }
-        Iterator<Map.Entry<RuntimeAssociation, Object>> iterator = traverseAssociations(insert.getPersistentEntity(), entity).iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<RuntimeAssociation, Object> entry = iterator.next();
-            RuntimeAssociation<Object> association = entry.getKey();
+        for (RuntimeAssociation<T> childAssociation : persistentEntity.getAssociations()) {
+            BeanProperty beanProperty = childAssociation.getProperty();
+            Object value = beanProperty.get(parent);
+            if (value == null) {
+                break;
+            }
+            if (childAssociation instanceof Embedded) {
+                Object newValue = cascadePrePersist(connection,
+                        annotationMetadata,
+                        repositoryType,
+                        (RuntimePersistentEntity<T>) childAssociation.getAssociatedEntity(),
+                        associated(associations, childAssociation),
+                        (T) value,
+                        persisted,
+                        identityProperty);
+                if (value != newValue) {
+                    parent = (T) setProperty(beanProperty, parent, newValue);
+                }
+                continue;
+            }
             // PrePersist insert is only allowed for non foreign keys
-            if (association.doesCascade(Relation.Cascade.PERSIST) && !association.isForeignKey()) {
+            if (childAssociation.doesCascade(Relation.Cascade.PERSIST) && !childAssociation.isForeignKey()) {
+                if (childAssociation.getInverseSide().map(associations::contains).orElse(false)) {
+                    continue;
+                }
+                switch (childAssociation.getKind()) {
+                    case ONE_TO_ONE:
+                    case MANY_TO_ONE:
+                        parent = cascadePersistForChild(connection, annotationMetadata, repositoryType, associated(associations, childAssociation), parent, childAssociation, value, persisted);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Cannot cascade PERSIST for relation: " + childAssociation.getKind());
+                }
+            }
+        }
+        return parent;
+    }
+
+    private <T> T cascadePostPersist(
+            Connection connection,
+            AnnotationMetadata annotationMetadata,
+            Class<?> repositoryType,
+            Dialect dialect,
+            RuntimePersistentEntity<T> persistentEntity,
+            List<Association> associations,
+            T parent,
+            Object identityValue,
+            Set<Object> persisted) throws SQLException {
+        RuntimePersistentProperty<T> identityProperty = persistentEntity.getIdentity();
+        if (identityValue == null) {
+            return parent;
+        }
+        for (RuntimeAssociation<T> association : persistentEntity.getAssociations()) {
+            BeanProperty beanProperty = association.getProperty();
+            Object value = beanProperty.get(parent);
+            if (value == null) {
+                break;
+            }
+            if (association instanceof Embedded) {
+                Object newValue = cascadePostPersist(connection,
+                        annotationMetadata,
+                        repositoryType,
+                        dialect,
+                        (RuntimePersistentEntity) association.getAssociatedEntity(),
+                        associated(associations, association),
+                        value,
+                        identityValue,
+                        persisted);
+                if (value != newValue) {
+                    parent = (T) setProperty(beanProperty, parent, newValue);
+                }
+                continue;
+            }
+            // PostPersist insert is only allowed for foreign keys
+            if (association.doesCascade(Relation.Cascade.PERSIST) && association.isForeignKey()) {
+                if (association.getInverseSide().map(associations::contains).orElse(false)) {
+                    continue;
+                }
                 switch (association.getKind()) {
                     case ONE_TO_ONE:
                     case MANY_TO_ONE:
-                        cascadePersistForChild(connection, annotationMetadata, repositoryType, entity, association, entry.getValue(), persisted);
+                        parent = cascadePersistForChild(connection, annotationMetadata, repositoryType, associated(associations, association), parent, association, value, persisted);
+                        break;
+                    case ONE_TO_MANY:
+                    case MANY_TO_MANY:
+                        parent = cascadePersistForChildren(connection,
+                                annotationMetadata,
+                                repositoryType,
+                                associations,
+                                parent,
+                                persistentEntity,
+                                identityProperty,
+                                identityValue,
+                                dialect,
+                                association,
+                                persisted);
                         break;
                     default:
                         throw new IllegalArgumentException("Cannot cascade PERSIST for relation: " + association.getKind());
                 }
             }
         }
+        return parent;
     }
 
-    private <T> void cascadePostPersist(
-            Connection connection,
-            AnnotationMetadata annotationMetadata,
-            Class<?> repositoryType,
-            StoredInsert<T> insert,
-            T entity,
-            Set<Object> persisted,
-            RuntimePersistentProperty<T> identityProperty) throws SQLException {
-        if (identityProperty == null) {
-            return;
-        }
-        Iterator<Map.Entry<RuntimeAssociation, Object>> iterator = traverseAssociations(insert.getPersistentEntity(), entity).iterator();
-        while (iterator.hasNext()) {
-            Map.Entry<RuntimeAssociation, Object> entry = iterator.next();
-            RuntimeAssociation<Object> association = entry.getKey();
-            // PostPersist insert is only allowed for foreign keys
-            if (association.doesCascade(Relation.Cascade.PERSIST) && association.isForeignKey()) {
-                final Relation.Kind kind = association.getKind();
-                switch (kind) {
-                    case ONE_TO_ONE:
-                    case MANY_TO_ONE:
-                        cascadePersistForChild(connection, annotationMetadata, repositoryType, entity, association, entry.getValue(), persisted);
-                        break;
-                    case ONE_TO_MANY:
-                    case MANY_TO_MANY:
-                    default:
-                        cascadePersistForChildren(connection,
-                                annotationMetadata,
-                                repositoryType,
-                                entity,
-                                insert.getPersistentEntity(),
-                                identityProperty,
-                                insert.getDialect(),
-                                association,
-                                persisted);
-                }
-            }
-        }
-    }
-
-    private void cascadePersistForChild(Connection connection,
-                                        AnnotationMetadata annotationMetadata,
-                                        Class<?> repositoryType,
-                                        Object parent,
-                                        RuntimeAssociation<Object> childAssociation,
-                                        Object child,
-                                        Set<Object> persisted) {
-        final RuntimePersistentEntity<?> associatedEntity = childAssociation.getAssociatedEntity();
-        final Class<?> associationType = associatedEntity.getIntrospection().getBeanType();
-        final RuntimePersistentProperty<?> associatedId = associatedEntity.getIdentity();
-        final BeanProperty associatedIdProperty = associatedId.getProperty();
-        // in the case of an one-to-one we ensure the inverse side set
+    private <T> T cascadePersistForChild(Connection connection,
+                                         AnnotationMetadata annotationMetadata,
+                                         Class<?> repositoryType,
+                                         List<Association> associations,
+                                         T parent,
+                                         RuntimeAssociation<T> childAssociation,
+                                         Object child,
+                                         Set<Object> persisted) {
+        RuntimePersistentProperty<?> associatedId = childAssociation.getAssociatedEntity().getIdentity();
+        BeanProperty associatedIdProperty = associatedId.getProperty();
         if (child == null || persisted.contains(child)) {
-            return;
-        }
-        if (childAssociation.isForeignKey()) {
-            childAssociation.getInverseSide().ifPresent(inverse -> {
-                final BeanProperty property = inverse.getProperty();
-                property.set(child, parent);
-            });
+            return parent;
         }
         if (associatedId != null) {
             final Object id = associatedIdProperty.get(child);
             if (id != null) {
-                return;
+                return parent;
             }
         }
+        final RuntimePersistentEntity<?> associatedEntity = childAssociation.getAssociatedEntity();
+        final Class<?> associationType = associatedEntity.getIntrospection().getBeanType();
         StoredInsert<Object>  associatedInsert = resolveEntityInsert(
                 annotationMetadata,
                 repositoryType,
                 associationType,
                 associatedEntity
         );
-        persistOne(
+        child = persistOne(
                 connection,
                 annotationMetadata,
                 repositoryType,
                 associatedInsert,
+                associations,
                 child,
                 persisted
         );
+        if (associatedIdProperty.isReadOnly()) {
+            BeanProperty associationBeanProperty = childAssociation.getProperty();
+            return (T) setProperty(associationBeanProperty, parent, child);
+        }
+        if (childAssociation.isForeignKey()) {
+            RuntimeAssociation<?> inverseAssociation = childAssociation.getInverseSide().orElse(null);
+            if (inverseAssociation != null) {
+                BeanProperty property = inverseAssociation.getProperty();
+                return (T) setProperty(property, parent, child);
+            }
+        }
+        return parent;
     }
 
-    private <T> void cascadePersistForChildren(Connection connection,
-                                               AnnotationMetadata annotationMetadata,
-                                               Class<?> repositoryType,
-                                               T parent,
-                                               RuntimePersistentEntity persistentEntity,
-                                               RuntimePersistentProperty<T> identityProperty,
-                                               Dialect dialect,
-                                               RuntimeAssociation<Object> association,
-                                               Set<Object> persisted) throws SQLException {
+    private <T> T cascadePersistForChildren(Connection connection,
+                                            AnnotationMetadata annotationMetadata,
+                                            Class<?> repositoryType,
+                                            List<Association> associations,
+                                            T parent,
+                                            RuntimePersistentEntity<T> persistentEntity,
+                                            RuntimePersistentProperty<T> identityProperty,
+                                            Object identityValue,
+                                            Dialect dialect,
+                                            RuntimeAssociation<T> association,
+                                            Set<Object> persisted) throws SQLException {
         final RuntimePersistentEntity<?> associatedEntity = association.getAssociatedEntity();
         final Class<?> associationType = associatedEntity.getIntrospection().getBeanType();
         final RuntimePersistentProperty<?> associatedId = associatedEntity.getIdentity();
         final BeanProperty associatedIdProperty = associatedId.getProperty();
-        final Object children = association.getProperty().get(parent);
+        final BeanProperty associationProperty = association.getProperty();
+        final Object children = associationProperty.get(parent);
         final RuntimeAssociation<?> inverse = association.getInverseSide().orElse(null);
-        BeanProperty<T, ?> identity = identityProperty.getProperty();
 
         if (children instanceof Iterable) {
-            Iterable<Object> entities = (Iterable) children;
+            List<Object> entities;
             List<Object> toPersist;
-            if (children instanceof Collection) {
-                toPersist = new ArrayList<>(((Collection<?>) children).size());
+            if (children instanceof List) {
+                entities = new ArrayList<>(((List<?>) children));
             } else {
-                toPersist = new ArrayList<>(15);
+                entities = new ArrayList<>(CollectionUtils.iterableToList((Iterable) children));
             }
-            for (Object o : entities) {
-                if (o == null || persisted.contains(o)) {
+            toPersist = new ArrayList<>(15);
+            boolean setChildren = false;
+            int[] toPersistEntitiesIndex = new int[entities.size()];
+            int i = 0;
+            for (Object child : entities) {
+                if (child == null || persisted.contains(child)) {
                     continue;
                 }
                 if (inverse != null) {
                     if (inverse.getKind() == Relation.Kind.MANY_TO_ONE) {
                         final BeanProperty property = inverse.getProperty();
-                        property.set(o, parent);
+                        child = setProperty(property, child, parent);
+                        setChildren = true;
                     }
                 }
                 if (associatedId != null) {
                     final BeanProperty bp = associatedIdProperty;
-                    final Object id = bp.get(o);
+                    final Object id = bp.get(child);
                     if (id == null) {
-                        toPersist.add(o);
+                        toPersist.add(child);
+                        toPersistEntitiesIndex[i] = i;
                     }
                 }
+                i++;
             }
             if (!toPersist.isEmpty()) {
+                List<Association> newAssociations = associated(associations, association);
                 StoredInsert<Object> insertQuery = resolveEntityInsert(
                         annotationMetadata,
                         repositoryType,
@@ -1032,38 +1116,83 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         associatedEntity
                 );
                 if (insertQuery.doesSupportBatch()) {
-                    persistInBatch(
+                    List<Object> persistedChildren = persistInBatch(
                             annotationMetadata,
                             repositoryType,
+                            newAssociations,
                             toPersist,
                             insertQuery,
                             persisted
                     );
+                    int k = 0;
+                    for (Object child : persistedChildren) {
+                        if (association.isForeignKey()) {
+                            RuntimeAssociation<?> inverseAssociation = association.getInverseSide().orElse(null);
+                            if (inverseAssociation != null) {
+                                BeanProperty property = inverseAssociation.getProperty();
+                                child = setProperty(property, child, parent);
+                            }
+                        }
+                        int idx = toPersistEntitiesIndex[k++];
+                        if (entities.get(idx) != child) {
+                            entities.set(idx, child);
+                            setChildren = true;
+                        }
+                    }
                 } else {
-                    for (Object o : toPersist) {
-                        persistOne(
+                    int k = 0;
+                    for (Object child : toPersist) {
+                        child = persistOne(
                                 connection,
                                 annotationMetadata,
                                 repositoryType,
                                 insertQuery,
-                                o,
+                                newAssociations,
+                                child,
                                 persisted
                         );
+                        if (association.isForeignKey()) {
+                            RuntimeAssociation<?> inverseAssociation = association.getInverseSide().orElse(null);
+                            if (inverseAssociation != null) {
+                                BeanProperty property = inverseAssociation.getProperty();
+                                child = setProperty(property, child, parent);
+                            }
+                        }
+                        int idx = toPersistEntitiesIndex[k++];
+                        if (entities.get(idx) != child) {
+                            entities.set(idx, child);
+                            setChildren = true;
+                        }
                     }
                 }
             }
+            if (setChildren) {
+                parent = convertAndSetWithValue((BeanProperty<T, Object>) associationProperty, parent, entities);
+            }
             if (SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
-                String sqlInsert = resolveAssociationInsert(repositoryType, persistentEntity, association);
+                RuntimePersistentEntity<T> pe;
+                if (associations.isEmpty()) {
+                    pe = persistentEntity;
+                } else {
+                    Association assoc = associations.get(0);
+                    if (assoc instanceof Embedded) {
+                        pe = (RuntimePersistentEntity<T>) assoc.getOwner();
+                    } else {
+                        pe = (RuntimePersistentEntity<T>) assoc.getAssociatedEntity();
+                    }
+                }
+                String sqlInsert = resolveAssociationInsert(repositoryType, pe, association);
                 insertJoinTableAssociations(
                         dialect,
                         connection,
                         sqlInsert,
-                        identityProperty,
-                        identity.get(parent),
+                        pe.getIdentity(),
+                        identityValue,
                         associatedId,
                         entities);
             }
         }
+        return parent;
     }
 
     private <T> void insertJoinTableAssociations(Dialect dialect,
@@ -1150,29 +1279,6 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return Stream.of(new AbstractMap.SimpleEntry<>(property, propertyValue));
     }
 
-    private Stream<Map.Entry<RuntimeAssociation, Object>> traverseAssociations(RuntimePersistentEntity persistentEntity, Object value) {
-        return Stream.concat(
-                Stream.of(persistentEntity.getIdentity()), persistentEntity.getPersistentProperties().stream()
-        ).flatMap(property -> traverseAssociations((RuntimePersistentProperty) property, value));
-    }
-
-    private Stream<Map.Entry<RuntimeAssociation, Object>> traverseAssociations(RuntimePersistentProperty property, Object value) {
-        if (value == null) {
-            return Stream.empty();
-        }
-        Object propertyValue = property.getProperty().get(value);
-        if (property instanceof Embedded) {
-            Embedded embedded = (Embedded) property;
-            RuntimePersistentEntity<Object> embeddedEntity = (RuntimePersistentEntity) embedded.getAssociatedEntity();
-            return embeddedEntity.getPersistentProperties()
-                    .stream()
-                    .flatMap(prop -> traverseAssociations(prop, propertyValue));
-        } else if (property instanceof RuntimeAssociation) {
-            return Stream.of(new AbstractMap.SimpleEntry<>((RuntimeAssociation) property, propertyValue));
-        }
-        return Stream.empty();
-    }
-
     @Nullable
     @Override
     public <T> T findOne(@NonNull Class<T> type, @NonNull Serializable id) {
@@ -1214,6 +1320,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             return persistInBatch(
                     operation.getAnnotationMetadata(),
                     operation.getRepositoryType(),
+                    Collections.emptyList(),
                     operation,
                     insert,
                     new HashSet(10)
@@ -1221,9 +1328,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         }
     }
 
-    private <T> Iterable<T> persistInBatch(
+    private <T> List<T> persistInBatch(
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
+            List<Association> associations,
             @NonNull Iterable<T> entities,
             StoredInsert<T> insert,
             Set<Object> persisted) {
@@ -1263,8 +1371,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 stmt.executeBatch();
 
-
-                if (hasGeneratedID && !identity.isReadOnly()) {
+                if (hasGeneratedID) {
                     ListIterator<T> resultIterator = results.listIterator();
                     ResultSet generatedKeys = stmt.getGeneratedKeys();
                     while (resultIterator.hasNext()) {
@@ -1281,19 +1388,27 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     }
                 }
                 final boolean hasPostPersistEventListeners = persistentEntity.hasPostPersistEventListeners();
-                for (T result : results) {
+                ListIterator<T> it = results.listIterator();
+                while (it.hasNext()) {
+                    T entityBeforePostPersist = it.next();
+                    T entity = entityBeforePostPersist;
                     if (hasPostPersistEventListeners) {
-                        result = triggerPostPersist(result, persistentEntity, annotationMetadata);
+                        entity = triggerPostPersist(entity, persistentEntity, annotationMetadata);
                     }
-                    cascadePostPersist(
+                    entity = cascadePostPersist(
                             connection,
                             annotationMetadata,
                             repositoryType,
-                            insert,
-                            result,
-                            persisted,
-                            insert.getIdentity()
+                            insert.getDialect(),
+                            persistentEntity,
+                            associations,
+                            entity,
+                            persistentEntity.getIdentity().getProperty().get(entityBeforePostPersist),
+                            persisted
                     );
+                    if (entity != entityBeforePostPersist) {
+                        it.set(entity);
+                    }
                 }
                 return results;
             } catch (SQLException e) {
@@ -1419,5 +1534,20 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         };
         return StreamSupport.stream(iterable.spliterator(), false);
+    }
+
+    private List<Association> associated(List<Association> associations, Association association) {
+        List<Association> newAssociations = new ArrayList<>(associations.size() + 1);
+        newAssociations.addAll(associations);
+        newAssociations.add(association);
+        return newAssociations;
+    }
+
+    private <X, Y> X setProperty(BeanProperty<X, Y> beanProperty, X x, Y y) {
+        if (beanProperty.isReadOnly()) {
+            return beanProperty.withValue(x, y);
+        }
+        beanProperty.set(x, y);
+        return x;
     }
 }

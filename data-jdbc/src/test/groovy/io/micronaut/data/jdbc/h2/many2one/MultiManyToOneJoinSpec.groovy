@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 @MicronautTest
 @H2DBProperties
-class MultiOneToManyJoinSpec extends Specification implements H2TestPropertyProvider {
+class MultiManyToOneJoinSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
