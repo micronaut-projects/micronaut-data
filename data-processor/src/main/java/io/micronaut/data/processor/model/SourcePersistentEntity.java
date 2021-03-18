@@ -17,7 +17,6 @@ package io.micronaut.data.processor.model;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
@@ -30,7 +29,6 @@ import io.micronaut.inject.ast.TypedElement;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link PersistentEntity} that operates on the sources.
@@ -42,11 +40,13 @@ import java.util.stream.Collectors;
 public class SourcePersistentEntity extends AbstractPersistentEntity implements PersistentEntity, TypedElement {
 
     private final ClassElement classElement;
-    private final Map<String, PropertyElement> beanProperties;
-    private final SourcePersistentProperty[] id;
+    private final SourcePersistentProperty[] ids;
     private final SourcePersistentProperty version;
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver;
-    private final List<SourcePersistentProperty> persistentProperties;
+    private final Map<String, SourcePersistentProperty> persistentProperties;
+    private final Map<String, SourcePersistentProperty> allPersistentProperties;
+
+    private List<String> allPersistentPropertiesNames;
+    private List<SourcePersistentProperty> persistentPropertiesValues;
 
     /**
      * Default constructor.
@@ -57,55 +57,54 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
             @NonNull ClassElement classElement,
             @NonNull Function<ClassElement, SourcePersistentEntity> entityResolver) {
         super(classElement);
-        this.entityResolver = entityResolver;
         this.classElement = classElement;
         final List<PropertyElement> beanProperties = classElement.getBeanProperties();
-        this.beanProperties = new LinkedHashMap<>(beanProperties.size());
-        List<SourcePersistentProperty> id = new ArrayList<>(2);
+        this.allPersistentProperties = new LinkedHashMap<>(beanProperties.size());
+        this.persistentProperties = new LinkedHashMap<>(beanProperties.size());
+        List<SourcePersistentProperty> ids = new ArrayList<>(2);
         SourcePersistentProperty version = null;
-        for (PropertyElement beanProperty : beanProperties) {
-            if (beanProperty.getName().equals("metaClass")) {
+        for (PropertyElement propertyElement : beanProperties) {
+            if (propertyElement.getName().equals("metaClass")) {
                 continue;
             }
-            if (beanProperty.hasStereotype(Transient.class)) {
+            if (propertyElement.hasStereotype(Transient.class)) {
                 continue;
             }
-            if (beanProperty.hasStereotype(Id.class)) {
-                if (beanProperty.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
-                    id.add(new SourceEmbedded(this, beanProperty, entityResolver));
+            if (propertyElement.hasStereotype(Id.class)) {
+                SourcePersistentProperty id;
+                if (isEmbedded(propertyElement)) {
+                    id = new SourceEmbedded(this, propertyElement, entityResolver);
                 } else {
-                    id.add(new SourcePersistentProperty(this, beanProperty));
+                    id = new SourcePersistentProperty(this, propertyElement);
                 }
-            } else if (beanProperty.hasStereotype(Version.class)) {
-                version = new SourcePersistentProperty(this, beanProperty);
+                ids.add(id);
+                allPersistentProperties.put(id.getName(), id);
+            } else if (propertyElement.hasStereotype(Version.class)) {
+                version = new SourcePersistentProperty(this, propertyElement);
+                allPersistentProperties.put(version.getName(), version);
             } else {
-                this.beanProperties.put(beanProperty.getName(), beanProperty);
+                SourcePersistentProperty prop;
+                if (propertyElement.hasAnnotation(Relation.class)) {
+                    if (isEmbedded(propertyElement)) {
+                        if (!propertyElement.getType().hasStereotype(Embeddable.class)) {
+                            throw new MappingException("Type [" + propertyElement.getType().getName() + "] of property [" + propertyElement.getName() + "] of entity [" + getName() + "] is missing @Embeddable annotation. @Embedded fields can only be applied to types annotated with @Embeddable");
+                        }
+                        prop = new SourceEmbedded(this, propertyElement, entityResolver);
+                    } else {
+                        prop = new SourceAssociation(this, propertyElement, entityResolver);
+                    }
+                } else {
+                    prop = new SourcePersistentProperty(this, propertyElement);
+                    if (prop.getDataType() == DataType.ENTITY) {
+                        prop = new SourceAssociation(this, propertyElement, entityResolver);
+                    }
+                }
+                allPersistentProperties.put(prop.getName(), prop);
+                persistentProperties.put(prop.getName(), prop);
             }
         }
-
+        this.ids = ids.stream().toArray(SourcePersistentProperty[]::new);
         this.version = version;
-        this.id = id.toArray(new SourcePersistentProperty[0]);
-        this.persistentProperties = this.beanProperties.values().stream().map(propertyElement -> {
-            Optional<AnnotationValue<Relation>> relation = propertyElement.findAnnotation(Relation.class);
-            if (relation.isPresent()) {
-                Relation.Kind kind = relation.flatMap(av -> av.enumValue(Relation.Kind.class)).orElse(null);
-                if (kind == Relation.Kind.EMBEDDED) {
-                    if (!propertyElement.getType().hasStereotype(Embeddable.class)) {
-                        throw new MappingException("Type [" + propertyElement.getType().getName()  + "] of property [" + propertyElement.getName() + "] of entity [" + getName() + "] is missing @Embeddable annotation. @Embedded fields can only be applied to types annotated with @Embeddable");
-                    }
-                    return new SourceEmbedded(this, propertyElement, entityResolver);
-                } else {
-                    return new SourceAssociation(this, propertyElement, entityResolver);
-                }
-            } else {
-                SourcePersistentProperty pp = new SourcePersistentProperty(this, propertyElement);
-                if (pp.getDataType() == DataType.ENTITY) {
-                    return new SourceAssociation(this, propertyElement, entityResolver);
-                }
-                return pp;
-            }
-        })
-        .collect(Collectors.toList());
     }
 
     @NonNull
@@ -136,24 +135,24 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
 
     @Override
     public boolean hasCompositeIdentity() {
-        return id.length > 1;
+        return ids.length > 1;
     }
 
     @Override
     public boolean hasIdentity() {
-        return id.length == 1;
+        return ids.length == 1;
     }
 
     @Nullable
     @Override
     public SourcePersistentProperty[] getCompositeIdentity() {
-        return id.length > 1 ? id : null;
+        return ids.length > 1 ? ids : null;
     }
 
     @Nullable
     @Override
     public SourcePersistentProperty getIdentity() {
-        return id.length == 1 ? id[0] : null;
+        return ids.length == 1 ? ids[0] : null;
     }
 
     @Nullable
@@ -165,43 +164,17 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     @NonNull
     @Override
     public List<SourcePersistentProperty> getPersistentProperties() {
-        return persistentProperties;
-    }
-
-    @NonNull
-    @Override
-    public List<Association> getAssociations() {
-        return persistentProperties.stream()
-                .filter(bp -> bp instanceof Association)
-                .map(bp -> (Association) bp)
-                .collect(Collectors.toList());
-    }
-
-    @NonNull
-    @Override
-    public List<Embedded> getEmbedded() {
-        return persistentProperties.stream()
-                .filter(p -> p instanceof Embedded)
-                .map(p -> (Embedded) p)
-                .collect(Collectors.toList());
+        if (persistentPropertiesValues == null) {
+            persistentPropertiesValues = Collections.unmodifiableList(new ArrayList<>(persistentProperties.values()));
+        }
+        return persistentPropertiesValues;
     }
 
     @Nullable
     @Override
     public SourcePersistentProperty getPropertyByName(String name) {
         if (StringUtils.isNotEmpty(name)) {
-            final PropertyElement prop = beanProperties.get(name);
-            if (prop != null) {
-                if (prop.hasStereotype(Relation.class)) {
-                    if (isEmbedded(prop)) {
-                        return new SourceEmbedded(this, prop, entityResolver);
-                    } else {
-                        return new SourceAssociation(this, prop, entityResolver);
-                    }
-                } else {
-                    return new SourcePersistentProperty(this, prop);
-                }
-            }
+            return allPersistentProperties.get(name);
         }
         return null;
     }
@@ -219,8 +192,8 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
      * @return The PersistentProperty used as id or version or null if it doesn't exist
      */
     public SourcePersistentProperty getIdOrVersionPropertyByName(String name) {
-        if (ArrayUtils.isNotEmpty(id)) {
-            SourcePersistentProperty persistentProp = Arrays.stream(id)
+        if (ArrayUtils.isNotEmpty(ids)) {
+            SourcePersistentProperty persistentProp = Arrays.stream(ids)
                     .filter(p -> p.getName().equals(name))
                     .findFirst()
                     .orElse(null);
@@ -240,7 +213,10 @@ public class SourcePersistentEntity extends AbstractPersistentEntity implements 
     @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
-        return Collections.unmodifiableList(new ArrayList<>(beanProperties.keySet()));
+        if (allPersistentPropertiesNames == null) {
+            allPersistentPropertiesNames = Collections.unmodifiableList(new ArrayList<>(allPersistentProperties.keySet()));
+        }
+        return allPersistentPropertiesNames;
     }
 
     @Override

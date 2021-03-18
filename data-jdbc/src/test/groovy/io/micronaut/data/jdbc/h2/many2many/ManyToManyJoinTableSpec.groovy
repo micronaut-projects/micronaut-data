@@ -1,6 +1,8 @@
 package io.micronaut.data.jdbc.h2.many2many
 
+import groovy.transform.EqualsAndHashCode
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.annotation.JoinColumn
@@ -38,6 +40,9 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
     @Shared
     @Inject
     CourseRatingRepository courseRatingRepository = applicationContext.getBean(CourseRatingRepository)
+    @Shared
+    @Inject
+    CourseRatingCompositeKeyRepository courseRatingCompositeKeyRepository = applicationContext.getBean(CourseRatingCompositeKeyRepository)
 
     void 'test many-to-many hierarchy'() {
         given:
@@ -77,6 +82,17 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             student.ratings[0].student == student
             student.ratings[0].course.name == "Physics"
             student.ratings[0].rating == 5
+        when:
+            rating = new CourseRatingCompositeKey(id: new CourseRatingKey(student: student, course: student.courses.get(1)), rating: 5)
+            courseRatingCompositeKeyRepository.save(rating)
+            student = studentRepository.findByIdEquals(student.id).get()
+        then:
+            student.name == "Denis"
+            student.courses.size() == 2
+            student.ratingsCK.size() == 1
+            student.ratingsCK[0].id.student == student
+            student.ratingsCK[0].id.course.name == "Physics"
+            student.ratingsCK[0].rating == 5
     }
 
     void "test build create Student tables"() {
@@ -142,6 +158,16 @@ class ManyToManyJoinTableSpec extends Specification implements H2TestPropertyPro
             query == 'INSERT INTO "m2m_student_course_association" ("st_id","cs_id") VALUES (?,?)'
     }
 
+    void "test build CourseRatingCompositeKey insert"() {
+        when:
+            QueryBuilder encoder = new SqlQueryBuilder()
+            def e = getRuntimePersistentEntity(CourseRatingCompositeKey)
+            def insert = encoder.buildInsert(AnnotationMetadata.EMPTY_METADATA, e)
+
+        then:
+            insert.query == 'INSERT INTO "m2m_course_rating_ck" ("rating","xyz_student_id","abc_course_id") VALUES (?,?,?)'
+    }
+
     @Shared
     Map<Class, RuntimePersistentEntity> entities = [:]
 
@@ -172,6 +198,11 @@ interface StudentRepository extends CrudRepository<Student, Long> {
     @Join(value = "ratings", type = Join.Type.LEFT_FETCH)
     @Join(value = "ratings.course", type = Join.Type.LEFT_FETCH)
     Optional<Student> queryById(Long aLong)
+
+    @Join(value = "courses", type = Join.Type.LEFT_FETCH)
+    @Join(value = "ratingsCK", type = Join.Type.LEFT_FETCH)
+    @Join(value = "ratingsCK.id.course", type = Join.Type.LEFT_FETCH)
+    Optional<Student> findByIdEquals(Long id)
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -196,6 +227,21 @@ interface CourseRatingRepository extends CrudRepository<CourseRating, Long> {
     Optional<CourseRating> findById(Long id)
 }
 
+@JdbcRepository(dialect = Dialect.H2)
+interface CourseRatingCompositeKeyRepository extends CrudRepository<CourseRatingCompositeKey, CourseRatingKey> {
+
+    @Join(value = "student", type = Join.Type.LEFT_FETCH)
+    @Join(value = "course", type = Join.Type.LEFT_FETCH)
+    @Override
+    Iterable<CourseRatingCompositeKey> findAll()
+
+    @Join(value = "student", type = Join.Type.LEFT_FETCH)
+    @Join(value = "course", type = Join.Type.LEFT_FETCH)
+    @Override
+    Optional<CourseRatingCompositeKey> findById(CourseRatingKey id)
+}
+
+@EqualsAndHashCode(includes = "id")
 @MappedEntity("m2m_student")
 class Student {
     @Id
@@ -210,8 +256,11 @@ class Student {
     List<Course> courses
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "student")
     Set<CourseRating> ratings
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "student")
+    Set<CourseRatingCompositeKey> ratingsCK
 }
 
+@EqualsAndHashCode(includes = "id")
 @MappedEntity("m2m_course")
 class Course {
     @Id
@@ -236,13 +285,40 @@ class CourseRating {
     int rating
 }
 
-// Unsupported
-//@Embeddable
-//class CourseRatingKey {
-//    @MappedProperty("student_id")
-//    Long studentId
-//    @MappedProperty("course_id")
-//    Long courseId
+@MappedEntity("m2m_course_rating_ck")
+class CourseRatingCompositeKey {
+    @EmbeddedId
+    CourseRatingKey id
+
+    int rating
+}
+
+@EqualsAndHashCode
+@Embeddable
+class CourseRatingKey {
+    @MappedProperty("xyz_student_id")
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    Student student
+    @MappedProperty("abc_course_id")
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    Course course
+}
+
+// @MapsId not supported yet
+//@MappedEntity("m2m_course_rating_e")
+//class CourseRatingWithEmbeddedId {
+//    @EmbeddedId
+//    CourseRatingKey id
+//    @Relation(Relation.Kind.MANY_TO_ONE)
+////    @MapsId("studentId")
+////    @JoinColumn(name = "student_id")
+//    Student student
+//    @Relation(Relation.Kind.MANY_TO_ONE)
+////    @MapsId("courseId")
+////    @JoinColumn(name = "course_id")
+//    @MappedProperty("unused")
+//    Course course
+//    int rating
 //}
 
 //@MappedEntity("m2m_course_rating_e")

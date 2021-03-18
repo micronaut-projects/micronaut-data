@@ -77,7 +77,7 @@ interface MyInterface extends GenericRepository<Company, Long> {
 
         where:
         method                         | arguments     | query
-        "findByNameOrderByDateCreated" | "String name" | "ORDER BY company_.date_created ASC"
-        "findByNameOrderByDateCreatedAndName" | "String name" | "ORDER BY company_.date_created ASC,company_.name ASC"
+        "findByNameOrderByDateCreated" | "String name" | 'ORDER BY company_."date_created" ASC'
+        "findByNameOrderByDateCreatedAndName" | "String name" | 'ORDER BY company_."date_created" ASC,company_."name" ASC'
     }
 }
