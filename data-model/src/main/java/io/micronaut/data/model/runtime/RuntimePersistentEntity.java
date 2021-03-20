@@ -23,6 +23,7 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
@@ -41,11 +42,15 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
 
     private final BeanIntrospection<T> introspection;
     private final RuntimePersistentProperty<T>[] identity;
+    private final Map<String, RuntimePersistentProperty<T>> allPersistentProperties;
     private final Map<String, RuntimePersistentProperty<T>> persistentProperties;
     private final RuntimePersistentProperty<T>[] constructorArguments;
     private final String aliasName;
     private final RuntimePersistentProperty<T> version;
     private Boolean hasAutoPopulatedProperties;
+
+    private List<String> allPersistentPropertiesNames;
+    private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
 
     /**
      * Default constructor.
@@ -65,20 +70,28 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
         this.introspection = introspection;
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
         Set<String> constructorArgumentNames = Arrays.stream(constructorArguments).map(Argument::getName).collect(Collectors.toSet());
-        identity = introspection.getIndexedProperties(Id.class).stream().map(bp -> {
-            if (bp.enumValue(Relation.class, Relation.Kind.class).map(k -> k == Relation.Kind.EMBEDDED).orElse(false)) {
-                return new RuntimeEmbedded<>(this, bp, constructorArgumentNames.contains(bp.getName()));
-            } else {
-                return new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
-            }
-        }).toArray(RuntimePersistentProperty[]::new);
-        version = introspection.getIndexedProperty(Version.class).map(bp -> new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()))
-        ).orElse(null);
+        RuntimePersistentProperty<T> version = null;
+        List<RuntimePersistentProperty<T>> ids = new LinkedList<>();
         Collection<BeanProperty<T, Object>> beanProperties = introspection.getBeanProperties();
         this.persistentProperties = new LinkedHashMap<>(beanProperties.size());
-
+        this.allPersistentProperties = new LinkedHashMap<>(beanProperties.size());
         for (BeanProperty<T, Object> bp : beanProperties) {
-            if (!bp.hasStereotype(Id.class, Version.class)) {
+            if (bp.hasStereotype(Transient.class)) {
+                continue;
+            }
+            if (bp.hasStereotype(Id.class)) {
+                RuntimePersistentProperty<T> id;
+                if (isEmbedded(bp)) {
+                    id = new RuntimeEmbedded<>(this, bp, constructorArgumentNames.contains(bp.getName()));
+                } else {
+                    id = new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
+                }
+                ids.add(id);
+                allPersistentProperties.put(id.getName(), id);
+            } else if (bp.hasStereotype(Version.class)) {
+                version = new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
+                allPersistentProperties.put(version.getName(), version);
+            } else {
                 RuntimePersistentProperty<T> prop;
                 if (bp.hasAnnotation(Relation.class)) {
                     if (isEmbedded(bp)) {
@@ -89,9 +102,12 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
                 } else {
                     prop = new RuntimePersistentProperty<>(this, bp, constructorArgumentNames.contains(bp.getName()));
                 }
+                allPersistentProperties.put(prop.getName(), prop);
                 persistentProperties.put(prop.getName(), prop);
             }
         }
+        this.identity = ids.stream().toArray(RuntimePersistentProperty[]::new);
+        this.version = version;
 
         this.constructorArguments = new RuntimePersistentProperty[constructorArguments.length];
         for (int i = 0; i < constructorArguments.length; i++) {
@@ -217,37 +233,22 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @NonNull
     @Override
     public Collection<RuntimePersistentProperty<T>> getPersistentProperties() {
-        return persistentProperties.values();
+        if (persistentPropertiesValues == null) {
+            persistentPropertiesValues = Collections.unmodifiableList(new ArrayList<>(persistentProperties.values()));
+        }
+        return persistentPropertiesValues;
     }
 
     @NonNull
     @Override
     public Collection<RuntimeAssociation<T>> getAssociations() {
-        return persistentProperties
-                .values()
-                .stream()
-                .filter(bp -> bp.getAnnotationMetadata().hasStereotype(Relation.class))
-                .map(p -> ((RuntimeAssociation<T>) p))
-                .collect(Collectors.toList());
-    }
-
-    @NonNull
-    @Override
-    public Collection<Embedded> getEmbedded() {
-        return persistentProperties.values().stream()
-                .filter(pp -> pp instanceof Embedded)
-                .map(pp -> (Embedded) pp)
-                .collect(Collectors.toList());
+        return (Collection<RuntimeAssociation<T>>) super.getAssociations();
     }
 
     @Nullable
     @Override
     public RuntimePersistentProperty<T> getPropertyByName(String name) {
-        RuntimePersistentProperty<T> property = persistentProperties.get(name);
-        if (property == null) {
-            return getIdentityByName(name);
-        }
-        return property;
+        return allPersistentProperties.get(name);
     }
 
     @Nullable
@@ -259,7 +260,10 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
     @NonNull
     @Override
     public List<String> getPersistentPropertyNames() {
-        return Arrays.asList(introspection.getPropertyNames());
+        if (allPersistentPropertiesNames == null) {
+            allPersistentPropertiesNames = Collections.unmodifiableList(new ArrayList<>(allPersistentProperties.keySet()));
+        }
+        return allPersistentPropertiesNames;
     }
 
     @Override
@@ -299,19 +303,9 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
      */
     public boolean hasAutoPopulatedProperties() {
         if (this.hasAutoPopulatedProperties == null) {
-            final RuntimePersistentProperty<T> identity = getIdentity();
-            boolean hasAutoPopulated = isAutoPopulatedProperty(identity);
-
-            if (!hasAutoPopulated) {
-                hasAutoPopulated = persistentProperties.values().stream()
-                        .anyMatch(PersistentProperty::isAutoPopulated);
-            }
-            this.hasAutoPopulatedProperties = hasAutoPopulated;
+            this.hasAutoPopulatedProperties = allPersistentProperties.values().stream().anyMatch(PersistentProperty::isAutoPopulated);
         }
         return this.hasAutoPopulatedProperties;
     }
 
-    private boolean isAutoPopulatedProperty(RuntimePersistentProperty<T> identity) {
-        return identity != null && identity.isAutoPopulated();
-    }
 }

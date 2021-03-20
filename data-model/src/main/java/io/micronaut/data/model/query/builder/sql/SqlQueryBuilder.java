@@ -38,6 +38,7 @@ import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
@@ -325,20 +326,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     joinTableName = quote(joinTableName);
                 }
                 joinTableBuilder.append(joinTableName).append(" (");
-                List<PropertyPath> leftProperties = new ArrayList<>();
-                List<PropertyPath> rightProperties = new ArrayList<>();
+                List<PersistentPropertyPath> leftProperties = new ArrayList<>();
+                List<PersistentPropertyPath> rightProperties = new ArrayList<>();
                 boolean isAssociationOwner = !inverseSide.isPresent();
                 List<String> leftJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, entity, namingStrategy);
                 List<String> rightJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, association.getAssociatedEntity(), namingStrategy);
                 traversePersistentProperties(entity.getIdentity(), (associations, property) -> {
-                    leftProperties.add(new PropertyPath(associations, property, ""));
+                    leftProperties.add(new PersistentPropertyPath(associations, property, ""));
                 });
                 traversePersistentProperties(associatedEntity.getIdentity(), (associations, property) -> {
-                    rightProperties.add(new PropertyPath(associations, property, ""));
+                    rightProperties.add(new PersistentPropertyPath(associations, property, ""));
                 });
                 if (leftJoinTableColumns.size() == leftProperties.size()) {
                     for (int i = 0; i < leftJoinTableColumns.size(); i++) {
-                        PropertyPath pp = leftProperties.get(i);
+                        PersistentPropertyPath pp = leftProperties.get(i);
                         String columnName = leftJoinTableColumns.get(i);
                         if (escape) {
                             columnName = quote(columnName);
@@ -348,7 +349,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(',');
                     }
                 } else {
-                    for (PropertyPath pp: leftProperties) {
+                    for (PersistentPropertyPath pp: leftProperties) {
                         String columnName =  namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
                         if (escape) {
                             columnName = quote(columnName);
@@ -360,7 +361,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 }
                 if (rightJoinTableColumns.size() == rightProperties.size()) {
                     for (int i = 0; i < rightJoinTableColumns.size(); i++) {
-                        PropertyPath pp = rightProperties.get(i);
+                        PersistentPropertyPath pp = rightProperties.get(i);
                         String columnName = rightJoinTableColumns.get(i);
                         if (escape) {
                             columnName = quote(columnName);
@@ -370,7 +371,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(',');
                     }
                 } else {
-                    for (PropertyPath pp: rightProperties) {
+                    for (PersistentPropertyPath pp: rightProperties) {
                         String columnName =  namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
                         if (escape) {
                             columnName = quote(columnName);
@@ -395,15 +396,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         List<String> columns = new ArrayList<>();
 
         if (identity != null) {
-            List<PropertyPath> ids = new ArrayList<>();
+            List<PersistentPropertyPath> ids = new ArrayList<>();
             traversePersistentProperties(identity, (associations, property) -> {
-                ids.add(new PropertyPath(associations, property, ""));
+                ids.add(new PersistentPropertyPath(associations, property, ""));
             });
             if (ids.size() > 1) {
                 generatePkAfterColumns = true;
             }
             boolean finalGeneratePkAfterColumns = generatePkAfterColumns;
-            for (PropertyPath pp : ids) {
+            for (PersistentPropertyPath pp : ids) {
                 String column = namingStrategy.mappedName(pp.getAssociations(), pp.getProperty());
                 if (escape) {
                     column = quote(column);
@@ -645,8 +646,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     @Override
     protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
         PersistentEntity entity = queryState.getEntity();
-        String alias = queryState.getCurrentAlias();
-        selectAllColumns(entity, alias, queryBuffer);
+        selectAllColumns(entity, queryState.getRootAlias(), queryBuffer);
 
         QueryModel queryModel = queryState.getQueryModel();
 
@@ -1026,7 +1026,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
-    protected void appendUpdateSetParameter(StringBuilder sb, String alias, PersistentProperty prop, Placeholder param) {
+    protected void appendUpdateSetParameter(StringBuilder sb, String alias, PersistentProperty prop, String placeholder) {
         String transformed = getDataTransformerWriteValue(alias, prop).orElse(null);
         if (transformed != null) {
             sb.append(transformed);
@@ -1035,19 +1035,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (prop.getDataType() == DataType.JSON) {
             switch (dialect) {
                 case H2:
-                    sb.append(param.getName()).append(" FORMAT JSON");
+                    sb.append(placeholder).append(" FORMAT JSON");
                     break;
                 case MYSQL:
-                    sb.append("CONVERT(").append(param.getName()).append(" USING UTF8MB4)");
+                    sb.append("CONVERT(").append(placeholder).append(" USING UTF8MB4)");
                     break;
                 case POSTGRES:
-                    sb.append("to_json(").append(param.getName()).append("::json)");
+                    sb.append("to_json(").append(placeholder).append("::json)");
                     break;
                 default:
-                    super.appendUpdateSetParameter(sb, alias, prop, param);
+                    super.appendUpdateSetParameter(sb, alias, prop, placeholder);
             }
         } else {
-            super.appendUpdateSetParameter(sb, alias, prop, param);
+            super.appendUpdateSetParameter(sb, alias, prop, placeholder);
         }
     }
 
@@ -1079,7 +1079,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
 
             String currentPath = pathSoFar.toString();
-            String existingAlias = appliedJoinPaths.get(alias + DOT + currentPath);
+            String existingAlias = appliedJoinPaths.get(currentPath);
             if (existingAlias != null) {
                 joinAliases[i] = existingAlias;
                 joinAlias = existingAlias;
@@ -1095,107 +1095,125 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                           joinPath.getAlias().orElse(null))
                           );
                 joinAliases[i] = getAliasName(joinPathToUse);
-                final PersistentEntity associationOwner = findOwner(joinAssociationsPath, association).orElse(queryState.getEntity());
-                final boolean escape = shouldEscape(associationOwner);
-                String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
-
                 String currentJoinAlias = joinAliases[i];
-                if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && StringUtils.isEmpty(mappedBy)) {
-                    PersistentProperty identity = associatedEntity.getIdentity();
-                    if (identity == null) {
-                        throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
-                    }
-                    final PersistentProperty associatedId = associationOwner.getIdentity();
-                    if (associatedId == null) {
-                        throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
-                    }
-                    Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
-                    Association owningAssociation = inverseSide.orElse(association);
-                    boolean isAssociationOwner = !association.getInverseSide().isPresent();
-                    NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
-                    AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
 
-                    List<String> ownerJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, associationOwner, namingStrategy);
-                    List<String> ownerJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, associationOwner, namingStrategy);
-                    List<String> associationJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
-                    List<String> associationJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
-                    if (escape) {
-                        ownerJoinColumns = ownerJoinColumns.stream().map(this::quote).collect(Collectors.toList());
-                        ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
-                        associationJoinColumns = associationJoinColumns.stream().map(this::quote).collect(Collectors.toList());
-                        associationJoinTableColumns = associationJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
-                    }
+                buildJoin(joinType, target, queryState,
+                        joinAssociationsPath,
+                        joinAlias,
+                        association,
+                        associatedEntity,
+                        findOwner(joinAssociationsPath, association).orElseGet(queryState::getEntity),
+                        currentJoinAlias);
 
-                    String joinTableName = annotationMetadata
-                            .stringValue(ANN_JOIN_TABLE, "name")
-                            .orElseGet(() -> namingStrategy.mappedName(association));
-                    String joinTableAlias = annotationMetadata
-                            .stringValue(ANN_JOIN_TABLE, "alias")
-                            .orElseGet(() -> currentJoinAlias + joinTableName + "_");
-                    join(target,
-                            queryState.getQueryModel(),
-                            joinType,
-                            escape ? quote(joinTableName) : joinTableName,
-                            joinTableAlias,
-                            joinAlias,
-                            ownerJoinColumns,
-                            ownerJoinTableColumns
-                    );
-                    target.append(SPACE);
-                    join(target,
-                            queryState.getQueryModel(),
-                            joinType,
-                            getTableName(associatedEntity),
-                            currentJoinAlias,
-                            joinTableAlias,
-                            associationJoinTableColumns,
-                            associationJoinColumns
-                    );
-                } else {
-                    if (StringUtils.isNotEmpty(mappedBy)) {
-                        PersistentEntity associatedEntityOwner = findOwner(joinAssociationsPath, association).orElseGet(queryState::getEntity);
-                        PersistentProperty ownerIdentity = associatedEntityOwner.getIdentity();
-                        if (ownerIdentity == null) {
-                            throw new IllegalArgumentException("Associated entity [" + associatedEntityOwner + "] defines no ID. Cannot join.");
-                        }
-                        PersistentProperty associatedProperty = associatedEntity.getPropertyByName(mappedBy);
-                        if (associatedProperty == null) {
-                            throw new MappingException("Foreign key association with mappedBy references a property that doesn't exist [" + mappedBy + "] of entity: " + associatedEntity.getName());
-                        }
-                        join(target,
-                                joinType,
-                                queryState,
-                                associatedEntity,
-                                associationOwner,
-                                joinAlias,
-                                currentJoinAlias,
-                                joinAssociationsPath,
-                                ownerIdentity,
-                                Collections.emptyList(),
-                                associatedProperty);
-                    } else {
-                        PersistentProperty associatedProperty = association.getAssociatedEntity().getIdentity();
-                        if (associatedProperty == null) {
-                            throw new IllegalArgumentException("Associated entity [" + association.getAssociatedEntity().getName() + "] defines no ID. Cannot join.");
-                        }
-                        join(target,
-                                joinType,
-                                queryState,
-                                associatedEntity,
-                                associationOwner,
-                                joinAlias,
-                                currentJoinAlias,
-                                joinAssociationsPath,
-                                association,
-                                Collections.emptyList(),
-                                associatedProperty);
-                    }
-                }
                 joinAlias = currentJoinAlias;
             }
             joinAssociationsPath.clear();
         }
         return joinAliases;
+    }
+
+    private void buildJoin(String joinType,
+                           StringBuilder sb,
+                           QueryState queryState,
+                           List<Association> joinAssociationsPath,
+                           String joinAlias,
+                           Association association,
+                           PersistentEntity associatedEntity,
+                           PersistentEntity associationOwner,
+                           String currentJoinAlias) {
+        final boolean escape = shouldEscape(associationOwner);
+        String mappedBy = association.getAnnotationMetadata().stringValue(Relation.class, "mappedBy").orElse(null);
+
+        if (association.getKind() == Relation.Kind.MANY_TO_MANY || association.isForeignKey() && StringUtils.isEmpty(mappedBy)) {
+            PersistentProperty identity = associatedEntity.getIdentity();
+            if (identity == null) {
+                throw new IllegalArgumentException("Associated entity [" + associatedEntity.getName() + "] defines no ID. Cannot join.");
+            }
+            final PersistentProperty associatedId = associationOwner.getIdentity();
+            if (associatedId == null) {
+                throw new MappingException("Cannot join on entity [" + associationOwner.getName() + "] that has no declared ID");
+            }
+            Optional<Association> inverseSide = association.getInverseSide().map(Function.identity());
+            Association owningAssociation = inverseSide.orElse(association);
+            boolean isAssociationOwner = !association.getInverseSide().isPresent();
+            NamingStrategy namingStrategy = associationOwner.getNamingStrategy();
+            AnnotationMetadata annotationMetadata = owningAssociation.getAnnotationMetadata();
+
+            List<String> ownerJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, isAssociationOwner, associationOwner, namingStrategy);
+            List<String> ownerJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, isAssociationOwner, associationOwner, namingStrategy);
+            List<String> associationJoinColumns = resolveJoinTableAssociatedColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
+            List<String> associationJoinTableColumns = resolveJoinTableJoinColumns(annotationMetadata, !isAssociationOwner, associatedEntity, namingStrategy);
+            if (escape) {
+                ownerJoinColumns = ownerJoinColumns.stream().map(this::quote).collect(Collectors.toList());
+                ownerJoinTableColumns = ownerJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
+                associationJoinColumns = associationJoinColumns.stream().map(this::quote).collect(Collectors.toList());
+                associationJoinTableColumns = associationJoinTableColumns.stream().map(this::quote).collect(Collectors.toList());
+            }
+
+            String joinTableName = annotationMetadata
+                    .stringValue(ANN_JOIN_TABLE, "name")
+                    .orElseGet(() -> namingStrategy.mappedName(association));
+            String joinTableAlias = annotationMetadata
+                    .stringValue(ANN_JOIN_TABLE, "alias")
+                    .orElseGet(() -> currentJoinAlias + joinTableName + "_");
+            join(sb,
+                    queryState.getQueryModel(),
+                    joinType,
+                    escape ? quote(joinTableName) : joinTableName,
+                    joinTableAlias,
+                    joinAlias,
+                    ownerJoinColumns,
+                    ownerJoinTableColumns
+            );
+            sb.append(SPACE);
+            join(sb,
+                    queryState.getQueryModel(),
+                    joinType,
+                    getTableName(associatedEntity),
+                    currentJoinAlias,
+                    joinTableAlias,
+                    associationJoinTableColumns,
+                    associationJoinColumns
+            );
+        } else {
+            if (StringUtils.isNotEmpty(mappedBy)) {
+                PersistentProperty ownerIdentity = associationOwner.getIdentity();
+                if (ownerIdentity == null) {
+                    throw new IllegalArgumentException("Associated entity [" + associationOwner + "] defines no ID. Cannot join.");
+                }
+                PersistentPropertyPath mappedByPropertyPath = associatedEntity.getPropertyPath(mappedBy);
+                if (mappedByPropertyPath == null) {
+                    throw new MappingException("Foreign key association with mappedBy references a property that doesn't exist [" + mappedBy + "] of entity: " + associatedEntity.getName());
+                }
+                join(sb,
+                        joinType,
+                        queryState,
+                        associatedEntity,
+                        associationOwner,
+                        joinAlias,
+                        currentJoinAlias,
+                        joinAssociationsPath,
+                        ownerIdentity,
+                        mappedByPropertyPath.getAssociations(),
+                        mappedByPropertyPath.getProperty());
+            } else {
+                PersistentProperty associatedProperty = association.getAssociatedEntity().getIdentity();
+                if (associatedProperty == null) {
+                    throw new IllegalArgumentException("Associated entity [" + association.getAssociatedEntity().getName() + "] defines no ID. Cannot join.");
+                }
+                join(sb,
+                        joinType,
+                        queryState,
+                        associatedEntity,
+                        associationOwner,
+                        joinAlias,
+                        currentJoinAlias,
+                        joinAssociationsPath,
+                        association,
+                        Collections.emptyList(),
+                        associatedProperty);
+            }
+        }
     }
 
     private void join(StringBuilder sb,

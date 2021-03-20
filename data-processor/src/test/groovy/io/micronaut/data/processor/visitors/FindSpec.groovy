@@ -247,7 +247,7 @@ interface PlayerRepository extends GenericRepository<Player, Integer> {
         def findByTeamId = beanDefinition.getRequiredMethod("findByTeamId", Integer)
 
         expect:
-        findByTeamName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.name = :p1)'
+        findByTeamName.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ JOIN player_.team player_team_ WHERE (player_team_.name = :p1)'
         findByTeamId.stringValue(Query).get() == 'SELECT player_ FROM test.Player AS player_ WHERE (player_.team.id = :p1)'
     }
 

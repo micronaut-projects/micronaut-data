@@ -34,7 +34,7 @@ import java.util.List;
  */
 public final class JoinTableAnnotationMapper implements NamedAnnotationMapper {
 
-    private final static JoinColumnAnnotationMapper JOIN_COLUMN_ANNOTATION_MAPPER = new JoinColumnAnnotationMapper();
+    private static final JoinColumnAnnotationMapper JOIN_COLUMN_ANNOTATION_MAPPER = new JoinColumnAnnotationMapper();
 
     @NonNull
     @Override

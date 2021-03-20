@@ -49,6 +49,7 @@ import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -632,31 +633,23 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         Object value = resolvedEntity;
                         RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) persistentEntity.getPropertyByName(propertyName);
                         if (property == null) {
-                            List<PersistentProperty> embeddedProperties = persistentEntity.getPropertiesInPath(propertyName);
-                            if (embeddedProperties.isEmpty()) {
+                            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyName);
+                            if (propertyPath == null) {
                                 throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
                             }
-                            property = (RuntimePersistentProperty) CollectionUtils.last(embeddedProperties);
-                            List<Association> associations = new ArrayList<>();
-                            for (PersistentProperty embeddedProperty : embeddedProperties) {
-                                if (embeddedProperty instanceof Association) {
-                                    Association association = (Association) embeddedProperty;
-                                    if (association.getKind() != Relation.Kind.EMBEDDED) {
-                                        RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) embeddedProperty;
-                                        if (value != null) {
-                                            value = p.getProperty().get(value);
-                                        }
-                                        cascadeUpdate(connection, repositoryType, annotationMetadata, associations, association, value, persisted);
-                                        continue;
-                                    } else {
-                                        associations.add(association);
-                                    }
-                                }
-                                if (value == null || property == embeddedProperty) {
+                            property = (RuntimePersistentProperty<Object>) propertyPath.getProperty();
+                            List<Association> embeddedAssociations = new ArrayList<>(propertyPath.getAssociations().size());
+                            for (Association association : propertyPath.getAssociations()) {
+                                RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) association;
+                                value = p.getProperty().get(value);
+                                if (value == null) {
                                     break;
                                 }
-                                RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) embeddedProperty;
-                                value = p.getProperty().get(value);
+                                if (association instanceof Embedded) {
+                                    embeddedAssociations.add(association);
+                                } else {
+                                    cascadeUpdate(connection, repositoryType, annotationMetadata, embeddedAssociations, association, value, persisted);
+                                }
                             }
                         }
                         DataType dataType = property.getDataType();

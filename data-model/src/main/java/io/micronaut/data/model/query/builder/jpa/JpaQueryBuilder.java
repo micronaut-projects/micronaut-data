@@ -52,54 +52,44 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * Default constructor.
      */
     public JpaQueryBuilder() {
-        queryHandlers.put(QueryModel.EqualsAll.class, (queryState, criterion) -> {
-            String comparisonExpression = " = ALL (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.EqualsAll.class, (ctx, criterion) -> {
+            handleSubQuery(ctx, criterion, " = ALL (");
         });
 
-        queryHandlers.put(QueryModel.NotEqualsAll.class, (queryState, criterion) -> {
-            String comparisonExpression = " != ALL (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.NotEqualsAll.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " != ALL (");
         });
 
-        queryHandlers.put(QueryModel.GreaterThanAll.class, (queryState, criterion) -> {
-            String comparisonExpression = " > ALL (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.GreaterThanAll.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " > ALL (");
         });
 
-        queryHandlers.put(QueryModel.GreaterThanSome.class, (queryState, criterion) -> {
-            String comparisonExpression = " > SOME (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.GreaterThanSome.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " > SOME (");
         });
 
-        queryHandlers.put(QueryModel.GreaterThanEqualsAll.class, (queryState, criterion) -> {
-            String comparisonExpression = " >= ALL (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.GreaterThanEqualsAll.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " >= ALL (");
         });
 
-        queryHandlers.put(QueryModel.GreaterThanEqualsSome.class, (queryState, criterion) -> {
-            String comparisonExpression = " >= SOME (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.GreaterThanEqualsSome.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " >= SOME (");
         });
 
-        queryHandlers.put(QueryModel.LessThanAll.class, (queryState, criterion) -> {
-            String comparisonExpression = " < ALL (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.LessThanAll.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " < ALL (");
         });
 
-        queryHandlers.put(QueryModel.LessThanSome.class, (queryState, criterion) -> {
-            String comparisonExpression = " < SOME (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.LessThanSome.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " < SOME (");
         });
 
-        queryHandlers.put(QueryModel.LessThanEqualsAll.class, (queryState, criterion) -> {
-            String comparisonExpression = " <= ALL (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.LessThanEqualsAll.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " <= ALL (");
         });
 
-        queryHandlers.put(QueryModel.LessThanEqualsSome.class, (queryState, criterion) -> {
-            String comparisonExpression = " <= SOME (";
-            handleSubQuery(queryState, (QueryModel.SubqueryCriterion) criterion, comparisonExpression);
+        addCriterionHandler(QueryModel.LessThanEqualsSome.class, (queryState, criterion) -> {
+            handleSubQuery(queryState, criterion, " <= SOME (");
         });
     }
 
@@ -133,7 +123,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 continue;
             }
             String currentPath = pathSoFar.toString();
-            String existingAlias = appliedJoinPaths.get(alias + DOT + currentPath);
+            String existingAlias = appliedJoinPaths.get(currentPath);
             if (existingAlias != null) {
                 joinAliases[i] = existingAlias;
                 aliases.add(existingAlias);
@@ -174,7 +164,7 @@ public class JpaQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     @Override
     protected void selectAllColumns(QueryState queryState, StringBuilder queryBuffer) {
-        queryBuffer.append(queryState.getCurrentAlias());
+        queryBuffer.append(queryState.getRootAlias());
     }
 
     @Override

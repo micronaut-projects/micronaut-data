@@ -114,8 +114,8 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         method                           | returnType | arguments     | query
-        "findByCountryRegionCountryName" | "City"     | "String name" | "SELECT city_ FROM $City.name AS city_ WHERE (city_.countryRegion.country.name = :p1)"
-        "findByCountryRegionName"        | "City"     | "String name" | "SELECT city_ FROM $City.name AS city_ WHERE (city_.countryRegion.name = :p1)"
+        "findByCountryRegionCountryName" | "City"     | "String name" | "SELECT city_ FROM $City.name AS city_ JOIN city_.countryRegion city_country_region_ JOIN city_country_region_.country city_country_region_country_ WHERE (city_country_region_country_.name = :p1)"
+        "findByCountryRegionName"        | "City"     | "String name" | "SELECT city_ FROM $City.name AS city_ JOIN city_.countryRegion city_country_region_ WHERE (city_country_region_.name = :p1)"
     }
 
 
@@ -386,7 +386,7 @@ interface MyInterface extends GenericRepository<City, Long> {
 
         where:
         joinPath        | method                           | returnType | arguments     | whereClause
-        "countryRegion" | "findByCountryRegionCountryName" | "City"     | "String name" | "WHERE (city_country_region_.country.name = :p1)"
+        "countryRegion" | "findByCountryRegionCountryName" | "City"     | "String name" | "WHERE (city_country_region_country_.name = :p1)"
         "countryRegion" | "findByCountryRegionName"        | "City"     | "String name" | "WHERE (city_country_region_.name = :p1)"
     }
 

@@ -360,22 +360,24 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                 if (j < 0) {
                     continue;
                 }
-                List<PersistentProperty> embeddedProperties = persistentEntity.getPropertiesInPath(path);
-                if (embeddedProperties.isEmpty()) {
+                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
+                if (propertyPath == null) {
                     throw new IllegalStateException("Unrecognized path: " + path);
                 }
-                RuntimePersistentProperty<?> property;
                 value = entity;
-                for (PersistentProperty embeddedProperty : embeddedProperties) {
-                    property = (RuntimePersistentProperty) embeddedProperty;
+                for (Association association : propertyPath.getAssociations()) {
+                    RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
                     BeanProperty beanProperty = property.getProperty();
                     value = beanProperty.get(value);
                     if (value == null) {
                         break;
                     }
                 }
-
-                property = (RuntimePersistentProperty) CollectionUtils.last(embeddedProperties);
+                RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
+                if (value != null) {
+                    BeanProperty beanProperty = property.getProperty();
+                    value = beanProperty.get(value);
+                }
                 type = property.getDataType();
                 if (value == null && type == DataType.ENTITY) {
                     RuntimePersistentEntity<?> entity1 = getEntity(property.getType());

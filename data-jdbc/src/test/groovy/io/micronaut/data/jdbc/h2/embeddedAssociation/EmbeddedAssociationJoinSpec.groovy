@@ -116,14 +116,11 @@ interface OneMainEntityRepository extends CrudRepository<OneMainEntity, Long> {
     Optional<OneMainEntity> findById(Long aLong)
 }
 
+@Join(value = "id.one", type = Join.Type.FETCH)
+@Join(value = "id.one.assoc", type = Join.Type.FETCH)
+@Join(value = "id.one.em.assoc", type = Join.Type.FETCH)
 @JdbcRepository(dialect = Dialect.H2)
 interface OneMainEntityEmRepository extends CrudRepository<OneMainEntityEm, EmId> {
-
-    @Join(value = "id.one", type = Join.Type.FETCH)
-    @Join(value = "id.one.assoc", type = Join.Type.FETCH)
-    @Join(value = "id.one.em.assoc", type = Join.Type.FETCH)
-    @Override
-    Optional<OneMainEntityEm> findById(EmId id)
 }
 
 @MappedEntity

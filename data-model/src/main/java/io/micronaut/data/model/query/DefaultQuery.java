@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.factory.Restrictions;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Models a query that can be executed against a data store.
@@ -120,19 +121,19 @@ public class DefaultQuery implements QueryModel {
     @Override
     public JoinPath join(@NonNull String path, @NonNull Join.Type joinType, String alias) {
         PersistentEntity entity = getEntity();
-        List<PersistentProperty> propertiesInPath = entity.getPropertiesInPath(path);
-        if (propertiesInPath.isEmpty()) {
-            throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association.");
+        PersistentPropertyPath propertyPath = entity.getPropertyPath(path);
+        if (propertyPath == null) {
+            throw new IllegalArgumentException("Invalid association path. Element [" + path + "] is not an association for [" + entity + "]");
         }
-        List<Association> associations = new ArrayList<>(propertiesInPath.size());
-        for (PersistentProperty property : propertiesInPath) {
-            if (property instanceof Association) {
-                associations.add((Association) property);
-            } else {
-                throw new IllegalArgumentException("Invalid association path. Property [" + property + "] is not an association.");
-            }
+        Association[] associationPath;
+        if (propertyPath.getProperty() instanceof Association) {
+            associationPath = Stream.concat(
+                    propertyPath.getAssociations().stream(),
+                    Stream.of(propertyPath.getProperty())
+            ).toArray(Association[]::new);
+        } else {
+            associationPath = propertyPath.getAssociations().toArray(new Association[0]);
         }
-        Association[] associationPath = associations.toArray(new Association[0]);
         JoinPath jp = new JoinPath(path, associationPath, joinType, alias);
         joinPaths.put(path, jp);
         return jp;

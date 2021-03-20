@@ -585,10 +585,15 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     @NonNull
     protected List<AnnotationValue<Join>> joinSpecsAtMatchContext(@NonNull MethodMatchContext matchContext) {
         final MethodMatchInfo.OperationType operationType = getOperationType();
+        List<AnnotationValue<Join>> joins;
         if (operationType != MethodMatchInfo.OperationType.QUERY) {
             return matchContext.getAnnotationMetadata().getDeclaredAnnotationValuesByType(Join.class);
         }
-        return matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
+        joins = matchContext.getAnnotationMetadata().getAnnotationValuesByType(Join.class);
+        if (!joins.isEmpty()) {
+            return joins;
+        }
+        return matchContext.getRepositoryClass().getAnnotationMetadata().getAnnotationValuesByType(Join.class);
     }
 
     /**
