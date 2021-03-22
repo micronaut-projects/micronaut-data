@@ -42,6 +42,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractAsyncInterceptor<T,
 
     @Override
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
-        return asyncDatastoreOperations.persist(getInsertOperation(context));
+        Object entity = getEntityParameter(context, Object.class);
+        return asyncDatastoreOperations.persist(getInsertOperation(context, entity));
     }
 }

@@ -22,35 +22,39 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
+import io.micronaut.data.intercept.reactive.UpdateAllEntitiesReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
 /**
- * Default implementation of {@link UpdateEntityReactiveInterceptor}.
- * @author graemerocher
- * @since 1.0.0
+ * Default implementation of {@link UpdateAllEntitiesReactiveInterceptor}.
+ * @param <T> The declaring type
+ * @param <R> The return type
+ * @author Denis Stepanov
+ * @since 2.4.0
  */
-public class DefaultUpdateEntityReactiveInterceptor extends AbstractReactiveInterceptor<Object, Object>
-        implements UpdateEntityReactiveInterceptor<Object, Object> {
+public class DefaultUpdateAllEntitiesReactiveInterceptor<T, R> extends AbstractReactiveInterceptor<T, R>
+        implements UpdateAllEntitiesReactiveInterceptor<T, R> {
+
     /**
      * Default constructor.
-     *
      * @param operations The operations
      */
-    protected DefaultUpdateEntityReactiveInterceptor(@NonNull RepositoryOperations operations) {
+    public DefaultUpdateAllEntitiesReactiveInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Object entity = getEntityParameter(context, Object.class);
-        Publisher<Object> rs = reactiveOperations.update(getUpdateOperation(context, entity));
-        ReturnType<Object> rt = context.getReturnType();
+    public R intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
+        Iterable<R> iterable = (Iterable<R>) getEntitiesParameter(context, Object.class);
+        //noinspection unchecked
+        Class<R> rootEntity = (Class<R>) getRequiredRootEntity(context);
+        Publisher<R> rs = reactiveOperations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
+        ReturnType<R> rt = context.getReturnType();
         Argument<?> reactiveValue = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         if (isNumber(reactiveValue.getType())) {
             return ConversionService.SHARED.convert(count(rs), rt.asArgument())
-                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
+                        .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
         }
         return Publishers.convertPublisher(rs, context.getReturnType().getType());
     }

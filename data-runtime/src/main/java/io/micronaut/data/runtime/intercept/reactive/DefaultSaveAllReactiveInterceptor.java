@@ -18,10 +18,8 @@ package io.micronaut.data.runtime.intercept.reactive;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveAllReactiveInterceptor;
-import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
 
@@ -43,14 +41,8 @@ public class DefaultSaveAllReactiveInterceptor extends AbstractReactiveIntercept
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        Object[] parameterValues = context.getParameterValues();
-        if (ArrayUtils.isNotEmpty(parameterValues) && parameterValues[0] instanceof Iterable) {
-            //noinspection unchecked
-            final InsertBatchOperation<Object> insertBatchOperation = getInsertBatchOperation(context, (Iterable<Object>) parameterValues[0]);
-            Publisher<Object> publisher = reactiveOperations.persistAll(insertBatchOperation);
-            return Publishers.convertPublisher(publisher, context.getReturnType().getType());
-        } else {
-            throw new IllegalArgumentException("First argument should be an iterable");
-        }
+        Iterable<Object> iterable = getEntitiesParameter(context, Object.class);
+        Publisher<Object> publisher = reactiveOperations.persistAll(getInsertBatchOperation(context, iterable));
+        return Publishers.convertPublisher(publisher, context.getReturnType().getType());
     }
 }

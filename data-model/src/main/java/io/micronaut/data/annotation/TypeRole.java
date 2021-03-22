@@ -55,6 +55,11 @@ public @interface TypeRole {
     String ENTITY = "entity";
 
     /**
+     * The parameter that defines an iterable of the entity instances.
+     */
+    String ENTITIES = "entities";
+
+    /**
      * The last updated property of the entity for an update operation.
      */
     String LAST_UPDATED_PROPERTY = "lastUpdatedProperty";

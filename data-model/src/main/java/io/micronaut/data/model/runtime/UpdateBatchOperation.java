@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
+package io.micronaut.data.model.runtime;
+
+import java.util.List;
 
 /**
- * Interface for the interceptor that handles saving a list or iterable of objects.
+ * A update batch operation is an operation performed on one or more entities of the same type.
  *
- * @param <T> The declaring type
- * @param <R> The return type
- *
- * @author graemerocher
- * @since 1.0
+ * @param <E> The entity type
+ * @author Denis Stepanov
+ * @since 2.3.0
  */
-public interface SaveAllInterceptor<T, R> extends DataInterceptor<T, R> {
+public interface UpdateBatchOperation<E> extends BatchOperation<E> {
+
+    /**
+     * Split the batch operation into individual updates.
+     *
+     * @return The separated updates.
+     */
+    List<UpdateOperation<E>> split();
 }

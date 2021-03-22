@@ -15,55 +15,53 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.repository.reactive.RxJavaCrudRepository;
+import io.micronaut.data.repository.async.AsyncCrudRepository;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.PersonDto;
-import io.reactivex.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
-public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, Long> {
+public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long> {
 
-    Single<Person> save(String name, int age);
+    CompletionStage<Person> save(String name, int age);
 
-    Single<Person> getById(Long id);
+    CompletableFuture<Person> getById(Long id);
 
-    Completable updatePerson(@Id Long id, @Parameter("name") String name);
+    CompletableFuture<Void> updatePerson(@Id Long id, @Parameter("name") String name);
 
-    Flowable<Person> list(Pageable pageable);
+    CompletableFuture<List<Person>> list(Pageable pageable);
 
-    Single<Long> count(String name);
+    CompletableFuture<Long> count(String name);
 
-    @Nullable
-    Maybe<Person> findByName(String name);
+    CompletableFuture<Person> findByName(String name);
 
-    Single<PersonDto> getByName(String name);
+    CompletableFuture<PersonDto> getByName(String name);
 
-    Flowable<PersonDto> queryByName(String name);
+    CompletableFuture<List<PersonDto>> queryByName(String name);
 
-    Single<Long> deleteByNameLike(String name);
+    CompletableFuture<Long> deleteByNameLike(String name);
 
-
-    Observable<Person> findByNameLike(String name);
+    CompletableFuture<List<Person>> findByNameLike(String name);
 
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
-    Maybe<Long> getMaxId();
+    CompletableFuture<Long> getMaxId();
 
-    Maybe<Long> updateAll(List<Person> people);
+    CompletableFuture<Long> updateAll(List<Person> people);
 
-    Flowable<Person> updatePeople(List<Person> people);
+    CompletableFuture<List<Person>> updatePeople(List<Person> people);
 
     @Query("UPDATE person SET name = :newName WHERE (name = :oldName)")
-    Maybe<Long> updateNamesCustom(String newName, String oldName);
+    CompletableFuture<Long> updateNamesCustom(String newName, String oldName);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    Completable saveCustom(List<Person> people);
+    CompletableFuture<Void> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    Completable saveCustomSingle(Person people);
+    CompletableFuture<Void> saveCustomSingle(Person people);
 }

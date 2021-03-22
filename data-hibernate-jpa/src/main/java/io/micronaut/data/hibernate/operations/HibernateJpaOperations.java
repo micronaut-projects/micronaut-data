@@ -417,6 +417,19 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         });
     }
 
+    @NonNull
+    @Override
+    public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        return transactionOperations.executeWrite(status -> {
+            EntityManager entityManager = sessionFactory.getCurrentSession();
+            for (T entity : operation) {
+                entityManager.merge(entity);
+            }
+            flushIfNecessary(entityManager, operation.getAnnotationMetadata());
+            return operation;
+        });
+    }
+
     @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
@@ -427,9 +440,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 for (T entity : operation) {
                     entityManager.persist(entity);
                 }
-                AnnotationMetadata annotationMetadata =
-                        operation.getAnnotationMetadata();
-                flushIfNecessary(entityManager, annotationMetadata);
+                flushIfNecessary(entityManager, operation.getAnnotationMetadata());
                 return operation;
             } else {
                 return Collections.emptyList();

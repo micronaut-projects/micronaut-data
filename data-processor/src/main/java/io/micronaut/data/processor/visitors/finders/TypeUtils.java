@@ -75,6 +75,18 @@ public class TypeUtils {
     }
 
     /**
+     * Does the given type have an {@link MappedEntity}.
+     * @param type The type
+     * @return True if it does
+     */
+    public static boolean isEntity(@Nullable ClassElement type) {
+        if (type == null) {
+            return false;
+        }
+        return type.hasAnnotation(MappedEntity.class);
+    }
+
+    /**
      * Does the given type have a first argument annotated with {@link MappedEntity}.
      * @param type The type
      * @return True if it does
@@ -83,7 +95,7 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.getFirstTypeArgument().map(t -> t.hasAnnotation(MappedEntity.class)).orElse(false);
+        return type.getFirstTypeArgument().map(TypeUtils::isEntity).orElse(false);
     }
 
     /**
@@ -196,7 +208,7 @@ public class TypeUtils {
      * @return True if is void
      */
     public static boolean isVoid(@Nullable ClassElement type) {
-        return type != null && type.getName().equals("void");
+        return type != null && (type.isAssignable(Void.class) || type.isAssignable(void.class));
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2021 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
+package io.micronaut.data.processor.visitors;
 
 /**
- * Interface for the interceptor that handles saving a list or iterable of objects.
+ * Immediate match fail.
  *
- * @param <T> The declaring type
- * @param <R> The return type
- *
- * @author graemerocher
- * @since 1.0
+ * @author Denis Stepanov
+ * @version 2.4.0
  */
-public interface SaveAllInterceptor<T, R> extends DataInterceptor<T, R> {
+public class MatchFailedException extends RuntimeException {
 }

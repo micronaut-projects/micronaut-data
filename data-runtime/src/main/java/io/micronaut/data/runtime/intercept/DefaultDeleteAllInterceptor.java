@@ -30,6 +30,8 @@ import io.micronaut.data.operations.RepositoryOperations;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.model.runtime.PreparedQuery;
 
+import java.util.Optional;
+
 /**
  * Default implementation of {@link DeleteAllInterceptor}.
  * @param <T> The declaring type
@@ -38,28 +40,30 @@ import io.micronaut.data.model.runtime.PreparedQuery;
  */
 public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements DeleteAllInterceptor<T> {
 
+    private final DefaultDeleteOneInterceptor deleteOneInterceptor;
+
     /**
      * Default constructor.
      * @param datastore The operations
      */
     protected DefaultDeleteAllInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
+        deleteOneInterceptor = new DefaultDeleteOneInterceptor(datastore);
     }
 
     @Override
     public Number intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Number> context) {
         Argument<Number> resultType = context.getReturnType().asArgument();
-        Object[] parameterValues = context.getParameterValues();
-        final boolean isBatch = parameterValues.length == 1 && parameterValues[0] instanceof Iterable;
+        Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
+        Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            if (isBatch) {
+            if (deleteEntities.isPresent()) {
                 final RuntimePersistentProperty<?> identity = operations.getEntity(preparedQuery.getRootEntity()).getIdentity();
                 if (identity instanceof Embedded) {
-                    Iterable iterable = (Iterable) parameterValues[0];
                     int deleteCount = 0;
                     final BeanProperty idProp = identity.getProperty();
-                    for (Object o : iterable) {
+                    for (Object o : deleteEntities.get()) {
                         final Object idValue = idProp.get(o);
                         if (idValue == null) {
                             throw new IllegalStateException("Cannot delete an entity with null ID: " + o);
@@ -69,29 +73,20 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
                         deleteCount++;
                     }
                     return convertIfNecessary(resultType, deleteCount);
-                } else {
-                    Number result = operations.executeDelete(preparedQuery).orElse(0);
-                    return convertIfNecessary(resultType, result);
                 }
-
+                Number result = operations.executeDelete(preparedQuery).orElse(0);
+                return convertIfNecessary(resultType, result);
             } else {
                 Number result = operations.executeDelete(preparedQuery).orElse(0);
                 return convertIfNecessary(resultType, result);
             }
-        } else {
+        } else if (!deleteEntity.isPresent() && !deleteEntities.isPresent()){
             Class<?> rootEntity = getRequiredRootEntity(context);
-            if (isBatch) {
-                Iterable<Object> iterable = (Iterable<Object>) parameterValues[0];
-                final DeleteBatchOperation<Object> batchOperation = getDeleteBatchOperation(context, iterable);
-                Number deleted = operations.deleteAll(batchOperation).orElse(0);
-                return convertIfNecessary(resultType, deleted);
-            } else if (parameterValues.length == 0) {
-                final DeleteBatchOperation<?> batchOperation = getDeleteAllBatchOperation(context, rootEntity);
-                Number result = operations.deleteAll(batchOperation).orElse(0);
-                return convertIfNecessary(resultType, result);
-            } else {
-                throw new IllegalArgumentException("Unexpected argument types received to deleteAll method");
-            }
+            DeleteBatchOperation<?> batchOperation = getDeleteAllBatchOperation(context, rootEntity);
+            Number result = operations.deleteAll(batchOperation).orElse(0);
+            return convertIfNecessary(resultType, result);
+        } else {
+            return (Number) deleteOneInterceptor.intercept(methodKey, context);
         }
     }
 

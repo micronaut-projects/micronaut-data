@@ -199,7 +199,13 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     parameters
             );
             for (MethodCandidate finder : finders) {
-                if (finder.isMethodMatch(element, matchContext)) {
+                boolean matches;
+                try {
+                    matches = finder.isMethodMatch(element, matchContext);
+                } catch (MatchFailedException e) {
+                    return;
+                }
+                if (matches) {
                     SourcePersistentEntity entity = resolvePersistentEntity(element, parametersInRole, context);
 
                     if (entity == null) {
@@ -225,6 +231,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     MethodMatchInfo methodInfo;
                     try {
                         methodInfo = finder.buildMatchInfo(methodMatchContext);
+                    } catch (MatchFailedException ex) {
+                        return;
                     } catch (Exception e) {
                         matchContext.fail(e.getMessage());
                         return;
@@ -251,7 +259,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                         if (queryObject != null) {
                             if (queryObject instanceof RawQuery) {
                                 RawQuery rawQuery = (RawQuery) queryObject;
-
                                 // no need to annotation since already annotated, just replace the
                                 // the computed parameter names
                                 parameterBinding = rawQuery.getParameterBinding();
@@ -266,6 +273,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     } else {
                                         rawCount = true;
                                     }
+                                }
+                                if (methodInfo.getOperationType() == MethodMatchInfo.OperationType.INSERT) {
+                                    encodeEntityParameters = true;
                                 }
                             } else {
 
@@ -285,7 +295,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                                             queryObject,
                                                             methodInfo.getUpdateProperties());
 
-                                            final boolean isEntityArgument = parameters.length == 1 && parameters[0].getGenericType().getName().equals(entity.getName());
+                                            final boolean isEntityArgument = parameters.length == 1 &&
+                                                    (
+                                                            TypeUtils.isIterableOfEntity(parameters[0].getGenericType()) ||
+                                                            parameters[0].getGenericType().getName().equals(entity.getName())
+                                                    );
                                             if (isEntityArgument) {
                                                 encodeEntityParameters = true;
                                             }
@@ -479,11 +493,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                 }
                                 if (queryObject != null) {
                                     if (queryObject instanceof RawQuery) {
-                                        element.annotate(Query.class, (builder) -> {
-                                            String q = element.stringValue(Query.class).orElse(null);
-                                            q = replaceNamedParameters(queryEncoder, q);
-                                            builder.member(DataMethod.META_MEMBER_RAW_QUERY, q);
-                                        });
+                                        element.annotate(Query.class, (builder) -> builder.member(DataMethod.META_MEMBER_RAW_QUERY,
+                                                element.stringValue(Query.class)
+                                                        .map(q -> replaceNamedParameters(queryEncoder, q))
+                                                        .orElse(null)));
                                     }
                                     int max = queryObject.getMax();
                                     if (max > -1) {
@@ -673,11 +686,11 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private List<MethodCandidate> initializeMethodCandidates(VisitorContext context) {
         List<MethodCandidate> finderList = Arrays.asList(
+                new RawQueryMethod(),
                 new FindByFinder(),
                 new ExistsByFinder(),
                 new SaveEntityMethod(),
                 new SaveOneMethod(),
-                new SaveAllMethod(),
                 new ListMethod(),
                 new CountMethod(),
                 new DeleteByMethod(),

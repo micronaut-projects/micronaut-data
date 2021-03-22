@@ -44,18 +44,13 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
 
     @Override
     public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
-        Object[] parameterValues = context.getParameterValues();
-        if (parameterValues.length == 1) {
-            Object o = parameterValues[0];
-            if (o != null) {
-                final DeleteOperation<Object> deleteOperation = getDeleteOperation(context, o);
-                return asyncDatastoreOperations.delete(deleteOperation)
-                        .thenApply(n -> 1);
-            } else {
-                throw new IllegalArgumentException("Entity to delete cannot be null");
-            }
+        Object entity = getEntityParameter(context, Object.class);
+        if (entity != null) {
+            final DeleteOperation<Object> deleteOperation = getDeleteOperation(context, entity);
+            return asyncDatastoreOperations.delete(deleteOperation)
+                    .thenApply(n -> 1);
         } else {
-            throw new IllegalStateException("Expected exactly one argument");
+            throw new IllegalArgumentException("Entity to delete cannot be null");
         }
     }
 }

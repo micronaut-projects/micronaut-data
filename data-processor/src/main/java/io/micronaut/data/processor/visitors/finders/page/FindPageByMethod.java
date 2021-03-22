@@ -16,15 +16,10 @@
 package io.micronaut.data.processor.visitors.finders.page;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
-import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.FindByFinder;
-import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.slice.FindSliceByMethod;
-import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
 /**
@@ -40,17 +35,6 @@ public class FindPageByMethod extends FindByFinder {
     @Override
     public int getOrder() {
         return POSITION;
-    }
-
-    @Nullable
-    @Override
-    protected MethodMatchInfo buildInfo(MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
-        if (!matchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
-            matchContext.fail("Method must accept an argument that is a Pageable");
-            return null;
-        } else {
-            return super.buildInfo(matchContext, queryResultType, query);
-        }
     }
 
     @Override

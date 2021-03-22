@@ -29,6 +29,7 @@ import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableArgumentValue;
@@ -205,6 +206,63 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
             throw new IllegalStateException("No root entity present in method");
         }
+    }
+
+    /**
+     * Retrieve an entity parameter value in role.
+     * @param context The context
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An result
+     */
+    protected <RT> RT getEntityParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
+        return getRequiredParameterInRole(context, TypeRole.ENTITY, type);
+    }
+
+    /**
+     * Retrieve an entities parameter value in role.
+     * @param context The context
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An result
+     */
+    protected <RT> Iterable<RT> getEntitiesParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
+        return getRequiredParameterInRole(context, TypeRole.ENTITIES, Iterable.class);
+    }
+
+    /**
+     * Find an entity parameter value in role.
+     * @param context The context
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An result
+     */
+    protected <RT> Optional<RT> findEntityParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
+        return getParameterInRole(context, TypeRole.ENTITY, type);
+    }
+
+    /**
+     * Fid an entities parameter value in role.
+     * @param context The context
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An result
+     */
+    protected <RT> Optional<Iterable<RT>> findEntitiesParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
+        Optional parameterInRole = getParameterInRole(context, TypeRole.ENTITIES, Iterable.class);
+        return (Optional<Iterable<RT>>) parameterInRole;
+    }
+
+    /**
+     * Retrieve a parameter in the given role for the given type.
+     * @param context The context
+     * @param role The role
+     * @param type The type
+     * @param <RT> The generic type
+     * @return An result
+     */
+    private <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
+        return getParameterInRole(context, role, type).orElseThrow(() -> new IllegalStateException("Cannot find parameter with role: " + role));
     }
 
     /**
@@ -514,8 +572,31 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     @SuppressWarnings("unchecked")
     protected <E> UpdateOperation<E> getUpdateOperation(@NonNull MethodInvocationContext<T, ?> context) {
-        E o = (E) getRequiredEntity(context);
-        return new DefaultUpdateOperation<>(context, o);
+        return getUpdateOperation(context, (E) getRequiredEntity(context));
+    }
+
+    /**
+     * Get the batch operation for the given context.
+     * @param context The context
+     * @param entity The entity instance
+     * @param <E> The entity type
+     * @return The paged query
+     */
+    @SuppressWarnings("unchecked")
+    protected <E> UpdateOperation<E> getUpdateOperation(@NonNull MethodInvocationContext<T, ?> context, E entity) {
+        return new DefaultUpdateOperation<>(context, entity);
+    }
+
+    /**
+     * Get the update all batch operation for the given context.
+     * @param <E> The entity type
+     * @param rootEntity The root entitry
+     * @param context The context
+     * @param iterable The iterable
+     * @return The paged query
+     */
+    protected @NonNull <E> UpdateBatchOperation<E> getUpdateAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
+        return new DefaultUpdateBatchOperation<>(context, rootEntity, iterable);
     }
 
     /**
@@ -598,6 +679,42 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 throw new IllegalArgumentException("Argument [" + context.getArguments()[i].getName() + "] value is null and the method parameter is not declared as nullable");
             }
         }
+    }
+
+    /**
+     * Count the items.
+     *
+     * @param iterable the iterable
+     * @return the size
+     */
+    protected int count(Iterable<?> iterable) {
+        if (iterable instanceof Collection) {
+            return ((Collection<?>) iterable).size();
+        }
+        Iterator<?> iterator = iterable.iterator();
+        int i = 0;
+        while (iterator.hasNext()) {
+            i++;
+            iterator.next();
+        }
+        return i;
+    }
+
+    /**
+     * Is the type a number.
+     * @param type The type
+     * @return True if is a number
+     */
+    protected boolean isNumber(@Nullable Class<?> type) {
+        if (type == null) {
+            return false;
+        }
+        if (type.isPrimitive()) {
+            return ClassUtils.getPrimitiveType(type.getName()).map(aClass ->
+                    Number.class.isAssignableFrom(ReflectionUtils.getWrapperType(aClass))
+            ).orElse(false);
+        }
+        return Number.class.isAssignableFrom(type);
     }
 
     /**
@@ -800,6 +917,26 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 deletes.add(new DefaultDeleteOperation<>(method, e));
             }
             return deletes;
+        }
+
+    }
+
+    /**
+     * Default implementation of {@link UpdateBatchOperation}.
+     * @param <E> The entity type
+     */
+    private class DefaultUpdateBatchOperation<E> extends DefaultBatchOperation<E> implements UpdateBatchOperation<E> {
+
+        DefaultUpdateBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
+            super(method, rootEntity, iterable);
+        }
+
+        public List<UpdateOperation<E>> split() {
+            List<UpdateOperation<E>> updates = new ArrayList<>(10);
+            for (E e : iterable) {
+                updates.add(new DefaultUpdateOperation<>(method, e));
+            }
+            return updates;
         }
 
     }

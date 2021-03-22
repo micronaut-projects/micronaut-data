@@ -21,7 +21,6 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.PersistentProperty;
@@ -66,97 +65,92 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         ClassElement queryResultType = rootEntity.getClassElement();
 
-        if (methodElement.hasAnnotation(Query.class)) {
-            query = buildRawQuery(matchContext);
-        } else {
-            if (CollectionUtils.isNotEmpty(queryParams)) {
-                query = QueryModel.from(rootEntity);
-                for (ParameterElement queryParam : queryParams) {
-                    String paramName = queryParam.getName();
-                    PersistentProperty prop = rootEntity.getPropertyByName(paramName);
-                    if (prop == null) {
-                        if (TypeRole.ID.equals(paramName) && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
-                            query.idEq(new QueryParameter(queryParam.getName()));
-                        } else {
-                            matchContext.fail("Cannot query persistentEntity [" + rootEntity.getSimpleName() + "] on non-existent property: " + paramName);
-                            return null;
-                        }
-                    } else if (prop == rootEntity.getIdentity()) {
+        if (CollectionUtils.isNotEmpty(queryParams)) {
+            query = QueryModel.from(rootEntity);
+            for (ParameterElement queryParam : queryParams) {
+                String paramName = queryParam.getName();
+                PersistentProperty prop = rootEntity.getPropertyByName(paramName);
+                if (prop == null) {
+                    if (TypeRole.ID.equals(paramName) && (rootEntity.hasIdentity() || rootEntity.hasCompositeIdentity())) {
                         query.idEq(new QueryParameter(queryParam.getName()));
                     } else {
-                        query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
+                        matchContext.fail("Cannot query persistentEntity [" + rootEntity.getSimpleName() + "] on non-existent property: " + paramName);
+                        return null;
                     }
+                } else if (prop == rootEntity.getIdentity()) {
+                    query.idEq(new QueryParameter(queryParam.getName()));
+                } else {
+                    query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
+                }
+            }
+        }
+
+        String methodName = methodElement.getName();
+        Matcher matcher = pattern.matcher(methodName);
+
+        if (matcher.find()) {
+            String querySequence = matcher.group(3);
+            ArrayList<Sort.Order> orderBys = new ArrayList<>(2);
+            String querySequenceBefore = querySequence;
+            querySequence = matchForUpdate(matchContext, querySequenceBefore);
+            if (!querySequenceBefore.equals(querySequence)) {
+                if (query == null) {
+                    query = QueryModel.from(rootEntity);
+                }
+                applyForUpdate(query);
+            }
+            querySequence = matchOrder(querySequence, orderBys);
+            if (CollectionUtils.isNotEmpty(orderBys)) {
+                if (query == null) {
+                    query = QueryModel.from(rootEntity);
+                }
+                if (applyOrderBy(matchContext, query, orderBys)) {
+                    return null;
                 }
             }
 
-            String methodName = methodElement.getName();
-            Matcher matcher = pattern.matcher(methodName);
-
-            if (matcher.find()) {
-                String querySequence = matcher.group(3);
-                ArrayList<Sort.Order> orderBys = new ArrayList<>(2);
-                String querySequenceBefore = querySequence;
-                querySequence = matchForUpdate(matchContext, querySequenceBefore);
-                if (!querySequenceBefore.equals(querySequence)) {
+            if (StringUtils.isNotEmpty(querySequence)) {
+                ArrayList<ProjectionMethodExpression> projections = new ArrayList<>();
+                matchProjections(matchContext, projections, querySequence);
+                if (CollectionUtils.isNotEmpty(projections)) {
                     if (query == null) {
                         query = QueryModel.from(rootEntity);
                     }
-                    applyForUpdate(query);
-                }
-                querySequence = matchOrder(querySequence, orderBys);
-                if (CollectionUtils.isNotEmpty(orderBys)) {
-                    if (query == null) {
-                        query = QueryModel.from(rootEntity);
+
+                    for (ProjectionMethodExpression projection : projections) {
+                        projection.apply(matchContext, query);
+                        queryResultType = projection.getExpectedResultType();
                     }
-                    if (applyOrderBy(matchContext, query, orderBys)) {
-                        return null;
+
+                    if (projections.size() > 1) {
+                        queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(rootEntity.getClassElement());
                     }
-                }
 
-                if (StringUtils.isNotEmpty(querySequence)) {
-                    ArrayList<ProjectionMethodExpression> projections = new ArrayList<>();
-                    matchProjections(matchContext, projections, querySequence);
-                    if (CollectionUtils.isNotEmpty(projections)) {
-                        if (query == null) {
-                            query = QueryModel.from(rootEntity);
-                        }
-
-                        for (ProjectionMethodExpression projection : projections) {
-                            projection.apply(matchContext, query);
-                            queryResultType = projection.getExpectedResultType();
-                        }
-
-                        if (projections.size() > 1) {
-                            queryResultType = matchContext.getVisitorContext().getClassElement(Object.class).orElse(rootEntity.getClassElement());
-                        }
-
-                        for (QueryModel.Projection projection : query.getProjections()) {
-                            if (projection instanceof QueryModel.PropertyProjection) {
-                                QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
-                                String prop = pp.getPropertyName();
-                                Optional<String> path = rootEntity.getPath(prop);
-                                if (!path.isPresent()) {
-                                    matchContext.fail("Cannot project on non-existent property: " + prop);
-                                    return null;
-                                }
+                    for (QueryModel.Projection projection : query.getProjections()) {
+                        if (projection instanceof QueryModel.PropertyProjection) {
+                            QueryModel.PropertyProjection pp = (QueryModel.PropertyProjection) projection;
+                            String prop = pp.getPropertyName();
+                            Optional<String> path = rootEntity.getPath(prop);
+                            if (!path.isPresent()) {
+                                matchContext.fail("Cannot project on non-existent property: " + prop);
+                                return null;
                             }
                         }
                     }
                 }
             }
-
-            List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext);
-            
-            if (CollectionUtils.isNotEmpty(joinSpecs)) {
-                if (query == null) {
-                    query = QueryModel.from(rootEntity);
-                }
-                if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
-                    return null;
-                }
-            }
         }
 
+        List<AnnotationValue<Join>> joinSpecs = joinSpecsAtMatchContext(matchContext);
+
+        if (CollectionUtils.isNotEmpty(joinSpecs)) {
+            if (query == null) {
+                query = QueryModel.from(rootEntity);
+            }
+            if (applyJoinSpecs(matchContext, query, rootEntity, joinSpecs)) {
+                return null;
+            }
+        }
 
         if (query != null) {
             return buildInfo(matchContext, queryResultType, query);

@@ -73,6 +73,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 @io.micronaut.context.annotation.Executable
 interface MovieRepository extends CrudRepository<Movie, Integer> {
     void updateById(int id, String theLongName, String title);
+    void updateAll(java.util.List<Movie> movies);
 }
 
 ${entity('Movie', [title: String, theLongName: String])}
@@ -89,6 +90,7 @@ ${entity('Movie', [title: String, theLongName: String])}
         methodName   | query                                                             | bindingPaths                               | binding
         'update'     | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | [] as String[]
         'updateById' | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)' | ['', '', ''] as String[]                   | ['1', '2', '0'] as String[]
+        'updateAll'  | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | [] as String[]
     }
 
     @Unroll

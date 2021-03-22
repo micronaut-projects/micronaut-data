@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.intercept;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateEntityInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -40,7 +42,14 @@ public class DefaultUpdateEntityInterceptor<T> extends AbstractQueryInterceptor<
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
-        return operations.update(getUpdateOperation(context));
+        Object entity = getEntityParameter(context, Object.class);
+        entity = operations.update(getUpdateOperation(context, entity));
+        ReturnType<Object> rt = context.getReturnType();
+        if (isNumber(rt.getType())) {
+            return ConversionService.SHARED.convert(1, rt.asArgument())
+                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
+        }
+        return entity;
     }
 
 }

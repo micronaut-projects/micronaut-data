@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.intercept;
+package io.micronaut.data.jdbc.h2;
 
-/**
- * Interface for the interceptor that handles saving a list or iterable of objects.
- *
- * @param <T> The declaring type
- * @param <R> The return type
- *
- * @author graemerocher
- * @since 1.0
- */
-public interface SaveAllInterceptor<T, R> extends DataInterceptor<T, R> {
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.repositories.PersonAsyncRepository;
+
+@JdbcRepository(dialect = Dialect.H2)
+public interface H2AsyncPersonRepository extends PersonAsyncRepository {
 }

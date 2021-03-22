@@ -163,6 +163,14 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
 
     @NonNull
     @Override
+    public <T> Publisher<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
+                asyncOperations.updateAll(operation)
+        )).flatMap(Flowable::fromIterable);
+    }
+
+    @NonNull
+    @Override
     public <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
         return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
                 asyncOperations.persistAll(operation)

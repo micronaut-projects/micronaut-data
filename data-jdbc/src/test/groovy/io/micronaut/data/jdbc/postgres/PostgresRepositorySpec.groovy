@@ -262,8 +262,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
             def books12 = bookRepository.listNativeBooksNullableArraySearch(new String[] {"The Stand"})
         then:
             books12.size() == 1
-        cleanup:
-            cleanupBooks()
     }
 
 

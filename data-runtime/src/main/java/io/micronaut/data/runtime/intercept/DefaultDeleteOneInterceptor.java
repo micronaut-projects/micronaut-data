@@ -23,6 +23,8 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 
+import java.util.Optional;
+
 /**
  * The default implementation of {@link DeleteOneInterceptor}.
  *
@@ -43,38 +45,37 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
-        Object[] parameterValues = context.getParameterValues();
-        if (parameterValues.length == 1) {
-            Object o = parameterValues[0];
-            Number deleted;
-            final Class<Object> returnType = context.getReturnType().getType();
-            if (o instanceof Iterable) {
-                DeleteBatchOperation<?> batchOperation = getDeleteBatchOperation(context, (Iterable) o);
-                deleted = operations.deleteAll(batchOperation).orElse(null);
-            } else {
-                if (o == null) {
-                    throw new IllegalArgumentException("Entity to delete cannot be null");
-                }
-                Class<?> rootEntity = getRequiredRootEntity(context);
-                if (!rootEntity.isInstance(o)) {
-                    throw new IllegalArgumentException("Entity argument must be an instance of " + rootEntity.getName());
-                }
-                deleted = operations.delete(getDeleteOperation(context, o));
-                if (returnType.equals(rootEntity)) {
-                    if (deleted.intValue() > 0) {
-                        return o;
-                    } else {
-                        return null;
-                    }
+        Class<Object> returnType = context.getReturnType().getType();
+        Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
+        if (deleteEntity.isPresent()) {
+            Object entity = deleteEntity.get();
+            Class<?> rootEntity = getRequiredRootEntity(context);
+            if (!rootEntity.isInstance(entity)) {
+                throw new IllegalArgumentException("Entity argument must be an instance of " + rootEntity.getName());
+            }
+            Number deleted = operations.delete(getDeleteOperation(context, entity));
+            if (isNumber(returnType)) {
+                return ConversionService.SHARED.convertRequired(deleted, returnType);
+            } else if (returnType.equals(rootEntity)) {
+                if (deleted.intValue() > 0) {
+                    return entity;
+                } else {
+                    return null;
                 }
             }
-            if (Number.class.isAssignableFrom(returnType)) {
+            return null;
+        }
+        Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
+        if (deleteEntities.isPresent()) {
+            Iterable entities = deleteEntities.get();
+            DeleteBatchOperation<?> batchOperation = getDeleteBatchOperation(context, entities);
+            Number deleted = operations.deleteAll(batchOperation).orElse(0);
+            if (isNumber(returnType)) {
                 return ConversionService.SHARED.convertRequired(deleted, returnType);
             }
             return null;
-        } else {
-            throw new IllegalStateException("Expected exactly one argument");
         }
+        throw new IllegalStateException("Argument not found");
     }
 
 }

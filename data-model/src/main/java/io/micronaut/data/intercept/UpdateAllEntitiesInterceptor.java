@@ -16,13 +16,13 @@
 package io.micronaut.data.intercept;
 
 /**
- * Interface for the interceptor that handles saving a list or iterable of objects.
+ * Interface for the interceptor that handles updating a list or iterable of objects.
  *
  * @param <T> The declaring type
  * @param <R> The return type
  *
- * @author graemerocher
- * @since 1.0
+ * @author Denis Stepanov
+ * @since 2.4.0
  */
-public interface SaveAllInterceptor<T, R> extends DataInterceptor<T, R> {
+public interface UpdateAllEntitiesInterceptor<T, R> extends DataInterceptor<T, R> {
 }
