@@ -31,7 +31,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
       - name: Setup GraalVM CE
-        uses: DeLaGuardo/setup-graalvm@3.1
+        uses: DeLaGuardo/setup-graalvm@4.0
         with:
           graalvm-version: ${{ matrix.graalvm }}
       - name: Install Native Image
