@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -134,11 +134,9 @@ extends java.lang.Object</pre>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#addParameterType-java.lang.String-io.micronaut.data.model.DataType-">addParameterType</a></span>(java.lang.String&nbsp;name,
-                <a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;dataType)</code>
-<div class="block">Add a parameter type.</div>
-</td>
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#addParameter-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.QueryParameter-">addParameter</a></span>(<a href="../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty,
+            <a href="../../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;queryParameter)</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>void</code></td>
@@ -148,7 +146,7 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#applyJoin-io.micronaut.data.model.query.JoinPath-">applyJoin</a></span>(<a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#applyJoin-io.micronaut.data.model.query.JoinPath-">applyJoin</a></span>(<a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;jp)</code>
 <div class="block">Applies a join for the given association.</div>
 </td>
 </tr>
@@ -165,64 +163,44 @@ extends java.lang.Object</pre>
 </td>
 </tr>
 <tr id="i5" class="rowColor">
-<td class="colFirst"><code>java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getCurrentAlias--">getCurrentAlias</a></span>()</code>&nbsp;</td>
-</tr>
-<tr id="i6" class="altColor">
-<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getCurrentEmbedded--">getCurrentEmbedded</a></span>()</code>&nbsp;</td>
-</tr>
-<tr id="i7" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getEntity--">getEntity</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getParameters--">getParameters</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getParameterTypes--">getParameterTypes</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.lang.StringBuilder</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getQuery--">getQuery</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getQueryModel--">getQueryModel</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i10" class="altColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getRootAlias--">getRootAlias</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>java.lang.StringBuilder</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getWhereClause--">getWhereClause</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#isAllowJoins--">isAllowJoins</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#newParameter--">newParameter</a></span>()</code>
 <div class="block">Constructs a new parameter placeholder.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#setCurrentAlias-java.lang.String-">setCurrentAlias</a></span>(java.lang.String&nbsp;currentAlias)</code>
-<div class="block">Sets the current logic name.</div>
-</td>
-</tr>
-<tr id="i16" class="altColor">
-<td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#setCurrentEmbedded-io.micronaut.data.model.Embedded-">setCurrentEmbedded</a></span>(<a href="../../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&nbsp;currentEmbedded)</code>&nbsp;</td>
-</tr>
-<tr id="i17" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#setEntity-io.micronaut.data.model.PersistentEntity-">setEntity</a></span>(<a href="../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</code>
-<div class="block">Sets the current entity.</div>
-</td>
-</tr>
-<tr id="i18" class="altColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#shouldEscape--">shouldEscape</a></span>()</code>&nbsp;</td>
 </tr>
@@ -248,60 +226,17 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="getCurrentAlias--">
+<a name="getRootAlias--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>getCurrentAlias</h4>
+<h4>getRootAlias</h4>
 <pre>@Nullable
-public&nbsp;java.lang.String&nbsp;getCurrentAlias()</pre>
+public&nbsp;java.lang.String&nbsp;getRootAlias()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The current current alias</dd>
-</dl>
-</li>
-</ul>
-<a name="setCurrentAlias-java.lang.String-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>setCurrentAlias</h4>
-<pre>public&nbsp;void&nbsp;setCurrentAlias(@Nullable
-                            java.lang.String&nbsp;currentAlias)</pre>
-<div class="block">Sets the current logic name.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>currentAlias</code> - The current alias</dd>
-</dl>
-</li>
-</ul>
-<a name="getCurrentEmbedded--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getCurrentEmbedded</h4>
-<pre>@Nullable
-public&nbsp;<a href="../../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&nbsp;getCurrentEmbedded()</pre>
-<dl>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The current embedded property</dd>
-</dl>
-</li>
-</ul>
-<a name="setCurrentEmbedded-io.micronaut.data.model.Embedded-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>setCurrentEmbedded</h4>
-<pre>public&nbsp;void&nbsp;setCurrentEmbedded(@Nullable
-                               <a href="../../../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&nbsp;currentEmbedded)</pre>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>currentEmbedded</code> - The current embedded</dd>
+<dd>The root alias</dd>
 </dl>
 </li>
 </ul>
@@ -315,21 +250,6 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/model/Embedded.html" ti
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The entity</dd>
-</dl>
-</li>
-</ul>
-<a name="setEntity-io.micronaut.data.model.PersistentEntity-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>setEntity</h4>
-<pre>public&nbsp;void&nbsp;setEntity(@NonNull
-                      <a href="../../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a>&nbsp;entity)</pre>
-<div class="block">Sets the current entity.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>entity</code> - The entity to set</dd>
 </dl>
 </li>
 </ul>
@@ -356,24 +276,6 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/model/Embedded.html" ti
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The precomputed parameter types</dd>
-</dl>
-</li>
-</ul>
-<a name="addParameterType-java.lang.String-io.micronaut.data.model.DataType-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>addParameterType</h4>
-<pre>public&nbsp;void&nbsp;addParameterType(@NonNull
-                             java.lang.String&nbsp;name,
-                             @NonNull
-                             <a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&nbsp;dataType)</pre>
-<div class="block">Add a parameter type.</div>
-<dl>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>name</code> - The name</dd>
-<dd><code>dataType</code> - The type</dd>
 </dl>
 </li>
 </ul>
@@ -465,11 +367,11 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/model/Embedded.html" ti
 <li class="blockList">
 <h4>applyJoin</h4>
 <pre>public&nbsp;java.lang.String&nbsp;applyJoin(@NonNull
-                                  <a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;joinPath)</pre>
+                                  <a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&nbsp;jp)</pre>
 <div class="block">Applies a join for the given association.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>joinPath</code> - The join path</dd>
+<dd><code>jp</code> - The join path</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The alias</dd>
 </dl>
@@ -508,7 +410,7 @@ public&nbsp;java.lang.String&nbsp;computeAlias(java.lang.String&nbsp;association
 <a name="getAdditionalRequiredParameters--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>getAdditionalRequiredParameters</h4>
 <pre>@Nullable
@@ -518,6 +420,16 @@ public&nbsp;java.util.Set&lt;java.lang.String&gt;&nbsp;getAdditionalRequiredPara
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The parameters</dd>
 </dl>
+</li>
+</ul>
+<a name="addParameter-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.QueryParameter-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>addParameter</h4>
+<pre>public&nbsp;java.lang.String&nbsp;addParameter(<a href="../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty,
+                                     <a href="../../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;queryParameter)</pre>
 </li>
 </ul>
 </li>
@@ -547,7 +459,7 @@ public&nbsp;java.util.Set&lt;java.lang.String&gt;&nbsp;getAdditionalRequiredPara
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">

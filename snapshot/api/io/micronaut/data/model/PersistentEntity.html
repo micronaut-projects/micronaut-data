@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":18,"i5":6,"i6":6,"i7":18,"i8":6,"i9":6,"i10":6,"i11":18,"i12":6,"i13":6,"i14":18,"i15":6,"i16":18,"i17":18,"i18":18,"i19":6,"i20":18,"i21":18,"i22":18,"i23":6,"i24":18,"i25":18,"i26":17,"i27":17};
+var methods = {"i0":6,"i1":6,"i2":18,"i3":6,"i4":18,"i5":18,"i6":6,"i7":18,"i8":6,"i9":6,"i10":6,"i11":18,"i12":6,"i13":6,"i14":6,"i15":18,"i16":18,"i17":18,"i18":18,"i19":6,"i20":18,"i21":18,"i22":18,"i23":6,"i24":18,"i25":18,"i26":17,"i27":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -162,7 +162,7 @@ extends <a href="../../../../io/micronaut/data/model/PersistentElement.html" tit
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getAliasName--">getAliasName</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
-<td class="colFirst"><code>java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
+<td class="colFirst"><code>default java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getAssociations--">getAssociations</a></span>()</code>
 <div class="block">A list of the associations for this entity.</div>
 </td>
@@ -178,7 +178,7 @@ extends <a href="../../../../io/micronaut/data/model/PersistentElement.html" tit
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getDecapitalizedName--">getDecapitalizedName</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i5" class="rowColor">
-<td class="colFirst"><code>java.util.Collection&lt;<a href="../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;</code></td>
+<td class="colFirst"><code>default java.util.Collection&lt;<a href="../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getEmbedded--">getEmbedded</a></span>()</code>
 <div class="block">A list of embedded associations for this entity.</div>
 </td>
@@ -232,23 +232,22 @@ extends <a href="../../../../io/micronaut/data/model/PersistentElement.html" tit
 </td>
 </tr>
 <tr id="i14" class="altColor">
-<td class="colFirst"><code>default java.util.List&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertiesInPath-java.lang.String-">getPropertiesInPath</a></span>(java.lang.String&nbsp;path)</code>
-<div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
- .</div>
-</td>
-</tr>
-<tr id="i15" class="rowColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyByName-java.lang.String-">getPropertyByName</a></span>(java.lang.String&nbsp;name)</code>
 <div class="block">Obtains a PersistentProperty instance by name.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>default java.util.Optional&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyByPath-java.lang.String-">getPropertyByPath</a></span>(java.lang.String&nbsp;path)</code>
 <div class="block">Return a property for a dot separated property path such as <code>foo.bar.prop</code>
  .</div>
+</td>
+</tr>
+<tr id="i16" class="altColor">
+<td class="colFirst"><code>default <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPropertyPath-java.lang.String-">getPropertyPath</a></span>(java.lang.String&nbsp;path)</code>
+<div class="block">Return a <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><code>PersistentPropertyPath</code></a> by path such as <code>foo.bar.prop</code>.</div>
 </td>
 </tr>
 <tr id="i17" class="rowColor">
@@ -490,7 +489,7 @@ java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/P
 <li class="blockList">
 <h4>getAssociations</h4>
 <pre>@NonNull
-java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;getAssociations()</pre>
+default&nbsp;java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;getAssociations()</pre>
 <div class="block">A list of the associations for this entity. This is typically
  a subset of the list returned by <a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentProperties--"><code>getPersistentProperties()</code></a></div>
 <dl>
@@ -506,7 +505,7 @@ java.util.Collection&lt;? extends <a href="../../../../io/micronaut/data/model/A
 <li class="blockList">
 <h4>getEmbedded</h4>
 <pre>@NonNull
-java.util.Collection&lt;<a href="../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;&nbsp;getEmbedded()</pre>
+default&nbsp;java.util.Collection&lt;<a href="../../../../io/micronaut/data/model/Embedded.html" title="interface in io.micronaut.data.model">Embedded</a>&gt;&nbsp;getEmbedded()</pre>
 <div class="block">A list of embedded associations for this entity. This is typically
  a subset of the list returned by <a href="../../../../io/micronaut/data/model/PersistentEntity.html#getPersistentProperties--"><code>getPersistentProperties()</code></a></div>
 <dl>
@@ -699,16 +698,16 @@ default&nbsp;<a href="../../../../io/micronaut/data/model/PersistentEntity.html"
 </dl>
 </li>
 </ul>
-<a name="getPropertiesInPath-java.lang.String-">
+<a name="getPropertyPath-java.lang.String-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>getPropertiesInPath</h4>
-<pre>@NonNull
-default&nbsp;java.util.List&lt;<a href="../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&gt;&nbsp;getPropertiesInPath(@NonNull
-                                                                        java.lang.String&nbsp;path)</pre>
-<div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
+<h4>getPropertyPath</h4>
+<pre>@Nullable
+default&nbsp;<a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a>&nbsp;getPropertyPath(@NonNull
+                                                         java.lang.String&nbsp;path)</pre>
+<div class="block">Return a <a href="../../../../io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><code>PersistentPropertyPath</code></a> by path such as <code>foo.bar.prop</code>.
  .</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>

@@ -152,7 +152,7 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
                          <a href="../../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,java.lang.String&gt;&nbsp;resultReader,
                          java.util.Set&lt;<a href="../../../../../../io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a>&gt;&nbsp;joinPaths,
                          io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
-                         java.util.function.BiFunction&lt;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;loadListener)</code>
+                         java.util.function.BiFunction&lt;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;java.lang.Object&gt;,java.lang.Object,java.lang.Object&gt;&nbsp;loadListener)</code>
 <div class="block">Constructor used to customize the join paths.</div>
 </td>
 </tr>
@@ -199,7 +199,7 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#map-RS-java.lang.Class-">map</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;object,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#map-RS-java.lang.Class-">map</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
    java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;type)</code>
 <div class="block">Map the given result set to the given object.</div>
 </td>
@@ -219,13 +219,12 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 </td>
 </tr>
 <tr id="i7" class="rowColor">
-<td class="colFirst"><code>void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readChildren-RS-R-">readChildren</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
-            <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&nbsp;object)</code>&nbsp;</td>
+<td class="colFirst"><code>java.util.List&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readAllWithJoins-RS-">readAllWithJoins</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</code>&nbsp;</td>
 </tr>
 <tr id="i8" class="altColor">
-<td class="colFirst"><code>java.lang.Object</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readId-RS-">readId</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;object)</code>&nbsp;</td>
+<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readOneWithJoins-RS-">readOneWithJoins</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</code>&nbsp;</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -318,7 +317,7 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
                                  @Nullable
                                  io.micronaut.http.codec.MediaTypeCodec&nbsp;jsonCodec,
                                  @Nullable
-                                 java.util.function.BiFunction&lt;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;loadListener)</pre>
+                                 java.util.function.BiFunction&lt;<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;java.lang.Object&gt;,java.lang.Object,java.lang.Object&gt;&nbsp;loadListener)</pre>
 <div class="block">Constructor used to customize the join paths.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -376,7 +375,7 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/ResultRe
 <h4>map</h4>
 <pre>@NonNull
 public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&nbsp;map(@NonNull
-                      <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;object,
+                      <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
                       @NonNull
                       java.lang.Class&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;type)
                throws <a href="../../../../../../io/micronaut/data/exceptions/DataAccessException.html" title="class in io.micronaut.data.exceptions">DataAccessException</a></pre>
@@ -386,7 +385,7 @@ public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlR
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code><a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html#map-D-java.lang.Class-">map</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/mapper/TypeMapper.html" title="interface in io.micronaut.data.runtime.mapper">TypeMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</code></dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>object</code> - The object to map</dd>
+<dd><code>rs</code> - The object to map</dd>
 <dd><code>type</code> - The type</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The mapped object</dd>
@@ -468,28 +467,28 @@ public&nbsp;java.lang.Object&nbsp;read(@NonNull
 </dl>
 </li>
 </ul>
-<a name="readId-java.lang.Object-">
+<a name="readOneWithJoins-java.lang.Object-">
 <!--   -->
-</a><a name="readId-RS-">
+</a><a name="readOneWithJoins-RS-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>readId</h4>
-<pre>public&nbsp;java.lang.Object&nbsp;readId(@NonNull
-                               <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;object)</pre>
+<h4>readOneWithJoins</h4>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&nbsp;readOneWithJoins(@NonNull
+                          <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</pre>
 </li>
 </ul>
-<a name="readChildren-java.lang.Object-java.lang.Object-">
+<a name="readAllWithJoins-java.lang.Object-">
 <!--   -->
-</a><a name="readChildren-RS-R-">
+</a><a name="readAllWithJoins-RS-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>readChildren</h4>
-<pre>public&nbsp;void&nbsp;readChildren(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs,
-                         <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&nbsp;object)</pre>
+<h4>readAllWithJoins</h4>
+<pre>public&nbsp;java.util.List&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;readAllWithJoins(@NonNull
+                                          <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</pre>
 </li>
 </ul>
 <a name="getPersistentEntity--">

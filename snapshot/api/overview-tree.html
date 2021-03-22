@@ -273,7 +273,7 @@
 </ul>
 </li>
 <li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.Placeholder</span></a></li>
-<li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.PropertyPath</span></a></li>
+<li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryPropertyPath</span></a></li>
 <li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryState</span></a></li>
 <li type="circle">io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations"><span class="typeNameLink">AbstractSqlRepositoryOperations</span></a>&lt;RS,PS&gt; (implements io.micronaut.data.operations.<a href="io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>)
 <ul>
@@ -428,6 +428,7 @@
 <li type="circle">io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/OneToManyMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">OneToManyMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.jpa.<a href="io/micronaut/data/processor/mappers/jpa/OneToOneMapper.html" title="class in io.micronaut.data.processor.mappers.jpa"><span class="typeNameLink">OneToOneMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.runtime.http.<a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html" title="class in io.micronaut.data.runtime.http"><span class="typeNameLink">PageableRequestArgumentBinder</span></a> (implements io.micronaut.http.bind.binders.TypedRequestArgumentBinder&lt;T&gt;)</li>
+<li type="circle">io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><span class="typeNameLink">PersistentPropertyPath</span></a></li>
 <li type="circle">io.micronaut.data.processor.mappers.jpa.event.<a href="io/micronaut/data/processor/mappers/jpa/event/PostLoadAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.event"><span class="typeNameLink">PostLoadAnnotationMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.jpa.event.<a href="io/micronaut/data/processor/mappers/jpa/event/PostPersistAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.event"><span class="typeNameLink">PostPersistAnnotationMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
 <li type="circle">io.micronaut.data.processor.mappers.jpa.event.<a href="io/micronaut/data/processor/mappers/jpa/event/PostRemoveAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.event"><span class="typeNameLink">PostRemoveAnnotationMapper</span></a> (implements io.micronaut.inject.annotation.NamedAnnotationMapper)</li>
@@ -642,7 +643,12 @@
 </ul>
 <h2 title="Interface Hierarchy">Interface Hierarchy</h2>
 <ul>
-<li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryHandler.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryHandler</span></a></li>
+<li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriterionHandler.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.CriterionHandler</span></a>&lt;T&gt;</li>
+<li type="circle">io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.PropertyParameterCreator
+<ul>
+<li type="circle">io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.CriteriaContext</span></a></li>
+</ul>
+</li>
 <li type="circle">io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">AbstractSqlRepositoryOperations.StatementSupplier</span></a>&lt;PS&gt;</li>
 <li type="circle">io.micronaut.core.annotation.AnnotationSource
 <ul>

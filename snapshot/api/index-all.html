@@ -132,20 +132,24 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#AbstractSqlLikeQueryBuilder--">AbstractSqlLikeQueryBuilder()</a></span> - Constructor for class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.CriteriaContext</span></a> - Interface in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
+<dd>
+<div class="block">A criterion context.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriterionHandler.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.CriterionHandler</span></a>&lt;<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriterionHandler.html" title="type parameter in AbstractSqlLikeQueryBuilder.CriterionHandler">T</a> extends <a href="io/micronaut/data/model/query/QueryModel.Criterion.html" title="interface in io.micronaut.data.model.query">QueryModel.Criterion</a>&gt; - Interface in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
+<dd>
+<div class="block">A criterion handler.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.Placeholder</span></a> - Class in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
 <dd>
 <div class="block">Represents a placeholder in query.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.PropertyPath</span></a> - Class in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryPosition</span></a> - Enum in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryPropertyPath</span></a> - Class in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
 <dd>
 <div class="block">Represents a path to a property.</div>
 </dd>
-<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryHandler.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryHandler</span></a> - Interface in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
-<dd>
-<div class="block">A query handler.</div>
-</dd>
-<dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPosition.html" title="enum in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryPosition</span></a> - Enum in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
-<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">AbstractSqlLikeQueryBuilder.QueryState</span></a> - Class in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
 <dd>
 <div class="block">The state of the query.</div>
@@ -206,13 +210,17 @@
 <dd>
 <div class="block">Adds an additional criterion.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#addCriterionHandler-java.lang.Class-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.CriterionHandler-">addCriterionHandler(Class&lt;T&gt;, AbstractSqlLikeQueryBuilder.CriterionHandler&lt;T&gt;)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Adds criterion handler.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#addParameter-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.QueryParameter-">addParameter(PersistentProperty, QueryParameter)</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#addParameter-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.QueryParameter-">addParameter(PersistentProperty, QueryParameter)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html#addParameterRole-java.lang.CharSequence-java.lang.String-">addParameterRole(CharSequence, String)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></dt>
 <dd>
 <div class="block">Adds a parameter role.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#addParameterType-java.lang.String-io.micronaut.data.model.DataType-">addParameterType(String, DataType)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
-<dd>
-<div class="block">Add a parameter type.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#addRequiredParameters-java.lang.String-">addRequiredParameters(String)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>
@@ -324,11 +332,11 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#appendProjectionRowCount-java.lang.StringBuilder-java.lang.String-">appendProjectionRowCount(StringBuilder, String)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#appendUpdateSetParameter-java.lang.StringBuilder-java.lang.String-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">appendUpdateSetParameter(StringBuilder, String, PersistentProperty, AbstractSqlLikeQueryBuilder.Placeholder)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#appendUpdateSetParameter-java.lang.StringBuilder-java.lang.String-io.micronaut.data.model.PersistentProperty-java.lang.String-">appendUpdateSetParameter(StringBuilder, String, PersistentProperty, String)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Appends the SET=? call to the query string.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#appendUpdateSetParameter-java.lang.StringBuilder-java.lang.String-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">appendUpdateSetParameter(StringBuilder, String, PersistentProperty, AbstractSqlLikeQueryBuilder.Placeholder)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#appendUpdateSetParameter-java.lang.StringBuilder-java.lang.String-io.micronaut.data.model.PersistentProperty-java.lang.String-">appendUpdateSetParameter(StringBuilder, String, PersistentProperty, String)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html#apply-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.data.model.query.QueryModel-">apply(MethodMatchContext, QueryModel)</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html" title="class in io.micronaut.data.processor.visitors.finders">ProjectionMethodExpression</a></dt>
 <dd>
@@ -815,8 +823,6 @@
 <dd>
 <div class="block">Computes the alias for the given association path given the current state of the joins.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#computeEmbeddedName-io.micronaut.data.model.Embedded-java.lang.String-io.micronaut.data.model.PersistentProperty-">computeEmbeddedName(Embedded, String, PersistentProperty)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#computePropertyPaths--">computePropertyPaths()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Whether property path expressions require computation by the implementation.</div>
@@ -2228,10 +2234,6 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#encodeInExpression-java.lang.StringBuilder-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.Placeholder-">encodeInExpression(StringBuilder, AbstractSqlLikeQueryBuilder.Placeholder)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
-<dd>
-<div class="block">Placeholders for IN queries in SQL require special treatment.</div>
-</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.EndingWith.html#EndingWith-java.lang.String-">EndingWith(String)</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/CriterionMethodExpression.EndingWith.html" title="class in io.micronaut.data.processor.visitors.finders">CriterionMethodExpression.EndingWith</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
@@ -2369,6 +2371,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/intercept/RepositoryMethodKey.html#equals-java.lang.Object-">equals(Object)</a></span> - Method in class io.micronaut.data.intercept.<a href="io/micronaut/data/intercept/RepositoryMethodKey.html" title="class in io.micronaut.data.intercept">RepositoryMethodKey</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/AbstractPersistentEntity.html#equals-java.lang.Object-">equals(Object)</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#EQUALS">EQUALS</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/JoinPath.html#equals-java.lang.Object-">equals(Object)</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></dt>
 <dd>&nbsp;</dd>
@@ -2880,6 +2884,10 @@
 <dd>
 <div class="block">Find one method.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentPropertyPath.html#findPropertyOwner--">findPropertyOwner()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
+<dd>
+<div class="block">Find the owner of the possible embedded property.</div>
+</dd>
 <dt><a href="io/micronaut/data/intercept/async/FindSliceAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="typeNameLink">FindSliceAsyncInterceptor</span></a>&lt;<a href="io/micronaut/data/intercept/async/FindSliceAsyncInterceptor.html" title="type parameter in FindSliceAsyncInterceptor">T</a>&gt; - Interface in <a href="io/micronaut/data/intercept/async/package-summary.html">io.micronaut.data.intercept.async</a></dt>
 <dd>
 <div class="block">An interceptor that executes a query and returns a <a href="io/micronaut/data/model/Slice.html" title="interface in io.micronaut.data.model"><code>Slice</code></a> asynchronously.</div>
@@ -3186,11 +3194,11 @@
 <dd>
 <div class="block">A list of the associations for this entity.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentPropertyPath.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getAssociations--">getAssociations()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html#getAttribute-java.lang.CharSequence-">getAttribute(CharSequence)</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/AbstractPreparedDataOperation.html" title="class in io.micronaut.data.model.runtime">AbstractPreparedDataOperation</a></dt>
 <dd>&nbsp;</dd>
@@ -3210,6 +3218,8 @@
 <dd>
 <div class="block">Get the column name for the given property.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getColumnName--">getColumnName()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#getColumnName-io.micronaut.data.model.PersistentProperty-">getColumnName(PersistentProperty)</a></span> - Method in class io.micronaut.data.model.query.builder.jpa.<a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#getColumnName-io.micronaut.data.model.PersistentProperty-">getColumnName(PersistentProperty)</a></span> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
@@ -3297,13 +3307,11 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.Junction.html#getCriteria--">getCriteria()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Junction.html" title="class in io.micronaut.data.model.query">QueryModel.Junction</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getCurrentAlias--">getCurrentAlias()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getCurrentEmbedded--">getCurrentEmbedded()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getCurrentEntityManager--">getCurrentEntityManager()</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#getCurrentEntityManager--">getCurrentEntityManager()</a></span> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#getCurrentTableAlias--">getCurrentTableAlias()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html#getCurrentTransactionIsolationLevel--">getCurrentTransactionIsolationLevel()</a></span> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationManager</a></dt>
 <dd>
@@ -3392,10 +3400,6 @@
 <dd>
 <div class="block">A list of embedded associations for this entity.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#getEmbedded--">getEmbedded()</a></span> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
-<dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getEmbedded--">getEmbedded()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/event/EntityEventContext.html#getEntity--">getEntity()</a></span> - Method in interface io.micronaut.data.event.<a href="io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#getEntity-java.lang.Class-">getEntity(Class&lt;T&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></dt>
@@ -3696,6 +3700,12 @@
 <dd>
 <div class="block">Obtain the naming strategy for the entity.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentPropertyPath.html#getNamingStrategy--">getNamingStrategy()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
+<dd>
+<div class="block">Get naming strategy for thpe property.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getNamingStrategy--">getNamingStrategy()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentEntity.html#getNativeType--">getNativeType()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentEntity.html" title="class in io.micronaut.data.processor.model">SourcePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/model/SourcePersistentProperty.html#getNativeType--">getNativeType()</a></span> - Method in class io.micronaut.data.processor.model.<a href="io/micronaut/data/processor/model/SourcePersistentProperty.html" title="class in io.micronaut.data.processor.model">SourcePersistentProperty</a></dt>
@@ -3875,9 +3885,11 @@
 <dd>
 <div class="block">Computes a dot separated property path for the given camel case path.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentPropertyPath.html#getPath--">getPath()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/AssociationQuery.html#getPath--">getPath()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/AssociationQuery.html" title="class in io.micronaut.data.model.query">AssociationQuery</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#getPath--">getPath()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getPath--">getPath()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/JoinPath.html#getPath--">getPath()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/JoinPath.html" title="class in io.micronaut.data.model.query">JoinPath</a></dt>
 <dd>&nbsp;</dd>
@@ -3898,6 +3910,8 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/data/event/PersistenceEventContext.html#getPersistentEntity--">getPersistentEntity()</a></span> - Method in interface io.micronaut.data.event.<a href="io/micronaut/data/event/PersistenceEventContext.html" title="interface in io.micronaut.data.event">PersistenceEventContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html#getPersistentEntity--">getPersistentEntity()</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StoredInsert.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StoredInsert</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#getPersistentEntity--">getPersistentEntity()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/DefaultQuery.html#getPersistentEntity--">getPersistentEntity()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></dt>
 <dd>&nbsp;</dd>
@@ -3939,12 +3953,9 @@
 <dd>
 <div class="block">Return the propagation behavior.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getPropertiesInPath-java.lang.String-">getPropertiesInPath(String)</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
-<dd>
-<div class="block">Return a properties for a dot separated property path such as <code>foo.bar.prop</code>
- .</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#getProperty--">getProperty()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentPropertyPath.html#getProperty--">getProperty()</a></span> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getProperty--">getProperty()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.Between.html#getProperty--">getProperty()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.Between.html" title="class in io.micronaut.data.model.query">QueryModel.Between</a></dt>
 <dd>&nbsp;</dd>
@@ -3971,6 +3982,10 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.PropertyProjection.html#getPropertyName--">getPropertyName()</a></span> - Method in class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.PropertyProjection.html" title="class in io.micronaut.data.model.query">QueryModel.PropertyProjection</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getPropertyPath-java.lang.String-">getPropertyPath(String)</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
+<dd>
+<div class="block">Return a <a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><code>PersistentPropertyPath</code></a> by path such as <code>foo.bar.prop</code>.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/event/listeners/AutoPopulatedEntityEventListener.html#getPropertyPredicate--">getPropertyPredicate()</a></span> - Method in class io.micronaut.data.runtime.event.listeners.<a href="io/micronaut/data/runtime/event/listeners/AutoPopulatedEntityEventListener.html" title="class in io.micronaut.data.runtime.event.listeners">AutoPopulatedEntityEventListener</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/event/listeners/AutoTimestampEntityEventListener.html#getPropertyPredicate--">getPropertyPredicate()</a></span> - Method in class io.micronaut.data.runtime.event.listeners.<a href="io/micronaut/data/runtime/event/listeners/AutoTimestampEntityEventListener.html" title="class in io.micronaut.data.runtime.event.listeners">AutoTimestampEntityEventListener</a></dt>
@@ -4015,6 +4030,8 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getQueryModel--">getQueryModel()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#getQueryState--">getQueryState()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#getRepositoryClass--">getRepositoryClass()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/runtime/EntityOperation.html#getRepositoryType--">getRepositoryType()</a></span> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/EntityOperation.html" title="interface in io.micronaut.data.model.runtime">EntityOperation</a></dt>
@@ -4026,6 +4043,10 @@
 <div class="block">Looks up the entity to persist from the execution context, or throws an exception.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html#getRequiredProperties--">getRequiredProperties()</a></span> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/ProjectionMethodExpression.html" title="class in io.micronaut.data.processor.visitors.finders">ProjectionMethodExpression</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#getRequiredProperty-java.lang.String-java.lang.Class-">getRequiredProperty(String, Class&lt;?&gt;)</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#getRequiredProperty-io.micronaut.data.model.query.QueryModel.PropertyNameCriterion-">getRequiredProperty(QueryModel.PropertyNameCriterion)</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getRequiredRootEntity-io.micronaut.aop.MethodInvocationContext-">getRequiredRootEntity(MethodInvocationContext)</a></span> - Method in class io.micronaut.data.runtime.intercept.<a href="io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></dt>
 <dd>
@@ -4085,6 +4106,8 @@
 <div class="block">The computed result type.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/MatchContext.html#getReturnType--">getReturnType()</a></span> - Method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#getRootAlias--">getRootAlias()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentEntity.html#getRootEntity--">getRootEntity()</a></span> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
@@ -4175,6 +4198,8 @@
 <div class="block">Return an unmodifiable snapshot list of all registered synchronizations
  for the current thread.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#getTableAlias--">getTableAlias()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#getTableAsKeyword--">getTableAsKeyword()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">Get the AS keyword to use for table aliases.</div>
@@ -4423,11 +4448,11 @@
 </a>
 <h2 class="title">H</h2>
 <dl>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryHandler.html#handle-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-io.micronaut.data.model.query.QueryModel.Criterion-">handle(AbstractSqlLikeQueryBuilder.QueryState, QueryModel.Criterion)</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryHandler.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryHandler</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriterionHandler.html#handle-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.CriteriaContext-T-">handle(AbstractSqlLikeQueryBuilder.CriteriaContext, T)</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriterionHandler.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriterionHandler</a></dt>
 <dd>
 <div class="block">Handles a criterion.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#handleSubQuery-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.QueryState-io.micronaut.data.model.query.QueryModel.SubqueryCriterion-java.lang.String-">handleSubQuery(AbstractSqlLikeQueryBuilder.QueryState, QueryModel.SubqueryCriterion, String)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#handleSubQuery-io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder.CriteriaContext-io.micronaut.data.model.query.QueryModel.SubqueryCriterion-java.lang.String-">handleSubQuery(AbstractSqlLikeQueryBuilder.CriteriaContext, QueryModel.SubqueryCriterion, String)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>
 <div class="block">For handling subqueries.</div>
 </dd>
@@ -6877,6 +6902,14 @@
 <dd>
 <div class="block">Models a persistent property.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model"><span class="typeNameLink">PersistentPropertyPath</span></a> - Class in <a href="io/micronaut/data/model/package-summary.html">io.micronaut.data.model</a></dt>
+<dd>
+<div class="block">The property path representation.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/PersistentPropertyPath.html#PersistentPropertyPath-java.util.List-io.micronaut.data.model.PersistentProperty-java.lang.String-">PersistentPropertyPath(List&lt;Association&gt;, PersistentProperty, String)</a></span> - Constructor for class io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentPropertyPath.html" title="class in io.micronaut.data.model">PersistentPropertyPath</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html#Placeholder-java.lang.String-java.lang.String-">Placeholder(String, String)</a></span> - Constructor for class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.Placeholder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.Placeholder</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
@@ -7296,10 +7329,6 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html#PropertyPath-java.util.List-io.micronaut.data.model.PersistentProperty-java.lang.String-">PropertyPath(List&lt;Association&gt;, PersistentProperty, String)</a></span> - Constructor for class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.PropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.PropertyPath</a></dt>
-<dd>
-<div class="block">Default constructor.</div>
-</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/QueryModel.PropertyProjection.html#PropertyProjection-java.lang.String-">PropertyProjection(String)</a></span> - Constructor for class io.micronaut.data.model.query.<a href="io/micronaut/data/model/query/QueryModel.PropertyProjection.html" title="class in io.micronaut.data.model.query">QueryModel.PropertyProjection</a></dt>
 <dd>
 <div class="block">Default constructor.</div>
@@ -7620,6 +7649,10 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#QueryPropertyPath-io.micronaut.data.model.PersistentPropertyPath-java.lang.String-">QueryPropertyPath(PersistentPropertyPath, String)</a></span> - Constructor for class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">QueryResult</span></a> - Interface in <a href="io/micronaut/data/model/query/builder/package-summary.html">io.micronaut.data.model.query.builder</a></dt>
 <dd>
 <div class="block">Used to represent a built query that is computed at compilation time.</div>
@@ -7718,6 +7751,8 @@
 <dd>
 <div class="block">Marker for read-only transactions in description strings.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readAllWithJoins-RS-">readAllWithJoins(RS)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readBigDecimal-java.sql.ResultSet-java.lang.Integer-">readBigDecimal(ResultSet, Integer)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readBigDecimal-java.sql.ResultSet-java.lang.String-">readBigDecimal(ResultSet, String)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
@@ -7778,8 +7813,6 @@
 <dd>
 <div class="block">Read a char value for the given name.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readChildren-RS-R-">readChildren(RS, R)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readDate-java.sql.ResultSet-java.lang.Integer-">readDate(ResultSet, Integer)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readDate-java.sql.ResultSet-java.lang.String-">readDate(ResultSet, String)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
@@ -7852,8 +7885,6 @@
 <dd>
 <div class="block">Read a float value for the given name.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readId-RS-">readId(RS)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readInt-java.sql.ResultSet-java.lang.Integer-">readInt(ResultSet, Integer)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html#readInt-java.sql.ResultSet-java.lang.String-">readInt(ResultSet, String)</a></span> - Method in class io.micronaut.data.jdbc.mapper.<a href="io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dt>
@@ -7878,6 +7909,8 @@
 <dd>
 <div class="block">Read a long value for the given name.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readOneWithJoins-RS-">readOneWithJoins(RS)</a></span> - Method in class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/annotation/ReadOnly.html" title="annotation in io.micronaut.transaction.annotation"><span class="typeNameLink">ReadOnly</span></a> - Annotation Type in <a href="io/micronaut/transaction/annotation/package-summary.html">io.micronaut.transaction.annotation</a></dt>
 <dd>
 <div class="block">Stereotype annotation for demarcating a read-only transaction.</div>
@@ -8457,12 +8490,6 @@
 <dd>
 <div class="block">Sets the connection holder.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#setCurrentAlias-java.lang.String-">setCurrentAlias(String)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
-<dd>
-<div class="block">Sets the current logic name.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#setCurrentEmbedded-io.micronaut.data.model.Embedded-">setCurrentEmbedded(Embedded)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
-<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html#setCurrentTransactionIsolationLevel-io.micronaut.transaction.TransactionDefinition.Isolation-">setCurrentTransactionIsolationLevel(TransactionDefinition.Isolation)</a></span> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionSynchronizationManager.html" title="class in io.micronaut.transaction.support">TransactionSynchronizationManager</a></dt>
 <dd>
 <div class="block">Expose an isolation level for the current transaction.</div>
@@ -8513,10 +8540,6 @@
  (as indicated by <a href="io/micronaut/transaction/TransactionDefinition.html#isReadOnly--"><code>TransactionDefinition.isReadOnly()</code></a>
  through an explicit statement on the transactional connection:
  "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.</div>
-</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#setEntity-io.micronaut.data.model.PersistentEntity-">setEntity(PersistentEntity)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
-<dd>
-<div class="block">Sets the current entity.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#setFailEarlyOnGlobalRollbackOnly-boolean-">setFailEarlyOnGlobalRollbackOnly(boolean)</a></span> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>
@@ -8739,6 +8762,8 @@
 <div class="block">Return whether to call <code>doCommit</code> on a transaction that has been
  marked as rollback-only in a global fashion.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html#shouldEscape--">shouldEscape()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html#shouldEscape--">shouldEscape()</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.QueryState.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.QueryState</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#shouldEscape-io.micronaut.data.model.PersistentEntity-">shouldEscape(PersistentEntity)</a></span> - Method in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
@@ -9066,7 +9091,7 @@
 <dd>
 <div class="block">Constructor used to customize the join paths.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#SqlResultEntityTypeMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-java.util.Set-io.micronaut.http.codec.MediaTypeCodec-java.util.function.BiFunction-">SqlResultEntityTypeMapper(RuntimePersistentEntity&lt;R&gt;, ResultReader&lt;RS, String&gt;, Set&lt;JoinPath&gt;, MediaTypeCodec, BiFunction&lt;RuntimePersistentEntity&lt;R&gt;, R, R&gt;)</a></span> - Constructor for class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#SqlResultEntityTypeMapper-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.runtime.mapper.ResultReader-java.util.Set-io.micronaut.http.codec.MediaTypeCodec-java.util.function.BiFunction-">SqlResultEntityTypeMapper(RuntimePersistentEntity&lt;R&gt;, ResultReader&lt;RS, String&gt;, Set&lt;JoinPath&gt;, MediaTypeCodec, BiFunction&lt;RuntimePersistentEntity&lt;Object&gt;, Object, Object&gt;)</a></span> - Constructor for class io.micronaut.data.runtime.mapper.sql.<a href="io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="class in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper</a></dt>
 <dd>
 <div class="block">Constructor used to customize the join paths.</div>
 </dd>
@@ -9868,6 +9893,8 @@ the order they are declared.</div>
  queries with additional criterion.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#WHERE_CLAUSE">WHERE_CLAUSE</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#whereClause--">whereClause()</a></span> - Method in interface io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html" title="interface in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder.CriteriaContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/annotation/repeatable/WhereSpecifications.html" title="annotation in io.micronaut.data.annotation.repeatable"><span class="typeNameLink">WhereSpecifications</span></a> - Annotation Type in <a href="io/micronaut/data/annotation/repeatable/package-summary.html">io.micronaut.data.annotation.repeatable</a></dt>
 <dd>
