@@ -16,6 +16,13 @@ jobs:
       matrix:
         graalvm: ['21.0.0.2.java8', '21.0.0.2.java11']
     steps:
+       # https://github.com/actions/virtual-environments/issues/709
+      - name: Free disk space
+        run: |
+         sudo rm -rf "/usr/local/share/boost"
+         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+         sudo apt-get clean
+         df -h    
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.4
         with:
@@ -30,6 +37,7 @@ jobs:
       - name: Install Native Image
         run: gu install native-image
       - name: Build with Gradle
+        if: ${{ secrets.GRAALVM_TESTS_ENABLED != 'false' }} 
         run: |
           if ./gradlew tasks --no-daemon --all | grep -w "testNativeImage"
           then
@@ -37,3 +45,5 @@ jobs:
           else
             ./gradlew check --continue --no-daemon
           fi
+        env:
+           TESTCONTAINERS_RYUK_DISABLED: true
