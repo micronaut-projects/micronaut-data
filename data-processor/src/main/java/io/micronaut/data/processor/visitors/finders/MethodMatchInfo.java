@@ -42,6 +42,7 @@ public class MethodMatchInfo {
 
     private Map<String, String> parameterRoles = new HashMap<>(2);
     private boolean dto;
+    private boolean optimisticLock;
 
     /**
      * Creates a method info.
@@ -78,6 +79,21 @@ public class MethodMatchInfo {
      * @param query The query, can be null for interceptors that don't execute queries.
      * @param interceptor The interceptor type to execute at runtime
      * @param operationType The operation type
+     */
+    public MethodMatchInfo(
+            @Nullable TypedElement resultType,
+            @Nullable QueryModel query,
+            @Nullable ClassElement interceptor,
+            @NonNull OperationType operationType) {
+        this(resultType, query, interceptor, operationType, null);
+    }
+
+    /**
+     * Creates a method info.
+     * @param resultType The result type, can be null for void etc.
+     * @param query The query, can be null for interceptors that don't execute queries.
+     * @param interceptor The interceptor type to execute at runtime
+     * @param operationType The operation type
      * @param updateProperties the update properties
      */
     public MethodMatchInfo(
@@ -85,7 +101,7 @@ public class MethodMatchInfo {
             @Nullable QueryModel query,
             @Nullable ClassElement interceptor,
             @NonNull OperationType operationType,
-            String... updateProperties) {
+            String[] updateProperties) {
         this.query = query;
         this.interceptor = interceptor;
         this.operationType = operationType;
@@ -99,6 +115,24 @@ public class MethodMatchInfo {
      */
     public boolean isDto() {
         return dto;
+    }
+
+    /**
+     * Gets optimistic lock value.
+     *
+     * @return the value
+     */
+    public boolean isOptimisticLock() {
+        return optimisticLock;
+    }
+
+    /**
+     * Sets optimistic lock value.
+     *
+     * @param optimisticLock new value
+     */
+    public void setOptimisticLock(boolean optimisticLock) {
+        this.optimisticLock = optimisticLock;
     }
 
     /**

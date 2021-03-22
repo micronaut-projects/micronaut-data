@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.jdbc.h2
 
-
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
+import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Shared
 
 import javax.inject.Inject
 
@@ -28,13 +27,10 @@ import javax.inject.Inject
 class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec {
 
     @Inject
-    @Shared
-    PersonReactiveRepository personReactiveRepository
+    PersonReactiveRepository personRepository
 
-    @Override
-    PersonReactiveRepository getPersonRepository() {
-        return personReactiveRepository
-    }
+    @Inject
+    StudentReactiveRepository studentRepository
 
     @Override
     void init() {

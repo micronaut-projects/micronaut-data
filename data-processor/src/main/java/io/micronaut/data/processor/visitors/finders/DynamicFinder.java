@@ -269,7 +269,7 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                 }
             }
         }
-
+        QueryParameter versionMatchParameter = null;
         if ("Or".equalsIgnoreCase(operatorInUse)) {
             QueryModel.Disjunction disjunction = new QueryModel.Disjunction();
             for (CriterionMethodExpression expression : expressions) {
@@ -293,6 +293,9 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
                         }
                     } else if (persistentProperty == entity.getIdentity()) {
                         query.idEq((QueryParameter) equals.getValue());
+                    } else if (persistentProperty == entity.getVersion()) {
+                        versionMatchParameter = (QueryParameter) equals.getValue();
+                        query.versionEq((QueryParameter) equals.getValue());
                     } else {
                         query.add(criterion);
                     }
@@ -302,11 +305,15 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
             }
         }
 
-        return buildInfo(
+        MethodMatchInfo methodMatchInfo = buildInfo(
                 matchContext,
                 queryResultType,
                 query
         );
+        if (methodMatchInfo != null && versionMatchParameter != null) {
+            methodMatchInfo.setOptimisticLock(true);
+        }
+        return methodMatchInfo;
     }
 
     private void verifyFinderParameter(String methodName, SourcePersistentEntity entity, CriterionMethodExpression methodExpression, ParameterElement parameter) {

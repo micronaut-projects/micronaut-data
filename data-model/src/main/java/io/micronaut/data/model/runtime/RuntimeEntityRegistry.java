@@ -16,6 +16,8 @@
 package io.micronaut.data.model.runtime;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.event.EntityEventListener;
 
 /**
@@ -29,6 +31,17 @@ public interface RuntimeEntityRegistry {
      * @return The primary entity event listener
      */
     @NonNull EntityEventListener<Object> getEntityEventListener();
+
+    /**
+     * @param persistentProperty The persistent property
+     * @param previousValue The previous value
+     * @return The new value, never null.
+     */
+    @Experimental
+    @NonNull Object autoPopulateRuntimeProperty(
+            @NonNull RuntimePersistentProperty<?> persistentProperty,
+            @Nullable Object previousValue
+    );
 
     /**
      * Get a new, non-cached instance.

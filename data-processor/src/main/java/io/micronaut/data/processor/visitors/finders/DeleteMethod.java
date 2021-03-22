@@ -88,7 +88,7 @@ public class DeleteMethod extends AbstractListMethod {
             // Generate one 'IN' query for multiple entities if it's possible otherwise use batch
             boolean generateInIdList = entitiesParameter != null
                     && !rootEntity.hasCompositeIdentity()
-                    && !(rootEntity.getIdentity() instanceof Embedded);
+                    && !(rootEntity.getIdentity() instanceof Embedded) && rootEntity.getVersion() == null;
             if (generateInIdList) {
                 queryModel = QueryModel.from(rootEntity)
                         .inList(rootEntity.getIdentity().getName(), new QueryParameter(entitiesParameter.getName()));
@@ -97,6 +97,9 @@ public class DeleteMethod extends AbstractListMethod {
             } else {
                 queryModel = QueryModel.from(rootEntity)
                         .idEq(new QueryParameter(entitiesParameter == null ? entityParameter.getName() : entitiesParameter.getName()));
+                if (rootEntity.getVersion() != null) {
+                    queryModel.versionEq(new QueryParameter(rootEntity.getVersion().getName()));
+                }
             }
         }
 
@@ -117,6 +120,9 @@ public class DeleteMethod extends AbstractListMethod {
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
         } else if (entitiesParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+        }
+        if (queryModel != null && rootEntity.getVersion() != null) {
+            methodMatchInfo.setOptimisticLock(true);
         }
         return methodMatchInfo;
     }

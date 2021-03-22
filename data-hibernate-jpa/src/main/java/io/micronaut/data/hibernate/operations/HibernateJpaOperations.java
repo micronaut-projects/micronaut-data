@@ -62,7 +62,6 @@ import javax.persistence.Tuple;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.sql.Connection;
-import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -91,6 +90,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     private static final JpaQueryBuilder QUERY_BUILDER = new JpaQueryBuilder();
     private final SessionFactory sessionFactory;
     private final TransactionOperations<Connection> transactionOperations;
+    private final RuntimeEntityRegistry runtimeEntityRegistry;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
 
@@ -98,14 +98,18 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
      * Default constructor.
      *
      * @param sessionFactory        The session factory
+     * @param sessionFactory        The session factory
      * @param transactionOperations The transaction operations
      * @param executorService       The executor service for I/O tasks to use
+     * @param runtimeEntityRegistry The runtime entity registry
      */
     protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
-            @Named("io") @Nullable ExecutorService executorService) {
+            @Named("io") @Nullable ExecutorService executorService,
+            RuntimeEntityRegistry runtimeEntityRegistry) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
+        this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.sessionFactory = sessionFactory;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
@@ -199,36 +203,29 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             if (parameterIndex > -1) {
                 value = parameterArray[parameterIndex];
             } else {
+                String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
                 String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
                 String propertyPath = i < indexedParameterPaths.length ? indexedParameterPaths[i] : null;
-                if (propertyPath != null) {
-                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
-                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
-                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
-                        if (lastUpdatedType == null) {
-                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
-                        }
-                        Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
-                        if (timestamp == null) {
-                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                        }
-                        value = timestamp;
-                    } else {
-                        int j = propertyPath.indexOf('.');
-                        if (j > -1) {
-                            String subProp = propertyPath.substring(j + 1);
-                            value = parameterArray[Integer.parseInt(propertyPath.substring(0, j))];
-                            value = BeanWrapper.getWrapper(value).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
-                        } else {
-                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
-                        }
+                String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
+                if (autoPopulatedPropertyPath != null) {
+                    RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
+                    RuntimePersistentProperty<T> persistentProperty = persistentEntity.getPropertyByName(autoPopulatedPropertyPath);
+                    if (persistentProperty == null) {
+                        throw new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath);
                     }
+                    Object previousValue = null;
+                    if (propertyPath != null) {
+                        previousValue = resolveQueryParameterByPath(query, i, parameterArray, propertyPath);
+                    }
+                    value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+                } else if (propertyPath != null) {
+                    value = resolveQueryParameterByPath(query, i, parameterArray, propertyPath);
                 } else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
                 }
             }
             if (preparedQuery.isNative()) {
-                Argument<?> argument = preparedQuery.getArguments()[i];
+                Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
                 Class<?> argumentType = argument.getType();
                 if (Collection.class.isAssignableFrom(argumentType)) {
                     Type valueType = sessionFactory.getTypeHelper().heuristicType(argument.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT).getType().getName());
@@ -248,6 +245,17 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
             }
             q.setParameter(parameterName, value);
+        }
+    }
+
+    private Object resolveQueryParameterByPath(String query, int i, Object[] queryParameters, String propertyPath) {
+        int j = propertyPath.indexOf('.');
+        if (j > -1) {
+            String subProp = propertyPath.substring(j + 1);
+            Object indexedValue = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
+            return BeanWrapper.getWrapper(indexedValue).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
+        } else {
+            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
         }
     }
 

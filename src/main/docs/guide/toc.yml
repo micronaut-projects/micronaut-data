@@ -42,6 +42,7 @@ sql:
     jdbcRepositories:
       title: JDBC Repositories
       sqlInserts: Inserts and Updates
+      optimisticLocking: Optimistic locking
       pessimisticLocking: Pessimistic Locking
     sqlMapping:
       title: Mapping Entities

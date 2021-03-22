@@ -15,15 +15,13 @@
  */
 package io.micronaut.data.model.query.builder;
 
-import io.micronaut.core.util.ArgumentUtils;
-
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.DataType;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Used to represent a built query that is computed at compilation time.
@@ -36,7 +34,8 @@ public interface QueryResult {
     /**
      * @return A string representation of the original query.
      */
-    @NonNull String getQuery();
+    @NonNull
+    String getQuery();
 
     /**
      * A map containing the parameter names and the references to the {@link io.micronaut.core.type.Argument} names which define the values.
@@ -44,35 +43,58 @@ public interface QueryResult {
      *
      * @return The map
      */
-    @NonNull Map<String, String> getParameters();
+    default @NonNull Map<String, String> getParameters() {
+        return getParameterBindings().stream().collect(Collectors.toMap(QueryParameterBinding::getKey, p -> {
+            if (p.getQueryParameter() != null) {
+                return p.getQueryParameter().getName();
+            }
+            return p.getPath();
+        }));
+    }
 
     /**
      * @return The computed parameter types.
      */
-    @NonNull Map<String, DataType> getParameterTypes();
-
-    /**
-     * Returns the names of additional required parameters for this query.
-     * @return The additional required parameters, if any
-     */
-    default Set<String> getAdditionalRequiredParameters() {
-        return Collections.emptySet();
+    default @NonNull Map<String, DataType> getParameterTypes() {
+        return getParameterBindings().stream().collect(Collectors.toMap(p -> {
+            if (p.getQueryParameter() != null) {
+                return p.getQueryParameter().getName();
+            }
+            return p.getPath();
+            }, QueryParameterBinding::getDataType, (d1, d2) -> d1));
     }
 
     /**
+     * Returns the parameters binding for this query.
+     *
+     * @return the parameters binding
+     */
+    List<QueryParameterBinding> getParameterBindings();
+
+    /**
+     * Returns additional required parameters.
+     *
+     * @return the additional required parameters
+     */
+    Map<String, String> getAdditionalRequiredParameters();
+
+    /**
      * Creates a new encoded query.
-     * @param query The query
-     * @param parameters The parameters
-     * @param parameterTypes  The parameter types
-     * @param additionalRequiredParameters Names of the additional required parameters to execute the query
+     *
+     * @param query                        The query
+     * @param parameterBindings            The parameters binding
+     * @param additionalRequiredParameters Additional required parameters to execute the query
      * @return The query
      */
-    static @NonNull QueryResult of(
+    static @NonNull
+    QueryResult of(
             @NonNull String query,
-            @Nullable Map<String, String> parameters,
-            @Nullable Map<String, DataType> parameterTypes,
-            @Nullable Set<String> additionalRequiredParameters) {
+            @NonNull List<QueryParameterBinding> parameterBindings,
+            @NonNull Map<String, String> additionalRequiredParameters) {
         ArgumentUtils.requireNonNull("query", query);
+        ArgumentUtils.requireNonNull("parameterBindings", parameterBindings);
+        ArgumentUtils.requireNonNull("additionalRequiredParameters", additionalRequiredParameters);
+
         return new QueryResult() {
             @NonNull
             @Override
@@ -80,21 +102,14 @@ public interface QueryResult {
                 return query;
             }
 
-            @NonNull
             @Override
-            public Map<String, String> getParameters() {
-                return parameters != null ? Collections.unmodifiableMap(parameters) : Collections.emptyMap();
-            }
-
-            @NonNull
-            @Override
-            public Map<String, DataType> getParameterTypes() {
-                return parameterTypes != null ? Collections.unmodifiableMap(parameterTypes) : Collections.emptyMap();
+            public List<QueryParameterBinding> getParameterBindings() {
+                return parameterBindings;
             }
 
             @Override
-            public Set<String> getAdditionalRequiredParameters() {
-                return additionalRequiredParameters != null ? additionalRequiredParameters : Collections.emptySet();
+            public Map<String, String> getAdditionalRequiredParameters() {
+                return additionalRequiredParameters;
             }
         };
     }

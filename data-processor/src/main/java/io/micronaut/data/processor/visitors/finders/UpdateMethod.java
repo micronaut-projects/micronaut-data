@@ -16,9 +16,12 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
+import io.micronaut.data.annotation.Version;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -84,7 +87,7 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             @NonNull MethodMatchContext matchContext) {
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         List<ParameterElement> remainingParameters = parameters.stream()
-                .filter(p -> !p.hasAnnotation(Id.class))
+                .filter(p -> !p.hasAnnotation(Id.class) && !p.hasAnnotation(Version.class))
                 .collect(Collectors.toList());
 
         ParameterElement idParameter = parameters.stream().filter(p -> p.hasAnnotation(Id.class)).findFirst()
@@ -107,9 +110,18 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
             matchContext.fail("Cannot update by ID for entity that has no ID");
         }
 
+        ParameterElement versionMatchMethodParameter = null;
+
         QueryModel query = QueryModel.from(entity);
         query.idEq(new QueryParameter(idParameter.getName()));
-        List<String> properiesToUpdate = new ArrayList<>(remainingParameters.size());
+        SourcePersistentProperty version = entity.getVersion();
+        if (version != null) {
+            versionMatchMethodParameter = parameters.stream().filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
+            if (versionMatchMethodParameter != null) {
+                query.versionEq(new QueryParameter(versionMatchMethodParameter.getName()));
+            }
+        }
+        List<String> propertiesToUpdate = new ArrayList<>(remainingParameters.size());
         for (ParameterElement parameter : remainingParameters) {
             String name = parameter.stringValue(Parameter.class).orElse(parameter.getName());
             SourcePersistentProperty prop = entity.getPropertyByName(name);
@@ -121,14 +133,18 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                     matchContext.fail("Cannot update a generated property: " + name);
                     return null;
                 } else {
-                    properiesToUpdate.add(name);
+                    propertiesToUpdate.add(name);
                 }
             }
         }
 
-        Element element = matchContext.getParametersInRole().get(TypeRole.LAST_UPDATED_PROPERTY);
-        if (element instanceof PropertyElement) {
-            properiesToUpdate.add(element.getName());
+        entity.getPersistentProperties().stream()
+                .filter(p -> p != null && p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(false))
+                .map(PersistentProperty::getName)
+                .collect(Collectors.toCollection(() -> propertiesToUpdate));
+
+        if (versionMatchMethodParameter != null && entity.getVersion() != null) {
+            propertiesToUpdate.add(entity.getVersion().getName());
         }
 
         ClassElement returnType = matchContext.getReturnType();
@@ -138,13 +154,16 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                 query,
                 getInterceptorElement(matchContext, entry.getValue()),
                 MethodMatchInfo.OperationType.UPDATE,
-                properiesToUpdate.toArray(new String[0])
+                propertiesToUpdate.stream().toArray(String[]::new)
         );
 
-        info.addParameterRole(
-                TypeRole.ID,
+        info.addParameterRole(TypeRole.ID,
                 idParameter.getName()
         );
+
+        if (versionMatchMethodParameter != null) {
+            info.setOptimisticLock(true);
+        }
         return info;
     }
 

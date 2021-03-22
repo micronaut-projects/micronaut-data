@@ -62,6 +62,7 @@ public @interface TypeRole {
     /**
      * The last updated property of the entity for an update operation.
      */
+    @Deprecated
     String LAST_UPDATED_PROPERTY = "lastUpdatedProperty";
 
     /**

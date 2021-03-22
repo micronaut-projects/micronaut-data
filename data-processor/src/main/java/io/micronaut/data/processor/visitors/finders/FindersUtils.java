@@ -217,10 +217,6 @@ interface FindersUtils {
         return entry;
     }
 
-    /**
-     * @param matchContext The match context
-     * @return The resolved {@link DataInterceptor} or {@literal null}.
-     */
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveSyncFindInterceptor(@NonNull MethodMatchContext matchContext,
                                                                                                 @NotNull ClassElement returnType) {
         ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);

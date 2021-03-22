@@ -49,11 +49,13 @@ interface CompanyRepository extends io.micronaut.data.tck.repositories.CompanyRe
 }
 """)
         def updateMethod = repository.findPossibleMethods("update").findFirst().get()
-        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths", String[].class).get()
+        def updatePaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS, String[].class).get()
+        def autoPopulatedPropertyPaths = updateMethod.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS, String[].class).get()
 
         expect:"The repository compiles"
         repository != null
-        updatePaths == ['', "lastUpdated", ""] as String[]
+        updatePaths == ['', "", ""] as String[]
+        autoPopulatedPropertyPaths == ['', "lastUpdated", ""] as String[]
     }
 
     void "test compile repository"() {

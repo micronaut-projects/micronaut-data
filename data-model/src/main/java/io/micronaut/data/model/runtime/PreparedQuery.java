@@ -55,7 +55,10 @@ public interface PreparedQuery<E, R> extends PagedQuery<E>, StoredQuery<E, R>, P
     /**
      * @return The last updated type.
      */
-    Class<?> getLastUpdatedType();
+    @Deprecated
+    default Class<?> getLastUpdatedType() {
+        throw new IllegalStateException("Not supported anymore");
+    }
 
     @NonNull
     @Override

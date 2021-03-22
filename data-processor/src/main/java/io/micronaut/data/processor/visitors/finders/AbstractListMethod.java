@@ -64,7 +64,7 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         MethodElement methodElement = matchContext.getMethodElement();
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
         ClassElement queryResultType = rootEntity.getClassElement();
-
+        QueryParameter versionMatchParameter = null;
         if (CollectionUtils.isNotEmpty(queryParams)) {
             query = QueryModel.from(rootEntity);
             for (ParameterElement queryParam : queryParams) {
@@ -79,6 +79,9 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
                     }
                 } else if (prop == rootEntity.getIdentity()) {
                     query.idEq(new QueryParameter(queryParam.getName()));
+                } else if (prop == rootEntity.getVersion()) {
+                    versionMatchParameter = new QueryParameter(queryParam.getName());
+                    query.versionEq(versionMatchParameter);
                 } else {
                     query.eq(prop.getName(), new QueryParameter(queryParam.getName()));
                 }
@@ -153,7 +156,11 @@ public abstract class AbstractListMethod extends AbstractPatternBasedMethod {
         }
 
         if (query != null) {
-            return buildInfo(matchContext, queryResultType, query);
+            MethodMatchInfo methodMatchInfo = buildInfo(matchContext, queryResultType, query);
+            if (methodMatchInfo != null && versionMatchParameter != null) {
+                methodMatchInfo.setOptimisticLock(true);
+            }
+            return methodMatchInfo;
         } else {
             if (matchContext.supportsImplicitQueries() && hasNoWhereDeclaration(matchContext)) {
                 return buildInfo(matchContext, queryResultType, null);

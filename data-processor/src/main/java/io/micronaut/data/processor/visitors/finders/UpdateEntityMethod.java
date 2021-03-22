@@ -132,19 +132,21 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     } else {
                         idName = TypeRole.ID;
                     }
-                    queryModel = QueryModel.from(rootEntity).idEq(new QueryParameter(idName));
-                    updateProperties = rootEntity.getPersistentProperties()
-                            .stream().filter(p ->
-                                    !((p instanceof Association) && ((Association) p).isForeignKey()) &&
-                                            !p.isGenerated() &&
-                                            p.booleanValue(AutoPopulated.class, "updateable").orElse(true)
-                            )
+                    queryModel = QueryModel.from(rootEntity)
+                            .idEq(new QueryParameter(idName));
+                    if (rootEntity.getVersion() != null) {
+                        queryModel = queryModel.versionEq(new QueryParameter(rootEntity.getVersion().getName()));
+                    }
+                    updateProperties = Stream.concat(rootEntity.getPersistentProperties().stream(), Stream.of(rootEntity.getVersion()))
+                            .filter(p -> p != null && !((p instanceof Association) && ((Association) p).isForeignKey()) && !p.isGenerated() &&
+                                    p.findAnnotation(AutoPopulated.class).map(ap -> ap.getRequiredValue(AutoPopulated.UPDATEABLE, Boolean.class)).orElse(true))
                             .map(PersistentProperty::getName)
                             .toArray(String[]::new);
                     if (ArrayUtils.isEmpty(updateProperties)) {
                         queryModel = null;
                     }
                 }
+
                 MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
                         returnType,
                         queryModel,
@@ -157,6 +159,9 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                 }
                 if (isMultipleEntityParameter) {
                     methodMatchInfo.addParameterRole(TypeRole.ENTITIES, matchingParameter.getName());
+                }
+                if (queryModel != null && matchContext.getRootEntity().getVersion() != null) {
+                    methodMatchInfo.setOptimisticLock(true);
                 }
                 return methodMatchInfo;
             }

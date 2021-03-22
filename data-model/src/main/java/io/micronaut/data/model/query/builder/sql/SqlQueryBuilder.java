@@ -44,6 +44,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 
 import java.lang.annotation.Annotation;
@@ -54,7 +55,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
@@ -418,6 +418,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 columns.add(column);
             }
         }
+        PersistentProperty version = entity.getVersion();
+        if (version != null) {
+            String column = namingStrategy.mappedName(Collections.emptyList(), version);
+            if (escape) {
+                column = quote(column);
+            }
+            column = addTypeToColumn(version, column, true);
+            columns.add(column);
+        }
 
         BiConsumer<List<Association>, PersistentProperty> addColumn = (associations, property) -> {
             String column = namingStrategy.mappedName(associations, property);
@@ -680,7 +689,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         // so we need to retrieve it
                         includeIdentity = true;
                     }
-                    traversePersistentProperties(associatedEntity, includeIdentity, (propertyAssociations, prop) ->  {
+                    traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) ->  {
                         String columnName;
                         if (computePropertyPaths()) {
                             columnName = namingStrategy.mappedName(propertyAssociations, prop);
@@ -797,19 +806,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         NamingStrategy namingStrategy = entity.getNamingStrategy();
 
         Collection<? extends PersistentProperty> persistentProperties = entity.getPersistentProperties();
-        Map<String, String> parameters = new LinkedHashMap<>(persistentProperties.size());
-        Map<String, DataType> parameterTypes = new LinkedHashMap<>(persistentProperties.size());
-
+        List<QueryParameterBinding> parameterBindings = new ArrayList<>();
         List<String> columns = new ArrayList<>();
         List<String> values = new ArrayList<>();
 
         for (PersistentProperty prop : persistentProperties) {
             if (!prop.isGenerated()) {
                 traversePersistentProperties(prop, (associations, property) -> {
-                    String path = asPath(associations, property);
-                    parameterTypes.put(prop.getName(), prop.getDataType());
                     addWriteExpression(values, prop);
-                    parameters.put(String.valueOf(values.size()), path);
+
+                    parameterBindings.add(QueryParameterBinding.of(
+                            String.valueOf(values.size()),
+                            asPath(associations, property),
+                            property.getDataType()
+                    ));
 
                     String columnName = namingStrategy.mappedName(associations, property);
                     if (escape) {
@@ -818,6 +828,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     columns.add(columnName);
                 });
             }
+        }
+        PersistentProperty version = entity.getVersion();
+        if (version != null) {
+            addWriteExpression(values, version);
+
+            parameterBindings.add(QueryParameterBinding.of(
+                    String.valueOf(values.size()),
+                    version.getName(),
+                    version.getDataType()
+            ));
+
+            String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
+            if (escape) {
+                columnName = quote(columnName);
+            }
+            columns.add(columnName);
         }
 
         PersistentProperty identity = entity.getIdentity();
@@ -842,10 +868,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (isSequence) {
                     values.add(getSequenceStatement(unescapedTableName, property));
                 } else {
-                    String path = asPath(associations, property);
-                    parameterTypes.put(path, property.getDataType());
                     addWriteExpression(values, property);
-                    parameters.put(String.valueOf(values.size()), path);
+                    parameterBindings.add(QueryParameterBinding.of(
+                            String.valueOf(values.size()),
+                            asPath(associations, property),
+                            property.getDataType()
+                    ));
                 }
 
                 String columnName = namingStrategy.mappedName(associations, property);
@@ -861,9 +889,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 "VALUES (" + String.join(String.valueOf(COMMA), values) + CLOSE_BRACKET;
         return QueryResult.of(
                 builder,
-                parameters,
-                parameterTypes,
-                Collections.emptySet()
+                parameterBindings,
+                Collections.emptyMap()
         );
     }
 
@@ -933,16 +960,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
             return QueryResult.of(
                     builder.toString(),
-                    Collections.emptyMap(),
-                    Collections.emptyMap(),
-                    Collections.emptySet()
+                    Collections.emptyList(),
+                    Collections.emptyMap()
             );
         } else {
             return QueryResult.of(
                     "",
-                    Collections.emptyMap(),
-                    Collections.emptyMap(),
-                    Collections.emptySet()
+                    Collections.emptyList(),
+                    Collections.emptyMap()
             );
         }
     }
