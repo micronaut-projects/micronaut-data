@@ -14,15 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        graalvm: ['20.3.0.java8', '20.3.0.java11']
+        graalvm: ['21.0.0.2.java8', '21.0.0.2.java11']
     steps:
+       # https://github.com/actions/virtual-environments/issues/709
       - name: Free disk space
-        # https://github.com/actions/virtual-environments/issues/709
         run: |
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
-          sudo apt-get clean
-          df -h
+         sudo rm -rf "/usr/local/share/boost"
+         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+         sudo apt-get clean
+         df -h    
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.4
         with:
@@ -38,12 +38,11 @@ jobs:
         run: gu install native-image
       - name: Build with Gradle
         run: |
-          if ./gradlew tasks --all | grep -w "testNativeImage"
+          if ./gradlew tasks --no-daemon --all | grep -w "testNativeImage"
           then
             ./gradlew check testNativeImage --continue --no-daemon
           else
             ./gradlew check --continue --no-daemon
           fi
         env:
-          TESTCONTAINERS_RYUK_DISABLED: true
-
+           TESTCONTAINERS_RYUK_DISABLED: true
