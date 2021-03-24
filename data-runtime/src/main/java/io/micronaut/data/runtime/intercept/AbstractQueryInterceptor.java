@@ -611,28 +611,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     /**
-     * Get the delete all batch operation for the given context.
-     * @param <E> The entity type
-     * @param context The context
-     * @return The paged query
-     */
-    protected @NonNull <E> DeleteBatchOperation<E> getDeleteAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context) {
-        @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
-        return getDeleteAllBatchOperation(context, rootEntity);
-    }
-
-    /**
-     * Get the delete all batch operation for the given context.
-     * @param <E> The entity type
-     * @param context The context
-     * @param rootEntity The root entity
-     * @return The paged query
-     */
-    protected @NonNull <E> DeleteBatchOperation<E> getDeleteAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity) {
-        return new DefaultDeleteBatchOperation<>(context, rootEntity);
-    }
-
-    /**
      * Get the delete batch operation for the given context.
      * @param context The context
      * @param iterable The iterable
@@ -891,24 +869,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      */
     private class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
 
-        private final boolean all;
-
         DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity) {
-            this(method, rootEntity, Collections.emptyList(), true);
+            this(method, rootEntity, Collections.emptyList());
         }
 
         DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            this(method, rootEntity, iterable, false);
-        }
-
-        DefaultDeleteBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable, boolean all) {
             super(method, rootEntity, iterable);
-            this.all = all;
-        }
-
-        @Override
-        public boolean all() {
-            return all;
         }
 
         public List<DeleteOperation<E>> split() {

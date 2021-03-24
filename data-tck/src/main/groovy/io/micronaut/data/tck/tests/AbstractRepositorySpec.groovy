@@ -233,6 +233,74 @@ abstract class AbstractRepositorySpec extends Specification {
         people.count { it.name == "Denis"} == 2
     }
 
+    void "test custom update only names"() {
+        when:
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+        def people = personRepository.findAll().toList()
+        people.forEach {it.age = 100 }
+        personRepository.updateAll(people)
+        people = personRepository.findAll().toList()
+
+        then:
+        people.size() == 4
+        people.every{it.age > 0 }
+
+        when:
+        people.forEach() {
+            it.name = it.name + " updated"
+            it.age = -1
+        }
+        int updated = personRepository.updateCustomOnlyNames(people)
+        people = personRepository.findAll().toList()
+
+        then:
+        updated == 4
+        people.size() == 4
+        people.every {it.name.endsWith(" updated") }
+        people.every {it.age > 0 }
+    }
+
+    void "test custom delete"() {
+        given:
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().toList()
+        people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
+        def deleted = personRepository.deleteCustom(people)
+        people = personRepository.findAll().toList()
+
+        then:
+        deleted == 2
+        people.size() == 2
+        people.count {it.name == "Dennis"}
+    }
+
+    void "test custom delete single"() {
+        given:
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().toList()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingle(jeff)
+        people = personRepository.findAll().toList()
+
+        then:
+        deleted == 1
+        people.size() == 3
+
+        when:
+        def james = people.find {it.name == "James"}
+        james.name = "DoNotDelete"
+        deleted = personRepository.deleteCustomSingle(james)
+        people = personRepository.findAll().toList()
+
+        then:
+        deleted == 0
+        people.size() == 3
+    }
+
     void "test delete by id"() {
         given:
         savePersons(["Jeff", "James"])

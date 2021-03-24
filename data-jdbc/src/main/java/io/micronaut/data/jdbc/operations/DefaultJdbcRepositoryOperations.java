@@ -493,31 +493,16 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        if (operation.all()) {
-            final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            final String query = annotationMetadata.stringValue(Query.class).orElse(null);
-            if (query == null) {
-                throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
-            }
-            final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-            if (params.length != 0) {
-                throw new IllegalStateException("Unexpected parameters: " + Arrays.toString(params));
-            }
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        String query = annotationMetadata.stringValue(Query.class, "rawQuery")
+                .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null));
+        Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+        RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
 
-            return transactionOperations.executeWrite(status -> {
-                try {
-                    Connection connection = status.getConnection();
-                    if (QUERY_LOG.isDebugEnabled()) {
-                        QUERY_LOG.debug("Executing SQL DELETE ALL: {}", query);
-                    }
-                    try (PreparedStatement ps = connection.prepareStatement(query)) {
-                        return Optional.of(ps.executeUpdate());
-                    }
-                } catch (SQLException e) {
-                    throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
-                }
-            });
-
+        if (isSupportsBatchUpdate(persistentEntity, dialect)) {
+            return Optional.of(transactionOperations.executeWrite(status ->
+                    deleteInBatch(status.getConnection(), dialect, annotationMetadata, persistentEntity, query, params, operation)));
         }
         return Optional.of(
                 operation.split().stream()
@@ -528,26 +513,27 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
-        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-        final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-        final String query = annotationMetadata.stringValue(Query.class).orElse(null);
-        final Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        String query = annotationMetadata.stringValue(Query.class, "rawQuery")
+                .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null));
+        Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+        return deleteOne(annotationMetadata, params, query, dialect, getEntity(operation.getRootEntity()), operation.getEntity());
+    }
 
+    private <T> int deleteOne(AnnotationMetadata annotationMetadata, String[] params, String query, Dialect dialect, RuntimePersistentEntity<T> persistentEntity, T oneEntity) {
         Objects.requireNonNull(query, "Query cannot be null");
+        Objects.requireNonNull(oneEntity, "Passed entity cannot be null");
 
-        final Object opEntity = operation.getEntity();
-        Objects.requireNonNull(opEntity, "Passed entity cannot be null");
-
-        final RuntimePersistentEntity<Object> finalPersistentEntity = (RuntimePersistentEntity<Object>) getEntity(opEntity.getClass());
-        final Object finalEntity;
-        if (finalPersistentEntity.hasPreRemoveEventListeners()) {
-            finalEntity = triggerPreRemove(opEntity, finalPersistentEntity, annotationMetadata);
-            if (finalEntity == null) {
+        final T entity;
+        if (persistentEntity.hasPreRemoveEventListeners()) {
+            entity = triggerPreRemove(oneEntity, persistentEntity, annotationMetadata);
+            if (entity == null) {
                 // operation vetoed
                 return 0;
             }
         } else {
-            finalEntity = opEntity;
+            entity = oneEntity;
         }
         return transactionOperations.executeWrite(status -> {
             try {
@@ -555,46 +541,93 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing SQL DELETE: {}", query);
                 }
-                Object entity = finalEntity;
-                RuntimePersistentEntity<Object> persistentEntity = finalPersistentEntity;
-                final RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
-                if (identity != null) {
-                    if (identity instanceof Embedded) {
-                        final BeanProperty idProp = identity.getProperty();
-                        final Object idEntity = idProp.get(entity);
-                        if (idEntity == null) {
-                            throw new IllegalStateException("Cannot delete an entity with null ID: " + entity);
-                        }
-                        entity = idEntity;
-                        persistentEntity = (RuntimePersistentEntity<Object>) getEntity(idEntity.getClass());
-                    }
-                }
                 try (PreparedStatement ps = connection.prepareStatement(query)) {
                     for (int i = 0; i < params.length; i++) {
-                        String propertyName = params[i];
-                        if (propertyName.isEmpty()) {
-                            setStatementParameter(ps, i + 1, DataType.ENTITY, entity, dialect);
-                        } else {
-                            if (propertyName.startsWith("0.")) {
-                                propertyName = propertyName.replace("0.", "");
-                            }
-                            RuntimePersistentProperty<Object> pp = persistentEntity.getPropertyByName(propertyName);
-                            if (pp == null) {
-                                throw new IllegalStateException("Cannot perform delete for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
-                            }
-                            setStatementParameter(ps, i + 1, pp.getDataType(), pp.getProperty().get(entity), dialect);
-                        }
+                        setDeleteStatementParameter(dialect, persistentEntity, params[i], ps, entity, i);
                     }
-                    int updated = ps.executeUpdate();
-                    if (updated > 0 && persistentEntity.hasPostRemoveEventListeners()) {
-                        triggerPostRemove(finalEntity, persistentEntity, annotationMetadata);
+                    int deleted = ps.executeUpdate();
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Delete operation deleted {} records", deleted);
                     }
-                    return updated;
+                    if (deleted > 0 && persistentEntity.hasPostRemoveEventListeners()) {
+                        triggerPostRemove(entity, persistentEntity, annotationMetadata);
+                    }
+                    return deleted;
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
             }
         });
+    }
+
+    private <T> int deleteInBatch(Connection connection,
+                                  Dialect dialect,
+                                  AnnotationMetadata annotationMetadata,
+                                  RuntimePersistentEntity<T> persistentEntity,
+                                  String query,
+                                  String[] params,
+                                  Iterable<T> entitiesIterable) {
+
+        Objects.requireNonNull(query, "Query cannot be null");
+        Objects.requireNonNull(entitiesIterable, "Entities cannot be ull");
+        try {
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing Batch SQL DELETE: {}", query);
+            }
+            try (PreparedStatement ps = connection.prepareStatement(query)) {
+                for (T entity : entitiesIterable) {
+                    if (persistentEntity.hasPreRemoveEventListeners()) {
+                        entity = triggerPreRemove(entity, persistentEntity, annotationMetadata);
+                        if (entity == null) {
+                            // operation vetoed
+                            continue;
+                        }
+                    }
+                    for (int i = 0; i < params.length; i++) {
+                        setDeleteStatementParameter(dialect, persistentEntity, params[i], ps, entity, i);
+                    }
+                    ps.addBatch();
+                    if (persistentEntity.hasPostRemoveEventListeners()) {
+                        triggerPostRemove(entity, persistentEntity, annotationMetadata);
+                    }
+                }
+
+                int[] deleted = ps.executeBatch();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Delete operation deleted {} records", deleted);
+                }
+                return Arrays.stream(deleted).sum();
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+        }
+    }
+
+    private <T> void setDeleteStatementParameter(Dialect dialect, RuntimePersistentEntity<T> persistentEntity, String param, PreparedStatement ps, Object value, int i) {
+        String propertyName = param;
+        if (propertyName.isEmpty()) {
+            setStatementParameter(ps, i + 1, DataType.ENTITY, value, dialect);
+            return;
+        }
+        if (propertyName.startsWith("0.")) {
+            propertyName = propertyName.replace("0.", "");
+        }
+        PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyName);
+        if (propertyPath == null) {
+            throw new IllegalStateException("Cannot perform delete for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
+        }
+        for (Association association : propertyPath.getAssociations()) {
+            RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) association;
+            value = p.getProperty().get(value);
+            if (value == null) {
+                break;
+            }
+        }
+        RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) propertyPath.getProperty();
+        if (value != null) {
+            value = property.getProperty().get(value);
+        }
+        setStatementParameter(ps, i + 1, property.getDataType(), value, dialect);
     }
 
     @NonNull

@@ -22,7 +22,6 @@ import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -80,6 +79,27 @@ public class DeleteMethod extends AbstractListMethod {
         }
 
         SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+        QueryModel queryModel = null;
+        if (!matchContext.supportsImplicitQueries()) {
+            if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
+                matchContext.fail("Delete all not supported for entities with no ID");
+                return null;
+            }
+            // Generate one 'IN' query for multiple entities if it's possible otherwise use batch
+            boolean generateInIdList = entitiesParameter != null
+                    && !rootEntity.hasCompositeIdentity()
+                    && !(rootEntity.getIdentity() instanceof Embedded);
+            if (generateInIdList) {
+                queryModel = QueryModel.from(rootEntity)
+                        .inList(rootEntity.getIdentity().getName(), new QueryParameter(entitiesParameter.getName()));
+                entityParameter = null;
+                entitiesParameter = null;
+            } else {
+                queryModel = QueryModel.from(rootEntity)
+                        .idEq(new QueryParameter(entitiesParameter == null ? entityParameter.getName() : entitiesParameter.getName()));
+            }
+        }
+
         Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
                 entityParameter != null,
                 entitiesParameter != null,
@@ -87,37 +107,15 @@ public class DeleteMethod extends AbstractListMethod {
                 matchContext);
         ClassElement resultType = entry.getKey();
         Class<? extends DataInterceptor> interceptorType = entry.getValue();
-        MethodMatchInfo methodMatchInfo;
-        if (matchContext.supportsImplicitQueries()) {
-            methodMatchInfo = new MethodMatchInfo(
-                    resultType,
-                    null,
-                    getInterceptorElement(matchContext, interceptorType),
-                    getOperationType()
-            );
-        } else {
-            QueryModel queryModel = QueryModel.from(rootEntity);
-            if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
-                matchContext.fail("Delete all not supported for entities with no ID");
-                return null;
-            }
-            QueryParameter queryParameter = new QueryParameter(entitiesParameter == null ? entityParameter.getName() : entitiesParameter.getName());
-            SourcePersistentProperty identity = rootEntity.getIdentity();
-            if (rootEntity.hasCompositeIdentity() || identity instanceof Embedded) {
-                queryModel.idEq(queryParameter);
-            } else if (identity != null && interceptorType.getSimpleName().startsWith("DeleteAll")) {
-                queryModel.inList(identity.getName(), queryParameter);
-            }
-            methodMatchInfo = new MethodMatchInfo(
-                    resultType,
-                    queryModel,
-                    getInterceptorElement(matchContext, interceptorType),
-                    getOperationType()
-            );
-        }
+        MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
+                resultType,
+                queryModel,
+                getInterceptorElement(matchContext, interceptorType),
+                getOperationType()
+        );
         if (entityParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
-        } else {
+        } else if (entitiesParameter != null) {
             methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
         }
         return methodMatchInfo;
@@ -136,9 +134,10 @@ public class DeleteMethod extends AbstractListMethod {
                     getOperationType()
             );
         } else {
+            // Always generate delete all query
             return new MethodMatchInfo(
                     entry.getKey(),
-                    matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
+                    QueryModel.from(matchContext.getRootEntity()),
                     getInterceptorElement(matchContext, interceptor),
                     getOperationType()
             );

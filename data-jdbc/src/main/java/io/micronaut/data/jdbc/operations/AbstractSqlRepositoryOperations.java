@@ -813,6 +813,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     /**
+     * Does supports batch for delete queries.
+     * @param persistentEntity The persistent entity
+     * @param dialect The dialect
+     * @return true if supported
+     */
+    protected boolean isSupportsBatchDelete(PersistentEntity persistentEntity, Dialect dialect) {
+        return true;
+    }
+
+    /**
      * Functional interface used to supply a statement.
      *
      * @param <PS> The prepared statement type

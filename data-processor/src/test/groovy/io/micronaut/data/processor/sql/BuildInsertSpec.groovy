@@ -369,4 +369,40 @@ interface MyInterface extends CrudRepository<Food, UUID> {
             method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
                     ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "fid"] as String[]
     }
+
+    void "test build custom SQL insert"() {
+        given:
+            BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package test;
+
+import io.micronaut.data.tck.entities.Food;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import java.util.UUID;
+
+@Repository
+@RepositoryConfiguration(queryBuilder=SqlQueryBuilder.class, implicitQueries = false)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends CrudRepository<Food, UUID> {
+
+    @Query("INSERT INTO food(key, carbohydrates) VALUES (:key, :carbohydrates)")
+    void saveCustom(java.util.List<Food> food);
+
+    @Query("INSERT INTO food(key, carbohydrates) VALUES (:key, :carbohydrates)")
+    void saveCustomSingle(Food food);
+
+}
+""")
+        when:
+        def saveCustom = beanDefinition.findPossibleMethods("saveCustom").findFirst().get()
+        then:
+        saveCustom.stringValue(Query, "rawQuery").orElse(null) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
+        saveCustom.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["key", "carbohydrates"] as String[]
+        when:
+        def saveCustomSingle = beanDefinition.findPossibleMethods("saveCustomSingle").findFirst().get()
+        then:
+        saveCustomSingle.stringValue(Query, "rawQuery").orElse(null) == 'INSERT INTO food(key, carbohydrates) VALUES (?, ?)'
+        saveCustomSingle.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["key", "carbohydrates"] as String[]
+    }
 }

@@ -121,13 +121,9 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                 }
 
                 Class<? extends DataInterceptor> interceptor = matchEntry.getValue();
-                if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(
-                            returnType,
-                            null, getInterceptorElement(matchContext, interceptor),
-                            MethodMatchInfo.OperationType.UPDATE
-                    );
-                } else {
+                QueryModel queryModel = null;
+                String[] updateProperties = null;
+                if (!matchContext.supportsImplicitQueries()) {
                     final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
                     final String idName;
                     final SourcePersistentProperty identity = rootEntity.getIdentity();
@@ -136,9 +132,8 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     } else {
                         idName = TypeRole.ID;
                     }
-                    final QueryModel queryModel = QueryModel.from(rootEntity)
-                            .idEq(new QueryParameter(idName));
-                    String[] updateProperties = rootEntity.getPersistentProperties()
+                    queryModel = QueryModel.from(rootEntity).idEq(new QueryParameter(idName));
+                    updateProperties = rootEntity.getPersistentProperties()
                             .stream().filter(p ->
                                     !((p instanceof Association) && ((Association) p).isForeignKey()) &&
                                             !p.isGenerated() &&
@@ -146,31 +141,24 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                             )
                             .map(PersistentProperty::getName)
                             .toArray(String[]::new);
-                    MethodMatchInfo methodMatchInfo;
                     if (ArrayUtils.isEmpty(updateProperties)) {
-                        methodMatchInfo =  new MethodMatchInfo(
-                                returnType,
-                                null,
-                                getInterceptorElement(matchContext, interceptor),
-                                MethodMatchInfo.OperationType.UPDATE
-                        );
-                    } else {
-                        methodMatchInfo = new MethodMatchInfo(
-                                returnType,
-                                queryModel,
-                                getInterceptorElement(matchContext, interceptor),
-                                MethodMatchInfo.OperationType.UPDATE,
-                                updateProperties
-                        );
+                        queryModel = null;
                     }
-                    if (isEntityParameter) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITY, matchingParameter.getName());
-                    }
-                    if (isMultipleEntityParameter) {
-                        methodMatchInfo.addParameterRole(TypeRole.ENTITIES, matchingParameter.getName());
-                    }
-                    return methodMatchInfo;
                 }
+                MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
+                        returnType,
+                        queryModel,
+                        getInterceptorElement(matchContext, interceptor),
+                        MethodMatchInfo.OperationType.UPDATE,
+                        updateProperties
+                );
+                if (isEntityParameter) {
+                    methodMatchInfo.addParameterRole(TypeRole.ENTITY, matchingParameter.getName());
+                }
+                if (isMultipleEntityParameter) {
+                    methodMatchInfo.addParameterRole(TypeRole.ENTITIES, matchingParameter.getName());
+                }
+                return methodMatchInfo;
             }
         }
         matchContext.fail("Cannot implement update method for specified arguments and return type");

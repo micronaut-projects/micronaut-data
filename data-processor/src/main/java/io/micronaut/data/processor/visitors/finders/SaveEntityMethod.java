@@ -79,7 +79,6 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod {
                     getInterceptorElement(matchContext, entry.getValue()),
                     MethodMatchInfo.OperationType.INSERT
             );
-
             methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.get().getName());
             return methodMatchInfo;
         }

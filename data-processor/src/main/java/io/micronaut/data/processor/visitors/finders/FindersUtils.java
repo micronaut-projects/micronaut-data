@@ -61,13 +61,13 @@ import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateAllEntitiesReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
 import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
-import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import org.reactivestreams.Publisher;
 
 import javax.annotation.Nonnull;
+import javax.validation.constraints.NotNull;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
 import java.util.AbstractMap;
@@ -97,7 +97,7 @@ interface FindersUtils {
             case UPDATE:
                 Map.Entry<ClassElement, Class<? extends DataInterceptor>> updateEntry;
                 if (hasMultipleEntityParameter) {
-                    updateEntry = pickUpdateAllInterceptor(matchContext, returnType);
+                    updateEntry = pickUpdateAllEntitiesInterceptor(matchContext, returnType);
                 } else if (hasEntityParameter) {
                     updateEntry = pickUpdateEntityInterceptor(matchContext, returnType);
                 } else {
@@ -131,7 +131,7 @@ interface FindersUtils {
         }
     }
 
-    static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateAllInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+    static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
         ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
             return typeAndInterceptorEntry(firstTypeArgument, UpdateAllEntriesAsyncInterceptor.class);
@@ -209,7 +209,7 @@ interface FindersUtils {
         } else if (isReactiveType(matchContext, returnType)) {
             entry = resolveReactiveFindInterceptor(matchContext, returnType, firstTypeArgument);
         } else {
-            entry = resolveSyncFindInterceptor(matchContext);
+            entry = resolveSyncFindInterceptor(matchContext, returnType);
         }
 //        if (!isValidResultType(entry.getKey())) {
 //            matchContext.failAndThrow("Unsupported return type: " + entry.getKey());
@@ -221,10 +221,9 @@ interface FindersUtils {
      * @param matchContext The match context
      * @return The resolved {@link DataInterceptor} or {@literal null}.
      */
-    static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveSyncFindInterceptor(@NonNull MethodMatchContext matchContext) {
-        ClassElement returnType = matchContext.getReturnType();
+    static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveSyncFindInterceptor(@NonNull MethodMatchContext matchContext,
+                                                                                                @NotNull ClassElement returnType) {
         ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
-
         if (isPage(matchContext, returnType)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindPageInterceptor.class);
         } else if (isSlice(matchContext, returnType)) {
@@ -285,7 +284,7 @@ interface FindersUtils {
     }
 
     static boolean isPage(MethodMatchContext methodMatchContext, ClassElement typeArgument) {
-        boolean matches = isContainer(methodMatchContext, typeArgument, Page.class);
+        boolean matches = methodMatchContext.isTypeInRole(typeArgument, TypeRole.PAGE);
         if (matches && !methodMatchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             methodMatchContext.fail("Method must accept an argument that is a Pageable");
         }
@@ -293,7 +292,7 @@ interface FindersUtils {
     }
 
     static boolean isSlice(MethodMatchContext methodMatchContext, ClassElement typeArgument) {
-        boolean matches = isContainer(methodMatchContext, typeArgument, Slice.class);
+        boolean matches = methodMatchContext.isTypeInRole(typeArgument, TypeRole.SLICE);
         if (matches && !methodMatchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             methodMatchContext.fail("Method must accept an argument that is a Pageable");
         }

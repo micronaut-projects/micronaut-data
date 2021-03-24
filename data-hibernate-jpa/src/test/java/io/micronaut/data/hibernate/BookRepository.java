@@ -19,16 +19,14 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jpa.annotation.EntityGraph;
-import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
 import javax.annotation.Nullable;
 import javax.transaction.Transactional;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Repository
 @Transactional
@@ -60,4 +58,26 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] arg0);
 
+    public abstract List<Book> updateBooks(Collection<Book> books);
+
+    @Query("UPDATE Book SET title = :newName WHERE (title = :oldName)")
+    public abstract long updateNamesCustom(String newName, String oldName);
+
+    @Query("UPDATE Book SET title = :title where id = :id")
+    public abstract long updateCustomOnlyTitles(Collection<Book> books);
+
+    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    public abstract void saveCustom(Collection<Book> books);
+
+    @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
+    public abstract void saveCustomSingle(Book book);
+
+    @Query("DELETE FROM Book WHERE title = :title")
+    public abstract int deleteCustom(Collection<Book> books);
+
+    @Query("DELETE FROM Book WHERE title = :title")
+    public abstract int deleteCustomSingle(Book book);
+
+    @Query("DELETE FROM Book WHERE title = :name")
+    public abstract int deleteCustomByName(String name);
 }

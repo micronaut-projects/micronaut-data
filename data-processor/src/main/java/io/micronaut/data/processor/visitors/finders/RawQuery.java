@@ -31,15 +31,18 @@ import java.util.Map;
 public class RawQuery extends DefaultQuery implements QueryModel {
 
     private final Map<String, String> parameterBinding;
+    private final boolean encodeEntityParameters;
 
     /**
      * Represents a raw query provided by the user.
      * @param entity The entity
      * @param parameterBinding The parameter binding.
+     * @param encodeEntityParameters The encodeEntityParameters.
      */
-    protected RawQuery(@NonNull PersistentEntity entity, @NonNull Map<String, String> parameterBinding) {
+    protected RawQuery(@NonNull PersistentEntity entity, @NonNull Map<String, String> parameterBinding, boolean encodeEntityParameters) {
         super(entity);
         this.parameterBinding = parameterBinding;
+        this.encodeEntityParameters = encodeEntityParameters;
     }
 
     /**
@@ -47,5 +50,12 @@ public class RawQuery extends DefaultQuery implements QueryModel {
      */
     public Map<String, String> getParameterBinding() {
         return this.parameterBinding;
+    }
+
+    /**
+     * @return should encode entity parameters
+     */
+    public boolean isEncodeEntityParameters() {
+        return encodeEntityParameters;
     }
 }

@@ -274,9 +274,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                         rawCount = true;
                                     }
                                 }
-                                if (methodInfo.getOperationType() == MethodMatchInfo.OperationType.INSERT) {
-                                    encodeEntityParameters = true;
-                                }
+                                encodeEntityParameters = rawQuery.isEncodeEntityParameters();
                             } else {
 
                                 final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(

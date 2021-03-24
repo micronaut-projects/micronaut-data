@@ -119,7 +119,7 @@ public class RawQueryMethod implements MethodCandidate {
                     queryModel,
                     FindersUtils.getInterceptorElement(matchContext, interceptorType),
                     true);
-            return methodMatchInfo;
+
         } else {
             methodMatchInfo = new MethodMatchInfo(
                     resultType,
@@ -226,7 +226,7 @@ public class RawQueryMethod implements MethodCandidate {
                 }
             }
         }
-        return new RawQuery(matchContext.getRootEntity(), parameterBinding);
+        return new RawQuery(matchContext.getRootEntity(), parameterBinding, persistentEntity != null);
     }
 
 }

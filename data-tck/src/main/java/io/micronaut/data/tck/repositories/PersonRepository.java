@@ -119,9 +119,18 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Query("UPDATE person SET name = :newName WHERE (name = :oldName)")
     long updateNamesCustom(String newName, String oldName);
 
+    @Query("UPDATE person SET name = :name WHERE id = :id")
+    long updateCustomOnlyNames(List<Person> people);
+
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     void saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     void saveCustomSingle(Person people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    int deleteCustom(List<Person> people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    int deleteCustomSingle(Person person);
 }

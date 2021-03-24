@@ -20,7 +20,6 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.Optional;
@@ -62,16 +61,6 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
                 } else {
                     return null;
                 }
-            }
-            return null;
-        }
-        Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
-        if (deleteEntities.isPresent()) {
-            Iterable entities = deleteEntities.get();
-            DeleteBatchOperation<?> batchOperation = getDeleteBatchOperation(context, entities);
-            Number deleted = operations.deleteAll(batchOperation).orElse(0);
-            if (isNumber(returnType)) {
-                return ConversionService.SHARED.convertRequired(deleted, returnType);
             }
             return null;
         }

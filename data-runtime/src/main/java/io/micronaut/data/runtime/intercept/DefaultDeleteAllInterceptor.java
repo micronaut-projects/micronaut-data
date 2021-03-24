@@ -16,15 +16,10 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.runtime.DeleteBatchOperation;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.operations.RepositoryOperations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
@@ -40,15 +35,12 @@ import java.util.Optional;
  */
 public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, Number> implements DeleteAllInterceptor<T> {
 
-    private final DefaultDeleteOneInterceptor deleteOneInterceptor;
-
     /**
      * Default constructor.
      * @param datastore The operations
      */
     protected DefaultDeleteAllInterceptor(@NonNull RepositoryOperations datastore) {
         super(datastore);
-        deleteOneInterceptor = new DefaultDeleteOneInterceptor(datastore);
     }
 
     @Override
@@ -56,37 +48,13 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
         Argument<Number> resultType = context.getReturnType().asArgument();
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
-        if (context.hasAnnotation(Query.class)) {
+        if (!deleteEntity.isPresent() && !deleteEntities.isPresent()) {
             PreparedQuery<?, Number> preparedQuery = (PreparedQuery<?, Number>) prepareQuery(methodKey, context);
-            if (deleteEntities.isPresent()) {
-                final RuntimePersistentProperty<?> identity = operations.getEntity(preparedQuery.getRootEntity()).getIdentity();
-                if (identity instanceof Embedded) {
-                    int deleteCount = 0;
-                    final BeanProperty idProp = identity.getProperty();
-                    for (Object o : deleteEntities.get()) {
-                        final Object idValue = idProp.get(o);
-                        if (idValue == null) {
-                            throw new IllegalStateException("Cannot delete an entity with null ID: " + o);
-                        }
-                        preparedQuery.getParameterArray()[0] = idValue;
-                        operations.executeDelete(preparedQuery);
-                        deleteCount++;
-                    }
-                    return convertIfNecessary(resultType, deleteCount);
-                }
-                Number result = operations.executeDelete(preparedQuery).orElse(0);
-                return convertIfNecessary(resultType, result);
-            } else {
-                Number result = operations.executeDelete(preparedQuery).orElse(0);
-                return convertIfNecessary(resultType, result);
-            }
-        } else if (!deleteEntity.isPresent() && !deleteEntities.isPresent()){
-            Class<?> rootEntity = getRequiredRootEntity(context);
-            DeleteBatchOperation<?> batchOperation = getDeleteAllBatchOperation(context, rootEntity);
-            Number result = operations.deleteAll(batchOperation).orElse(0);
+            Number result = operations.executeDelete(preparedQuery).orElse(0);
             return convertIfNecessary(resultType, result);
         } else {
-            return (Number) deleteOneInterceptor.intercept(methodKey, context);
+            Number result = operations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get())).orElse(0);
+            return convertIfNecessary(resultType, result);
         }
     }
 

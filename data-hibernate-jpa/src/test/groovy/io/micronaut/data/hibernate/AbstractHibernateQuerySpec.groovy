@@ -219,6 +219,121 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.books.size() == 2
     }
 
+    void "test update many"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+            author.getBooks().forEach() { it.title = it.title + " updated" }
+            bookRepository.updateBooks(author.getBooks())
+            author = authorRepository.searchByName("Stephen King")
+        then:
+            author.getBooks().every {it.title.endsWith(" updated")}
+    }
+
+    void "test update custom only titles"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+        when:
+            author.getBooks().forEach() {
+                it.title = it.title + " updated"
+                it.totalPages = -1
+            }
+            bookRepository.updateCustomOnlyTitles(author.getBooks())
+            author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+            author.getBooks().every {it.totalPages > 0}
+    }
+
+    void "test custom insert"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+        when:
+            bookRepository.saveCustom([new Book(title: "Abc", totalPages: 12, author: author), new Book(title: "Xyz", totalPages: 22, author: author)])
+            def authorAfter = authorRepository.searchByName("Stephen King")
+        then:
+            authorAfter.books.size() == 4
+            authorAfter.books.find { it.title == "Abc" }
+            authorAfter.books.find { it.title == "Xyz" }
+    }
+
+    void "test custom single insert"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+        when:
+            bookRepository.saveCustomSingle(new Book(title: "Abc", totalPages: 12, author: author))
+            def authorAfter = authorRepository.searchByName("Stephen King")
+        then:
+            authorAfter.books.size() == 3
+            authorAfter.books.find { it.title == "Abc" }
+    }
+
+    void "test custom update"() {
+        when:
+            def books = bookRepository.findAllByTitleStartsWith("Along Came a Spider")
+        then:
+            books.size() == 1
+            bookRepository.findAllByTitleStartsWith("Xyz").isEmpty()
+        when:
+            bookRepository.updateNamesCustom("Xyz", "Along Came a Spider")
+        then:
+            bookRepository.findAllByTitleStartsWith("Along Came a Spider").isEmpty()
+            bookRepository.findAllByTitleStartsWith("Xyz").size() == 1
+    }
+
+    void "test custom delete"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+        when:
+            author.books.find {it.title == "The Stand"}.title = "DoNotDelete"
+            def deleted = bookRepository.deleteCustom(author.books)
+            author = authorRepository.searchByName("Stephen King")
+        then:
+            deleted == 1
+            author.books.size() == 1
+    }
+
+    void "test custom delete single"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+        when:
+            def book = author.books.find { it.title == "The Stand" }
+            book.title = "DoNotDelete"
+            def deleted = bookRepository.deleteCustomSingle(book)
+            author = authorRepository.searchByName("Stephen King")
+        then:
+            deleted == 0
+            author.books.size() == 2
+        when:
+            book = author.books.find { it.title == "The Stand" }
+            deleted = bookRepository.deleteCustomSingle(book)
+            author = authorRepository.searchByName("Stephen King")
+        then:
+            deleted == 1
+            author.books.size() == 1
+    }
+
+    void "test custom delete by title"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 2
+        when:
+            bookRepository.deleteCustomByName("The Stand")
+            author = authorRepository.searchByName("Stephen King")
+        then:
+            author.books.size() == 1
+    }
+
     @Override
     BookRepository getBookRepository() {
         return br
