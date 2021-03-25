@@ -21,15 +21,16 @@ querying:
   async: Asynchronous Queries
   reactive: Reactive Queries
 dataUpdates:
-  title: Updating Data
+  title: Inserting and modifying data
+  inserts: Inserting
+  updates: Updating
+  deletes: Deleting
+  timestamps: Entity Timestamps
+  entityEvents: Entity Events
   transactions:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
     transactionalEvents: Transactional Events
-  batchUpdates: Batch Updates
-  batchDeletes: Batch Deletes
-  timestamps: Entity Timestamps
-  entityEvents: Entity Events
 howItWorks:
   title: How Micronaut Data Works
 sql:

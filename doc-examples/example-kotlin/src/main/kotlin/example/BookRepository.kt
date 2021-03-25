@@ -62,16 +62,31 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     // end::explicit[]
 
     // tag::save[]
-    fun persist(entity: Book): Book
+    fun save(entity: Book): Book
     // end::save[]
+
+    // tag::inserts[]
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    fun insert(title: String, pages: Int)
+
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    fun insertOne(book: Book)
+
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    fun insertMany(books: Iterable<Book>)
+    // end::inserts[]
 
     // tag::save2[]
     fun persist(title: String, pages: Int): Book
     // end::save2[]
 
     // tag::update[]
-    fun update(@Id id: Long?, pages: Int)
+    fun update(newBook: Book): Book
     // end::update[]
+
+    // tag::update1[]
+    fun update(@Id id: Long?, pages: Int)
+    // end::update1[]
 
     // tag::update2[]
     fun updateByTitle(title: String, pages: Int)
@@ -81,9 +96,25 @@ interface BookRepository : CrudRepository<Book, Long> { // <2>
     fun updatePages(@Id id: Long?, pages: Int)
     // end::update3[]
 
+    // tag::updateCustomQuery[]
+    @Query("UPDATE book SET title = :title where id = :id")
+    fun updateOne(book: Book)
+
+    @Query("UPDATE book SET title = :title where id = :id")
+    fun updateMany(books: Iterable<Book>)
+    // end::updateCustomQuery[]
+
     // tag::deleteall[]
     override fun deleteAll()
     // end::deleteall[]
+
+    // tag::deleteCustomQuery[]
+    @Query("DELETE FROM Book WHERE title = :title")
+    fun deleteOne(book: Book)
+
+    @Query("DELETE FROM Book WHERE title = :title")
+    fun deleteMany(books: Iterable<Book>)
+    // end::deleteCustomQuery[]
 
     // tag::deleteone[]
     fun delete(title: String)
