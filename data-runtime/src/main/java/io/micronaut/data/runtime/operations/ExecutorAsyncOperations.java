@@ -155,6 +155,14 @@ public class ExecutorAsyncOperations implements AsyncRepositoryOperations {
 
     @NonNull
     @Override
+    public <T> CompletableFuture<Iterable<T>> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        return CompletableFuture.supplyAsync(() ->
+                datastore.updateAll(operation), executor
+        );
+    }
+
+    @NonNull
+    @Override
     public <T> CompletableFuture<Number> delete(@NonNull DeleteOperation<T> operation) {
         return CompletableFuture.supplyAsync(() ->
                 datastore.delete(operation), executor

@@ -17,14 +17,11 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
@@ -115,44 +112,12 @@ public abstract class DynamicFinder extends AbstractPatternBasedMethod implement
     @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
         String methodName = methodElement.getName();
-        return hasQueryAnnotation(methodElement) || pattern.matcher(methodName.subSequence(0, methodName.length())).find();
-    }
-
-    /**
-     * Method that checks for the presence of the query annotation.
-     * @param methodElement The method element
-     * @return True if a query annotation is present
-     */
-    protected boolean hasQueryAnnotation(@NonNull MethodElement methodElement) {
-        return methodElement.hasAnnotation(Query.class);
+        return pattern.matcher(methodName.subSequence(0, methodName.length())).find();
     }
 
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         MethodElement methodElement = matchContext.getMethodElement();
-
-        if (methodElement.hasAnnotation(Query.class)) {
-            RawQuery rawQuery = buildRawQuery(matchContext);
-            if (rawQuery == null) {
-                return null;
-            }
-            ClassElement genericReturnType = methodElement.getGenericReturnType();
-            if (TypeUtils.isContainerType(genericReturnType)) {
-                genericReturnType = genericReturnType.getFirstTypeArgument().orElse(genericReturnType);
-            }
-            // reactive types double nested
-            if (TypeUtils.isContainerType(genericReturnType)) {
-                genericReturnType = genericReturnType.getFirstTypeArgument().orElse(genericReturnType);
-            }
-            if (!genericReturnType.hasAnnotation(MappedEntity.class) && genericReturnType.hasAnnotation(Introspected.class)) {
-                genericReturnType = matchContext.getRootEntity().getType();
-            }
-            return buildInfo(
-                    matchContext,
-                    genericReturnType,
-                    rawQuery
-            );
-        }
 
         List<CriterionMethodExpression> expressions = new ArrayList<>();
         List<ProjectionMethodExpression> projectionExpressions = new ArrayList<>();

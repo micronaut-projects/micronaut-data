@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.model.Association
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.JoinPath
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
@@ -97,8 +98,8 @@ interface MyInterface extends GenericRepository<Book, Long> {
         def builder = new JpaQueryBuilder()
         def entity = PersistentEntity.of(Book)
         def alias = builder.getAliasName(entity)
-        def authorAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("author")))
-        def publisherAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("publisher")))
+        def authorAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("author") as Association))
+        def publisherAlias = builder.getAliasName(JoinPath.of(entity.getPropertyByName("publisher") as Association))
 
         expect:
         repository.getRequiredMethod("list").synthesize(Query).value() ==

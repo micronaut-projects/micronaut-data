@@ -134,6 +134,17 @@ public interface ReactiveRepositoryOperations {
     @NonNull <T> Publisher<T> update(@NonNull UpdateOperation<T> operation);
 
     /**
+     * Updates the entities for the given operation.
+     *
+     * @param operation The operation
+     * @param <T> The generic type
+     * @return The updated entities
+     */
+    default @NonNull <T> Publisher<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        throw new UnsupportedOperationException("The updateAll is required to be implemented.");
+    }
+
+    /**
      * Persist all the given entities.
      * @param operation The batch operation
      * @param <T> The generic type

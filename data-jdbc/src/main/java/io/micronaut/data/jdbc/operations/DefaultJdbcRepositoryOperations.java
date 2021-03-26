@@ -63,6 +63,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
@@ -492,31 +493,16 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        if (operation.all()) {
-            final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            final String query = annotationMetadata.stringValue(Query.class).orElse(null);
-            if (query == null) {
-                throw new UnsupportedOperationException("The deleteAll method via batch is unsupported. Execute the SQL update directly");
-            }
-            final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-            if (params.length != 0) {
-                throw new IllegalStateException("Unexpected parameters: " + Arrays.toString(params));
-            }
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        String query = annotationMetadata.stringValue(Query.class, "rawQuery")
+                .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null));
+        Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+        RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
 
-            return transactionOperations.executeWrite(status -> {
-                try {
-                    Connection connection = status.getConnection();
-                    if (QUERY_LOG.isDebugEnabled()) {
-                        QUERY_LOG.debug("Executing SQL DELETE ALL: {}", query);
-                    }
-                    try (PreparedStatement ps = connection.prepareStatement(query)) {
-                        return Optional.of(ps.executeUpdate());
-                    }
-                } catch (SQLException e) {
-                    throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
-                }
-            });
-
+        if (isSupportsBatchUpdate(persistentEntity, dialect)) {
+            return Optional.of(transactionOperations.executeWrite(status ->
+                    deleteInBatch(status.getConnection(), dialect, annotationMetadata, persistentEntity, query, params, operation)));
         }
         return Optional.of(
                 operation.split().stream()
@@ -527,26 +513,27 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
-        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-        final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-        final String query = annotationMetadata.stringValue(Query.class).orElse(null);
-        final Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        String query = annotationMetadata.stringValue(Query.class, "rawQuery")
+                .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null));
+        Dialect dialect = queryBuilders.getOrDefault(operation.getRepositoryType(), DEFAULT_SQL_BUILDER).dialect();
+        return deleteOne(annotationMetadata, params, query, dialect, getEntity(operation.getRootEntity()), operation.getEntity());
+    }
 
+    private <T> int deleteOne(AnnotationMetadata annotationMetadata, String[] params, String query, Dialect dialect, RuntimePersistentEntity<T> persistentEntity, T oneEntity) {
         Objects.requireNonNull(query, "Query cannot be null");
+        Objects.requireNonNull(oneEntity, "Passed entity cannot be null");
 
-        final Object opEntity = operation.getEntity();
-        Objects.requireNonNull(opEntity, "Passed entity cannot be null");
-
-        final RuntimePersistentEntity<Object> finalPersistentEntity = (RuntimePersistentEntity<Object>) getEntity(opEntity.getClass());
-        final Object finalEntity;
-        if (finalPersistentEntity.hasPreRemoveEventListeners()) {
-            finalEntity = triggerPreRemove(opEntity, finalPersistentEntity, annotationMetadata);
-            if (finalEntity == null) {
+        final T entity;
+        if (persistentEntity.hasPreRemoveEventListeners()) {
+            entity = triggerPreRemove(oneEntity, persistentEntity, annotationMetadata);
+            if (entity == null) {
                 // operation vetoed
                 return 0;
             }
         } else {
-            finalEntity = opEntity;
+            entity = oneEntity;
         }
         return transactionOperations.executeWrite(status -> {
             try {
@@ -554,46 +541,93 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing SQL DELETE: {}", query);
                 }
-                Object entity = finalEntity;
-                RuntimePersistentEntity<Object> persistentEntity = finalPersistentEntity;
-                final RuntimePersistentProperty<Object> identity = persistentEntity.getIdentity();
-                if (identity != null) {
-                    if (identity instanceof Embedded) {
-                        final BeanProperty idProp = identity.getProperty();
-                        final Object idEntity = idProp.get(entity);
-                        if (idEntity == null) {
-                            throw new IllegalStateException("Cannot delete an entity with null ID: " + entity);
-                        }
-                        entity = idEntity;
-                        persistentEntity = (RuntimePersistentEntity<Object>) getEntity(idEntity.getClass());
-                    }
-                }
                 try (PreparedStatement ps = connection.prepareStatement(query)) {
                     for (int i = 0; i < params.length; i++) {
-                        String propertyName = params[i];
-                        if (propertyName.isEmpty()) {
-                            setStatementParameter(ps, i + 1, DataType.ENTITY, entity, dialect);
-                        } else {
-                            if (propertyName.startsWith("0.")) {
-                                propertyName = propertyName.replace("0.", "");
-                            }
-                            RuntimePersistentProperty<Object> pp = persistentEntity.getPropertyByName(propertyName);
-                            if (pp == null) {
-                                throw new IllegalStateException("Cannot perform delete for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
-                            }
-                            setStatementParameter(ps, i + 1, pp.getDataType(), pp.getProperty().get(entity), dialect);
-                        }
+                        setDeleteStatementParameter(dialect, persistentEntity, params[i], ps, entity, i);
                     }
-                    int updated = ps.executeUpdate();
-                    if (updated > 0 && persistentEntity.hasPostRemoveEventListeners()) {
-                        triggerPostRemove(finalEntity, persistentEntity, annotationMetadata);
+                    int deleted = ps.executeUpdate();
+                    if (QUERY_LOG.isTraceEnabled()) {
+                        QUERY_LOG.trace("Delete operation deleted {} records", deleted);
                     }
-                    return updated;
+                    if (deleted > 0 && persistentEntity.hasPostRemoveEventListeners()) {
+                        triggerPostRemove(entity, persistentEntity, annotationMetadata);
+                    }
+                    return deleted;
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
             }
         });
+    }
+
+    private <T> int deleteInBatch(Connection connection,
+                                  Dialect dialect,
+                                  AnnotationMetadata annotationMetadata,
+                                  RuntimePersistentEntity<T> persistentEntity,
+                                  String query,
+                                  String[] params,
+                                  Iterable<T> entitiesIterable) {
+
+        Objects.requireNonNull(query, "Query cannot be null");
+        Objects.requireNonNull(entitiesIterable, "Entities cannot be ull");
+        try {
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing Batch SQL DELETE: {}", query);
+            }
+            try (PreparedStatement ps = connection.prepareStatement(query)) {
+                for (T entity : entitiesIterable) {
+                    if (persistentEntity.hasPreRemoveEventListeners()) {
+                        entity = triggerPreRemove(entity, persistentEntity, annotationMetadata);
+                        if (entity == null) {
+                            // operation vetoed
+                            continue;
+                        }
+                    }
+                    for (int i = 0; i < params.length; i++) {
+                        setDeleteStatementParameter(dialect, persistentEntity, params[i], ps, entity, i);
+                    }
+                    ps.addBatch();
+                    if (persistentEntity.hasPostRemoveEventListeners()) {
+                        triggerPostRemove(entity, persistentEntity, annotationMetadata);
+                    }
+                }
+
+                int[] deleted = ps.executeBatch();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Delete operation deleted {} records", deleted);
+                }
+                return Arrays.stream(deleted).sum();
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL DELETE: " + e.getMessage(), e);
+        }
+    }
+
+    private <T> void setDeleteStatementParameter(Dialect dialect, RuntimePersistentEntity<T> persistentEntity, String param, PreparedStatement ps, Object value, int i) {
+        String propertyName = param;
+        if (propertyName.isEmpty()) {
+            setStatementParameter(ps, i + 1, DataType.ENTITY, value, dialect);
+            return;
+        }
+        if (propertyName.startsWith("0.")) {
+            propertyName = propertyName.replace("0.", "");
+        }
+        PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyName);
+        if (propertyPath == null) {
+            throw new IllegalStateException("Cannot perform delete for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
+        }
+        for (Association association : propertyPath.getAssociations()) {
+            RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) association;
+            value = p.getProperty().get(value);
+            if (value == null) {
+                break;
+            }
+        }
+        RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) propertyPath.getProperty();
+        if (value != null) {
+            value = property.getProperty().get(value);
+        }
+        setStatementParameter(ps, i + 1, property.getDataType(), value, dialect);
     }
 
     @NonNull
@@ -605,15 +639,42 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
         final T entity = operation.getEntity();
         final Set<Object> persisted = new HashSet<>(10);
         final Class<?> repositoryType = operation.getRepositoryType();
+        final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
+        final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
         return transactionOperations.executeWrite(status ->
-                updateOne(status.getConnection(), repositoryType, annotationMetadata, query, params, entity, persisted));
+                updateOne(status.getConnection(), repositoryType, dialect, annotationMetadata, persistentEntity, query, params, entity, persisted));
     }
 
-    private <T> T updateOne(Connection connection, Class<?> repositoryType, AnnotationMetadata annotationMetadata, String query, String[] params, T entity, Set persisted) {
+    @NonNull
+    @Override
+    public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        final String[] params = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        final String query = annotationMetadata.stringValue(Query.class, "rawQuery")
+                .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null));
+        final Set<Object> persisted = new HashSet<>(10);
+        final Class<?> repositoryType = operation.getRepositoryType();
+        final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
+        final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
+        if (!isSupportsBatchUpdate(persistentEntity, dialect)) {
+            return transactionOperations.executeWrite(status -> operation.split().stream()
+                    .map(op -> updateOne(status.getConnection(), repositoryType, dialect, annotationMetadata, persistentEntity, query, params, op.getEntity(), persisted))
+                    .collect(Collectors.toList()));
+        } else {
+            return transactionOperations.executeWrite(status -> updateInBatch(
+                    status.getConnection(), repositoryType, dialect, annotationMetadata, persistentEntity, query, params, operation, persisted
+            ));
+        }
+    }
+
+    private <T> T updateOne(Connection connection,
+                            Class<?> repositoryType,
+                            Dialect dialect,
+                            AnnotationMetadata annotationMetadata,
+                            RuntimePersistentEntity<T> persistentEntity,
+                            String query, String[] params, T entity, Set persisted) {
         Objects.requireNonNull(entity, "Passed entity cannot be null");
         if (StringUtils.isNotEmpty(query) && ArrayUtils.isNotEmpty(params)) {
-            final RuntimePersistentEntity<T> persistentEntity = (RuntimePersistentEntity<T>) getEntity(entity.getClass());
-            final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
             final T resolvedEntity;
             if (persistentEntity.hasPreUpdateEventListeners()) {
                 resolvedEntity = triggerPreUpdate(entity, persistentEntity, annotationMetadata);
@@ -628,56 +689,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     QUERY_LOG.debug("Executing SQL UPDATE: {}", query);
                 }
                 try (PreparedStatement ps = connection.prepareStatement(query)) {
-                    for (int i = 0; i < params.length; i++) {
-                        String propertyName = params[i];
-                        Object value = resolvedEntity;
-                        RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) persistentEntity.getPropertyByName(propertyName);
-                        if (property == null) {
-                            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyName);
-                            if (propertyPath == null) {
-                                throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName);
-                            }
-                            property = (RuntimePersistentProperty<Object>) propertyPath.getProperty();
-                            List<Association> embeddedAssociations = new ArrayList<>(propertyPath.getAssociations().size());
-                            for (Association association : propertyPath.getAssociations()) {
-                                RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) association;
-                                value = p.getProperty().get(value);
-                                if (value == null) {
-                                    break;
-                                }
-                                if (association instanceof Embedded) {
-                                    embeddedAssociations.add(association);
-                                } else {
-                                    cascadeUpdate(connection, repositoryType, annotationMetadata, embeddedAssociations, association, value, persisted);
-                                }
-                            }
-                        }
-                        DataType dataType = property.getDataType();
-                        BeanProperty beanProperty = property.getProperty();
-                        if (dataType == DataType.ENTITY) {
-                            property = (RuntimePersistentProperty) getEntity(property.getType()).getIdentity();
-                            dataType = property.getDataType();
-                            beanProperty = property.getProperty();
-                            if (value != null) {
-                                value = beanProperty.get(value);
-                            }
-                        } else {
-                            if (beanProperty.hasAnnotation(DateUpdated.class)) {
-                                Object newValue = dateTimeProvider.getNow();
-                                beanProperty.convertAndSet(value, newValue);
-                                value = newValue;
-                            } else if (value != null) {
-                                value = beanProperty.get(value);
-                            }
-                        }
-                        setStatementParameter(
-                                ps,
-                                i + 1,
-                                dataType,
-                                value,
-                                dialect
-                        );
-                    }
+                    updateEntitySetStatement(ps, connection, repositoryType, dialect, annotationMetadata, persistentEntity, params, persisted, resolvedEntity);
                     int result = ps.executeUpdate();
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", result);
@@ -692,6 +704,130 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
         return entity;
+    }
+
+    private <T> Iterable<T> updateInBatch(Connection connection,
+                                          Class<?> repositoryType,
+                                          Dialect dialect,
+                                          AnnotationMetadata annotationMetadata,
+                                          RuntimePersistentEntity<T> persistentEntity,
+                                          String query,
+                                          String[] params,
+                                          Iterable<T> entitiesIterable,
+                                          Set persisted) {
+        Objects.requireNonNull(entitiesIterable, "Passed entities cannot be null");
+        if (StringUtils.isEmpty(query) || ArrayUtils.isEmpty(params)) {
+            return Collections.emptyList();
+        }
+        List<T> entities;
+        if (entitiesIterable instanceof List) {
+            entities = new ArrayList<>(((List<T>) entitiesIterable));
+        } else {
+            entities = new ArrayList<>(CollectionUtils.iterableToList(entitiesIterable));
+        }
+        List<T> toUpdate;
+        int[] toUpdateEntitiesIndex;
+        if (persistentEntity.hasPreUpdateEventListeners()) {
+            toUpdate = new ArrayList<>(entities.size());
+            toUpdateEntitiesIndex = new int[entities.size()];
+            int i = 0;
+            for (T child : entities) {
+                if (child == null || persisted.contains(child)) {
+                    continue;
+                }
+                toUpdate.add(child);
+                toUpdateEntitiesIndex[i] = i;
+                i++;
+            }
+        } else {
+            toUpdate = entities;
+            toUpdateEntitiesIndex = null;
+        }
+        try {
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing Batch SQL Update: {}", query);
+            }
+            try (PreparedStatement ps = connection.prepareStatement(query)) {
+                for (T entity : toUpdate) {
+                    updateEntitySetStatement(ps, connection, repositoryType, dialect, annotationMetadata, persistentEntity, params, persisted, entity);
+                    // TODO: update the entity
+                    ps.addBatch();
+                }
+                int[] result = ps.executeBatch();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Update batch operation updated {} records", Arrays.toString(result));
+                }
+            }
+            if (persistentEntity.hasPostUpdateEventListeners()) {
+                for (T entity : toUpdate) {
+                    triggerPostUpdate(entity, persistentEntity, annotationMetadata);
+                }
+            }
+            if (toUpdateEntitiesIndex != null) {
+                int index = 0;
+                for (T entity : toUpdate) {
+                    entities.set(toUpdateEntitiesIndex[index++], entity);
+                }
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error executing SQL UPDATE: " + e.getMessage(), e);
+        }
+        return entities;
+    }
+
+    private <T> void updateEntitySetStatement(PreparedStatement ps,
+                                              Connection connection,
+                                              Class<?> repositoryType,
+                                              Dialect dialect,
+                                              AnnotationMetadata annotationMetadata,
+                                              RuntimePersistentEntity<T> persistentEntity,
+                                              String[] params,
+                                              Set persisted,
+                                              T entity) {
+        for (int i = 0; i < params.length; i++) {
+            Object value = entity;
+            String propertyName = params[i];
+            RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) persistentEntity.getPropertyByName(propertyName);
+            if (property == null) {
+                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyName);
+                if (propertyPath == null) {
+                    throw new IllegalStateException("Cannot perform update for non-existent property: " + persistentEntity.getSimpleName() + "." + propertyName + " " + Arrays.toString(params));
+                }
+                property = (RuntimePersistentProperty<Object>) propertyPath.getProperty();
+                List<Association> embeddedAssociations = new ArrayList<>(propertyPath.getAssociations().size());
+                for (Association association : propertyPath.getAssociations()) {
+                    RuntimePersistentProperty<Object> p = (RuntimePersistentProperty<Object>) association;
+                    value = p.getProperty().get(value);
+                    if (value == null) {
+                        break;
+                    }
+                    if (association instanceof Embedded) {
+                        embeddedAssociations.add(association);
+                    } else {
+                        cascadeUpdate(connection, repositoryType, annotationMetadata, embeddedAssociations, association, value, persisted);
+                    }
+                }
+            }
+            DataType dataType = property.getDataType();
+            BeanProperty beanProperty = property.getProperty();
+            if (dataType == DataType.ENTITY) {
+                property = (RuntimePersistentProperty) getEntity(property.getType()).getIdentity();
+                dataType = property.getDataType();
+                beanProperty = property.getProperty();
+                if (value != null) {
+                    value = beanProperty.get(value);
+                }
+            } else {
+                if (beanProperty.hasAnnotation(DateUpdated.class)) {
+                    Object newValue = dateTimeProvider.getNow();
+                    beanProperty.convertAndSet(value, newValue);
+                    value = newValue;
+                } else if (value != null) {
+                    value = beanProperty.get(value);
+                }
+            }
+            setStatementParameter(ps, i + 1, dataType, value, dialect);
+        }
     }
 
     private void cascadeUpdate(Connection connection, Class<?> repositoryType,
@@ -713,6 +849,7 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 switch (kind) {
                     case ONE_TO_ONE:
                     case MANY_TO_ONE:
+                        // TODO: support batch update
                         persisted.add(value);
                         final StoredInsert<Object> updateStatement = resolveEntityUpdate(
                                 annotationMetadata,
@@ -723,7 +860,9 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         updateOne(
                                 connection,
                                 repositoryType,
+                                updateStatement.getDialect(),
                                 annotationMetadata,
+                                updateStatement.getPersistentEntity(),
                                 updateStatement.getSql(),
                                 updateStatement.getParameterBinding(),
                                 value,
@@ -1219,7 +1358,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     }
                     ps.addBatch();
                 }
-                ps.executeBatch();
+                int[] result = ps.executeBatch();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Insert batch operation inserted {} records", Arrays.toString(result));
+                }
             }
         } else {
             for (Object child : children) {
@@ -1362,7 +1504,10 @@ public class DefaultJdbcRepositoryOperations extends AbstractSqlRepositoryOperat
                     stmt.addBatch();
                     results.add(entity);
                 }
-                stmt.executeBatch();
+                int[] result = stmt.executeBatch();
+                if (QUERY_LOG.isTraceEnabled()) {
+                    QUERY_LOG.trace("Insert batch operation inserted {} records", Arrays.toString(result));
+                }
 
                 if (hasGeneratedID) {
                     ListIterator<T> resultIterator = results.listIterator();

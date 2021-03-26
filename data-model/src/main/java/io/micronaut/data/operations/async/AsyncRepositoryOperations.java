@@ -134,6 +134,17 @@ public interface AsyncRepositoryOperations {
     @NonNull <T> CompletionStage<T> update(@NonNull UpdateOperation<T> operation);
 
     /**
+     * Updates the entities for the given operation.
+     *
+     * @param operation The operation
+     * @param <T> The generic type
+     * @return The updated entities
+     */
+    default @NonNull <T> CompletionStage<Iterable<T>> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        throw new UnsupportedOperationException("The updateAll is required to be implemented.");
+    }
+
+    /**
      * Deletes the entity.
      * @param operation The batch operation
      * @param <T> The generic type

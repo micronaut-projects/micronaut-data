@@ -17,12 +17,8 @@ package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
-import io.micronaut.core.util.ArrayUtils;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.SaveEntityInterceptor;
-import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.SaveEntityReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -32,6 +28,8 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -40,7 +38,7 @@ import java.util.regex.Pattern;
  * @author graemerocher
  * @since 1.0.0
  */
-public class SaveEntityMethod extends AbstractPatternBasedMethod implements MethodCandidate {
+public class SaveEntityMethod extends AbstractPatternBasedMethod {
 
     public static final Pattern METHOD_PATTERN = Pattern.compile("^((save|persist|store|insert)(\\S*?))$");
 
@@ -61,12 +59,9 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
     public boolean isMethodMatch(@NonNull MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
         return parameters.length > 0 &&
-                hasMatchingParameters(parameters) &&
-                super.isMethodMatch(methodElement, matchContext) && isValidSaveReturnType(matchContext, false);
-    }
-
-    private boolean hasMatchingParameters(ParameterElement[] parameters) {
-        return Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class));
+                Arrays.stream(parameters)
+                        .anyMatch(p -> (TypeUtils.isIterableOfEntity(p.getGenericType()) || TypeUtils.isEntity(p.getGenericType())) && isValidSaveReturnType(matchContext))
+                && super.isMethodMatch(methodElement, matchContext);
     }
 
     @Nullable
@@ -74,63 +69,62 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod implements Meth
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         VisitorContext visitorContext = matchContext.getVisitorContext();
         ParameterElement[] parameters = matchContext.getParameters();
-        if (ArrayUtils.isNotEmpty(parameters)) {
-            if (hasMatchingParameters(parameters)) {
-                ClassElement returnType = matchContext.getReturnType();
-                Class<? extends DataInterceptor> interceptor = pickSaveInterceptor(returnType);
-                if (TypeUtils.isReactiveOrFuture(returnType)) {
-                    returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
-                }
-
-                if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(returnType, null, getInterceptorElement(matchContext, interceptor), MethodMatchInfo.OperationType.INSERT);
-                } else {
-                    return new MethodMatchInfo(returnType,
-                            QueryModel.from(matchContext.getRootEntity()),
-                            getInterceptorElement(matchContext, interceptor),
-                            MethodMatchInfo.OperationType.INSERT
-                    );
-                }
-            }
+        Optional<ParameterElement> entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst();
+        if (entityParameter.isPresent()) {
+            Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                    true, false, MethodMatchInfo.OperationType.INSERT, matchContext);
+            QueryModel queryModel = matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity());
+            MethodMatchInfo methodMatchInfo = new MethodMatchInfo(entry.getKey(),
+                    queryModel,
+                    getInterceptorElement(matchContext, entry.getValue()),
+                    MethodMatchInfo.OperationType.INSERT
+            );
+            methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.get().getName());
+            return methodMatchInfo;
         }
-        visitorContext.fail(
-                "Cannot implement save method for specified arguments and return type",
-                matchContext.getMethodElement()
-        );
+        Optional<ParameterElement> entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst();
+        if (entitiesParameter.isPresent()) {
+            Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                    false, true, MethodMatchInfo.OperationType.INSERT, matchContext);
+            QueryModel queryModel = matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity());
+            MethodMatchInfo methodMatchInfo = new MethodMatchInfo(entry.getKey(),
+                    queryModel,
+                    getInterceptorElement(matchContext, entry.getValue()),
+                    MethodMatchInfo.OperationType.INSERT
+            );
+            methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.get().getName());
+            return methodMatchInfo;
+        }
+        visitorContext.fail("Cannot implement save method for specified arguments and return type", matchContext.getMethodElement());
         return null;
     }
 
     /**
      * Is the return type valid for saving an entity.
      * @param matchContext The match context
-     * @param entityArgumentNotRequired  If an entity arg is not required
-     * @return True if it is
+     * @return True if correct return type
      */
-    static boolean isValidSaveReturnType(@NonNull MatchContext matchContext, boolean entityArgumentNotRequired) {
+    static boolean isValidSaveReturnType(@NonNull MatchContext matchContext) {
         ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isVoid(returnType)) {
+            return true;
+        }
+
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
         }
-        return returnType != null &&
-                returnType.hasAnnotation(MappedEntity.class) &&
-                (entityArgumentNotRequired || returnType.getName().equals(matchContext.getParameters()[0].getGenericType().getName()));
-    }
-
-    /**
-     * Pick a runtime interceptor to use based on the return type.
-     * @param returnType The return type
-     * @return The interceptor
-     */
-    private static @NonNull Class<? extends DataInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
-        Class<? extends DataInterceptor> interceptor;
-        if (TypeUtils.isFutureType(returnType)) {
-            interceptor = SaveEntityAsyncInterceptor.class;
-        } else if (TypeUtils.isReactiveOrFuture(returnType)) {
-            interceptor = SaveEntityReactiveInterceptor.class;
-        } else {
-            interceptor = SaveEntityInterceptor.class;
+        if (returnType == null) {
+            // Skip for Completable etc.
+            return true;
         }
-        return interceptor;
+        if (TypeUtils.isIterableOfEntity(returnType)) {
+            return true;
+        } else if (returnType.isAssignable(Iterable.class)) {
+            // This doesn't return correct class for generic type 'S':
+            // <S extends E> CompletableFuture<? extends Iterable<S>> saveAll(@Valid @NotNull @NonNull Iterable<S> entities)
+            return true;
+        }
+        return TypeUtils.isEntity(returnType);
     }
 
 }

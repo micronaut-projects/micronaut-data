@@ -21,6 +21,8 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
+import io.reactivex.Flowable;
+import org.reactivestreams.Publisher;
 
 /**
  * Abstract reactive repository interceptor.
@@ -47,5 +49,15 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
         } else {
             throw new DataAccessException("Datastore of type [" + operations.getClass() + "] does not support reactive operations");
         }
+    }
+
+    /**
+     * Count the items.
+     *
+     * @param publisher the publisher
+     * @return the size
+     */
+    protected Publisher<Integer> count(Publisher<R> publisher) {
+        return Flowable.fromPublisher(publisher).count().toFlowable().map(lng -> lng.intValue());
     }
 }

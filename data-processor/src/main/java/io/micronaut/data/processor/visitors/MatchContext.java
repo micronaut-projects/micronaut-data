@@ -147,6 +147,15 @@ public class MatchContext implements AnnotationMetadataProvider {
     }
 
     /**
+     * Fail compilation with the given message for the current method.
+     * @param message The message
+     */
+    public void failAndThrow(@NonNull String message) {
+        fail(message);
+        throw new MatchFailedException();
+    }
+
+    /**
      * Add a message that indicates a given finder failed. This should only be used
      * if a finder matches a method, but some additional requirement is not met. This
      * leaves the possibility that another finder may match the method and proceed

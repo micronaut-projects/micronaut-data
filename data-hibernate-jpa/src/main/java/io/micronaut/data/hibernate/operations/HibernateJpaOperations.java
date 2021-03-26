@@ -29,6 +29,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.DataType;
@@ -408,12 +409,39 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> T update(@NonNull UpdateOperation<T> operation) {
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
         return transactionOperations.executeWrite(status -> {
+            if (queryString != null) {
+                executeEntityUpdate(annotationMetadata, queryString, operation.getEntity());
+                return operation.getEntity();
+            }
             T entity = operation.getEntity();
             EntityManager session = sessionFactory.getCurrentSession();
             entity = session.merge(entity);
             flushIfNecessary(session, operation.getAnnotationMetadata());
             return entity;
+        });
+    }
+
+    @NonNull
+    @Override
+    public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
+        return transactionOperations.executeWrite(status -> {
+            if (queryString != null) {
+                for (T entity : operation) {
+                    executeEntityUpdate(annotationMetadata, queryString, entity);
+                }
+                return operation;
+            }
+            EntityManager entityManager = sessionFactory.getCurrentSession();
+            for (T entity : operation) {
+                entityManager.merge(entity);
+            }
+            flushIfNecessary(entityManager, operation.getAnnotationMetadata());
+            return operation;
         });
     }
 
@@ -427,9 +455,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 for (T entity : operation) {
                     entityManager.persist(entity);
                 }
-                AnnotationMetadata annotationMetadata =
-                        operation.getAnnotationMetadata();
-                flushIfNecessary(entityManager, annotationMetadata);
+                flushIfNecessary(entityManager, operation.getAnnotationMetadata());
                 return operation;
             } else {
                 return Collections.emptyList();
@@ -461,7 +487,12 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
         return transactionOperations.executeWrite(status -> {
+            if (queryString != null) {
+                return executeEntityUpdate(annotationMetadata, queryString, operation.getEntity());
+            }
             getCurrentSession().remove(operation.getEntity());
             return 1;
         });
@@ -469,29 +500,41 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        if (operation.all()) {
-            return transactionOperations.executeWrite(status -> {
-                Class<T> entityType = operation.getRootEntity();
-                Session session = getCurrentSession();
-                CriteriaDelete<T> criteriaDelete = session.getCriteriaBuilder().createCriteriaDelete(entityType);
-                criteriaDelete.from(entityType);
-                Query query = session.createQuery(
-                        criteriaDelete
-                );
-                return Optional.of(query.executeUpdate());
-            });
-        } else {
-            Integer result = transactionOperations.executeWrite(status -> {
+        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
+        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
+        Integer result = transactionOperations.executeWrite(status -> {
+            if (queryString != null) {
                 int i = 0;
-                Session session = getCurrentSession();
                 for (T entity : operation) {
-                    session.remove(entity);
-                    i++;
+                    i  += executeEntityUpdate(annotationMetadata, queryString, entity);
                 }
                 return i;
-            });
-            return Optional.ofNullable(result);
+            }
+            int i = 0;
+            Session session = getCurrentSession();
+            for (T entity : operation) {
+                session.remove(entity);
+                i++;
+            }
+            return i;
+        });
+        return Optional.ofNullable(result);
+    }
+
+    private int executeEntityUpdate(AnnotationMetadata annotationMetadata, String queryString, Object entity) {
+        String[] parameters = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
+        Query query = getCurrentSession().createQuery(queryString);
+        for (String parameter : parameters) {
+            query.setParameter(parameter, getParameterValue(parameter, entity));
         }
+        return query.executeUpdate();
+    }
+
+    private Object getParameterValue(String propertyName, Object value) {
+        for (String property : propertyName.split("\\.")) {
+            value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
+        }
+        return value;
     }
 
     @NonNull
@@ -500,7 +543,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         //noinspection ConstantConditions
         return transactionOperations.executeRead(status -> {
             String query = preparedQuery.getQuery();
-            Map<String, Object> parameterValues = preparedQuery.getParameterValues();
             Pageable pageable = preparedQuery.getPageable();
             Session currentSession = getCurrentSession();
             Class<R> resultType = preparedQuery.getResultType();

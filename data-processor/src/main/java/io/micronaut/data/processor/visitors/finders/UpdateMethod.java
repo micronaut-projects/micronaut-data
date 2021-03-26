@@ -19,9 +19,6 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.UpdateInterceptor;
-import io.micronaut.data.intercept.async.UpdateAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -35,6 +32,7 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -134,14 +132,11 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         }
 
         ClassElement returnType = matchContext.getReturnType();
-        Class<? extends DataInterceptor> interceptor = pickUpdateInterceptor(returnType);
-        if (TypeUtils.isReactiveOrFuture(returnType)) {
-            returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
-        }
+        Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.pickUpdateInterceptor(matchContext, returnType);
         MethodMatchInfo info = new MethodMatchInfo(
-                returnType,
+                entry.getKey(),
                 query,
-                getInterceptorElement(matchContext, interceptor),
+                getInterceptorElement(matchContext, entry.getValue()),
                 MethodMatchInfo.OperationType.UPDATE,
                 properiesToUpdate.toArray(new String[0])
         );
@@ -153,20 +148,4 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         return info;
     }
 
-    /**
-     * Pick the correct delete all interceptor.
-     * @param returnType The return type
-     * @return The interceptor
-     */
-    static Class<? extends DataInterceptor> pickUpdateInterceptor(ClassElement returnType) {
-        Class<? extends DataInterceptor> interceptor;
-        if (TypeUtils.isFutureType(returnType)) {
-            interceptor = UpdateAsyncInterceptor.class;
-        } else if (TypeUtils.isReactiveType(returnType)) {
-            interceptor = UpdateReactiveInterceptor.class;
-        } else {
-            interceptor = UpdateInterceptor.class;
-        }
-        return interceptor;
-    }
 }

@@ -25,6 +25,8 @@ import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.PersonDto;
 import io.reactivex.*;
 
+import java.util.List;
+
 public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, Long> {
 
     Single<Person> save(String name, int age);
@@ -51,4 +53,17 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
 
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
     Maybe<Long> getMaxId();
+
+    Maybe<Long> updateAll(List<Person> people);
+
+    Flowable<Person> updatePeople(List<Person> people);
+
+    @Query("UPDATE person SET name = :newName WHERE (name = :oldName)")
+    Maybe<Long> updateNamesCustom(String newName, String oldName);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    Completable saveCustom(List<Person> people);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    Completable saveCustomSingle(Person people);
 }

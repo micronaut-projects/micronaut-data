@@ -16,24 +16,22 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import io.micronaut.data.intercept.DeleteAllInterceptor;
-import io.micronaut.data.intercept.DeleteOneInterceptor;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
-import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.DeleteAllReactiveInterceptor;
-import io.micronaut.data.intercept.reactive.DeleteOneReactiveInterceptor;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import edu.umd.cs.findbugs.annotations.Nullable;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Support for simple delete operations.
@@ -42,6 +40,8 @@ import edu.umd.cs.findbugs.annotations.Nullable;
  * @since 1.0.0
  */
 public class DeleteMethod extends AbstractListMethod {
+
+    public static final Pattern METHOD_PATTERN = Pattern.compile("^((delete|remove|erase|eliminate)(\\S*?))$");
 
     /**
      * Default constructor.
@@ -58,8 +58,7 @@ public class DeleteMethod extends AbstractListMethod {
 
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
-        return super.isMethodMatch(methodElement, matchContext) &&
-                TypeUtils.isValidBatchUpdateReturnType(methodElement);
+        return super.isMethodMatch(methodElement, matchContext) && TypeUtils.isValidBatchUpdateReturnType(methodElement);
     }
 
     @NonNull
@@ -72,91 +71,77 @@ public class DeleteMethod extends AbstractListMethod {
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
-        Class<? extends DataInterceptor> interceptor = null;
-        if (parameters.length == 1) {
-            ClassElement genericType = parameters[0].getGenericType();
-            SourcePersistentEntity rootEntity = matchContext.getRootEntity();
-            if (genericType.isAssignable(rootEntity.getName())) {
-                ClassElement returnType = matchContext.getReturnType();
-                if (TypeUtils.isFutureType(returnType)) {
-                    interceptor = DeleteOneAsyncInterceptor.class;
-                } else if (TypeUtils.isReactiveType(returnType)) {
-                    interceptor = DeleteOneReactiveInterceptor.class;
-                } else {
-                    interceptor = DeleteOneInterceptor.class;
-                }
-            } else if (TypeUtils.isIterableOfEntity(genericType)) {
-                interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
+        ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
+        ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+        if (entityParameter == null && entitiesParameter == null) {
+            // Delete all
+            return super.buildMatchInfo(matchContext);
+        }
+
+        SourcePersistentEntity rootEntity = matchContext.getRootEntity();
+        QueryModel queryModel = null;
+        if (!matchContext.supportsImplicitQueries()) {
+            if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
+                matchContext.fail("Delete all not supported for entities with no ID");
+                return null;
             }
-            if (interceptor != null) {
-                if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(
-                            null,
-                            null,
-                            getInterceptorElement(matchContext, interceptor),
-                            getOperationType()
-                    );
-                } else {
-                    QueryModel queryModel = QueryModel.from(rootEntity);
-                    if (!rootEntity.hasIdentity() && !rootEntity.hasCompositeIdentity()) {
-                        matchContext.fail("Delete all not supported for entities with no ID");
-                        return null;
-                    }
-                    QueryParameter queryParameter = new QueryParameter(parameters[0].getName());
-                    SourcePersistentProperty identity = rootEntity.getIdentity();
-                    if (rootEntity.hasCompositeIdentity() || identity instanceof Embedded) {
-                        queryModel.idEq(queryParameter);
-                    } else if (identity != null && interceptor.getSimpleName().startsWith("DeleteAll")) {
-                        queryModel.inList(identity.getName(), queryParameter);
-                    }
-                    return new MethodMatchInfo(
-                            null,
-                            queryModel,
-                            getInterceptorElement(matchContext, interceptor),
-                            getOperationType()
-                    );
-                }
+            // Generate one 'IN' query for multiple entities if it's possible otherwise use batch
+            boolean generateInIdList = entitiesParameter != null
+                    && !rootEntity.hasCompositeIdentity()
+                    && !(rootEntity.getIdentity() instanceof Embedded);
+            if (generateInIdList) {
+                queryModel = QueryModel.from(rootEntity)
+                        .inList(rootEntity.getIdentity().getName(), new QueryParameter(entitiesParameter.getName()));
+                entityParameter = null;
+                entitiesParameter = null;
+            } else {
+                queryModel = QueryModel.from(rootEntity)
+                        .idEq(new QueryParameter(entitiesParameter == null ? entityParameter.getName() : entitiesParameter.getName()));
             }
         }
-        return super.buildMatchInfo(matchContext);
+
+        Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
+                entityParameter != null,
+                entitiesParameter != null,
+                MethodMatchInfo.OperationType.DELETE,
+                matchContext);
+        ClassElement resultType = entry.getKey();
+        Class<? extends DataInterceptor> interceptorType = entry.getValue();
+        MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
+                resultType,
+                queryModel,
+                getInterceptorElement(matchContext, interceptorType),
+                getOperationType()
+        );
+        if (entityParameter != null) {
+            methodMatchInfo.addParameterRole(TypeRole.ENTITY, entityParameter.getName());
+        } else if (entitiesParameter != null) {
+            methodMatchInfo.addParameterRole(TypeRole.ENTITIES, entitiesParameter.getName());
+        }
+        return methodMatchInfo;
     }
 
     @Nullable
     @Override
     protected MethodMatchInfo buildInfo(@NonNull MethodMatchContext matchContext, @NonNull ClassElement queryResultType, @Nullable QueryModel query) {
-        Class<? extends DataInterceptor> interceptor = pickDeleteAllInterceptor(matchContext.getReturnType());
+        Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.pickDeleteAllInterceptor(matchContext, matchContext.getReturnType());
+        Class<? extends DataInterceptor> interceptor = entry.getValue();
         if (query != null) {
             return new MethodMatchInfo(
-                    null,
+                    entry.getKey(),
                     query,
                     getInterceptorElement(matchContext, interceptor),
                     getOperationType()
             );
         } else {
+            // Always generate delete all query
             return new MethodMatchInfo(
-                    null,
-                    matchContext.supportsImplicitQueries() ? null : QueryModel.from(matchContext.getRootEntity()),
+                    entry.getKey(),
+                    QueryModel.from(matchContext.getRootEntity()),
                     getInterceptorElement(matchContext, interceptor),
                     getOperationType()
             );
         }
-    }
-
-    /**
-     * Pick the correct delete all interceptor.
-     * @param returnType The return type
-     * @return The interceptor
-     */
-    static Class<? extends DataInterceptor> pickDeleteAllInterceptor(ClassElement returnType) {
-        Class<? extends DataInterceptor> interceptor;
-        if (TypeUtils.isFutureType(returnType)) {
-            interceptor = DeleteAllAsyncInterceptor.class;
-        } else if (TypeUtils.isReactiveType(returnType)) {
-            interceptor = DeleteAllReactiveInterceptor.class;
-        } else {
-            interceptor = DeleteAllInterceptor.class;
-        }
-        return interceptor;
     }
 
 }

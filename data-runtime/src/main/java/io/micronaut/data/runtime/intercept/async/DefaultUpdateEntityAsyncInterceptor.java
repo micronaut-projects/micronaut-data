@@ -42,6 +42,7 @@ public class DefaultUpdateEntityAsyncInterceptor<T> extends AbstractAsyncInterce
 
     @Override
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
-        return asyncDatastoreOperations.update(getUpdateOperation(context));
+        Object entity = getEntityParameter(context, Object.class);
+        return asyncDatastoreOperations.update(getUpdateOperation(context, entity));
     }
 }

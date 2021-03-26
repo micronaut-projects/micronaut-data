@@ -40,7 +40,8 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractQueryInterceptor<T,
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
-        return operations.persist(getInsertOperation(context));
+        Object entity = getEntityParameter(context, Object.class);
+        return operations.persist(getInsertOperation(context, entity));
     }
 
 }

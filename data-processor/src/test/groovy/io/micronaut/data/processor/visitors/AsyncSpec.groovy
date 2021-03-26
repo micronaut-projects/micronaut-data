@@ -16,18 +16,7 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.intercept.annotation.DataMethod
-import io.micronaut.data.intercept.async.CountAsyncInterceptor
-import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor
-import io.micronaut.data.intercept.async.ExistsByAsyncInterceptor
-import io.micronaut.data.intercept.async.FindAllAsyncInterceptor
-import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor
-import io.micronaut.data.intercept.async.FindOneAsyncInterceptor
-import io.micronaut.data.intercept.async.FindPageAsyncInterceptor
-import io.micronaut.data.intercept.async.FindSliceAsyncInterceptor
-import io.micronaut.data.intercept.async.SaveAllAsyncInterceptor
-import io.micronaut.data.intercept.async.SaveEntityAsyncInterceptor
-import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor
-import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
+import io.micronaut.data.intercept.async.*
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.entities.PersonDto
 import spock.lang.Unroll
@@ -150,17 +139,23 @@ class FullNameDto {
         "find"             | "CompletionStage<Person>"            | "String name"                  | FindOneAsyncInterceptor    | Person.name        | false
         "count"            | "CompletionStage<Long>"              | "String name"                  | CountAsyncInterceptor      | Long.name          | false
         "countByName"      | "CompletionStage<Long>"              | "String name"                  | CountAsyncInterceptor      | Long.name          | false
-        "delete"           | "CompletionStage<Integer>"           | "String name"                  | DeleteAllAsyncInterceptor  | void.class.name    | false
-        "delete"           | "CompletionStage<Void>"              | "String name"                  | DeleteAllAsyncInterceptor  | void.class.name    | false
-        "deleteByName"     | "CompletionStage<Long>"              | "String name"                  | DeleteAllAsyncInterceptor  | void.class.name    | false
+        "delete"           | "CompletionStage<Integer>"           | "String name"                  | DeleteAllAsyncInterceptor  | Integer.name       | false
+        "delete"           | "CompletionStage<Void>"              | "String name"                  | DeleteAllAsyncInterceptor  | Void.name          | false
+        "deleteByName"     | "CompletionStage<Long>"              | "String name"                  | DeleteAllAsyncInterceptor  | void.name          | false
         "existsByName"     | "CompletionStage<Boolean>"           | "String name"                  | ExistsByAsyncInterceptor   | Boolean.name       | false
         "findById"         | "CompletionStage<Person>"            | "Long id"                      | FindByIdAsyncInterceptor   | Person.name        | false
         "findFullNameById" | "CompletionStage<FullNameDto>"       | "Long id"                      | FindOneAsyncInterceptor    | 'test.FullNameDto' | true
         "save"             | "CompletionStage<Person>"            | "Person person"                | SaveEntityAsyncInterceptor | Person.name        | false
         "save"             | "CompletionStage<Person>"            | "String name, String publicId" | SaveOneAsyncInterceptor    | Person.name        | false
-        "save"             | "CompletionStage<List<Person>>"      | "List<Person> entities"        | SaveAllAsyncInterceptor    | void.class.name    | false
+        "save"             | "CompletionStage<List<Person>>"      | "List<Person> entities"        | SaveAllAsyncInterceptor    | Person.name        | false
         "updateByName"     | "CompletionStage<Long>"              | "String name, int age"         | UpdateAsyncInterceptor     | Person.name        | false
         "update"           | "CompletionStage<Void>"              | "@Id Long id, int age"         | UpdateAsyncInterceptor     | Void.name          | false
+        "updateAll"        | "CompletionStage<Integer>"           | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Integer.class.name | false
+        "updateAll"        | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Person.class.name  | false
+        "updateCustom"     | "CompletionStage<Integer>"           | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Integer.class.name | false
+        "updateCustom"     | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Person.class.name  | false
+        "update"           | "CompletionStage<Integer>"           | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Integer.class.name | false
+        "update"           | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Person.class.name  | false
     }
 
     @Unroll

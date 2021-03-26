@@ -111,4 +111,26 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Query(value = "select * from person person_ where person_.name like :n",
             countQuery = "select count(*) from person person_ where person_.name like :n")
     Page<Person> findPeople(String n, Pageable pageable);
+
+    long updateAll(List<Person> people);
+
+    List<Person> updatePeople(List<Person> people);
+
+    @Query("UPDATE person SET name = :newName WHERE (name = :oldName)")
+    long updateNamesCustom(String newName, String oldName);
+
+    @Query("UPDATE person SET name = :name WHERE id = :id")
+    long updateCustomOnlyNames(List<Person> people);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    void saveCustom(List<Person> people);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    void saveCustomSingle(Person people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    int deleteCustom(List<Person> people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    int deleteCustomSingle(Person person);
 }

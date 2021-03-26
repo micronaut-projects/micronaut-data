@@ -1,4 +1,4 @@
-Batch deletes can be performed in a number of ways. To delete everything (use with care!) you can use `deleteAll`:
+Deleting can be performed in a number of ways. To delete everything (use with care!) you can use `deleteAll`:
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteall", indent="0"]
 
@@ -11,3 +11,7 @@ snippet::example.BookRepository[project-base="doc-examples/example", source="mai
 Finally, you can also use the `deleteBy*` pattern (the method must start with `delete`, `remove`, `erase` or `eliminate`) and any finder expression, for example:
 
 snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteby", indent="0"]
+
+You can also specify A custom query for a delete method:
+
+snippet::example.BookRepository[project-base="doc-examples/example", source="main", tags="deleteCustomQuery", indent="0"]

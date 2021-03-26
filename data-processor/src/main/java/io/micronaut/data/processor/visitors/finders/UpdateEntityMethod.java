@@ -23,9 +23,6 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.UpdateEntityInterceptor;
-import io.micronaut.data.intercept.async.UpdateEntityAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.UpdateEntityReactiveInterceptor;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
@@ -40,7 +37,9 @@ import io.micronaut.inject.ast.ParameterElement;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 /**
  * Handles {@link io.micronaut.data.repository.CrudRepository#update(Object)}.
@@ -73,9 +72,11 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
     @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         ParameterElement[] parameters = matchContext.getParameters();
-        return parameters.length > 0 &&
-                Arrays.stream(parameters).anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class)) &&
-                super.isMethodMatch(methodElement, matchContext) && isValidSaveReturnType(matchContext, false);
+        return parameters.length > 0 && hasMatchingParameters(Arrays.stream(parameters)) && super.isMethodMatch(methodElement, matchContext);
+    }
+
+    private boolean hasMatchingParameters(Stream<ParameterElement> parameters) {
+        return parameters.anyMatch(p -> TypeUtils.isIterableOfEntity(p.getGenericType()) || p.getGenericType().hasAnnotation(MappedEntity.class));
     }
 
     @Nullable
@@ -83,19 +84,46 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         if (CollectionUtils.isNotEmpty(parameters)) {
-            if (parameters.stream().anyMatch(p -> p.getGenericType().hasAnnotation(MappedEntity.class))) {
-                ClassElement returnType = matchContext.getReturnType();
-                Class<? extends DataInterceptor> interceptor = pickSaveInterceptor(returnType);
-                if (TypeUtils.isReactiveOrFuture(returnType)) {
-                    returnType = returnType.getGenericType().getFirstTypeArgument().orElse(returnType);
+            if (hasMatchingParameters(parameters.stream())) {
+                ParameterElement matchingParameter = null;
+                boolean isEntityParameter = false;
+                boolean isMultipleEntityParameter = false;
+                if (parameters.size() > 0) {
+                    ParameterElement parameterElement = parameters.get(0);
+                    if (TypeUtils.isIterableOfEntity(parameterElement.getGenericType())) {
+                        matchingParameter = parameterElement;
+                        isMultipleEntityParameter = true;
+                    }
+                    if (parameterElement.getGenericType().hasAnnotation(MappedEntity.class)) {
+                        matchingParameter = parameterElement;
+                        isEntityParameter = true;
+                    }
                 }
-                if (matchContext.supportsImplicitQueries()) {
-                    return new MethodMatchInfo(
-                            returnType,
-                            null, getInterceptorElement(matchContext, interceptor),
-                            MethodMatchInfo.OperationType.UPDATE
-                    );
-                } else {
+                if (matchingParameter == null) {
+                    matchContext.failAndThrow("Cannot find a parameter representing the entity update");
+                    return null;
+                }
+
+                Map.Entry<ClassElement, Class<? extends DataInterceptor>> matchEntry = FindersUtils.resolveInterceptorTypeByOperationType(
+                        isEntityParameter,
+                        isMultipleEntityParameter,
+                        MethodMatchInfo.OperationType.UPDATE,
+                        matchContext);
+
+                ClassElement returnType = matchEntry.getKey();
+                if (returnType == null) {
+                    returnType = matchContext.getRootEntity().getType();
+                } else if (!TypeUtils.isVoid(returnType)
+                        && !TypeUtils.isNumber(returnType)
+                        && !returnType.hasStereotype(MappedEntity.class)) {
+                    matchContext.failAndThrow("Cannot implement update method for specified return type: " + returnType.getName());
+                    return null;
+                }
+
+                Class<? extends DataInterceptor> interceptor = matchEntry.getValue();
+                QueryModel queryModel = null;
+                String[] updateProperties = null;
+                if (!matchContext.supportsImplicitQueries()) {
                     final SourcePersistentEntity rootEntity = matchContext.getRootEntity();
                     final String idName;
                     final SourcePersistentProperty identity = rootEntity.getIdentity();
@@ -104,9 +132,8 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     } else {
                         idName = TypeRole.ID;
                     }
-                    final QueryModel queryModel = QueryModel.from(rootEntity)
-                            .idEq(new QueryParameter(idName));
-                    String[] updateProperties = rootEntity.getPersistentProperties()
+                    queryModel = QueryModel.from(rootEntity).idEq(new QueryParameter(idName));
+                    updateProperties = rootEntity.getPersistentProperties()
                             .stream().filter(p ->
                                     !((p instanceof Association) && ((Association) p).isForeignKey()) &&
                                             !p.isGenerated() &&
@@ -115,60 +142,27 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                             .map(PersistentProperty::getName)
                             .toArray(String[]::new);
                     if (ArrayUtils.isEmpty(updateProperties)) {
-                        return new MethodMatchInfo(
-                                returnType,
-                                null,
-                                getInterceptorElement(matchContext, interceptor),
-                                MethodMatchInfo.OperationType.UPDATE
-                        );
-                    } else {
-                        return new MethodMatchInfo(
-                                returnType,
-                                queryModel,
-                                getInterceptorElement(matchContext, interceptor),
-                                MethodMatchInfo.OperationType.UPDATE,
-                                updateProperties
-                        );
+                        queryModel = null;
                     }
-
                 }
+                MethodMatchInfo methodMatchInfo = new MethodMatchInfo(
+                        returnType,
+                        queryModel,
+                        getInterceptorElement(matchContext, interceptor),
+                        MethodMatchInfo.OperationType.UPDATE,
+                        updateProperties
+                );
+                if (isEntityParameter) {
+                    methodMatchInfo.addParameterRole(TypeRole.ENTITY, matchingParameter.getName());
+                }
+                if (isMultipleEntityParameter) {
+                    methodMatchInfo.addParameterRole(TypeRole.ENTITIES, matchingParameter.getName());
+                }
+                return methodMatchInfo;
             }
         }
         matchContext.fail("Cannot implement update method for specified arguments and return type");
         return null;
-    }
-
-    /**
-     * Is the return type valid for saving an entity.
-     * @param matchContext The match context
-     * @param entityArgumentNotRequired  If an entity arg is not required
-     * @return True if it is
-     */
-    static boolean isValidSaveReturnType(@NonNull MatchContext matchContext, boolean entityArgumentNotRequired) {
-        ClassElement returnType = matchContext.getReturnType();
-        if (TypeUtils.isReactiveOrFuture(returnType)) {
-            returnType = returnType.getFirstTypeArgument().orElse(null);
-        }
-        return returnType != null &&
-                returnType.hasAnnotation(MappedEntity.class) &&
-                (entityArgumentNotRequired || returnType.getName().equals(matchContext.getParameters()[0].getGenericType().getName()));
-    }
-
-    /**
-     * Pick a runtime interceptor to use based on the return type.
-     * @param returnType The return type
-     * @return The interceptor
-     */
-    private static @NonNull Class<? extends DataInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
-        Class<? extends DataInterceptor> interceptor;
-        if (TypeUtils.isFutureType(returnType)) {
-            interceptor = UpdateEntityAsyncInterceptor.class;
-        } else if (TypeUtils.isReactiveOrFuture(returnType)) {
-            interceptor = UpdateEntityReactiveInterceptor.class;
-        } else {
-            interceptor = UpdateEntityInterceptor.class;
-        }
-        return interceptor;
     }
 
 }

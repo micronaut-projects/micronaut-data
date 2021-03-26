@@ -147,6 +147,19 @@ public interface RepositoryOperations {
     @NonNull <T> T update(@NonNull UpdateOperation<T> operation);
 
     /**
+     * Updates the entities for the given operation.
+     *
+     * @param operation The operation
+     * @param <T> The generic type
+     * @return The updated entities
+     */
+    default @NonNull <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
+        return operation.split().stream()
+                .map(this::update)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Persist all the given entities.
      * @param operation The operation
      * @param <T> The generic type

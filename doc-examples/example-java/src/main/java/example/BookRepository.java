@@ -2,10 +2,14 @@
 // tag::repository[]
 package example;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Repository // <1>
@@ -63,16 +67,31 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     // end::explicit[]
 
     // tag::save[]
-    Book persist(Book entity);
+    Book save(Book entity);
     // end::save[]
+
+    // tag::inserts[]
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    void insert(String title, int pages);
+
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    void insertOne(Book book);
+
+    @Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+    void insertMany(Iterable<Book> books);
+    // end::inserts[]
 
     // tag::save2[]
     Book persist(String title, int pages);
     // end::save2[]
 
     // tag::update[]
-    void update(@Id Long id, int pages);
+    Book update(Book newBook);
     // end::update[]
+
+    // tag::update1[]
+    void update(@Id Long id, int pages);
+    // end::update1[]
 
     // tag::update2[]
     void updateByTitle(String title, int pages);
@@ -82,9 +101,25 @@ interface BookRepository extends CrudRepository<Book, Long> { // <2>
     void updatePages(@Id Long id, int pages);
     // end::update3[]
 
+    // tag::updateCustomQuery[]
+    @Query("UPDATE book SET title = :title where id = :id")
+    void updateOne(Book book);
+
+    @Query("UPDATE book SET title = :title where id = :id")
+    void updateMany(Iterable<Book> books);
+    // end::updateCustomQuery[]
+
     // tag::deleteall[]
     void deleteAll();
     // end::deleteall[]
+
+    // tag::deleteCustomQuery[]
+    @Query("DELETE FROM Book WHERE title = :title")
+    void deleteOne(Book book);
+
+    @Query("DELETE FROM Book WHERE title = :title")
+    void deleteMany(Iterable<Book> books);
+    // end::deleteCustomQuery[]
 
     // tag::deleteone[]
     void delete(String title);
