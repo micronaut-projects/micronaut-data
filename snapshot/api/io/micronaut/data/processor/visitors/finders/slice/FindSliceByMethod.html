@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10};
+var methods = {"i0":10,"i1":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -225,18 +225,10 @@ extends <a href="../../../../../../../io/micronaut/data/processor/visitors/finde
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>protected <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/slice/FindSliceByMethod.html#buildInfo-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-">buildInfo</a></span>(<a href="../../../../../../../io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
-         io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
-         <a href="../../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</code>
-<div class="block">Build the <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders"><code>MethodMatchInfo</code></a>.</div>
-</td>
-</tr>
-<tr id="i1" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/slice/FindSliceByMethod.html#getOrder--">getOrder</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/slice/FindSliceByMethod.html#isCompatibleReturnType-io.micronaut.inject.ast.MethodElement-io.micronaut.data.processor.visitors.MatchContext-">isCompatibleReturnType</a></span>(io.micronaut.inject.ast.MethodElement&nbsp;methodElement,
                       <a href="../../../../../../../io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors">MatchContext</a>&nbsp;matchContext)</code>
@@ -256,14 +248,14 @@ extends <a href="../../../../../../../io/micronaut/data/processor/visitors/finde
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="../../../../../../../io/micronaut/data/processor/visitors/finders/DynamicFinder.html" title="class in io.micronaut.data.processor.visitors.finders">DynamicFinder</a></h3>
-<code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/DynamicFinder.html#buildMatchInfo-io.micronaut.data.processor.visitors.MethodMatchContext-">buildMatchInfo</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/DynamicFinder.html#hasQueryAnnotation-io.micronaut.inject.ast.MethodElement-">hasQueryAnnotation</a></code></li>
+<code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/DynamicFinder.html#buildMatchInfo-io.micronaut.data.processor.visitors.MethodMatchContext-">buildMatchInfo</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.processor.visitors.finders.AbstractPatternBasedMethod">
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.data.processor.visitors.finders.<a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternBasedMethod</a></h3>
-<code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyForUpdate-io.micronaut.data.model.query.QueryModel-">applyForUpdate</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyJoinSpecs-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.data.model.query.QueryModel-io.micronaut.data.processor.model.SourcePersistentEntity-java.util.List-">applyJoinSpecs</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyOrderBy-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.data.model.query.QueryModel-java.util.List-">applyOrderBy</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#buildRawQuery-io.micronaut.data.processor.visitors.MethodMatchContext-">buildRawQuery</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#getInterceptorElement-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.Class-">getInterceptorElement</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#getInterceptorElement-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.String-">getInterceptorElement</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#getOperationType--">getOperationType</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#isPage-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-">isPage</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#isSlice-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-">isSlice</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#joinSpecsAtMatchContext-io.micronaut.data.processor.visitors.MethodMatchContext-">joinSpecsAtMatchContext</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchForUpdate-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.String-">matchForUpdate</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchOrder-java.lang.String-java.util.List-">matchOrder</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchProjections-io.micronaut.data.processor.visitors.MethodMatchContext-java.util.List-java.lang.String-">matchProjections</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#resolveFindInterceptor-io.micronaut.data.processor.visitors.MethodMatchContext-">resolveFindInterceptor</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#resolveInterceptorType-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-boolean-boolean-">resolveInterceptorType</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#resolveInterceptorTypeByOperationType-io.micronaut.data.processor.visitors.finders.MethodMatchInfo.OperationType-io.micronaut.inject.ast.ClassElement-">resolveInterceptorTypeByOperationType</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#resolveReactiveInterceptorType-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-boolean-boolean-">resolveReactiveInterceptorType</a></code></li>
+<code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyForUpdate-io.micronaut.data.model.query.QueryModel-">applyForUpdate</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyJoinSpecs-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.data.model.query.QueryModel-io.micronaut.data.processor.model.SourcePersistentEntity-java.util.List-">applyJoinSpecs</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#applyOrderBy-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.data.model.query.QueryModel-java.util.List-">applyOrderBy</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#buildInfo-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-">buildInfo</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#getInterceptorElement-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.Class-">getInterceptorElement</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#getInterceptorElement-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.String-">getInterceptorElement</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#getOperationType--">getOperationType</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#joinSpecsAtMatchContext-io.micronaut.data.processor.visitors.MethodMatchContext-">joinSpecsAtMatchContext</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchForUpdate-io.micronaut.data.processor.visitors.MethodMatchContext-java.lang.String-">matchForUpdate</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchOrder-java.lang.String-java.util.List-">matchOrder</a>, <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#matchProjections-io.micronaut.data.processor.visitors.MethodMatchContext-java.util.List-java.lang.String-">matchProjections</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -331,32 +323,6 @@ extends <a href="../../../../../../../io/micronaut/data/processor/visitors/finde
 <li class="blockList">
 <h4>getOrder</h4>
 <pre>public&nbsp;int&nbsp;getOrder()</pre>
-</li>
-</ul>
-<a name="buildInfo-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>buildInfo</h4>
-<pre>@Nullable
-protected&nbsp;<a href="../../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders">MethodMatchInfo</a>&nbsp;buildInfo(<a href="../../../../../../../io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors">MethodMatchContext</a>&nbsp;matchContext,
-                                              @NonNull
-                                              io.micronaut.inject.ast.ClassElement&nbsp;queryResultType,
-                                              @Nullable
-                                              <a href="../../../../../../../io/micronaut/data/model/query/QueryModel.html" title="interface in io.micronaut.data.model.query">QueryModel</a>&nbsp;query)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#buildInfo-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-">AbstractPatternBasedMethod</a></code></span></div>
-<div class="block">Build the <a href="../../../../../../../io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders"><code>MethodMatchInfo</code></a>.</div>
-<dl>
-<dt><span class="overrideSpecifyLabel">Overrides:</span></dt>
-<dd><code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html#buildInfo-io.micronaut.data.processor.visitors.MethodMatchContext-io.micronaut.inject.ast.ClassElement-io.micronaut.data.model.query.QueryModel-">buildInfo</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../../io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternBasedMethod</a></code></dd>
-<dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>matchContext</code> - The match context</dd>
-<dd><code>queryResultType</code> - The query result type</dd>
-<dd><code>query</code> - The query</dd>
-<dt><span class="returnLabel">Returns:</span></dt>
-<dd>The info or null if it can't be built</dd>
-</dl>
 </li>
 </ul>
 <a name="isCompatibleReturnType-io.micronaut.inject.ast.MethodElement-io.micronaut.data.processor.visitors.MatchContext-">

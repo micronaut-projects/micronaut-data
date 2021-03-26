@@ -152,6 +152,9 @@
 <li><a href="io/micronaut/transaction/interceptor/DefaultTransactionAttribute.html" title="class in io.micronaut.transaction.interceptor" target="classFrame">DefaultTransactionAttribute</a></li>
 <li><a href="io/micronaut/transaction/support/DefaultTransactionDefinition.html" title="class in io.micronaut.transaction.support" target="classFrame">DefaultTransactionDefinition</a></li>
 <li><a href="io/micronaut/transaction/support/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.support" target="classFrame">DefaultTransactionStatus</a></li>
+<li><a href="io/micronaut/data/runtime/intercept/async/DefaultUpdateAllAsyncEntitiesInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async" target="classFrame">DefaultUpdateAllAsyncEntitiesInterceptor</a></li>
+<li><a href="io/micronaut/data/runtime/intercept/DefaultUpdateAllEntitiesInterceptor.html" title="class in io.micronaut.data.runtime.intercept" target="classFrame">DefaultUpdateAllEntitiesInterceptor</a></li>
+<li><a href="io/micronaut/data/runtime/intercept/reactive/DefaultUpdateAllEntitiesReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive" target="classFrame">DefaultUpdateAllEntitiesReactiveInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/async/DefaultUpdateAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async" target="classFrame">DefaultUpdateAsyncInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/async/DefaultUpdateEntityAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async" target="classFrame">DefaultUpdateEntityAsyncInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/DefaultUpdateEntityInterceptor.html" title="class in io.micronaut.data.runtime.intercept" target="classFrame">DefaultUpdateEntityInterceptor</a></li>
@@ -272,6 +275,7 @@
 <li><a href="io/micronaut/data/annotation/MappedProperty.html" title="annotation in io.micronaut.data.annotation" target="classFrame">MappedProperty</a></li>
 <li><a href="io/micronaut/data/exceptions/MappingException.html" title="class in io.micronaut.data.exceptions" target="classFrame">MappingException</a></li>
 <li><a href="io/micronaut/data/processor/visitors/MatchContext.html" title="class in io.micronaut.data.processor.visitors" target="classFrame">MatchContext</a></li>
+<li><a href="io/micronaut/data/processor/visitors/MatchFailedException.html" title="class in io.micronaut.data.processor.visitors" target="classFrame">MatchFailedException</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders" target="classFrame"><span class="interfaceName">MethodCandidate</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/MethodMatchContext.html" title="class in io.micronaut.data.processor.visitors" target="classFrame">MethodMatchContext</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html" title="class in io.micronaut.data.processor.visitors.finders" target="classFrame">MethodMatchInfo</a></li>
@@ -412,6 +416,7 @@
 <li><a href="io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder" target="classFrame"><span class="interfaceName">QueryResult</span></a></li>
 <li><a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper" target="classFrame"><span class="interfaceName">QueryStatement</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/RawQuery.html" title="class in io.micronaut.data.processor.visitors.finders" target="classFrame">RawQuery</a></li>
+<li><a href="io/micronaut/data/processor/visitors/finders/RawQueryMethod.html" title="class in io.micronaut.data.processor.visitors.finders" target="classFrame">RawQueryMethod</a></li>
 <li><a href="io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive" target="classFrame"><span class="interfaceName">ReactiveCapableRepository</span></a></li>
 <li><a href="io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive" target="classFrame"><span class="interfaceName">ReactiveRepositoryOperations</span></a></li>
 <li><a href="io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html" title="interface in io.micronaut.data.repository.reactive" target="classFrame"><span class="interfaceName">ReactiveStreamsCrudRepository</span></a></li>
@@ -441,7 +446,6 @@
 <li><a href="io/micronaut/data/repository/reactive/RxJavaCrudRepository.html" title="interface in io.micronaut.data.repository.reactive" target="classFrame"><span class="interfaceName">RxJavaCrudRepository</span></a></li>
 <li><a href="io/micronaut/data/intercept/async/SaveAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async" target="classFrame"><span class="interfaceName">SaveAllAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/SaveAllInterceptor.html" title="interface in io.micronaut.data.intercept" target="classFrame"><span class="interfaceName">SaveAllInterceptor</span></a></li>
-<li><a href="io/micronaut/data/processor/visitors/finders/SaveAllMethod.html" title="class in io.micronaut.data.processor.visitors.finders" target="classFrame">SaveAllMethod</a></li>
 <li><a href="io/micronaut/data/intercept/reactive/SaveAllReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive" target="classFrame"><span class="interfaceName">SaveAllReactiveInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/async/SaveEntityAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async" target="classFrame"><span class="interfaceName">SaveEntityAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/SaveEntityInterceptor.html" title="interface in io.micronaut.data.intercept" target="classFrame"><span class="interfaceName">SaveEntityInterceptor</span></a></li>
@@ -528,7 +532,11 @@
 <li><a href="io/micronaut/data/annotation/TypeRole.html" title="annotation in io.micronaut.data.annotation" target="classFrame">TypeRole</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/TypeUtils.html" title="class in io.micronaut.data.processor.visitors.finders" target="classFrame">TypeUtils</a></li>
 <li><a href="io/micronaut/transaction/exceptions/UnexpectedRollbackException.html" title="class in io.micronaut.transaction.exceptions" target="classFrame">UnexpectedRollbackException</a></li>
+<li><a href="io/micronaut/data/intercept/UpdateAllEntitiesInterceptor.html" title="interface in io.micronaut.data.intercept" target="classFrame"><span class="interfaceName">UpdateAllEntitiesInterceptor</span></a></li>
+<li><a href="io/micronaut/data/intercept/reactive/UpdateAllEntitiesReactiveInterceptor.html" title="interface in io.micronaut.data.intercept.reactive" target="classFrame"><span class="interfaceName">UpdateAllEntitiesReactiveInterceptor</span></a></li>
+<li><a href="io/micronaut/data/intercept/async/UpdateAllEntriesAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async" target="classFrame"><span class="interfaceName">UpdateAllEntriesAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/async/UpdateAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async" target="classFrame"><span class="interfaceName">UpdateAsyncInterceptor</span></a></li>
+<li><a href="io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime" target="classFrame"><span class="interfaceName">UpdateBatchOperation</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/UpdateByMethod.html" title="class in io.micronaut.data.processor.visitors.finders" target="classFrame">UpdateByMethod</a></li>
 <li><a href="io/micronaut/data/intercept/async/UpdateEntityAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async" target="classFrame"><span class="interfaceName">UpdateEntityAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/UpdateEntityInterceptor.html" title="interface in io.micronaut.data.intercept" target="classFrame"><span class="interfaceName">UpdateEntityInterceptor</span></a></li>

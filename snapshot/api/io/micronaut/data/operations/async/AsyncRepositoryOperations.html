@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":18,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6,"i11":6,"i12":6,"i13":6,"i14":6,"i15":6,"i16":6,"i17":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -229,6 +229,12 @@ var activeTableTab = "activeTableTab";
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.util.concurrent.CompletionStage&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/async/AsyncRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity returning a possibly new entity.</div>
+</td>
+</tr>
+<tr id="i17" class="rowColor">
+<td class="colFirst"><code>default &lt;T&gt;&nbsp;java.util.concurrent.CompletionStage&lt;java.lang.Iterable&lt;T&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/operations/async/AsyncRepositoryOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
+<div class="block">Updates the entities for the given operation.</div>
 </td>
 </tr>
 </table>
@@ -467,6 +473,26 @@ java.util.concurrent.Executor&nbsp;getExecutor()</pre>
 <dd><code>operation</code> - The entity operation</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>A completion stage that emits the entity</dd>
+</dl>
+</li>
+</ul>
+<a name="updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>updateAll</h4>
+<pre>@NonNull
+default&nbsp;&lt;T&gt;&nbsp;java.util.concurrent.CompletionStage&lt;java.lang.Iterable&lt;T&gt;&gt;&nbsp;updateAll(@NonNull
+                                                                                           <a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</pre>
+<div class="block">Updates the entities for the given operation.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>operation</code> - The operation</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The updated entities</dd>
 </dl>
 </li>
 </ul>

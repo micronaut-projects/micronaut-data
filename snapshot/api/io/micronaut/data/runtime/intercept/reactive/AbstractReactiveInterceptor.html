@@ -17,6 +17,12 @@
     catch(err) {
     }
 //-->
+var methods = {"i0":10};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
+var altColor = "altColor";
+var rowColor = "rowColor";
+var tableTab = "tableTab";
+var activeTableTab = "activeTableTab";
 </script>
 <noscript>
 <div>JavaScript is disabled on your browser.</div>
@@ -69,13 +75,13 @@
 <li>Nested&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
-<li><a href="#methods.inherited.from.class.io.micronaut.data.runtime.intercept.AbstractQueryInterceptor">Method</a></li>
+<li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
 <a name="skip.navbar.top">
@@ -115,7 +121,7 @@
 </dl>
 <dl>
 <dt>Direct Known Subclasses:</dt>
-<dd><a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultCountReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultCountReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultDeleteAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultDeleteAllReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultDeleteOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultDeleteOneReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultExistsByReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultExistsByReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindAllReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindByIdReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindByIdReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindOneReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindPageReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindPageReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindSliceReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindSliceReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultSaveAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveAllReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultSaveEntityReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveEntityReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultSaveOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveOneReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultUpdateEntityReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateEntityReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultUpdateReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateReactiveInterceptor</a></dd>
+<dd><a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultCountReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultCountReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultDeleteAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultDeleteAllReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultDeleteOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultDeleteOneReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultExistsByReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultExistsByReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindAllReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindByIdReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindByIdReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindOneReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindPageReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindPageReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultFindSliceReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultFindSliceReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultSaveAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveAllReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultSaveEntityReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveEntityReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultSaveOneReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveOneReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultUpdateAllEntitiesReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateAllEntitiesReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultUpdateEntityReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateEntityReactiveInterceptor</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/DefaultUpdateReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultUpdateReactiveInterceptor</a></dd>
 </dl>
 <hr>
 <br>
@@ -187,12 +193,25 @@ extends <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQ
 <!--   -->
 </a>
 <h3>Method Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t4" class="tableTab"><span><a href="javascript:show(8);">Concrete Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Method and Description</th>
+</tr>
+<tr id="i0" class="altColor">
+<td class="colFirst"><code>protected org.reactivestreams.Publisher&lt;java.lang.Integer&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/AbstractReactiveInterceptor.html#count-org.reactivestreams.Publisher-">count</a></span>(org.reactivestreams.Publisher&lt;<a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/AbstractReactiveInterceptor.html" title="type parameter in AbstractReactiveInterceptor">R</a>&gt;&nbsp;publisher)</code>
+<div class="block">Count the items.</div>
+</td>
+</tr>
+</table>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.runtime.intercept.AbstractQueryInterceptor">
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.data.runtime.intercept.<a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html" title="class in io.micronaut.data.runtime.intercept">AbstractQueryInterceptor</a></h3>
-<code><a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#convertNumberArgumentIfNecessary-java.lang.Number-io.micronaut.core.type.Argument-">convertNumberArgumentIfNecessary</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteAllBatchOperation-io.micronaut.aop.MethodInvocationContext-">getDeleteAllBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteAllBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">getDeleteAllBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-java.lang.Iterable-">getDeleteBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Iterable-">getDeleteBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteOperation-io.micronaut.aop.MethodInvocationContext-E-">getDeleteOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-java.lang.Iterable-">getInsertBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Iterable-">getInsertBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertOperation-io.micronaut.aop.MethodInvocationContext-">getInsertOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertOperation-io.micronaut.aop.MethodInvocationContext-E-">getInsertOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getPageable-io.micronaut.aop.MethodInvocationContext-">getPageable</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getPagedQuery-io.micronaut.aop.MethodInvocationContext-">getPagedQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getRequiredEntity-io.micronaut.aop.MethodInvocationContext-">getRequiredEntity</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getRequiredRootEntity-io.micronaut.aop.MethodInvocationContext-">getRequiredRootEntity</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getUpdateOperation-io.micronaut.aop.MethodInvocationContext-">getUpdateOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#instantiateEntity-java.lang.Class-java.util.Map-">instantiateEntity</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#isNullable-io.micronaut.core.annotation.AnnotationMetadata-">isNullable</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareCountQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">prepareCountQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">prepareQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">prepareQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#validateNullArguments-io.micronaut.aop.MethodInvocationContext-">validateNullArguments</a></code></li>
+<code><a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#convertNumberArgumentIfNecessary-java.lang.Number-io.micronaut.core.type.Argument-">convertNumberArgumentIfNecessary</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#count-java.lang.Iterable-">count</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#findEntitiesParameter-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">findEntitiesParameter</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#findEntityParameter-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">findEntityParameter</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-java.lang.Iterable-">getDeleteBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Iterable-">getDeleteBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getDeleteOperation-io.micronaut.aop.MethodInvocationContext-E-">getDeleteOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getEntitiesParameter-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">getEntitiesParameter</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getEntityParameter-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">getEntityParameter</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-java.lang.Iterable-">getInsertBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Iterable-">getInsertBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertOperation-io.micronaut.aop.MethodInvocationContext-">getInsertOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getInsertOperation-io.micronaut.aop.MethodInvocationContext-E-">getInsertOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getPageable-io.micronaut.aop.MethodInvocationContext-">getPageable</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getPagedQuery-io.micronaut.aop.MethodInvocationContext-">getPagedQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getRequiredEntity-io.micronaut.aop.MethodInvocationContext-">getRequiredEntity</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getRequiredRootEntity-io.micronaut.aop.MethodInvocationContext-">getRequiredRootEntity</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getUpdateAllBatchOperation-io.micronaut.aop.MethodInvocationContext-java.lang.Class-java.lang.Iterable-">getUpdateAllBatchOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getUpdateOperation-io.micronaut.aop.MethodInvocationContext-">getUpdateOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#getUpdateOperation-io.micronaut.aop.MethodInvocationContext-E-">getUpdateOperation</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#instantiateEntity-java.lang.Class-java.util.Map-">instantiateEntity</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#isNullable-io.micronaut.core.annotation.AnnotationMetadata-">isNullable</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#isNumber-java.lang.Class-">isNumber</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareCountQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">prepareCountQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">prepareQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#prepareQuery-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-java.lang.Class-">prepareQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/intercept/AbstractQueryInterceptor.html#validateNullArguments-io.micronaut.aop.MethodInvocationContext-">validateNullArguments</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -257,6 +276,30 @@ protected final&nbsp;<a href="../../../../../../io/micronaut/data/operations/rea
 </ul>
 </li>
 </ul>
+<!-- ============ METHOD DETAIL ========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method.detail">
+<!--   -->
+</a>
+<h3>Method Detail</h3>
+<a name="count-org.reactivestreams.Publisher-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>count</h4>
+<pre>protected&nbsp;org.reactivestreams.Publisher&lt;java.lang.Integer&gt;&nbsp;count(org.reactivestreams.Publisher&lt;<a href="../../../../../../io/micronaut/data/runtime/intercept/reactive/AbstractReactiveInterceptor.html" title="type parameter in AbstractReactiveInterceptor">R</a>&gt;&nbsp;publisher)</pre>
+<div class="block">Count the items.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>publisher</code> - the publisher</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the size</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
 </li>
 </ul>
 </div>
@@ -310,13 +353,13 @@ protected final&nbsp;<a href="../../../../../../io/micronaut/data/operations/rea
 <li>Nested&nbsp;|&nbsp;</li>
 <li><a href="#field.summary">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
-<li><a href="#methods.inherited.from.class.io.micronaut.data.runtime.intercept.AbstractQueryInterceptor">Method</a></li>
+<li><a href="#method.summary">Method</a></li>
 </ul>
 <ul class="subNavList">
 <li>Detail:&nbsp;</li>
 <li><a href="#field.detail">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.detail">Constr</a>&nbsp;|&nbsp;</li>
-<li>Method</li>
+<li><a href="#method.detail">Method</a></li>
 </ul>
 </div>
 <a name="skip.navbar.bottom">

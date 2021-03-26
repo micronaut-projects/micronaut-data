@@ -53,7 +53,7 @@
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#querying"><strong>5</strong><span>Writing Queries</span></a></div>
                                 
-                                <div class="toc-item" style="margin-left:0"><a href="#dataUpdates"><strong>6</strong><span>Updating Data</span></a></div>
+                                <div class="toc-item" style="margin-left:0"><a href="#dataUpdates"><strong>6</strong><span>Inserting and modifying data</span></a></div>
                                 
                                 <div class="toc-item" style="margin-left:0"><a href="#howItWorks"><strong>7</strong><span>How Micronaut Data Works</span></a></div>
                                 
@@ -126,21 +126,23 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-reactive"><a href="#reactive"><strong>5.11</strong><span>Reactive Queries</span></a></div>
         
-        <div class="toc-item" style="margin-left:0px" id="toc-item-dataUpdates"><a href="#dataUpdates"><strong>6</strong><span>Updating Data</span></a></div>
+        <div class="toc-item" style="margin-left:0px" id="toc-item-dataUpdates"><a href="#dataUpdates"><strong>6</strong><span>Inserting and modifying data</span></a></div>
         
-        <div class="toc-item" style="margin-left:10px" id="toc-item-transactions"><a href="#transactions"><strong>6.1</strong><span>Transactions</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-inserts"><a href="#inserts"><strong>6.1</strong><span>Inserting</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-programmaticTransactions"><a href="#programmaticTransactions"><strong>6.1.1</strong><span>Programmatic Transactions</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-updates"><a href="#updates"><strong>6.2</strong><span>Updating</span></a></div>
         
-        <div class="toc-item" style="margin-left:20px" id="toc-item-transactionalEvents"><a href="#transactionalEvents"><strong>6.1.2</strong><span>Transactional Events</span></a></div>
-        
-        <div class="toc-item" style="margin-left:10px" id="toc-item-batchUpdates"><a href="#batchUpdates"><strong>6.2</strong><span>Batch Updates</span></a></div>
-        
-        <div class="toc-item" style="margin-left:10px" id="toc-item-batchDeletes"><a href="#batchDeletes"><strong>6.3</strong><span>Batch Deletes</span></a></div>
+        <div class="toc-item" style="margin-left:10px" id="toc-item-deletes"><a href="#deletes"><strong>6.3</strong><span>Deleting</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-timestamps"><a href="#timestamps"><strong>6.4</strong><span>Entity Timestamps</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-entityEvents"><a href="#entityEvents"><strong>6.5</strong><span>Entity Events</span></a></div>
+        
+        <div class="toc-item" style="margin-left:10px" id="toc-item-transactions"><a href="#transactions"><strong>6.6</strong><span>Transactions</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-programmaticTransactions"><a href="#programmaticTransactions"><strong>6.6.1</strong><span>Programmatic Transactions</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-transactionalEvents"><a href="#transactionalEvents"><strong>6.6.2</strong><span>Transactional Events</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-howItWorks"><a href="#howItWorks"><strong>7</strong><span>How Micronaut Data Works</span></a></div>
         
@@ -257,10 +259,14 @@
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Repository <b class="conum">(1)</b>
@@ -583,10 +589,14 @@ data class Book(@Id
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
 import io.micronaut.data.repository.CrudRepository;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Repository <b class="conum">(1)</b>
@@ -2610,7 +2620,7 @@ assertEquals(
 <p>In addition for more complex operations it may be more efficient to write custom code that uses a single session.</p>
 </div>
 
-<h1 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>6 Updating Data</h1>
+<h1 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>6 Inserting and modifying data</h1>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
@@ -2621,28 +2631,52 @@ assertEquals(
 
 
 <div class="paragraph">
-<p>There are various ways to perform write operations with Micronaut Data interfaces.</p>
+<p>There are various ways to perform read/write operations with Micronaut Data interfaces:</p>
 </div>
+<div class="ulist">
+<ul>
+<li>
+<p>extend one of the <a href="#repositories">builtin repository interfaces</a></p>
+</li>
+<li>
+<p>simply define a new method with a <a href="#criteria">criteria query naming convention</a></p>
+</li>
+<li>
+<p>define a new method with a custom query using <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation</p>
+</li>
+</ul>
+</div>
+
+<h2 id="inserts"><a class="anchor" href="#inserts"></a>6.1 Inserting</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/dataUpdates/inserts.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
 <div class="paragraph">
 <p>To insert data the simplest form is to define a method that accepts the type of the entity, the same way as the <a href="../api/io/micronaut/data/repository/CrudRepository.html">CrudRepository</a> interface does:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">Book persist(Book entity);</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">Book save(Book entity);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book persist(Book entity)</code></pre>
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book save(Book entity)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun persist(entity: Book): Book</code></pre>
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun save(entity: Book): Book</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The method must accept a single argument that is the entity and start with either <code>save</code>, <code>persist</code>, <code>insert</code> or <code>store</code>.</p>
+<p>The method must accept a single argument that is the entity and start with either <code>save</code>, <code>persist</code>, <code>insert</code> or <code>store</code>, to persist multiple entities the method needs to accept <code>java.lag.Iterable</code> of the entity.</p>
 </div>
 <div class="paragraph">
 <p>Alternatively you can also define a method that features parameter names that match the properties of the entity name:</p>
@@ -2666,21 +2700,42 @@ assertEquals(
 <p>In this case, when update of whole entity is intended, you must specify parameters for all properties other than those that are declared as <code>@Nullable</code> or as a <code>@GeneratedValue</code>, if you do not a compilation error will occur.</p>
 </div>
 <div class="paragraph">
-<p>For partial updates, you must define a method that features a parameter annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a> and parameters for the properties to be updated.</p>
+<p>The insert method can have a custom query defined by <a href="../api/io/micronaut/data/annotation/Query.html">@Query</a> annotation:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">void update(@Id Long id, int pages);</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+void insert(String title, int pages);
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+void insertOne(Book book);
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+void insertMany(Iterable&lt;Book&gt; books);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">void update(@Id Long id, int pages)</code></pre>
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+void insert(String title, int pages)
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+void insertOne(Book entity)
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+void insertMany(Iterable&lt;Book&gt; entities)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(@Id id: Long?, pages: Int)</code></pre>
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+fun insert(title: String, pages: Int)
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+fun insertOne(book: Book)
+
+@Query("INSERT INTO Book(title, pages) VALUES (:title, :pages)")
+fun insertMany(books: Iterable&lt;Book&gt;)</code></pre>
 </div>
 </div>
 <div class="admonitionblock tip">
@@ -2696,554 +2751,39 @@ It is not possible to use the entity as the return type in partial updates becau
 </table>
 </div>
 
-<h2 id="transactions"><a class="anchor" href="#transactions"></a>6.1 Transactions</h2>
+<h2 id="updates"><a class="anchor" href="#updates"></a>6.2 Updating</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
-/src/main/docs/guide/dataUpdates/transactions.adoc"'>
+/src/main/docs/guide/dataUpdates/updates.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the <code>javax.transaction.Transactional</code> annotation.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-If you prefer Spring-managed transactions you can add the <code>micronaut-data-spring</code> dependency and Spring-managed transactions will be used instead. See the section on <a href="#spring">Spring Support</a> for more information.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
-</div>
-<div class="paragraph">
-<p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
-</div>
-
-<h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>6.1.1 Programmatic Transactions</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
-/src/main/docs/guide/dataUpdates/transactions/programmaticTransactions.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>You can use the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> API to perform programmatic transactions.</p>
-</div>
-<div class="paragraph">
-<p>The following demonstrates an example:</p>
+<p>To update an entity you can once again pass the entity to the <code>update</code> method:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">package example;
-
-import io.micronaut.transaction.SynchronousTransactionManager;
-import javax.inject.Singleton;
-import javax.persistence.EntityManager;
-import java.sql.Connection;
-
-@Singleton
-public class ProductManager {
-
-    private final EntityManager entityManager;
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
-
-    public ProductManager(
-            EntityManager entityManager,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
-        this.entityManager = entityManager;
-        this.transactionManager = transactionManager;
-    }
-
-    Product save(String name, Manufacturer manufacturer) {
-        return transactionManager.executeWrite(status -&gt; { <b class="conum">(2)</b>
-            final Product product = new Product(name, manufacturer);
-            entityManager.persist(product);
-            return product;
-        });
-    }
-
-    Product find(String name) {
-        return transactionManager.executeRead(status -&gt; <b class="conum">(3)</b>
-                entityManager.createQuery("from Product p where p.name = :name", Product.class)
-                    .setParameter("name", name)
-                    .getSingleResult()
-        );
-    }
-}</code></pre>
+<pre class="highlight"><code class="language-java" data-lang="java">Book update(Book newBook);</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
-
-import io.micronaut.transaction.SynchronousTransactionManager
-import javax.inject.Singleton
-import javax.persistence.EntityManager
-import java.sql.Connection
-
-@Singleton
-class ProductManager {
-
-    private final EntityManager entityManager
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
-
-    ProductManager(
-            EntityManager entityManager,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
-        this.entityManager = entityManager
-        this.transactionManager = transactionManager
-    }
-
-    Product save(String name, Manufacturer manufacturer) {
-        return transactionManager.executeWrite { <b class="conum">(2)</b>
-            final product = new Product(name, manufacturer)
-            entityManager.persist(product)
-            return product
-        }
-    }
-
-    Product find(String name) {
-        return transactionManager.executeRead { <b class="conum">(3)</b>
-            entityManager.createQuery("from Product p where p.name = :name", Product)
-                    .setParameter("name", name)
-                    .singleResult
-        }
-    }
-}</code></pre>
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book update(Book newBook)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
-
-import io.micronaut.transaction.SynchronousTransactionManager
-import java.sql.Connection
-import javax.inject.Singleton
-import javax.persistence.EntityManager
-
-@Singleton
-class ProductManager(
-        private val entityManager: EntityManager,
-        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
-{
-
-    fun save(name: String, manufacturer: Manufacturer): Product {
-        return transactionManager.executeWrite { <b class="conum">(2)</b>
-            val product = Product(0, name, manufacturer)
-            entityManager.persist(product)
-            product
-        }
-    }
-
-    fun find(name: String): Product {
-        return transactionManager.executeRead {  <b class="conum">(3)</b>
-            entityManager.createQuery("from Product p where p.name = :name", Product::class.java)
-                    .setParameter("name", name)
-                    .singleResult
-        }
-    }
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> and a transaction-aware <code>EntityManager</code></td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>The <code>save</code> method uses the <code>executeWrite</code> method to execute a write transaction within the context of the passed lambda.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Note that if you are using Micronaut Data JDBC then instead of an <code>EntityManager</code> you should inject a transaction-aware JDBC <code>Connection</code> object.</p>
-</div>
-<div class="paragraph">
-<p>The following presents an example:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">package example;
-
-import io.micronaut.transaction.SynchronousTransactionManager;
-import javax.inject.Singleton;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-
-@Singleton
-public class ProductManager {
-
-    private final Connection connection;
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
-
-    public ProductManager(
-            Connection connection,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
-        this.connection = connection;
-        this.transactionManager = transactionManager;
-    }
-
-    Product save(String name, Manufacturer manufacturer) {
-        return transactionManager.executeWrite(status -&gt; { <b class="conum">(2)</b>
-            final Product product = new Product(name, manufacturer);
-            try (PreparedStatement ps =
-                         connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")) {
-                ps.setString(1, name);
-                ps.setLong(2, manufacturer.getId());
-                ps.execute();
-            }
-            return product;
-        });
-    }
-
-    Product find(String name) {
-        return transactionManager.executeRead(status -&gt; { <b class="conum">(3)</b>
-            try (PreparedStatement ps = connection
-                    .prepareStatement("select * from product p where p.name = ?")) {
-                ps.setString(1, name);
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return new Product(rs.getString("name"), null);
-                    }
-                    return null;
-                }
-            }
-        });
-    }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
-
-import io.micronaut.transaction.SynchronousTransactionManager
-import javax.inject.Singleton
-import java.sql.Connection
-import java.sql.PreparedStatement
-import java.sql.ResultSet
-
-@Singleton
-class ProductManager {
-
-    private final Connection connection
-    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
-
-    ProductManager(
-            Connection connection,
-            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
-        this.connection = connection
-        this.transactionManager = transactionManager
-    }
-
-    Product save(String name, Manufacturer manufacturer) {
-        return transactionManager.executeWrite { <b class="conum">(2)</b>
-            final Product product = new Product(name, manufacturer)
-            connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")
-                .withCloseable { PreparedStatement ps -&gt;
-                    ps.setString(1, name)
-                    ps.setLong(2, manufacturer.getId())
-                    ps.execute()
-                }
-            return product
-        }
-    }
-
-    Product find(String name) {
-        return transactionManager.executeRead{ <b class="conum">(3)</b>
-            connection
-                .prepareStatement("select * from product p where p.name = ?").withCloseable {
-                    PreparedStatement ps -&gt;
-                ps.setString(1, name)
-                ps.executeQuery().withCloseable { ResultSet rs -&gt;
-                    if (rs.next()) {
-                        return new Product(rs.getString("name"), null)
-                    }
-                    return null
-                }
-            }
-        }
-    }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
-
-import io.micronaut.transaction.SynchronousTransactionManager
-import java.sql.Connection
-import javax.inject.Singleton
-
-@Singleton
-class ProductManager(
-        private val connection: Connection,
-        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
-{
-
-    fun save(name: String, manufacturer: Manufacturer): Product {
-        return transactionManager.executeWrite { <b class="conum">(2)</b>
-            val product = Product(0, name, manufacturer)
-            connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)").use { ps -&gt;
-                ps.setString(1, name)
-                ps.setLong(2, manufacturer.id!!)
-                ps.execute()
-            }
-            product
-        }
-    }
-
-    fun find(name: String): Product? {
-        return transactionManager.executeRead { <b class="conum">(3)</b>
-            connection
-                    .prepareStatement("select * from product p where p.name = ?").use { ps -&gt;
-                        ps.setString(1, name)
-                        ps.executeQuery().use { rs -&gt;
-                            if (rs.next()) {
-                                return@executeRead Product(
-                                        rs.getLong("id"),
-                                        rs.getString("name"),
-                                        null)
-                            }
-                            return@executeRead null
-                        }
-                    }
-        }
-    }
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> and a transaction-aware <code>Connection</code></td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>The <code>save</code> method uses the <code>executeWrite</code> method to execute a write transaction within the context of the passed lambda.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Note that it is important that you always use the injected connection as Micronaut Data makes available a transaction-aware implementation that uses the connection associated with the underlying transaction.</p>
-</div>
-<div class="paragraph">
-<p>If a transaction is not active when using this connection then a <a href="../api/io/micronaut/transaction/exceptions/NoTransactionException.html">NoTransactionException</a> will be thrown indicating you should either provide a programmatic transaction or use <code>@Transactional</code>.</p>
-</div>
-
-<h2 id="transactionalEvents"><a class="anchor" href="#transactionalEvents"></a>6.1.2 Transactional Events</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
-/src/main/docs/guide/dataUpdates/transactions/transactionalEvents.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>You can write event listeners that are transaction aware using the <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a> annotation.</p>
-</div>
-<div class="paragraph">
-<p>The following demonstrates an example:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">package example;
-
-import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.transaction.annotation.TransactionalEventListener;
-import javax.inject.Singleton;
-import javax.transaction.Transactional;
-
-@Singleton
-public class BookManager {
-    private final BookRepository bookRepository;
-    private final ApplicationEventPublisher eventPublisher;
-
-    public BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { <b class="conum">(1)</b>
-        this.bookRepository = bookRepository;
-        this.eventPublisher = eventPublisher;
-    }
-
-    @Transactional
-    void saveBook(String title, int pages) {
-        final Book book = new Book(title, pages);
-        bookRepository.save(book);
-        eventPublisher.publishEvent(new NewBookEvent(book)); <b class="conum">(2)</b>
-    }
-
-    @TransactionalEventListener
-    void onNewBook(NewBookEvent event) {
-        System.out.println("book = " + event.book); <b class="conum">(3)</b>
-    }
-
-    static class NewBookEvent {
-        final Book book;
-
-        public NewBookEvent(Book book) {
-            this.book = book;
-        }
-    }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
-
-import io.micronaut.context.event.ApplicationEventPublisher
-import io.micronaut.transaction.annotation.TransactionalEventListener
-import javax.inject.Singleton
-import javax.transaction.Transactional
-
-@Singleton
-class BookManager {
-    private final BookRepository bookRepository
-    private final ApplicationEventPublisher eventPublisher
-
-    BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { <b class="conum">(1)</b>
-        this.bookRepository = bookRepository
-        this.eventPublisher = eventPublisher
-    }
-
-    @Transactional
-    void saveBook(String title, int pages) {
-        final Book book = new Book(title, pages)
-        bookRepository.save(book)
-        eventPublisher.publishEvent(new NewBookEvent(book)) <b class="conum">(2)</b>
-    }
-
-    @TransactionalEventListener
-    void onNewBook(NewBookEvent event) {
-        println("book = $event.book") <b class="conum">(3)</b>
-    }
-
-    static class NewBookEvent {
-        final Book book
-
-        NewBookEvent(Book book) {
-            this.book = book
-        }
-    }
-}</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
-
-import io.micronaut.context.event.ApplicationEventPublisher
-import io.micronaut.transaction.annotation.TransactionalEventListener
-import javax.inject.Singleton
-import javax.transaction.Transactional
-
-@Singleton
-open class BookManager(
-        private val bookRepository: BookRepository, private val eventPublisher: ApplicationEventPublisher) { <b class="conum">(1)</b>
-
-    @Transactional
-    open fun saveBook(title: String, pages: Int) {
-        val book = Book(0, title, pages)
-        bookRepository.save(book)
-        eventPublisher.publishEvent(NewBookEvent(book)) <b class="conum">(2)</b>
-    }
-
-    @TransactionalEventListener
-    open fun onNewBook(event: NewBookEvent) {
-        println("book = ${event.book}") <b class="conum">(3)</b>
-    }
-
-    class NewBookEvent(val book: Book)
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The <code>BookManager</code> class receives an instance of <code>ApplicationEventPublisher</code>.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>When the event is published if there is a running transaction then it will only trigger the listener once the transaction is committed.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>The listener itself is annotated with <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a></td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-You can set the value of the <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a> annotation to bind the listener to a particular transaction phase.
-</td>
-</tr>
-</table>
-</div>
-
-<h2 id="batchUpdates"><a class="anchor" href="#batchUpdates"></a>6.2 Batch Updates</h2>
-
-<div class='contribute-btn'>
-    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
-/src/main/docs/guide/dataUpdates/batchUpdates.adoc"'>
-        <i class='fa fa-pencil-square-o'></i> Improve this doc
-    </button>
-</div>
-
-
-<div class="paragraph">
-<p>To update an entity you can once again pass the entity to the the <code>save</code> method:</p>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">Book persist(Book entity);</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">Book persist(Book entity)</code></pre>
-</div>
-</div>
-<div class="listingblock multi-language-sample">
-<div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun persist(entity: Book): Book</code></pre>
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun update(newBook: Book): Book</code></pre>
 </div>
 </div>
 <div class="paragraph">
 <p>However, generally it is more efficient to use batch updates to only update the properties that have actually changed.</p>
 </div>
 <div class="paragraph">
-<p>There are a couple of ways to achieve batch updates. One way is to define a method that features an argument annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a>, starts with the stem <code>update</code> and returns <code>void</code>:</p>
+<p>There are a couple of ways to achieve batch updates. One way is to define a method that features an argument annotated with <a href="../api/io/micronaut/data/annotation/Id.html">@Id</a>, starts with the stem <code>update</code>:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -3284,19 +2824,49 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 <div class="paragraph">
 <p>In this case you can use any finder expression to query on arbitrary properties and any remaining arguments that don&#8217;t form part of the query expression are used for the update. Once again if one of the remaining arguments does not match an existing property of the entity a compilation error will occur.</p>
 </div>
+<div class="paragraph">
+<p>You can also specify a custom query for the update methods:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Query("UPDATE book SET title = :title where id = :id")
+void updateOne(Book book);
 
-<h2 id="batchDeletes"><a class="anchor" href="#batchDeletes"></a>6.3 Batch Deletes</h2>
+@Query("UPDATE book SET title = :title where id = :id")
+void updateMany(Iterable&lt;Book&gt; books);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Query("UPDATE book SET title = :title where id = :id")
+void updateOne(Book book)
+
+@Query("UPDATE book SET title = :title where id = :id")
+void updateMany(Iterable&lt;Book&gt; books)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Query("UPDATE book SET title = :title where id = :id")
+fun updateOne(book: Book)
+
+@Query("UPDATE book SET title = :title where id = :id")
+fun updateMany(books: Iterable&lt;Book&gt;)</code></pre>
+</div>
+</div>
+
+<h2 id="deletes"><a class="anchor" href="#deletes"></a>6.3 Deleting</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
-/src/main/docs/guide/dataUpdates/batchDeletes.adoc"'>
+/src/main/docs/guide/dataUpdates/deletes.adoc"'>
         <i class='fa fa-pencil-square-o'></i> Improve this doc
     </button>
 </div>
 
 
 <div class="paragraph">
-<p>Batch deletes can be performed in a number of ways. To delete everything (use with care!) you can use <code>deleteAll</code>:</p>
+<p>Deleting can be performed in a number of ways. To delete everything (use with care!) you can use <code>deleteAll</code>:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -3359,6 +2929,36 @@ You can set the value of the <a href="../api/io/micronaut/transaction/annotation
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">fun deleteByTitleLike(title: String)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also specify A custom query for a delete method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Query("DELETE FROM Book WHERE title = :title")
+void deleteOne(Book book);
+
+@Query("DELETE FROM Book WHERE title = :title")
+void deleteMany(Iterable&lt;Book&gt; books);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Query("DELETE FROM Book WHERE title = :title")
+void deleteOne(Book book)
+
+@Query("DELETE FROM Book WHERE title = :title")
+void deleteMany(Iterable&lt;Book&gt; books)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Query("DELETE FROM Book WHERE title = :title")
+fun deleteOne(book: Book)
+
+@Query("DELETE FROM Book WHERE title = :title")
+fun deleteMany(books: Iterable&lt;Book&gt;)</code></pre>
 </div>
 </div>
 
@@ -3772,6 +3372,521 @@ class BookListeners {
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
 <td>An additional <a href="../api/io/micronaut/data/event/listeners/PostPersistListener.html">@PostPersistListener</a> event listener is defined</td>
+</tr>
+</table>
+</div>
+
+<h2 id="transactions"><a class="anchor" href="#transactions"></a>6.6 Transactions</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/dataUpdates/transactions.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data will automatically manage transactions for you. You can simply declare a method as transactional with the <code>javax.transaction.Transactional</code> annotation.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+If you prefer Spring-managed transactions you can add the <code>micronaut-data-spring</code> dependency and Spring-managed transactions will be used instead. See the section on <a href="#spring">Spring Support</a> for more information.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Micronaut Data maps the declared transaction annotation to the correct underlying semantics and compilation time.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data will also automatically apply read-only transactional semantics to query methods and write transaction semantics to write operations.</p>
+</div>
+
+<h2 id="programmaticTransactions"><a class="anchor" href="#programmaticTransactions"></a>6.6.1 Programmatic Transactions</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/dataUpdates/transactions/programmaticTransactions.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can use the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> API to perform programmatic transactions.</p>
+</div>
+<div class="paragraph">
+<p>The following demonstrates an example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.transaction.SynchronousTransactionManager;
+import javax.inject.Singleton;
+import javax.persistence.EntityManager;
+import java.sql.Connection;
+
+@Singleton
+public class ProductManager {
+
+    private final EntityManager entityManager;
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
+
+    public ProductManager(
+            EntityManager entityManager,
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
+        this.entityManager = entityManager;
+        this.transactionManager = transactionManager;
+    }
+
+    Product save(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite(status -&gt; { <b class="conum">(2)</b>
+            final Product product = new Product(name, manufacturer);
+            entityManager.persist(product);
+            return product;
+        });
+    }
+
+    Product find(String name) {
+        return transactionManager.executeRead(status -&gt; <b class="conum">(3)</b>
+                entityManager.createQuery("from Product p where p.name = :name", Product.class)
+                    .setParameter("name", name)
+                    .getSingleResult()
+        );
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.transaction.SynchronousTransactionManager
+import javax.inject.Singleton
+import javax.persistence.EntityManager
+import java.sql.Connection
+
+@Singleton
+class ProductManager {
+
+    private final EntityManager entityManager
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
+
+    ProductManager(
+            EntityManager entityManager,
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
+        this.entityManager = entityManager
+        this.transactionManager = transactionManager
+    }
+
+    Product save(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite { <b class="conum">(2)</b>
+            final product = new Product(name, manufacturer)
+            entityManager.persist(product)
+            return product
+        }
+    }
+
+    Product find(String name) {
+        return transactionManager.executeRead { <b class="conum">(3)</b>
+            entityManager.createQuery("from Product p where p.name = :name", Product)
+                    .setParameter("name", name)
+                    .singleResult
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.transaction.SynchronousTransactionManager
+import java.sql.Connection
+import javax.inject.Singleton
+import javax.persistence.EntityManager
+
+@Singleton
+class ProductManager(
+        private val entityManager: EntityManager,
+        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
+{
+
+    fun save(name: String, manufacturer: Manufacturer): Product {
+        return transactionManager.executeWrite { <b class="conum">(2)</b>
+            val product = Product(0, name, manufacturer)
+            entityManager.persist(product)
+            product
+        }
+    }
+
+    fun find(name: String): Product {
+        return transactionManager.executeRead {  <b class="conum">(3)</b>
+            entityManager.createQuery("from Product p where p.name = :name", Product::class.java)
+                    .setParameter("name", name)
+                    .singleResult
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> and a transaction-aware <code>EntityManager</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>save</code> method uses the <code>executeWrite</code> method to execute a write transaction within the context of the passed lambda.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that if you are using Micronaut Data JDBC then instead of an <code>EntityManager</code> you should inject a transaction-aware JDBC <code>Connection</code> object.</p>
+</div>
+<div class="paragraph">
+<p>The following presents an example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.transaction.SynchronousTransactionManager;
+import javax.inject.Singleton;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
+@Singleton
+public class ProductManager {
+
+    private final Connection connection;
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager;
+
+    public ProductManager(
+            Connection connection,
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
+        this.connection = connection;
+        this.transactionManager = transactionManager;
+    }
+
+    Product save(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite(status -&gt; { <b class="conum">(2)</b>
+            final Product product = new Product(name, manufacturer);
+            try (PreparedStatement ps =
+                         connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")) {
+                ps.setString(1, name);
+                ps.setLong(2, manufacturer.getId());
+                ps.execute();
+            }
+            return product;
+        });
+    }
+
+    Product find(String name) {
+        return transactionManager.executeRead(status -&gt; { <b class="conum">(3)</b>
+            try (PreparedStatement ps = connection
+                    .prepareStatement("select * from product p where p.name = ?")) {
+                ps.setString(1, name);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        return new Product(rs.getString("name"), null);
+                    }
+                    return null;
+                }
+            }
+        });
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.transaction.SynchronousTransactionManager
+import javax.inject.Singleton
+import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
+
+@Singleton
+class ProductManager {
+
+    private final Connection connection
+    private final SynchronousTransactionManager&lt;Connection&gt; transactionManager
+
+    ProductManager(
+            Connection connection,
+            SynchronousTransactionManager&lt;Connection&gt; transactionManager) { <b class="conum">(1)</b>
+        this.connection = connection
+        this.transactionManager = transactionManager
+    }
+
+    Product save(String name, Manufacturer manufacturer) {
+        return transactionManager.executeWrite { <b class="conum">(2)</b>
+            final Product product = new Product(name, manufacturer)
+            connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)")
+                .withCloseable { PreparedStatement ps -&gt;
+                    ps.setString(1, name)
+                    ps.setLong(2, manufacturer.getId())
+                    ps.execute()
+                }
+            return product
+        }
+    }
+
+    Product find(String name) {
+        return transactionManager.executeRead{ <b class="conum">(3)</b>
+            connection
+                .prepareStatement("select * from product p where p.name = ?").withCloseable {
+                    PreparedStatement ps -&gt;
+                ps.setString(1, name)
+                ps.executeQuery().withCloseable { ResultSet rs -&gt;
+                    if (rs.next()) {
+                        return new Product(rs.getString("name"), null)
+                    }
+                    return null
+                }
+            }
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.transaction.SynchronousTransactionManager
+import java.sql.Connection
+import javax.inject.Singleton
+
+@Singleton
+class ProductManager(
+        private val connection: Connection,
+        private val transactionManager: SynchronousTransactionManager&lt;Connection&gt;) <b class="conum">(1)</b>
+{
+
+    fun save(name: String, manufacturer: Manufacturer): Product {
+        return transactionManager.executeWrite { <b class="conum">(2)</b>
+            val product = Product(0, name, manufacturer)
+            connection.prepareStatement("insert into product (name, manufacturer_id) values (?, ?)").use { ps -&gt;
+                ps.setString(1, name)
+                ps.setLong(2, manufacturer.id!!)
+                ps.execute()
+            }
+            product
+        }
+    }
+
+    fun find(name: String): Product? {
+        return transactionManager.executeRead { <b class="conum">(3)</b>
+            connection
+                    .prepareStatement("select * from product p where p.name = ?").use { ps -&gt;
+                        ps.setString(1, name)
+                        ps.executeQuery().use { rs -&gt;
+                            if (rs.next()) {
+                                return@executeRead Product(
+                                        rs.getLong("id"),
+                                        rs.getString("name"),
+                                        null)
+                            }
+                            return@executeRead null
+                        }
+                    }
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The constructor is injected with the <a href="../api/io/micronaut/transaction/SynchronousTransactionManager.html">SynchronousTransactionManager</a> and a transaction-aware <code>Connection</code></td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The <code>save</code> method uses the <code>executeWrite</code> method to execute a write transaction within the context of the passed lambda.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The <code>find</code> method uses the <code>executeRead</code> method to execute a read-only transaction within the context of the passed lambda.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Note that it is important that you always use the injected connection as Micronaut Data makes available a transaction-aware implementation that uses the connection associated with the underlying transaction.</p>
+</div>
+<div class="paragraph">
+<p>If a transaction is not active when using this connection then a <a href="../api/io/micronaut/transaction/exceptions/NoTransactionException.html">NoTransactionException</a> will be thrown indicating you should either provide a programmatic transaction or use <code>@Transactional</code>.</p>
+</div>
+
+<h2 id="transactionalEvents"><a class="anchor" href="#transactionalEvents"></a>6.6.2 Transactional Events</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/dataUpdates/transactions/transactionalEvents.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>You can write event listeners that are transaction aware using the <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a> annotation.</p>
+</div>
+<div class="paragraph">
+<p>The following demonstrates an example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.transaction.annotation.TransactionalEventListener;
+import javax.inject.Singleton;
+import javax.transaction.Transactional;
+
+@Singleton
+public class BookManager {
+    private final BookRepository bookRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { <b class="conum">(1)</b>
+        this.bookRepository = bookRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    @Transactional
+    void saveBook(String title, int pages) {
+        final Book book = new Book(title, pages);
+        bookRepository.save(book);
+        eventPublisher.publishEvent(new NewBookEvent(book)); <b class="conum">(2)</b>
+    }
+
+    @TransactionalEventListener
+    void onNewBook(NewBookEvent event) {
+        System.out.println("book = " + event.book); <b class="conum">(3)</b>
+    }
+
+    static class NewBookEvent {
+        final Book book;
+
+        public NewBookEvent(Book book) {
+            this.book = book;
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.transaction.annotation.TransactionalEventListener
+import javax.inject.Singleton
+import javax.transaction.Transactional
+
+@Singleton
+class BookManager {
+    private final BookRepository bookRepository
+    private final ApplicationEventPublisher eventPublisher
+
+    BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { <b class="conum">(1)</b>
+        this.bookRepository = bookRepository
+        this.eventPublisher = eventPublisher
+    }
+
+    @Transactional
+    void saveBook(String title, int pages) {
+        final Book book = new Book(title, pages)
+        bookRepository.save(book)
+        eventPublisher.publishEvent(new NewBookEvent(book)) <b class="conum">(2)</b>
+    }
+
+    @TransactionalEventListener
+    void onNewBook(NewBookEvent event) {
+        println("book = $event.book") <b class="conum">(3)</b>
+    }
+
+    static class NewBookEvent {
+        final Book book
+
+        NewBookEvent(Book book) {
+            this.book = book
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import io.micronaut.context.event.ApplicationEventPublisher
+import io.micronaut.transaction.annotation.TransactionalEventListener
+import javax.inject.Singleton
+import javax.transaction.Transactional
+
+@Singleton
+open class BookManager(
+        private val bookRepository: BookRepository, private val eventPublisher: ApplicationEventPublisher) { <b class="conum">(1)</b>
+
+    @Transactional
+    open fun saveBook(title: String, pages: Int) {
+        val book = Book(0, title, pages)
+        bookRepository.save(book)
+        eventPublisher.publishEvent(NewBookEvent(book)) <b class="conum">(2)</b>
+    }
+
+    @TransactionalEventListener
+    open fun onNewBook(event: NewBookEvent) {
+        println("book = ${event.book}") <b class="conum">(3)</b>
+    }
+
+    class NewBookEvent(val book: Book)
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The <code>BookManager</code> class receives an instance of <code>ApplicationEventPublisher</code>.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>When the event is published if there is a running transaction then it will only trigger the listener once the transaction is committed.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The listener itself is annotated with <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a></td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+You can set the value of the <a href="../api/io/micronaut/transaction/annotation/TransactionalEventListener.html">@TransactionalEventListener</a> annotation to bind the listener to a particular transaction phase.
+</td>
 </tr>
 </table>
 </div>

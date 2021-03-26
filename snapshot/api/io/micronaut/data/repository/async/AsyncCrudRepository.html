@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":6,"i10":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -195,6 +195,12 @@ extends <a href="../../../../../io/micronaut/data/repository/GenericRepository.h
 <div class="block">Saves all given entities, possibly returning new instances representing the saved state.</div>
 </td>
 </tr>
+<tr id="i10" class="altColor">
+<td class="colFirst"><code>&lt;S extends <a href="../../../../../io/micronaut/data/repository/async/AsyncCrudRepository.html" title="type parameter in AsyncCrudRepository">E</a>&gt;<br>java.util.concurrent.CompletableFuture&lt;S&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/repository/async/AsyncCrudRepository.html#update-S-">update</a></span>(S&nbsp;entity)</code>
+<div class="block">This method issues an explicit update for the given entity.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -222,6 +228,30 @@ extends <a href="../../../../../io/micronaut/data/repository/GenericRepository.h
 &lt;S extends <a href="../../../../../io/micronaut/data/repository/async/AsyncCrudRepository.html" title="type parameter in AsyncCrudRepository">E</a>&gt;&nbsp;java.util.concurrent.CompletableFuture&lt;S&gt;&nbsp;save(@Valid @NotNull @NonNull
                                                                       S&nbsp;entity)</pre>
 <div class="block">Saves the given valid entity, returning a possibly new entity representing the saved state.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>S</code> - The generic type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>entity</code> - The entity to save. Must not be null.</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The saved entity will never be null.</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code>javax.validation.ConstraintViolationException</code> - if the entity is null or invalid.</dd>
+</dl>
+</li>
+</ul>
+<a name="update-java.lang.Object-">
+<!--   -->
+</a><a name="update-S-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>update</h4>
+<pre>@NonNull
+&lt;S extends <a href="../../../../../io/micronaut/data/repository/async/AsyncCrudRepository.html" title="type parameter in AsyncCrudRepository">E</a>&gt;&nbsp;java.util.concurrent.CompletableFuture&lt;S&gt;&nbsp;update(@Valid @NotNull @NonNull
+                                                                        S&nbsp;entity)</pre>
+<div class="block">This method issues an explicit update for the given entity. The method differs from <a href="../../../../../io/micronaut/data/repository/async/AsyncCrudRepository.html#save-S-"><code>save(Object)</code></a> in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>S</code> - The generic type</dd>
