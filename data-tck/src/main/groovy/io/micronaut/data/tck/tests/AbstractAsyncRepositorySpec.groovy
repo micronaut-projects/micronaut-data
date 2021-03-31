@@ -168,6 +168,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         when:"an entity is retrieved"
         createFrankAndBob()
         def person = personRepository.findByName("Frank").get()
+        def bob = personRepository.findByName("Bob").get()
 
         then:"the person is not null"
         person != null
@@ -180,6 +181,14 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         then:"They are really deleted"
         isEmptyResult { personRepository.findById(person.id).get() }
         personRepository.count().get() == 3
+
+        when:"the person is deleted"
+        def rowsDeleted = personRepository.remove(bob.id).get()
+
+        then:"They are really deleted"
+        rowsDeleted == 1
+        isEmptyResult { personRepository.findById(bob.id).get() }
+        personRepository.count().get() == 2
     }
 
     void "test delete by multiple ids"() {
@@ -193,11 +202,23 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         people.size() == 2
 
         when:"the people are deleted"
-        personRepository.deleteAll(people).get()
+        def result = personRepository.deleteAll(people).thenAccept(r -> {
+            if (r instanceof Number) {
+                throw new IllegalStateException()
+            }
+        }).get()
 
         then:"Only the correct people are deleted"
+        result == null
         people.every {person -> isEmptyResult { personRepository.findById(person.id).get() } }
         personRepository.count().get() == 2
+
+        when:
+        def rowsDeleted = personRepository.deleteManyReturnRowsDeleted(personRepository.findAll().get().toList()).get()
+
+        then:
+        rowsDeleted == 2
+        personRepository.findAll().get().toList().isEmpty()
     }
 
     void "test delete one"() {
@@ -205,17 +226,44 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         createFrankAndBob()
         def allPeople = personRepository.findAll().get()
         def bob = personRepository.findByName("Bob").get()
+        def jeff = personRepository.findByName("Jeff").get()
+        def frank = personRepository.findByName("Frank").get()
 
         then:"The person is present"
         bob != null
         allPeople.size() == 4
 
         when:"The person is deleted"
-        personRepository.deleteById(bob.id).get()
+        Void result = personRepository.deleteById(bob.id).thenAccept(r -> {
+            if (r instanceof Number) {
+                throw new IllegalStateException()
+            }
+        }).get()
 
         then:"They are deleted"
+        result == null
         isEmptyResult { personRepository.findById(bob.id).get() }
         personRepository.count().get() == 3
+
+        when:
+        result = personRepository.delete(jeff).thenAccept(r -> {
+            if (r instanceof Number) {
+                throw new IllegalStateException()
+            }
+        }).get()
+        then:
+        result == null
+
+        isEmptyResult { personRepository.findById(jeff.id).get() }
+        personRepository.count().get() == 2
+
+        when:
+        def rowsDeleted = personRepository.deleteOneReturnRowsDeleted(frank).get()
+        then:
+        rowsDeleted == 1
+
+        isEmptyResult { personRepository.findById(frank.id).get() }
+        personRepository.count().get() == 1
     }
 
     void "test update one"() {
@@ -260,9 +308,14 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.count().get() == 2
 
         when:"everything is deleted"
-        personRepository.deleteAll().get()
+        def result = personRepository.deleteAll().thenAccept(r -> {
+            if (r instanceof Number) {
+                throw new IllegalStateException()
+            }
+        }).join()
 
         then:"data is gone"
+        result == null
         personRepository.count().get() == 0
     }
 

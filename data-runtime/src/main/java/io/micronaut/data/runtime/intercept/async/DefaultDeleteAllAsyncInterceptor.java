@@ -34,7 +34,7 @@ import java.util.concurrent.CompletionStage;
  * @author graemerocher
  * @since 1.0.0
  */
-public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Number> implements DeleteAllAsyncInterceptor<T> {
+public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object> implements DeleteAllAsyncInterceptor<T, Object> {
     /**
      * Default constructor.
      *
@@ -45,8 +45,8 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
-        Argument<CompletionStage<Number>> arg = context.getReturnType().asArgument();
+    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+        Argument<CompletionStage<Object>> arg = context.getReturnType().asArgument();
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
         CompletionStage<Number> cs;

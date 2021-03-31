@@ -64,4 +64,10 @@ public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long>
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
     CompletableFuture<Void> saveCustomSingle(Person people);
+
+    CompletableFuture<Integer> remove(Long id);
+
+    CompletableFuture<Integer> deleteOneReturnRowsDeleted(Person people);
+
+    CompletableFuture<Integer> deleteManyReturnRowsDeleted(List<Person> people);
 }
