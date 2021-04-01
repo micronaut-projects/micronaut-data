@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.async;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.DeleteOneAsyncInterceptor;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -31,8 +32,8 @@ import java.util.concurrent.CompletionStage;
  * @since 1.0.0
  */
 @SuppressWarnings("unused")
-public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Number>
-        implements DeleteOneAsyncInterceptor<T> {
+public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Object>
+        implements DeleteOneAsyncInterceptor<T, Object> {
     /**
      * Default constructor.
      *
@@ -43,12 +44,13 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
     }
 
     @Override
-    public CompletionStage<Number> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Number>> context) {
+    public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
+        Argument<CompletionStage<Object>> arg = context.getReturnType().asArgument();
         Object entity = getEntityParameter(context, Object.class);
         if (entity != null) {
             final DeleteOperation<Object> deleteOperation = getDeleteOperation(context, entity);
             return asyncDatastoreOperations.delete(deleteOperation)
-                    .thenApply(n -> 1);
+                    .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
         } else {
             throw new IllegalArgumentException("Entity to delete cannot be null");
         }

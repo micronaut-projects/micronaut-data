@@ -23,9 +23,10 @@ import java.util.concurrent.CompletionStage;
  * An interceptor that executes a batch delete of all records asynchronously.
  *
  * @param <T> The declaring type
+ * @param <R> The result type
  * @author graemerocher
  * @since 1.0
  */
-public interface DeleteAllAsyncInterceptor<T> extends DataInterceptor<T, CompletionStage<Number>> {
+public interface DeleteAllAsyncInterceptor<T, R> extends DataInterceptor<T, CompletionStage<R>> {
 }
 
