@@ -30,6 +30,9 @@ import java.util.Optional;
 
 public interface AuthorRepository extends CrudRepository<Author, Long> {
 
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    Author queryByName(String name);
+
     @NonNull
     @Override
     @Join(value = "books", alias = "b", type = Join.Type.LEFT_FETCH)

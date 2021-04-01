@@ -15,19 +15,15 @@
  */
 package io.micronaut.data.jdbc.oraclexe
 
-import io.micronaut.context.ApplicationContext
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-@MicronautTest
 class OracleXEUUIDSpec extends AbstractUUIDSpec implements OracleTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(properties)
-
-    OracleXEUuidRepository uuidRepository = applicationContext.getBean(OracleXEUuidRepository)
-
+    @Memoized
+    @Override
+    UuidRepository getUuidRepository() {
+        return applicationContext.getBean(OracleXEUuidRepository)
+    }
 }

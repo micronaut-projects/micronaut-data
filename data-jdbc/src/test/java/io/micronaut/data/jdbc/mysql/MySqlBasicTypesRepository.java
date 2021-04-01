@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.jdbc.mysql;
 
-import io.micronaut.data.jdbc.BasicTypes;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.tck.repositories.BasicTypesRepository;
 
 @JdbcRepository(dialect = Dialect.MYSQL)
-public interface MySqlBasicTypesRepository extends CrudRepository<BasicTypes, Long> {
+public interface MySqlBasicTypesRepository extends BasicTypesRepository {
 }

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.GenericRepository;
@@ -22,10 +23,13 @@ import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface BookDtoRepository extends GenericRepository<Book, Long> {
 
+    @Query("select * from book b where b.title = :title")
+    Optional<BookDto> findByTitleWithQuery(String title);
 
     List<BookDto> findByTitleLike(String title);
 

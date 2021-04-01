@@ -1,0 +1,97 @@
+configurations.all {
+    resolutionStrategy {
+        eachDependency { DependencyResolveDetails details ->
+            //specifying a fixed version for all libraries with 'org.gradle' group
+            if (details.requested.group == 'io.projectreactor') {
+                details.useVersion reactorVersion
+            }
+        }
+    }
+}
+dependencies {
+    annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
+    annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
+    implementation "io.micronaut.reactor:micronaut-reactor"
+    implementation "io.projectreactor.netty:reactor-netty"
+
+    implementation platform("io.micronaut.r2dbc:micronaut-r2dbc-bom:$micronautR2dbcVersion")
+    testImplementation platform("io.micronaut.r2dbc:micronaut-r2dbc-bom:$micronautR2dbcVersion")
+
+    api "io.projectreactor:reactor-core:$reactorVersion"
+    api "io.projectreactor:reactor-tools:$reactorVersion"
+    api project(":data-model")
+    api project(":data-runtime")
+    implementation "io.micronaut:micronaut-http:$micronautVersion"
+    api "io.micronaut.r2dbc:micronaut-r2dbc-core"
+    api "io.r2dbc:r2dbc-spi"
+
+    testImplementation project(":data-tck")
+    testImplementation("org.spockframework:spock-core:${spockVersion}") {
+        exclude module:'groovy-all'
+    }
+    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+    testImplementation "io.r2dbc:r2dbc-pool"
+
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    testAnnotationProcessor project(":data-processor")
+    testCompileOnly "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+    testCompileOnly project(":data-processor")
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.12.2"
+    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+    testImplementation "org.codehaus.groovy:groovy-sql:$groovyVersion"
+    testImplementation "io.micronaut:micronaut-validation:$micronautVersion"
+    testImplementation platform("org.testcontainers:testcontainers-bom:$testContainersVersion")
+    testImplementation "org.testcontainers:r2dbc"
+
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
+        // oracle
+        testImplementation "com.oracle.database.r2dbc:oracle-r2dbc:0.1.0"
+    }
+    testImplementation "org.testcontainers:oracle-xe"
+
+    // mariadb
+    testImplementation 'org.mariadb:r2dbc-mariadb'
+    testImplementation "org.testcontainers:mariadb"
+    testImplementation 'org.mariadb.jdbc:mariadb-java-client'
+
+    // mysql
+    testImplementation "org.testcontainers:mysql"
+    testImplementation 'mysql:mysql-connector-java'
+    testImplementation 'dev.miku:r2dbc-mysql'
+
+    // h2
+    testImplementation 'io.r2dbc:r2dbc-h2'
+
+    // sqlserver
+    testImplementation "org.testcontainers:mssqlserver"
+    testImplementation 'com.microsoft.sqlserver:mssql-jdbc'
+    testImplementation 'io.r2dbc:r2dbc-mssql'
+
+    // postgres
+    testImplementation 'io.r2dbc:r2dbc-postgresql'
+    testImplementation "org.testcontainers:postgresql"
+    testImplementation 'org.postgresql:postgresql'
+}
+
+test {
+    systemProperty "oracle.jdbc.timezoneAsRegion", "false"
+    exclude "**/r2dbc/mysql/**"
+    exclude "**/r2dbc/postgres/**"
+    exclude "**/r2dbc/sqlserver/**"
+    exclude "**/r2dbc/oraclexe/**"
+//    exclude "**/r2dbc/mariadb/**"
+//    exclude "**/r2dbc/h2/**"
+}
+
+micronautBuild {
+    resolutionStrategy {
+        componentSelection {
+            all { selection ->
+                if (selection.candidate.module == 'mssql-jdbc' && !selection.candidate.version.contains("jre8")) {
+                    selection.reject("Not a JDK8 compatible MS SQL driver")
+                }
+            }
+        }
+    }
+}

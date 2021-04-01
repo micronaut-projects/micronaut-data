@@ -17,6 +17,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
+import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -24,6 +25,7 @@ import javax.inject.Inject
 import javax.persistence.CascadeType
 import javax.persistence.OneToMany
 
+@Ignore
 @MicronautTest
 @H2DBProperties
 class CompositeSpec extends Specification implements H2TestPropertyProvider {

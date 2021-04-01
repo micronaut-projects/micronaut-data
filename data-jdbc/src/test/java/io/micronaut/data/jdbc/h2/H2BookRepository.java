@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2;
 
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.exceptions.EmptyResultException;
@@ -45,9 +44,6 @@ public abstract class H2BookRepository extends io.micronaut.data.tck.repositorie
 
     @Query("DELETE book WHERE title = :title")
     abstract Long wipeOutBook(String title);
-
-    @Join(value = "author", alias = "auth")
-    abstract Book queryByTitle(String title);
 
     @Transactional
     public Author findByName(String name) {

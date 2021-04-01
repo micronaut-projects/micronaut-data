@@ -15,18 +15,11 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.context.ApplicationContext
+
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
 import spock.lang.Shared
 
-@MicronautTest
 class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvider {
-
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     @Shared
     MySqlUuidEntityRepository repository = applicationContext.getBean(MySqlUuidEntityRepository)

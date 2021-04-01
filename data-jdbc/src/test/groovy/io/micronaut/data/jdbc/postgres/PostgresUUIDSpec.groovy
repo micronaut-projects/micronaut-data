@@ -15,19 +15,15 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.context.ApplicationContext
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-@MicronautTest
 class PostgresUUIDSpec extends AbstractUUIDSpec implements PostgresTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(properties)
-
-    PostgresUuidRepository uuidRepository = applicationContext.getBean(PostgresUuidRepository)
-
+    @Memoized
+    @Override
+    UuidRepository getUuidRepository() {
+        return applicationContext.getBean(PostgresUuidRepository)
+    }
 }

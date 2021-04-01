@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.data.tck.entities.Car
+import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.AuthorRepository
+import io.micronaut.data.tck.repositories.BasicTypesRepository
 import io.micronaut.data.tck.repositories.BookDtoRepository
 import io.micronaut.data.tck.repositories.BookRepository
+import io.micronaut.data.tck.repositories.CarRepository
 import io.micronaut.data.tck.repositories.CityRepository
 import io.micronaut.data.tck.repositories.CompanyRepository
 import io.micronaut.data.tck.repositories.CountryRegionCityRepository
@@ -177,64 +179,29 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
     }
 
     @Override
+    CarRepository getCarRepository() {
+        return carRepo
+    }
+
+    @Memoized
+    @Override
+    BasicTypesRepository getBasicTypeRepository() {
+        return context.getBean(H2BasicTypesRepository)
+    }
+
+    @Override
     boolean isSupportsArrays() {
         return true
     }
 
-    void "test total dto"() {
-        given:
-        savePersons(["Jeff", "James"])
-
-        expect:
-        pr.getTotal().total == 2
-
-        cleanup:
-        personRepository.deleteAll()
+    @Override
+    protected boolean skipQueryByDataArray() {
+        return true
     }
 
     void "test repositories are singleton"() {
         expect:
-        pr.is(context.getBean(H2PersonRepository))
-    }
-
-    void "test CRUD with custom schema and catalog"() {
-        when:
-        def a5 = carRepo.save(new Car(name: "A5"))
-
-        then:
-        a5.id
-
-
-        when:
-        a5 = carRepo.findById(a5.id).orElse(null)
-
-        then:
-        a5.id
-        a5.name == 'A5'
-        carRepo.getById(a5.id).parts.size() == 0
-
-        when:"an update happens"
-        carRepo.update(a5.id, "A6")
-        a5 = carRepo.findById(a5.id).orElse(null)
-
-        then:"the updated worked"
-        a5.name == 'A6'
-
-        when:"an update to null happens"
-            carRepo.update(a5.id, null)
-            a5 = carRepo.findById(a5.id).orElse(null)
-
-        then:"the updated to null worked"
-            a5.name == null
-
-        when:"A deleted"
-        carRepo.deleteById(a5.id)
-
-        then:"It was deleted"
-        !carRepo.findById(a5.id).isPresent()
-
-        cleanup:
-        carRepo.deleteAll()
+            pr.is(context.getBean(H2PersonRepository))
     }
 
     void "test manual joining on many ended association"() {
@@ -285,54 +252,4 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         cleanupData()
     }
 
-    void "test In Native Query function"() {
-        given:
-        savePersons(["Cemo", "Deniz", "Utku"])
-
-        when:"using a mix of parameters with collection types with IN queries"
-        def persons = pr.queryNames(
-            ["Ali"],
-            "James",
-            ["Onur"],
-            ["Cemo","Deniz","Olcay"],
-            "Utku");
-
-        then:"The result is correct"
-        persons != null
-        persons.size() == 3
-
-        then:
-        cleanupData()
-    }
-
-    void "test custom alias"() {
-        given:
-        saveSampleBooks()
-
-        when:
-        def book = br.queryByTitle("The Stand")
-
-        then:
-        book.title == "The Stand"
-        book.author != null
-        book.author.name == "Stephen King"
-
-        cleanup:
-        cleanupData()
-    }
-
-    void "test @Query with DTO"() {
-        given:
-        saveSampleBooks()
-
-        when:
-        def book = dto.findByTitleWithQuery("The Stand")
-
-        then:
-        book.isPresent()
-        book.get().title == "The Stand"
-
-        cleanup:
-        cleanupData()
-    }
 }

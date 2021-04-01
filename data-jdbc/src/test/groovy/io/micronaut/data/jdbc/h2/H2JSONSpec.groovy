@@ -15,36 +15,15 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleRepository
+import io.micronaut.data.tck.tests.AbstractJSONSpec
 
-import io.micronaut.data.tck.entities.Sale
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Specification
+class H2JSONSpec extends AbstractJSONSpec implements H2TestPropertyProvider {
 
-import javax.inject.Inject
-
-@MicronautTest
-@H2DBProperties
-class H2JSONSpec extends Specification {
-    @Inject H2SaleRepository saleRepository
-
-    void "test read and write json"() {
-        when:
-        Sale sale = new Sale()
-        sale.setName("test 1")
-        sale.data = [foo:'bar']
-        saleRepository.save(sale)
-        sale = saleRepository.findById(sale.id).orElse(null)
-
-        then:
-        sale.name == 'test 1'
-        sale.data == [foo:'bar']
-
-        when:
-        saleRepository.updateData(sale.id,[foo:'changed'] )
-        sale = saleRepository.findById(sale.id).orElse(null)
-
-        then:
-        sale.name == 'test 1'
-        sale.data == [foo:'changed']
+    @Memoized
+    @Override
+    SaleRepository getSaleRepository() {
+        return applicationContext.getBean(H2SaleRepository)
     }
 }

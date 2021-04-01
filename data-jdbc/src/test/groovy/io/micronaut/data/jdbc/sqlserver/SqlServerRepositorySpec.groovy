@@ -15,161 +15,123 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
-
-import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.tck.repositories.AuthorRepository
-import io.micronaut.data.tck.repositories.BookDtoRepository
-import io.micronaut.data.tck.repositories.BookRepository
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CompanyRepository
-import io.micronaut.data.tck.repositories.CountryRegionCityRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.FaceRepository
-import io.micronaut.data.tck.repositories.FoodRepository
-import io.micronaut.data.tck.repositories.MealRepository
-import io.micronaut.data.tck.repositories.NoseRepository
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.repositories.RegionRepository
-import io.micronaut.data.tck.repositories.RoleRepository
-import io.micronaut.data.tck.repositories.StudentRepository
-import io.micronaut.data.tck.repositories.UserRepository
-import io.micronaut.data.tck.repositories.UserRoleRepository
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.IgnoreIf
 
 class SqlServerRepositorySpec extends AbstractRepositorySpec implements MSSQLTestPropertyProvider {
 
+    @Memoized
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(MSSQLPersonRepository)
     }
 
+    @Memoized
     @Override
     BookRepository getBookRepository() {
         return context.getBean(MSBookRepository)
     }
 
+    @Memoized
     @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MSAuthorRepository)
     }
 
+    @Memoized
     @Override
     CompanyRepository getCompanyRepository() {
         return context.getBean(MSCompanyRepository)
     }
 
+    @Memoized
     @Override
     BookDtoRepository getBookDtoRepository() {
         return context.getBean(MSBookDtoRepository)
     }
 
+    @Memoized
     @Override
     CountryRepository getCountryRepository() {
         return context.getBean(MSCountryRepository)
     }
 
+    @Memoized
     @Override
     CityRepository getCityRepository() {
         return context.getBean(MSCityRepository)
     }
 
+    @Memoized
     @Override
     RegionRepository getRegionRepository() {
         return context.getBean(MSRegionRepository)
     }
 
+    @Memoized
     @Override
     NoseRepository getNoseRepository() {
         return context.getBean(MSNoseRepository)
     }
 
+    @Memoized
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MSFaceRepository)
     }
 
+    @Memoized
     @Override
     CountryRegionCityRepository getCountryRegionCityRepository() {
         return context.getBean(MSCountryRegionCityRepository)
     }
 
+    @Memoized
     @Override
     UserRoleRepository getUserRoleRepository() {
         return context.getBean(MSUserRoleRepository)
     }
 
+    @Memoized
     @Override
     RoleRepository getRoleRepository() {
         return context.getBean(MSRoleRepository)
     }
 
+    @Memoized
     @Override
     UserRepository getUserRepository() {
         return context.getBean(MSUserRepository)
     }
 
+    @Memoized
     @Override
     MealRepository getMealRepository() {
         return context.getBean(MSMealRepository)
     }
 
+    @Memoized
     @Override
     FoodRepository getFoodRepository() {
         return context.getBean(MSFoodRepository)
     }
 
+    @Memoized
     @Override
     StudentRepository getStudentRepository() {
         return context.getBean(MSStudentRepository)
     }
 
-    @IgnoreIf({ jvm.isJava15Compatible() })
-    void "test save and retrieve basic types"() {
-        when: "we save a new book"
-        def basicTypesRepo = context.getBean(MSBasicTypesRepository)
-        def book = basicTypesRepo.save(new BasicTypes())
+    @Memoized
+    @Override
+    CarRepository getCarRepository() {
+        return context.getBean(MSCarRepository)
+    }
 
-        then: "The ID is assigned"
-        book.myId != null
-
-        when:"A book is found"
-        def retrievedBook = basicTypesRepo.findById(book.myId).orElse(null)
-
-        then:"The book is correct"
-        retrievedBook.uuid == book.uuid
-        retrievedBook.bigDecimal == book.bigDecimal
-        retrievedBook.byteArray == book.byteArray
-        retrievedBook.charSequence == book.charSequence
-        retrievedBook.charset == book.charset
-        retrievedBook.primitiveBoolean == book.primitiveBoolean
-        retrievedBook.primitiveByte == book.primitiveByte
-        retrievedBook.primitiveChar == book.primitiveChar
-        retrievedBook.primitiveDouble == book.primitiveDouble
-        retrievedBook.primitiveFloat == book.primitiveFloat
-        retrievedBook.primitiveInteger == book.primitiveInteger
-        retrievedBook.primitiveLong == book.primitiveLong
-        retrievedBook.primitiveShort == book.primitiveShort
-        retrievedBook.wrapperBoolean == book.wrapperBoolean
-        retrievedBook.wrapperByte == book.wrapperByte
-        retrievedBook.wrapperChar == book.wrapperChar
-        retrievedBook.wrapperDouble == book.wrapperDouble
-        retrievedBook.wrapperFloat == book.wrapperFloat
-        retrievedBook.wrapperInteger == book.wrapperInteger
-        retrievedBook.wrapperLong == book.wrapperLong
-        retrievedBook.uri == book.uri
-        retrievedBook.url == book.url
-        retrievedBook.instant == book.instant
-        retrievedBook.localDateTime == book.localDateTime
-        retrievedBook.zonedDateTime == book.zonedDateTime
-        retrievedBook.offsetDateTime == book.offsetDateTime
-        retrievedBook.dateCreated == book.dateCreated
-        retrievedBook.dateUpdated == book.dateUpdated
-        // stored as a DATE type without time
-//        retrievedBook.date == book.date
-
-        cleanup:
-        basicTypesRepo.deleteAll()
-
+    @Memoized
+    @Override
+    BasicTypesRepository getBasicTypeRepository() {
+        return context.getBean(MSBasicTypesRepository)
     }
 }

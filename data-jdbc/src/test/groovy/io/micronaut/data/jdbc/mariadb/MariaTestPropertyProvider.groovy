@@ -15,28 +15,23 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
+
+import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MariaTestPropertyProvider implements DatabaseTestPropertyProvider {
-
-    @Override
-    String url() {
-        MariaDb.getJdbcUrl()
-    }
-
-    @Override
-    String username() {
-        MariaDb.getUsername()
-    }
-
-    @Override
-    String password() {
-        MariaDb.getPassword()
-    }
+trait MariaTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.MYSQL
+    }
+
+    String driverName() {
+        "mariadb"
+    }
+
+    @Override
+    int sharedSpecsCount() {
+        return 5
     }
 }

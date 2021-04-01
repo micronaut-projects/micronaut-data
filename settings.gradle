@@ -1,3 +1,14 @@
+pluginManagement {
+    plugins {
+        id 'io.micronaut.application' version getProperty("micronautGradlePluginVersion")
+        id 'io.micronaut.library' version getProperty("micronautGradlePluginVersion")
+        id "org.jetbrains.kotlin.jvm" version getProperty("kotlinVersion")
+        id "org.jetbrains.kotlin.kapt" version getProperty("kotlinVersion")
+        id "org.jetbrains.kotlin.plugin.allopen" version getProperty("kotlinVersion")
+        id "org.jetbrains.kotlin.plugin.jpa" version getProperty("kotlinVersion")
+    }
+}
+
 rootProject.name = 'data'
 
 include 'data-bom'
@@ -13,6 +24,7 @@ include 'data-tck'
 include 'data-hibernate-jpa'
 include 'data-tx-hibernate'
 include 'data-jdbc'
+include 'data-r2dbc'
 
 // Spring compatibility
 include 'data-spring'
@@ -26,6 +38,9 @@ include 'doc-examples:example-kotlin'
 include 'doc-examples:jdbc-example-java'
 include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
+include 'doc-examples:r2dbc-example-java'
+include 'doc-examples:r2dbc-example-groovy'
+include 'doc-examples:r2dbc-example-kotlin'
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
     include 'doc-examples:jdbc-example-records-java'
 }

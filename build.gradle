@@ -1,3 +1,5 @@
+import java.time.Duration
+
 buildscript {
     repositories {
         mavenCentral()
@@ -61,6 +63,7 @@ subprojects { Project subproject ->
         if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
             jvmArgs "--enable-preview"
         }
+        timeout = Duration.ofMinutes(20)
     }
 
     if (subproject.name != 'data-bom') {
@@ -77,6 +80,7 @@ subprojects { Project subproject ->
             if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
                 jvmArgs "--enable-preview"
             }
+            timeout = Duration.ofMinutes(20)
         }
     }
     

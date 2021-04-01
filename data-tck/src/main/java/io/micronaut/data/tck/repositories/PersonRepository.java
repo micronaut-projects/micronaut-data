@@ -26,6 +26,7 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 import io.micronaut.data.tck.entities.Person;
+import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
 
 import java.util.List;
@@ -34,6 +35,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public interface PersonRepository extends CrudRepository<Person, Long>, PageableRepository<Person, Long> {
+
+    @Query("select count(*) as total from person")
+    TotalDto getTotal();
 
     int countByAgeGreaterThan(Integer wrapper);
 

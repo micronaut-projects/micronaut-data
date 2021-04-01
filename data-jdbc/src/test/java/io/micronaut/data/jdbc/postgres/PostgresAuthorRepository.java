@@ -30,7 +30,4 @@ public interface PostgresAuthorRepository extends AuthorRepository {
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     List<Author> listAll();
 
-    @Join(value = "books", type = Join.Type.LEFT_FETCH)
-    Author queryByName(String name);
-
 }

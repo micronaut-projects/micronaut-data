@@ -15,27 +15,39 @@
  */
 package io.micronaut.data.tck.tests
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
+import spock.lang.Timeout
 
-import java.util.concurrent.CompletionException
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 20, unit = TimeUnit.SECONDS)
 @Stepwise
 abstract class AbstractReactiveRepositorySpec extends Specification {
+
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
 
     abstract PersonReactiveRepository getPersonRepository()
     abstract StudentReactiveRepository getStudentRepository()
 
-    abstract void init()
+    void init() {
+    }
 
     def setup() {
         init()
+        personRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingGet()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
                 new Person(name: "James")
@@ -48,8 +60,8 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     }
 
     def cleanup() {
-        init()
         personRepository.deleteAll().blockingGet()
+        studentRepository.deleteAll().blockingGet()
     }
 
     void "test no value"() {
@@ -270,7 +282,14 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         personRepository.count().blockingGet() == 0
     }
 
-    void "test optimistic locking"() {
+    boolean skipOptimisticLockingTest() {
+        return false
+    }
+
+    def "test optimistic locking"() {
+        if (skipOptimisticLockingTest()) {
+            return
+        }
         given:
             def student = new Student("Denis")
         when:
@@ -282,28 +301,28 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             student.setName("Xyz")
             studentRepository.update(student).blockingGet()
         then:
-            def e = thrown(CompletionException)
-            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+            def e = thrown(Exception)
+            e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             e = studentRepository.updateByIdAndVersion(student.getId(), student.getVersion(), student.getName()).blockingGet()
         then:
-            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+            e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             e = studentRepository.delete(student).blockingGet()
         then:
-            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+            e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             e = studentRepository.deleteByIdAndVersionAndName(student.getId(), student.getVersion(), student.getName()).blockingGet()
         then:
-            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+            e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             e = studentRepository.deleteByIdAndVersion(student.getId(), student.getVersion()).blockingGet()
         then:
-            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+            e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             e = studentRepository.deleteAll([student]).blockingGet()
         then:
-            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+            e.message.contains "Execute update returned unexpected row count. Expected: 1 got: 0"
         when:
             student = studentRepository.findById(student.getId()).blockingGet()
         then:

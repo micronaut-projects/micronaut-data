@@ -38,6 +38,9 @@ import java.util.stream.Stream;
 
 public abstract class BookRepository implements PageableRepository<Book, Long> {
 
+    @Join(value = "author", alias = "auth")
+    public abstract Book queryByTitle(String title);
+
     @NonNull
     @Override
     @Join("author")

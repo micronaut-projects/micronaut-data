@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.jdbc.h2
 
-
-import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.data.tck.entities.BasicTypes
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject
@@ -30,7 +29,7 @@ import java.time.ZonedDateTime
 class LocalDateTimeSpec extends Specification {
 
     @Inject
-    H2BasicTypeRepository repository;
+    H2BasicTypesRepository repository;
 
 
     void "test local date time - DST"() {

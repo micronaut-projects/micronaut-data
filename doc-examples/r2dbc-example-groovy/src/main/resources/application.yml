@@ -1,0 +1,7 @@
+micronaut:
+  application:
+    name: example
+flyway:
+  datasources:
+    default:
+      enabled: true

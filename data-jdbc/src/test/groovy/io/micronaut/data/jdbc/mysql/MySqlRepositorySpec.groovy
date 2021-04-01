@@ -15,157 +15,135 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.data.jdbc.BasicTypes
-import io.micronaut.data.tck.repositories.AuthorRepository
-import io.micronaut.data.tck.repositories.BookDtoRepository
-import io.micronaut.data.tck.repositories.BookRepository
-import io.micronaut.data.tck.repositories.CityRepository
-import io.micronaut.data.tck.repositories.CompanyRepository
-import io.micronaut.data.tck.repositories.CountryRegionCityRepository
-import io.micronaut.data.tck.repositories.CountryRepository
-import io.micronaut.data.tck.repositories.FaceRepository
-import io.micronaut.data.tck.repositories.FoodRepository
-import io.micronaut.data.tck.repositories.MealRepository
-import io.micronaut.data.tck.repositories.NoseRepository
-import io.micronaut.data.tck.repositories.PersonRepository
-import io.micronaut.data.tck.repositories.RegionRepository
-import io.micronaut.data.tck.repositories.RoleRepository
-import io.micronaut.data.tck.repositories.StudentRepository
-import io.micronaut.data.tck.repositories.UserRepository
-import io.micronaut.data.tck.repositories.UserRoleRepository
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
-import spock.lang.IgnoreIf
 
 class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPropertyProvider {
 
+    @Memoized
     @Override
     PersonRepository getPersonRepository() {
         return context.getBean(MySqlPersonRepository)
     }
 
+    @Memoized
     @Override
     BookRepository getBookRepository() {
         return context.getBean(MySqlBookRepository)
     }
 
+    @Memoized
     @Override
     AuthorRepository getAuthorRepository() {
         return context.getBean(MySqlAuthorRepository)
     }
 
+    @Memoized
     @Override
     CompanyRepository getCompanyRepository() {
         return context.getBean(MySqlCompanyRepository)
     }
 
+    @Memoized
     @Override
     BookDtoRepository getBookDtoRepository() {
         return context.getBean(MySqlBookDtoRepository)
     }
 
+    @Memoized
     @Override
     CountryRepository getCountryRepository() {
         return context.getBean(MySqlCountryRepository)
     }
 
+    @Memoized
     @Override
     CityRepository getCityRepository() {
         return context.getBean(MySqlCityRepository)
     }
 
+    @Memoized
     @Override
     RegionRepository getRegionRepository() {
         return context.getBean(MySqlRegionRepository)
     }
 
+    @Memoized
     @Override
     NoseRepository getNoseRepository() {
         return context.getBean(MySqlNoseRepository)
     }
 
+    @Memoized
     @Override
     FaceRepository getFaceRepository() {
         return context.getBean(MySqlFaceRepository)
     }
 
+    @Memoized
     @Override
     CountryRegionCityRepository getCountryRegionCityRepository() {
         return context.getBean(MySqlCountryRegionCityRepository)
     }
 
+    @Memoized
     @Override
     UserRoleRepository getUserRoleRepository() {
         return context.getBean(MySqlUserRoleRepository)
     }
 
+    @Memoized
     @Override
     RoleRepository getRoleRepository() {
         return context.getBean(MySqlRoleRepository)
     }
 
+    @Memoized
     @Override
     UserRepository getUserRepository() {
         return context.getBean(MySqlUserRepository)
     }
 
+    @Memoized
     @Override
     MealRepository getMealRepository() {
         return context.getBean(MySqlMealRepository)
     }
 
+    @Memoized
     @Override
     FoodRepository getFoodRepository() {
         return context.getBean(MySqlFoodRepository)
     }
 
+    @Memoized
     @Override
     StudentRepository getStudentRepository() {
         return context.getBean(MySqlStudentRepository)
     }
 
-    @IgnoreIf({ jvm.isJava15Compatible() })
-    void "test save and retrieve basic types"() {
-        when: "we save a new book"
-        def basicTypesRepo = context.getBean(MySqlBasicTypesRepository)
-        def book = basicTypesRepo.save(new BasicTypes())
-
-        then: "The ID is assigned"
-        book.myId != null
-
-        when:"A book is found"
-        def retrievedBook = basicTypesRepo.findById(book.myId).orElse(null)
-
-        then:"The book is correct"
-        retrievedBook.uuid == book.uuid
-        retrievedBook.bigDecimal == book.bigDecimal
-        retrievedBook.byteArray == book.byteArray
-        retrievedBook.charSequence == book.charSequence
-        retrievedBook.charset == book.charset
-        retrievedBook.primitiveBoolean == book.primitiveBoolean
-        retrievedBook.primitiveByte == book.primitiveByte
-        retrievedBook.primitiveChar == book.primitiveChar
-        retrievedBook.primitiveDouble == book.primitiveDouble
-        retrievedBook.primitiveFloat == book.primitiveFloat
-        retrievedBook.primitiveInteger == book.primitiveInteger
-        retrievedBook.primitiveLong == book.primitiveLong
-        retrievedBook.primitiveShort == book.primitiveShort
-        retrievedBook.wrapperBoolean == book.wrapperBoolean
-        retrievedBook.wrapperByte == book.wrapperByte
-        retrievedBook.wrapperChar == book.wrapperChar
-        retrievedBook.wrapperDouble == book.wrapperDouble
-        retrievedBook.wrapperFloat == book.wrapperFloat
-        retrievedBook.wrapperInteger == book.wrapperInteger
-        retrievedBook.wrapperLong == book.wrapperLong
-        retrievedBook.uri == book.uri
-        retrievedBook.url == book.url
-        retrievedBook.instant == book.instant
-        retrievedBook.localDateTime == book.localDateTime
-        retrievedBook.zonedDateTime == book.zonedDateTime
-        retrievedBook.offsetDateTime == book.offsetDateTime
-        retrievedBook.dateCreated == book.dateCreated
-        retrievedBook.dateUpdated == book.dateUpdated
-        // stored as a DATE type without time
-//        retrievedBook.date == book.date
-
+    @Memoized
+    @Override
+    CarRepository getCarRepository() {
+        return context.getBean(MySqlCarRepository)
     }
+
+    @Memoized
+    @Override
+    BasicTypesRepository getBasicTypeRepository() {
+        return context.getBean(MySqlBasicTypesRepository)
+    }
+
+    @Override
+    protected boolean skipCustomSchemaAndCatalogTest() {
+        // INSERT command denied to user 'test'@'172.17.0.1' for table 'cars'
+        return true
+    }
+
+    @Override
+    protected boolean skipQueryByDataArray() {
+        return true
+    }
+
 }
