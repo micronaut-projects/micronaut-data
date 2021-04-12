@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6};
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -130,16 +130,21 @@ var activeTableTab = "activeTableTab";
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>java.lang.Object</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html#autoPopulateRuntimeProperty-io.micronaut.data.model.runtime.RuntimePersistentProperty-java.lang.Object-">autoPopulateRuntimeProperty</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;persistentProperty,
+                           java.lang.Object&nbsp;previousValue)</code>&nbsp;</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html#getEntity-java.lang.Class-">getEntity</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Get a new, non-cached instance.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/event/EntityEventListener.html" title="interface in io.micronaut.data.event">EntityEventListener</a>&lt;java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html#getEntityEventListener--">getEntityEventListener</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;<a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html#newEntity-java.lang.Class-">newEntity</a></span>(java.lang.Class&lt;T&gt;&nbsp;type)</code>
 <div class="block">Get a new, non-cached instance.</div>
@@ -171,6 +176,26 @@ var activeTableTab = "activeTableTab";
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The primary entity event listener</dd>
+</dl>
+</li>
+</ul>
+<a name="autoPopulateRuntimeProperty-io.micronaut.data.model.runtime.RuntimePersistentProperty-java.lang.Object-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>autoPopulateRuntimeProperty</h4>
+<pre>@NonNull
+java.lang.Object&nbsp;autoPopulateRuntimeProperty(@NonNull
+                                                      <a href="../../../../../io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a>&lt;?&gt;&nbsp;persistentProperty,
+                                                      @Nullable
+                                                      java.lang.Object&nbsp;previousValue)</pre>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>persistentProperty</code> - The persistent property</dd>
+<dd><code>previousValue</code> - The previous value</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The new value, never null.</dd>
 </dl>
 </li>
 </ul>

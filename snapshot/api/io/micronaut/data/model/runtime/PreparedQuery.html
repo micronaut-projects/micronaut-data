@@ -17,8 +17,8 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":18,"i5":6};
-var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
+var methods = {"i0":6,"i1":50,"i2":6,"i3":6,"i4":18,"i5":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"],32:["t6","Deprecated Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
 var tableTab = "tableTab";
@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/model/runtime/PropertyAutoPopulator.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../index.html?io/micronaut/data/model/runtime/PreparedQuery.html" target="_top">Frames</a></li>
@@ -145,7 +145,7 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html"
 </a>
 <h3>Method Summary</h3>
 <table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
-<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t5" class="tableTab"><span><a href="javascript:show(16);">Default Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t6" class="tableTab"><span><a href="javascript:show(32);">Deprecated Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
 <tr>
 <th class="colFirst" scope="col">Modifier and Type</th>
 <th class="colLast" scope="col">Method and Description</th>
@@ -155,8 +155,10 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html"
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getArguments--">getArguments</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getLastUpdatedType--">getLastUpdatedType</a></span>()</code>&nbsp;</td>
+<td class="colFirst"><code>default java.lang.Class&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/model/runtime/PreparedQuery.html#getLastUpdatedType--">getLastUpdatedType</a></span>()</code>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
+</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>java.lang.Object[]</code></td>
@@ -189,7 +191,7 @@ extends <a href="../../../../../io/micronaut/data/model/runtime/PagedQuery.html"
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.runtime.<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a></h3>
-<code><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes--">getArgumentTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getEntityIdentifierType--">getEntityIdentifierType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterNames--">getParameterNames</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getQuery--">getQuery</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultArgument--">getResultArgument</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultType--">getResultType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--">getRootEntity</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasResultConsumer--">hasResultConsumer</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></code></li>
+<code><a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getArgumentTypes--">getArgumentTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getEntityIdentifierType--">getEntityIdentifierType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyIndexes--">getIndexedParameterAutoPopulatedPreviousPropertyIndexes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPreviousPropertyPaths--">getIndexedParameterAutoPopulatedPreviousPropertyPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterAutoPopulatedPropertyPaths--">getIndexedParameterAutoPopulatedPropertyPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterBinding--">getIndexedParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterPaths--">getIndexedParameterPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getIndexedParameterTypes--">getIndexedParameterTypes</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getJoinFetchPaths--">getJoinFetchPaths</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getLastUpdatedProperty--">getLastUpdatedProperty</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterBinding--">getParameterBinding</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getParameterNames--">getParameterNames</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getQuery--">getQuery</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultArgument--">getResultArgument</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultDataType--">getResultDataType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getResultType--">getResultType</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#getRootEntity--">getRootEntity</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasInExpression--">hasInExpression</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasPageable--">hasPageable</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#hasResultConsumer--">hasResultConsumer</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isCount--">isCount</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isDtoProjection--">isDtoProjection</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isNative--">isNative</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isOptimisticLock--">isOptimisticLock</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#isSingleResult--">isSingleResult</a>, <a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html#useNumericPlaceholders--">useNumericPlaceholders</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.core.naming.Named">
@@ -306,7 +308,9 @@ java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getParameterValues()
 <ul class="blockList">
 <li class="blockList">
 <h4>getLastUpdatedType</h4>
-<pre>java.lang.Class&lt;?&gt;&nbsp;getLastUpdatedType()</pre>
+<pre>@Deprecated
+default&nbsp;java.lang.Class&lt;?&gt;&nbsp;getLastUpdatedType()</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The last updated type.</dd>
@@ -361,7 +365,7 @@ default&nbsp;java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;getQuer
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../io/micronaut/data/model/runtime/PreparedDataOperation.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../io/micronaut/data/model/runtime/RuntimeAssociation.html" title="class in io.micronaut.data.model.runtime"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../io/micronaut/data/model/runtime/PropertyAutoPopulator.html" title="interface in io.micronaut.data.model.runtime"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../index.html?io/micronaut/data/model/runtime/PreparedQuery.html" target="_top">Frames</a></li>

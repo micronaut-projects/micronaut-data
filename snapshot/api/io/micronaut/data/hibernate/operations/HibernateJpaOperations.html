@@ -142,9 +142,10 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-">HibernateJpaOperations</a></span>(org.hibernate.SessionFactory&nbsp;sessionFactory,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">HibernateJpaOperations</a></span>(org.hibernate.SessionFactory&nbsp;sessionFactory,
                       <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
-                      java.util.concurrent.ExecutorService&nbsp;executorService)</code>
+                      java.util.concurrent.ExecutorService&nbsp;executorService,
+                      <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</code>
 <div class="block">Default constructor.</div>
 </td>
 </tr>
@@ -317,7 +318,7 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-">
+<a name="HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -328,13 +329,16 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
                                  @NonNull @Parameter
                                  <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
                                  @Named(value="io") @Nullable
-                                 java.util.concurrent.ExecutorService&nbsp;executorService)</pre>
+                                 java.util.concurrent.ExecutorService&nbsp;executorService,
+                                 <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>sessionFactory</code> - The session factory</dd>
+<dd><code>sessionFactory</code> - The session factory</dd>
 <dd><code>transactionOperations</code> - The transaction operations</dd>
 <dd><code>executorService</code> - The executor service for I/O tasks to use</dd>
+<dd><code>runtimeEntityRegistry</code> - The runtime entity registry</dd>
 </dl>
 </li>
 </ul>

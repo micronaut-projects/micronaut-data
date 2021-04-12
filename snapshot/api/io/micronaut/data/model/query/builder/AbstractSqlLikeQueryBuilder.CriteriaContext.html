@@ -125,7 +125,8 @@ var activeTableTab = "activeTableTab";
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>default java.lang.String</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#addParameter-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.QueryParameter-">addParameter</a></span>(<a href="../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.CriteriaContext.html#addParameter-io.micronaut.data.model.PersistentProperty-java.lang.String-io.micronaut.data.model.query.QueryParameter-">addParameter</a></span>(<a href="../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty,
+            java.lang.String&nbsp;path,
             <a href="../../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;value)</code>&nbsp;</td>
 </tr>
 <tr id="i1" class="rowColor">
@@ -205,13 +206,16 @@ var activeTableTab = "activeTableTab";
                                                                   java.lang.Class&lt;?&gt;&nbsp;criterionClazz)</pre>
 </li>
 </ul>
-<a name="addParameter-io.micronaut.data.model.PersistentProperty-io.micronaut.data.model.query.QueryParameter-">
+<a name="addParameter-io.micronaut.data.model.PersistentProperty-java.lang.String-io.micronaut.data.model.query.QueryParameter-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>addParameter</h4>
-<pre>default&nbsp;java.lang.String&nbsp;addParameter(<a href="../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
+<pre>default&nbsp;java.lang.String&nbsp;addParameter(@NonNull
+                                      <a href="../../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;persistentProperty,
+                                      java.lang.String&nbsp;path,
+                                      @Nullable
                                       <a href="../../../../../../io/micronaut/data/model/query/QueryParameter.html" title="class in io.micronaut.data.model.query">QueryParameter</a>&nbsp;value)</pre>
 </li>
 </ul>

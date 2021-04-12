@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":6,"i2":6,"i3":6,"i4":17};
+var methods = {"i0":6,"i1":6,"i2":18,"i3":18,"i4":6,"i5":17};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li>Next&nbsp;Class</li>
 </ul>
 <ul class="navList">
@@ -126,31 +126,36 @@ var activeTableTab = "activeTableTab";
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>default java.util.Set&lt;java.lang.String&gt;</code></td>
+<td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getAdditionalRequiredParameters--">getAdditionalRequiredParameters</a></span>()</code>
-<div class="block">Returns the names of additional required parameters for this query.</div>
+<div class="block">Returns additional required parameters.</div>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
+<td class="colFirst"><code>java.util.List&lt;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder">QueryParameterBinding</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getParameterBindings--">getParameterBindings</a></span>()</code>
+<div class="block">Returns the parameters binding for this query.</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>default java.util.Map&lt;java.lang.String,java.lang.String&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getParameters--">getParameters</a></span>()</code>
 <div class="block">A map containing the parameter names and the references to the <code>Argument</code> names which define the values.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
-<td class="colFirst"><code>java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;</code></td>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code>default java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getParameterTypes--">getParameterTypes</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#getQuery--">getQuery</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>static <a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#of-java.lang.String-java.util.Map-java.util.Map-java.util.Set-">of</a></span>(java.lang.String&nbsp;query,
-  java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;parameters,
-  java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;parameterTypes,
-  java.util.Set&lt;java.lang.String&gt;&nbsp;additionalRequiredParameters)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html#of-java.lang.String-java.util.List-java.util.Map-">of</a></span>(java.lang.String&nbsp;query,
+  java.util.List&lt;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder">QueryParameterBinding</a>&gt;&nbsp;parameterBindings,
+  java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;additionalRequiredParameters)</code>
 <div class="block">Creates a new encoded query.</div>
 </td>
 </tr>
@@ -190,7 +195,7 @@ java.lang.String&nbsp;getQuery()</pre>
 <li class="blockList">
 <h4>getParameters</h4>
 <pre>@NonNull
-java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParameters()</pre>
+default&nbsp;java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParameters()</pre>
 <div class="block">A map containing the parameter names and the references to the <code>Argument</code> names which define the values.
  These can be used to resolve the runtime values to bind to the prepared statement.</div>
 <dl>
@@ -206,10 +211,24 @@ java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getParameters()</pre
 <li class="blockList">
 <h4>getParameterTypes</h4>
 <pre>@NonNull
-java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;getParameterTypes()</pre>
+default&nbsp;java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;getParameterTypes()</pre>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The computed parameter types.</dd>
+</dl>
+</li>
+</ul>
+<a name="getParameterBindings--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getParameterBindings</h4>
+<pre>java.util.List&lt;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder">QueryParameterBinding</a>&gt;&nbsp;getParameterBindings()</pre>
+<div class="block">Returns the parameters binding for this query.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the parameters binding</dd>
 </dl>
 </li>
 </ul>
@@ -219,15 +238,15 @@ java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/m
 <ul class="blockList">
 <li class="blockList">
 <h4>getAdditionalRequiredParameters</h4>
-<pre>default&nbsp;java.util.Set&lt;java.lang.String&gt;&nbsp;getAdditionalRequiredParameters()</pre>
-<div class="block">Returns the names of additional required parameters for this query.</div>
+<pre>java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;getAdditionalRequiredParameters()</pre>
+<div class="block">Returns additional required parameters.</div>
 <dl>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The additional required parameters, if any</dd>
+<dd>the additional required parameters</dd>
 </dl>
 </li>
 </ul>
-<a name="of-java.lang.String-java.util.Map-java.util.Map-java.util.Set-">
+<a name="of-java.lang.String-java.util.List-java.util.Map-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -236,19 +255,16 @@ java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/m
 <pre>@NonNull
 static&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder">QueryResult</a>&nbsp;of(@NonNull
                                java.lang.String&nbsp;query,
-                               @Nullable
-                               java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;parameters,
-                               @Nullable
-                               java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;parameterTypes,
-                               @Nullable
-                               java.util.Set&lt;java.lang.String&gt;&nbsp;additionalRequiredParameters)</pre>
+                               @NonNull
+                               java.util.List&lt;<a href="../../../../../../io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder">QueryParameterBinding</a>&gt;&nbsp;parameterBindings,
+                               @NonNull
+                               java.util.Map&lt;java.lang.String,java.lang.String&gt;&nbsp;additionalRequiredParameters)</pre>
 <div class="block">Creates a new encoded query.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>query</code> - The query</dd>
-<dd><code>parameters</code> - The parameters</dd>
-<dd><code>parameterTypes</code> - The parameter types</dd>
-<dd><code>additionalRequiredParameters</code> - Names of the additional required parameters to execute the query</dd>
+<dd><code>parameterBindings</code> - The parameters binding</dd>
+<dd><code>additionalRequiredParameters</code> - Additional required parameters to execute the query</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The query</dd>
 </dl>
@@ -281,7 +297,7 @@ static&nbsp;<a href="../../../../../../io/micronaut/data/model/query/builder/Que
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../../io/micronaut/data/model/query/builder/QueryBuilder.html" title="interface in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li>Next&nbsp;Class</li>
 </ul>
 <ul class="navList">

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9};
+var methods = {"i0":9,"i1":9,"i2":9,"i3":9,"i4":9,"i5":9,"i6":9,"i7":9,"i8":9,"i9":9,"i10":9,"i11":9,"i12":9,"i13":9,"i14":9,"i15":9,"i16":9,"i17":9,"i18":9,"i19":9};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -266,6 +266,12 @@ extends java.lang.Object</pre>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/TypeUtils.html#resolveDataType-io.micronaut.inject.ast.ClassElement-java.util.Map-">resolveDataType</a></span>(io.micronaut.inject.ast.ClassElement&nbsp;type,
                java.util.Map&lt;java.lang.String,<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;dataTypes)</code>
 <div class="block">Compute the data type for the given type.</div>
+</td>
+</tr>
+<tr id="i19" class="rowColor">
+<td class="colFirst"><code>static java.util.Optional&lt;<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/processor/visitors/finders/TypeUtils.html#resolveDataType-io.micronaut.inject.ast.ParameterElement-">resolveDataType</a></span>(io.micronaut.inject.ast.ParameterElement&nbsp;parameter)</code>
+<div class="block">Compute the data type for the given parameter.</div>
 </td>
 </tr>
 </table>
@@ -574,6 +580,23 @@ extends java.lang.Object</pre>
 <dd><code>type</code> - The type</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>True if it is Object</dd>
+</dl>
+</li>
+</ul>
+<a name="resolveDataType-io.micronaut.inject.ast.ParameterElement-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>resolveDataType</h4>
+<pre>public static&nbsp;java.util.Optional&lt;<a href="../../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a>&gt;&nbsp;resolveDataType(@NonNull
+                                                           io.micronaut.inject.ast.ParameterElement&nbsp;parameter)</pre>
+<div class="block">Compute the data type for the given parameter.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>parameter</code> - The parameter</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The data type</dd>
 </dl>
 </li>
 </ul>

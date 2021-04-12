@@ -158,7 +158,9 @@
         
         <div class="toc-item" style="margin-left:30px" id="toc-item-sqlInserts"><a href="#sqlInserts"><strong>8.1.3.1</strong><span>Inserts and Updates</span></a></div>
         
-        <div class="toc-item" style="margin-left:30px" id="toc-item-pessimisticLocking"><a href="#pessimisticLocking"><strong>8.1.3.2</strong><span>Pessimistic Locking</span></a></div>
+        <div class="toc-item" style="margin-left:30px" id="toc-item-optimisticLocking"><a href="#optimisticLocking"><strong>8.1.3.2</strong><span>Optimistic locking</span></a></div>
+        
+        <div class="toc-item" style="margin-left:30px" id="toc-item-pessimisticLocking"><a href="#pessimisticLocking"><strong>8.1.3.3</strong><span>Pessimistic Locking</span></a></div>
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-sqlMapping"><a href="#sqlMapping"><strong>8.1.4</strong><span>Mapping Entities</span></a></div>
         
@@ -4826,7 +4828,117 @@ fun update(@Id id: Long?, title: String)</code></pre>
 <p>By being explicit in defining the method as an update method Micronaut Data knows to execute an <code>UPDATE</code>.</p>
 </div>
 
-<h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>8.1.3.2 Pessimistic Locking</h2>
+<h2 id="optimisticLocking"><a class="anchor" href="#optimisticLocking"></a>8.1.3.2 Optimistic locking</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/jdbc/jdbcRepositories/optimisticLocking.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Optimistic locking is a strategy where you note the actual record state&#8217;s version and modify the record only when the version is the same.</p>
+</div>
+<div class="paragraph">
+<p>To enable optimistic locking for your entity add <a href="../api/io/micronaut/data/annotation/Version.html">@Version</a> annotated field with one of the types:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>java.lang.Integer</code></p>
+</li>
+<li>
+<p><code>java.lang.Long</code></p>
+</li>
+<li>
+<p><code>java.lang.Short</code></p>
+</li>
+<li>
+<p>Date-time type extending <code>java.time.Temporal</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The field is going to be incremented (for number types) or replaced (for date types) on an update operation.</p>
+</div>
+<div class="paragraph">
+<p>Micronaut Data will generate <code>UPDATE</code>/<code>DELETE</code> SQL queries with a version match: <code>&#8230;&#8203; WHERE rec.version = :currentVersion &#8230;&#8203;</code> and if the update/delete doesn&#8217;t produce any result <a href="../api/io/micronaut/data/exceptions/OptimisticLockException.html">OptimisticLockException</a> will be thrown.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Entity
+public class Student {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Version
+    private Long version;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Entity
+class Student {
+
+    @Id
+    @GeneratedValue
+    Long id
+    @Version
+    Long version</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Entity
+data class Student(
+        @Id @GeneratedValue
+        var id: Long?,
+        @Version
+        val version: Long,</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It&#8217;s possible to use <a href="../api/io/micronaut/data/annotation/Version.html">@Version</a> in a partial update or a delete method, in this case the version needs to match the version of the stored record.</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Repository
+public interface StudentRepository extends CrudRepository&lt;Student, Long&gt; {
+
+    void update(@Id Long id, @Version Long version, String name);
+
+    void delete(@Id Long id, @Version Long version);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
+interface StudentRepository extends CrudRepository&lt;Student, Long&gt; {
+
+    void update(@Id Long id, @Version Long version, String name)
+
+    void delete(@Id Long id, @Version Long version)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
+interface StudentRepository : CrudRepository&lt;Student, Long&gt; {
+
+    fun update(@Id id: Long, @Version version: Long, name: String)
+
+    fun delete(@Id id: Long, @Version version: Long)
+
+}</code></pre>
+</div>
+</div>
+
+<h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>8.1.3.3 Pessimistic Locking</h2>
 
 <div class='contribute-btn'>
     <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
@@ -5040,6 +5152,10 @@ public class Country {
 <td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the ID of an entity</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Embeddable.html">@Embeddable</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies that the bean is embeddable</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/EmbeddedId.html">@EmbeddedId</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Specifies an embedded ID of an entity</p></td>
 </tr>
@@ -5059,6 +5175,10 @@ public class Country {
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Transient.html">@Transient</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a property is transient</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Version.html">@Version</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the version field of an entity, enables optimistic locking</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -5071,6 +5191,9 @@ public class Country {
 </li>
 <li>
 <p><code>@Id</code></p>
+</li>
+<li>
+<p><code>@Version</code></p>
 </li>
 <li>
 <p><code>@Column</code></p>
@@ -5095,6 +5218,9 @@ public class Country {
 </li>
 <li>
 <p><code>@Embedded</code></p>
+</li>
+<li>
+<p><code>@EmbeddedId</code></p>
 </li>
 <li>
 <p><code>@Embeddable</code></p>
