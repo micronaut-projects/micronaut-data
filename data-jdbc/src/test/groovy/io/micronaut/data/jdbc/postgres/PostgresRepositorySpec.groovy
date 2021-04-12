@@ -19,6 +19,7 @@ package io.micronaut.data.jdbc.postgres
 import io.micronaut.data.jdbc.BasicTypes
 import io.micronaut.data.tck.repositories.FoodRepository
 import io.micronaut.data.tck.repositories.MealRepository
+import io.micronaut.data.tck.repositories.StudentRepository
 import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.Car
@@ -116,6 +117,11 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     @Override
     FoodRepository getFoodRepository() {
         return context.getBean(PostgresFoodRepository)
+    }
+
+    @Override
+    StudentRepository getStudentRepository() {
+        return context.getBean(PostgresStudentRepository)
     }
 
     @Override

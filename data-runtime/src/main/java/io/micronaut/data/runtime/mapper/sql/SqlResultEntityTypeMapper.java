@@ -427,6 +427,13 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 BeanProperty<K, Object> idProperty = (BeanProperty<K, Object>) identity.getProperty();
                 entity = (K) convertAndSetWithValue(entity, identity, idProperty, id, identity.getDataType());
             }
+            RuntimePersistentProperty<K> version = persistentEntity.getVersion();
+            if (version != null) {
+                Object v = readProperty(rs, ctx, version);
+                if (v != null) {
+                    entity = (K) convertAndSetWithValue(entity, version, version.getProperty(), v, version.getDataType());
+                }
+            }
             for (RuntimePersistentProperty<K> rpp : persistentEntity.getPersistentProperties()) {
                 if (rpp.isReadOnly()) {
                     continue;

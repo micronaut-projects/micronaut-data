@@ -356,10 +356,10 @@ public class DefaultQuery implements QueryModel {
         return null;
     }
 
-    @NonNull
     @Override
-    public QueryModel idEquals(QueryParameter parameter) {
-        return null;
+    public DefaultQuery versionEq(@NonNull QueryParameter value) {
+        criteria.add(Restrictions.versionEq(value));
+        return this;
     }
 
     /**

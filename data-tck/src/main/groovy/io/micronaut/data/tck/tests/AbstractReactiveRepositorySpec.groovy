@@ -18,14 +18,19 @@ package io.micronaut.data.tck.tests
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
+import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
+import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import spock.lang.Specification
 import spock.lang.Stepwise
+
+import java.util.concurrent.CompletionException
 
 @Stepwise
 abstract class AbstractReactiveRepositorySpec extends Specification {
 
     abstract PersonReactiveRepository getPersonRepository()
+    abstract StudentReactiveRepository getStudentRepository()
 
     abstract void init()
 
@@ -263,5 +268,74 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
 
         then:"data is gone"
         personRepository.count().blockingGet() == 0
+    }
+
+    void "test optimistic locking"() {
+        given:
+            def student = new Student("Denis")
+        when:
+            studentRepository.save(student).blockingGet()
+        then:
+            student.version == 0
+        when:
+            student.setVersion(5)
+            student.setName("Xyz")
+            studentRepository.update(student).blockingGet()
+        then:
+            def e = thrown(CompletionException)
+            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            e = studentRepository.updateByIdAndVersion(student.getId(), student.getVersion(), student.getName()).blockingGet()
+        then:
+            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            e = studentRepository.delete(student).blockingGet()
+        then:
+            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            e = studentRepository.deleteByIdAndVersionAndName(student.getId(), student.getVersion(), student.getName()).blockingGet()
+        then:
+            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            e = studentRepository.deleteByIdAndVersion(student.getId(), student.getVersion()).blockingGet()
+        then:
+            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            e = studentRepository.deleteAll([student]).blockingGet()
+        then:
+            e.cause.message == "Execute update returned unexpected row count. Expected: 1 got: 0"
+        when:
+            student = studentRepository.findById(student.getId()).blockingGet()
+        then:
+            student.name == "Denis"
+            student.version == 0
+        when:
+            student.setName("Abc")
+            studentRepository.update(student).blockingGet()
+            def student2 = studentRepository.findById(student.getId()).blockingGet()
+        then:
+            student.version == 1
+            student2.name == "Abc"
+            student2.version == 1
+        when:
+            studentRepository.updateByIdAndVersion(student2.getId(), student2.getVersion(), "Joe").blockingGet()
+            def student3 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student3.name == "Joe"
+            student3.version == 2
+        when:
+            studentRepository.updateById(student2.getId(), "Joe2").blockingGet()
+            def student4 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student4.name == "Joe2"
+            student4.version == 2
+        when:
+            studentRepository.deleteByIdAndVersionAndName(student4.getId(), student4.getVersion(), student4.getName()).blockingGet()
+            def student5 = studentRepository.findById(student2.getId())
+        then:
+            student5.isEmpty().blockingGet()
+
+        cleanup:
+            studentRepository.deleteAll().blockingAwait()
     }
 }

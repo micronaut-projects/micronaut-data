@@ -30,6 +30,7 @@ import io.micronaut.data.tck.repositories.NoseRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.repositories.RegionRepository
 import io.micronaut.data.tck.repositories.RoleRepository
+import io.micronaut.data.tck.repositories.StudentRepository
 import io.micronaut.data.tck.repositories.UserRepository
 import io.micronaut.data.tck.repositories.UserRoleRepository
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
@@ -115,6 +116,11 @@ class MySqlRepositorySpec extends AbstractRepositorySpec implements MySQLTestPro
     @Override
     FoodRepository getFoodRepository() {
         return context.getBean(MySqlFoodRepository)
+    }
+
+    @Override
+    StudentRepository getStudentRepository() {
+        return context.getBean(MySqlStudentRepository)
     }
 
     @IgnoreIf({ jvm.isJava15Compatible() })

@@ -16,15 +16,15 @@
 package io.micronaut.data.jdbc.operations;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -33,6 +33,7 @@ import io.micronaut.data.model.*;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -40,7 +41,6 @@ import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
-import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 import io.micronaut.data.runtime.mapper.QueryStatement;
@@ -80,14 +80,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     protected final Map<Class, SqlQueryBuilder> queryBuilders = new HashMap<>(10);
     protected final MediaTypeCodec jsonCodec;
     protected final EntityEventListener<Object> entityEventRegistry;
-    protected final DateTimeProvider dateTimeProvider;
+    protected final RuntimeEntityRegistry runtimeEntityRegistry;
 
-    private final Map<Class, StoredInsert> storedInserts = new ConcurrentHashMap<>(10);
-    private final Map<QueryKey, StoredInsert> entityInserts = new ConcurrentHashMap<>(10);
-    private final Map<QueryKey, StoredInsert> entityUpdates = new ConcurrentHashMap<>(10);
+    private final Map<QueryKey, SqlOperation> entityInserts = new ConcurrentHashMap<>(10);
+    private final Map<QueryKey, SqlOperation> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
-    private final RuntimeEntityRegistry runtimeEntityRegistry;
 
 
     /**
@@ -98,9 +96,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
-     * @param dateTimeProvider           The date time provider
      * @param beanContext                The bean context
-     * @deprecated Use {@link #AbstractSqlRepositoryOperations(String, ResultReader, ResultReader, QueryStatement, List, DateTimeProvider, RuntimeEntityRegistry, BeanContext)}
+     * @deprecated Use {@link #AbstractSqlRepositoryOperations(String, ResultReader, ResultReader, QueryStatement, List, RuntimeEntityRegistry, BeanContext)}
      */
     @Deprecated
     protected AbstractSqlRepositoryOperations(
@@ -109,16 +106,17 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
-            DateTimeProvider<Object> dateTimeProvider,
             BeanContext beanContext) {
+        //noinspection rawtypes
         this(
                 dataSourceName,
                 columnNameResultSetReader,
                 columnIndexResultSetReader,
                 preparedStatementWriter,
                 codecs,
-                dateTimeProvider,
-                new DefaultRuntimeEntityRegistry(new EntityEventRegistry(beanContext)),
+                new DefaultRuntimeEntityRegistry(
+                        new EntityEventRegistry(beanContext),
+                        (Collection) beanContext.getBeanRegistrations(PropertyAutoPopulator.class)),
                 beanContext
         );
     }
@@ -131,7 +129,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param columnIndexResultSetReader The column index result reader
      * @param preparedStatementWriter    The prepared statement writer
      * @param codecs                     The media type codecs
-     * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param beanContext                The bean context
      */
@@ -141,10 +138,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             ResultReader<RS, Integer> columnIndexResultSetReader,
             QueryStatement<PS, Integer> preparedStatementWriter,
             List<MediaTypeCodec> codecs,
-            DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
             BeanContext beanContext) {
-        this.dateTimeProvider = dateTimeProvider;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.entityEventRegistry = runtimeEntityRegistry.getEntityEventListener();
         this.columnNameResultSetReader = columnNameResultSetReader;
@@ -188,13 +183,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             StatementSupplier<PS> statementFunction,
             @NonNull PreparedQuery<T, R> preparedQuery,
             boolean isUpdate,
-            boolean isSingleResult) {
+            boolean isSingleResult) throws Exception {
         Object[] queryParameters = preparedQuery.getParameterArray();
         int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
         DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
+        String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
+        String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
+        String[] indexedParameterAutoPopulatedPreviousPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
+        int[] indexedParameterAutoPopulatedPreviousPropertyIndexes = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
         String query = preparedQuery.getQuery();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
         final Dialect dialect = queryBuilder.getDialect();
+        RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
 
         int[] parametersListSizes = null;
         for (int i = 0; i < parameterBinding.length; i++) {
@@ -246,7 +246,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
                 } else if (isSqlServerWithoutOrderBy(query, dialect)) {
                     // SQL server requires order by
-                    RuntimePersistentEntity<T> persistentEntity = getEntity(rootEntity);
                     sort = sortById(persistentEntity);
                     query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
                 }
@@ -274,35 +273,27 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             if (parameterIndex > -1) {
                 value = queryParameters[parameterIndex];
             } else {
-                String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
                 String propertyPath = indexedParameterPaths[i];
-                if (propertyPath != null) {
-
-                    String lastUpdatedProperty = preparedQuery.getLastUpdatedProperty();
-                    if (lastUpdatedProperty != null && lastUpdatedProperty.equals(propertyPath)) {
-                        Class<?> lastUpdatedType = preparedQuery.getLastUpdatedType();
-                        if (lastUpdatedType == null) {
-                            throw new IllegalStateException("Could not establish last updated time for entity: " + preparedQuery.getRootEntity());
-                        }
-                        Object timestamp = ConversionService.SHARED.convert(dateTimeProvider.getNow(), lastUpdatedType).orElse(null);
-                        if (timestamp == null) {
-                            throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                        }
-                        value = timestamp;
+                String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
+                if (autoPopulatedPropertyPath != null) {
+                    RuntimePersistentProperty<T> persistentProperty = persistentEntity.getPropertyByName(autoPopulatedPropertyPath);
+                    if (persistentProperty == null) {
+                        throw new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath);
+                    }
+                    Object previousValue = null;
+                    int autoPopulatedPreviousPropertyIndex = indexedParameterAutoPopulatedPreviousPropertyIndexes[i];
+                    if (autoPopulatedPreviousPropertyIndex > -1) {
+                        previousValue = queryParameters[autoPopulatedPreviousPropertyIndex];
                     } else {
-                        int j = propertyPath.indexOf('.');
-                        if (j > -1) {
-                            String[] properties = propertyPath.split("\\.");
-                            value = queryParameters[Integer.parseInt(properties[0])];
-                            for (int k = 1; k < properties.length && value != null; k++) {
-                                String property = properties[k];
-                                value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
-                            }
-                        } else {
-                            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                        String previousValuePath = indexedParameterAutoPopulatedPreviousPropertyPaths[i];
+                        if (previousValuePath != null) {
+                            previousValue = resolveQueryParameterByPath(query, i, queryParameters, previousValuePath);
                         }
                     }
-                } else {
+                    value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+                } else if (propertyPath != null) {
+                    value = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
+                }  else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
                 }
             }
@@ -335,80 +326,18 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         return ps;
     }
 
-    /**
-     * Sets the insert parameters for the given insert, entity and statement.
-     *
-     * @param insert The insert
-     * @param entity The entity
-     * @param stmt   The statement
-     * @param <T>    The entity type
-     */
-    protected final <T> void setInsertParameters(@NonNull StoredInsert<T> insert, @NonNull T entity, @NonNull PS stmt) {
-        final RuntimePersistentEntity<T> persistentEntity = insert.getPersistentEntity();
-        final String[] parameterBinding = insert.getParameterBinding();
-        final Dialect dialect = insert.dialect;
-
-        int index;
-        DataType type;
-        Object value;
-        for (int i = 0; i < parameterBinding.length; i++) {
-            index = shiftIndex(i);
-            String path = parameterBinding[i];
-            RuntimePersistentProperty<T> prop = persistentEntity.getPropertyByName(path);
-            if (prop == null) {
-                int j = path.indexOf('.');
-                if (j < 0) {
-                    continue;
-                }
-                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(path);
-                if (propertyPath == null) {
-                    throw new IllegalStateException("Unrecognized path: " + path);
-                }
-                value = entity;
-                for (Association association : propertyPath.getAssociations()) {
-                    RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-                    BeanProperty beanProperty = property.getProperty();
-                    value = beanProperty.get(value);
-                    if (value == null) {
-                        break;
-                    }
-                }
-                RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
-                if (value != null) {
-                    BeanProperty beanProperty = property.getProperty();
-                    value = beanProperty.get(value);
-                }
-                type = property.getDataType();
-                if (value == null && type == DataType.ENTITY) {
-                    RuntimePersistentEntity<?> entity1 = getEntity(property.getType());
-                    RuntimePersistentProperty<?> identity = entity1.getIdentity();
-                    type = identity.getDataType();
-                }
-            } else {
-                type = prop.getDataType();
-                BeanProperty<T, Object> beanProperty = (BeanProperty<T, Object>) prop.getProperty();
-                value = beanProperty.get(entity);
-
-                if (prop instanceof Association) {
-                    Association association = (Association) prop;
-                    if (association.isForeignKey()) {
-                        continue;
-                    }
-
-                    @SuppressWarnings("unchecked")
-                    RuntimePersistentEntity<Object> associatedEntity = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
-                    RuntimePersistentProperty<Object> identity = associatedEntity.getIdentity();
-                    if (identity == null) {
-                        throw new IllegalArgumentException("Associated entity has not ID: " + associatedEntity.getName());
-                    } else {
-                        type = identity.getDataType();
-                    }
-                    BeanProperty<Object, ?> identityProperty = identity.getProperty();
-                    value = value != null ? identityProperty.get(value) : null;
-                }
+    private Object resolveQueryParameterByPath(String query, int i, Object[] queryParameters, String propertyPath) {
+        int j = propertyPath.indexOf('.');
+        if (j > -1) {
+            String[] properties = propertyPath.split("\\.");
+            Object value = queryParameters[Integer.parseInt(properties[0])];
+            for (int k = 1; k < properties.length && value != null; k++) {
+                String property = properties[k];
+                value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
             }
-
-            setStatementParameter(stmt, index, type, value, dialect);
+            return value;
+        } else {
+            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
         }
     }
 
@@ -498,11 +427,13 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param pe The persistent entity
      * @param annotationMetadata The annotation metadata
      * @param <T> The generic type
+     * @return The entity, possibly modified
      */
     @SuppressWarnings("unchecked")
-    protected <T> void triggerPostUpdate(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
-        final RuntimePersistentEntity<Object> simple = (RuntimePersistentEntity<Object>) pe;
-        entityEventRegistry.postUpdate(new DefaultEntityEventContext<>(simple, entity));
+    protected <T> T triggerPostUpdate(@NonNull T entity, RuntimePersistentEntity<T> pe, AnnotationMetadata annotationMetadata) {
+        DefaultEntityEventContext<T> context = new DefaultEntityEventContext<>(pe, entity);
+        entityEventRegistry.postUpdate((EntityEventContext<Object>) context);
+        return context.getEntity();
     }
 
     /**
@@ -528,32 +459,6 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      */
     protected int shiftIndex(int i) {
         return i + 1;
-    }
-
-    /**
-     * Resolve the INSERT for the given {@link EntityOperation}.
-     *
-     * @param operation The operation
-     * @param <T>       The entity type
-     * @return The insert
-     */
-    @NonNull
-    protected final <T> StoredInsert<T> resolveInsert(@NonNull EntityOperation<T> operation) {
-        return storedInserts.computeIfAbsent(operation.getRootEntity(), aClass -> {
-            AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-            String insertStatement = annotationMetadata.stringValue(Query.class).orElse(null);
-            if (insertStatement == null) {
-                throw new IllegalStateException("No insert statement present in repository. Ensure it extends GenericRepository and is annotated with @JdbcRepository");
-            }
-
-            RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
-            String[] parameterBinding = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-            // MSSQL doesn't support RETURN_GENERATED_KEYS https://github.com/Microsoft/mssql-jdbc/issues/245 with BATCHi
-            final Dialect dialect = annotationMetadata.enumValue(Repository.class, "dialect", Dialect.class)
-                    .orElse(Dialect.ANSI);
-            boolean supportsBatch = isSupportsBatch(persistentEntity, dialect);
-            return new StoredInsert<>(insertStatement, persistentEntity, parameterBinding, supportsBatch, dialect);
-        });
     }
 
     /**
@@ -683,11 +588,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param repositoryType     The repository type
      * @param rootEntity         The root entity
      * @param persistentEntity   The persistent entity
-     * @param <T>                The generic type
      * @return The insert
      */
-    protected @NonNull
-    <T> StoredInsert<T> resolveEntityInsert(
+    protected @NonNull SqlOperation resolveEntityInsert(
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
             @NonNull Class<?> rootEntity,
@@ -698,15 +601,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
-            final String sql = queryResult.getQuery();
-            final Map<String, String> parameters = queryResult.getParameters();
-            Dialect dialect = queryBuilder.getDialect();
-            return new StoredInsert<>(
-                    sql,
-                    persistentEntity,
-                    parameters.values().toArray(new String[0]),
-                    isSupportsBatch(persistentEntity, dialect),
-                    dialect
+            return new SqlOperation(
+                    queryBuilder.getDialect(),
+                    queryResult.getQuery(),
+                    queryResult.getParameterBindings().stream().map(QueryParameterBinding::getPath).toArray(String[]::new),
+                    new String[0],
+                    false
             );
         });
     }
@@ -718,11 +618,9 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
      * @param repositoryType     The repository type
      * @param rootEntity         The root entity
      * @param persistentEntity   The persistent entity
-     * @param <T>                The generic type
      * @return The insert
      */
-    protected @NonNull
-    <T> StoredInsert<T> resolveEntityUpdate(
+    protected @NonNull SqlOperation resolveEntityUpdate(
             AnnotationMetadata annotationMetadata,
             Class<?> repositoryType,
             @NonNull Class<?> rootEntity,
@@ -740,6 +638,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
             } else {
                 idName = TypeRole.ID;
             }
+
             final QueryModel queryModel = QueryModel.from(persistentEntity)
                     .idEq(new QueryParameter(idName));
             List<String> updateProperties = persistentEntity.getPersistentProperties()
@@ -755,15 +654,12 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
                     updateProperties
             );
 
-            final String sql = queryResult.getQuery();
-            final Map<String, String> parameters = queryResult.getParameters();
-            Dialect dialect = queryBuilder.getDialect();
-            return new StoredInsert<>(
-                    sql,
-                    persistentEntity,
-                    parameters.values().toArray(new String[0]),
-                    isSupportsBatch(persistentEntity, dialect),
-                    dialect
+            return new SqlOperation(
+                    queryBuilder.getDialect(),
+                    queryResult.getQuery(),
+                    queryResult.getParameterBindings().stream().map(QueryParameterBinding::getPath).toArray(String[]::new),
+                    new String[0],
+                    false
             );
         });
     }
@@ -788,6 +684,27 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
     }
 
     private boolean isSupportsBatch(PersistentEntity persistentEntity, Dialect dialect) {
+        switch (dialect) {
+            case SQL_SERVER:
+                return false;
+            case ORACLE:
+                if (persistentEntity.getIdentity() != null) {
+                    // Oracle doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+                    return !persistentEntity.getIdentity().isGenerated();
+                }
+                return false;
+            default:
+                return true;
+        }
+    }
+
+    /**
+     * Does supports batch for update queries.
+     * @param persistentEntity The persistent entity
+     * @param dialect The dialect
+     * @return true if supported
+     */
+    protected boolean isSupportsBatchInsert(PersistentEntity persistentEntity, Dialect dialect) {
         switch (dialect) {
             case SQL_SERVER:
                 return false;
@@ -863,105 +780,144 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS> implements Reposit
         }
     }
 
-    /**
-     * A stored insert statement.
-     *
-     * @param <T> The entity type
-     */
-    protected final class StoredInsert<T> {
-        private final String[] parameterBinding;
-        private final RuntimePersistentProperty identity;
-        private final boolean generateId;
-        private final String sql;
-        private final boolean supportsBatch;
-        private final RuntimePersistentEntity<T> persistentEntity;
-        private final Dialect dialect;
+    class StoredSqlOperation extends SqlOperation {
 
-        /**
-         * Default constructor.
-         *
-         * @param sql              The SQL INSERT
-         * @param persistentEntity The entity
-         * @param parameterBinding The parameter binding
-         * @param supportsBatch    Whether batch insert is supported
-         * @param dialect          The dialect
-         */
-        StoredInsert(
-                String sql,
-                RuntimePersistentEntity<T> persistentEntity,
-                String[] parameterBinding,
-                boolean supportsBatch,
-                Dialect dialect) {
-            this.sql = sql;
-            this.persistentEntity = persistentEntity;
-            this.parameterBinding = parameterBinding;
-            this.identity = persistentEntity.getIdentity();
-            this.generateId = identity != null && identity.isGenerated();
-            this.supportsBatch = supportsBatch;
-            this.dialect = dialect;
+        StoredSqlOperation(Dialect dialect, AnnotationMetadata annotationMetadata) {
+            super(dialect,
+                    annotationMetadata.stringValue(Query.class, "rawQuery")
+                            .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null)),
+                    annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS),
+                    annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS),
+                    annotationMetadata.booleanValue(DataMethod.class, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).orElse(false)
+            );
         }
 
-        /**
-         * @return The dialect
-         */
-        public @NonNull
-        Dialect getDialect() {
+    }
+
+    class SqlOperation {
+
+        protected final String[] parameterBindingPaths;
+        protected final String[] autoPopulatedPreviousProperties;
+        protected final String query;
+        protected final Dialect dialect;
+        protected final boolean isOptimisticLock;
+
+        SqlOperation(Dialect dialect,
+                     String query,
+                     String[] parameterBindingPaths,
+                     String[] autoPopulatedPreviousProperties,
+                     boolean isOptimisticLock) {
+            Objects.requireNonNull(query, "Query cannot be null");
+            Objects.requireNonNull(dialect, "Dialect cannot be null");
+            this.parameterBindingPaths = parameterBindingPaths;
+            this.autoPopulatedPreviousProperties = autoPopulatedPreviousProperties;
+            this.query = query;
+            this.dialect = dialect;
+            this.isOptimisticLock = isOptimisticLock;
+        }
+
+        public String getQuery() {
+            return query;
+        }
+
+        public Dialect getDialect() {
             return dialect;
         }
 
         /**
-         * @return The persistent entity
+         * Return true if query contains previous version check.
+         * If true and modifying query updates less records than expected {@link io.micronaut.data.exceptions.OptimisticLockException should be thrown.}
+         *
+         * @return true if the query contains optimistic lock
          */
-        public RuntimePersistentEntity<T> getPersistentEntity() {
-            return persistentEntity;
+        public boolean isOptimisticLock() {
+            return isOptimisticLock;
         }
 
         /**
-         * @return Whether batch inserts are allowed.
+         * Collect auto-populated property values before pre-actions are triggered and property values are modified.
+         *
+         * @param persistentEntity The persistent entity
+         * @param entity The entity instance
+         * @param <T> The entity type
+         * @return collected values
          */
-        public boolean doesSupportBatch() {
-            return supportsBatch;
-        }
-
-        /**
-         * @return The SQL
-         */
-        public @NonNull
-        String getSql() {
-            return sql;
-        }
-
-        /**
-         * @return The parameter binding
-         */
-        public @NonNull
-        String[] getParameterBinding() {
-            return parameterBinding;
-        }
-
-        /**
-         * @return The identity
-         */
-        public @Nullable
-        BeanProperty<T, Object> getIdentityProperty() {
-            if (identity != null) {
-                return identity.getProperty();
+        public <T> Map<String, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
+            if (autoPopulatedPreviousProperties == null || autoPopulatedPreviousProperties.length == 0) {
+                return null;
             }
-            return null;
+            return Arrays.stream(autoPopulatedPreviousProperties)
+                    .filter(StringUtils::isNotEmpty)
+                    .map(propertyPath -> {
+                        Object value = entity;
+                        for (String property : propertyPath.split("\\.")) {
+                            if (value == null) {
+                                break;
+                            }
+                            value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
+                        }
+                        return new AbstractMap.SimpleEntry<>(propertyPath, value);
+                    })
+                    .filter(e -> e.getValue() != null)
+                    .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
         }
 
-        /**
-         * @return The runtime persistent property.
-         */
-        public RuntimePersistentProperty getIdentity() {
-            return identity;
+        public <T> void setParameters(PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues) {
+            for (int i = 0; i < parameterBindingPaths.length; i++) {
+                String propertyPath = parameterBindingPaths[i];
+                if (StringUtils.isEmpty(propertyPath)) {
+                    if (previousValues != null) {
+                        String autoPopulatedPreviousProperty = autoPopulatedPreviousProperties[i];
+                        Object previousValue = previousValues.get(autoPopulatedPreviousProperty);
+                        if (previousValue != null) {
+                            PersistentPropertyPath pp = persistentEntity.getPropertyPath(autoPopulatedPreviousProperty);
+                            if (pp == null) {
+                                throw new IllegalStateException("Unrecognized path: " + autoPopulatedPreviousProperty);
+                            }
+                            setStatementParameter(stmt, shiftIndex(i), pp.getProperty().getDataType(), previousValue, dialect);
+                            continue;
+                        }
+                    }
+                    setStatementParameter(stmt, shiftIndex(i), DataType.ENTITY, entity, dialect);
+                    continue;
+                }
+                setPropertyPathParameter(stmt, shiftIndex(i), persistentEntity, entity, propertyPath);
+            }
         }
 
-        /**
-         * @return Is the id generated
-         */
-        public boolean isGenerateId() {
-            return generateId;
+        public <T> void setPropertyPathParameter(PS stmt, int index, RuntimePersistentEntity<T> persistentEntity, T entity, String propertyStringPath) {
+            if (propertyStringPath.startsWith("0.")) {
+                propertyStringPath = propertyStringPath.substring(2);
+            }
+            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyStringPath);
+            if (propertyPath == null) {
+                throw new IllegalStateException("Unrecognized path: " + propertyStringPath);
+            }
+            Object value = entity;
+            for (Association association : propertyPath.getAssociations()) {
+                RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
+                BeanProperty beanProperty = property.getProperty();
+                value = beanProperty.get(value);
+                if (value == null) {
+                    break;
+                }
+            }
+            RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
+            if (value != null) {
+                BeanProperty beanProperty = property.getProperty();
+                value = beanProperty.get(value);
+            }
+            DataType type = property.getDataType();
+            if (value == null && type == DataType.ENTITY) {
+                RuntimePersistentEntity<?> referencedEntity = getEntity(property.getType());
+                RuntimePersistentProperty<?> identity = referencedEntity.getIdentity();
+                if (identity == null) {
+                    throw new IllegalStateException("Cannot set an entity value without identity: " + referencedEntity);
+                }
+                type = identity.getDataType();
+            }
+            setStatementParameter(stmt, index, type, value, dialect);
         }
     }
+
 }

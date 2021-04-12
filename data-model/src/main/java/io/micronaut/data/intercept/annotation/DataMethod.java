@@ -78,6 +78,21 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETER_BINDING_PATHS = META_MEMBER_PARAMETER_BINDING + "Paths";
 
     /**
+     * The member name that holds parameter auto populated property paths.
+     */
+    String META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPaths";
+
+    /**
+     * The member name that holds parameter auto populated property paths.
+     */
+    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPreviousPaths";
+
+    /**
+     * The member name that holds parameter auto populated property paths.
+     */
+    String META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES = META_MEMBER_PARAMETER_BINDING + "AutoPopulatedPrevious";
+
+    /**
      * The ID type.
      */
     String META_MEMBER_ID_TYPE = "idType";
@@ -106,6 +121,11 @@ public @interface DataMethod {
      * Does the query result in a DTO object.
      */
     String META_MEMBER_DTO = "dto";
+
+    /**
+     * Does the query contains optimistic lock.
+     */
+    String META_MEMBER_OPTIMISTIC_LOCK = "optimisticLock";
 
     /**
      * The query builder to use.

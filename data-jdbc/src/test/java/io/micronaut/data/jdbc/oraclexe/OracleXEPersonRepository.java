@@ -15,10 +15,21 @@
  */
 package io.micronaut.data.jdbc.oraclexe;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonRepository;
+
+import java.util.List;
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface OracleXEPersonRepository extends PersonRepository {
+
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    void saveCustom(List<Person> people);
+
+    @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
+    void saveCustomSingle(Person people);
+
 }

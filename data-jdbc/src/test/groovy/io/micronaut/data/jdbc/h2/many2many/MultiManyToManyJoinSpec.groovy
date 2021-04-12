@@ -47,12 +47,13 @@ class MultiManyToManyJoinSpec extends Specification implements H2TestPropertyPro
         then:
             page.content.size() == 1
             page.content[0].refB[0].refC[0].name == "TestXyz"
-        when:
-            refARepository.update(refA)
-            refA = refARepository.findById(refA.id).get()
-        then:
-            refA.id
-            refA.refB[0].refC[0].name == "TestXyz"
+// refA doesn't have any field to update
+//        when:
+//            refARepository.update(refA)
+//            refA = refARepository.findById(refA.id).get()
+//        then:
+//            refA.id
+//            refA.refB[0].refC[0].name == "TestXyz"
     }
 }
 

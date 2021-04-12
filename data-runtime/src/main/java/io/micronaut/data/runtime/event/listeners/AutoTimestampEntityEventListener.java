@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.event.listeners;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionService;
@@ -24,6 +25,7 @@ import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreUpdate;
+import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.date.DateTimeProvider;
@@ -41,7 +43,7 @@ import java.util.function.Predicate;
  * @since 2.3.0
  */
 @Singleton
-public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener {
+public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
     private final DateTimeProvider<?> dateTimeProvider;
     private final ConversionService<?> conversionService;
 
@@ -80,6 +82,12 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
     public boolean preUpdate(@NonNull EntityEventContext<Object> context) {
         autoTimestampIfNecessary(context, true);
         return true;
+    }
+
+    @Override
+    @NonNull
+    public Object populate(RuntimePersistentProperty<?> property, @Nullable Object previousValue) {
+        return ConversionService.SHARED.convertRequired(dateTimeProvider.getNow(), property.getArgument());
     }
 
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {

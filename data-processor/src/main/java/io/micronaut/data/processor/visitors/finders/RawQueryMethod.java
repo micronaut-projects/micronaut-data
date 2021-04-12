@@ -23,9 +23,12 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -33,6 +36,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -188,18 +192,19 @@ public class RawQueryMethod implements MethodCandidate {
                 persistentEntity = matchContext.getEntity(parameterElement.getGenericType());
             }
         }
+        List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         if (namedParameters) {
             while (matcher.find()) {
                 String name = matcher.group(3);
                 Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
                 if (element.isPresent()) {
-                    parameterBinding.put(name, element.get().getName());
+                    parameterBindings.add(QueryParameterBinding.of(name, name, DataType.OBJECT, new QueryParameter(name)));
                 } else if (persistentEntity != null) {
                     PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
                     if (propertyPath == null) {
                         matchContext.fail("Cannot update non-existent property: " + name);
                     } else {
-                        parameterBinding.put(name, propertyPath.getPath());
+                        parameterBindings.add(QueryParameterBinding.of(name, propertyPath.getPath(), propertyPath.getProperty().getDataType()));
                     }
                 } else {
                     matchContext.fail("No method parameter found for named Query parameter : " + name);
@@ -212,13 +217,13 @@ public class RawQueryMethod implements MethodCandidate {
                 String name = matcher.group(3);
                 Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
                 if (element.isPresent()) {
-                    parameterBinding.put(String.valueOf(index++), element.get().getName());
+                    parameterBindings.add(QueryParameterBinding.of(String.valueOf(index++), name, DataType.OBJECT, new QueryParameter(name)));
                 } else if (persistentEntity != null) {
                     PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(name);
                     if (propertyPath == null) {
                         matchContext.fail("Cannot update non-existent property: " + name);
                     } else {
-                        parameterBinding.put(String.valueOf(index++), propertyPath.getPath());
+                        parameterBindings.add(QueryParameterBinding.of(String.valueOf(index++), propertyPath.getPath(), propertyPath.getProperty().getDataType()));
                     }
                 } else {
                     matchContext.fail("No method parameter found for named Query parameter : " + name);
@@ -226,7 +231,7 @@ public class RawQueryMethod implements MethodCandidate {
                 }
             }
         }
-        return new RawQuery(matchContext.getRootEntity(), parameterBinding, persistentEntity != null);
+        return new RawQuery(matchContext.getRootEntity(), parameterBindings, persistentEntity != null);
     }
 
 }

@@ -139,13 +139,15 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             settlement.enabled
 
         when: "joined table citizen is added"
-            Citizen citizen = new Citizen(settlements: [settlement])
+            Citizen citizen = new Citizen(name: "Jack", settlements: [settlement])
             citizenRepository.save(citizen)
 
         then:
             citizen.id
+            citizen.name == "Jack"
 
         when:
+            citizenRepository.queryById(citizen.id).get()
             citizenRepository.findById(citizen.id).get()
 
         then:
@@ -172,6 +174,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
 
         then:
             citizen.id
+            citizen.name == "Jack"
             citizen.settlements == null
 
         when:
@@ -235,7 +238,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
         then:
             statements.length == 2
             statements[0] == 'CREATE TABLE "citizen_settlement" ("citizen_id" BIGINT NOT NULL,"settlement_id_code" VARCHAR(255) NOT NULL,"settlement_id_code_id" INT NOT NULL,"settlement_id_county_id_id" INT NOT NULL,"settlement_id_county_id_state_id" INT NOT NULL);'
-            statements[1] == 'CREATE TABLE "comp_citizen" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT);'
+            statements[1] == 'CREATE TABLE "comp_citizen" ("id" BIGINT PRIMARY KEY AUTO_INCREMENT,"name" VARCHAR(255) NOT NULL);'
     }
 
     void "test build insert"() {
@@ -342,7 +345,7 @@ class CompositeSpec extends Specification implements H2TestPropertyProvider {
             queryModel.join("settlements", null, Join.Type.FETCH, null)
             def q = encoder.buildQuery(queryModel.idEq(new QueryParameter("xyz")))
         then:
-            q.query == 'SELECT citizen_."id",citizen_settlements_."code" AS settlements_code,citizen_settlements_."code_id" AS settlements_code_id,citizen_settlements_."id_county_id_id" AS settlements_id_county_id_id,citizen_settlements_."id_county_id_state_id" AS settlements_id_county_id_state_id,citizen_settlements_."description" AS settlements_description,citizen_settlements_."settlement_type_id" AS settlements_settlement_type_id,citizen_settlements_."zone_id" AS settlements_zone_id,citizen_settlements_."is_enabled" AS settlements_is_enabled FROM "comp_citizen" citizen_ INNER JOIN "citizen_settlement" citizen_settlements_citizen_settlement_ ON citizen_."id"=citizen_settlements_citizen_settlement_."citizen_id"  INNER JOIN "comp_settlement" citizen_settlements_ ON citizen_settlements_citizen_settlement_."settlement_id_code"=citizen_settlements_."code" AND citizen_settlements_citizen_settlement_."settlement_id_code_id"=citizen_settlements_."code_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_id"=citizen_settlements_."id_county_id_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_state_id"=citizen_settlements_."id_county_id_state_id" WHERE (citizen_."id" = ?)'
+            q.query == 'SELECT citizen_."id",citizen_."name",citizen_settlements_."code" AS settlements_code,citizen_settlements_."code_id" AS settlements_code_id,citizen_settlements_."id_county_id_id" AS settlements_id_county_id_id,citizen_settlements_."id_county_id_state_id" AS settlements_id_county_id_state_id,citizen_settlements_."description" AS settlements_description,citizen_settlements_."settlement_type_id" AS settlements_settlement_type_id,citizen_settlements_."zone_id" AS settlements_zone_id,citizen_settlements_."is_enabled" AS settlements_is_enabled FROM "comp_citizen" citizen_ INNER JOIN "citizen_settlement" citizen_settlements_citizen_settlement_ ON citizen_."id"=citizen_settlements_citizen_settlement_."citizen_id"  INNER JOIN "comp_settlement" citizen_settlements_ ON citizen_settlements_citizen_settlement_."settlement_id_code"=citizen_settlements_."code" AND citizen_settlements_citizen_settlement_."settlement_id_code_id"=citizen_settlements_."code_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_id"=citizen_settlements_."id_county_id_id" AND citizen_settlements_citizen_settlement_."settlement_id_county_id_state_id"=citizen_settlements_."id_county_id_state_id" WHERE (citizen_."id" = ?)'
             q.parameters == [
                     '1': 'xyz'
             ]
@@ -489,6 +492,8 @@ class Citizen {
     @Id
     @GeneratedValue
     Long id
+
+    String name
 
     @OneToMany(cascade = CascadeType.PERSIST)
     List<Settlement> settlements

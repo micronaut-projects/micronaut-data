@@ -367,7 +367,7 @@ interface MyInterface extends CrudRepository<Food, UUID> {
             method.stringValue(Query)
                 .orElse(null) == 'UPDATE "food" SET "key"=?,"carbohydrates"=?,"portion_grams"=?,"updated_on"=?,"fk_meal_id"=?,"fk_alt_meal"=? WHERE ("fid" = ?)'
             method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Paths") ==
-                    ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", "fid"] as String[]
+                    ["key", "carbohydrates", "portionGrams", "updatedOn", "meal.mid", "alternativeMeal.mid", ""] as String[]
     }
 
     void "test build custom SQL insert"() {

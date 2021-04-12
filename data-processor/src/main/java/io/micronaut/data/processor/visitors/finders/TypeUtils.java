@@ -26,6 +26,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Slice;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
 import org.reactivestreams.Publisher;
 
 import java.math.BigDecimal;
@@ -253,6 +254,19 @@ public class TypeUtils {
      */
     public static boolean isObjectClass(ClassElement type) {
         return type != null && type.getName().equals(Object.class.getName());
+    }
+
+    /**
+     * Compute the data type for the given parameter.
+     * @param parameter The parameter
+     * @return The data type
+     */
+    public static Optional<DataType> resolveDataType(@NonNull ParameterElement parameter) {
+        ClassElement genericType = parameter.getGenericType();
+        if (TypeUtils.isEntityContainerType(genericType) || genericType.hasStereotype(MappedEntity.class)) {
+            return Optional.of(DataType.ENTITY);
+        }
+        return parameter.enumValue(TypeDef.class, "type", DataType.class);
     }
 
     /**

@@ -28,12 +28,22 @@ import java.util.Map;
 public interface Criteria  {
 
     /**
-     * Creates a criterion that restricts the id to the given value.
+     * Creates an "equals" Criterion based on the specified property name and value.
      *
      * @param parameter The parameter that provides the value
+     *
      * @return The criteria
      */
-    @NonNull Criteria idEquals(QueryParameter parameter);
+    @NonNull Criteria idEq(QueryParameter parameter);
+
+    /**
+     * Creates that restricts the version to the given value.
+     *
+     * @param parameter The parameter that provides the value
+     *
+     * @return The criteria
+     */
+    @NonNull Criteria versionEq(QueryParameter parameter);
 
     /**
      * Creates a criterion that asserts the given property is empty (such as a blank string).
@@ -92,15 +102,6 @@ public interface Criteria  {
      * @return The criteria
      */
     @NonNull Criteria eq(String propertyName, QueryParameter parameter);
-
-    /**
-     * Creates an "equals" Criterion based on the specified property name and value.
-     *
-     * @param parameter The parameter that provides the value
-     *
-     * @return The criteria
-     */
-    @NonNull Criteria idEq(QueryParameter parameter);
 
     /**
      * Creates a "not equals" Criterion based on the specified property name and value.

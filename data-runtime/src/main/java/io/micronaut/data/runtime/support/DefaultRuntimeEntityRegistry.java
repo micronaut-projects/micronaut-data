@@ -16,16 +16,21 @@
 package io.micronaut.data.runtime.support;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.context.BeanRegistration;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.annotation.event.*;
+import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
 import javax.inject.Singleton;
-import java.util.Map;
+import java.lang.annotation.Annotation;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,15 +43,47 @@ import java.util.concurrent.ConcurrentHashMap;
 @Internal
 public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry {
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
-
+    private final Map<Class<? extends Annotation>, PropertyAutoPopulator<?>> propertyPopulators;
     private final EntityEventRegistry eventRegistry;
 
     /**
      * Default constructor.
      * @param eventRegistry The event registry
+     * @param propertyPopulators The property populators
      */
-    public DefaultRuntimeEntityRegistry(EntityEventRegistry eventRegistry) {
+    public DefaultRuntimeEntityRegistry(
+            EntityEventRegistry eventRegistry,
+            Collection<BeanRegistration<PropertyAutoPopulator<?>>> propertyPopulators) {
         this.eventRegistry = eventRegistry;
+        this.propertyPopulators = new HashMap<>(propertyPopulators.size());
+        for (BeanRegistration<PropertyAutoPopulator<?>> propertyPopulator : propertyPopulators) {
+            final PropertyAutoPopulator<?> populator = propertyPopulator.getBean();
+            final List<Argument<?>> typeArguments = propertyPopulator.getBeanDefinition().getTypeArguments(PropertyAutoPopulator.class);
+            if (!typeArguments.isEmpty()) {
+                @SuppressWarnings("unchecked") final Class<? extends Annotation> annotationType =
+                        (Class<? extends Annotation>) typeArguments.iterator().next().getType();
+                if (this.propertyPopulators.containsKey(annotationType)) {
+                    throw new IllegalStateException("Multiple property populators for annotation of type are not allowed: " + annotationType);
+                } else {
+                    this.propertyPopulators.put(annotationType, populator);
+                }
+            }
+        }
+    }
+
+    @Override
+    @NonNull
+    public Object autoPopulateRuntimeProperty(@NonNull RuntimePersistentProperty<?> persistentProperty, Object previousValue) {
+        for (Map.Entry<Class<? extends Annotation>, PropertyAutoPopulator<?>> entry : propertyPopulators.entrySet()) {
+            if (persistentProperty.getAnnotationMetadata().hasAnnotation(entry.getKey())) {
+                final PropertyAutoPopulator<?> populator = entry.getValue();
+                return Objects.requireNonNull(
+                        populator.populate(persistentProperty, previousValue),
+                        () -> "PropertyAutoPopulator illegally returned null: " + populator.getClass()
+                );
+            }
+        }
+        throw new IllegalStateException("Cannot auto populate property: " + persistentProperty.getName()  + " for entity: " + persistentProperty.getOwner().getName());
     }
 
     @NonNull

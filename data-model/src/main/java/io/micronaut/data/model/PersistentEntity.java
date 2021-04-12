@@ -340,6 +340,12 @@ public interface PersistentEntity extends PersistentElement {
                         }
                     }
                 }
+                PersistentProperty version = getVersion();
+                if (version != null) {
+                    if (version.getName().equals(path)) {
+                        pp = version;
+                    }
+                }
             }
             return pp == null ? null : new PersistentPropertyPath(Collections.emptyList(), pp, path);
         } else {

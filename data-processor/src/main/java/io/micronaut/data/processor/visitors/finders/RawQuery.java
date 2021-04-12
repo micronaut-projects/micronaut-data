@@ -20,7 +20,9 @@ import io.micronaut.data.model.query.DefaultQuery;
 import io.micronaut.data.model.query.QueryModel;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import java.util.Map;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
+
+import java.util.List;
 
 /**
  * Represents a raw query. Specified by the user.
@@ -30,7 +32,7 @@ import java.util.Map;
  */
 public class RawQuery extends DefaultQuery implements QueryModel {
 
-    private final Map<String, String> parameterBinding;
+    private final List<QueryParameterBinding> parameterBinding;
     private final boolean encodeEntityParameters;
 
     /**
@@ -39,7 +41,7 @@ public class RawQuery extends DefaultQuery implements QueryModel {
      * @param parameterBinding The parameter binding.
      * @param encodeEntityParameters The encodeEntityParameters.
      */
-    protected RawQuery(@NonNull PersistentEntity entity, @NonNull Map<String, String> parameterBinding, boolean encodeEntityParameters) {
+    protected RawQuery(@NonNull PersistentEntity entity, @NonNull List<QueryParameterBinding> parameterBinding, boolean encodeEntityParameters) {
         super(entity);
         this.parameterBinding = parameterBinding;
         this.encodeEntityParameters = encodeEntityParameters;
@@ -48,7 +50,7 @@ public class RawQuery extends DefaultQuery implements QueryModel {
     /**
      * @return The parameter binding to use for the raw query.
      */
-    public Map<String, String> getParameterBinding() {
+    public List<QueryParameterBinding> getParameterBinding() {
         return this.parameterBinding;
     }
 

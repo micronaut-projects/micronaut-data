@@ -22,8 +22,6 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
 import io.micronaut.core.convert.ConversionService;
@@ -51,7 +49,6 @@ import io.micronaut.transaction.TransactionDefinition;
 
 import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -373,65 +370,34 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         if (namedValues.containsKey(argument)) {
             parameterValues.put(index, namedValues.get(argument));
         } else {
-            String v = storedQuery.getLastUpdatedProperty();
-            if (v != null && v.equals(argument)) {
-
-                Class<?> rootEntity = storedQuery.getRootEntity();
-                Class<?> lastUpdatedType = getLastUpdatedType(rootEntity, v);
-                if (lastUpdatedType == null) {
-                    throw new IllegalStateException("Could not establish last updated time for entity: " + rootEntity);
+            int i = argument.indexOf('.');
+            if (i > -1) {
+                String argumentName = argument.substring(0, i);
+                Object o = namedValues.get(argumentName);
+                if (o != null) {
+                    try {
+                        BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(o);
+                        String prop = argument.substring(i + 1);
+                        Object val = wrapper.getRequiredProperty(prop, Object.class);
+                        parameterValues.put(index, val);
+                    } catch (IntrospectionException e) {
+                        throw new DataAccessException("Embedded value [" + o + "] should be annotated with introspected");
+                    }
                 }
-                Object timestamp = ConversionService.SHARED.convert(OffsetDateTime.now(), lastUpdatedType).orElse(null);
-                if (timestamp == null) {
-                    throw new IllegalStateException("Unsupported date type: " + lastUpdatedType);
-                }
-                parameterValues.put(index, timestamp);
             } else {
-                int i = argument.indexOf('.');
-                if (i > -1) {
-                    String argumentName = argument.substring(0, i);
-                    Object o = namedValues.get(argumentName);
-                    if (o != null) {
-                        try {
-                            BeanWrapper<Object> wrapper = BeanWrapper.getWrapper(o);
-                            String prop = argument.substring(i + 1);
-                            Object val = wrapper.getRequiredProperty(prop, Object.class);
-                            parameterValues.put(index, val);
-                        } catch (IntrospectionException e) {
-                            throw new DataAccessException("Embedded value [" + o + "] should be annotated with introspected");
-                        }
-                    }
+                Optional<Argument> named = Arrays.stream(context.getArguments())
+                        .filter(arg -> {
+                            String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
+                            return n.equals(argument);
+                        })
+                        .findFirst();
+                if (named.isPresent()) {
+                    parameterValues.put(index, namedValues.get(named.get().getName()));
                 } else {
-                    Optional<Argument> named = Arrays.stream(context.getArguments())
-                            .filter(arg -> {
-                                String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
-                                return n.equals(argument);
-                            })
-                            .findFirst();
-                    if (named.isPresent()) {
-                        parameterValues.put(index, namedValues.get(named.get().getName()));
-                    } else {
-                        throw new IllegalArgumentException("Missing query arguments: " + argument);
-                    }
+                    throw new IllegalArgumentException("Missing query arguments: " + argument);
                 }
             }
-
-
         }
-    }
-
-    private Class<?> getLastUpdatedType(Class<?> rootEntity, String property) {
-        Class<?> type = lastUpdatedTypes.get(rootEntity);
-        if (type == null) {
-            type = BeanIntrospector.SHARED
-                    .findIntrospection(rootEntity)
-                    .flatMap(bp -> bp.getProperty(property))
-                    .map(BeanProperty::getType).orElse(null);
-            if (type != null) {
-                lastUpdatedTypes.put(rootEntity, type);
-            }
-        }
-        return type;
     }
 
     /**
@@ -1014,8 +980,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final @Nullable int[] indexedParameterBinding;
         private final @Nullable String[] parameterPaths;
         private final ExecutableMethod<?, ?> method;
-        private final String lastUpdatedProp;
         private final boolean isDto;
+        private final boolean isOptimisticLock;
         private final boolean isNative;
         private final boolean isNumericPlaceHolder;
         private final boolean hasPageable;
@@ -1023,6 +989,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final boolean isCount;
         private final DataType[] indexedDataTypes;
         private final String[] parameterNames;
+        private final String[] parameterAutoPopulatedPropertyPaths;
+        private final String[] parameterAutoPopulatedPreviousPropertyPaths;
+        private final int[] parameterAutoPopulatedPreviousPropertyIndexes;
         private final boolean hasResultConsumer;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
@@ -1062,8 +1031,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_QUERY).orElse(query);
             }
             this.method = method;
-            this.lastUpdatedProp = method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.LAST_UPDATED_PROPERTY).orElse(null);
             this.isDto = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_DTO);
+            this.isOptimisticLock = method.isTrue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_OPTIMISTIC_LOCK);
 
             this.isCount = isCount;
             AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
@@ -1073,13 +1042,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 if (isNumericPlaceHolder) {
                     String[] strArray = annotation.stringValues(parameterBindingMember + "Paths");
                     if (strArray.length == indexedParameterBinding.length) {
-                        for (int i = 0; i < strArray.length; i++) {
-                            String s = strArray[i];
-                            if (StringUtils.isEmpty(s)) {
-                                strArray[i] = null;
-                            }
-                        }
-                        this.parameterPaths = strArray;
+                        this.parameterPaths = removeEmpty(strArray);
                     } else {
                         this.parameterPaths = new String[indexedParameterBinding.length];
                     }
@@ -1087,15 +1050,20 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     this.parameterNames = null;
                 } else {
                     this.parameterBinding = null;
-                    this.parameterPaths = annotation.stringValues(parameterBindingMember + "Paths");
+                    this.parameterPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "Paths"));
                     this.parameterNames = annotation.stringValues(parameterBindingMember + "Names");
                 }
-
+                this.parameterAutoPopulatedPropertyPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "AutoPopulatedPaths"));
+                this.parameterAutoPopulatedPreviousPropertyPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "AutoPopulatedPreviousPaths"));
+                this.parameterAutoPopulatedPreviousPropertyIndexes = annotation.get(parameterBindingMember + "AutoPopulatedPrevious", int[].class).orElse(EMPTY_INT_ARRAY);
             } else {
                 this.indexedParameterBinding = EMPTY_INT_ARRAY;
                 this.parameterPaths = null;
                 this.parameterBinding = null;
                 this.parameterNames = null;
+                this.parameterAutoPopulatedPropertyPaths = null;
+                this.parameterAutoPopulatedPreviousPropertyPaths = null;
+                this.parameterAutoPopulatedPreviousPropertyIndexes = null;
             }
             if (method.hasAnnotation(QueryHint.class)) {
                 List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
@@ -1124,6 +1092,16 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             } else {
                 this.indexedDataTypes = null;
             }
+        }
+
+        private String[] removeEmpty(String[] strArray) {
+            for (int i = 0; i < strArray.length; i++) {
+                String s = strArray[i];
+                if (StringUtils.isEmpty(s)) {
+                    strArray[i] = null;
+                }
+            }
+            return strArray;
         }
 
         @Override
@@ -1315,8 +1293,23 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
-        public String getLastUpdatedProperty() {
-            return lastUpdatedProp;
+        public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
+            return parameterAutoPopulatedPropertyPaths;
+        }
+
+        @Override
+        public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
+            return parameterAutoPopulatedPreviousPropertyIndexes;
+        }
+
+        @Override
+        public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
+            return parameterAutoPopulatedPreviousPropertyPaths;
+        }
+
+        @Override
+        public boolean isOptimisticLock() {
+            return isOptimisticLock;
         }
 
         @Override
@@ -1387,11 +1380,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
             return AbstractQueryInterceptor.this.getParameterInRole(context, role, type);
-        }
-
-        @Override
-        public Class<?> getLastUpdatedType() {
-            return AbstractQueryInterceptor.this.getLastUpdatedType(getRootEntity(), getLastUpdatedProperty());
         }
 
         @Override
@@ -1532,11 +1520,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return storedQuery.isCount();
         }
 
-        @Override
-        public String getLastUpdatedProperty() {
-            return storedQuery.getLastUpdatedProperty();
-        }
-
         @Nonnull
         @Override
         public String getName() {
@@ -1559,6 +1542,27 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public <T> Optional<T> getAttribute(CharSequence name, Class<T> type) {
             return context.getAttribute(name, type);
+        }
+
+        @Nullable
+        @Override
+        public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
+            return storedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
+        }
+
+        @Override
+        public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
+            return storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
+        }
+
+        @Override
+        public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
+            return storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
+        }
+
+        @Override
+        public boolean isOptimisticLock() {
+            return storedQuery.isOptimisticLock();
         }
     }
 
