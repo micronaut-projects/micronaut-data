@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10,"i25":10,"i26":10,"i27":10,"i28":10,"i29":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -47,7 +47,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li>Prev&nbsp;Class</li>
 <li><a href="../../../../../io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -72,8 +72,8 @@ var activeTableTab = "activeTableTab";
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested.classes.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">Nested</a>&nbsp;|&nbsp;</li>
-<li><a href="#fields.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#nested.classes.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">Nested</a>&nbsp;|&nbsp;</li>
+<li><a href="#fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>
@@ -98,7 +98,7 @@ var activeTableTab = "activeTableTab";
 <li>java.lang.Object</li>
 <li>
 <ul class="inheritance">
-<li><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations</a>&lt;java.sql.ResultSet,java.sql.PreparedStatement&gt;</li>
+<li><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations</a>&lt;java.sql.Connection,java.sql.ResultSet,java.sql.PreparedStatement,java.sql.SQLException&gt;</li>
 <li>
 <ul class="inheritance">
 <li>io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations</li>
@@ -117,15 +117,16 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>@EachBean(value=javax.sql.DataSource.class)
-public class <span class="typeNameLabel">DefaultJdbcRepositoryOperations</span>
-extends <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a>&lt;java.sql.ResultSet,java.sql.PreparedStatement&gt;
+ @Internal
+public final class <span class="typeNameLabel">DefaultJdbcRepositoryOperations</span>
+extends <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a>&lt;java.sql.Connection,java.sql.ResultSet,java.sql.PreparedStatement,java.sql.SQLException&gt;
 implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../../../../../io/micronaut/data/operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../../../../io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, java.lang.AutoCloseable</pre>
 <div class="block">Implementation of <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><code>JdbcRepositoryOperations</code></a>.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
 <dd>1.0.0</dd>
 <dt><span class="simpleTagLabel">Author:</span></dt>
-<dd>graemerocher</dd>
+<dd>graemerocher, Denis Stepanov</dd>
 </dl>
 </li>
 </ul>
@@ -140,11 +141,11 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </a>
 <h3>Nested Class Summary</h3>
 <ul class="blockList">
-<li class="blockList"><a name="nested.classes.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">
+<li class="blockList"><a name="nested.classes.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">
 <!--   -->
 </a>
-<h3>Nested classes/interfaces inherited from class&nbsp;io.micronaut.data.jdbc.operations.<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></h3>
-<code><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="type parameter in AbstractSqlRepositoryOperations.StatementSupplier">PS</a>&gt;</code></li>
+<h3>Nested classes/interfaces inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a></h3>
+<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.BaseOperations</a>&lt;<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="type parameter in AbstractSqlRepositoryOperations.BaseOperations">T</a>&gt;, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.CascadeContext.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.CascadeContext</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.CascadeManyOp.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.CascadeManyOp</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.CascadeOneOp.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.CascadeOneOp</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.CascadeOp.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.CascadeOp</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation1</a>&lt;<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="type parameter in AbstractSqlRepositoryOperations.DBOperation1">In</a>,<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="type parameter in AbstractSqlRepositoryOperations.DBOperation1">Exc</a> extends java.lang.Exception&gt;, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation2.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation2</a>&lt;<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation2.html" title="type parameter in AbstractSqlRepositoryOperations.DBOperation2">In1</a>,<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation2.html" title="type parameter in AbstractSqlRepositoryOperations.DBOperation2">In2</a>,<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation2.html" title="type parameter in AbstractSqlRepositoryOperations.DBOperation2">Exc</a> extends java.lang.Exception&gt;, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntitiesOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.EntitiesOperations</a>&lt;<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntitiesOperations.html" title="type parameter in AbstractSqlRepositoryOperations.EntitiesOperations">T</a>&gt;, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.EntityOperations</a>&lt;<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntityOperations.html" title="type parameter in AbstractSqlRepositoryOperations.EntityOperations">T</a>&gt;, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.StatementSupplier</a>&lt;<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StatementSupplier.html" title="type parameter in AbstractSqlRepositoryOperations.StatementSupplier">PS</a>&gt;, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredAnnotationMetadataSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.StoredAnnotationMetadataSqlOperation</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.StoredSqlOperation</a></code></li>
 </ul>
 </li>
 </ul>
@@ -155,11 +156,11 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </a>
 <h3>Field Summary</h3>
 <ul class="blockList">
-<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">
+<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">
 <!--   -->
 </a>
-<h3>Fields inherited from class&nbsp;io.micronaut.data.jdbc.operations.<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></h3>
-<code><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#columnIndexResultSetReader">columnIndexResultSetReader</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#columnNameResultSetReader">columnNameResultSetReader</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#entityEventRegistry">entityEventRegistry</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#jsonCodec">jsonCodec</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#runtimeEntityRegistry">runtimeEntityRegistry</a></code></li>
+<h3>Fields inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a></h3>
+<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#columnIndexResultSetReader">columnIndexResultSetReader</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#columnNameResultSetReader">columnNameResultSetReader</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#dateTimeProvider">dateTimeProvider</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#DEFAULT_SQL_BUILDER">DEFAULT_SQL_BUILDER</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#entityEventRegistry">entityEventRegistry</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#jsonCodec">jsonCodec</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#preparedStatementWriter">preparedStatementWriter</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#QUERY_LOG">QUERY_LOG</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#queryBuilders">queryBuilders</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#runtimeEntityRegistry">runtimeEntityRegistry</a></code></li>
 </ul>
 </li>
 </ul>
@@ -177,12 +178,13 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>protected </code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">DefaultJdbcRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">DefaultJdbcRepositoryOperations</a></span>(java.lang.String&nbsp;dataSourceName,
                                javax.sql.DataSource&nbsp;dataSource,
                                <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
                                java.util.concurrent.ExecutorService&nbsp;executorService,
                                io.micronaut.context.BeanContext&nbsp;beanContext,
                                java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
+                               <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
                                <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;entityRegistry)</code>
 <div class="block">Default constructor.</div>
 </td>
@@ -316,29 +318,52 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#getDataSource--">getDataSource</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i19" class="rowColor">
+<td class="colFirst"><code>protected <a href="../../../../../io/micronaut/data/runtime/mapper/ResultConsumer.Context.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer.Context</a>&lt;java.sql.ResultSet&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#newMappingContext-java.sql.ResultSet-">newMappingContext</a></span>(java.sql.ResultSet&nbsp;rs)</code>&nbsp;</td>
+</tr>
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
+<td class="colFirst"><code>protected void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#prepareStatement-java.sql.Connection-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.data.model.PersistentProperty-boolean-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">prepareStatement</a></span>(java.sql.Connection&nbsp;connection,
+                <a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+                <a href="../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;identity,
+                boolean&nbsp;hasGeneratedID,
+                java.lang.String&nbsp;insertSql,
+                <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation1</a>&lt;java.sql.PreparedStatement,java.sql.SQLException&gt;&nbsp;fn)</code>
+<div class="block">Prepare a statement and run a function.</div>
+</td>
+</tr>
+<tr id="i23" class="rowColor">
+<td class="colFirst"><code>protected void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#prepareStatement-java.sql.Connection-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">prepareStatement</a></span>(java.sql.Connection&nbsp;connection,
+                java.lang.String&nbsp;query,
+                <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation1</a>&lt;java.sql.PreparedStatement,java.sql.SQLException&gt;&nbsp;fn)</code>
+<div class="block">Prepare a statement and run a function.</div>
+</td>
+</tr>
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>&lt;R&gt;&nbsp;R</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#prepareStatement-java.lang.String-io.micronaut.data.jdbc.runtime.PreparedStatementCallback-">prepareStatement</a></span>(java.lang.String&nbsp;sql,
                 <a href="../../../../../io/micronaut/data/jdbc/runtime/PreparedStatementCallback.html" title="interface in io.micronaut.data.jdbc.runtime">PreparedStatementCallback</a>&lt;R&gt;&nbsp;callback)</code>
 <div class="block">Execute the given operation with the given callback.</div>
 </td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i25" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#reactive--">reactive</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i26" class="altColor">
 <td class="colFirst"><code>&lt;E,D&gt;&nbsp;D</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#readDTO-java.lang.String-java.sql.ResultSet-java.lang.Class-java.lang.Class-">readDTO</a></span>(java.lang.String&nbsp;prefix,
        java.sql.ResultSet&nbsp;resultSet,
@@ -347,7 +372,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </td>
 </tr>
-<tr id="i24" class="altColor">
+<tr id="i27" class="rowColor">
 <td class="colFirst"><code>&lt;E&gt;&nbsp;E</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#readEntity-java.lang.String-java.sql.ResultSet-java.lang.Class-">readEntity</a></span>(java.lang.String&nbsp;prefix,
           java.sql.ResultSet&nbsp;resultSet,
@@ -355,13 +380,13 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <div class="block">Read an entity using the given prefix to be passes to result set lookups.</div>
 </td>
 </tr>
-<tr id="i25" class="rowColor">
+<tr id="i28" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i26" class="altColor">
+<tr id="i29" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
@@ -369,11 +394,11 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 </tr>
 </table>
 <ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">
 <!--   -->
 </a>
-<h3>Methods inherited from class&nbsp;io.micronaut.data.jdbc.operations.<a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">AbstractSqlRepositoryOperations</a></h3>
-<code><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#getIdReader-java.lang.Object-">getIdReader</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#isSqlServerWithoutOrderBy-java.lang.String-io.micronaut.data.model.query.builder.sql.Dialect-">isSqlServerWithoutOrderBy</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#isSupportsBatchDelete-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.query.builder.sql.Dialect-">isSupportsBatchDelete</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#isSupportsBatchInsert-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.query.builder.sql.Dialect-">isSupportsBatchInsert</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#isSupportsBatchUpdate-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.query.builder.sql.Dialect-">isSupportsBatchUpdate</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#prepareStatement-io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations.StatementSupplier-io.micronaut.data.model.runtime.PreparedQuery-boolean-boolean-">prepareStatement</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#resolveAssociationInsert-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.model.runtime.RuntimeAssociation-">resolveAssociationInsert</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#resolveEntityInsert-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-">resolveEntityInsert</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#resolveEntityUpdate-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-">resolveEntityUpdate</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#setStatementParameter-PS-int-io.micronaut.data.model.DataType-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-">setStatementParameter</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#shiftIndex-int-">shiftIndex</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#sizeOf-java.lang.Object-">sizeOf</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#sortById-io.micronaut.data.model.runtime.RuntimePersistentEntity-">sortById</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPostLoad-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostLoad</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPostPersist-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostPersist</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPostRemove-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostRemove</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPostUpdate-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostUpdate</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPrePersist-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPrePersist</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPreRemove-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPreRemove</a>, <a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.html#triggerPreUpdate-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPreUpdate</a></code></li>
+<h3>Methods inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a></h3>
+<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#afterCascadedMany-T-java.util.List-java.lang.Iterable-java.util.List-">afterCascadedMany</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#afterCascadedOne-T-java.util.List-java.lang.Object-java.lang.Object-">afterCascadedOne</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#cascade-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-boolean-io.micronaut.data.annotation.Relation.Cascade-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.CascadeContext-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.List-">cascade</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#checkOptimisticLocking-int-int-">checkOptimisticLocking</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#deleteInBatch-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntitiesOperations-">deleteInBatch</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">deleteOne</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#getEntity-java.lang.Class-">getEntity</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#getIdReader-java.lang.Object-">getIdReader</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#isSqlServerWithoutOrderBy-java.lang.String-io.micronaut.data.model.query.builder.sql.Dialect-">isSqlServerWithoutOrderBy</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#isSupportsBatchDelete-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.query.builder.sql.Dialect-">isSupportsBatchDelete</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#isSupportsBatchInsert-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.query.builder.sql.Dialect-">isSupportsBatchInsert</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#isSupportsBatchUpdate-io.micronaut.data.model.PersistentEntity-io.micronaut.data.model.query.builder.sql.Dialect-">isSupportsBatchUpdate</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#persistInBatch-Cnt-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-java.util.List-java.util.Set-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntitiesOperations-">persistInBatch</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#persistJoinTableAssociation-Cnt-java.lang.Class-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.data.model.Association-java.lang.Object-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.BaseOperations-">persistJoinTableAssociation</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#persistOne-Cnt-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-java.util.List-java.util.Set-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">persistOne</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#prepareStatement-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.StatementSupplier-io.micronaut.data.model.runtime.PreparedQuery-boolean-boolean-">prepareStatement</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#resolveAssociationInsert-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.data.model.runtime.RuntimeAssociation-">resolveAssociationInsert</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#resolveEntityInsert-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-">resolveEntityInsert</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#resolveEntityUpdate-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-java.lang.Class-io.micronaut.data.model.runtime.RuntimePersistentEntity-">resolveEntityUpdate</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#setStatementParameter-PS-int-io.micronaut.data.model.DataType-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-">setStatementParameter</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#shiftIndex-int-">shiftIndex</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#sizeOf-java.lang.Object-">sizeOf</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#sortById-io.micronaut.data.model.runtime.RuntimePersistentEntity-">sortById</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#triggerPostLoad-T-io.micronaut.data.model.runtime.RuntimePersistentEntity-io.micronaut.core.annotation.AnnotationMetadata-">triggerPostLoad</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#updateInBatch-Cnt-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.StoredSqlOperation-java.util.List-java.util.Set-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntitiesOperations-">updateInBatch</a>, <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#updateOne-Cnt-io.micronaut.core.annotation.AnnotationMetadata-java.lang.Class-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-java.util.List-java.util.Set-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">updateOne</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -410,7 +435,7 @@ implements <a href="../../../../../io/micronaut/data/jdbc/operations/JdbcReposit
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">
+<a name="DefaultJdbcRepositoryOperations-java.lang.String-javax.sql.DataSource-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.context.BeanContext-java.util.List-io.micronaut.data.runtime.date.DateTimeProvider-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -426,6 +451,8 @@ protected&nbsp;DefaultJdbcRepositoryOperations(@Parameter
                                                     java.util.concurrent.ExecutorService&nbsp;executorService,
                                                     io.micronaut.context.BeanContext&nbsp;beanContext,
                                                     java.util.List&lt;io.micronaut.http.codec.MediaTypeCodec&gt;&nbsp;codecs,
+                                                    @NonNull
+                                                    <a href="../../../../../io/micronaut/data/runtime/date/DateTimeProvider.html" title="interface in io.micronaut.data.runtime.date">DateTimeProvider</a>&nbsp;dateTimeProvider,
                                                     <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;entityRegistry)</pre>
 <div class="block">Default constructor.</div>
 <dl>
@@ -436,6 +463,7 @@ protected&nbsp;DefaultJdbcRepositoryOperations(@Parameter
 <dd><code>executorService</code> - The executor service</dd>
 <dd><code>beanContext</code> - The bean context</dd>
 <dd><code>codecs</code> - The codecs</dd>
+<dd><code>dateTimeProvider</code> - The dateTimeProvider</dd>
 <dd><code>entityRegistry</code> - The entity registry</dd>
 </dl>
 </li>
@@ -448,6 +476,60 @@ protected&nbsp;DefaultJdbcRepositoryOperations(@Parameter
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="prepareStatement-java.sql.Connection-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>prepareStatement</h4>
+<pre>protected&nbsp;void&nbsp;prepareStatement(java.sql.Connection&nbsp;connection,
+                                java.lang.String&nbsp;query,
+                                <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation1</a>&lt;java.sql.PreparedStatement,java.sql.SQLException&gt;&nbsp;fn)
+                         throws java.sql.SQLException</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#prepareStatement-Cnt-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">AbstractSqlRepositoryOperations</a></code></span></div>
+<div class="block">Prepare a statement and run a function.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#prepareStatement-Cnt-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">prepareStatement</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a>&lt;java.sql.Connection,java.sql.ResultSet,java.sql.PreparedStatement,java.sql.SQLException&gt;</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>connection</code> - The connection.</dd>
+<dd><code>query</code> - The query</dd>
+<dd><code>fn</code> - The function to be run with a statement</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code>java.sql.SQLException</code></dd>
+</dl>
+</li>
+</ul>
+<a name="prepareStatement-java.sql.Connection-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.data.model.PersistentProperty-boolean-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>prepareStatement</h4>
+<pre>protected&nbsp;void&nbsp;prepareStatement(java.sql.Connection&nbsp;connection,
+                                <a href="../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
+                                <a href="../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;identity,
+                                boolean&nbsp;hasGeneratedID,
+                                java.lang.String&nbsp;insertSql,
+                                <a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation1.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation1</a>&lt;java.sql.PreparedStatement,java.sql.SQLException&gt;&nbsp;fn)
+                         throws java.sql.SQLException</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#prepareStatement-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.data.model.PersistentProperty-boolean-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">AbstractSqlRepositoryOperations</a></code></span></div>
+<div class="block">Prepare a statement and run a function.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#prepareStatement-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.data.model.PersistentProperty-boolean-java.lang.String-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation1-">prepareStatement</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a>&lt;java.sql.Connection,java.sql.ResultSet,java.sql.PreparedStatement,java.sql.SQLException&gt;</code></dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>connection</code> - The connection</dd>
+<dd><code>dialect</code> - The dialect</dd>
+<dd><code>identity</code> - The identity property</dd>
+<dd><code>hasGeneratedID</code> - Is genereted idenntity</dd>
+<dd><code>insertSql</code> - Te query</dd>
+<dd><code>fn</code> - The function to be run with a statement</dd>
+<dt><span class="throwsLabel">Throws:</span></dt>
+<dd><code>java.sql.SQLException</code></dd>
+</dl>
+</li>
+</ul>
 <a name="async--">
 <!--   -->
 </a>
@@ -1042,7 +1124,7 @@ public&nbsp;&lt;E,D&gt;&nbsp;D&nbsp;readDTO(@NonNull
 <a name="entityStream-java.sql.ResultSet-java.lang.String-java.lang.Class-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>entityStream</h4>
 <pre>@NonNull
@@ -1066,6 +1148,16 @@ public&nbsp;&lt;T&gt;&nbsp;java.util.stream.Stream&lt;T&gt;&nbsp;entityStream(@N
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The stream</dd>
 </dl>
+</li>
+</ul>
+<a name="newMappingContext-java.sql.ResultSet-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>newMappingContext</h4>
+<pre>@NonNull
+protected&nbsp;<a href="../../../../../io/micronaut/data/runtime/mapper/ResultConsumer.Context.html" title="interface in io.micronaut.data.runtime.mapper">ResultConsumer.Context</a>&lt;java.sql.ResultSet&gt;&nbsp;newMappingContext(java.sql.ResultSet&nbsp;rs)</pre>
 </li>
 </ul>
 </li>
@@ -1095,7 +1187,7 @@ public&nbsp;&lt;T&gt;&nbsp;java.util.stream.Stream&lt;T&gt;&nbsp;entityStream(@N
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../../../io/micronaut/data/jdbc/operations/AbstractSqlRepositoryOperations.StatementSupplier.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li>Prev&nbsp;Class</li>
 <li><a href="../../../../../io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -1120,8 +1212,8 @@ public&nbsp;&lt;T&gt;&nbsp;java.util.stream.Stream&lt;T&gt;&nbsp;entityStream(@N
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li><a href="#nested.classes.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">Nested</a>&nbsp;|&nbsp;</li>
-<li><a href="#fields.inherited.from.class.io.micronaut.data.jdbc.operations.AbstractSqlRepositoryOperations">Field</a>&nbsp;|&nbsp;</li>
+<li><a href="#nested.classes.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">Nested</a>&nbsp;|&nbsp;</li>
+<li><a href="#fields.inherited.from.class.io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations">Field</a>&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
 </ul>

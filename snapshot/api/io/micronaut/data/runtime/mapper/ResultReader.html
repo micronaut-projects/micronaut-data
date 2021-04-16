@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":18,"i1":18,"i2":6,"i3":6,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18};
+var methods = {"i0":18,"i1":18,"i2":6,"i3":6,"i4":18,"i5":18,"i6":18,"i7":18,"i8":18,"i9":18,"i10":18,"i11":18,"i12":18,"i13":18,"i14":18,"i15":18,"i16":18,"i17":18,"i18":18};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],16:["t5","Default Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -104,7 +104,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>All Known Implementing Classes:</dt>
-<dd><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a>, <a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dd>
+<dd><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnIndexR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnIndexR2dbcResultReader</a>, <a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnIndexResultSetReader</a>, <a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html" title="class in io.micronaut.data.r2dbc.mapper">ColumnNameR2dbcResultReader</a>, <a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnNameResultSetReader.html" title="class in io.micronaut.data.jdbc.mapper">ColumnNameResultSetReader</a></dd>
 </dl>
 <hr>
 <br>
@@ -253,6 +253,13 @@ var activeTableTab = "activeTableTab";
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readTimestamp-RS-IDX-">readTimestamp</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
              <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;index)</code>
 <div class="block">Read a timestamp value for the given index.</div>
+</td>
+</tr>
+<tr id="i18" class="altColor">
+<td class="colFirst"><code>default java.util.UUID</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#readUUID-RS-IDX-">readUUID</a></span>(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+        <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</code>
+<div class="block">Read a UUID value for the given name.</div>
 </td>
 </tr>
 </table>
@@ -482,6 +489,27 @@ default&nbsp;java.lang.Object&nbsp;readDynamic(@NonNull
 default&nbsp;java.lang.String&nbsp;readString(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
                                               <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</pre>
 <div class="block">Read a string value for the given name.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>resultSet</code> - The result set</dd>
+<dd><code>name</code> - The name (such as the column name)</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The string value</dd>
+</dl>
+</li>
+</ul>
+<a name="readUUID-java.lang.Object-java.lang.Object-">
+<!--   -->
+</a><a name="readUUID-RS-IDX-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>readUUID</h4>
+<pre>@Nullable
+default&nbsp;java.util.UUID&nbsp;readUUID(<a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">RS</a>&nbsp;resultSet,
+                                          <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="type parameter in ResultReader">IDX</a>&nbsp;name)</pre>
+<div class="block">Read a UUID value for the given name.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>resultSet</code> - The result set</dd>

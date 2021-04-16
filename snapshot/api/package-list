@@ -44,6 +44,11 @@ io.micronaut.data.processor.visitors.finders
 io.micronaut.data.processor.visitors.finders.page
 io.micronaut.data.processor.visitors.finders.slice
 io.micronaut.data.processor.visitors.finders.specification
+io.micronaut.data.r2dbc.annotation
+io.micronaut.data.r2dbc.config
+io.micronaut.data.r2dbc.mapper
+io.micronaut.data.r2dbc.operations
+io.micronaut.data.r2dbc.repository
 io.micronaut.data.repository
 io.micronaut.data.repository.async
 io.micronaut.data.repository.reactive
@@ -58,6 +63,7 @@ io.micronaut.data.runtime.intercept.reactive
 io.micronaut.data.runtime.mapper
 io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.operations
+io.micronaut.data.runtime.operations.internal
 io.micronaut.data.runtime.support
 io.micronaut.data.spring.hibernate
 io.micronaut.data.spring.jdbc

@@ -188,6 +188,16 @@
         
         <div class="toc-item" style="margin-left:20px" id="toc-item-jdbcNativeQueries"><a href="#jdbcNativeQueries"><strong>8.1.7</strong><span>Explicit JDBC Queries</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-r2dbc"><a href="#r2dbc"><strong>8.2</strong><span>Micronaut Data R2DBC</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-r2querying"><a href="#r2querying"><strong>8.2.1</strong><span>Writing Queries</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-r2crud"><a href="#r2crud"><strong>8.2.2</strong><span>Performing CRUD Operations</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-r2transactionManagement"><a href="#r2transactionManagement"><strong>8.2.3</strong><span>Micronaut Data Transactions with R2DBC</span></a></div>
+        
+        <div class="toc-item" style="margin-left:20px" id="toc-item-r2entityEvents"><a href="#r2entityEvents"><strong>8.2.4</strong><span>Reactive &amp; Entity Events</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-graal"><a href="#graal"><strong>9</strong><span>Going Native with GraalVM</span></a></div>
         
         <div class="toc-item" style="margin-left:0px" id="toc-item-spring"><a href="#spring"><strong>10</strong><span>Spring Data Support</span></a></div>
@@ -6394,6 +6404,489 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 </tr>
 </table>
 </div>
+</div>
+
+<h2 id="r2dbc"><a class="anchor" href="#r2dbc"></a>8.2 Micronaut Data R2DBC</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/r2dbc.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The R2DBC module features support for defining reactive Micronaut Data repositories that use the underlying R2DBC driver to automatically implement queries for your at compilation time.</p>
+</div>
+
+<h2 id="r2querying"><a class="anchor" href="#r2querying"></a>8.2.1 Writing Queries</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/r2dbc/r2querying.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>To write queries with Micronaut Data R2DBC you can use all the same patterns as defined in the <a href="#querying">Micronaut Data documentation on querying</a>.</p>
+</div>
+<div class="paragraph">
+<p>The method pattern is essentially:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="https://micronaut-projects.github.io/micronaut-data/latest/img/finderpattern.svg" alt="finderpattern">
+</div>
+<div class="title">Figure 1. Query Method Pattern</div>
+</div>
+<div class="paragraph">
+<p>The Reactive return type is used to figure out whether the query is for a single result or multiple. If you use for example <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a> or Reactor&#8217;s <code>Mono</code> type a single result will be returned, whilst a <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a> or Reactor <code>Flux</code> will return multiple records.</p>
+</div>
+<div class="paragraph">
+<p>You can pass a <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> instance to any query to paginate results, although note that the <a href="../api/io/micronaut/data/model/Page.html">Page</a> return type is not supported since it is an implicitly blocking API.</p>
+</div>
+
+<h2 id="r2crud"><a class="anchor" href="#r2crud"></a>8.2.2 Performing CRUD Operations</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/r2dbc/r2crud.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>The <a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> interface exposes methods to perform Create, Read, Update and Delete (CRUD) operations reactively.</p>
+</div>
+<div class="paragraph">
+<p>To create a new instance you can use the <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#save-S-">save</a> method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Post("/")
+Single&lt;Book&gt; create(@Valid Book book) {
+    return Single.fromPublisher(bookRepository.save(book));
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Post("/")
+Single&lt;Book&gt; create(@Valid Book book) {
+    return Single.fromPublisher(bookRepository.save(book))
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Post("/")
+fun create(book: @Valid Book): Single&lt;Book&gt; {
+    return Single.fromPublisher(bookRepository.save(book))
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To read objects you can use <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#findAll--">findAll</a> or <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#findById-ID-">findById</a>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Get("/")
+Flux&lt;Book&gt; all() {
+    return bookRepository.findAll(); <b class="conum">(1)</b>
+}
+
+@Get("/{id}")
+Mono&lt;Book&gt; show(Long id) {
+    return bookRepository.findById(id); <b class="conum">(2)</b>
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Get("/")
+Flux&lt;Book&gt; all() {
+    return bookRepository.findAll() <b class="conum">(1)</b>
+}
+
+@Get("/{id}")
+Mono&lt;Book&gt; show(Long id) {
+    return bookRepository.findById(id) <b class="conum">(2)</b>
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Get("/")
+fun all(): Flux&lt;Book&gt; {
+    return bookRepository.findAll() <b class="conum">(1)</b>
+}
+
+@Get("/{id}")
+fun show(id: Long): Mono&lt;Book&gt; {
+    return bookRepository.findById(id) <b class="conum">(2)</b>
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To perform an update you can use the <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#update-S-">update</a> method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Put("/{id}")
+Single&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
+    return Single.fromPublisher(bookRepository.update(book));
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Put("/{id}")
+Single&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
+    return Single.fromPublisher(bookRepository.update(book))
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Put("/{id}")
+fun update(id: Long, book: @Valid Book): Single&lt;Book&gt; {
+    return Single.fromPublisher(bookRepository.update(book))
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally to delete an instance you can use thBasicTypese <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#deleteById-ID-">deleteById</a> method:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Delete("/{id}")
+Single&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
+    return Single.fromPublisher(bookRepository.deleteById(id))
+            .map(deleted -&gt; deleted &gt; 0 ? HttpResponse.noContent() : HttpResponse.notFound());
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Delete("/{id}")
+Single&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
+    return Single.fromPublisher(bookRepository.deleteById(id))
+            .map(deleted -&gt; deleted &gt; 0 ? HttpResponse.noContent() : HttpResponse.notFound())
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Delete("/{id}")
+fun delete(id: Long): Single&lt;HttpResponse&lt;*&gt;&gt; {
+    return Single.fromPublisher(bookRepository.deleteById(id))
+            .map { deleted: Long -&gt; if (deleted &gt; 0) HttpResponse.noContent() else HttpResponse.notFound&lt;Any&gt;() }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For more information on the possible write operations, see the documentation on <a href="#dataUpdates">Data updates</a> in the Micronaut Data documentation which also apply to R2DBC.</p>
+</div>
+
+<h2 id="r2transactionManagement"><a class="anchor" href="#r2transactionManagement"></a>8.2.3 Micronaut Data Transactions with R2DBC</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/r2dbc/r2transactionManagement.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data R2DBC features Reactive transaction management support whereby you can declare <code>javax.transaction.Transactional</code> on your methods and a reactive transaction will be initiated, for example:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">package example;
+
+import reactor.core.publisher.Mono;
+
+import javax.inject.Singleton;
+import javax.transaction.Transactional;
+import java.util.Arrays;
+
+@Singleton
+public class AuthorService {
+    private final AuthorRepository authorRepository;
+    private final BookRepository bookRepository;
+
+    public AuthorService(AuthorRepository authorRepository, BookRepository bookRepository) { <b class="conum">(1)</b>
+        this.authorRepository = authorRepository;
+        this.bookRepository = bookRepository;
+    }
+
+    @Transactional <b class="conum">(2)</b>
+    Mono&lt;Void&gt; setupData() {
+        return Mono.from(authorRepository.save(new Author("Stephen King")))
+                .flatMapMany((author -&gt; bookRepository.saveAll(Arrays.asList(
+                        new Book("The Stand", 1000, author),
+                        new Book("The Shining", 400, author)
+                ))))
+                .then(Mono.from(authorRepository.save(new Author("James Patterson"))))
+                .flatMapMany((author -&gt;
+                        bookRepository.save(new Book("Along Came a Spider", 300, author))
+                )).then();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
+
+import reactor.core.publisher.Mono
+
+import javax.inject.Singleton
+import javax.transaction.Transactional
+
+@Singleton
+class AuthorService {
+    private final AuthorRepository authorRepository
+    private final BookRepository bookRepository
+
+    AuthorService(AuthorRepository authorRepository, BookRepository bookRepository) { <b class="conum">(1)</b>
+        this.authorRepository = authorRepository
+        this.bookRepository = bookRepository
+    }
+
+    @Transactional <b class="conum">(2)</b>
+    Mono&lt;Void&gt; setupData() {
+        return Mono.from(authorRepository.save(new Author("Stephen King")))
+                .flatMapMany((author -&gt; bookRepository.saveAll([
+                        new Book("The Stand", 1000, author),
+                        new Book("The Shining", 400, author)
+                ])))
+                .then(Mono.from(authorRepository.save(new Author("James Patterson"))))
+                .flatMapMany((author -&gt;
+                        bookRepository.save(new Book("Along Came a Spider", 300, author))
+                )).then()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
+
+import reactor.core.publisher.Mono
+import javax.inject.Singleton
+import javax.transaction.Transactional
+
+@Singleton
+open class AuthorService(
+        private val authorRepository: AuthorRepository,
+        private val bookRepository: BookRepository) { <b class="conum">(1)</b>
+
+    @Transactional <b class="conum">(2)</b>
+    open fun setupData(): Mono&lt;Void&gt; {
+        return Mono.from(authorRepository.save(Author("Stephen King")))
+                .flatMapMany { author: Author -&gt;
+                    bookRepository.saveAll(listOf(
+                            Book("The Stand", 1000, author),
+                            Book("The Shining", 400, author)
+                    ))
+                }
+                .then(Mono.from(authorRepository.save(Author("James Patterson"))))
+                .flatMapMany { author: Author -&gt;
+                    bookRepository.save(Book("Along Came a Spider", 300, author))
+                }.then()
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Supporting repositories are injected</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td><code>@Transactional</code> is used to declare a transaction</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This same declarative logic can be done programmatically as well by injecting the <a href="../api/io/micronaut/data/r2dbc/operations/R2dbcOperations.html">R2dbcOperations</a> interface:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Mono.from(operations.withTransaction(status -&gt;
+    Flux.from(authorRepository.save(new Author("Stephen King")))
+            .flatMap((author -&gt; bookRepository.saveAll(Arrays.asList(
+                    new Book("The Stand", 1000, author),
+                    new Book("The Shining", 400, author)
+            ))))
+    .thenMany(Flux.from(authorRepository.save(new Author("James Patterson"))))
+        .flatMap((author -&gt;
+                bookRepository.save(new Book("Along Came a Spider", 300, author))
+    )).then()
+)).block();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Mono.from(operations.withTransaction(status -&gt;
+        Flux.from(authorRepository.save(new Author("Stephen King")))
+                .flatMap((author -&gt; bookRepository.saveAll([
+                        new Book("The Stand", 1000, author),
+                        new Book("The Shining", 400, author)
+                ])))
+                .thenMany(Flux.from(authorRepository.save(new Author("James Patterson"))))
+                .flatMap((author -&gt;
+                        bookRepository.save(new Book("Along Came a Spider", 300, author))
+                )).then()
+)).block()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">Mono.from(operations.withTransaction {
+    Flux.from(authorRepository.save(Author("Stephen King")))
+            .flatMap { author: Author -&gt;
+                bookRepository.saveAll(listOf(
+                        Book("The Stand", 1000, author),
+                        Book("The Shining", 400, author)
+                ))
+            }
+            .thenMany(Flux.from(authorRepository.save(Author("James Patterson"))))
+            .flatMap { author: Author -&gt; bookRepository.save(Book("Along Came a Spider", 300, author)) }.then()
+}).block()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the above case the <code>withTransaction</code> method is used to initiate a transaction.</p>
+</div>
+<div class="paragraph">
+<p>Note however, that transaction management is possibly one of the most challenging areas to get right in reactive programming since you need to propagate the transaction across the reactive flow.</p>
+</div>
+<div class="paragraph">
+<p>Most R2DBC drivers are implemented in <a href="https://projectreactor.io/">Project Reactor</a> which has the ability to <a href="https://projectreactor.io/docs/core/release/reference/#context">propagate a context</a> across reactive operators and Micronaut Data R2DBC will populate this context and ensure the transaction is re-used if it is found within it.</p>
+</div>
+<div class="paragraph">
+<p>However, it is still pretty easy for the context to be lost since different libraries that implement Reactive Streams don&#8217;t propagate contexts between each other so if you include RxJava or any other reactive operator library it is likely the context will be lost.</p>
+</div>
+<div class="paragraph">
+<p>To ensure this doesn&#8217;t happen it is recommended that you annotate write operations that participate within a transaction as <code>MANDATORY</code> which ensures it is not possible to run these methods without a surrounding transaction present so that if the transaction is somehow lost within the reactive flow it doesn&#8217;t cause operations to be run in separate transactions:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@NonNull
+@Override
+@Transactional(Transactional.TxType.MANDATORY)
+&lt;S extends Book&gt; Publisher&lt;S&gt; save(@NonNull @Valid @NotNull S entity);
+
+@NonNull
+@Override
+@Transactional(Transactional.TxType.MANDATORY)
+&lt;S extends Book&gt; Publisher&lt;S&gt; saveAll(@NonNull @Valid @NotNull Iterable&lt;S&gt; entities);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@NonNull
+@Override
+@Transactional(Transactional.TxType.MANDATORY)
+&lt;S extends Book&gt; Publisher&lt;S&gt; save(@NonNull @Valid @NotNull S entity);
+
+@NonNull
+@Override
+@Transactional(Transactional.TxType.MANDATORY)
+&lt;S extends Book&gt; Publisher&lt;S&gt; saveAll(@NonNull @Valid @NotNull Iterable&lt;S&gt; entities);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Transactional(Transactional.TxType.MANDATORY)
+override fun &lt;S : Book?&gt; save(entity: @Valid @NotNull S): Publisher&lt;S&gt;
+
+@Transactional(Transactional.TxType.MANDATORY)
+override fun &lt;S : Book?&gt; saveAll(entities: @Valid @NotNull Iterable&lt;S&gt;): Publisher&lt;S&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If the transaction is somehow lost during the reactive flow there are a couple of ways you can solve the problem. One way is to use the <code>withTransaction</code> method of the <a href="../api/io/micronaut/data/r2dbc/operations/R2dbcOperations.html">R2dbcOperations</a> interface to obtain the current <code>ReactiveTransactionStatus</code>, you can then pass this instance into another execution of the <code>withTransaction</code> method or pass it directly as the last argument to any method declared on the repository itself.</p>
+</div>
+<div class="paragraph">
+<p>An example of the former approach is presented below, using RxJava 2 this time which will cause propagation loss:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">Flowable.fromPublisher(operations.withTransaction(status -&gt; <b class="conum">(1)</b>
+        Flowable.fromPublisher(authorRepository.save(new Author("Michael Crichton")))
+                .flatMap((author -&gt; operations.withTransaction(status, (s) -&gt; <b class="conum">(2)</b>
+                        bookRepository.saveAll(Arrays.asList(
+                                new Book("Jurassic Park", 300, author),
+                                new Book("Disclosure", 400, author)
+                        )))))
+)).blockingSubscribe();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Flowable.fromPublisher(operations.withTransaction(status -&gt; <b class="conum">(1)</b>
+        Flowable.fromPublisher(authorRepository.save(new Author("Michael Crichton")))
+                .flatMap((author -&gt; operations.withTransaction(status, (s) -&gt; <b class="conum">(2)</b>
+                        bookRepository.saveAll([
+                                new Book("Jurassic Park", 300, author),
+                                new Book("Disclosure", 400, author)
+                        ]))))
+)).blockingSubscribe()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">Flowable.fromPublisher(operations.withTransaction { status: ReactiveTransactionStatus&lt;Connection&gt; -&gt;  <b class="conum">(1)</b>
+    Flowable.fromPublisher(authorRepository.save(Author("Michael Crichton")))
+            .flatMap { author: Author -&gt;
+                operations.withTransaction(status) {   <b class="conum">(2)</b>
+                    bookRepository.saveAll(listOf(
+                            Book("Jurassic Park", 300, author),
+                            Book("Disclosure", 400, author)
+                    ))
+                }
+            }
+}).blockingSubscribe()</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>An outer <code>withTransaction</code> call starts the transaction</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>An inner call ensures the existing transaction is propagated</td>
+</tr>
+</table>
+</div>
+
+<h2 id="r2entityEvents"><a class="anchor" href="#r2entityEvents"></a>8.2.4 Reactive & Entity Events</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master
+/src/main/docs/guide/sql/r2dbc/r2entityEvents.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="paragraph">
+<p>Micronaut Data R2DBC supports persistence events introduced in Micronaut Data 2.3 and above however it should be noted that these should not block and should only perform operations that don&#8217;t incur any network I/O and if they do a new thread should execute this logic.</p>
+</div>
+<div class="paragraph">
+<p>Note that persistence events are most commonly used to pre-populate database properties prior to performing an insert (for example encoding a password etc.) these types of operations typically don&#8217;t involve blocking I/O and are safe to perform.</p>
 </div>
 
 <h1 id="graal"><a class="anchor" href="#graal"></a>9 Going Native with GraalVM</h1>

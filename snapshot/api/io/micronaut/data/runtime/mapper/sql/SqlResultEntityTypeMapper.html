@@ -48,7 +48,7 @@ var activeTableTab = "activeTableTab";
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" target="_top">Frames</a></li>
@@ -72,7 +72,7 @@ var activeTableTab = "activeTableTab";
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
@@ -128,6 +128,27 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 <div class="summary">
 <ul class="blockList">
 <li class="blockList">
+<!-- ======== NESTED CLASS SUMMARY ======== -->
+<ul class="blockList">
+<li class="blockList"><a name="nested.class.summary">
+<!--   -->
+</a>
+<h3>Nested Class Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Nested Class Summary table, listing nested classes, and an explanation">
+<caption><span>Nested Classes</span><span class="tabEnd">&nbsp;</span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Class and Description</th>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static interface&nbsp;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="type parameter in SqlResultEntityTypeMapper.PushingMapper">RS</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="type parameter in SqlResultEntityTypeMapper.PushingMapper">R</a>&gt;</span></code>
+<div class="block">The pushing mapper helper interface.</div>
+</td>
+</tr>
+</table>
+</li>
+</ul>
 <!-- ======== CONSTRUCTOR SUMMARY ======== -->
 <ul class="blockList">
 <li class="blockList"><a name="constructor.summary">
@@ -219,12 +240,16 @@ implements <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTy
 </td>
 </tr>
 <tr id="i7" class="rowColor">
-<td class="colFirst"><code>java.util.List&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readAllWithJoins-RS-">readAllWithJoins</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</code>&nbsp;</td>
+<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,java.util.List&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readAllWithJoins--">readAllWithJoins</a></span>()</code>
+<div class="block">Read multiple entities with a pushing mapper.</div>
+</td>
 </tr>
 <tr id="i8" class="altColor">
-<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readOneWithJoins-RS-">readOneWithJoins</a></span>(<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</code>&nbsp;</td>
+<td class="colFirst"><code><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html#readOneWithJoins--">readOneWithJoins</a></span>()</code>
+<div class="block">Read one entity with a pushing mapper.</div>
+</td>
 </tr>
 </table>
 <ul class="blockList">
@@ -467,28 +492,32 @@ public&nbsp;java.lang.Object&nbsp;read(@NonNull
 </dl>
 </li>
 </ul>
-<a name="readOneWithJoins-java.lang.Object-">
-<!--   -->
-</a><a name="readOneWithJoins-RS-">
+<a name="readOneWithJoins--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>readOneWithJoins</h4>
-<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&nbsp;readOneWithJoins(@NonNull
-                          <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</pre>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;readOneWithJoins()</pre>
+<div class="block">Read one entity with a pushing mapper.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The pushing mapper</dd>
+</dl>
 </li>
 </ul>
-<a name="readAllWithJoins-java.lang.Object-">
-<!--   -->
-</a><a name="readAllWithJoins-RS-">
+<a name="readAllWithJoins--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>readAllWithJoins</h4>
-<pre>public&nbsp;java.util.List&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&nbsp;readAllWithJoins(@NonNull
-                                          <a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>&nbsp;rs)</pre>
+<pre>public&nbsp;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql">SqlResultEntityTypeMapper.PushingMapper</a>&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">RS</a>,java.util.List&lt;<a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" title="type parameter in SqlResultEntityTypeMapper">R</a>&gt;&gt;&nbsp;readAllWithJoins()</pre>
+<div class="block">Read multiple entities with a pushing mapper.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The pushing mapper</dd>
+</dl>
 </li>
 </ul>
 <a name="getPersistentEntity--">
@@ -528,7 +557,7 @@ public&nbsp;java.lang.Object&nbsp;read(@NonNull
 <div class="subNav">
 <ul class="navList">
 <li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlDTOMapper.html" title="class in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
-<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlTypeMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+<li><a href="../../../../../../io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.PushingMapper.html" title="interface in io.micronaut.data.runtime.mapper.sql"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
 <li><a href="../../../../../../index.html?io/micronaut/data/runtime/mapper/sql/SqlResultEntityTypeMapper.html" target="_top">Frames</a></li>
@@ -552,7 +581,7 @@ public&nbsp;java.lang.Object&nbsp;read(@NonNull
 <div>
 <ul class="subNavList">
 <li>Summary:&nbsp;</li>
-<li>Nested&nbsp;|&nbsp;</li>
+<li><a href="#nested.class.summary">Nested</a>&nbsp;|&nbsp;</li>
 <li>Field&nbsp;|&nbsp;</li>
 <li><a href="#constructor.summary">Constr</a>&nbsp;|&nbsp;</li>
 <li><a href="#method.summary">Method</a></li>
