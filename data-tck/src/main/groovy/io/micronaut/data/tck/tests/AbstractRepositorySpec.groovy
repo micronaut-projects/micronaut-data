@@ -27,8 +27,11 @@ import io.micronaut.data.tck.jdbc.entities.UserRole
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
+import spock.lang.Ignore
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Timeout
 import spock.lang.Unroll
 
 import java.sql.Connection
@@ -36,6 +39,7 @@ import java.time.LocalDate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()
@@ -55,6 +59,8 @@ abstract class AbstractRepositorySpec extends Specification {
     abstract MealRepository getMealRepository()
     abstract FoodRepository getFoodRepository()
     abstract StudentRepository getStudentRepository()
+    abstract CarRepository getCarRepository()
+    abstract BasicTypesRepository getBasicTypeRepository()
 
     abstract Map<String, String> getProperties()
 
@@ -63,7 +69,7 @@ abstract class AbstractRepositorySpec extends Specification {
     ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
-    SynchronousTransactionManager<Connection> transactionManager = context.getBean(SynchronousTransactionManager)
+    Optional<SynchronousTransactionManager<Connection>> transactionManager = context.findBean(SynchronousTransactionManager)
 
     boolean isOracle() {
         return false
@@ -105,6 +111,10 @@ abstract class AbstractRepositorySpec extends Specification {
                 ))])
     }
 
+    protected void setup(){
+        cleanup()
+    }
+
     protected void cleanupBooks() {
         bookRepository.deleteAll()
         authorRepository.deleteAll()
@@ -125,6 +135,190 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupBooks()
         cleanupData()
         cleanupMeals()
+    }
+
+    protected boolean skipQueryByDataArray() {
+        return false
+    }
+
+    @IgnoreIf({ jvm.isJava15Compatible() })
+    void "test save and retrieve basic types"() {
+        when: "we save a new book"
+        def book = basicTypeRepository.save(new BasicTypes())
+
+        then: "The ID is assigned"
+        book.myId != null
+
+        when:"A book is found"
+        def retrievedBook = basicTypeRepository.findById(book.myId).orElse(null)
+
+        then:"The book is correct"
+        retrievedBook.uuid == book.uuid
+        retrievedBook.bigDecimal == book.bigDecimal
+        retrievedBook.byteArray == book.byteArray
+        retrievedBook.charSequence == book.charSequence
+        retrievedBook.charset == book.charset
+        retrievedBook.primitiveBoolean == book.primitiveBoolean
+        retrievedBook.primitiveByte == book.primitiveByte
+        retrievedBook.primitiveChar == book.primitiveChar
+        retrievedBook.primitiveDouble == book.primitiveDouble
+        retrievedBook.primitiveFloat == book.primitiveFloat
+        retrievedBook.primitiveInteger == book.primitiveInteger
+        retrievedBook.primitiveLong == book.primitiveLong
+        retrievedBook.primitiveShort == book.primitiveShort
+        retrievedBook.wrapperBoolean == book.wrapperBoolean
+        retrievedBook.wrapperByte == book.wrapperByte
+        retrievedBook.wrapperChar == book.wrapperChar
+        retrievedBook.wrapperDouble == book.wrapperDouble
+        retrievedBook.wrapperFloat == book.wrapperFloat
+        retrievedBook.wrapperInteger == book.wrapperInteger
+        retrievedBook.wrapperLong == book.wrapperLong
+        retrievedBook.uri == book.uri
+        retrievedBook.url == book.url
+        retrievedBook.instant == book.instant
+        retrievedBook.localDateTime == book.localDateTime
+        retrievedBook.zonedDateTime == book.zonedDateTime
+        retrievedBook.offsetDateTime == book.offsetDateTime
+        retrievedBook.dateCreated == book.dateCreated
+        retrievedBook.dateUpdated == book.dateUpdated
+        // stored as a DATE type without time
+//        retrievedBook.date == book.date
+    }
+
+    @IgnoreIf({ !jvm.isJava11Compatible() })
+    void "test query by byte array"() {
+        if (skipQueryByDataArray()) {
+            return
+        }
+
+        when:
+            def book = basicTypeRepository.save(new BasicTypes())
+            def changed = "changed byte".bytes
+            basicTypeRepository.update(book.myId, changed)
+
+        then:
+            basicTypeRepository.findByByteArray(changed) != null
+    }
+
+    void "test save and fetch author with no books"() {
+        given:
+        def author = new Author(name: "Some Dude")
+        authorRepository.save(author)
+
+        author = authorRepository.queryByName("Some Dude")
+
+        expect:
+        author.books.size() == 0
+
+        cleanup:
+        authorRepository.deleteById(author.id)
+    }
+
+    void "test total dto"() {
+        given:
+        savePersons(["Jeff", "James"])
+
+        expect:
+        personRepository.getTotal().total == 2
+
+        cleanup:
+        personRepository.deleteAll()
+    }
+
+    protected boolean skipCustomSchemaAndCatalogTest() {
+        return false
+    }
+
+    void "test CRUD with custom schema and catalog"() {
+        if (skipCustomSchemaAndCatalogTest()) {
+            return
+        }
+        when:
+        def a5 = carRepository.save(new Car(name: "A5"))
+
+        then:
+        a5.id
+
+        when:
+        a5 = carRepository.findById(a5.id).orElse(null)
+
+        then:
+        a5.id
+        a5.name == 'A5'
+        carRepository.getById(a5.id).parts.size() == 0
+
+        when:"an update happens"
+        carRepository.update(a5.id, "A6")
+        a5 = carRepository.findById(a5.id).orElse(null)
+
+        then:"the updated worked"
+        a5.name == 'A6'
+
+        when:"an update to null happens"
+        carRepository.update(a5.id, null)
+        a5 = carRepository.findById(a5.id).orElse(null)
+
+        then:"the updated to null worked"
+            a5.name == null
+
+        when:"A deleted"
+        carRepository.deleteById(a5.id)
+
+        then:"It was deleted"
+        !carRepository.findById(a5.id).isPresent()
+        carRepository.deleteAll()
+    }
+
+    @Ignore("Fix indexed mapping for r2dbc")
+    void "test In Native Query function"() {
+        given:
+        savePersons(["Cemo", "Deniz", "Utku"])
+
+        when:"using a mix of parameters with collection types with IN queries"
+        def persons = personRepository.queryNames(
+            ["Ali"],
+            "James",
+            ["Onur"],
+            ["Cemo","Deniz","Olcay"],
+            "Utku");
+
+        then:"The result is correct"
+        persons != null
+        persons.size() == 3
+
+        then:
+        cleanupData()
+    }
+
+    void "test custom alias"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def book = bookRepository.queryByTitle("The Stand")
+
+        then:
+        book.title == "The Stand"
+        book.author != null
+        book.author.name == "Stephen King"
+
+        cleanup:
+        cleanupData()
+    }
+
+    void "test @Query with DTO"() {
+        given:
+        saveSampleBooks()
+
+        when:
+        def book = bookDtoRepository.findByTitleWithQuery("The Stand")
+
+        then:
+        book.isPresent()
+        book.get().title == "The Stand"
+
+        cleanup:
+        cleanupData()
     }
 
     void "test save one"() {
@@ -1029,17 +1223,20 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find one for update"() {
+        if (!transactionManager.isPresent()) {
+            return
+        }
         given:
         def meal = mealRepository.save(new Meal(10))
         def food = foodRepository.save(new Food("food", 80, 200, meal))
 
         when:
-        def mealById = transactionManager.executeWrite { mealRepository.findByIdForUpdate(meal.mid) }
+        def mealById = transactionManager.get().executeWrite { mealRepository.findByIdForUpdate(meal.mid) }
         then:
         meal.currentBloodGlucose == mealById.currentBloodGlucose
 
         when: "finding with associations"
-        def mealWithFood = transactionManager.executeWrite { mealRepository.searchByIdForUpdate(meal.mid) }
+        def mealWithFood = transactionManager.get().executeWrite { mealRepository.searchByIdForUpdate(meal.mid) }
         then: "the association is fetched"
         food.carbohydrates == mealWithFood.foods.first().carbohydrates
 
@@ -1048,6 +1245,10 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find many for update"() {
+        if (!transactionManager.isPresent()) {
+            return
+        }
+
         given:
         def meals = mealRepository.saveAll([
                 new Meal(10),
@@ -1057,7 +1258,7 @@ abstract class AbstractRepositorySpec extends Specification {
         foodRepository.saveAll(meals.collect { new Food("food", 10, 100, it) })
 
         when:
-        def mealsForUpdate = transactionManager.executeWrite { forUpdateMethod.call(*args) }
+        def mealsForUpdate = transactionManager.get().executeWrite { forUpdateMethod.call(*args) }
 
         then:
         mealsForUpdate.collect { it.currentBloodGlucose }.sort() ==
@@ -1074,6 +1275,10 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find for update locking"() {
+        if (!transactionManager.isPresent()) {
+            return
+        }
+
         given:
         def meal = mealRepository.save(new Meal(10))
         def threadCount = 2
@@ -1082,7 +1287,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def latch = new CountDownLatch(threadCount)
         (1..threadCount).collect {
             Thread.start {
-                transactionManager.executeWrite {
+                transactionManager.get().executeWrite {
                     def mealToUpdate = mealRepository.findByIdForUpdate(meal.mid)
                     latch.countDown()
                     latch.await(5, TimeUnit.SECONDS)
@@ -1100,6 +1305,9 @@ abstract class AbstractRepositorySpec extends Specification {
     }
 
     void "test find for update locking with associations"() {
+        if (!transactionManager.isPresent()) {
+            return
+        }
         given:
         def meal = mealRepository.save(new Meal(10))
         foodRepository.save(new Food("food", 80, 200, meal))
@@ -1109,7 +1317,7 @@ abstract class AbstractRepositorySpec extends Specification {
         def latch = new CountDownLatch(threadCount)
         (1..threadCount).collect {
             Thread.start {
-                transactionManager.executeWrite {
+                transactionManager.get().executeWrite {
                     def food = foodRepository.findByMealMidForUpdate(meal.mid)
                     def mealToUpdate = food.meal
                     latch.countDown()
@@ -1200,7 +1408,14 @@ abstract class AbstractRepositorySpec extends Specification {
             cleanupBooks()
     }
 
-    void "test optimistic locking"() {
+    boolean skipOptimisticLockingTest() {
+        return false
+    }
+
+    def "test optimistic locking"() {
+        if (skipOptimisticLockingTest()) {
+            return
+        }
         given:
             def student = new Student("Denis")
         when:

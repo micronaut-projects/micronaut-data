@@ -13,6 +13,9 @@ configurations {
 
 dependencies {
     implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+    annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+    testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
@@ -21,13 +24,13 @@ dependencies {
     implementation "io.micronaut:micronaut-validation"
     compileOnly project(":data-processor")
     compileOnly "io.micronaut:micronaut-inject-groovy"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
     testImplementation("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
     testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+    testImplementation "io.micronaut.test:micronaut-test-spock"
 }
 
 test.classpath += configurations.developmentOnly

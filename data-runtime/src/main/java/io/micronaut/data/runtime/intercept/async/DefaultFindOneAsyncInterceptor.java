@@ -19,6 +19,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
@@ -48,6 +49,12 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         CompletionStage<Object> future = asyncDatastoreOperations.findOne(preparedQuery);
         Argument<?> type = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         return future.thenApply(o -> {
+            if (o == null) {
+                if (!isNullable(context.getAnnotationMetadata())) {
+                    throw new EmptyResultException();
+                }
+                return null;
+            }
             if (!type.getType().isInstance(o)) {
                 return ConversionService.SHARED.convert(o, type)
                         .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + o));

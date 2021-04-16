@@ -15,22 +15,34 @@
  */
 package io.micronaut.data.tck.tests
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Timeout
 
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
 
+@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractAsyncRepositorySpec extends Specification {
+
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
 
     abstract PersonAsyncRepository getPersonRepository()
 
-    abstract void init()
+    void init() {
+    }
 
     def setup() {
+        cleanup()
         init()
         personRepository.saveAll([
                 new Person(name: "Jeff"),
@@ -44,7 +56,6 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
     }
 
     def cleanup() {
-        init()
         personRepository.deleteAll().get()
     }
 

@@ -15,77 +15,16 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import io.micronaut.context.ApplicationContext
-import io.micronaut.data.tck.entities.Sale
-import spock.lang.AutoCleanup
-import spock.lang.Shared
-import spock.lang.Specification
 
-class PostgresJSONBSpec extends Specification implements PostgresTestPropertyProvider {
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(getProperties())
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleRepository
+import io.micronaut.data.tck.tests.AbstractJSONSpec
 
-    @Shared
-    PostgresSaleRepository saleRepository = applicationContext.getBean(PostgresSaleRepository)
+class PostgresJSONBSpec extends AbstractJSONSpec implements PostgresTestPropertyProvider {
 
-    void "test read and write json"() {
-        when:
-        Sale sale = new Sale()
-        sale.setName("test 1")
-        sale.data = [foo: 'bar']
-        sale.quantities = [foo: 10]
-        saleRepository.save(sale)
-        sale = saleRepository.findById(sale.id).orElse(null)
-
-        then:
-        sale.name == 'test 1'
-        sale.data == [foo: 'bar']
-        sale.quantities == [foo: 10]
-
-        when:
-        sale.data.put('foo2', 'bar2')
-        saleRepository.update(sale)
-        sale = saleRepository.findById(sale.id).orElse(null)
-        then:
-        sale.data.containsKey('foo2')
-
-        when:
-        saleRepository.updateData(sale.id, [foo: 'changed'])
-        sale = saleRepository.findById(sale.id).orElse(null)
-
-        then:
-        sale.name == 'test 1'
-        sale.data == [foo: 'changed']
-        sale.quantities == [foo: 10]
-
-        when: "retrieving the data via DTO"
-        def dto = saleRepository.getById(sale.id)
-
-        then: "the data is correct"
-        dto.name == 'test 1'
-        dto.data == [foo: 'changed']
-
-        cleanup:
-        saleRepository.deleteAll()
-    }
-
-    void "test read write json with string field"() {
-        def objectMapper = new ObjectMapper()
-
-        given:
-        def sale = new Sale(name: "sale")
-        def extraData = "{\"color\":\"blue\"}"
-        sale.setExtraData(extraData)
-
-        when:
-        saleRepository.save(sale)
-
-        then:
-        objectMapper.readTree(saleRepository.findById(sale.id).get().extraData) == objectMapper.readTree(extraData)
-
-        cleanup:
-        saleRepository.deleteAll()
+    @Memoized
+    @Override
+    SaleRepository getSaleRepository() {
+        return applicationContext.getBean(PostgresSaleRepository);
     }
 }

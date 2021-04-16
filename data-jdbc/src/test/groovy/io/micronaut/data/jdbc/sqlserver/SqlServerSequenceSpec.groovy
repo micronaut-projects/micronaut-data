@@ -31,7 +31,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 
 @MicronautTest(transactional = false)
-class SqlServerSequenceSpec extends AbstractSqlServerSpec {
+class SqlServerSequenceSpec implements MSSQLTestPropertyProvider {
     @Inject TestSequenceRepo testSequenceRepo
     @Inject DataSource dataSource
     @Inject SynchronousTransactionManager transactionManager

@@ -15,28 +15,30 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
+
+import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
+import org.testcontainers.containers.JdbcDatabaseContainer
 
-trait PostgresTestPropertyProvider implements DatabaseTestPropertyProvider {
+import java.sql.Connection
 
-    @Override
-    String url() {
-        Postgres.getJdbcUrl()
-    }
-
-    @Override
-    String username() {
-        Postgres.getUsername()
-    }
-
-    @Override
-    String password() {
-        Postgres.getPassword()
-    }
+trait PostgresTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.POSTGRES
+    }
+
+    @Override
+    int sharedSpecsCount() {
+        return 9
+    }
+
+    @Override
+    void startContainer(JdbcDatabaseContainer container) {
+        container.start()
+        try (Connection connection = container.createConnection("")) {
+            connection.prepareCall('CREATE EXTENSION "uuid-ossp";').execute()
+        }
     }
 }

@@ -220,48 +220,79 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
     }
 
-    public R readOneWithJoins(@NonNull RS rs) {
-        MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
-        Object id = readEntityId(rs, ctx);
-        R entityInstance = readEntity(rs, ctx, null, id);
-        if (entityInstance != null && !joinPaths.isEmpty()) {
-            while (hasNext(rs)) {
-                readChildren(rs, entityInstance, null, ctx);
+    /**
+     * Read one entity with a pushing mapper.
+     *
+     * @return The pushing mapper
+     */
+    public PushingMapper<RS, R> readOneWithJoins() {
+        return new PushingMapper<RS, R>() {
+
+            final MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+            R entityInstance;
+
+            @Override
+            public void processRow(RS row) {
+                if (entityInstance == null) {
+                    Object id = readEntityId(row, ctx);
+                    entityInstance = readEntity(row, ctx, null, id);
+                } else {
+                    readChildren(row, entityInstance, null, ctx);
+                }
             }
-            entityInstance = (R) setChildrenAndTriggerPostLoad(entityInstance, ctx);
-        }
-        if (entityInstance == null) {
-            throw new DataAccessException("Unable to map result to entity of type [" + entity.getName() + "]. Missing result data.");
-        }
-        if (joinPaths.isEmpty()) {
-            return triggerPostLoad(entity, entityInstance);
-        }
-        return entityInstance;
+
+            @Override
+            public R getResult() {
+                if (entityInstance == null) {
+                    return null;
+                }
+                if (!joinPaths.isEmpty()) {
+                    entityInstance = (R) setChildrenAndTriggerPostLoad(entityInstance, ctx);
+                } else {
+                    return triggerPostLoad(entity, entityInstance);
+                }
+                return entityInstance;
+            }
+        };
     }
 
-    public List<R> readAllWithJoins(@NonNull RS rs) {
-        Map<Object, MappingContext<R>> processed = new LinkedHashMap<>();
-        while (hasNext(rs)) {
-            MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
-            Object id = readEntityId(rs, ctx);
-            if (id == null) {
-                throw new IllegalStateException("Entity doesn't have an id!");
+    /**
+     * Read multiple entities with a pushing mapper.
+     *
+     * @return The pushing mapper
+     */
+    public PushingMapper<RS, List<R>> readAllWithJoins() {
+        return new PushingMapper<RS, List<R>>() {
+
+            final Map<Object, MappingContext<R>> processed = new LinkedHashMap<>();
+
+            @Override
+            public void processRow(RS row) {
+                MappingContext<R> ctx = MappingContext.of(entity, startingPrefix);
+                Object id = readEntityId(row, ctx);
+                if (id == null) {
+                    throw new IllegalStateException("Entity doesn't have an id!");
+                }
+                MappingContext<R> prevCtx = processed.get(id);
+                if (prevCtx != null) {
+                    readChildren(row, prevCtx.entity, null, prevCtx);
+                } else {
+                    ctx.entity = readEntity(row, ctx, null, id);
+                    processed.put(id, ctx);
+                }
             }
-            MappingContext<R> prevCtx = processed.get(id);
-            if (prevCtx != null) {
-                readChildren(rs, prevCtx.entity, null, prevCtx);
-            } else {
-                ctx.entity = readEntity(rs, ctx, null, id);
-                processed.put(id, ctx);
+
+            @Override
+            public List<R> getResult() {
+                List<R> values = new ArrayList<>(processed.size());
+                for (Map.Entry<Object, MappingContext<R>> e : processed.entrySet()) {
+                    MappingContext<R> ctx = e.getValue();
+                    R entityInstance = (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx);
+                    values.add(entityInstance);
+                }
+                return values;
             }
-        }
-        List<R> values = new ArrayList<>(processed.size());
-        for (Map.Entry<Object, MappingContext<R>> e : processed.entrySet()) {
-            MappingContext<R> ctx = e.getValue();
-            R entityInstance = (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx);
-            values.add(entityInstance);
-        }
-        return values;
+        };
     }
 
     private void readChildren(RS rs, Object instance, Object parent, MappingContext<R> ctx) {
@@ -780,6 +811,30 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             newAssociations.add(association);
             return newAssociations;
         }
+
+    }
+
+    /**
+     * The pushing mapper helper interface.
+     *
+     * @param <RS> The row type
+     * @param <R> The result type
+     */
+    public interface PushingMapper<RS, R> {
+
+        /**
+         * Process row.
+         *
+         * @param row The row
+         */
+        void processRow(RS row);
+
+        /**
+         * The result created by pushed rows.
+         *
+         * @return the result
+         */
+        R getResult();
 
     }
 

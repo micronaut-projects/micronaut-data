@@ -15,28 +15,23 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
+
+import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MySQLTestPropertyProvider implements DatabaseTestPropertyProvider {
-
-    @Override
-    String url() {
-        MySql.getJdbcUrl()
-    }
-
-    @Override
-    String username() {
-        MySql.getUsername()
-    }
-
-    @Override
-    String password() {
-        MySql.getPassword()
-    }
+trait MySQLTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.MYSQL
+    }
+
+    String driverName() {
+        "mysql"
+    }
+
+    @Override
+    int sharedSpecsCount() {
+        return 5
     }
 }

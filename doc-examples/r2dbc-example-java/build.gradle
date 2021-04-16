@@ -1,0 +1,41 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor("io.micronaut:micronaut-graal")
+    annotationProcessor project(":data-processor")
+    implementation project(":data-r2dbc")
+    implementation platform("io.micronaut.r2dbc:micronaut-r2dbc-bom:$micronautR2dbcVersion")
+    implementation "io.micronaut.r2dbc:micronaut-r2dbc-core"
+    implementation "io.micronaut.r2dbc:micronaut-r2dbc-rxjava2"
+    implementation("io.micronaut.flyway:micronaut-flyway")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    runtimeOnly 'dev.miku:r2dbc-mysql'
+    implementation "mysql:mysql-connector-java"
+
+    testImplementation "io.micronaut:micronaut-http-client"
+    testImplementation platform("org.testcontainers:testcontainers-bom:$testContainersVersion")
+    testImplementation "org.testcontainers:mysql"
+
+    testImplementation "io.micronaut.test:micronaut-test-core"
+}
+
+nativeImage {
+    args('-H:+AddAllCharsets')
+}
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
+}

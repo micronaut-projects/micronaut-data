@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.CountInterceptor
+import io.micronaut.data.intercept.FindOneInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.CountAsyncInterceptor
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor
@@ -66,5 +67,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         "countDistinctNameByName" | "Long"                  | "String name" | CountInterceptor         | Long       | "SELECT COUNT(DISTINCT(person_.name))"
         "countDistinctNameByName" | "Single<Long>"          | "String name" | CountReactiveInterceptor | Long       | "SELECT COUNT(DISTINCT(person_.name))"
         "countDistinctName"       | "CompletionStage<Long>" | "String name" | CountAsyncInterceptor    | Long       | "SELECT COUNT(DISTINCT(person_.name))"
+        "getAvgAgeByNameLike"     | "long"                  | "String name" | FindOneInterceptor       | Number     | "SELECT AVG(person_.age) FROM io.micronaut.data.model.entities.Person AS person_ WHERE (person_.name like :p1)"
+        "getSumAgeByNameLike"     | "long"                  | "String name" | FindOneInterceptor       | Number     | "SELECT SUM(person_.age) FROM io.micronaut.data.model.entities.Person AS person_ WHERE (person_.name like :p1)"
     }
 }

@@ -1,0 +1,3 @@
+Micronaut Data R2DBC supports persistence events introduced in Micronaut Data 2.3 and above however it should be noted that these should not block and should only perform operations that don't incur any network I/O and if they do a new thread should execute this logic.
+
+Note that persistence events are most commonly used to pre-populate database properties prior to performing an insert (for example encoding a password etc.) these types of operations typically don't involve blocking I/O and are safe to perform.

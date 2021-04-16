@@ -15,28 +15,19 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
+
+import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait MSSQLTestPropertyProvider implements DatabaseTestPropertyProvider {
-
-    @Override
-    String url() {
-        MSSQL.getJdbcUrl()
-    }
-
-    @Override
-    String username() {
-        MSSQL.getUsername()
-    }
-
-    @Override
-    String password() {
-        MSSQL.getPassword()
-    }
+trait MSSQLTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.SQL_SERVER
+    }
+
+    @Override
+    int sharedSpecsCount() {
+        return 8
     }
 }

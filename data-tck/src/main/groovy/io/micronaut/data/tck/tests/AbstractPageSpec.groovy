@@ -33,7 +33,7 @@ abstract class AbstractPageSpec extends Specification {
 
     abstract void init()
 
-    def setupSpec() {
+    def setup() {
         init()
 
         List<Person> people = []
@@ -46,7 +46,7 @@ abstract class AbstractPageSpec extends Specification {
         personRepository.saveAll(people)
     }
 
-    def cleanupSpec() {
+    def cleanup() {
         personRepository.deleteAll()
     }
 

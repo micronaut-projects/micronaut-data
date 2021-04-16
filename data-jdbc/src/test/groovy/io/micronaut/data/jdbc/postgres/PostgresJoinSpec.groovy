@@ -15,36 +15,22 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.context.ApplicationContext
-import io.micronaut.data.runtime.config.SchemaGenerate
+import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.CategoryRepository
 import io.micronaut.data.tck.repositories.ProductRepository
 import io.micronaut.data.tck.tests.AbstractJoinSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-@MicronautTest
 class PostgresJoinSpec extends AbstractJoinSpec implements PostgresTestPropertyProvider {
-    @Shared @AutoCleanup ApplicationContext context
 
+    @Memoized
     @Override
     CategoryRepository getCategoryRepository() {
         return context.getBean(PostgresCategoryRepository)
     }
 
+    @Memoized
     @Override
     ProductRepository getProductRepository() {
         return context.getBean(PostgresProductRepository)
-    }
-
-    @Override
-    void init() {
-        context = ApplicationContext.run(getProperties())
-    }
-
-    @Override
-    SchemaGenerate schemaGenerate() {
-        SchemaGenerate.CREATE_DROP
     }
 }

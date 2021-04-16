@@ -15,20 +15,16 @@
  */
 package io.micronaut.data.jdbc.mariadb
 
-import io.micronaut.context.ApplicationContext
+import groovy.transform.Memoized
 import io.micronaut.data.jdbc.mysql.MySqlUuidRepository
+import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-@MicronautTest
 class MariaUUIDSpec extends AbstractUUIDSpec implements MariaTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(properties)
-
-    MySqlUuidRepository uuidRepository = applicationContext.getBean(MySqlUuidRepository)
-
+    @Memoized
+    @Override
+    UuidRepository getUuidRepository() {
+        return applicationContext.getBean(MySqlUuidRepository)
+    }
 }

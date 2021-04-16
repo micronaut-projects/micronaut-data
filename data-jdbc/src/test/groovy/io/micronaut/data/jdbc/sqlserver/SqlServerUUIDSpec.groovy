@@ -15,19 +15,15 @@
  */
 package io.micronaut.data.jdbc.sqlserver
 
-import io.micronaut.context.ApplicationContext
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.UuidRepository
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
-@MicronautTest
 class SqlServerUUIDSpec extends AbstractUUIDSpec implements MSSQLTestPropertyProvider {
 
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(properties)
-
-    MSUuidRepository uuidRepository = applicationContext.getBean(MSUuidRepository)
-
+    @Memoized
+    @Override
+    UuidRepository getUuidRepository() {
+        return applicationContext.getBean(MSUuidRepository)
+    }
 }

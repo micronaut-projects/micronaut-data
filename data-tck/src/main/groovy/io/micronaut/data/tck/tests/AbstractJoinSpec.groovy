@@ -15,30 +15,32 @@
  */
 package io.micronaut.data.tck.tests
 
-
+import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Category
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.data.tck.repositories.CategoryRepository
 import io.micronaut.data.tck.repositories.ProductRepository
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import spock.lang.AutoCleanup
+import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Timeout
+
+import java.util.concurrent.TimeUnit
 
 import static java.util.stream.Collectors.toMap
 
-@MicronautTest
+@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractJoinSpec extends Specification {
+
+    @AutoCleanup
+    @Shared
+    ApplicationContext context = ApplicationContext.run(properties)
 
     abstract CategoryRepository getCategoryRepository()
 
     abstract ProductRepository getProductRepository()
-
-    abstract void init()
-
-    def setupSpec() {
-        init()
-    }
 
     def cleanup() {
         productRepository?.deleteAll()

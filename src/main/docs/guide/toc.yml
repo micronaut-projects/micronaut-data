@@ -58,6 +58,12 @@ sql:
     jdbcJoinQueries: JDBC Join Queries
     jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
+  r2dbc:
+    title: Micronaut Data R2DBC
+    r2querying: Writing Queries
+    r2crud: Performing CRUD Operations
+    r2transactionManagement: Micronaut Data Transactions with R2DBC
+    r2entityEvents: Reactive & Entity Events
 graal:
   title: Going Native with GraalVM
 spring:

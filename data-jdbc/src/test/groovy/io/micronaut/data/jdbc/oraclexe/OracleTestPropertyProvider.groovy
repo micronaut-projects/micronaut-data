@@ -15,28 +15,19 @@
  */
 package io.micronaut.data.jdbc.oraclexe
 
-import io.micronaut.data.jdbc.DatabaseTestPropertyProvider
+
+import io.micronaut.data.jdbc.SharedDatabaseContainerTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 
-trait OracleTestPropertyProvider implements DatabaseTestPropertyProvider {
-
-    @Override
-    String url() {
-        Oracle.getJdbcUrl()
-    }
-
-    @Override
-    String username() {
-        Oracle.getUsername()
-    }
-
-    @Override
-    String password() {
-        Oracle.getPassword()
-    }
+trait OracleTestPropertyProvider implements SharedDatabaseContainerTestPropertyProvider {
 
     @Override
     Dialect dialect() {
         Dialect.ORACLE
+    }
+
+    @Override
+    int sharedSpecsCount() {
+        return 5
     }
 }

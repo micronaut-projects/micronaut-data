@@ -56,6 +56,10 @@ public @interface Relation {
          * Cascade insert operations.
          */
         PERSIST,
+        /**
+         * Cascade update operations.
+         */
+        UPDATE,
          /**
          * Don't cascade.
          */

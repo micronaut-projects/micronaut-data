@@ -249,7 +249,7 @@ public abstract class ProjectionMethodExpression {
         @Override
         protected ClassElement resolveExpectedType(@NonNull MethodMatchContext matchContext, @NonNull ClassElement classElement) {
             if (TypeUtils.isNumber(classElement)) {
-                return matchContext.getVisitorContext().getClassElement(Double.class)
+                return matchContext.getVisitorContext().getClassElement(Number.class)
                         .orElse(super.resolveExpectedType(matchContext, classElement));
             } else {
                 return super.resolveExpectedType(matchContext, classElement);

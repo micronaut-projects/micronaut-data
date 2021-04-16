@@ -15,6 +15,7 @@ dependencies {
 
     implementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
     implementation  "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
 }
 
 tasks.withType(JavaCompile){

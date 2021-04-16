@@ -15,38 +15,16 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.data.tck.entities.Sale
-import io.micronaut.test.annotation.MicronautTest
-import spock.lang.Specification
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleRepository
+import io.micronaut.data.tck.tests.AbstractJSONSpec
 
-import javax.inject.Inject
+class MySqlJsonSpec extends AbstractJSONSpec implements MySQLTestPropertyProvider {
 
-@MicronautTest
-class MySqlJsonSpec extends Specification implements MySQLTestPropertyProvider {
-
-
-    @Inject MySqlSaleRepository saleRepository
-
-    void "test read and write json"() {
-        when:
-        Sale sale = new Sale()
-        sale.setName("test 1")
-        sale.data = [foo:'bar']
-        saleRepository.save(sale)
-        sale = saleRepository.findById(sale.id).orElse(null)
-
-        then:
-        sale.name == 'test 1'
-        sale.data == [foo:'bar']
-
-//      TODO: updates not working due to https://bugs.mysql.com/bug.php?id=93052
-//        when:
-//        saleRepository.updateData(sale.id,[foo:'changed'] )
-//        sale = saleRepository.findById(sale.id).orElse(null)
-//
-//        then:
-//        sale.name == 'test 1'
-//        sale.data == [foo:'changed']
-
+    @Memoized
+    @Override
+    SaleRepository getSaleRepository() {
+        return applicationContext.getBean(MySqlSaleRepository)
     }
+
 }

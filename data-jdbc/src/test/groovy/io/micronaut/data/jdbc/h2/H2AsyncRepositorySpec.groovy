@@ -15,27 +15,16 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.PersonAsyncRepository
 import io.micronaut.data.tck.tests.AbstractAsyncRepositorySpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.Shared
 
-import javax.inject.Inject
+class H2AsyncRepositorySpec extends AbstractAsyncRepositorySpec implements H2TestPropertyProvider {
 
-@MicronautTest(rollback = false)
-@H2DBProperties
-class H2AsyncRepositorySpec extends AbstractAsyncRepositorySpec {
-
-    @Inject
-    @Shared
-    PersonAsyncRepository personAsyncRepository
-
+    @Memoized
     @Override
     PersonAsyncRepository getPersonRepository() {
-        return personAsyncRepository
+        return context.getBean(H2AsyncPersonRepository)
     }
 
-    @Override
-    void init() {
-    }
 }

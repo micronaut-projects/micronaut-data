@@ -1,0 +1,19 @@
+The api:data.repository.reactive.ReactiveStreamsCrudRepository[] interface exposes methods to perform Create, Read, Update and Delete (CRUD) operations reactively.
+
+To create a new instance you can use the api:data.repository.reactive.ReactiveStreamsCrudRepository#save(S)[save] method:
+
+snippet::example.BookController[project-base="doc-examples/r2dbc-example", source="main", indent="0", tags="create"]
+
+To read objects you can use api:data.repository.reactive.ReactiveStreamsCrudRepository#findAll()[findAll] or api:data.repository.reactive.ReactiveStreamsCrudRepository#findById(ID)[findById]:
+
+snippet::example.BookController[project-base="doc-examples/r2dbc-example", source="main", indent="0", tags="read"]
+
+To perform an update you can use the api:data.repository.reactive.ReactiveStreamsCrudRepository#update(S)[update] method:
+
+snippet::example.BookController[project-base="doc-examples/r2dbc-example", source="main", indent="0", tags="update"]
+
+Finally to delete an instance you can use thBasicTypese api:data.repository.reactive.ReactiveStreamsCrudRepository#deleteById(ID)[deleteById] method:
+
+snippet::example.BookController[project-base="doc-examples/r2dbc-example", source="main", indent="0", tags="delete"]
+
+For more information on the possible write operations, see the documentation on <<dataUpdates, Data updates>> in the Micronaut Data documentation which also apply to R2DBC.

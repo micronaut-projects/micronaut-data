@@ -178,7 +178,6 @@ public class RawQueryMethod implements MethodCandidate {
                 new IllegalStateException("Should only be called if Query has value!")
         );
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
-        Map<String, String> parameterBinding = new LinkedHashMap<>(parameters.size());
         boolean namedParameters = matchContext.getRepositoryClass()
                 .booleanValue(RepositoryConfiguration.class, "namedParameters").orElse(true);
         Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(queryString);

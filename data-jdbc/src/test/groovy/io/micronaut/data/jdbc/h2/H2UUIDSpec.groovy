@@ -15,18 +15,12 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.ApplicationContext
+
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 @MicronautTest
 class H2UUIDSpec extends AbstractUUIDSpec implements H2TestPropertyProvider {
-
-    @AutoCleanup
-    @Shared
-    ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     H2UuidRepository uuidRepository = applicationContext.getBean(H2UuidRepository)
 

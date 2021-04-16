@@ -15,24 +15,23 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import groovy.transform.Memoized
 import io.micronaut.data.tck.repositories.PersonReactiveRepository
 import io.micronaut.data.tck.repositories.StudentReactiveRepository
 import io.micronaut.data.tck.tests.AbstractReactiveRepositorySpec
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
 
-import javax.inject.Inject
+class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec implements H2TestPropertyProvider {
 
-@MicronautTest(rollback = false)
-@H2DBProperties
-class H2ReactiveRepositorySpec extends AbstractReactiveRepositorySpec {
-
-    @Inject
-    PersonReactiveRepository personRepository
-
-    @Inject
-    StudentReactiveRepository studentRepository
-
+    @Memoized
     @Override
-    void init() {
+    PersonReactiveRepository getPersonRepository() {
+        return context.getBean(H2ReactivePersonRepository)
     }
+
+    @Memoized
+    @Override
+    StudentReactiveRepository getStudentRepository() {
+        return context.getBean(H2StudentReactiveRepository)
+    }
+
 }
