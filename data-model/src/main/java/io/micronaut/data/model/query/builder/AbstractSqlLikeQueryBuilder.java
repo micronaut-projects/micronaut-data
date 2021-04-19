@@ -655,9 +655,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
     private void handleAssociationCriteria(CriteriaContext ctx, AssociationQuery associationQuery) {
         QueryState queryState = ctx.getQueryState();
-        if (!queryState.isAllowJoins()) {
-            throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
-        }
         Association association = associationQuery.getAssociation();
         if (association == null) {
             return;
@@ -1047,6 +1044,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
                 // We don't need to join to access the id of the relation
                 if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
+                    if (!queryState.isAllowJoins()) {
+                        throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
+                    }
                     String joinStringPath = joinPathJoiner.toString();
                     String joinAlias = joinInPath(queryState, joinStringPath);
                     // Continue to look for a joined property
