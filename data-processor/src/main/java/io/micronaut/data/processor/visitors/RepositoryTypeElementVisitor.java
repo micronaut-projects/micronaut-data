@@ -78,12 +78,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     private Set<String> visitedRepositories = new HashSet<>();
     private Map<String, DataType> dataTypes = Collections.emptyMap();
     private Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
-    private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
-        @Override
-        public SourcePersistentEntity apply(ClassElement classElement) {
-            return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
-        }
-    };
+    private Function<ClassElement, SourcePersistentEntity> entityResolver;
 
     /**
      * Default constructor.
@@ -121,6 +116,24 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             return;
         }
         this.currentClass = element;
+
+        entityResolver = new Function<ClassElement, SourcePersistentEntity>() {
+
+            MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
+            MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
+
+            @Override
+            public SourcePersistentEntity apply(ClassElement classElement) {
+                return entityMap.computeIfAbsent(classElement.getName(), s -> {
+                    if (classElement.hasAnnotation("io.micronaut.data.annotation.Embeddable")) {
+                        embeddedMappedEntityVisitor.visitClass(classElement, context);
+                    } else {
+                        mappedEntityVisitor.visitClass(classElement, context);
+                    }
+                    return new SourcePersistentEntity(classElement, this);
+                });
+            }
+        };
 
         if (element.hasDeclaredStereotype(Repository.class)) {
             visitedRepositories.add(interfaceName);
@@ -168,7 +181,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (currentRepository == null || failing) {
             return;
         }
-
         ClassElement genericReturnType = element.getGenericReturnType();
         if (queryEncoder != null && currentClass != null && element.isAbstract() && !element.isStatic() && finders != null) {
             ParameterElement[] parameters = element.getParameters();
