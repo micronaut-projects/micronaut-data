@@ -271,7 +271,7 @@
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
@@ -601,7 +601,7 @@ data class Book(@Id
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;
@@ -2297,7 +2297,7 @@ data class User(
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -2321,7 +2321,7 @@ public interface UserRepository extends CrudRepository&lt;User, Long&gt; { <b cl
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
-import edu.umd.cs.findbugs.annotations.NonNull
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -5823,7 +5823,7 @@ To allow JSON to be serialized and deserialized in entity properties you must ha
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.*;
 import java.util.Date;
 
