@@ -47,13 +47,24 @@ public interface AsyncCrudRepository<E, ID> extends GenericRepository<E, ID> {
     /**
      * This method issues an explicit update for the given entity. The method differs from {@link #save(Object)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
      *
-     * @param entity The entity to save. Must not be {@literal null}.
-     * @return The saved entity will never be {@literal null}.
+     * @param entity The entity to updated. Must not be {@literal null}.
+     * @return The updated entity will never be {@literal null}.
      * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
      * @param <S> The generic type
      */
     @NonNull
     <S extends E> CompletableFuture<S> update(@Valid @NotNull @NonNull S entity);
+
+    /**
+     * This method issues an explicit update for the given entities. The method differs from {@link #saveAll(Iterable)} in that an update will be generated regardless if the entity has been saved previously or not. If the entity has no assigned ID then an exception will be thrown.
+     *
+     * @param entities The entities to update. Must not be {@literal null}.
+     * @return The updating entity will never be {@literal null}.
+     * @throws javax.validation.ConstraintViolationException if the entity is {@literal null} or invalid.
+     * @param <S> The generic type
+     */
+    @NonNull
+    <S extends E> CompletableFuture<? extends Iterable<S>> updateAll(@Valid @NotNull @NonNull Iterable<S> entities);
 
     /**
      * Saves all given entities, possibly returning new instances representing the saved state.

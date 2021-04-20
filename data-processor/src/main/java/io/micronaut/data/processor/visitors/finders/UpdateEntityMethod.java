@@ -115,7 +115,8 @@ public class UpdateEntityMethod extends AbstractPatternBasedMethod implements Me
                     returnType = matchContext.getRootEntity().getType();
                 } else if (!TypeUtils.isVoid(returnType)
                         && !TypeUtils.isNumber(returnType)
-                        && !returnType.hasStereotype(MappedEntity.class)) {
+                        && !returnType.hasStereotype(MappedEntity.class)
+                        && !(TypeUtils.isReactiveOrFuture(matchContext.getReturnType()) && TypeUtils.isObjectClass(returnType))) {
                     matchContext.failAndThrow("Cannot implement update method for specified return type: " + returnType.getName());
                     return null;
                 }

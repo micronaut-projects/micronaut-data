@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.repository;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -41,6 +42,10 @@ public interface ReactorCrudRepository<E, ID> extends ReactiveStreamsCrudReposit
     @NonNull
     @Override
     <S extends E> Mono<S> update(@NonNull @Valid @NotNull S entity);
+
+    @NonNull
+    @Override
+    <S extends E> Flux<S> updateAll(@NonNull @Valid @NotNull Iterable<S> entities);
 
     @NonNull
     @Override

@@ -54,8 +54,6 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
     Maybe<Long> getMaxId();
 
-    Maybe<Long> updateAll(List<Person> people);
-
     Flowable<Person> updatePeople(List<Person> people);
 
     @Query("UPDATE person SET name = :newName WHERE (name = :oldName)")
