@@ -57,14 +57,14 @@ class OptimisticLockingSpec extends AbstractDataSpec {
             updateByIdAndVersionMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES) == ["-1", "-1", "1", "-1", "-1"] as String[]
             updateByIdAndVersionMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).get()
 
-            def updateMethod = repository.findPossibleMethods("update").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
-            def updateQuery = updateMethod.stringValue(Query).get()
+            def updateOneMethod = repository.findPossibleMethods("update").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
+            def updateOneQuery = updateOneMethod.stringValue(Query).get()
 
         then:
-            updateQuery == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
-            updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["name", "lastUpdatedTime", "version", "id", ''] as String[]
-            updateMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", "", "", "version"] as String[]
-            updateMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
+            updateOneQuery == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
+            updateOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["name", "lastUpdatedTime", "version", "id", ''] as String[]
+            updateOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", "", "", "version"] as String[]
+            updateOneMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def updateStudentMethod1 = repository.findPossibleMethods("updateStudent1").findFirst().get()
@@ -118,14 +118,14 @@ class OptimisticLockingSpec extends AbstractDataSpec {
             updateByStudentMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
-            def deleteMethod = repository.findPossibleMethods("delete").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
-            def deleteQuery = deleteMethod.stringValue(Query).get()
+            def deleteOneMethod = repository.findPossibleMethods("delete").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
+            def deleteOneQuery = deleteOneMethod.stringValue(Query).get()
 
         then:
-            deleteQuery == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ?)'
-            deleteMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", ''] as String[]
-            deleteMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['0', '-1'] as String[]
-            deleteMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
+            deleteOneQuery == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ?)'
+            deleteOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["id", ''] as String[]
+            deleteOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "version"] as String[]
+            deleteOneMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def deleteStudentMethod = repository.findPossibleMethods("delete").filter({ it -> it.getArguments().size() > 1 }).findFirst().get()

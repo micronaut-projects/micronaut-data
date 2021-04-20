@@ -241,46 +241,33 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         final Dialect dialect = queryBuilder.getDialect();
         RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
 
-        int[] parametersListSizes = null;
-        for (int i = 0; i < parameterBinding.length; i++) {
-            int parameterIndex = parameterBinding[i];
-            DataType dataType = parameterTypes[i];
-            if (parameterIndex == -1) {
-                continue;
-            }
-            if (dataType.isArray()) {
-                continue;
-            }
-            Object value = queryParameters[parameterIndex];
-            if (value == null || value instanceof byte[]) {
-                continue;
-            }
-            int size = sizeOf(value);
-            if (size == 1) {
-                continue;
-            }
-            if (parametersListSizes == null) {
-                parametersListSizes = new int[parameterBinding.length];
-                Arrays.fill(parametersListSizes, 1);
-            }
-            parametersListSizes[i] = size;
-        }
-        if (parametersListSizes != null) {
-            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
-            Pattern positionalParameterPattern = queryBuilder.positionalParameterPattern();
-            String[] queryParametersSplit = positionalParameterPattern.split(query);
-            StringBuilder sb = new StringBuilder(queryParametersSplit[0]);
-            int inx = 1;
-            for (int i = 0; i < parameterBinding.length; i++) {
-                int parameterSetSize = parametersListSizes[i];
-                sb.append(String.format(positionalParameterFormat, inx));
-                for (int sx = 1; sx < parameterSetSize; sx++) {
-                    sb.append(",").append(String.format(positionalParameterFormat, inx + sx));
+        Iterator<Object> valuesIterator = new Iterator<Object>() {
+
+            int i;
+
+            @Override
+            public boolean hasNext() {
+                if (i >= parameterBinding.length) {
+                    return false;
                 }
-                sb.append(queryParametersSplit[inx++]);
+                int parameterIndex = parameterBinding[i];
+                DataType dataType = parameterTypes[i];
+                if (parameterIndex == -1 || dataType.isArray()) {
+                    i++;
+                    return hasNext();
+                }
+                return true;
             }
-            query = sb.toString();
-        }
+
+            @Override
+            public Object next() {
+                Object queryParameter = queryParameters[parameterBinding[i]];
+                i++;
+                return queryParameter;
+            }
+        };
+
+        query = expandMultipleValues(parameterBinding.length, valuesIterator, query, queryBuilder);
 
         if (!isUpdate) {
             Pageable pageable = preparedQuery.getPageable();
@@ -343,32 +330,76 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 }
             }
 
-            if (value == null || dataType.isArray() || value instanceof byte[]) {
-                setStatementParameter(ps, index++, dataType, value, dialect);
-            } else if (value instanceof Iterable) {
-                Iterator<?> iterator = ((Iterable<?>) value).iterator();
-                if (!iterator.hasNext()) {
-                    setStatementParameter(ps, index++, dataType, null, dialect);
-                } else {
-                    while (iterator.hasNext()) {
-                        setStatementParameter(ps, index++, dataType, iterator.next(), dialect);
-                    }
-                }
-            } else if (value.getClass().isArray()) {
-                int len = Array.getLength(value);
-                if (len == 0) {
-                    setStatementParameter(ps, index++, dataType, null, dialect);
-                } else {
-                    for (int j = 0; j < len; j++) {
-                        Object o = Array.get(value, j);
-                        setStatementParameter(ps, index++, dataType, o, dialect);
-                    }
-                }
-            } else {
-                setStatementParameter(ps, index++, dataType, value, dialect);
-            }
+            index = setExpandedStatementParameter(value, ps, index, dataType, dialect);
         }
         return ps;
+    }
+
+    private int setExpandedStatementParameter(Object value, PS ps, int index, DataType dataType, Dialect dialect) {
+        if (value == null || dataType.isArray() || value instanceof byte[]) {
+            setStatementParameter(ps, index++, dataType, value, dialect);
+        } else if (value instanceof Iterable) {
+            Iterator<?> iterator = ((Iterable<?>) value).iterator();
+            if (!iterator.hasNext()) {
+                setStatementParameter(ps, index++, dataType, null, dialect);
+            } else {
+                while (iterator.hasNext()) {
+                    setStatementParameter(ps, index++, dataType, iterator.next(), dialect);
+                }
+            }
+        } else if (value.getClass().isArray()) {
+            int len = Array.getLength(value);
+            if (len == 0) {
+                setStatementParameter(ps, index++, dataType, null, dialect);
+            } else {
+                for (int j = 0; j < len; j++) {
+                    Object o = Array.get(value, j);
+                    setStatementParameter(ps, index++, dataType, o, dialect);
+                }
+            }
+        } else {
+            setStatementParameter(ps, index++, dataType, value, dialect);
+        }
+        return index;
+    }
+
+    private String expandMultipleValues(int parametersSize, Iterator<Object> valuesIt, String query, SqlQueryBuilder queryBuilder) {
+        int[] parametersListSizes = null;
+        for (int i = 0; i < parametersSize; i++) {
+            if (!valuesIt.hasNext()) {
+                continue;
+            }
+            Object value = valuesIt.next();
+            if (value == null || value instanceof byte[]) {
+                continue;
+            }
+            int size = sizeOf(value);
+            if (size == 1) {
+                continue;
+            }
+            if (parametersListSizes == null) {
+                parametersListSizes = new int[parametersSize];
+                Arrays.fill(parametersListSizes, 1);
+            }
+            parametersListSizes[i] = size;
+        }
+        if (parametersListSizes != null) {
+            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
+            Pattern positionalParameterPattern = queryBuilder.positionalParameterPattern();
+            String[] queryParametersSplit = positionalParameterPattern.split(query);
+            StringBuilder sb = new StringBuilder(queryParametersSplit[0]);
+            int inx = 1;
+            for (int i = 0; i < parametersSize; i++) {
+                int parameterSetSize = parametersListSizes[i];
+                sb.append(String.format(positionalParameterFormat, inx));
+                for (int sx = 1; sx < parameterSetSize; sx++) {
+                    sb.append(",").append(String.format(positionalParameterFormat, inx + sx));
+                }
+                sb.append(queryParametersSplit[inx++]);
+            }
+            return sb.toString();
+        }
+        return query;
     }
 
     /**
@@ -605,9 +636,10 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param dialect            The dialect
      * @param annotationMetadata The annotationMetadata
      * @param op                 The operation
+     * @param queryBuilder       The queryBuilder
      * @param <T>                The entity type
      */
-    protected <T> void deleteOne(Cnt connection, Dialect dialect, AnnotationMetadata annotationMetadata, EntityOperations<T> op) {
+    protected <T> void deleteOne(Cnt connection, Dialect dialect, AnnotationMetadata annotationMetadata, EntityOperations<T> op, SqlQueryBuilder queryBuilder) {
         StoredSqlOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
         op.collectAutoPopulatedPreviousValues(sqlOperation);
         boolean vetoed = op.triggerPreRemove();
@@ -619,6 +651,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             if (QUERY_LOG.isDebugEnabled()) {
                 QUERY_LOG.debug("Executing SQL DELETE: {}", sqlOperation.getQuery());
             }
+            op.checkForParameterToBeExpanded(sqlOperation, queryBuilder);
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
                 op.setParameters(ps, sqlOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
@@ -1390,6 +1423,15 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         protected abstract void collectAutoPopulatedPreviousValues(SqlOperation sqlOperation);
 
         /**
+         * Delegate to SQL operation to check if query needs to be changed to allow for expanded parameters.
+         *
+         * @param sqlOperation The sqlOperation
+         * @param queryBuilder The queryBuilder
+         */
+        protected void checkForParameterToBeExpanded(SqlOperation sqlOperation, SqlQueryBuilder queryBuilder) {
+        }
+
+        /**
          * Set sql parameters.
          *
          * @param stmt         The statement
@@ -1563,6 +1605,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         protected final String[] autoPopulatedPreviousProperties;
         protected final boolean isOptimisticLock;
 
+        protected boolean expandedQuery;
+
         /**
          * Creates a new instance.
          *
@@ -1609,6 +1653,57 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                     })
                     .filter(e -> e.getValue() != null)
                     .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        }
+
+        /**
+         * Check if query need to be modified to expand parameters.
+         *
+         * @param persistentEntity  The persistentEntity
+         * @param entity            The entity instance
+         * @param queryBuilder      The queryBuilder
+         * @param <T>               The entity type
+         */
+        public <T> void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity, SqlQueryBuilder queryBuilder) {
+            Iterator<Object> valuesIt = new Iterator<Object>() {
+
+                int i;
+
+                @Override
+                public boolean hasNext() {
+                    return i >= parameterBindingPaths.length;
+                }
+
+                @Override
+                public Object next() {
+                    String stringPropertyPath = parameterBindingPaths[i];
+                    PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(stringPropertyPath);
+                    if (propertyPath == null) {
+                        throw new IllegalStateException("Unrecognized path: " + stringPropertyPath);
+                    }
+                    Object value = entity;
+                    for (Association association : propertyPath.getAssociations()) {
+                        RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
+                        BeanProperty beanProperty = property.getProperty();
+                        value = beanProperty.get(value);
+                        if (value == null) {
+                            break;
+                        }
+                    }
+                    RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
+                    if (value != null) {
+                        BeanProperty beanProperty = property.getProperty();
+                        value = beanProperty.get(value);
+                    }
+                    i++;
+                    return value;
+                }
+
+            };
+            String q = expandMultipleValues(parameterBindingPaths.length, valuesIt, query, queryBuilder);
+            if (q != query) {
+                expandedQuery = true;
+                query = q;
+            }
         }
 
         @Override
@@ -1678,6 +1773,15 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             setStatementParameter(stmt, index, type, value, dialect);
         }
+
+        private void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+            if (expandedQuery) {
+                setExpandedStatementParameter(value, preparedStatement, index, dataType, dialect);
+            } else {
+                AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, value, dialect);
+            }
+        }
+
     }
 
     /**
@@ -1685,7 +1789,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      */
     protected abstract class SqlOperation {
 
-        protected final String query;
+        protected String query;
         protected final Dialect dialect;
 
         /**
@@ -1697,6 +1801,10 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         protected SqlOperation(String query, Dialect dialect) {
             this.query = query;
             this.dialect = dialect;
+        }
+
+        public String exandedQuery() {
+            return query;
         }
 
         /**

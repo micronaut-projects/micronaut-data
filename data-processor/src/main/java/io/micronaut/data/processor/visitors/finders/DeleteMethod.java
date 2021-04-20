@@ -22,6 +22,7 @@ import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
@@ -85,18 +86,23 @@ public class DeleteMethod extends AbstractListMethod {
                 matchContext.fail("Delete all not supported for entities with no ID");
                 return null;
             }
+            final String idName;
+            final SourcePersistentProperty identity = rootEntity.getIdentity();
+            if (identity != null) {
+                idName = identity.getName();
+            } else {
+                idName = TypeRole.ID;
+            }
             // Generate one 'IN' query for multiple entities if it's possible otherwise use batch
             boolean generateInIdList = entitiesParameter != null
                     && !rootEntity.hasCompositeIdentity()
                     && !(rootEntity.getIdentity() instanceof Embedded) && rootEntity.getVersion() == null;
             if (generateInIdList) {
-                queryModel = QueryModel.from(rootEntity)
-                        .inList(rootEntity.getIdentity().getName(), new QueryParameter(entitiesParameter.getName()));
-                entityParameter = null;
-                entitiesParameter = null;
+                queryModel = QueryModel.from(rootEntity).inList(rootEntity.getIdentity().getName(), new QueryParameter(idName));
+//                entityParameter = null;
+//                entitiesParameter = null;
             } else {
-                queryModel = QueryModel.from(rootEntity)
-                        .idEq(new QueryParameter(entitiesParameter == null ? entityParameter.getName() : entitiesParameter.getName()));
+                queryModel = QueryModel.from(rootEntity).idEq(new QueryParameter(idName));
                 if (rootEntity.getVersion() != null) {
                     queryModel.versionEq(new QueryParameter(rootEntity.getVersion().getName()));
                 }

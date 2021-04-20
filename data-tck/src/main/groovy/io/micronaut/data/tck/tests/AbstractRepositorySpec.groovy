@@ -1499,7 +1499,22 @@ abstract class AbstractRepositorySpec extends Specification {
             def student5 = studentRepository.findById(student2.getId())
         then:
             !student5.isPresent()
-
+        when:
+            student = new Student("Denis2")
+            studentRepository.save(student)
+            studentRepository.update(student)
+            studentRepository.update(student)
+            studentRepository.update(student)
+        then:
+            student.version == 3
+        when:
+            student = studentRepository.findById(student.getId()).orElseThrow()
+        then:
+            student.version == 3
+        when:
+            studentRepository.delete(student)
+        then:
+            !studentRepository.findById(student.getId()).isPresent()
         cleanup:
             studentRepository.deleteAll()
     }
