@@ -57,4 +57,31 @@ ${entity('Movie', [title: String, theLongName: String])}
             'deleteCustomSingle' | 'DELETE FROM movie WHERE title = ?' | ['title'] as String[] | [] as String[]
     }
 
+    @Unroll
+    void  "test build delete query"() {
+        given:
+            def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface MovieRepository extends CrudRepository<Movie, Integer> {
+}
+
+${entity('Movie', [title: String, theLongName: String])}
+""")
+            def method = repository.findMethod(methodName, Iterable.class).get()
+
+        expect:
+            method.stringValue(Query, "value").get() == query
+            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
+            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
+
+
+        where:
+            methodName  | query                                       | bindingPaths       | binding
+            'deleteAll' | 'DELETE  FROM `movie`  WHERE (`id` IN (?))' | ['id'] as String[] | [] as String[]
+    }
+
 }

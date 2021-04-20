@@ -1039,20 +1039,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             if (parameterBindingMember != null && annotation != null) {
                 this.indexedParameterBinding = annotation.get(
                         parameterBindingMember, int[].class).orElse(EMPTY_INT_ARRAY);
-                if (isNumericPlaceHolder) {
-                    String[] strArray = annotation.stringValues(parameterBindingMember + "Paths");
-                    if (strArray.length == indexedParameterBinding.length) {
-                        this.parameterPaths = removeEmpty(strArray);
-                    } else {
-                        this.parameterPaths = new String[indexedParameterBinding.length];
-                    }
-                    this.parameterBinding = null;
-                    this.parameterNames = null;
-                } else {
-                    this.parameterBinding = null;
-                    this.parameterPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "Paths"));
-                    this.parameterNames = annotation.stringValues(parameterBindingMember + "Names");
-                }
+                this.parameterBinding = null;
+                this.parameterPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "Paths"));
+                this.parameterNames = annotation.stringValues(parameterBindingMember + "Names");
                 this.parameterAutoPopulatedPropertyPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "AutoPopulatedPaths"));
                 this.parameterAutoPopulatedPreviousPropertyPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "AutoPopulatedPreviousPaths"));
                 this.parameterAutoPopulatedPreviousPropertyIndexes = annotation.get(parameterBindingMember + "AutoPopulatedPrevious", int[].class).orElse(EMPTY_INT_ARRAY);

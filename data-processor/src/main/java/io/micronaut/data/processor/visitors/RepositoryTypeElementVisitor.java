@@ -288,6 +288,14 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                     try {
                                         switch (methodInfo.getOperationType()) {
                                             case DELETE:
+                                                final boolean isDeleteEntityArgument = parameters.length == 1 &&
+                                                        (
+                                                                TypeUtils.isIterableOfEntity(parameters[0].getGenericType()) ||
+                                                                        parameters[0].getGenericType().getName().equals(entity.getName())
+                                                        );
+                                                if (isDeleteEntityArgument) {
+                                                    encodeEntityParameters = true;
+                                                }
                                                 encodedQuery = queryEncoder.buildDelete(annotationMetadataHierarchy, queryObject);
                                                 break;
                                             case UPDATE:

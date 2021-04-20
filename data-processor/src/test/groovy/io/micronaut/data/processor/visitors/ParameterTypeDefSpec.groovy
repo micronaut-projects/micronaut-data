@@ -67,7 +67,7 @@ class Person {
         repository.getRequiredMethod("deleteAll", Iterable)
                 .getAnnotationMetadata()
                 .getAnnotation(DataMethod)
-                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS)[0] == 'ENTITY'
+                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS).length == 0
 
 
     }
@@ -164,7 +164,7 @@ class Person {
         repository.getRequiredMethod("deleteAll", Iterable)
                 .getAnnotationMetadata()
                 .getAnnotation(DataMethod)
-                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS)[0] == 'ENTITY'
+                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS).length == 0
 
 
     }
