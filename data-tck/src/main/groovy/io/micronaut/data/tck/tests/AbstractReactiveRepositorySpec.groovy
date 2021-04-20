@@ -108,7 +108,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         when:
         def people = personRepository.findAll().blockingIterable().toList()
         people.forEach() { it.name = it.name + " updated" }
-        def recordsUpdated = personRepository.updateAll(people).blockingGet()
+        def recordsUpdated = personRepository.updateAll(people).toList().blockingGet().size()
         people = personRepository.findAll().blockingIterable().toList()
 
         then:

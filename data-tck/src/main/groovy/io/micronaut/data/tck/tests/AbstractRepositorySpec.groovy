@@ -367,11 +367,10 @@ abstract class AbstractRepositorySpec extends Specification {
         when:
         def people = personRepository.findAll().toList()
         people.forEach() { it.name = it.name + " updated" }
-        def recordsUpdated = personRepository.updateAll(people)
+        personRepository.updateAll(people)
         people = personRepository.findAll().toList()
 
         then:
-        recordsUpdated == 2
         people.get(0).name.endsWith(" updated")
         people.get(1).name.endsWith(" updated")
 

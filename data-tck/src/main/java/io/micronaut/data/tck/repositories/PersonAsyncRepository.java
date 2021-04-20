@@ -52,8 +52,6 @@ public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long>
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
     CompletableFuture<Long> getMaxId();
 
-    CompletableFuture<Long> updateAll(List<Person> people);
-
     CompletableFuture<List<Person>> updatePeople(List<Person> people);
 
     @Query("UPDATE person SET name = :newName WHERE (name = :oldName)")

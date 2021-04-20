@@ -103,7 +103,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         when:
         def people = personRepository.findAll().get().toList()
         people.forEach() { it.name = it.name + " updated" }
-        def recordsUpdated = personRepository.updateAll(people).get()
+        def recordsUpdated = personRepository.updateAll(people).get().size()
         people = personRepository.findAll().get().toList()
 
         then:
