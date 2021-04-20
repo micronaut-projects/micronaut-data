@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -147,9 +147,13 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#isOptimisticLock">isOptimisticLock</a></span></code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#expandedQuery">expandedQuery</a></span></code>&nbsp;</td>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>protected boolean</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#isOptimisticLock">isOptimisticLock</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>protected java.lang.String[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#parameterBindingPaths">parameterBindingPaths</a></span></code>&nbsp;</td>
 </tr>
@@ -201,19 +205,27 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>&lt;T&gt;&nbsp;void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#checkForParameterToBeExpanded-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">checkForParameterToBeExpanded</a></span>(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
+                             T&nbsp;entity,
+                             <a href="../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&nbsp;queryBuilder)</code>
+<div class="block">Check if query need to be modified to expand parameters.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#collectAutoPopulatedPreviousValues-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-">collectAutoPopulatedPreviousValues</a></span>(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
                                   T&nbsp;entity)</code>
 <div class="block">Collect auto-populated property values before pre-actions are triggered and property values are modified.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#isOptimisticLock--">isOptimisticLock</a></span>()</code>
 <div class="block">Return true if query contains previous version check.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
@@ -228,7 +240,7 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a></h3>
-<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getDialect--">getDialect</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getQuery--">getQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-">setParameters</a></code></li>
+<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#exandedQuery--">exandedQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getDialect--">getDialect</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getQuery--">getQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-">setParameters</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -272,10 +284,19 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <a name="isOptimisticLock">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>isOptimisticLock</h4>
 <pre>protected final&nbsp;boolean isOptimisticLock</pre>
+</li>
+</ul>
+<a name="expandedQuery">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>expandedQuery</h4>
+<pre>protected&nbsp;boolean expandedQuery</pre>
 </li>
 </ul>
 </li>
@@ -356,6 +377,28 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <dd><code>entity</code> - The entity instance</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>collected values</dd>
+</dl>
+</li>
+</ul>
+<a name="checkForParameterToBeExpanded-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">
+<!--   -->
+</a><a name="checkForParameterToBeExpanded-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>checkForParameterToBeExpanded</h4>
+<pre>public&nbsp;&lt;T&gt;&nbsp;void&nbsp;checkForParameterToBeExpanded(<a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
+                                              T&nbsp;entity,
+                                              <a href="../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&nbsp;queryBuilder)</pre>
+<div class="block">Check if query need to be modified to expand parameters.</div>
+<dl>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - The entity type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>persistentEntity</code> - The persistentEntity</dd>
+<dd><code>entity</code> - The entity instance</dd>
+<dd><code>queryBuilder</code> - The queryBuilder</dd>
 </dl>
 </li>
 </ul>

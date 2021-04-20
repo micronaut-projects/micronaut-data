@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":6,"i1":6,"i2":6,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":10,"i9":10,"i10":10,"i11":6,"i12":10,"i13":10,"i14":10,"i15":10,"i16":6};
+var methods = {"i0":6,"i1":6,"i2":10,"i3":6,"i4":6,"i5":6,"i6":6,"i7":6,"i8":6,"i9":10,"i10":10,"i11":10,"i12":6,"i13":10,"i14":10,"i15":10,"i16":10,"i17":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -203,86 +203,93 @@ extends java.lang.Object</pre>
 </td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>protected void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#checkForParameterToBeExpanded-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">checkForParameterToBeExpanded</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>&nbsp;sqlOperation,
+                             <a href="../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&nbsp;queryBuilder)</code>
+<div class="block">Delegate to SQL operation to check if query needs to be changed to allow for expanded parameters.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#collectAutoPopulatedPreviousValues-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">collectAutoPopulatedPreviousValues</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>&nbsp;sqlOperation)</code>
 <div class="block">Collect auto populated values before pre-triggers modifies them.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#executeUpdate-PS-">executeUpdate</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt)</code>
 <div class="block">Execute update.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#executeUpdate-PS-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.DBOperation2-">executeUpdate</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.DBOperation2.html" title="interface in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.DBOperation2</a>&lt;java.lang.Integer,java.lang.Integer,<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Exc</a>&gt;&nbsp;fn)</code>
 <div class="block">Execute update and process entities modified and rows executed.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#executeUpdateSetGeneratedId-PS-">executeUpdateSetGeneratedId</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt)</code>
 <div class="block">Execute update and update generated id.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#setParameters-PS-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>&nbsp;sqlOperation)</code>
 <div class="block">Set sql parameters.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPost-java.util.function.Consumer-">triggerPost</a></span>(java.util.function.Consumer&lt;<a href="../../../../../../io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;java.lang.Object&gt;&gt;&nbsp;fn)</code>
 <div class="block">Trigger post-actions on <a href="../../../../../../io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event"><code>EntityEventContext</code></a>.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPostPersist--">triggerPostPersist</a></span>()</code>
 <div class="block">Trigger the post persist event.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPostRemove--">triggerPostRemove</a></span>()</code>
 <div class="block">Trigger the post remove event.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>protected void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPostUpdate--">triggerPostUpdate</a></span>()</code>
 <div class="block">Trigger the post update event.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>protected abstract boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPre-java.util.function.Function-">triggerPre</a></span>(java.util.function.Function&lt;<a href="../../../../../../io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event">EntityEventContext</a>&lt;java.lang.Object&gt;,java.lang.Boolean&gt;&nbsp;fn)</code>
 <div class="block">Trigger pre-actions on <a href="../../../../../../io/micronaut/data/event/EntityEventContext.html" title="interface in io.micronaut.data.event"><code>EntityEventContext</code></a>.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPrePersist--">triggerPrePersist</a></span>()</code>
 <div class="block">Trigger the pre persist event.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPreRemove--">triggerPreRemove</a></span>()</code>
 <div class="block">Trigger the pre remove event.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#triggerPreUpdate--">triggerPreUpdate</a></span>()</code>
 <div class="block">Trigger the pre update event.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>protected <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="type parameter in AbstractSqlRepositoryOperations.BaseOperations">T</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#updateEntityId-io.micronaut.core.beans.BeanProperty-T-java.lang.Object-">updateEntityId</a></span>(io.micronaut.core.beans.BeanProperty&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="type parameter in AbstractSqlRepositoryOperations.BaseOperations">T</a>,java.lang.Object&gt;&nbsp;identity,
               <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="type parameter in AbstractSqlRepositoryOperations.BaseOperations">T</a>&nbsp;entity,
@@ -290,7 +297,7 @@ extends java.lang.Object</pre>
 <div class="block">Update entity id.</div>
 </td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>protected abstract void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#veto-java.util.function.Predicate-">veto</a></span>(java.util.function.Predicate&lt;<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="type parameter in AbstractSqlRepositoryOperations.BaseOperations">T</a>&gt;&nbsp;predicate)</code>
 <div class="block">Veto an entity.</div>
@@ -419,6 +426,22 @@ extends java.lang.Object</pre>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>sqlOperation</code> - The sql operation</dd>
+</dl>
+</li>
+</ul>
+<a name="checkForParameterToBeExpanded-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>checkForParameterToBeExpanded</h4>
+<pre>protected&nbsp;void&nbsp;checkForParameterToBeExpanded(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>&nbsp;sqlOperation,
+                                             <a href="../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&nbsp;queryBuilder)</pre>
+<div class="block">Delegate to SQL operation to check if query needs to be changed to allow for expanded parameters.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>sqlOperation</code> - The sqlOperation</dd>
+<dd><code>queryBuilder</code> - The queryBuilder</dd>
 </dl>
 </li>
 </ul>

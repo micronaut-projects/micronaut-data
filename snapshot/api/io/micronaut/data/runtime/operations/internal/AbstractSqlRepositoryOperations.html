@@ -386,10 +386,11 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i5" class="rowColor">
 <td class="colFirst"><code>protected &lt;T&gt;&nbsp;void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">deleteOne</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">deleteOne</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
          <a href="../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
          io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
-         <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.EntityOperations</a>&lt;T&gt;&nbsp;op)</code>
+         <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.EntityOperations</a>&lt;T&gt;&nbsp;op,
+         <a href="../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&nbsp;queryBuilder)</code>
 <div class="block">Delete one operation.</div>
 </td>
 </tr>
@@ -995,9 +996,9 @@ public final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/mo
 </dl>
 </li>
 </ul>
-<a name="deleteOne-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">
+<a name="deleteOne-java.lang.Object-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">
 <!--   -->
-</a><a name="deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">
+</a><a name="deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">
 <!--   -->
 </a>
 <ul class="blockList">
@@ -1006,7 +1007,8 @@ public final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/mo
 <pre>protected&nbsp;&lt;T&gt;&nbsp;void&nbsp;deleteOne(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
                              <a href="../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a>&nbsp;dialect,
                              io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
-                             <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.EntityOperations</a>&lt;T&gt;&nbsp;op)</pre>
+                             <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.EntityOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.EntityOperations</a>&lt;T&gt;&nbsp;op,
+                             <a href="../../../../../../io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a>&nbsp;queryBuilder)</pre>
 <div class="block">Delete one operation.</div>
 <dl>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
@@ -1016,6 +1018,7 @@ public final&nbsp;&lt;T&gt;&nbsp;<a href="../../../../../../io/micronaut/data/mo
 <dd><code>dialect</code> - The dialect</dd>
 <dd><code>annotationMetadata</code> - The annotationMetadata</dd>
 <dd><code>op</code> - The operation</dd>
+<dd><code>queryBuilder</code> - The queryBuilder</dd>
 </dl>
 </li>
 </ul>

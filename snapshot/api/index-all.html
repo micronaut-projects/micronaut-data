@@ -821,6 +821,14 @@
 <dd>
 <div class="block">Meta annotation member to represent the catalog.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#checkForParameterToBeExpanded-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">checkForParameterToBeExpanded(AbstractSqlRepositoryOperations&lt;Cnt, RS, PS, Exc&gt;.SqlOperation, SqlQueryBuilder)</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.BaseOperations</a></dt>
+<dd>
+<div class="block">Delegate to SQL operation to check if query needs to be changed to allow for expanded parameters.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#checkForParameterToBeExpanded-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">checkForParameterToBeExpanded(RuntimePersistentEntity&lt;T&gt;, T, SqlQueryBuilder)</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.StoredSqlOperation</a></dt>
+<dd>
+<div class="block">Check if query need to be modified to expand parameters.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#checkOptimisticLocking-int-int-">checkOptimisticLocking(int, int)</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Compare the expected modifications and the received rows count.</div>
@@ -2167,7 +2175,7 @@
 <dd>
 <div class="block">Default constructor.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-">deleteOne(Cnt, Dialect, AnnotationMetadata, AbstractSqlRepositoryOperations&lt;Cnt, RS, PS, Exc&gt;.EntityOperations&lt;T&gt;)</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html#deleteOne-Cnt-io.micronaut.data.model.query.builder.sql.Dialect-io.micronaut.core.annotation.AnnotationMetadata-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.EntityOperations-io.micronaut.data.model.query.builder.sql.SqlQueryBuilder-">deleteOne(Cnt, Dialect, AnnotationMetadata, AbstractSqlRepositoryOperations&lt;Cnt, RS, PS, Exc&gt;.EntityOperations&lt;T&gt;, SqlQueryBuilder)</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Delete one operation.</div>
 </dd>
@@ -2638,6 +2646,8 @@
 <dd>
 <div class="block">Constructor.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#exandedQuery--">exandedQuery()</a></span> - Method in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#execute-io.micronaut.data.jdbc.runtime.ConnectionCallback-">execute(ConnectionCallback&lt;R&gt;)</a></span> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html#execute-io.micronaut.data.jdbc.runtime.ConnectionCallback-">execute(ConnectionCallback&lt;R&gt;)</a></span> - Method in interface io.micronaut.data.jdbc.runtime.<a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime">JdbcOperations</a></dt>
@@ -2814,6 +2824,8 @@
 <dd>
 <div class="block">An interceptor that executes an existence query reactively.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#expandedQuery">expandedQuery</a></span> - Variable in class io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.StoredSqlOperation</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <a name="I:F">
 <!--   -->

@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":6};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":6};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -189,24 +189,28 @@ extends java.lang.Object</pre>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#exandedQuery--">exandedQuery</a></span>()</code>&nbsp;</td>
+</tr>
+<tr id="i2" class="altColor">
 <td class="colFirst"><code><a href="../../../../../../io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum in io.micronaut.data.model.query.builder.sql">Dialect</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getDialect--">getDialect</a></span>()</code>
 <div class="block">Get dialect.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getQuery--">getQuery</a></span>()</code>
 <div class="block">Get sql query.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#isOptimisticLock--">isOptimisticLock</a></span>()</code>
 <div class="block">Return true if query contains previous version check.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
@@ -214,7 +218,7 @@ extends java.lang.Object</pre>
 <div class="block">Set query parameters.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>abstract &lt;T&gt;&nbsp;void</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
@@ -251,7 +255,7 @@ extends java.lang.Object</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>query</h4>
-<pre>protected final&nbsp;java.lang.String query</pre>
+<pre>protected&nbsp;java.lang.String query</pre>
 </li>
 </ul>
 <a name="dialect">
@@ -295,6 +299,15 @@ extends java.lang.Object</pre>
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="exandedQuery--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>exandedQuery</h4>
+<pre>public&nbsp;java.lang.String&nbsp;exandedQuery()</pre>
+</li>
+</ul>
 <a name="getQuery--">
 <!--   -->
 </a>
