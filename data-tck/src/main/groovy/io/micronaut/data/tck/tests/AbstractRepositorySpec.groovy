@@ -111,7 +111,7 @@ abstract class AbstractRepositorySpec extends Specification {
                 ))])
     }
 
-    protected void setup(){
+    protected void setup() {
         cleanup()
     }
 
@@ -515,6 +515,17 @@ abstract class AbstractRepositorySpec extends Specification {
         then:"They are really deleted"
         !personRepository.findById(person.id).isPresent()
         old(personRepository.count()) - 1 == personRepository.count()
+    }
+
+    void "test delete by id and author id"() {
+        given:
+        setupBooks()
+        def book = bookRepository.findByTitle("Pet Cemetery")
+        when:
+        int deleted = bookRepository.deleteByIdAndAuthorId(book.id, book.author.id)
+        then:
+        deleted == 1
+        !bookRepository.findById(book.id).isPresent()
     }
 
     void "test delete by multiple ids"() {
