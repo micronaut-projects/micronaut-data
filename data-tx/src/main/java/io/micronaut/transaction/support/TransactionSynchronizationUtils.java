@@ -15,8 +15,8 @@
  */
 package io.micronaut.transaction.support;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.aop.InterceptedProxy;
 import io.micronaut.core.annotation.Internal;
 import org.slf4j.Logger;

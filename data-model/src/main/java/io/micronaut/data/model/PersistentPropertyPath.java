@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.naming.NamingStrategy;
 
 import java.util.List;

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.repository.async;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.data.repository.GenericRepository;
 

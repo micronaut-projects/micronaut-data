@@ -18,7 +18,7 @@ package io.micronaut.data.spring.runtime;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Sort;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import java.util.*;
 
 /**

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;

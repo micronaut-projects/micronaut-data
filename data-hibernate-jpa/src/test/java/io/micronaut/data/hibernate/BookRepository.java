@@ -23,7 +23,7 @@ import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.transaction.Transactional;
 import java.util.Collection;
 import java.util.List;

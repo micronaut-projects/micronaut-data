@@ -16,8 +16,8 @@
 package io.micronaut.transaction;
 
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 
 import java.time.Duration;

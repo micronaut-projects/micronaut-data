@@ -18,7 +18,7 @@ package io.micronaut.data.tck.entities;
 import io.micronaut.core.annotation.Creator;
 import io.micronaut.data.annotation.*;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.persistence.Id;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;

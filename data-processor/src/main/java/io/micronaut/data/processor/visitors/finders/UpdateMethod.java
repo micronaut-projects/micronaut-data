@@ -30,8 +30,8 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.*;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

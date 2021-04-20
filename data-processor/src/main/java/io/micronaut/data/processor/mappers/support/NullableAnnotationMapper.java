@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.support;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.inject.annotation.TypedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
@@ -38,7 +38,7 @@ public class NullableAnnotationMapper implements TypedAnnotationMapper<Nullable>
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Nullable> annotation, VisitorContext visitorContext) {
         return Collections.singletonList(
-                AnnotationValue.builder("javax.annotation.Nullable").build()
+                AnnotationValue.builder("io.micronaut.core.annotation.Nullable").build()
         );
     }
 }

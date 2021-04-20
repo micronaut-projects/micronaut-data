@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate.spring;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;

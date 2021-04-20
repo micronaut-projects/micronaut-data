@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.inject.ast.ClassElement;

@@ -23,8 +23,8 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionCallback;
 import io.micronaut.transaction.TransactionDefinition;

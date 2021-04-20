@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.annotation.processing.visitor.JavaClassElement
 import io.micronaut.core.naming.NameUtils
 import io.micronaut.data.processor.model.SourcePersistentEntity
 import io.micronaut.inject.BeanDefinition
@@ -29,8 +28,6 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Requires
 
 import javax.annotation.processing.SupportedAnnotationTypes
-import javax.lang.model.element.TypeElement
-import java.util.function.Function
 
 @Requires({ javaVersion <= 1.8 })
 class AbstractDataSpec extends AbstractTypeElementSpec {

@@ -23,7 +23,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.value.OptionalValues;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;

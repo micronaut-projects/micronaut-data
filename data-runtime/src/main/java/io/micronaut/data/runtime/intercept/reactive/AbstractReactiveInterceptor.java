@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;

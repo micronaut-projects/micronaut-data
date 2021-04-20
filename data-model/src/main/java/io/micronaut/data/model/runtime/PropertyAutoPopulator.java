@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.runtime;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.Internal;

@@ -21,7 +21,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
 import java.util.UUID;
 

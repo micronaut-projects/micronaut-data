@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.jdbc;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.support.ResourceHolderSupport;
 
 import java.sql.Connection;

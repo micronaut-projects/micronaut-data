@@ -21,7 +21,6 @@ import io.micronaut.data.tck.entities.Face
 import io.micronaut.data.tck.entities.Product
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.IgnoreIf
-import spock.lang.Requires
 import spock.lang.Shared
 import spock.lang.Specification
 

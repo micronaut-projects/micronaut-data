@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.event.listeners;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;

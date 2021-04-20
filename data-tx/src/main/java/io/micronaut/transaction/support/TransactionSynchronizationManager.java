@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.support;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.transaction.TransactionDefinition;
 import org.slf4j.Logger;

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.operations.reactive;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;

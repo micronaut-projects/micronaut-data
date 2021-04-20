@@ -19,7 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise

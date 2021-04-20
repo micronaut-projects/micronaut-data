@@ -20,7 +20,7 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.AuthorBooksDto
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.BookDto
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.hibernate.Hibernate
 import spock.lang.Shared
 import spock.lang.Specification

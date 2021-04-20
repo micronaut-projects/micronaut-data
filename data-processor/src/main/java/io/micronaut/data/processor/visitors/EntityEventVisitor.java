@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.event.EntityEventMapping;

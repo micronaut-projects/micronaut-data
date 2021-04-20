@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.factory.Projections;
 
 import java.util.ArrayList;

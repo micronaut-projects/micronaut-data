@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.async.CountAsyncInterceptor;
@@ -27,7 +27,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 
 /**
  * Dynamic finder for support for counting.

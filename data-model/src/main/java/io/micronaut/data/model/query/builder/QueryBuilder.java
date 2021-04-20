@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query.builder;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.beans.BeanIntrospector;
@@ -28,7 +28,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.QueryModel;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 
 import java.util.List;

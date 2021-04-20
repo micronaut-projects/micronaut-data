@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.operations.async;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.NonBlocking;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.data.model.Page;

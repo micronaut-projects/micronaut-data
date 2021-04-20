@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.postgres
 
 import io.micronaut.data.model.query.builder.sql.Dialect
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.PostgreSQLContainer
 import spock.lang.Shared

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.operations;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;

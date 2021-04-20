@@ -23,7 +23,7 @@ import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.PreparedQuery;
 
 /**

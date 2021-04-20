@@ -32,7 +32,7 @@ import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Adds support for {@link io.micronaut.test.annotation.MicronautTest#transactional()} handling.
+ * Adds support for MicronautTest transactional handling.
  *
  * @author graemerocher
  * @since 1.0.0

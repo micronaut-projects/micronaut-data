@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
@@ -30,7 +30,7 @@ import io.micronaut.data.tck.entities.AuthorBooksDto;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.entities.BookDto;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;

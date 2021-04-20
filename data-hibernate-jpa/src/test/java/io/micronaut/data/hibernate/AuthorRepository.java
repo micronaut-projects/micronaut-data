@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.hibernate.entities.AuthorDto;

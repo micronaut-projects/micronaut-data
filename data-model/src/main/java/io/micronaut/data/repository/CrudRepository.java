@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.repository;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Blocking;
 import io.micronaut.validation.Validated;
 

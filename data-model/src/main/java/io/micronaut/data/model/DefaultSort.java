@@ -17,7 +17,7 @@ package io.micronaut.data.model;
 
 import io.micronaut.core.util.ArgumentUtils;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 
 import java.util.ArrayList;

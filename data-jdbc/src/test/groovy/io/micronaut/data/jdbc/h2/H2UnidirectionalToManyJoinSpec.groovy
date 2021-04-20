@@ -19,7 +19,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Page
 import io.micronaut.data.tck.entities.Shelf
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject

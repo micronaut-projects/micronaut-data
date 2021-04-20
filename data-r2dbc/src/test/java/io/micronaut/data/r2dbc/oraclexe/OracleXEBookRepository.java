@@ -23,7 +23,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Book;
 import io.micronaut.data.tck.repositories.BookRepository;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 

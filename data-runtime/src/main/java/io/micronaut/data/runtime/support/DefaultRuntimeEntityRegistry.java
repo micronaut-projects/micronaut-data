@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.support;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanRegistration;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;

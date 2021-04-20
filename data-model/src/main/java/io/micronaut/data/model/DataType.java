@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.TypeDef;

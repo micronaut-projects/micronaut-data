@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.runtime;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;

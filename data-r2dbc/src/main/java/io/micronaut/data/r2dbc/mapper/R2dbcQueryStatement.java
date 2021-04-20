@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.r2dbc.mapper;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;

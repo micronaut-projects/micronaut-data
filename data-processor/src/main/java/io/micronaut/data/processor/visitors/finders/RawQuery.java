@@ -19,7 +19,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.DefaultQuery;
 import io.micronaut.data.model.query.QueryModel;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 
 import java.util.List;

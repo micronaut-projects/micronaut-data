@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.reactive;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.TransactionDefinition;
 import org.reactivestreams.Publisher;
 

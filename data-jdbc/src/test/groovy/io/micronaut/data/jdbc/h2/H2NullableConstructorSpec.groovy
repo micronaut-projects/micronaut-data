@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.h2
 
 import io.micronaut.data.tck.entities.Plant
 import io.micronaut.data.tck.repositories.PlantRepository
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 

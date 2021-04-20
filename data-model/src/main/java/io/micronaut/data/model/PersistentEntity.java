@@ -23,8 +23,8 @@ import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;

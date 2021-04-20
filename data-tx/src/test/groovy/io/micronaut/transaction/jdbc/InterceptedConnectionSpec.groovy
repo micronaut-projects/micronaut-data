@@ -1,7 +1,7 @@
 package io.micronaut.transaction.jdbc
 
 import io.micronaut.context.annotation.Property
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.exceptions.NoTransactionException
 import spock.lang.Specification
 

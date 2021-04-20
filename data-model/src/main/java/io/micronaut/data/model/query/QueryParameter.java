@@ -18,7 +18,7 @@ package io.micronaut.data.model.query;
 import io.micronaut.core.naming.Named;
 import io.micronaut.core.util.ArgumentUtils;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import java.util.Objects;
 
 /**

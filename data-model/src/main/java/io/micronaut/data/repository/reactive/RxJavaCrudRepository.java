@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.repository.reactive;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.repository.GenericRepository;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;

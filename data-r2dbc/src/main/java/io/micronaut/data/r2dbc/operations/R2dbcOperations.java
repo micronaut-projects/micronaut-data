@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.r2dbc.spi.Connection;

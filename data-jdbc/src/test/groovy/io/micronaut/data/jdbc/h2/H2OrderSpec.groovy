@@ -19,7 +19,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject

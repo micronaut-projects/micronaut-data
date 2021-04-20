@@ -18,7 +18,7 @@ package io.micronaut.data.hibernate.reactive
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.model.Pageable
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject

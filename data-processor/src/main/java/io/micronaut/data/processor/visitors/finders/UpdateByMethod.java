@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.AutoPopulated;
@@ -27,7 +27,7 @@ import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.*;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 

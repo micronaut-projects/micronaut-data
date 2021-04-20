@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;

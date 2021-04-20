@@ -23,7 +23,7 @@ import io.micronaut.data.tck.repositories.BookRepository;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.List;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jpa.operations;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;

@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject

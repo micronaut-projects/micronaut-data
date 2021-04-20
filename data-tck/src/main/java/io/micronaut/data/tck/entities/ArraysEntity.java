@@ -21,7 +21,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;
