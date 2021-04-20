@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.runtime;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;

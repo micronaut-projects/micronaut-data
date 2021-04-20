@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jpa.repository;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.repository.intercept.FlushInterceptor;

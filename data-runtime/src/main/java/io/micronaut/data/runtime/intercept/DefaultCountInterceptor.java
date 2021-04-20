@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;

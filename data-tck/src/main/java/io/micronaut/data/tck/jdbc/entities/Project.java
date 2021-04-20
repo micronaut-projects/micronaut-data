@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.jdbc.entities;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.jdbc.annotation.ColumnTransformer;
 
 import javax.persistence.Column;

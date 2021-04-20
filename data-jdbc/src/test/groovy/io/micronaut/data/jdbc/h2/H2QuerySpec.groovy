@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.tests.AbstractQuerySpec
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 
 import javax.inject.Inject

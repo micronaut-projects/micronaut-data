@@ -17,7 +17,7 @@ package io.micronaut.data.hibernate
 
 import groovy.sql.Sql
 import io.micronaut.context.annotation.Property
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject

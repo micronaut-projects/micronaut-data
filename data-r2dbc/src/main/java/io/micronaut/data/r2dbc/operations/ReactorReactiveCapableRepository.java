@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 
 /**

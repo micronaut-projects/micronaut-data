@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.operations;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;

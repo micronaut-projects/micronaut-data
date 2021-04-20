@@ -20,7 +20,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.ArraysEntity;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import java.util.Collection;
 
 public interface ArraysEntityRepository extends CrudRepository<ArraysEntity, Long> {

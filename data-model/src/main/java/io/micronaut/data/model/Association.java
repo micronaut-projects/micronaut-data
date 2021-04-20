@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.naming.NamingStrategy;

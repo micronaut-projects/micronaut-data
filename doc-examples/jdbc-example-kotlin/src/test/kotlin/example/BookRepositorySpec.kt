@@ -3,7 +3,7 @@ package example
 import io.micronaut.context.BeanContext
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.Pageable
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.*

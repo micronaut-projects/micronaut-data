@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;

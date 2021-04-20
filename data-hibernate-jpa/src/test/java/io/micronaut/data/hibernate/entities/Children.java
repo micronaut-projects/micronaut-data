@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.hibernate.entities;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;

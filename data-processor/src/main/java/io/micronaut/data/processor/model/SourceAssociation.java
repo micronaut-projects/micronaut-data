@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.model;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.MappingException;

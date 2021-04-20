@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.mappers.jpa;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;

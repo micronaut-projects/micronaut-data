@@ -18,7 +18,7 @@ package io.micronaut.data.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 

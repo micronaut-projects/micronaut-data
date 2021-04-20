@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;

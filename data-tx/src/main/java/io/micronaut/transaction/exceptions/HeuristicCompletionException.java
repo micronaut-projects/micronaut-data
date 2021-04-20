@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.exceptions;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import java.util.Locale;
 
 /**

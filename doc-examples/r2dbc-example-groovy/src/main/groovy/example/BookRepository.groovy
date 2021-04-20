@@ -1,6 +1,6 @@
 package example
 
-import edu.umd.cs.findbugs.annotations.NonNull
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository

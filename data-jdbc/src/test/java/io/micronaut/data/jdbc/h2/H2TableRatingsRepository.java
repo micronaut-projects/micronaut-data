@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.h2;
 
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.jdbc.TableRatings;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;

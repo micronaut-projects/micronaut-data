@@ -16,7 +16,7 @@
 package io.micronaut.data.model.query;
 
 import io.micronaut.data.model.Association;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 
 /**
  * Extends a query and allows querying an association.

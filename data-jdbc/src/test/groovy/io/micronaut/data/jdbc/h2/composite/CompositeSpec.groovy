@@ -1,6 +1,6 @@
 package io.micronaut.data.jdbc.h2.composite
 
-import edu.umd.cs.findbugs.annotations.NonNull
+import io.micronaut.core.annotation.NonNull
 import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.*

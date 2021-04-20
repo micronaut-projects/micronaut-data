@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.event;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.processor.ExecutableMethodProcessor;

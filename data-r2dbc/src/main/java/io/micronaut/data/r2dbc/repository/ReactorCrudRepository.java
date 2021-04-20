@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.r2dbc.repository;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;

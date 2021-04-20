@@ -21,7 +21,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.entities.Car;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 
 public interface CarRepository extends CrudRepository<Car, Long> {
 

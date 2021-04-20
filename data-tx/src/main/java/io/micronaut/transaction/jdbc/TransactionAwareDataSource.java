@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.jdbc;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.BeanCreatedEvent;

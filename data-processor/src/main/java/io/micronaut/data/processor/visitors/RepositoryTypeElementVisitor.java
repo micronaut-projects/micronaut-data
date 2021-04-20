@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.*;
 import io.micronaut.core.io.service.ServiceDefinition;

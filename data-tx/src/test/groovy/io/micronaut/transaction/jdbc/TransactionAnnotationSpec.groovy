@@ -3,7 +3,7 @@ package io.micronaut.transaction.jdbc
 import io.micronaut.context.BeanDefinitionRegistry
 import io.micronaut.context.annotation.Property
 import io.micronaut.context.event.ApplicationEventPublisher
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.TransactionalEventListener
 import spock.lang.Specification
 import spock.lang.Stepwise

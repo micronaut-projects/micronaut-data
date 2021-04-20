@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.jpa.intercept;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.intercept.RepositoryMethodKey;

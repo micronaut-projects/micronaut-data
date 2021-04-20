@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.EmptyResultException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import org.hibernate.SessionFactory
 import spock.lang.Specification
 

@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.jdbc;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 
 import java.io.PrintWriter;
 import java.sql.Connection;

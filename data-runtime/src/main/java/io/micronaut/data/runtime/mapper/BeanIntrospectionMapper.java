@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;

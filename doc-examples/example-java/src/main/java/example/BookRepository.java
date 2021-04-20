@@ -2,7 +2,7 @@
 // tag::repository[]
 package example;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.*;

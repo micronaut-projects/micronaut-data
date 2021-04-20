@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 
 /**
  * Models a list of projections.

@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.spring.hibernate;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;

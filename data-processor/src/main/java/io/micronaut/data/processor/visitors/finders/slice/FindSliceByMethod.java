@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders.slice;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.finders.FindByFinder;

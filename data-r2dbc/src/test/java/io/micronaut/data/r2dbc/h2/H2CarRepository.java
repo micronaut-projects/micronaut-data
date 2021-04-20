@@ -20,7 +20,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.repositories.CarRepository;
 
-import javax.annotation.Nullable;
+import io.micronaut.core.annotation.Nullable;
 
 @R2dbcRepository(dialect = Dialect.H2)
 public interface H2CarRepository extends CarRepository {

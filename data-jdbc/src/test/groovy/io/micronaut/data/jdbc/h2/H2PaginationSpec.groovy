@@ -15,11 +15,10 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.tck.repositories.BookRepository
 import io.micronaut.data.tck.repositories.PersonRepository
 import io.micronaut.data.tck.tests.AbstractPageSpec
-import io.micronaut.test.annotation.MicronautTest
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 
 import javax.inject.Inject

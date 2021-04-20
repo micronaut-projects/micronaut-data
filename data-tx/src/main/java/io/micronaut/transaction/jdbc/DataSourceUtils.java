@@ -15,8 +15,8 @@
  */
 package io.micronaut.transaction.jdbc;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException;
 import io.micronaut.transaction.support.TransactionSynchronizationAdapter;

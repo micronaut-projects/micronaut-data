@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.model.query.builder.sql;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.DataType;
 
 /**

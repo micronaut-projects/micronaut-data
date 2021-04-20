@@ -15,7 +15,7 @@
  */
 package io.micronaut.transaction.hibernate5;
 
-import edu.umd.cs.findbugs.annotations.NonNull;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.transaction.exceptions.TransactionException;
