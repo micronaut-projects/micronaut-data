@@ -1,3 +1,9 @@
+Micronaut Data JDBC supports using immutable Kotlin data classes as model entities.
+The implementation is the same as for Java 16 records: to modify an entity a copy-constructor will be used and every modification means a new entity instance.
+
+[source, kotlin]
+.src/main/kotlin/example/Student.kt
+----
 package example
 
 import io.micronaut.data.annotation.GeneratedValue
@@ -17,3 +23,6 @@ data class Student(
 ) {
     constructor(name: String, items: List<Course>) : this(null, name, items, emptyList())
 }
+----
+
+NOTE: Generated values and relations that cannot be created during the entity initialization should be declared as nullable.

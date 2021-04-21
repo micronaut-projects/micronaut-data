@@ -51,10 +51,12 @@ sql:
       sqlCompositeId: Composite Primary Keys
       sqlConstructorArguments: Constructor Arguments
       sqlNaming: SQL Naming Strategies
-      sqlAssociations: Association Fetching
+      sqlAssociationMapping: Association Mapping
+      sqlAssociationFetching: Association Fetching
       columnTransformer: Using @ColumnTransformer
       sqlJsonType: JSON Column Support
-      javaRecords: Support for Java 14+ Records
+      javaRecords: Support for Java 16 Records
+      kotlinData: Support for Kotlin immutable data classes
     jdbcJoinQueries: JDBC Join Queries
     jdbcDataTypes: JDBC Data Types
     jdbcNativeQueries: Explicit JDBC Queries
