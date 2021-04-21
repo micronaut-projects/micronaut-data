@@ -32,7 +32,7 @@ public enum Dialect {
     /**
      * MySQL 5.5 or above.
      */
-    MYSQL(false, true, false),
+    MYSQL(true, true, false),
     /**
      * Postgres 9.5 or later.
      */

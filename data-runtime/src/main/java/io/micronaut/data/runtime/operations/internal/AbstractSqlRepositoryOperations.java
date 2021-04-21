@@ -1161,9 +1161,10 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         switch (dialect) {
             case SQL_SERVER:
                 return false;
+            case MYSQL:
             case ORACLE:
                 if (persistentEntity.getIdentity() != null) {
-                    // Oracle doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
+                    // Oracle and MySql doesn't support a batch with returning generated ID: "DML Returning cannot be batched"
                     return !persistentEntity.getIdentity().isGenerated();
                 }
                 return false;
