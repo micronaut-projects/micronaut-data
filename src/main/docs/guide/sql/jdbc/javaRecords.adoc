@@ -1,4 +1,4 @@
-Since 2.3.0, Micronaut Data JDBC has support for using Java 14+ records to model entities.
+Since 2.3.0, Micronaut Data JDBC has support for using Java 16 records to model entities.
 
 The following record class demonstrates this capability:
 
