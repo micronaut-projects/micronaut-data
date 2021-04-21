@@ -12,3 +12,4 @@ snippet::example.BookRepository[project-base="doc-examples/example", source="mai
 
 Micronaut Data will optimize the query to only select the necessary properties from the database.
 
+NOTE: You can use ann:data.annotation.NamingStrategy[] annotation to override the default naming strategy.

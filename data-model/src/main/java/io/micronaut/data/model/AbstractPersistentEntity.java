@@ -59,7 +59,7 @@ public abstract class AbstractPersistentEntity implements PersistentEntity {
 
     private NamingStrategy getNamingStrategy(AnnotationMetadata annotationMetadata) {
         return annotationMetadata
-                .stringValue(MappedEntity.class, "namingStrategy")
+                .stringValue(io.micronaut.data.annotation.NamingStrategy.class)
                 .flatMap(className -> getNamingStrategy(className, getClass().getClassLoader()))
                 .orElse(null);
     }
