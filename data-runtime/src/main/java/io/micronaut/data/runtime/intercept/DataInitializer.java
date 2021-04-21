@@ -24,6 +24,7 @@ import java.time.*;
 import java.time.chrono.ChronoLocalDate;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -40,6 +41,17 @@ class DataInitializer {
      */
     DataInitializer() {
         ConversionService<?> conversionService = ConversionService.SHARED;
+
+        conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
+        conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
+            Enum[] enumConstants = targetType.getEnumConstants();
+            int i = index.intValue();
+            if (i >= enumConstants.length) {
+                throw new IllegalStateException("Cannot find an enum value at index: " + i + " for enum: " + targetType);
+            }
+            return Optional.of(enumConstants[i]);
+        });
+        conversionService.addConverter(String.class, Enum.class, (name, targetType, context) -> Optional.of(Enum.valueOf(targetType, name)));
 
         conversionService.addConverter(Number.class, Character.class, number -> (char) number.intValue());
 

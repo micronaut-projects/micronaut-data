@@ -158,6 +158,13 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         DataType dataType = annotationMetadata.getValue(TypeDef.class, "type", DataType.class)
                 .orElse(null);
 
+        if (dataType == null && spp.getType().isEnum()) {
+            if (spp.getOwner().getAnnotationMetadata().hasAnnotation("javax.persistence.Entity")) {
+                // JPA enums have default ORDINAL mapping for enums
+                dataType = DataType.INTEGER;
+            }
+        }
+
         if (dataType == null) {
             ClassElement type = propertyElement.getGenericType();
             dataType = TypeUtils.resolveDataType(type, dataTypes);
