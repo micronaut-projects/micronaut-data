@@ -43,7 +43,10 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     int countByAgeLessThan(int wrapper);
 
-    Person save(String name, int age);
+    Person save(@Parameter("name") String name, @Parameter("age") int age);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    void saveCustom(@Parameter("name") String name, @Parameter("age") int age);
 
     Person get(Long id);
 

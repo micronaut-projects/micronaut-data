@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jpa.repository.JpaRepository;
@@ -29,6 +30,13 @@ import java.util.List;
 
 @Repository
 public interface PersonCrudRepository extends JpaRepository<Person, Long>, PersonRepository {
+
+    @Override
+    Person save(@Parameter("name") String name, @Parameter("age") int age);
+
+    @Override
+    void saveCustom(@Parameter("name") String name, @Parameter("age") int age);
+
     @Query("from Person p where p.name = :n")
     @Transactional
     List<Person> listPeople(String n);

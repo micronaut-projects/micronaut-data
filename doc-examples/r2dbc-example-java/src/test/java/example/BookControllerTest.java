@@ -10,7 +10,6 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import org.junit.jupiter.api.*;
 import org.testcontainers.containers.MySQLContainer;
-import org.testcontainers.utility.DockerImageName;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -92,7 +91,7 @@ public class BookControllerTest implements TestPropertyProvider {
 
     @Override
     public Map<String, String> getProperties() {
-        container = new MySQLContainer<>(DockerImageName.parse("mysql").withTag("5"));
+        container = new MySQLContainer<>("mysql:8.0.17");
         container.start();
         return CollectionUtils.mapOf(
                 "datasources.default.url", container.getJdbcUrl(),

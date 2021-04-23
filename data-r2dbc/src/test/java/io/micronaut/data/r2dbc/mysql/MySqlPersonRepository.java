@@ -15,9 +15,17 @@
  */
 package io.micronaut.data.r2dbc.mysql;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.tck.entities.Person;
 
 @R2dbcRepository(dialect = Dialect.MYSQL)
 public interface MySqlPersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+
+    Person save(String name, int age);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    void saveCustom(String name, int age);
+
 }

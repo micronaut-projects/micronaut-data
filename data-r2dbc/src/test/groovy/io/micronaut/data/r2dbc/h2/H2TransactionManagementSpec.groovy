@@ -14,7 +14,14 @@ import javax.inject.Inject
 class H2TransactionManagementSpec extends Specification implements H2TestPropertyProvider {
 
     @Shared @Inject H2OwnerRepository ownerRepository
-    @Shared @Inject H2PetRepository petRepository
+
+    def setup() {
+        Mono.from(ownerRepository.deleteAll()).block()
+    }
+
+    def cleanup() {
+        Mono.from(ownerRepository.deleteAll()).block()
+    }
 
     void 'test rollback only'() {
         when:"When setRollbackOnly is called"

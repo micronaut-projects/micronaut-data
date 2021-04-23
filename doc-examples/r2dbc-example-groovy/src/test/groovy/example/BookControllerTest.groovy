@@ -8,7 +8,6 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.reactivex.Flowable
 import org.testcontainers.containers.MySQLContainer
-import org.testcontainers.utility.DockerImageName
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Shared
@@ -68,7 +67,7 @@ class BookControllerTest extends Specification implements TestPropertyProvider {
 
     @Override
     Map<String, String> getProperties() {
-        container = new MySQLContainer<>(DockerImageName.parse("mysql").withTag("5"))
+        container = new MySQLContainer<>("mysql:8.0.17")
         container.start()
         return CollectionUtils.mapOf(
                 "datasources.default.url", container.getJdbcUrl(),
