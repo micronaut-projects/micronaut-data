@@ -4,8 +4,10 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -13,6 +15,7 @@ import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
+import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -20,6 +23,7 @@ import javax.inject.Inject
 import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
+import javax.transaction.Transactional
 
 @MicronautTest
 class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider {
@@ -34,6 +38,23 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
     @Shared
     @Inject
     JpaEnumEntityRepository jpaEnumEntityRepository = applicationContext.getBean(JpaEnumEntityRepository)
+
+    @PendingFeature(reason = "Investigate why custom inserts don't work")
+    void 'test inserts are broken for custom queries'() {
+        expect:
+        enumEntityRepository.insertValue("b", "b", 1)
+    }
+
+    void 'test read lower case enum'() {
+        when:
+        enumEntityRepository.insertValueExplicit("b", "B")
+        def result = enumEntityRepository.findByAsString(MyEnum.B)
+
+        then:
+        result != null
+        result.asDefault == MyEnum.B
+        result.asString == MyEnum.B
+    }
 
     void 'test enums'() {
         given:
@@ -114,11 +135,30 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
 }
 
 @JdbcRepository(dialect = Dialect.H2)
-interface EnumEntityRepository extends CrudRepository<EnumEntity, Long> {
+abstract class EnumEntityRepository implements CrudRepository<EnumEntity, Long> {
+    private final JdbcOperations jdbcOperations;
 
-    int update(@Id Long id, MyEnum asDefault, MyEnum asString, MyEnum asInt)
+    EnumEntityRepository(JdbcOperations jdbcOperations) {
+        this.jdbcOperations = jdbcOperations
+    }
 
-    Optional<EnumEntity> find(MyEnum asDefault, MyEnum asString, MyEnum asInt)
+    @Transactional
+    void insertValueExplicit(String a, b) {
+        jdbcOperations.prepareStatement("INSERT INTO ENUM_ENTITY(as_default, as_string, as_int) VALUES(?,?,1)", {
+            it.setString(1, a)
+            it.setString(2, b)
+            it.execute()
+        })
+    }
+
+    @Query("INSERT INTO ENUM_ENTITY(as_default, as_string, as_int) VALUES(:asDefault,:asString, :asString)")
+    abstract void insertValue(String asDefault, String asString, int asInt)
+
+    abstract EnumEntity findByAsString(MyEnum value)
+
+    abstract int update(@Id Long id, MyEnum asDefault, MyEnum asString, MyEnum asInt)
+
+    abstract Optional<EnumEntity> find(MyEnum asDefault, MyEnum asString, MyEnum asInt)
 
 }
 
