@@ -360,6 +360,24 @@ abstract class AbstractRepositorySpec extends Specification {
         isOracle() || personRepository.list(Pageable.from(0, 1)).size() == 1
     }
 
+    void "test save many custom"() {
+        given:
+        savePersons(["Jeff", "James"])
+
+        when:"many are saved"
+        personRepository.saveCustom("Frank", 0)
+        personRepository.saveCustom("Bob", 0)
+
+        then:"all are saved"
+        personRepository.findAll().size() == 4
+        personRepository.count() == 4
+        personRepository.count("Jeff") == 1
+
+        // Oracle 11g doesn't support pagination
+        isOracle() || personRepository.list(Pageable.from(1)).isEmpty()
+        isOracle() || personRepository.list(Pageable.from(0, 1)).size() == 1
+    }
+
     void "test update many"() {
         given:
         savePersons(["Jeff", "James"])

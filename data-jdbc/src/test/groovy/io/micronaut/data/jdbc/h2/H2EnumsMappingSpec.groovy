@@ -39,7 +39,6 @@ class H2EnumsMappingSpec extends Specification implements H2TestPropertyProvider
     @Inject
     JpaEnumEntityRepository jpaEnumEntityRepository = applicationContext.getBean(JpaEnumEntityRepository)
 
-    @PendingFeature(reason = "Investigate why custom inserts don't work")
     void 'test inserts are broken for custom queries'() {
         expect:
         enumEntityRepository.insertValue("b", "b", 1)
@@ -151,7 +150,7 @@ abstract class EnumEntityRepository implements CrudRepository<EnumEntity, Long> 
         })
     }
 
-    @Query("INSERT INTO ENUM_ENTITY(as_default, as_string, as_int) VALUES(:asDefault,:asString, :asString)")
+    @Query("INSERT INTO ENUM_ENTITY(as_default, as_string, as_int) VALUES(:asDefault,:asString,:asInt)")
     abstract void insertValue(String asDefault, String asString, int asInt)
 
     abstract EnumEntity findByAsString(MyEnum value)

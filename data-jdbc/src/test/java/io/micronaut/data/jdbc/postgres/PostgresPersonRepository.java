@@ -15,9 +15,17 @@
  */
 package io.micronaut.data.jdbc.postgres;
 
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 public interface PostgresPersonRepository extends io.micronaut.data.tck.repositories.PersonRepository {
+
+    Person save(String name, int age);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
+    void saveCustom(String name, int age);
+
 }

@@ -78,10 +78,7 @@ public class RawQueryMethod implements MethodCandidate {
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
         MethodElement methodElement = matchContext.getMethodElement();
-        RawQuery rawQuery = buildRawQuery(matchContext);
-        if (rawQuery == null) {
-            return null;
-        }
+
         ParameterElement[] parameters = matchContext.getParameters();
         ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
         ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
@@ -89,6 +86,11 @@ public class RawQueryMethod implements MethodCandidate {
         boolean readOnly = matchContext.getAnnotationMetadata().booleanValue(Query.class, "readOnly").orElse(true);
         String query = matchContext.getAnnotationMetadata().stringValue(Query.class).get();
         MethodMatchInfo.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
+
+        RawQuery rawQuery = buildRawQuery(matchContext, operationType);
+        if (rawQuery == null) {
+            return null;
+        }
 
         Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
                 entityParameter != null,
@@ -114,7 +116,7 @@ public class RawQueryMethod implements MethodCandidate {
             }
         }
 
-        QueryModel queryModel = buildRawQuery(matchContext);
+        QueryModel queryModel = buildRawQuery(matchContext, operationType);
         MethodMatchInfo methodMatchInfo;
         if (isDto) {
             methodMatchInfo = new MethodMatchInfo(
@@ -169,9 +171,10 @@ public class RawQueryMethod implements MethodCandidate {
      * Builds a raw query for the given match context. Should be called for methods annotated with {@link Query} explicitly.
      *
      * @param matchContext The match context
+     * @param operationType The operation type
      * @return The raw query or null if an error occurred
      */
-    private RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext) {
+    private RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext, MethodMatchInfo.OperationType operationType) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
                 new IllegalStateException("Should only be called if Query has value!")
@@ -229,7 +232,8 @@ public class RawQueryMethod implements MethodCandidate {
                 }
             }
         }
-        return new RawQuery(matchContext.getRootEntity(), parameterBindings, persistentEntity != null);
+        boolean encodeEntityParameters = persistentEntity != null || operationType == MethodMatchInfo.OperationType.INSERT;
+        return new RawQuery(matchContext.getRootEntity(), parameterBindings, encodeEntityParameters);
     }
 
 }

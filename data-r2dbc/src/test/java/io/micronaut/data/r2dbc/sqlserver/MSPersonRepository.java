@@ -26,6 +26,11 @@ import java.util.List;
 @R2dbcRepository(dialect = Dialect.SQL_SERVER)
 public interface MSPersonRepository extends PersonRepository {
 
+    Person save(String name, int age);
+
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
+    void saveCustom(String name, int age);
+
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
     void saveCustom(List<Person> people);
 
