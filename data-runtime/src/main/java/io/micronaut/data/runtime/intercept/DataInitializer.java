@@ -51,8 +51,6 @@ class DataInitializer {
             }
             return Optional.of(enumConstants[i]);
         });
-        conversionService.addConverter(String.class, Enum.class, (name, targetType, context) -> Optional.of(Enum.valueOf(targetType, name)));
-
         conversionService.addConverter(Number.class, Character.class, number -> (char) number.intValue());
 
         conversionService.addConverter(byte[].class, UUID.class, UUID::nameUUIDFromBytes);
