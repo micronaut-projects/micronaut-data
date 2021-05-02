@@ -13,9 +13,9 @@ dependencies {
     testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
     testAnnotationProcessor project(":data-processor")
     testImplementation project(":data-processor")
-    compileOnly "com.fasterxml.jackson.core:jackson-annotations:2.11.3"
+    compileOnly "com.fasterxml.jackson.core:jackson-annotations:2.12.3"
     testImplementation "io.micronaut:micronaut-inject-java-test:$micronautVersion"
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.3"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.12.3"
 
     testImplementation "io.micronaut.sql:micronaut-jdbc:$micronautSqlVersion"
     testRuntimeOnly "com.h2database:h2"

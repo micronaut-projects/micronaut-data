@@ -2,7 +2,7 @@ dependencies {
 	api project(":data-model")
 	compileOnly "io.micronaut:micronaut-inject:$micronautVersion"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-	testImplementation "io.projectreactor:reactor-core:3.4.0"
+	testImplementation "io.projectreactor:reactor-core:3.4.5"
 	testImplementation "io.micronaut:micronaut-inject-groovy"
 	testImplementation "io.micronaut:micronaut-inject-java-test"
 	testImplementation 'javax.persistence:javax.persistence-api:2.2'
