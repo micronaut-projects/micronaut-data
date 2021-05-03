@@ -215,5 +215,28 @@ ${entity('SomeEntity', [internetNumber: Long])}
         repository != null
     }
 
+    void "test multiple join query"() {
+        given:
+            def repository = buildRepository('test.MealRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Meal;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface MealRepository extends CrudRepository<Meal, Long> {
+    int countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList(List<Integer> list);
+}
+""")
+
+            def query = repository.getRequiredMethod("countDistinctByFoodsAlternativeMealCurrentBloodGlucoseInList", List)
+                    .stringValue(Query).get()
+
+        expect:
+            query == 'SELECT COUNT(*) FROM `meal` meal_ INNER JOIN `food` meal_foods_ ON meal_.`mid`=meal_foods_.`fk_meal_id` INNER JOIN `meal` meal_foods_alternative_meal_ ON meal_foods_.`fk_alt_meal`=meal_foods_alternative_meal_.`mid` WHERE (meal_foods_alternative_meal_.`current_blood_glucose` IN (?))'
+
+    }
+
 
 }

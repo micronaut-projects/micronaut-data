@@ -203,6 +203,9 @@ interface StudentRepository extends CrudRepository<Student, Long> {
     @Join(value = "ratingsCK", type = Join.Type.LEFT_FETCH)
     @Join(value = "ratingsCK.id.course", type = Join.Type.LEFT_FETCH)
     Optional<Student> findByIdEquals(Long id)
+
+    int countDistinctByCoursesRatingsRatingInList(List<Integer> ratings);
+
 }
 
 @JdbcRepository(dialect = Dialect.H2)
