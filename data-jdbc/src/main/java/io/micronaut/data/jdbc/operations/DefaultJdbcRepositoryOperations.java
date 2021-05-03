@@ -476,9 +476,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 }
                             }
                     );
-                    boolean onlySingleEndedJoins = joinFetchPaths.stream()
-                            .flatMap(jp -> Arrays.stream(jp.getAssociationPath()))
-                            .anyMatch(association -> association.getKind().isSingleEnded());
+                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(getEntity(preparedQuery.getRootEntity()), joinFetchPaths);
                     // Cannot stream ResultSet for "many" joined query
                     if (!onlySingleEndedJoins) {
                         try {

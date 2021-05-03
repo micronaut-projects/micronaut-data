@@ -15,36 +15,15 @@
  */
 package io.micronaut.data.jdbc.postgres
 
-import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.test.support.TestPropertyProvider
-import org.testcontainers.containers.PostgreSQLContainer
-import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.inject.Inject
 import java.sql.Connection
 
 @MicronautTest
-class PostgresSequenceDefaultSpec extends Specification implements TestPropertyProvider {
-
-    @Shared
-    PostgreSQLContainer postgres
-
-    @Override
-    Map<String, String> getProperties() {
-        postgres = new PostgreSQLContainer<>("postgres:10")
-                .withDatabaseName("test-database")
-                .withUsername("test")
-                .withPassword("test")
-        postgres.start()
-        [
-                "datasources.default.url":postgres.getJdbcUrl(),
-                "datasources.default.username":postgres.getUsername(),
-                "datasources.default.password":postgres.getPassword(),
-                "datasources.default.dialect": Dialect.POSTGRES
-        ] as Map<String, String>
-    }
+class PostgresSequenceDefaultSpec extends Specification implements PostgresTestPropertyProvider {
 
     @Inject
     Connection connection
@@ -54,6 +33,8 @@ class PostgresSequenceDefaultSpec extends Specification implements TestPropertyP
 
     void setup() {
         connection.prepareStatement('''
+drop sequence if exists "user_seq";
+drop table if exists "user_";
 create sequence "user_seq" increment by 1;
 create table "user_"
 (
@@ -66,11 +47,6 @@ create table "user_"
 ''').withCloseable { it.executeUpdate( )}
     }
 
-    def cleanup() {
-        postgres.close()
-    }
-
-
     void "test sequence generation with default nextval"() {
         when:
         User user = userRepository.save("Fred")
@@ -81,5 +57,10 @@ create table "user_"
         user.id > 0
         user.id != user2.id
         user.id == userRepository.findById(user.id).id
+    }
+
+    @Override
+    SchemaGenerate schemaGenerate() {
+        return SchemaGenerate.CREATE_DROP
     }
 }

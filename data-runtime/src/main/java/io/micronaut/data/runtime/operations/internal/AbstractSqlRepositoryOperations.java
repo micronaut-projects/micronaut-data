@@ -46,6 +46,7 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
@@ -106,7 +107,7 @@ import java.util.stream.Stream;
  * @author Denis Stepanov
  * @since 1.0.0
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings("FileLength")
 @Internal
 public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception> {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
@@ -1261,6 +1262,29 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         }
     }
 
+    /**
+     * Check if joined associated are all single ended (Can produce only one result).
+     *
+     * @param rootPersistentEntity The root entity
+     * @param joinFetchPaths The join paths
+     * @return true if there are no "many" joins
+     */
+    protected boolean isOnlySingleEndedJoins(RuntimePersistentEntity<?> rootPersistentEntity, Set<JoinPath> joinFetchPaths) {
+        boolean onlySingleEndedJoins = joinFetchPaths.isEmpty() || joinFetchPaths.stream()
+                .flatMap(jp -> {
+                    PersistentPropertyPath propertyPath = rootPersistentEntity.getPropertyPath(jp.getPath());
+                    if (propertyPath == null) {
+                        return Stream.empty();
+                    }
+                    if (propertyPath.getProperty() instanceof Association) {
+                        return Stream.concat(propertyPath.getAssociations().stream(), Stream.of((Association) propertyPath.getProperty()));
+                    }
+                    return propertyPath.getAssociations().stream();
+                })
+                .allMatch(association -> association.getKind() == Relation.Kind.EMBEDDED || association.getKind().isSingleEnded());
+        return onlySingleEndedJoins;
+    }
+
     private static List<Association> associated(List<Association> associations, Association association) {
         if (associations == null) {
             return Collections.singletonList(association);
@@ -1804,6 +1828,11 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             this.dialect = dialect;
         }
 
+        /**
+         * Expanded query.
+         *
+         * @return expanded query
+         */
         public String exandedQuery() {
             return query;
         }
