@@ -56,7 +56,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -1033,6 +1032,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             Association joinAssociation = null;
             StringJoiner joinPathJoiner = new StringJoiner(".");
+            String lastJoinAlias = null;
             for (Association association : propertyPath.getAssociations()) {
                 joinPathJoiner.add(association.getName());
                 if (association instanceof Embedded) {
@@ -1042,28 +1042,32 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     joinAssociation = association;
                     continue;
                 }
-                // We don't need to join to access the id of the relation
                 if (association != joinAssociation.getAssociatedEntity().getIdentity()) {
                     if (!queryState.isAllowJoins()) {
                         throw new IllegalArgumentException("Joins cannot be used in a DELETE or UPDATE operation");
                     }
                     String joinStringPath = joinPathJoiner.toString();
-                    String joinAlias = joinInPath(queryState, joinStringPath);
+                    lastJoinAlias = joinInPath(queryState, joinStringPath);
                     // Continue to look for a joined property
-                    String joinedPropertyName = name.replaceFirst(Pattern.quote(joinStringPath + DOT), "");
-                    return findPropertyInternal(queryState, joinAssociation.getAssociatedEntity(), joinAlias, joinedPropertyName, criterionType);
+                    joinAssociation = association;
+                } else {
+                    // We don't need to join to access the id of the relation
+                    joinAssociation = null;
                 }
-                joinAssociation = null;
             }
-            // We don't need to join to access the id of the relation
             PersistentProperty property = propertyPath.getProperty();
-            if (joinAssociation != null && property != joinAssociation.getAssociatedEntity().getIdentity()) {
-                String joinAlias = joinInPath(queryState, joinPathJoiner.toString());
-                // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
-                return new QueryPropertyPath(
-                        new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
-                        joinAlias
-                );
+            if (joinAssociation != null) {
+                if (property != joinAssociation.getAssociatedEntity().getIdentity()) {
+                    if (lastJoinAlias == null) {
+                        lastJoinAlias = joinInPath(queryState, joinPathJoiner.toString());
+                    }
+                    // 'joinPath.prop' should be represented as a path of 'prop' with a join alias
+                    return new QueryPropertyPath(
+                            new PersistentPropertyPath(Collections.emptyList(), property, property.getName()),
+                            lastJoinAlias
+                    );
+                }
+                // We don't need to join to access the id of the relation
             }
         } else if (TypeRole.ID.equals(name) && entity.getIdentity() != null) {
             // special case handling for ID
