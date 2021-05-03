@@ -100,6 +100,27 @@ class MultiOneToManyJoinSpec extends Specification implements H2TestPropertyProv
             category.productList[1].productOption[1].option.size() == 3
     }
 
+    void 'test joined collection should not be null'() {
+        given:
+            Category category = new Category(name: "Cats", productList: [])
+        when:
+            categoryRepository.save(category)
+            category = categoryRepository.findById(category.id).get()
+        then:
+            category.productList != null
+            category.productList.isEmpty()
+    }
+
+    void 'test not-joined collection should be null'() {
+        given:
+            Category category = new Category(name: "Cats", productList: [])
+        when:
+            categoryRepository.save(category)
+            category = categoryRepository.queryById(category.id).get()
+        then:
+            category.productList == null
+    }
+
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -116,6 +137,8 @@ interface CategoryRepository extends CrudRepository<Category, Long> {
     @Join(value = "productList.productOption.option", alias =  "opno_", type =  Join.Type.LEFT_FETCH)
     @Override
     Optional<Category> findById(Long id);
+
+    Optional<Category> queryById(Long id);
 }
 
 @MappedEntity("mo2m_category")
