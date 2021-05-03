@@ -3,10 +3,10 @@ import java.time.Duration
 buildscript {
     repositories {
         mavenCentral()
-        maven { url "https://repo.grails.org/grails/core" }
+        gradlePluginPortal()
     }
     dependencies {
-        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:3.0.3"
+        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.0.RC5"
     }
 }
 

@@ -10,7 +10,7 @@ buildscript {
 
 plugins {
 	id 'java'
-	id "me.champeau.gradle.jmh" version "0.5.2"
+    id "me.champeau.jmh" version "0.6.4"
 }
 
 apply plugin: "org.springframework.boot"
