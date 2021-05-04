@@ -89,7 +89,6 @@ import javax.inject.Named;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -662,9 +661,7 @@ public class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOpera
                                                 }
                                             }
                                     );
-                                    boolean onlySingleEndedJoins = joinFetchPaths.stream()
-                                            .flatMap(jp -> Arrays.stream(jp.getAssociationPath()))
-                                            .anyMatch(association -> association.getKind().isSingleEnded());
+                                    boolean onlySingleEndedJoins = isOnlySingleEndedJoins(getEntity(preparedQuery.getRootEntity()), joinFetchPaths);
                                     // Cannot stream ResultSet for "many" joined query
                                     if (!onlySingleEndedJoins) {
                                         SqlResultEntityTypeMapper.PushingMapper<Row, List<R>> manyReader = entityTypeMapper.readAllWithJoins();
