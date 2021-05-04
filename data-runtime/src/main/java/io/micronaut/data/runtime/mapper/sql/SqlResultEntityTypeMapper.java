@@ -338,10 +338,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 } else {
                     Object newValue = setChildrenAndTriggerPostLoad(null, associationCtx);
-                    if (newValue != null) {
-                        newValue = resultReader.convertRequired(newValue, beanProperty.getType());
-                        instance = setProperty(beanProperty, instance, newValue);
-                    }
+                    newValue = resultReader.convertRequired(newValue == null ? Collections.emptyList() : newValue, beanProperty.getType());
+                    instance = setProperty(beanProperty, instance, newValue);
                 }
             }
         }
