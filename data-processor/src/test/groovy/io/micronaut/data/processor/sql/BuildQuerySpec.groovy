@@ -140,6 +140,43 @@ interface FoodRepository extends CrudRepository<Food, UUID> {
 
     }
 
+    void "test query with an entity with custom id and id field"() {
+        given:
+        def repository = buildRepository('test.CustomIdEntityRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.CustomIdEntity;
+import java.util.Optional;
+import java.util.UUID;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface CustomIdEntityRepository extends CrudRepository<CustomIdEntity, Long> {
+    
+    Optional<CustomIdEntity> findByCustomId(Long customId);
+    
+    boolean existsByCustomId(Long customId);
+    
+    void deleteByCustomId(Long customId);
+}
+""")
+        when:
+        def q = repository.getRequiredMethod(method, Long)
+                .stringValue(Query).get()
+
+        then:
+        q == query
+
+        where:
+        method             | query
+        "existsByCustomId" | 'SELECT custom_id_entity_.`custom_id` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`custom_id` = ?)'
+        "deleteByCustomId" | 'DELETE  FROM `custom_id_entity`  WHERE (`custom_id` = ?)'
+        "findByCustomId"   | 'SELECT custom_id_entity_.`custom_id`,custom_id_entity_.`id`,custom_id_entity_.`name` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`custom_id` = ?)'
+        "existsById"       | 'SELECT custom_id_entity_.`custom_id` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`id` = ?)'
+        "findById"         | 'SELECT custom_id_entity_.`custom_id`,custom_id_entity_.`id`,custom_id_entity_.`name` FROM `custom_id_entity` custom_id_entity_ WHERE (custom_id_entity_.`id` = ?)'
+
+    }
+
     @Unroll
     void "test build query with datasource set"() {
         given:
