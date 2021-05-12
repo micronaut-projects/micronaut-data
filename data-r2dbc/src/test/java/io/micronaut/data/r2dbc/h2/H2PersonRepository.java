@@ -27,7 +27,7 @@ public interface H2PersonRepository extends io.micronaut.data.tck.repositories.P
     Person save(String name, int age);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    void saveCustom(String name, int age);
+    int saveCustom(String name, int age);
 
     @Query("select count(*) as total from person")
     TotalDto getTotal();

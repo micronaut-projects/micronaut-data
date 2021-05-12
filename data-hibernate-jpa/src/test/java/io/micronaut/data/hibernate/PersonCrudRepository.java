@@ -35,7 +35,7 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
     Person save(@Parameter("name") String name, @Parameter("age") int age);
 
     @Override
-    void saveCustom(@Parameter("name") String name, @Parameter("age") int age);
+    int saveCustom(@Parameter("xyz") String xyz, @Parameter("age") int age);
 
     @Query("from Person p where p.name = :n")
     @Transactional

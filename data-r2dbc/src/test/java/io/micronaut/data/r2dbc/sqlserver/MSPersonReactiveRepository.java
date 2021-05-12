@@ -21,6 +21,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonReactiveRepository;
 import io.reactivex.Completable;
+import io.reactivex.Single;
 
 import java.util.List;
 
@@ -28,9 +29,9 @@ import java.util.List;
 public interface MSPersonReactiveRepository extends PersonReactiveRepository {
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    Completable saveCustom(List<Person> people);
+    Single<Long> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    Completable saveCustomSingle(Person people);
+    Single<Long> saveCustomSingle(Person people);
 
 }

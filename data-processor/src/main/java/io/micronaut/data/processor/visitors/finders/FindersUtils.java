@@ -113,12 +113,8 @@ interface FindersUtils {
                     saveEntry = pickSaveEntityInterceptor(matchContext, returnType);
                 } else if (hasMultipleEntityParameter) {
                     saveEntry = pickSaveAllEntitiesInterceptor(matchContext, returnType);
-                } else if (isFutureType(matchContext, returnType)) {
-                    saveEntry = typeAndInterceptorEntry(returnType.getType(), SaveOneAsyncInterceptor.class);
-                } else if (isReactiveType(matchContext, returnType)) {
-                    saveEntry = typeAndInterceptorEntry(returnType.getType(), SaveOneReactiveInterceptor.class);
                 } else {
-                    saveEntry = typeAndInterceptorEntry(returnType.getType(), SaveOneInterceptor.class);
+                    saveEntry = pickSaveOneInterceptor(matchContext, returnType);
                 }
                 if (isContainer(matchContext, saveEntry.getKey(), Iterable.class)) {
                     return typeAndInterceptorEntry(saveEntry.getKey().getFirstTypeArgument().get(), saveEntry.getValue());
@@ -129,6 +125,16 @@ interface FindersUtils {
             default:
                 throw new IllegalStateException("Cannot pick interceptor for an operation type: " + operationType + " and a return type: " + returnType);
         }
+    }
+
+    static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
+        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
+        if (isFutureType(matchContext, returnType)) {
+            return typeAndInterceptorEntry(firstTypeArgument, SaveOneAsyncInterceptor.class);
+        } else if (isReactiveType(matchContext, returnType)) {
+            return typeAndInterceptorEntry(firstTypeArgument, SaveOneReactiveInterceptor.class);
+        }
+        return typeAndInterceptorEntry(returnType.getType(), SaveOneInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {

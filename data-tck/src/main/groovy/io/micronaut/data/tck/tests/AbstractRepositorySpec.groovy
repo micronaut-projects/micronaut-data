@@ -365,10 +365,12 @@ abstract class AbstractRepositorySpec extends Specification {
         savePersons(["Jeff", "James"])
 
         when:"many are saved"
-        personRepository.saveCustom("Frank", 0)
-        personRepository.saveCustom("Bob", 0)
+        def r1 = personRepository.saveCustom("Frank", 0)
+        def r2 =  personRepository.saveCustom("Bob", 0)
 
         then:"all are saved"
+        r1 == 1
+        r2 == 1
         personRepository.findAll().size() == 4
         personRepository.count() == 4
         personRepository.count("Jeff") == 1
@@ -511,6 +513,21 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         deleted == 0
+        people.size() == 3
+    }
+
+    void "test custom delete single no entity"() {
+        given:
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().toList()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName())
+        people = personRepository.findAll().toList()
+
+        then:
+        deleted == 1
         people.size() == 3
     }
 

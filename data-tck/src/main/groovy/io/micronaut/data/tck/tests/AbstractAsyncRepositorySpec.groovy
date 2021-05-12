@@ -129,12 +129,13 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
     void "test custom insert"() {
         given:
         personRepository.deleteAll().get()
-        personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).get()
+        def saved = personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).get()
 
         when:
-        def people = personRepository.findAll().get()
+        def people = personRepository.findAll().get().toList()
 
         then:
+        saved == 2
         people.size() == 2
         people.get(0).name == "Abc"
         people.get(1).name == "Xyz"
@@ -145,7 +146,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
     void "test custom update"() {
         given:
         personRepository.deleteAll().get()
-        personRepository.saveCustom([
+        def saved = personRepository.saveCustom([
                 new Person(name: "Dennis", age: 12),
                 new Person(name: "Jeff", age: 22),
                 new Person(name: "James", age: 12),
@@ -157,6 +158,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         def people = personRepository.findAll().get()
 
         then:
+        saved == 4
         updated == 2
         people.count { it.name == "Dennis"} == 0
         people.count { it.name == "Denis"} == 2
@@ -328,6 +330,69 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         then:"data is gone"
         result == null
         personRepository.count().get() == 0
+    }
+
+    void "test custom delete"() {
+        given:
+        personRepository.deleteAll().get()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().get().toList()
+        people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
+        def deleted = personRepository.deleteCustom(people).get()
+        people = personRepository.findAll().get().toList()
+
+        then:
+        deleted == 2
+        people.size() == 2
+        people.count {it.name == "Dennis"}
+    }
+
+    void "test custom delete single"() {
+        given:
+        personRepository.deleteAll().get()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().get().toList()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingle(jeff).get()
+        people = personRepository.findAll().get().toList()
+
+        then:
+        deleted == 1
+        people.size() == 3
+
+        when:
+        def james = people.find {it.name == "James"}
+        james.name = "DoNotDelete"
+        deleted = personRepository.deleteCustomSingle(james).get()
+        people = personRepository.findAll().get().toList()
+
+        then:
+        deleted == 0
+        people.size() == 3
+    }
+
+    void "test custom delete single no entity"() {
+        given:
+        personRepository.deleteAll().get()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().get().toList()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName()).get()
+        people = personRepository.findAll().get().toList()
+
+        then:
+        deleted == 1
+        people.size() == 3
+    }
+
+    protected void savePersons(List<String> names) {
+        personRepository.saveAll(names.collect { new Person(name: it) }).get()
     }
 
     private static boolean isEmptyResult(Closure<?> closure) {
