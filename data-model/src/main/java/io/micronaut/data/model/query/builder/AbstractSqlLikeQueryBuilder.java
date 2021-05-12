@@ -171,7 +171,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             } else if (persistentEntity.hasIdentity()) {
                 appendCriteriaForOperator(whereClause,
                         ctx,
-                        ctx.getRequiredProperty(TypeRole.ID, idEquals.getClass()),
+                        ctx.getRequiredProperty(persistentEntity.getIdentity().getName(), idEquals.getClass()),
                         idEquals.getValue(),
                         " = "
                 );
