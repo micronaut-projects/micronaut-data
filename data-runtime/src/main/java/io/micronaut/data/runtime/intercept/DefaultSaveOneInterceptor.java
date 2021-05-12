@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.SaveOneInterceptor;
@@ -45,6 +47,12 @@ public class DefaultSaveOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
         Object instance = instantiateEntity(rootEntity, parameterValueMap);
-        return operations.persist(getInsertOperation(context, instance));
+        instance = operations.persist(getInsertOperation(context, instance));
+        ReturnType<Object> rt = context.getReturnType();
+        if (isNumber(rt.getType())) {
+            return ConversionService.SHARED.convert(1, rt.asArgument())
+                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
+        }
+        return instance;
     }
 }

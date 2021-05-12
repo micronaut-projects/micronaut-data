@@ -29,12 +29,12 @@ public interface OracleXEPersonRepository extends PersonRepository {
     Person save(String name, int age);
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    void saveCustom(String name, int age);
+    int saveCustom(String name, int age);
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    void saveCustom(List<Person> people);
+    int saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    void saveCustomSingle(Person people);
+    int saveCustomSingle(Person people);
 
 }

@@ -13,9 +13,9 @@ import java.util.concurrent.CompletableFuture;
 public interface MSPersonAsyncRepository extends PersonAsyncRepository {
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    CompletableFuture<Void> saveCustom(List<Person> people);
+    CompletableFuture<Long> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    CompletableFuture<Void> saveCustomSingle(Person people);
+    CompletableFuture<Long> saveCustomSingle(Person people);
 
 }

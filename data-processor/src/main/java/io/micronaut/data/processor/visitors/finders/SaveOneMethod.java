@@ -22,9 +22,6 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.DataInterceptor;
-import io.micronaut.data.intercept.SaveOneInterceptor;
-import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
-import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -76,7 +73,7 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
         }
-        if (returnType == null || !rootEntity.getName().equals(returnType.getName())) {
+        if (returnType == null || !TypeUtils.isNumber(returnType) && !rootEntity.getName().equals(returnType.getName())) {
             matchContext.fail("The return type of the save method must be the same as the root entity type: " + rootEntity.getName());
             return null;
         }
@@ -139,11 +136,11 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
             }
         }
 
-        final Class<? extends DataInterceptor> interceptor = pickSaveInterceptor(matchContext.getReturnType());
+        Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickSaveOneInterceptor(matchContext, matchContext.getReturnType());
         return new MethodMatchInfo(
-                returnType,
+                e.getKey(),
                 QueryModel.from(matchContext.getRootEntity()),
-                getInterceptorElement(matchContext, interceptor),
+                getInterceptorElement(matchContext, e.getValue()),
                 MethodMatchInfo.OperationType.INSERT
         );
     }
@@ -154,20 +151,6 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
     }
 
     /**
-     * Pick a runtime interceptor to use based on the return type.
-     * @param returnType The return type
-     * @return The interceptor
-     */
-    static @NonNull Class<? extends DataInterceptor> pickSaveInterceptor(@NonNull ClassElement returnType) {
-        if (TypeUtils.isFutureType(returnType)) {
-            return SaveOneAsyncInterceptor.class;
-        } else if (TypeUtils.isReactiveOrFuture(returnType)) {
-            return SaveOneReactiveInterceptor.class;
-        }
-        return SaveOneInterceptor.class;
-    }
-
-    /**
      * Is the return type valid for saving an entity.
      * @param matchContext The match context
      * @param entityArgumentNotRequired  If an entity arg is not required
@@ -175,11 +158,19 @@ public class SaveOneMethod extends AbstractPatternBasedMethod {
      */
     private static boolean isValidSaveReturnType(@NonNull MatchContext matchContext, boolean entityArgumentNotRequired) {
         ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType)) {
+            return true;
+        }
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(null);
         }
-        return returnType != null &&
-                returnType.hasAnnotation(MappedEntity.class) &&
+        if (returnType == null) {
+            return false;
+        }
+        if (TypeUtils.isNumber(returnType)) {
+            return true;
+        }
+        return returnType.hasAnnotation(MappedEntity.class) &&
                 (entityArgumentNotRequired || returnType.getName().equals(matchContext.getParameters()[0].getGenericType().getName()));
     }
 

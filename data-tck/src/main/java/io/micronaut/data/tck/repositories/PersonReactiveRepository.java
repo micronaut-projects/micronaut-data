@@ -33,7 +33,7 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
 
     Single<Person> getById(Long id);
 
-    Completable updatePerson(@Id Long id, @Parameter("name") String name);
+    Single<Long> updatePerson(@Id Long id, @Parameter("name") String name);
 
     Flowable<Person> list(Pageable pageable);
 
@@ -48,7 +48,6 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
 
     Single<Long> deleteByNameLike(String name);
 
-
     Observable<Person> findByNameLike(String name);
 
     @Query("SELECT MAX(id) FROM person WHERE id = -1")
@@ -60,8 +59,18 @@ public interface PersonReactiveRepository extends RxJavaCrudRepository<Person, L
     Maybe<Long> updateNamesCustom(String newName, String oldName);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    Completable saveCustom(List<Person> people);
+    Single<Long> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    Completable saveCustomSingle(Person people);
+    Single<Long> saveCustomSingle(Person people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    Single<Long> deleteCustom(List<Person> people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    Single<Long> deleteCustomSingle(Person person);
+
+    @Query("DELETE FROM person WHERE name = :xyz")
+    Single<Long> deleteCustomSingleNoEntity(String xyz);
+
 }

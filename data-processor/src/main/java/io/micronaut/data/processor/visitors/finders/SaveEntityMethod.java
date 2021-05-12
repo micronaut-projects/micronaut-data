@@ -106,7 +106,7 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod {
      */
     static boolean isValidSaveReturnType(@NonNull MatchContext matchContext) {
         ClassElement returnType = matchContext.getReturnType();
-        if (TypeUtils.isVoid(returnType)) {
+        if (TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType)) {
             return true;
         }
 
@@ -117,7 +117,7 @@ public class SaveEntityMethod extends AbstractPatternBasedMethod {
             // Skip for Completable etc.
             return true;
         }
-        if (TypeUtils.isIterableOfEntity(returnType)) {
+        if (TypeUtils.isNumber(returnType) || TypeUtils.isIterableOfEntity(returnType)) {
             return true;
         } else if (returnType.isAssignable(Iterable.class)) {
             // This doesn't return correct class for generic type 'S':

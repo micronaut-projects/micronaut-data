@@ -26,6 +26,6 @@ public interface PostgresPersonRepository extends io.micronaut.data.tck.reposito
     Person save(String name, int age);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    void saveCustom(String name, int age);
+    int saveCustom(String name, int age);
 
 }

@@ -62,19 +62,24 @@ $returnType $method($arguments);
         "countByName"  | "Single<Long>"          | "String name"                  | CountReactiveInterceptor
         "delete"       | "Single<Long>"          | "String name"                  | DeleteAllReactiveInterceptor
         "delete"       | "Single<Void>"          | "String name"                  | DeleteAllReactiveInterceptor
+        "delete"       | "Completable"           | "String name"                  | DeleteAllReactiveInterceptor
         "deleteByName" | "Single<Integer>"       | "String name"                  | DeleteAllReactiveInterceptor
         "existsByName" | "Single<Boolean>"       | "String name"                  | ExistsByReactiveInterceptor
         "findById"     | "Single<Person>"        | "Long id"                      | FindByIdReactiveInterceptor
+        "save"         | "Completable"           | "Person person"                | SaveEntityReactiveInterceptor
+        "save"         | "Single<Long>"          | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
         "updateByName" | "Single<Number>"        | "String name, int age"         | UpdateReactiveInterceptor
         "update"       | "Completable"           | "@Id Long id, int age"         | UpdateReactiveInterceptor
+        "update"       | "Single<Number>"        | "@Id Long id, int age"         | UpdateReactiveInterceptor
         "updateAll"    | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateAll"    | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateCustom" | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "updateCustom" | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "update"       | "Single<Integer>"       | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
         "update"       | "Single<List<Person>>"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
+        "update"       | "Completable"  | "List<Person> entities"        | UpdateAllEntitiesReactiveInterceptor
     }
 }

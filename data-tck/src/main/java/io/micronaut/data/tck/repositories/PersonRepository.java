@@ -45,8 +45,8 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     Person save(@Parameter("name") String name, @Parameter("age") int age);
 
-    @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    void saveCustom(@Parameter("name") String name, @Parameter("age") int age);
+    @Query("INSERT INTO person(name, age, enabled) VALUES (:xyz, :age, TRUE)")
+    int saveCustom(@Parameter("xyz") String xyz, @Parameter("age") int age);
 
     Person get(Long id);
 
@@ -59,11 +59,11 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     @Query("UPDATE person SET name = 'test' WHERE id = :id")
     Single<Long> updatePersonCustomRx(Long id);
 
-    @Query("UPDATE person SET name = 'test' WHERE id = :id")
-    Future<Long> updatePersonCustomFuture(Long id);
+    @Query("UPDATE person SET name = 'test' WHERE id = :xyz")
+    Future<Long> updatePersonCustomFuture(Long xyz);
 
-    @Query("UPDATE person SET name = 'test' WHERE id = :id")
-    long updatePersonCustom(Long id);
+    @Query("UPDATE person SET name = 'test' WHERE id = :xyz")
+    long updatePersonCustom(Long xyz);
 
     @Query("SELECT * FROM person WHERE name = :names1 or name IN(:names3) or name IN(:names0) or (:name4 = name)")
     List<Person> queryNames(List<String> names0, String names1, List<String> names2, List<String> names3, String name4);
@@ -130,14 +130,17 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
     long updateCustomOnlyNames(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    void saveCustom(List<Person> people);
+    int saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    void saveCustomSingle(Person people);
+    int saveCustomSingle(Person people);
 
     @Query("DELETE FROM person WHERE name = :name")
     int deleteCustom(List<Person> people);
 
     @Query("DELETE FROM person WHERE name = :name")
     int deleteCustomSingle(Person person);
+
+    @Query("DELETE FROM person WHERE name = :xyz")
+    int deleteCustomSingleNoEntity(String xyz);
 }

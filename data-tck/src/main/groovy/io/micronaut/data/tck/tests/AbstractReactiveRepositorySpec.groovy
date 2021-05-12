@@ -134,12 +134,13 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     void "test custom insert"() {
         given:
         personRepository.deleteAll().blockingGet()
-        personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).blockingGet()
+        def saved = personRepository.saveCustom([new Person(name: "Abc", age: 12), new Person(name: "Xyz", age: 22)]).blockingGet()
 
         when:
         def people = personRepository.findAll().blockingIterable().toList()
 
         then:
+        saved == 2
         people.size() == 2
         people.get(0).name == "Abc"
         people.get(1).name == "Xyz"
@@ -150,12 +151,13 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     void "test custom single insert"() {
         given:
         personRepository.deleteAll().blockingGet()
-        personRepository.saveCustomSingle(new Person(name: "Abc", age: 12)).blockingGet()
+        def saved = personRepository.saveCustomSingle(new Person(name: "Abc", age: 12)).blockingGet()
 
         when:
         def people = personRepository.findAll().toList().blockingGet()
 
         then:
+        saved == 1
         people.size() == 1
         people.get(0).name == "Abc"
     }
@@ -163,7 +165,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     void "test custom update"() {
         given:
         personRepository.deleteAll().blockingGet()
-        personRepository.saveCustom([
+        def saved = personRepository.saveCustom([
                 new Person(name: "Dennis", age: 12),
                 new Person(name: "Jeff", age: 22),
                 new Person(name: "James", age: 12),
@@ -175,6 +177,7 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         def people = personRepository.findAll().blockingIterable().toList()
 
         then:
+        saved == 4
         updated == 2
         people.count { it.name == "Dennis"} == 0
         people.count { it.name == "Denis"} == 2
@@ -243,9 +246,10 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
         frank != null
 
         when:"The person is updated"
-        personRepository.updatePerson(frank.id, "Jack").blockingGet()
+        def updated =personRepository.updatePerson(frank.id, "Jack").blockingGet()
 
         then:"the person is updated"
+        updated == 1
         personRepository.findByName("Frank").blockingGet() == null
         personRepository.findByName("Jack").blockingGet() != null
 
@@ -353,8 +357,68 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             def student5 = studentRepository.findById(student2.getId())
         then:
             student5.isEmpty().blockingGet()
+    }
 
-        cleanup:
-            studentRepository.deleteAll().blockingAwait()
+    void "test custom delete"() {
+        given:
+        personRepository.deleteAll().blockingGet()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().toList().blockingGet()
+        people.findAll {it.name == "Dennis"}.forEach{ it.name = "DoNotDelete"}
+        def deleted = personRepository.deleteCustom(people).blockingGet()
+        people = personRepository.findAll().toList().blockingGet()
+
+        then:
+        deleted == 2
+        people.size() == 2
+        people.count {it.name == "Dennis"}
+    }
+
+    void "test custom delete single"() {
+        given:
+        personRepository.deleteAll().blockingGet()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().toList().blockingGet()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingle(jeff).blockingGet()
+        people = personRepository.findAll().toList().blockingGet()
+
+        then:
+        deleted == 1
+        people.size() == 3
+
+        when:
+        def james = people.find {it.name == "James"}
+        james.name = "DoNotDelete"
+        deleted = personRepository.deleteCustomSingle(james).blockingGet()
+        people = personRepository.findAll().toList().blockingGet()
+
+        then:
+        deleted == 0
+        people.size() == 3
+    }
+
+    void "test custom delete single no entity"() {
+        given:
+        personRepository.deleteAll().blockingGet()
+        savePersons(["Dennis", "Jeff", "James", "Dennis"])
+
+        when:
+        def people = personRepository.findAll().toList().blockingGet()
+        def jeff = people.find {it.name == "Jeff"}
+        def deleted = personRepository.deleteCustomSingleNoEntity(jeff.getName()).blockingGet()
+        people = personRepository.findAll().toList().blockingGet()
+
+        then:
+        deleted == 1
+        people.size() == 3
+    }
+
+    protected void savePersons(List<String> names) {
+        personRepository.saveAll(names.collect { new Person(name: it) }).toList().blockingGet()
     }
 }

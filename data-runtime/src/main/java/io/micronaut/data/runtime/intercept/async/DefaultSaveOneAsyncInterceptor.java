@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.SaveOneAsyncInterceptor;
@@ -51,6 +53,14 @@ public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         return CompletableFuture.supplyAsync(() -> {
             Object o = instantiateEntity(rootEntity, parameterValueMap);
             return getInsertOperation(context, o);
-        }, executor).thenCompose(asyncDatastoreOperations::persist);
+        }, executor)
+                .thenCompose(operation -> {
+                    CompletionStage<Object> cs = asyncDatastoreOperations.persist(operation);
+                    Argument<?> csValueArgument = context.getReturnType().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                    if (isNumber(csValueArgument.getType())) {
+                        return cs.thenApply(it -> ConversionService.SHARED.convertRequired(it == null ? 0 : 1, csValueArgument));
+                    }
+                    return cs;
+                });
     }
 }

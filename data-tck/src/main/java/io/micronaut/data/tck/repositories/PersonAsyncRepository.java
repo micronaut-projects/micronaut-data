@@ -58,14 +58,23 @@ public interface PersonAsyncRepository extends AsyncCrudRepository<Person, Long>
     CompletableFuture<Long> updateNamesCustom(String newName, String oldName);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    CompletableFuture<Void> saveCustom(List<Person> people);
+    CompletableFuture<Long> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, TRUE)")
-    CompletableFuture<Void> saveCustomSingle(Person people);
+    CompletableFuture<Long> saveCustomSingle(Person people);
 
     CompletableFuture<Integer> remove(Long id);
 
     CompletableFuture<Integer> deleteOneReturnRowsDeleted(Person people);
 
     CompletableFuture<Integer> deleteManyReturnRowsDeleted(List<Person> people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    CompletableFuture<Integer> deleteCustom(List<Person> people);
+
+    @Query("DELETE FROM person WHERE name = :name")
+    CompletableFuture<Integer> deleteCustomSingle(Person person);
+
+    @Query("DELETE FROM person WHERE name = :xyz")
+    CompletableFuture<Integer> deleteCustomSingleNoEntity(String xyz);
 }

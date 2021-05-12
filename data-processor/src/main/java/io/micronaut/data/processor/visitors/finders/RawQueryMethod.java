@@ -100,6 +100,16 @@ public class RawQueryMethod implements MethodCandidate {
         ClassElement resultType = entry.getKey();
         Class<? extends DataInterceptor> interceptorType = entry.getValue();
 
+        if (interceptorType.getSimpleName().startsWith("SaveOne")) {
+            // Use `executeUpdate` operation for "insert(String a, String b)" style queries
+            // - custom query doesn't need to use root entity
+            // - we would like to know how many rows were updated
+            operationType = MethodMatchInfo.OperationType.UPDATE;
+            Map.Entry<ClassElement, Class<? extends DataInterceptor>> e = FindersUtils.pickUpdateInterceptor(matchContext, matchContext.getReturnType());
+            resultType = e.getKey();
+            interceptorType = e.getValue();
+        }
+
         boolean isDto = false;
         if (resultType == null) {
             resultType = matchContext.getRootEntity().getType();
@@ -142,7 +152,7 @@ public class RawQueryMethod implements MethodCandidate {
 
     private boolean isValidReturnType(ClassElement returnType, MethodMatchInfo.OperationType operationType) {
         if (operationType == MethodMatchInfo.OperationType.INSERT) {
-            return TypeUtils.isVoid(returnType);
+            return TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType);
         }
         return true;
     }

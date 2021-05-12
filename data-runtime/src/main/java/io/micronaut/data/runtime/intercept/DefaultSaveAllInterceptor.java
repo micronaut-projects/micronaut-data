@@ -49,6 +49,10 @@ public class DefaultSaveAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
         if (rt.isVoid()) {
             return null;
         }
+        if (isNumber(rt.getType())) {
+            return ConversionService.SHARED.convert(count(rs), rt.asArgument())
+                    .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
+        }
         return ConversionService.SHARED.convert(rs, rt.asArgument())
                 .orElseThrow(() -> new IllegalStateException("Unsupported iterable return type: " + rt.getType()));
     }

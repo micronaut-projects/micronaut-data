@@ -29,12 +29,12 @@ public interface MSSQLPersonRepository extends PersonRepository {
     Person save(String name, int age);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    void saveCustom(String name, int age);
+    int saveCustom(String name, int age);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    void saveCustom(List<Person> people);
+    int saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(name, age, enabled) VALUES (:name, :age, 1)")
-    void saveCustomSingle(Person people);
+    int saveCustomSingle(Person people);
 
 }

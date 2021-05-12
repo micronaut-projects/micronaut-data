@@ -145,8 +145,10 @@ class FullNameDto {
         "existsByName"     | "CompletionStage<Boolean>"           | "String name"                  | ExistsByAsyncInterceptor   | Boolean.name       | false
         "findById"         | "CompletionStage<Person>"            | "Long id"                      | FindByIdAsyncInterceptor   | Person.name        | false
         "findFullNameById" | "CompletionStage<FullNameDto>"       | "Long id"                      | FindOneAsyncInterceptor    | 'test.FullNameDto' | true
+        "save"             | "CompletionStage<Integer>"           | "Person person"                | SaveEntityAsyncInterceptor | Integer.name       | false
         "save"             | "CompletionStage<Person>"            | "Person person"                | SaveEntityAsyncInterceptor | Person.name        | false
         "save"             | "CompletionStage<Person>"            | "String name, String publicId" | SaveOneAsyncInterceptor    | Person.name        | false
+        "save"             | "CompletionStage<Integer>"           | "String name, String publicId" | SaveOneAsyncInterceptor    | Integer.name       | false
         "save"             | "CompletionStage<List<Person>>"      | "List<Person> entities"        | SaveAllAsyncInterceptor    | Person.name        | false
         "updateByName"     | "CompletionStage<Long>"              | "String name, int age"         | UpdateAsyncInterceptor     | Person.name        | false
         "update"           | "CompletionStage<Void>"              | "@Id Long id, int age"         | UpdateAsyncInterceptor     | Void.name          | false

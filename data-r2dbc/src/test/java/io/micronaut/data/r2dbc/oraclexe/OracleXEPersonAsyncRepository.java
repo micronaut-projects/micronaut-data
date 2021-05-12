@@ -28,9 +28,9 @@ import java.util.concurrent.CompletableFuture;
 public interface OracleXEPersonAsyncRepository extends PersonAsyncRepository {
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    CompletableFuture<Void> saveCustom(List<Person> people);
+    CompletableFuture<Long> saveCustom(List<Person> people);
 
     @Query("INSERT INTO person(id, name, age, enabled) VALUES (\"PERSON_SEQ\".nextval, :name, :age, 1)")
-    CompletableFuture<Void> saveCustomSingle(Person people);
+    CompletableFuture<Long> saveCustomSingle(Person people);
 
 }

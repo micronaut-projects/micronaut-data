@@ -1,5 +1,6 @@
 package io.micronaut.data.processor.visitors
 
+import io.micronaut.data.intercept.SaveAllInterceptor
 import io.micronaut.data.intercept.SaveEntityInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.reactive.CountReactiveInterceptor
@@ -70,8 +71,12 @@ interface TypeRoleInterface extends GenericRepository<Person, Long> {
         "findById"     | "Single<Person>"        | "Long id"                      | FindByIdReactiveInterceptor
         "save"         | "Single<Person>"        | "Person person"                | SaveEntityReactiveInterceptor
         "save"         | "Person"                | "Person person"                | SaveEntityInterceptor
+        "save"         | "Integer"               | "Person person"                | SaveEntityInterceptor
+        "save"         | "void"                  | "Person person"                | SaveEntityInterceptor
         "save"         | "Single<Person>"        | "String name, String publicId" | SaveOneReactiveInterceptor
         "save"         | "Flowable<Person>"      | "List<Person> entities"        | SaveAllReactiveInterceptor
+        "save"         | "void"                  | "List<Person> entities"        | SaveAllInterceptor
+        "save"         | "Integer"               | "List<Person> entities"        | SaveAllInterceptor
         "updateByName" | "Single<Number>"        | "String name, int age"         | UpdateReactiveInterceptor
         "update"       | "Completable"           | "@Id Long id, int age"         | UpdateReactiveInterceptor
         "update"       | "Single<Person>"        | "Person person"                | UpdateEntityReactiveInterceptor
