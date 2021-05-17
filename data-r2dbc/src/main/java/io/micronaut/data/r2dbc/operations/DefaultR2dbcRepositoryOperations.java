@@ -886,36 +886,15 @@ public class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOpera
             }
         }
 
-        private <T, R> Publisher<R> withNewOrExistingTxAttribute(
+        private <R> Publisher<R> withNewOrExistingTxAttribute(
                 @NonNull AttributeHolder attributeHolder,
                 TransactionalCallback<Connection, R> entityOperation,
                 boolean isWrite) {
-            @SuppressWarnings("unchecked") ReactiveTransactionStatus<Connection> status =
-                    attributeHolder.getAttribute(ReactiveTransactionStatus.STATUS, ReactiveTransactionStatus.class).orElse(null);
-            if (status != null) {
-                try {
-                    return entityOperation.doInTransaction(status);
-                } catch (Exception e) {
-                    return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                }
-            } else {
-                if (isWrite) {
-                    TransactionDefinition definition = newTransactionDefinition(attributeHolder);
-                    if (definition.isReadOnly()) {
-                        return Mono.error(new TransactionUsageException("Cannot perform write operation with read-only transaction"));
-                    } else {
-                        return withTransaction(definition, entityOperation);
-                    }
-                } else {
-                    return withConnection((c -> {
-                        try {
-                            return entityOperation.doInTransaction(new DefaultReactiveTransactionStatus(c, true));
-                        } catch (Exception e) {
-                            return Mono.error(new TransactionSystemException("Error invoking doInTransaction handler: " + e.getMessage(), e));
-                        }
-                    }));
-                }
+            TransactionDefinition definition = newTransactionDefinition(attributeHolder);
+            if (isWrite && definition.isReadOnly()) {
+                return Mono.error(new TransactionUsageException("Cannot perform write operation with read-only transaction"));
             }
+            return withTransaction(definition, entityOperation);
         }
 
         @NonNull
