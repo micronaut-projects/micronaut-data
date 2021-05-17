@@ -19,8 +19,8 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jpa.annotation.EntityGraph;
+import io.micronaut.data.tck.entities.Author;
 import io.micronaut.data.tck.entities.Book;
-import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.AuthorRepository;
 
 import io.micronaut.core.annotation.Nullable;
@@ -65,6 +65,12 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
 
     @Query("UPDATE Book SET title = :title where id = :id")
     public abstract long updateCustomOnlyTitles(Collection<Book> books);
+
+    @Query("UPDATE Book SET author = :author WHERE id = :id")
+    public abstract long updateAuthor(Long id, Author author);
+
+    @Query("SELECT b FROM Book b WHERE b.author = :author")
+    public abstract List<Book> findByAuthor(Author author);
 
     @Query("INSERT INTO Book(title, pages, author) VALUES (:title, :pages, :author)")
     public abstract void saveCustom(Collection<Book> books);
