@@ -577,7 +577,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         }
                         PersistentProperty property = propertyPath.getProperty();
                         if (property instanceof Association && !(property instanceof Embedded)) {
-                            if (!queryState.getQueryModel().getJoinPath(propertyPath.getPath()).isPresent()) {
+                            if (!queryState.isJoined(propertyPath.getPath())) {
                                 queryString.setLength(queryString.length() - 1);
                                 continue;
                             }
@@ -1581,7 +1581,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * Computes the alias for the given association path given the current state of the joins.
          *
-         * @param associationPath The assocation path.
+         * @param associationPath The association path.
          * @return The alias
          */
         public @NonNull
@@ -1598,6 +1598,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             return getRootAlias() + DOT + associationPath;
+        }
+
+        /**
+         * Checks if the path is joined already.
+         *
+         * @param associationPath The association path.
+         * @return true if joined
+         */
+        public boolean isJoined(String associationPath) {
+            return appliedJoinPaths.containsKey(associationPath);
         }
 
         /**
