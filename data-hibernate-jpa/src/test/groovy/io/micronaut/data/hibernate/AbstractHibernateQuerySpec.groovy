@@ -409,6 +409,22 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             author.books.size() == 1
     }
 
+    void "test update relation"() {
+        when:
+            def book = bookRepository.findAllByTitleStartsWith("Along Came a Spider").first()
+            bookRepository.updateAuthor(book.id, book.author)
+        then:
+            book.publisher == book.publisher
+    }
+
+    void "test query by relation"() {
+        when:
+            def author = authorRepository.searchByName("Stephen King")
+            def books = bookRepository.findByAuthor(author)
+        then:
+            books.size() == 2
+    }
+
     @Override
     BookRepository getBookRepository() {
         return br

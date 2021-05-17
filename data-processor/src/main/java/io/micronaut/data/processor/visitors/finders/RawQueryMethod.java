@@ -15,9 +15,9 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
@@ -25,7 +25,6 @@ import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -80,17 +79,19 @@ public class RawQueryMethod implements MethodCandidate {
         MethodElement methodElement = matchContext.getMethodElement();
 
         ParameterElement[] parameters = matchContext.getParameters();
-        ParameterElement entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
-        ParameterElement entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+        ParameterElement entityParameter;
+        ParameterElement entitiesParameter;
+        if (parameters.length > 1) {
+            entityParameter = null;
+            entitiesParameter = null;
+        } else {
+            entityParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isEntity(p.getGenericType())).findFirst().orElse(null);
+            entitiesParameter = Arrays.stream(parameters).filter(p -> TypeUtils.isIterableOfEntity(p.getGenericType())).findFirst().orElse(null);
+        }
 
         boolean readOnly = matchContext.getAnnotationMetadata().booleanValue(Query.class, "readOnly").orElse(true);
         String query = matchContext.getAnnotationMetadata().stringValue(Query.class).get();
         MethodMatchInfo.OperationType operationType = findOperationType(methodElement.getName(), query, readOnly);
-
-        RawQuery rawQuery = buildRawQuery(matchContext, operationType);
-        if (rawQuery == null) {
-            return null;
-        }
 
         Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry = FindersUtils.resolveInterceptorTypeByOperationType(
                 entityParameter != null,
@@ -110,6 +111,17 @@ public class RawQueryMethod implements MethodCandidate {
             interceptorType = e.getValue();
         }
 
+        if (operationType == MethodMatchInfo.OperationType.QUERY) {
+            // Entity parameter/parameters only make sense if the operation is based on entity
+            entityParameter = null;
+            entitiesParameter = null;
+        }
+
+        RawQuery queryModel = buildRawQuery(matchContext, entityParameter, entitiesParameter, operationType);
+        if (queryModel == null) {
+            return null;
+        }
+
         boolean isDto = false;
         if (resultType == null) {
             resultType = matchContext.getRootEntity().getType();
@@ -126,7 +138,6 @@ public class RawQueryMethod implements MethodCandidate {
             }
         }
 
-        QueryModel queryModel = buildRawQuery(matchContext, operationType);
         MethodMatchInfo methodMatchInfo;
         if (isDto) {
             methodMatchInfo = new MethodMatchInfo(
@@ -179,12 +190,11 @@ public class RawQueryMethod implements MethodCandidate {
 
     /**
      * Builds a raw query for the given match context. Should be called for methods annotated with {@link Query} explicitly.
-     *
-     * @param matchContext The match context
-     * @param operationType The operation type
-     * @return The raw query or null if an error occurred
      */
-    private RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext, MethodMatchInfo.OperationType operationType) {
+    private RawQuery buildRawQuery(@NonNull MethodMatchContext matchContext,
+                                   ParameterElement entityParameter,
+                                   ParameterElement entitiesParameter,
+                                   MethodMatchInfo.OperationType operationType) {
         MethodElement methodElement = matchContext.getMethodElement();
         String queryString = methodElement.stringValue(Query.class).orElseThrow(() ->
                 new IllegalStateException("Should only be called if Query has value!")
@@ -195,13 +205,10 @@ public class RawQueryMethod implements MethodCandidate {
         Matcher matcher = QueryBuilder.VARIABLE_PATTERN.matcher(queryString);
 
         SourcePersistentEntity persistentEntity = null;
-        if (parameters.size() == 1) {
-            ParameterElement parameterElement = parameters.get(0);
-            if (TypeUtils.isIterableOfEntity(parameterElement.getGenericType())) {
-                persistentEntity = matchContext.getEntity(parameterElement.getGenericType().getFirstTypeArgument().get());
-            } else if (TypeUtils.isEntity(parameterElement.getGenericType())) {
-                persistentEntity = matchContext.getEntity(parameterElement.getGenericType());
-            }
+        if (entityParameter != null) {
+            persistentEntity = matchContext.getEntity(entityParameter.getGenericType());
+        } else if (entitiesParameter != null) {
+            persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().get());
         }
         List<QueryParameterBinding> parameterBindings = new ArrayList<>(parameters.size());
         if (namedParameters) {
