@@ -253,7 +253,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 }
                 int parameterIndex = parameterBinding[i];
                 DataType dataType = parameterTypes[i];
-                if (parameterIndex == -1 || dataType.isArray()) {
+                // We want to expand collections with byte array convertible values
+                if (parameterIndex == -1 || dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
                     i++;
                     return hasNext();
                 }
@@ -337,7 +338,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     }
 
     private int setExpandedStatementParameter(Object value, PS ps, int index, DataType dataType, Dialect dialect) {
-        if (value == null || dataType.isArray() || value instanceof byte[]) {
+        // Special case for byte array, we want to support a list of byte[] convertible values
+        if (value == null || dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
             setStatementParameter(ps, index++, dataType, value, dialect);
         } else if (value instanceof Iterable) {
             Iterator<?> iterator = ((Iterable<?>) value).iterator();
