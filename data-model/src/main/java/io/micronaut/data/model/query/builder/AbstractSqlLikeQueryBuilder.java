@@ -577,6 +577,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                         }
                         PersistentProperty property = propertyPath.getProperty();
                         if (property instanceof Association && !(property instanceof Embedded)) {
+                            if (!queryState.getQueryModel().getJoinPath(propertyPath.getPath()).isPresent()) {
+                                queryString.setLength(queryString.length() - 1);
+                                continue;
+                            }
                             String joinAlias = queryState.computeAlias(propertyPath.getPath());
                             selectAllColumns(((Association) property).getAssociatedEntity(), joinAlias, queryString);
                         } else {

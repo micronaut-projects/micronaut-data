@@ -75,6 +75,22 @@ $source
 """)
 
     }
+
+    BeanDefinition<?> buildJpaRepository(String name, String source) {
+        def pkg = NameUtils.getPackageName(name)
+        return buildBeanDefinition(name + BeanDefinitionVisitor.PROXY_SUFFIX, """
+package $pkg;
+
+import javax.persistence.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.annotation.Repository;
+import java.util.*;
+
+$source
+""")
+
+    }
+
     @Override
     protected JavaParser newJavaParser() {
         return new JavaParser() {
