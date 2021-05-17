@@ -801,8 +801,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Query: {}", sql);
         }
-        try (PreparedStatement ps = transactionOperations.getConnection().prepareStatement(sql)) {
-            return callback.call(ps);
+        try {
+            R result = null;
+            PreparedStatement ps = transactionOperations.getConnection().prepareStatement(sql);
+            try {
+                result = callback.call(ps);
+                return result;
+            } finally {
+                if (!(result instanceof AutoCloseable)) {
+                    ps.close();
+                }
+            }
         } catch (SQLException e) {
             throw new DataAccessException("Error preparing SQL statement: " + e.getMessage(), e);
         }
