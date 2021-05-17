@@ -15,11 +15,11 @@
  */
 package io.micronaut.data.hibernate.operations;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ConversionService;
@@ -37,7 +37,18 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
@@ -59,7 +70,13 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
 import javax.persistence.Tuple;
-import javax.persistence.criteria.*;
+import javax.persistence.TupleElement;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Path;
+import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.util.ArrayList;
@@ -70,6 +87,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -326,7 +344,15 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
                 bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
                 return q.stream()
-                        .map(tuple -> ((BeanIntrospectionMapper<Tuple, R>) Tuple::get).map(tuple, preparedQuery.getResultType()))
+                        .map(tuple -> {
+                            Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toSet());
+                            return ((BeanIntrospectionMapper<Tuple, R>) (tuple1, alias) -> {
+                                if (!properties.contains(alias)) {
+                                    return null;
+                                }
+                                return tuple1.get(alias);
+                            }).map(tuple, preparedQuery.getResultType());
+                        })
                         .collect(Collectors.toList());
             } else {
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
@@ -364,7 +390,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                         String[] pathsDefinitions = (String[]) value;
                         if (ArrayUtils.isNotEmpty(pathsDefinitions)) {
                             RootGraph<T> entityGraph = session.createEntityGraph(preparedQuery.getRootEntity());
-                            for (String pathsDefinition : pathsDefinitions)  {
+                            for (String pathsDefinition : pathsDefinitions) {
                                 String[] paths = pathsDefinition.split("\\.");
                                 if (paths.length == 1) {
                                     entityGraph.addAttributeNode(paths[0]);
@@ -514,7 +540,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
             if (queryString != null) {
                 int i = 0;
                 for (T entity : operation) {
-                    i  += executeEntityUpdate(annotationMetadata, queryString, entity);
+                    i += executeEntityUpdate(annotationMetadata, queryString, entity);
                 }
                 return i;
             }
@@ -582,17 +608,17 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                         bindParameters(nativeQuery, preparedQuery, query);
                         bindPageable(nativeQuery, pageable);
                         return nativeQuery.stream()
-                                  .map(tuple -> {
-                                      Object o = tuple.get(0);
-                                      if (wrapperType.isInstance(o)) {
-                                          return (R) o;
-                                      } else {
-                                          return ConversionService.SHARED.convertRequired(
-                                                  o,
-                                                  wrapperType
-                                          );
-                                      }
-                                  });
+                                .map(tuple -> {
+                                    Object o = tuple.get(0);
+                                    if (wrapperType.isInstance(o)) {
+                                        return (R) o;
+                                    } else {
+                                        return ConversionService.SHARED.convertRequired(
+                                                o,
+                                                wrapperType
+                                        );
+                                    }
+                                });
                     } else {
                         q = currentSession.createNativeQuery(query, wrapperType);
                     }

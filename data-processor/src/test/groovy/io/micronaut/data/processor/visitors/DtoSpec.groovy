@@ -21,7 +21,6 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.entities.Person
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
-import io.micronaut.inject.BeanDefinition
 
 class DtoSpec extends AbstractDataSpec {
 
@@ -188,6 +187,125 @@ class PersonDto {
         def queryMethod = repository.getRequiredMethod("findByNameWithQuery", String)
         queryMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
 
+    }
+
+    void "test build repository with DTO projection with association"() {
+        when:
+        def repository = buildJpaRepository('test.MyInterface', """
+
+import io.micronaut.core.annotation.Introspected;
+import javax.persistence.*;
+import io.micronaut.data.repository.*;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.Join;
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Author, Long> {
+
+    List<AuthorDto> listAll();
+    
+    @Join(value = "books", type = Join.Type.LEFT)
+    List<AuthorDto> findAll();
+    
+}
+
+@Entity
+class Author {
+
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+
+    @ManyToMany
+    private Set<Book> books;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
+}
+
+@Entity
+class Book {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String title;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+}
+
+
+@Introspected
+class AuthorDto {
+    private String name;
+    private Set<Book> books;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public Set<Book> getBooks() {
+        return books;
+    }
+
+    public void setBooks(Set<Book> books) {
+        this.books = books;
+    }
+    
+}
+""")
+        then:
+        repository != null
+
+        def listAllMethod = repository.getRequiredMethod("listAll")
+        listAllMethod.synthesize(DataMethod).resultType().name.contains("AuthorDto")
+        listAllMethod.synthesize(Query).value() == "SELECT author_.name AS name FROM test.Author AS author_"
+        listAllMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
+
+        def findAllMethod = repository.getRequiredMethod("findAll")
+        findAllMethod.synthesize(DataMethod).resultType().name.contains("AuthorDto")
+        findAllMethod.synthesize(Query).value() == "SELECT author_.name AS name,author_books_ AS books FROM test.Author AS author_ LEFT JOIN author_.books author_books_"
+        findAllMethod.isTrue(DataMethod, DataMethod.META_MEMBER_DTO)
     }
 
 }

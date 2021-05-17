@@ -28,9 +28,13 @@ import io.micronaut.core.reflect.exception.InstantiationException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -66,8 +70,14 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                         if (argument.getType().isInstance(o)) {
                             args[i] = o;
                         } else {
+                            Object convertFrom;
+                            if (Collection.class.isAssignableFrom(argument.getType()) && !(o instanceof Collection)) {
+                                convertFrom = Collections.singleton(o);
+                            } else {
+                                convertFrom = o;
+                            }
                             ArgumentConversionContext<?> acc = ConversionContext.of(argument);
-                            args[i] = conversionService.convert(o, acc).orElseThrow(() -> {
+                            args[i] = conversionService.convert(convertFrom, acc).orElseThrow(() -> {
                                         Optional<ConversionError> lastError = acc.getLastError();
                                         return lastError.<RuntimeException>map(conversionError -> new ConversionErrorException(argument, conversionError))
                                                 .orElseGet(() ->
@@ -88,10 +98,23 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
                 }
 
                 Object v = read(object, property.getName());
-                if (property.getType().isInstance(v))  {
-                    property.set(instance, v);
-                } else {
-                    property.convertAndSet(instance, v);
+                if (v != null) {
+                    if (property.getType().isInstance(v)) {
+                        property.set(instance, v);
+                    } else if (Iterable.class.isAssignableFrom(property.getType())) {
+                        Object value = property.get(instance);
+                        if (value instanceof Collection) {
+                            ((Collection) value).add(v);
+                        } else if (value instanceof Iterable) {
+                            List list = new ArrayList(CollectionUtils.iterableToList((Iterable) value));
+                            list.add(v);
+                            property.convertAndSet(instance, list);
+                        } else {
+                            property.convertAndSet(instance, Collections.singleton(v));
+                        }
+                    } else {
+                        property.convertAndSet(instance, v);
+                    }
                 }
             }
 
