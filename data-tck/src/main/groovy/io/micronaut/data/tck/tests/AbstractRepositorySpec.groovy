@@ -1553,6 +1553,30 @@ abstract class AbstractRepositorySpec extends Specification {
             studentRepository.deleteAll()
     }
 
+    void "test update relation custom query"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findAllByTitleStartingWith("Along Came a Spider").first()
+            def author = authorRepository.searchByName("Stephen King")
+            bookRepository.updateAuthorCustom(book.id, author)
+            book = bookRepository.findById(book.id).get()
+        then:
+            book.author.id == book.author.id
+    }
+
+    void "test update relation"() {
+        given:
+            setupBooks()
+        when:
+            def book = bookRepository.findAllByTitleStartingWith("Along Came a Spider").first()
+            def author = authorRepository.searchByName("Stephen King")
+            bookRepository.updateAuthor(book.id, author)
+            book = bookRepository.findById(book.id).get()
+        then:
+            book.author.id == book.author.id
+    }
+
     private GregorianCalendar getYearMonthDay(Date dateCreated) {
         def cal = dateCreated.toCalendar()
         def localDate = LocalDate.of(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DAY_OF_MONTH))

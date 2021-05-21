@@ -61,6 +61,11 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
     }
 
     @Override
+    public int getOrder() {
+        return DEFAULT_POSITION - 150;
+    }
+
+    @Override
     public boolean isMethodMatch(MethodElement methodElement, MatchContext matchContext) {
         boolean isMatch = super.isMethodMatch(methodElement, matchContext) &&
                 methodElement.getParameters().length > 1 &&
@@ -113,17 +118,17 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
         ParameterElement versionMatchMethodParameter = null;
 
         QueryModel query = QueryModel.from(entity);
-        query.idEq(new QueryParameter(idParameter.getName()));
+        query.idEq(new QueryParameter(getParameterName(idParameter)));
         SourcePersistentProperty version = entity.getVersion();
         if (version != null) {
             versionMatchMethodParameter = parameters.stream().filter(p -> p.hasAnnotation(Version.class)).findFirst().orElse(null);
             if (versionMatchMethodParameter != null) {
-                query.versionEq(new QueryParameter(versionMatchMethodParameter.getName()));
+                query.versionEq(new QueryParameter(getParameterName(versionMatchMethodParameter)));
             }
         }
         List<String> propertiesToUpdate = new ArrayList<>(remainingParameters.size());
         for (ParameterElement parameter : remainingParameters) {
-            String name = parameter.stringValue(Parameter.class).orElse(parameter.getName());
+            String name = getParameterName(parameter);
             SourcePersistentProperty prop = entity.getPropertyByName(name);
             if (prop == null) {
                 matchContext.fail("Cannot update non-existent property: " + name);
@@ -157,14 +162,16 @@ public class UpdateMethod extends AbstractPatternBasedMethod {
                 propertiesToUpdate.stream().toArray(String[]::new)
         );
 
-        info.addParameterRole(TypeRole.ID,
-                idParameter.getName()
-        );
+        info.addParameterRole(TypeRole.ID, getParameterName(idParameter));
 
         if (versionMatchMethodParameter != null) {
             info.setOptimisticLock(true);
         }
         return info;
+    }
+
+    private String getParameterName(ParameterElement p) {
+        return p.stringValue(Parameter.class).orElse(p.getName());
     }
 
 }

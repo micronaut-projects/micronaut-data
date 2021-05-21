@@ -552,7 +552,10 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
     private DataType[] getDataTypes(MethodMatchContext methodMatchContext, ParameterElement[] parameters, List<QueryParameterBinding> finalParameterBinding) {
         Map<String, DataType> parametersTypes = Arrays.stream(parameters)
-                .map(p -> new AbstractMap.SimpleEntry<>(p.getName(), TypeUtils.resolveDataType(p).orElse(null)))
+                .map(p -> new AbstractMap.SimpleEntry<>(
+                        p.stringValue(Parameter.class).orElse(p.getName()),
+                        TypeUtils.resolveDataType(p).orElse(null))
+                )
                 .filter(e -> e.getValue() != null)
                 .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
 
@@ -697,7 +700,8 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private DataType resolvePropertyDataType(MethodMatchContext matchContext, ParameterElement[] parameters, String value) {
-        Map<String, ParameterElement> paramMap = Arrays.stream(parameters).collect(Collectors.toMap(Element::getName, p -> p));
+        Map<String, ParameterElement> paramMap = Arrays.stream(parameters)
+                .collect(Collectors.toMap(e -> e.stringValue(Parameter.class).orElse(e.getName()), p -> p));
         int dot = value.indexOf('.');
         if (dot > -1) {
             String val = value.substring(0, dot);

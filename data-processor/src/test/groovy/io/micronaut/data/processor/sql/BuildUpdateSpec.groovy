@@ -255,4 +255,40 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
             updateByLastUpdatedMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"]
             updateByLastUpdatedMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.TIMESTAMP, DataType.TIMESTAMP]
     }
+
+    void "test build update relation"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends CrudRepository<Book, Long> {
+
+    @Query("UPDATE Book SET author_id = :author WHERE id = :id")
+    long updateAuthorCustom(Long id, Author author);
+
+    long updateAuthor(@Id Long id, Author author);
+
+}
+""")
+        when:
+            def updateAuthorCustomMethod = repository.findPossibleMethods("updateAuthorCustom").findFirst().get()
+        then:
+            updateAuthorCustomMethod.stringValue(Query).get() == 'UPDATE Book SET author_id = :author WHERE id = :id'
+            updateAuthorCustomMethod.stringValue(Query, "rawQuery").get() == 'UPDATE Book SET author_id = ? WHERE id = ?'
+            updateAuthorCustomMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["1", "0"] as String[]
+            updateAuthorCustomMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.ENTITY, DataType.LONG]
+        when:
+            def updateAuthorMethod = repository.findPossibleMethods("updateAuthor").findFirst().get()
+        then:
+            updateAuthorMethod.stringValue(Query).get() == 'UPDATE `book` SET `author_id`=? WHERE (`id` = ?)'
+            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"] as String[]
+            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["1.id", ""] as String[]
+            updateAuthorMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.LONG, DataType.LONG]
+
+    }
 }

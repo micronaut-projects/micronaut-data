@@ -96,6 +96,11 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title = ANY (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableArrayAsStringArray(@Nullable @TypeDef(type = DataType.STRING_ARRAY) String[] arg0);
 
+    @Query("UPDATE book SET author_id = :author WHERE id = :id")
+    public abstract long updateAuthorCustom(@Parameter("id") Long id, @Parameter("author") Author author);
+
+    public abstract long updateAuthor(@Parameter("id") @Id Long id, @Parameter("author") Author author);
+
     public void saveAuthorBooks(List<AuthorBooksDto> authorBooksDtos) {
         List<Author> authors = new ArrayList<>();
         for (AuthorBooksDto dto: authorBooksDtos) {
