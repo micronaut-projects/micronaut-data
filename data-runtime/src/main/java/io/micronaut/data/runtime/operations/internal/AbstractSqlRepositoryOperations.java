@@ -444,8 +444,9 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             if (association.isForeignKey()) {
                 RuntimeAssociation<Object> inverseAssociation = (RuntimeAssociation) association.getInverseSide().orElse(null);
                 if (inverseAssociation != null) {
-                    BeanProperty<T, Object> property = (BeanProperty<T, Object>) inverseAssociation.getProperty();
-                    entity = setProperty(property, entity, newChild);
+                    //don't cast to BeanProperty<T..> here because its the inverse, so we want to set the entity onto the newChild
+                    BeanProperty property = inverseAssociation.getProperty();
+                    newChild = setProperty(property, newChild, entity);
                 }
             }
             if (prevChild != newChild) {
