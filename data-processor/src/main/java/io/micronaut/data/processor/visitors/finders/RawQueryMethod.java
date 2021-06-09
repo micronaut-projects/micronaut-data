@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -214,7 +215,9 @@ public class RawQueryMethod implements MethodCandidate {
         if (namedParameters) {
             while (matcher.find()) {
                 String name = matcher.group(3);
-                Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
+                Optional<ParameterElement> element = parameters.stream()
+                        .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
+                        .findFirst();
                 if (element.isPresent()) {
                     parameterBindings.add(QueryParameterBinding.of(name, name, DataType.OBJECT, new QueryParameter(name)));
                 } else if (persistentEntity != null) {
@@ -225,7 +228,7 @@ public class RawQueryMethod implements MethodCandidate {
                         parameterBindings.add(QueryParameterBinding.of(name, propertyPath.getPath(), propertyPath.getProperty().getDataType()));
                     }
                 } else {
-                    matchContext.fail("No method parameter found for named Query parameter : " + name);
+                    matchContext.fail("No method parameter found for named Query parameter: " + name);
                     return null;
                 }
             }
@@ -233,7 +236,9 @@ public class RawQueryMethod implements MethodCandidate {
             int index = 1;
             while (matcher.find()) {
                 String name = matcher.group(3);
-                Optional<ParameterElement> element = parameters.stream().filter(p -> p.getName().equals(name)).findFirst();
+                Optional<ParameterElement> element = parameters.stream()
+                        .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
+                        .findFirst();
                 if (element.isPresent()) {
                     parameterBindings.add(QueryParameterBinding.of(String.valueOf(index++), name, DataType.OBJECT, new QueryParameter(name)));
                 } else if (persistentEntity != null) {
@@ -244,7 +249,7 @@ public class RawQueryMethod implements MethodCandidate {
                         parameterBindings.add(QueryParameterBinding.of(String.valueOf(index++), propertyPath.getPath(), propertyPath.getProperty().getDataType()));
                     }
                 } else {
-                    matchContext.fail("No method parameter found for named Query parameter : " + name);
+                    matchContext.fail("No method parameter found for named Query parameter: " + name);
                     return null;
                 }
             }

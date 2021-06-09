@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate;
 
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Where;
@@ -67,7 +68,9 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     public abstract long updateCustomOnlyTitles(Collection<Book> books);
 
     @Query("UPDATE Book SET author = :author WHERE id = :id")
-    public abstract long updateAuthor(Long id, Author author);
+    public abstract long updateAuthorCustomQuery(Long id, Author author);
+
+    public abstract long updateAuthor(@Id Long id, Author author);
 
     @Query("SELECT b FROM Book b WHERE b.author = :author")
     public abstract List<Book> findByAuthor(Author author);
