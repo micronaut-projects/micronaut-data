@@ -3,7 +3,6 @@ package io.micronaut.data.jdbc.h2.embeddedAssociation
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.annotation.JoinTable
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -33,6 +32,22 @@ class EmbeddedAssociationJoinSpec extends Specification implements H2TestPropert
     @Shared
     @Inject
     OneMainEntityEmRepository oneMainEntityEmRepository = applicationContext.getBean(OneMainEntityEmRepository)
+
+    void 'test one-to-one update'() {
+        given:
+            ChildEntity child = new ChildEntity(name: "child")
+            MainEntity main = new MainEntity(name: "test")
+            main.child = child
+            child.main = main
+        when:
+            mainEntityRepository.save(main)
+            main.name = "diff-name"
+            child.name = "diff-child"
+            MainEntity updatedMain = mainEntityRepository.update(main)
+        then:
+            updatedMain.name == "diff-name"
+            updatedMain.child.name == "diff-child"
+    }
 
     void 'test many-to-many hierarchy'() {
         given:
@@ -155,6 +170,18 @@ class MainEntity {
     List<MainEntityAssociation> assoc
     @Relation(value = Relation.Kind.EMBEDDED)
     MainEmbedded em
+    @Relation(value = Relation.Kind.ONE_TO_ONE, mappedBy = "main", cascade = Relation.Cascade.ALL)
+    ChildEntity child
+    String name
+}
+
+@MappedEntity
+class ChildEntity {
+    @Id
+    @GeneratedValue
+    Long id
+    @Relation(Relation.Kind.ONE_TO_ONE)
+    MainEntity main
     String name
 }
 
