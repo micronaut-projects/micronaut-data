@@ -15,12 +15,19 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import io.micronaut.core.annotation.Introspected
+import io.micronaut.data.annotation.*
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.repository.CrudRepository
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.ShipmentId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
 import javax.inject.Inject
+import javax.persistence.Entity
+import javax.validation.constraints.NotNull
 
 @MicronautTest
 @H2DBProperties
@@ -28,6 +35,20 @@ class H2EmbeddedIdSpec extends Specification {
 
     @Inject
     ShipmentRepository repository
+
+    @Inject
+    ItemGroupRepository groupRepository
+
+    void "test empty one-to-many via embedded-id"() {
+        when:
+        ItemGroup itemGroup = new ItemGroup(1L)
+        itemGroup.setSecondId(2L)
+        groupRepository.save(itemGroup)
+        ItemGroup entity = groupRepository.findById(1L).get()
+
+        then:
+        entity.getItems().size() == 0
+    }
 
     void "test CRUD"() {
         when:
@@ -105,4 +126,96 @@ class H2EmbeddedIdSpec extends Specification {
         then:"The entities where deleted"
         repository.count() == 0
     }
+}
+
+@Entity
+class ItemGroup {
+
+    @Id
+    private Long id;
+
+    private Long secondId;
+
+    ItemGroup(Long id) {
+        this.id = id
+    }
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY)
+    private Set<Item> items = new HashSet<>();
+
+    Long getId() {
+        return id
+    }
+
+    void setId(Long id) {
+        this.id = id
+    }
+
+    Long getSecondId() {
+        return secondId
+    }
+
+    void setSecondId(Long secondId) {
+        this.secondId = secondId
+    }
+
+    Set<Item> getItems() {
+        return items;
+    }
+
+    void setItems(Set<Item> shipments) {
+        this.items = shipments;
+    }
+}
+
+@Entity
+class Item {
+
+    @EmbeddedId
+    private ItemGroupId id;
+
+    ItemGroupId getId() {
+        return id
+    }
+
+    void setId(ItemGroupId id) {
+        this.id = id
+    }
+}
+
+@Introspected
+@Embeddable
+public class ItemGroupId {
+
+    ItemGroupId(Long firstId, Long secondId) {
+        this.firstId = firstId
+        this.secondId = secondId
+    }
+    private Long firstId
+
+    private Long secondId
+
+    Long getFirstId() {
+        return firstId
+    }
+
+    void setFirstId(Long firstId) {
+        this.firstId = firstId
+    }
+
+    Long getSecondId() {
+        return secondId
+    }
+
+    void setSecondId(Long secondId) {
+        this.secondId = secondId
+    }
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ItemGroupRepository extends CrudRepository<ItemGroup, Long> {
+
+    @Override
+    @Join(value = "items", type = Join.Type.LEFT_FETCH)
+    public abstract Optional<ItemGroup> findById(@NotNull Long id);
 }
