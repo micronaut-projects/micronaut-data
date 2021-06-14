@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Internal;
@@ -431,7 +432,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             } else {
                                 v = readProperty(rs, ctx, prop);
                                 if (v == null) {
-                                    if (ctx.persistentEntity.findAnnotation(Embeddable.class).isPresent() || ctx.persistentEntity.findAnnotation(EmbeddedId.class).isPresent()) {
+                                    AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
+                                    if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
                                         return null;
                                     } else if (!prop.isOptional() && !nullableEmbedded) {
                                         throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
