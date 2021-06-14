@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.BiFunction;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Internal;
@@ -41,6 +42,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -429,7 +432,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                             } else {
                                 v = readProperty(rs, ctx, prop);
                                 if (v == null) {
-                                    if (!prop.isOptional() && !nullableEmbedded) {
+                                    AnnotationMetadata entityAnnotationMetadata = ctx.persistentEntity.getAnnotationMetadata();
+                                    if (entityAnnotationMetadata.hasAnnotation(Embeddable.class) || entityAnnotationMetadata.hasAnnotation(EmbeddedId.class)) {
+                                        return null;
+                                    } else if (!prop.isOptional() && !nullableEmbedded) {
                                         throw new DataAccessException("Null value read for non-null constructor argument [" + prop.getName() + "] of type: " + persistentEntity.getName());
                                     } else {
                                         args[i] = null;
