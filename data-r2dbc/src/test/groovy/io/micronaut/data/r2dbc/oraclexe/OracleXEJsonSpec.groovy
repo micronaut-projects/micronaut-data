@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.r2dbc.oraclexe
 
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 import spock.lang.IgnoreIf
@@ -24,5 +26,11 @@ class OracleXEJsonSpec extends AbstractJSONSpec implements OracleXETestPropertyP
     @Override
     SaleRepository getSaleRepository() {
         return applicationContext.getBean(OracleXESaleRepository)
+    }
+
+    @Memoized
+    @Override
+    SaleItemRepository getSaleItemRepository() {
+        return applicationContext.getBean(OracleXESaleItemRepository)
     }
 }

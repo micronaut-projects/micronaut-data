@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.postgres
 
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 
@@ -26,5 +27,11 @@ class PostgresJSONBSpec extends AbstractJSONSpec implements PostgresTestProperty
     @Override
     SaleRepository getSaleRepository() {
         return applicationContext.getBean(PostgresSaleRepository);
+    }
+
+    @Memoized
+    @Override
+    SaleItemRepository getSaleItemRepository() {
+        return applicationContext.getBean(PostgresSaleItemRepository)
     }
 }

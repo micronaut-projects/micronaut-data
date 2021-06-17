@@ -13,24 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2
+package io.micronaut.data.r2dbc.mysql;
 
-import groovy.transform.Memoized
-import io.micronaut.data.tck.repositories.SaleItemRepository
-import io.micronaut.data.tck.repositories.SaleRepository
-import io.micronaut.data.tck.tests.AbstractJSONSpec
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.tck.repositories.SaleItemRepository;
 
-class H2JSONSpec extends AbstractJSONSpec implements H2TestPropertyProvider {
-
-    @Memoized
-    @Override
-    SaleRepository getSaleRepository() {
-        return applicationContext.getBean(H2SaleRepository)
-    }
-
-    @Memoized
-    @Override
-    SaleItemRepository getSaleItemRepository() {
-        return applicationContext.getBean(H2SaleItemRepository)
-    }
+@R2dbcRepository(dialect = Dialect.MYSQL)
+public interface MySqlSaleItemRepository extends SaleItemRepository {
 }

@@ -15,26 +15,7 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Join;
 import io.micronaut.data.repository.CrudRepository;
-import io.micronaut.data.tck.entities.Sale;
-import io.micronaut.data.tck.entities.SaleDTO;
-import org.jetbrains.annotations.NotNull;
+import io.micronaut.data.tck.entities.SaleItem;
 
-import java.util.Map;
-import java.util.Optional;
-
-public interface SaleRepository extends CrudRepository<Sale, Long> {
-
-    SaleDTO getById(Long id);
-
-    @Override
-    @NotNull
-    @Join(value = "items", type = Join.Type.LEFT_FETCH)
-    Optional<Sale> findById(@NotNull Long id);
-
-    void updateData(@Id Long id, @Parameter("data") Map<String, String> data);
-
-}
+public interface SaleItemRepository extends CrudRepository<SaleItem, Long> {}

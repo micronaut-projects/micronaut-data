@@ -443,8 +443,19 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     }
                                 }
                             }
-                            Class<?> t = prop.getType();
-                            args[i] = t.isInstance(v) ? v : resultReader.convertRequired(v, t);
+
+                            if (prop.getType().isInstance(v)) {
+                                args[i] = v;
+                            } else if (prop.getDataType() == DataType.JSON && jsonCodec != null) {
+                                try {
+                                    args[i] = jsonCodec.decode(prop.getArgument(), v.toString());
+                                } catch (Exception e) {
+                                    // Fallback to reading and converting if decoding failed.
+                                    args[i] = resultReader.convertRequired(v, prop.getArgument());
+                                }
+                            } else {
+                                args[i] = resultReader.convertRequired(v, prop.getArgument());
+                            }
                         }
                     } else {
                         throw new DataAccessException("Constructor argument [" + constructorArguments[i].getName() + "] must have an associated getter.");

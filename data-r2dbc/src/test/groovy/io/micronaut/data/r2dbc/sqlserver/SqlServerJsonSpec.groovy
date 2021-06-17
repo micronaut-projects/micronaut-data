@@ -15,7 +15,8 @@
  */
 package io.micronaut.data.r2dbc.sqlserver
 
-
+import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 
@@ -23,5 +24,11 @@ class SqlServerJsonSpec extends AbstractJSONSpec implements SqlServerTestPropert
     @Override
     SaleRepository getSaleRepository() {
         return applicationContext.getBean(MSSaleRepository)
+    }
+
+    @Memoized
+    @Override
+    SaleItemRepository getSaleItemRepository() {
+        return applicationContext.getBean(MSSaleItemRepository)
     }
 }

@@ -20,13 +20,17 @@ import io.micronaut.data.annotation.*;
 import io.micronaut.data.model.DataType;
 
 import java.util.Map;
-import java.util.Set;
+import java.util.Objects;
 
 @MappedEntity
-public class Sale {
+public class SaleItem {
     @GeneratedValue
     @Id
     private Long id;
+
+    @Relation(value = Relation.Kind.MANY_TO_ONE, cascade = Relation.Cascade.ALL)
+    @MappedProperty("fk_sale_id")
+    private Sale sale;
 
     private String name;
 
@@ -34,18 +38,13 @@ public class Sale {
     @Nullable
     private Map<String, String> data;
 
-    @TypeDef(type = DataType.JSON)
-    @Nullable
-    private String extraData;
 
-    @TypeDef(type = DataType.JSON)
-    @Nullable
-    private Map<String, Integer> quantities;
-
-    @Relation(
-        value = Relation.Kind.ONE_TO_MANY,
-        mappedBy = "sale")
-    private Set<SaleItem> items;
+  public SaleItem(Long id, Sale sale, String name, @Nullable Map<String, String> data) {
+      this.id = id;
+      this.sale = sale;
+      this.name = name;
+      this.data = data;
+  }
 
     public Long getId() {
         return id;
@@ -53,6 +52,14 @@ public class Sale {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Sale getSale() {
+        return sale;
+    }
+
+    public void setSale(Sale sale) {
+        this.sale = sale;
     }
 
     public String getName() {
@@ -71,27 +78,29 @@ public class Sale {
         this.data = data;
     }
 
-    public Map<String, Integer> getQuantities() {
-        return quantities;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof SaleItem)) {
+            return false;
+        }
+
+        SaleItem saleItem = (SaleItem) o;
+
+        return Objects.equals(id, saleItem.id) &&
+               Objects.equals(name, saleItem.name) &&
+               Objects.equals(data, saleItem.data);
     }
 
-    public void setQuantities(Map<String, Integer> quantities) {
-        this.quantities = quantities;
+    @Override
+    public int hashCode() {
+       return Objects.hash(id, sale, name, data);
     }
 
-    public String getExtraData() {
-        return extraData;
-    }
-
-    public void setExtraData(String extraData) {
-        this.extraData = extraData;
-    }
-
-    public Set<SaleItem> getItems() {
-        return items;
-    }
-
-    public void setItems(Set<SaleItem> items) {
-        this.items = items;
+    @Override
+    public String toString() {
+        return "SaleItem{" + "id=" + id + ", name='" + name + "', data=" + data + '}';
     }
 }
