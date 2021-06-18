@@ -18,6 +18,8 @@ package io.micronaut.data.tck.tests
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.entities.Sale
+import io.micronaut.data.tck.entities.SaleItem
+import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -34,9 +36,11 @@ abstract class AbstractJSONSpec extends Specification {
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     abstract SaleRepository getSaleRepository();
+    abstract SaleItemRepository getSaleItemRepository();
 
     def cleanup() {
         saleRepository.deleteAll()
+        saleItemRepository.deleteAll()
     }
 
     void "test read and write json"() {
@@ -78,7 +82,7 @@ abstract class AbstractJSONSpec extends Specification {
         dto.data == [foo: 'changed']
 
         cleanup:
-        saleRepository.deleteAll()
+        cleanup()
     }
 
     void "test read and write with updated"() {
@@ -100,6 +104,9 @@ abstract class AbstractJSONSpec extends Specification {
         then:
             sale.name == 'test 1'
             sale.data == [foo:'changed']
+
+        cleanup:
+            cleanup()
     }
 
     void "test read write json with string field"() {
@@ -117,7 +124,43 @@ abstract class AbstractJSONSpec extends Specification {
         objectMapper.readTree(saleRepository.findById(sale.id).get().extraData) == objectMapper.readTree(extraData)
 
         cleanup:
-        saleRepository.deleteAll()
+        cleanup()
     }
 
+    void "test read and write json with child rows"() {
+        given:
+        def sale = saleRepository.save(new Sale(name: "test 1"))
+        def items = saleItemRepository.saveAll([
+            new SaleItem(null, sale, "item 1", [count: "1"]),
+            new SaleItem(null, sale, "item 2", [count: "2"]),
+            new SaleItem(null, sale, "item 3", [count: "3"]),
+        ])
+
+        when:
+        def saleById = saleRepository.findById(sale.id).orElse(null)
+
+        then:
+        saleById.name == 'test 1'
+        saleById.items == items.toSet()
+
+        cleanup:
+        cleanup()
+    }
+
+    void "test read and write json with constructor args"() {
+        given:
+        def sale = saleRepository.save(new Sale(name: "test 1"))
+        def item = saleItemRepository.save(new SaleItem(null, sale, "item 1", [count: "1"]))
+
+        when:
+        def itemById = saleItemRepository.findById(item.id).orElse(null)
+
+        then:
+        itemById.name == 'item 1'
+        itemById.data == [count: "1"]
+        itemById.sale.id == sale.id
+
+        cleanup:
+        cleanup()
+    }
 }

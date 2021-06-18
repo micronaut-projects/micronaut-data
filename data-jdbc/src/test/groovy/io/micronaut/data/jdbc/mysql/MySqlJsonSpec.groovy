@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.mysql
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 
@@ -27,4 +28,9 @@ class MySqlJsonSpec extends AbstractJSONSpec implements MySQLTestPropertyProvide
         return applicationContext.getBean(MySqlSaleRepository)
     }
 
+    @Memoized
+    @Override
+    SaleItemRepository getSaleItemRepository() {
+        return applicationContext.getBean(MySqlSaleItemRepository)
+    }
 }

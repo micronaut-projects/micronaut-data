@@ -62,6 +62,7 @@ dependencies {
 
     // h2
     testImplementation 'io.r2dbc:r2dbc-h2'
+    testRuntimeOnly "com.h2database:h2:1.4.200"
 
     // sqlserver
     testImplementation "org.testcontainers:mssqlserver"

@@ -16,6 +16,7 @@
 package io.micronaut.data.r2dbc.mysql
 
 import groovy.transform.Memoized
+import io.micronaut.data.tck.repositories.SaleItemRepository
 import io.micronaut.data.tck.repositories.SaleRepository
 import io.micronaut.data.tck.tests.AbstractJSONSpec
 
@@ -25,5 +26,11 @@ class MySqlDbJsonSpec extends AbstractJSONSpec implements MySqlTestPropertyProvi
     @Override
     SaleRepository getSaleRepository() {
         return applicationContext.getBean(MySqlSaleRepository)
+    }
+
+    @Memoized
+    @Override
+    SaleItemRepository getSaleItemRepository() {
+        return applicationContext.getBean(MySqlSaleItemRepository)
     }
 }
