@@ -116,7 +116,6 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
      * Default constructor.
      *
      * @param sessionFactory        The session factory
-     * @param sessionFactory        The session factory
      * @param transactionOperations The transaction operations
      * @param executorService       The executor service for I/O tasks to use
      * @param runtimeEntityRegistry The runtime entity registry
@@ -153,6 +152,15 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         return transactionOperations.executeRead(status -> {
             final Session session = sessionFactory.getCurrentSession();
             return session.byId(type).load(id);
+        });
+    }
+
+    @NonNull
+    @Override
+    public <T> T load(@NonNull Class<T> type, @NonNull Serializable id) {
+        return transactionOperations.executeRead(status -> {
+            final Session session = sessionFactory.getCurrentSession();
+            return session.load(type, id);
         });
     }
 

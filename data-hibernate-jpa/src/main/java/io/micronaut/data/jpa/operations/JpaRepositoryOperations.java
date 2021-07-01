@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.PrimaryRepositoryOperations;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import java.io.Serializable;
 
 /**
  * Operations interface specific to JPA.
@@ -39,6 +40,16 @@ public interface JpaRepositoryOperations extends PrimaryRepositoryOperations {
      */
     @NonNull
     EntityManagerFactory getEntityManagerFactory();
+
+    /**
+     * Create an uninitialized proxy.
+     * @param type the entity type
+     * @param id the entity id
+     * @param <T> the entity type
+     * @return an uninitialized proxy
+     */
+    @NonNull
+    <T> T load(@NonNull Class<T> type, @NonNull Serializable id);
 
     /**
      * Flush the current session.
