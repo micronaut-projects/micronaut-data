@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.test.annotation.TransactionMode;
 import io.micronaut.test.context.TestContext;
 import io.micronaut.test.context.TestExecutionListener;
 import io.micronaut.test.extensions.AbstractMicronautExtension;
@@ -44,20 +45,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Internal
 public class DefaultTestTransactionExecutionListener implements TestExecutionListener {
     private final SynchronousTransactionManager<Object> transactionManager;
+    private final TransactionMode transactionMode;
     private TransactionStatus<Object> tx;
     private final AtomicInteger counter = new AtomicInteger();
+    private final AtomicInteger setupCounter = new AtomicInteger();
     private final boolean rollback;
 
     /**
      * @param transactionManager Spring's {@code PlatformTransactionManager}
      * @param rollback {@code true} if the transaction should be rollback
+     * @param transactionMode  The transaction mode
      */
     protected DefaultTestTransactionExecutionListener(
             SynchronousTransactionManager<Object> transactionManager,
-            @Property(name = AbstractMicronautExtension.TEST_ROLLBACK, defaultValue = "true") boolean rollback) {
+            @Property(name = AbstractMicronautExtension.TEST_ROLLBACK, defaultValue = "true") boolean rollback,
+            @Property(name = AbstractMicronautExtension.TEST_TRANSACTION_MODE, defaultValue = "SEPARATE_TRANSACTIONS") TransactionMode transactionMode) {
 
         this.transactionManager = transactionManager;
         this.rollback = rollback;
+        this.transactionMode = transactionMode;
     }
 
     @Override
@@ -67,7 +73,11 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
 
     @Override
     public void afterSetupTest(TestContext testContext) {
-        afterTestExecution(false);
+        if (transactionMode.equals(TransactionMode.SINGLE_TRANSACTION)) {
+            setupCounter.getAndIncrement();
+        } else {
+            afterTestExecution(false);
+        }
     }
 
     @Override
@@ -82,6 +92,9 @@ public class DefaultTestTransactionExecutionListener implements TestExecutionLis
 
     @Override
     public void afterTestExecution(TestContext testContext) {
+        if (transactionMode.equals(TransactionMode.SINGLE_TRANSACTION)) {
+            counter.addAndGet(-setupCounter.getAndSet(0));
+        }
         afterTestExecution(this.rollback);
     }
 
