@@ -25,6 +25,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.annotation.Inherited;
 
 /**
  * Internal annotation used to configure execution handling for {@link io.micronaut.data.intercept.DataIntroductionAdvice}.
@@ -35,6 +36,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 @Internal
+@Inherited
 public @interface DataMethod {
 
     /**

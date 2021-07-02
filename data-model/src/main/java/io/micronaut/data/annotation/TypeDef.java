@@ -32,6 +32,7 @@ import java.lang.annotation.*;
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
 @Documented
 @Repeatable(TypeDefinitions.class)
+@Inherited
 public @interface TypeDef {
     /**
      * The data type.

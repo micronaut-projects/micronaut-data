@@ -28,6 +28,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
+@Inherited
 public @interface TypeDefinitions {
 
     /**

@@ -28,6 +28,7 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 @Documented
 @Repeatable(QueryHints.class)
+@Inherited
 public @interface QueryHint {
     /**
      * @return Name of the hint.

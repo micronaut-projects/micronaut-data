@@ -33,6 +33,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
 @Documented
+@Inherited
 public @interface TypeRole {
     /**
      * The parameter that is used for pagination.
