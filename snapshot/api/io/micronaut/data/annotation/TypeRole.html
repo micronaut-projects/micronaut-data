@@ -94,6 +94,7 @@
 <pre>@Retention(value=RUNTIME)
  @Target(value={METHOD,FIELD,ANNOTATION_TYPE})
  @Documented
+ @Inherited
 public @interface <span class="memberNameLabel">TypeRole</span></pre>
 <div class="block">A type role indicates a method element in a repository that plays a role in query execution and should
  not be factored into query calculation but instead made available at runtime using the specified role name.
