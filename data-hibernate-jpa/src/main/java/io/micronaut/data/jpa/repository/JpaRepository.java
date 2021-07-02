@@ -19,12 +19,14 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.repository.intercept.FlushInterceptor;
+import io.micronaut.data.jpa.repository.intercept.LoadInterceptor;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.PageableRepository;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -62,4 +64,13 @@ public interface JpaRepository<E, ID> extends CrudRepository<E, ID>, PageableRep
      */
     @DataMethod(interceptor = FlushInterceptor.class)
     void flush();
+
+    /**
+     * Adds a load method.
+     * @param id the entity ID
+     * @param <S> the entity type
+     * @return An uninitialized proxy
+     */
+    @DataMethod(interceptor = LoadInterceptor.class)
+    <S extends E> S load(@NonNull @NotNull Serializable id);
 }

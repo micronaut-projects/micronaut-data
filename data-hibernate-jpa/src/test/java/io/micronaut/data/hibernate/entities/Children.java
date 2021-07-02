@@ -29,6 +29,8 @@ public class Children {
     @Nullable
     private String name;
 
+    public Children() { }
+
     public Children(ChildrenId id) {
         this.id = id;
     }
