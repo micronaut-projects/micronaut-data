@@ -5178,6 +5178,8 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, Void&gt;)</a></span> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/FlushInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">FlushInterceptor</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, T&gt;)</a></span> - Method in class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">LoadInterceptor</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/async/DefaultCountAsyncInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, CompletionStage&lt;Long&gt;&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.async.<a href="io/micronaut/data/runtime/intercept/async/DefaultCountAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultCountAsyncInterceptor</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/runtime/intercept/async/DefaultDeleteAllAsyncInterceptor.html#intercept-io.micronaut.data.intercept.RepositoryMethodKey-io.micronaut.aop.MethodInvocationContext-">intercept(RepositoryMethodKey, MethodInvocationContext&lt;T, CompletionStage&lt;Object&gt;&gt;)</a></span> - Method in class io.micronaut.data.runtime.intercept.async.<a href="io/micronaut/data/runtime/intercept/async/DefaultDeleteAllAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultDeleteAllAsyncInterceptor</a></dt>
@@ -6474,6 +6476,24 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/processor/visitors/finders/slice/ListSliceMethod.html#ListSliceMethod--">ListSliceMethod()</a></span> - Constructor for class io.micronaut.data.processor.visitors.finders.slice.<a href="io/micronaut/data/processor/visitors/finders/slice/ListSliceMethod.html" title="class in io.micronaut.data.processor.visitors.finders.slice">ListSliceMethod</a></dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#load-java.lang.Class-java.io.Serializable-">load(Class&lt;T&gt;, Serializable)</a></span> - Method in class io.micronaut.data.hibernate.operations.<a href="io/micronaut/data/hibernate/operations/HibernateJpaOperations.html" title="class in io.micronaut.data.hibernate.operations">HibernateJpaOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#load-java.lang.Class-java.io.Serializable-">load(Class&lt;T&gt;, Serializable)</a></span> - Method in interface io.micronaut.data.jpa.operations.<a href="io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></dt>
+<dd>
+<div class="block">Create an uninitialized proxy.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/repository/JpaRepository.html#load-java.io.Serializable-">load(Serializable)</a></span> - Method in interface io.micronaut.data.jpa.repository.<a href="io/micronaut/data/jpa/repository/JpaRepository.html" title="interface in io.micronaut.data.jpa.repository">JpaRepository</a></dt>
+<dd>
+<div class="block">Adds a load method.</div>
+</dd>
+<dt><a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept"><span class="typeNameLink">LoadInterceptor</span></a>&lt;<a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html" title="type parameter in LoadInterceptor">T</a>&gt; - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
+<dd>
+<div class="block">Interceptor for Load.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html#LoadInterceptor-io.micronaut.data.operations.RepositoryOperations-">LoadInterceptor(RepositoryOperations)</a></span> - Constructor for class io.micronaut.data.jpa.repository.intercept.<a href="io/micronaut/data/jpa/repository/intercept/LoadInterceptor.html" title="class in io.micronaut.data.jpa.repository.intercept">LoadInterceptor</a></dt>
+<dd>
+<div class="block">Default constructor.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html#logger">logger</a></span> - Variable in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractSynchronousTransactionManager.html" title="class in io.micronaut.transaction.support">AbstractSynchronousTransactionManager</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html#LOGICAL_AND">LOGICAL_AND</a></span> - Static variable in class io.micronaut.data.model.query.builder.<a href="io/micronaut/data/model/query/builder/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder">AbstractSqlLikeQueryBuilder</a></dt>

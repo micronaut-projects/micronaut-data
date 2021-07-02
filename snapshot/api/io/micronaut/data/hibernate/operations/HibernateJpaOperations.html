@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -263,27 +263,34 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 </tr>
 <tr id="i17" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#load-java.lang.Class-java.io.Serializable-">load</a></span>(java.lang.Class&lt;T&gt;&nbsp;type,
+    java.io.Serializable&nbsp;id)</code>
+<div class="block">Create an uninitialized proxy.</div>
+</td>
+</tr>
+<tr id="i18" class="altColor">
+<td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#reactive--">reactive</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
@@ -334,7 +341,6 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>sessionFactory</code> - The session factory</dd>
 <dd><code>sessionFactory</code> - The session factory</dd>
 <dd><code>transactionOperations</code> - The transaction operations</dd>
 <dd><code>executorService</code> - The executor service for I/O tasks to use</dd>
@@ -394,6 +400,32 @@ public&nbsp;&lt;T&gt;&nbsp;T&nbsp;findOne(@NonNull
 <dd><code>id</code> - The id</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>A result or null</dd>
+</dl>
+</li>
+</ul>
+<a name="load-java.lang.Class-java.io.Serializable-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>load</h4>
+<pre>@NonNull
+public&nbsp;&lt;T&gt;&nbsp;T&nbsp;load(@NonNull
+                           java.lang.Class&lt;T&gt;&nbsp;type,
+                           @NonNull
+                           java.io.Serializable&nbsp;id)</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#load-java.lang.Class-java.io.Serializable-">JpaRepositoryOperations</a></code></span></div>
+<div class="block">Create an uninitialized proxy.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositoryOperations.html#load-java.lang.Class-java.io.Serializable-">load</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a></code></dd>
+<dt><span class="paramLabel">Type Parameters:</span></dt>
+<dd><code>T</code> - the entity type</dd>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>type</code> - the entity type</dd>
+<dd><code>id</code> - the entity id</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>an uninitialized proxy</dd>
 </dl>
 </li>
 </ul>
