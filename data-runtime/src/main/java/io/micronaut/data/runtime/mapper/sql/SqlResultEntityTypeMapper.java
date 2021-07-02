@@ -355,10 +355,12 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         if (instance != null && (ctx.association == null || ctx.jp != null)) {
             if (parent != null && ctx.association != null && ctx.association.isBidirectional()) {
                 RuntimeAssociation inverseAssociation = (RuntimeAssociation) ctx.association.getInverseSide().get();
-                BeanProperty inverseProperty = inverseAssociation.getProperty();
-                Object inverseInstance = inverseProperty.get(instance);
-                if (inverseInstance != parent) {
-                    instance = setProperty(inverseProperty, instance, parent);
+                if (inverseAssociation.getKind().isSingleEnded()) {
+                    BeanProperty inverseProperty = inverseAssociation.getProperty();
+                    Object inverseInstance = inverseProperty.get(instance);
+                    if (inverseInstance != parent) {
+                        instance = setProperty(inverseProperty, instance, parent);
+                    }
                 }
             }
             triggerPostLoad(ctx.persistentEntity, instance);
