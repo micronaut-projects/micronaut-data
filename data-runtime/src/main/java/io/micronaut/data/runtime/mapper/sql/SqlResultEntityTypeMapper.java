@@ -66,7 +66,7 @@ import javax.validation.constraints.NotNull;
  * using column naming conventions mapped by the entity.
  *
  * @param <RS> The result set type
- * @param <R> The result type
+ * @param <R>  The result type
  */
 @Internal
 public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS, R> {
@@ -81,10 +81,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     /**
      * Default constructor.
-     * @param prefix The prefix to startup from.
-     * @param entity The entity
+     *
+     * @param prefix       The prefix to startup from.
+     * @param entity       The entity
      * @param resultReader The result reader
-     * @param jsonCodec The JSON codec
+     * @param jsonCodec    The JSON codec
      */
     public SqlResultEntityTypeMapper(
             String prefix,
@@ -96,10 +97,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     /**
      * Constructor used to customize the join paths.
-     * @param entity The entity
+     *
+     * @param entity       The entity
      * @param resultReader The result reader
-     * @param joinPaths The join paths
-     * @param jsonCodec The JSON codec
+     * @param joinPaths    The join paths
+     * @param jsonCodec    The JSON codec
      */
     public SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
@@ -111,10 +113,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     /**
      * Constructor used to customize the join paths.
-     * @param entity The entity
+     *
+     * @param entity       The entity
      * @param resultReader The result reader
-     * @param joinPaths The join paths
-     * @param jsonCodec The JSON codec
+     * @param joinPaths    The join paths
+     * @param jsonCodec    The JSON codec
      * @param loadListener The event listener
      */
     public SqlResultEntityTypeMapper(
@@ -128,9 +131,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
 
     /**
      * Constructor used to customize the join paths.
-     * @param entity The entity
+     *
+     * @param entity       The entity
      * @param resultReader The result reader
-     * @param joinPaths The join paths
+     * @param joinPaths    The join paths
      */
     private SqlResultEntityTypeMapper(
             @NonNull RuntimePersistentEntity<R> entity,
@@ -159,14 +163,16 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     /**
      * @return The entity to be materialized
      */
-    public @NonNull RuntimePersistentEntity<R> getEntity() {
+    public @NonNull
+    RuntimePersistentEntity<R> getEntity() {
         return entity;
     }
 
     /**
      * @return The result reader instance.
      */
-    public @NonNull ResultReader<RS, String> getResultReader() {
+    public @NonNull
+    ResultReader<RS, String> getResultReader() {
         return resultReader;
     }
 
@@ -250,7 +256,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     return null;
                 }
                 if (!joinPaths.isEmpty()) {
-                    entityInstance = (R) setChildrenAndTriggerPostLoad(entityInstance, ctx);
+                    entityInstance = (R) setChildrenAndTriggerPostLoad(entityInstance, ctx, null);
                 } else {
                     return triggerPostLoad(entity, entityInstance);
                 }
@@ -290,7 +296,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 List<R> values = new ArrayList<>(processed.size());
                 for (Map.Entry<Object, MappingContext<R>> e : processed.entrySet()) {
                     MappingContext<R> ctx = e.getValue();
-                    R entityInstance = (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx);
+                    R entityInstance = (R) setChildrenAndTriggerPostLoad(ctx.entity, ctx, null);
                     values.add(entityInstance);
                 }
                 return values;
@@ -321,11 +327,11 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         }
     }
 
-    private Object setChildrenAndTriggerPostLoad(Object instance, MappingContext<?> ctx) {
+    private Object setChildrenAndTriggerPostLoad(Object instance, MappingContext<?> ctx, Object parent) {
         if (ctx.manyAssociations != null) {
             List<Object> values = new ArrayList<>(ctx.manyAssociations.size());
             for (MappingContext associationCtx : ctx.manyAssociations.values()) {
-                values.add(setChildrenAndTriggerPostLoad(associationCtx.entity, associationCtx));
+                values.add(setChildrenAndTriggerPostLoad(associationCtx.entity, associationCtx, parent));
             }
             return values;
         } else if (ctx.associations != null) {
@@ -335,18 +341,26 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                 BeanProperty beanProperty = runtimeAssociation.getProperty();
                 if (runtimeAssociation.getKind().isSingleEnded() && (associationCtx.manyAssociations == null || associationCtx.manyAssociations.isEmpty())) {
                     Object value = beanProperty.get(instance);
-                    Object newValue = setChildrenAndTriggerPostLoad(value, associationCtx);
+                    Object newValue = setChildrenAndTriggerPostLoad(value, associationCtx, instance);
                     if (newValue != value) {
                         instance = setProperty(beanProperty, instance, newValue);
                     }
                 } else {
-                    Object newValue = setChildrenAndTriggerPostLoad(null, associationCtx);
+                    Object newValue = setChildrenAndTriggerPostLoad(null, associationCtx, instance);
                     newValue = resultReader.convertRequired(newValue == null ? new ArrayList<>() : newValue, beanProperty.getType());
                     instance = setProperty(beanProperty, instance, newValue);
                 }
             }
         }
         if (instance != null && (ctx.association == null || ctx.jp != null)) {
+            if (parent != null && ctx.association != null && ctx.association.isBidirectional()) {
+                RuntimeAssociation inverseAssociation = (RuntimeAssociation) ctx.association.getInverseSide().get();
+                BeanProperty inverseProperty = inverseAssociation.getProperty();
+                Object inverseInstance = inverseProperty.get(instance);
+                if (inverseInstance != parent) {
+                    instance = setProperty(inverseProperty, instance, parent);
+                }
+            }
             triggerPostLoad(ctx.persistentEntity, instance);
         }
         return instance;
@@ -565,7 +579,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         return finalEntity;
     }
 
-    private @Nullable <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
+    private @Nullable
+    <K> Object readEntityId(RS rs, MappingContext<K> ctx) {
         RuntimePersistentProperty<K> identity = ctx.persistentEntity.getIdentity();
         if (identity == null) {
             return null;
@@ -833,7 +848,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
      * The pushing mapper helper interface.
      *
      * @param <RS> The row type
-     * @param <R> The result type
+     * @param <R>  The result type
      */
     public interface PushingMapper<RS, R> {
 
