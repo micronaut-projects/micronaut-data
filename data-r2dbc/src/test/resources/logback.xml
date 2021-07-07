@@ -13,4 +13,5 @@
     </root>
     <logger name="io.micronaut.data.query" level="trace" />
     <logger name="io.micronaut.data.r2dbc" level="trace" />
+    <logger name="io.r2dbc.postgresql.QUERY" level="debug" />
 </configuration>

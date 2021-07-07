@@ -12,6 +12,6 @@ trait OracleXETestPropertyProvider implements SharedDatabaseContainerTestPropert
 
     @Override
     int sharedSpecsCount() {
-        return 6
+        return 7
     }
 }

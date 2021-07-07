@@ -4,6 +4,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.*
+import org.testcontainers.utility.DockerImageName
 
 trait DatabaseTestPropertyProvider implements TestPropertyProvider {
 
@@ -36,16 +37,16 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
     String getR2dbUrlSuffix(String driverName, JdbcDatabaseContainer container) {
         switch (driverName) {
             case "postgresql":
-                return "localhost:${container.getFirstMappedPort()}/${container.getDatabaseName()}"
+                return "${container.getHost()}:${container.getFirstMappedPort()}/${container.getDatabaseName()}"
             case "h2":
                 return "/testdb"
             case "sqlserver":
-                return "localhost:${container.getFirstMappedPort()}"
+                return "${container.getHost()}:${container.getFirstMappedPort()}"
             case "oracle":
-                return "localhost:${container.getFirstMappedPort()}/xe"
+                return "${container.getHost()}:${container.getFirstMappedPort()}/xe"
             case "mariadb":
             case "mysql":
-                return "${container.getUsername()}:${container.getPassword()}@localhost:${container.getFirstMappedPort()}/${container.getDatabaseName()}"
+                return "${container.getUsername()}:${container.getPassword()}@${container.getHost()}:${container.getFirstMappedPort()}/${container.getDatabaseName()}"
         }
     }
 
@@ -58,11 +59,13 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
             case "sqlserver":
                 return new MSSQLServerContainer<>()
             case "oracle":
-                return new OracleContainer("registry.gitlab.com/micronaut-projects/micronaut-graal-tests/oracle-database:18.4.0-xe")
+                return new OracleContainer(DockerImageName.parse("gvenzl/oracle-xe:18"))
+                        .withEnv("ORACLE_PASSWORD", "password")
+                        .withPassword("password")
             case "mariadb":
                 return new MariaDBContainer<>("mariadb:10.5")
             case "mysql":
-                return new MySQLContainer<>("mysql:8.0.17")
+                return new MySQLContainer<>(DockerImageName.parse("mysql/mysql-server:8.0").asCompatibleSubstituteFor("mysql"))
         }
     }
 
