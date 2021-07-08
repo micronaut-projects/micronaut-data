@@ -78,6 +78,7 @@ dependencies {
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     exclude "**/r2dbc/oraclexe/**"
+    exclude "**/r2dbc/postgres/**"
 }
 
 micronautBuild {
