@@ -3,8 +3,12 @@ package io.micronaut.data.r2dbc
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.support.TestPropertyProvider
+import io.r2dbc.spi.ConnectionFactoryOptions
 import org.testcontainers.containers.*
 import org.testcontainers.utility.DockerImageName
+
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 
 trait DatabaseTestPropertyProvider implements TestPropertyProvider {
 
@@ -53,7 +57,7 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
     JdbcDatabaseContainer getDatabaseContainer(String driverName) {
         switch (driverName) {
             case "postgresql":
-                return new PostgreSQLContainer<>("postgres:10")
+                return new PostgreSQLContainer<>("postgres:10.17")
             case "h2":
                 return null
             case "sqlserver":
@@ -84,11 +88,14 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
             ]
         }
         def map = [
-                "r2dbc.datasources.default.username"       : container == null ? "" : container.getUsername(),
-                "r2dbc.datasources.default.password"       : container == null ? "" : container.getPassword(),
-                "r2dbc.datasources.default.url"            : "r2dbc:${driverName}://${getR2dbUrlSuffix(driverName, container)}",
-                "r2dbc.datasources.default.schema-generate": schemaGenerate(),
-                "r2dbc.datasources.default.dialect"        : dialect
+                "r2dbc.datasources.default.username"                 : container == null ? "" : container.getUsername(),
+                "r2dbc.datasources.default.password"                 : container == null ? "" : container.getPassword(),
+                "r2dbc.datasources.default.url"                      : "r2dbc:${driverName}://${getR2dbUrlSuffix(driverName, container)}",
+                "r2dbc.datasources.default.schema-generate"          : schemaGenerate(),
+                "r2dbc.datasources.default.dialect"                  : dialect,
+                "r2dbc.datasources.default.options.connectTimeout"   : Duration.ofSeconds(10).toString(),
+                "r2dbc.datasources.default.options.statementTimeout" : Duration.ofSeconds(10).toString(),
+                "r2dbc.datasources.default.options.statement_timeout": Duration.ofSeconds(10).toString(),
         ] as Map<String, String>
         if (usePool()) {
             String poolProtocol
