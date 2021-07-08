@@ -21,6 +21,6 @@ trait MariaDbTestPropertyProvider implements SharedDatabaseContainerTestProperty
 
     @Override
     int sharedSpecsCount() {
-        return 6
+        return 9
     }
 }

@@ -12,13 +12,8 @@ trait SqlServerTestPropertyProvider implements SharedDatabaseContainerTestProper
 
     @Override
     int sharedSpecsCount() {
-        return 6
+        return 9
     }
 
-    @Override
-    boolean usePool() {
-        // SQL server doesn't work without pool
-        return true
-    }
 }
 

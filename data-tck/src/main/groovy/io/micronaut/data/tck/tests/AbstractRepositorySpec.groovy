@@ -1236,6 +1236,11 @@ abstract class AbstractRepositorySpec extends Specification {
 
         then:
         userRoleRepository.count() == 2
+
+        cleanup:
+        userRepository.deleteAll()
+        roleRepository.deleteAll()
+        userRoleRepository.deleteAll()
     }
 
     void "test finding authors by book"() {

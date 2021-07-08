@@ -142,12 +142,6 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
     }
 
     @Override
-    boolean skipOptimisticLockingTest() {
-        // https://github.com/oracle/oracle-r2dbc/issues/11
-        return true
-    }
-
-    @Override
     protected boolean skipCustomSchemaAndCatalogTest() {
         // ORA-04043: object "FORD"."CARS" does not exist
         return true

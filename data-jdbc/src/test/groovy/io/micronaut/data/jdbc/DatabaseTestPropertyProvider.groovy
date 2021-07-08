@@ -4,6 +4,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.test.support.TestPropertyProvider
 import org.testcontainers.containers.*
+import org.testcontainers.utility.DockerImageName
 
 trait DatabaseTestPropertyProvider implements TestPropertyProvider {
 
@@ -42,7 +43,9 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
             case "sqlserver":
                 return new MSSQLServerContainer<>()
             case "oracle":
-                return new OracleContainer("registry.gitlab.com/micronaut-projects/micronaut-graal-tests/oracle-database:18.4.0-xe")
+                return new OracleContainer(DockerImageName.parse("gvenzl/oracle-xe:18"))
+                        .withEnv("ORACLE_PASSWORD", "password")
+                        .withPassword("password")
             case "mariadb":
                 return new MariaDBContainer<>("mariadb:10.5")
             case "mysql":
