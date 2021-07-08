@@ -98,6 +98,10 @@ var activeTableTab = "activeTableTab";
 <ul class="blockList">
 <li class="blockList">
 <dl>
+<dt>All Superinterfaces:</dt>
+<dd>io.micronaut.context.ApplicationContextProvider</dd>
+</dl>
+<dl>
 <dt>All Known Subinterfaces:</dt>
 <dd><a href="../../../../io/micronaut/data/operations/async/AsyncCapableRepository.html" title="interface in io.micronaut.data.operations.async">AsyncCapableRepository</a>, <a href="../../../../io/micronaut/data/r2dbc/operations/BlockingReactorRepositoryOperations.html" title="interface in io.micronaut.data.r2dbc.operations">BlockingReactorRepositoryOperations</a>, <a href="../../../../io/micronaut/data/jdbc/operations/JdbcRepositoryOperations.html" title="interface in io.micronaut.data.jdbc.operations">JdbcRepositoryOperations</a>, <a href="../../../../io/micronaut/data/jpa/operations/JpaRepositoryOperations.html" title="interface in io.micronaut.data.jpa.operations">JpaRepositoryOperations</a>, <a href="../../../../io/micronaut/data/operations/PrimaryRepositoryOperations.html" title="interface in io.micronaut.data.operations">PrimaryRepositoryOperations</a>, <a href="../../../../io/micronaut/data/r2dbc/operations/R2dbcRepositoryOperations.html" title="interface in io.micronaut.data.r2dbc.operations">R2dbcRepositoryOperations</a>, <a href="../../../../io/micronaut/data/operations/reactive/ReactiveCapableRepository.html" title="interface in io.micronaut.data.operations.reactive">ReactiveCapableRepository</a>, <a href="../../../../io/micronaut/data/r2dbc/operations/ReactorReactiveCapableRepository.html" title="interface in io.micronaut.data.r2dbc.operations">ReactorReactiveCapableRepository</a></dd>
 </dl>
@@ -107,7 +111,8 @@ var activeTableTab = "activeTableTab";
 </dl>
 <hr>
 <br>
-<pre>public interface <span class="typeNameLabel">RepositoryOperations</span></pre>
+<pre>public interface <span class="typeNameLabel">RepositoryOperations</span>
+extends io.micronaut.context.ApplicationContextProvider</pre>
 <div class="block">Common interface for repository implementations to implement.</div>
 <dl>
 <dt><span class="simpleTagLabel">Since:</span></dt>
@@ -249,6 +254,13 @@ var activeTableTab = "activeTableTab";
 </td>
 </tr>
 </table>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.context.ApplicationContextProvider">
+<!--   -->
+</a>
+<h3>Methods inherited from interface&nbsp;io.micronaut.context.ApplicationContextProvider</h3>
+<code>getApplicationContext</code></li>
+</ul>
 </li>
 </ul>
 </li>
