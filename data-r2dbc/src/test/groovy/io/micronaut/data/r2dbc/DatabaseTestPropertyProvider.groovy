@@ -41,7 +41,7 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
     String getR2dbUrlSuffix(String driverName, JdbcDatabaseContainer container) {
         switch (driverName) {
             case "postgresql":
-                return "${container.getHost()}:${container.getFirstMappedPort()}/${container.getDatabaseName()}"
+                return "${container.getHost()}:${container.getFirstMappedPort()}/${container.getDatabaseName()}?options=statement_timeout=5s"
             case "h2":
                 return "/testdb"
             case "sqlserver":
