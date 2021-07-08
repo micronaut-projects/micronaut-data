@@ -45,4 +45,6 @@ public interface UserRoleRepository extends GenericRepository<UserRole, UserRole
 
     @Join("role")
     Iterable<Role> findRoleByUser(User user);
+
+    void deleteAll();
 }
