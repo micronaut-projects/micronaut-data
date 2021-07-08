@@ -34,7 +34,7 @@ import java.lang.annotation.Inherited;
  * @since 1.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Internal
 @Inherited
 public @interface DataMethod {

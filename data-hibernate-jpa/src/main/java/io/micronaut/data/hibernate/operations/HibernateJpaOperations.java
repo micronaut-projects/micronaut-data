@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.hibernate.operations;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -130,6 +131,11 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         this.sessionFactory = sessionFactory;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
+    }
+
+    @Override
+    public ApplicationContext getApplicationContext() {
+        return runtimeEntityRegistry.getApplicationContext();
     }
 
     @NonNull

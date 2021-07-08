@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.operations;
 
+import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.BeanContext;

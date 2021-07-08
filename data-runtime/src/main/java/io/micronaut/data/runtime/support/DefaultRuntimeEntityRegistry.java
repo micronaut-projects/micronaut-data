@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.runtime.support;
 
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanRegistration;
 import io.micronaut.core.annotation.Internal;
@@ -41,19 +43,22 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry {
+public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, ApplicationContextProvider {
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class<? extends Annotation>, PropertyAutoPopulator<?>> propertyPopulators;
     private final EntityEventRegistry eventRegistry;
+    private final ApplicationContext applicationContext;
 
     /**
      * Default constructor.
      * @param eventRegistry The event registry
      * @param propertyPopulators The property populators
+     * @param applicationContext The application context
      */
     public DefaultRuntimeEntityRegistry(
             EntityEventRegistry eventRegistry,
-            Collection<BeanRegistration<PropertyAutoPopulator<?>>> propertyPopulators) {
+            Collection<BeanRegistration<PropertyAutoPopulator<?>>> propertyPopulators,
+            ApplicationContext applicationContext) {
         this.eventRegistry = eventRegistry;
         this.propertyPopulators = new HashMap<>(propertyPopulators.size());
         for (BeanRegistration<PropertyAutoPopulator<?>> propertyPopulator : propertyPopulators) {
@@ -69,6 +74,7 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry {
                 }
             }
         }
+        this.applicationContext = applicationContext;
     }
 
     @Override
@@ -156,5 +162,10 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry {
                 return hasPostPersistEventListeners;
             }
         };
+    }
+
+    @Override
+    public ApplicationContext getApplicationContext() {
+        return applicationContext;
     }
 }

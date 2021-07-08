@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.runtime.operations.internal;
 
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -109,7 +111,7 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings("FileLength")
 @Internal
-public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception> {
+public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception> implements ApplicationContextProvider {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
     @SuppressWarnings("WeakerAccess")
@@ -160,9 +162,15 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 dateTimeProvider,
                 new DefaultRuntimeEntityRegistry(
                         new EntityEventRegistry(beanContext),
-                        (Collection) beanContext.getBeanRegistrations(PropertyAutoPopulator.class)),
+                        (Collection) beanContext.getBeanRegistrations(PropertyAutoPopulator.class),
+                        (ApplicationContext) beanContext),
                 beanContext
         );
+    }
+
+    @Override
+    public ApplicationContext getApplicationContext() {
+        return runtimeEntityRegistry.getApplicationContext();
     }
 
     /**
