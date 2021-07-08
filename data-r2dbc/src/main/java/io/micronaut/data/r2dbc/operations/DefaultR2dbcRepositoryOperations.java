@@ -503,6 +503,18 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         }
     }
 
+    private static <R> Mono<R> toSingleResult(Flux<R> flux) {
+        return flux.collectList().flatMap(result -> {
+            if (result.isEmpty()) {
+                return Mono.empty();
+            }
+            if (result.size() > 1) {
+                return Mono.error(new NonUniqueResultException());
+            }
+            return Mono.just(result.get(0));
+        });
+    }
+
     /**
      * Represents the current reactive transaction status.
      */
@@ -541,18 +553,6 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         public boolean isCompleted() {
             return completed;
         }
-    }
-
-    private static <R> Mono<R> toSingleResult(Flux<R> flux) {
-        return flux.collectList().flatMap(result -> {
-            if (result.isEmpty()) {
-                return Mono.empty();
-            }
-            if (result.size() > 1) {
-                return Mono.error(new NonUniqueResultException());
-            }
-            return Mono.just(result.get(0));
-        });
     }
 
     /**

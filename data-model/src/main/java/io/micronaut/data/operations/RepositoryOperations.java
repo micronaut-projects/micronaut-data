@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.operations;
 
+import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Page;
@@ -34,7 +35,7 @@ import java.util.stream.Stream;
  * @author graemerocher
  * @since 1.0
  */
-public interface RepositoryOperations {
+public interface RepositoryOperations extends ApplicationContextProvider {
 
     /**
      * Retrieves the entity for the given type.
