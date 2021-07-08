@@ -168,11 +168,6 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         );
     }
 
-    @Override
-    public ApplicationContext getApplicationContext() {
-        return runtimeEntityRegistry.getApplicationContext();
-    }
-
     /**
      * Default constructor.
      *
@@ -211,6 +206,11 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 queryBuilders.put(beanType, queryBuilder);
             }
         }
+    }
+
+    @Override
+    public ApplicationContext getApplicationContext() {
+        return runtimeEntityRegistry.getApplicationContext();
     }
 
     private MediaTypeCodec resolveJsonCodec(List<MediaTypeCodec> codecs) {
