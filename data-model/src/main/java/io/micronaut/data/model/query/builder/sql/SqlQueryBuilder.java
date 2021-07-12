@@ -25,6 +25,7 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
@@ -386,7 +387,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (dialect != Dialect.ORACLE) {
                     joinTableBuilder.append(';');
                 }
+
                 createStatements.add(joinTableBuilder.toString());
+
             }
         }
 
@@ -483,7 +486,68 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
         }
         createStatements.add(builder.toString());
+        addIndexes(entity, tableName, createStatements);
         return createStatements.toArray(new String[0]);
+    }
+
+    private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
+        final String indexes = createIndexesStatements(entity, tableName);
+        if (indexes.length() > 0) {
+            createStatements.add(indexes);
+        }
+    }
+
+    private String createIndexesStatements(PersistentEntity entity, String tableName) {
+
+        StringBuilder indexBuilder = new StringBuilder();
+
+       Optional<AnnotationValue<Index>[]> indexes = entity
+                .getAnnotationMetadata()
+                .findDeclaredAnnotation("javax.persistence.Table")
+                .flatMap(table -> Optional.ofNullable((AnnotationValue<Index>[]) table.getValues().get("indexes")));
+
+       Stream.of(indexes)
+               .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+               .forEach(index -> addIndex(indexBuilder, index, tableName));
+
+       return indexBuilder.toString();
+
+    }
+
+    private void addIndex(StringBuilder indexBuilder, AnnotationValue<Index> index, String tableName) {
+        indexBuilder.append("CREATE ")
+                .append(index.booleanValue("unique").map(isUnique -> isUnique ? "UNIQUE " : "").orElse(""))
+                .append("INDEX ")
+                .append(index.stringValue("name")
+                        .orElse(String.format(
+                                "idx%s",
+                                makeTransformedColumnList(index.stringValue("columnList").get()))))
+                .append(" ON " +
+                        tableName +
+                        " (" +
+                        index.stringValue("columnList").get());
+
+        if (dialect == Dialect.ORACLE) {
+            indexBuilder.append(")");
+        } else {
+            indexBuilder.append(");");
+        }
+    }
+
+    private String makeTransformedColumnList(String columnList) {
+        return Arrays.stream(prepareColumnNames(columnList).split(","))
+                .map(col -> "_" + col)
+                .collect(Collectors.joining());
+
+    }
+
+    private String prepareColumnNames(String columnList) {
+        return columnList.chars()
+                .mapToObj(c -> String.valueOf((char) c))
+                .filter(x -> !x.equals(" "))
+                .filter(x -> !x.equals("\""))
+                .map(String::toLowerCase)
+                .collect(Collectors.joining());
     }
 
     private boolean isRequired(List<Association> associations, PersistentProperty property) {

@@ -16,8 +16,10 @@
 package io.micronaut.data.processor.mappers
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
+import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.core.beans.BeanIntrospection
 import io.micronaut.core.naming.NameUtils
+import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 
@@ -33,7 +35,7 @@ import io.micronaut.core.annotation.Introspected;
 import javax.persistence.*;
 
 @Entity
-@Table(name="test_tb1")
+@Table(name="test_tb1", indexes = {@Index(name = "idx_test_name", columnList = "name",  unique = true)})
 class Test {
     private String name;
     @Id
@@ -74,6 +76,14 @@ class Test {
         introspection.hasStereotype(MappedEntity)
         introspection.getPropertyNames()
         introspection.getValue(MappedEntity, String).get() == 'test_tb1'
+        def tableAnnotation = introspection
+                .getAnnotationMetadata()
+                .findDeclaredAnnotation("javax.persistence.Table").get();
+        def indexes = (List<AnnotationValue<Index>>)tableAnnotation.getValues().get("indexes")
+        def idx = indexes.get(0).getValues();
+        idx.get("name") == "idx_test_name"
+        idx.get("columnList") == "name"
+        idx.get("unique") == true
         !introspection.getProperty("tmp").isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).isPresent()
         introspection.getIndexedProperty(io.micronaut.data.annotation.Id).get().name == 'id'
