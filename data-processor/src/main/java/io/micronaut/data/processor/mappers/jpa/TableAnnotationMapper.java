@@ -18,14 +18,17 @@ package io.micronaut.data.processor.mappers.jpa;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.sql.SqlMembers;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.lang.annotation.Annotation;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Maps JPA's {@code Table} annotation to {@link MappedEntity}.
@@ -43,10 +46,22 @@ public final class TableAnnotationMapper implements NamedAnnotationMapper {
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<Annotation> annotation, VisitorContext visitorContext) {
+
+        IndexAnnotationMapper mapper = new IndexAnnotationMapper();
+
         final AnnotationValueBuilder<MappedEntity> builder = AnnotationValue.builder(MappedEntity.class);
         annotation.stringValue("name").ifPresent(builder::value);
         annotation.stringValue(SqlMembers.CATALOG).ifPresent(catalog -> builder.member(SqlMembers.CATALOG, catalog));
         annotation.stringValue(SqlMembers.SCHEMA).ifPresent(catalog -> builder.member(SqlMembers.SCHEMA, catalog));
-        return Collections.singletonList(builder.build());
+        final AnnotationValueBuilder<Indexes> idxBuilder = AnnotationValue.builder(Indexes.class);
+        Optional.ofNullable((AnnotationValue<Annotation>[]) annotation.getValues().get("indexes"))
+                .ifPresent(indexes -> {
+                    final AnnotationValue<Index>[] annotationValues =
+                            (AnnotationValue<Index>[]) Arrays.stream(indexes)
+                                    .map(a -> mapper.map(a, null)
+                                    .get(0)).toArray(AnnotationValue[]::new);
+                   idxBuilder.member("value", annotationValues);
+                });
+        return Arrays.asList(builder.build(), idxBuilder.build());
     }
 }

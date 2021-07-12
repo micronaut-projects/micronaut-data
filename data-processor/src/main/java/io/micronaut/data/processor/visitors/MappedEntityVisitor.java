@@ -15,12 +15,14 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.InstantiationUtils;
 import io.micronaut.core.util.ArrayUtils;
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -38,8 +40,14 @@ import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A {@link TypeElementVisitor} that pre-computes mappings to columns based on the configured naming strategy.
@@ -102,6 +110,17 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
+
+        final List<AnnotationValue<Index>> indexes = properties.stream()
+                .filter(x -> ((PersistentProperty) x).findAnnotation(Indexes.class).isPresent())
+                .map(prop -> prop.findAnnotation(Index.class))
+                .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+                .collect(Collectors.toList());
+
+        if (!indexes.isEmpty()) {
+           element.annotate(Indexes.class, builder -> builder.values(indexes.toArray(new AnnotationValue[]{})));
+        }
+
         for (PersistentProperty property : properties) {
             computeMappingDefaults(namingStrategy, property, dataTypes, context);
         }
