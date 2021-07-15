@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
@@ -24,7 +25,6 @@ import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.r2dbc.BasicR2dbcProperties;
 import io.r2dbc.spi.ConnectionFactory;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -140,7 +140,7 @@ public class DataR2dbcConfiguration implements Named {
         this.dialect = dialect;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return name;

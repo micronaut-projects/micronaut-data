@@ -23,7 +23,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 
-import javax.annotation.Nonnull;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -68,7 +67,7 @@ public interface Page<T> extends Slice<T> {
      * @return A new slice with the mapped content
      */
     @Override
-    default @Nonnull <T2> Page<T2> map(Function<T, T2> function) {
+    default @NonNull <T2> Page<T2> map(Function<T, T2> function) {
         List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
         return new DefaultPage<>(content, getPageable(), getTotalSize());
     }

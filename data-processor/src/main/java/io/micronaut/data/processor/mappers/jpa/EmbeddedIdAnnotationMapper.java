@@ -16,12 +16,12 @@
 package io.micronaut.data.processor.mappers.jpa;
 
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.inject.annotation.NamedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +33,7 @@ import java.util.List;
  * @since 1.0.0
  */
 public final class EmbeddedIdAnnotationMapper implements NamedAnnotationMapper {
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return "javax.persistence.EmbeddedId";

@@ -66,7 +66,6 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.ast.ClassElement;
 import org.reactivestreams.Publisher;
 
-import javax.annotation.Nonnull;
 import javax.validation.constraints.NotNull;
 import java.lang.reflect.Array;
 import java.lang.reflect.Modifier;
@@ -395,7 +394,7 @@ interface FindersUtils {
             return new DynamicClassElement((Class<? extends DataInterceptor>) type.getComponentType());
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return type.getName();
@@ -411,7 +410,7 @@ interface FindersUtils {
             return Modifier.isPublic(type.getModifiers());
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public Object getNativeType() {
             return type;

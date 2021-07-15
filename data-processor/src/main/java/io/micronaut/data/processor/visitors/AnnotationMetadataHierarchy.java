@@ -18,11 +18,11 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.value.OptionalValues;
 
-import javax.annotation.Nonnull;
 import io.micronaut.core.annotation.Nullable;
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -55,9 +55,9 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
         }
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public OptionalDouble doubleValue(@Nonnull Class<? extends Annotation> annotation, @Nonnull String member) {
+    public OptionalDouble doubleValue(@NonNull Class<? extends Annotation> annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final OptionalDouble o = annotationMetadata.doubleValue(annotation, member);
             if (o.isPresent()) {
@@ -67,16 +67,16 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
         return OptionalDouble.empty();
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public String[] stringValues(@Nonnull Class<? extends Annotation> annotation, @Nonnull String member) {
+    public String[] stringValues(@NonNull Class<? extends Annotation> annotation, @NonNull String member) {
         return Arrays.stream(hierarchy)
                 .flatMap(am -> Stream.of(am.stringValues(annotation, member)))
                 .toArray(String[]::new);
     }
 
     @Override
-    public Optional<Boolean> booleanValue(@Nonnull String annotation, @Nonnull String member) {
+    public Optional<Boolean> booleanValue(@NonNull String annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Optional<Boolean> o = annotationMetadata.booleanValue(annotation, member);
             if (o.isPresent()) {
@@ -87,12 +87,12 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public boolean isTrue(@Nonnull String annotation, @Nonnull String member) {
+    public boolean isTrue(@NonNull String annotation, @NonNull String member) {
         return Arrays.stream(hierarchy).anyMatch(am -> am.isTrue(annotation, member));
     }
 
     @Override
-    public OptionalLong longValue(@Nonnull String annotation, @Nonnull String member) {
+    public OptionalLong longValue(@NonNull String annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final OptionalLong o = annotationMetadata.longValue(annotation, member);
             if (o.isPresent()) {
@@ -103,7 +103,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public Optional<String> stringValue(@Nonnull String annotation, @Nonnull String member) {
+    public Optional<String> stringValue(@NonNull String annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Optional<String> o = annotationMetadata.stringValue(annotation, member);
             if (o.isPresent()) {
@@ -114,7 +114,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public OptionalInt intValue(@Nonnull String annotation, @Nonnull String member) {
+    public OptionalInt intValue(@NonNull String annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final OptionalInt o = annotationMetadata.intValue(annotation, member);
             if (o.isPresent()) {
@@ -124,9 +124,9 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
         return OptionalInt.empty();
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public OptionalDouble doubleValue(@Nonnull String annotation, @Nonnull String member) {
+    public OptionalDouble doubleValue(@NonNull String annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final OptionalDouble o = annotationMetadata.doubleValue(annotation, member);
             if (o.isPresent()) {
@@ -137,7 +137,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public <E extends Enum> Optional<E> enumValue(@Nonnull Class<? extends Annotation> annotation, @Nonnull String member, Class<E> enumType) {
+    public <E extends Enum> Optional<E> enumValue(@NonNull Class<? extends Annotation> annotation, @NonNull String member, Class<E> enumType) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Optional<E> o = annotationMetadata.enumValue(annotation, member, enumType);
             if (o.isPresent()) {
@@ -148,9 +148,9 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @SuppressWarnings("unchecked")
-    @Nonnull
+    @NonNull
     @Override
-    public <T> Class<T>[] classValues(@Nonnull String annotation, @Nonnull String member) {
+    public <T> Class<T>[] classValues(@NonNull String annotation, @NonNull String member) {
         final Class[] classes = Arrays.stream(hierarchy)
                 .flatMap(am -> Stream.of(am.classValues(annotation, member)))
                 .toArray(Class[]::new);
@@ -158,7 +158,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public Optional<Class> classValue(@Nonnull String annotation, @Nonnull String member) {
+    public Optional<Class> classValue(@NonNull String annotation, @NonNull String member) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Optional<Class> o = annotationMetadata.classValue(annotation, member);
             if (o.isPresent()) {
@@ -168,7 +168,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
         return Optional.empty();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public List<String> getAnnotationNamesByStereotype(@Nullable String stereotype) {
         return Arrays.stream(hierarchy)
@@ -176,13 +176,13 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
                 .collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Set<String> getDeclaredAnnotationNames() {
         return hierarchy[0].getDeclaredAnnotationNames();
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public Set<String> getAnnotationNames() {
         return Arrays.stream(hierarchy)
@@ -190,9 +190,9 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
                 .collect(Collectors.toSet());
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public <T> OptionalValues<T> getValues(@Nonnull String annotation, @Nonnull Class<T> valueType) {
+    public <T> OptionalValues<T> getValues(@NonNull String annotation, @NonNull Class<T> valueType) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final OptionalValues<T> values = annotationMetadata.getValues(annotation, valueType);
             if (!values.isEmpty()) {
@@ -203,7 +203,7 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
     }
 
     @Override
-    public <T> Optional<T> getDefaultValue(@Nonnull String annotation, @Nonnull String member, @Nonnull Argument<T> requiredType) {
+    public <T> Optional<T> getDefaultValue(@NonNull String annotation, @NonNull String member, @NonNull Argument<T> requiredType) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Optional<T> defaultValue = annotationMetadata.getDefaultValue(annotation, member, requiredType);
             if (defaultValue.isPresent()) {
@@ -213,17 +213,17 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
         return Optional.empty();
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public <T extends Annotation> List<AnnotationValue<T>> getAnnotationValuesByType(@Nonnull Class<T> annotationType) {
+    public <T extends Annotation> List<AnnotationValue<T>> getAnnotationValuesByType(@NonNull Class<T> annotationType) {
         return Arrays.stream(hierarchy)
                 .flatMap(am -> am.getDeclaredAnnotationValuesByType(annotationType).stream())
                 .collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public <T extends Annotation> List<AnnotationValue<T>> getDeclaredAnnotationValuesByType(@Nonnull Class<T> annotationType) {
+    public <T extends Annotation> List<AnnotationValue<T>> getDeclaredAnnotationValuesByType(@NonNull Class<T> annotationType) {
         return hierarchy[0].getDeclaredAnnotationValuesByType(annotationType);
     }
 
@@ -257,9 +257,9 @@ public final class AnnotationMetadataHierarchy implements AnnotationMetadata {
         return hierarchy[0].hasDeclaredStereotype(annotation);
     }
 
-    @Nonnull
+    @NonNull
     @Override
-    public Map<String, Object> getDefaultValues(@Nonnull String annotation) {
+    public Map<String, Object> getDefaultValues(@NonNull String annotation) {
         for (AnnotationMetadata annotationMetadata : hierarchy) {
             final Map<String, Object> defaultValues = annotationMetadata.getDefaultValues(annotation);
             if (!defaultValues.isEmpty()) {
