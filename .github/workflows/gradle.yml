@@ -44,7 +44,7 @@ jobs:
         run: |
           [ -f ./setup.sh ] && ./setup.sh || true
       - name: Build with Gradle
-        run: ./gradlew dependencyUpdates check --no-daemon --parallel --continue
+        run: ./gradlew :data-r2dbc:test --tests "io.micronaut.data.r2dbc.oraclexe.*"
         env:
            TESTCONTAINERS_RYUK_DISABLED: true
       - name: Publish Test Report
