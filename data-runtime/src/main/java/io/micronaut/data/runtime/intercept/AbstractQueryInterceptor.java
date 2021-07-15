@@ -47,7 +47,6 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
 
-import javax.annotation.Nonnull;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -385,17 +384,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     }
                 }
             } else {
-                Optional<Argument> named = Arrays.stream(context.getArguments())
-                        .filter(arg -> {
-                            String n = arg.getAnnotationMetadata().stringValue(Parameter.class).orElse(arg.getName());
-                            return n.equals(argument);
-                        })
-                        .findFirst();
-                if (named.isPresent()) {
-                    parameterValues.put(index, namedValues.get(named.get().getName()));
-                } else {
-                    throw new IllegalArgumentException("Missing query arguments: " + argument);
+                for (Argument a : context.getArguments()) {
+                    String n = a.getAnnotationMetadata().stringValue(Parameter.class).orElse(a.getName());
+                    if (n.equals(argument)) {
+                        parameterValues.put(index, namedValues.get(a.getName()));
+                        return;
+                    }
                 }
+                throw new IllegalArgumentException("Missing query arguments: " + argument);
             }
         }
     }
@@ -698,7 +694,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return entity;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return method.getMethodName();
@@ -752,7 +748,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return entity;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return method.getMethodName();
@@ -803,7 +799,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return method.getTarget().getClass();
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return method.getMethodName();
@@ -906,7 +902,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return method.getTarget().getClass();
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return method.getMethodName();
@@ -954,7 +950,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return pageable;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return method.getMethodName();
@@ -1260,7 +1256,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return query;
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return method.getMethodName();
@@ -1509,7 +1505,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return storedQuery.isCount();
         }
 
-        @Nonnull
+        @NonNull
         @Override
         public String getName() {
             return storedQuery.getName();

@@ -17,11 +17,11 @@ package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.annotation.EachProperty;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.naming.Named;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -116,7 +116,7 @@ public class DataJdbcConfiguration implements Named {
         this.dialect = dialect;
     }
 
-    @Nonnull
+    @NonNull
     @Override
     public String getName() {
         return name;

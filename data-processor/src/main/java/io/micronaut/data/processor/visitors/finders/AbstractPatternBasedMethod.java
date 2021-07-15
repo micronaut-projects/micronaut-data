@@ -46,7 +46,6 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.PropertyElement;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -329,7 +328,7 @@ public abstract class AbstractPatternBasedMethod implements MethodCandidate {
     protected boolean applyJoinSpecs(
             @NonNull MethodMatchContext matchContext,
             @NonNull QueryModel query,
-            @Nonnull SourcePersistentEntity rootEntity,
+            @NonNull SourcePersistentEntity rootEntity,
             @NonNull List<AnnotationValue<Join>> joinSpecs) {
         for (AnnotationValue<Join> joinSpec : joinSpecs) {
             String path = joinSpec.stringValue().orElse(null);

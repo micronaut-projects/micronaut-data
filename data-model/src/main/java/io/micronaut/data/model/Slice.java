@@ -22,7 +22,6 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.ReflectiveAccess;
 import io.micronaut.core.annotation.TypeHint;
 
-import javax.annotation.Nonnull;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
@@ -123,7 +122,7 @@ public interface Slice<T> extends Iterable<T> {
      * @param <T2> The type returned by the function
      * @return A new slice with the mapped content
      */
-    default @Nonnull <T2> Slice<T2> map(Function<T, T2> function) {
+    default @NonNull <T2> Slice<T2> map(Function<T, T2> function) {
         List<T2> content = getContent().stream().map(function).collect(Collectors.toList());
         return new DefaultSlice<>(content, getPageable());
     }

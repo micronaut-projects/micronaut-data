@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.model
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
