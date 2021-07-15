@@ -28,6 +28,12 @@ class OracleXERepositorySpec extends AbstractRepositorySpec implements OracleXET
         return true
     }
 
+    @Override
+    boolean skipOptimisticLockingTest() {
+        // https://github.com/oracle/oracle-r2dbc/issues/11
+        return true
+    }
+
     @Memoized
     @Override
     PersonRepository getPersonRepository() {
