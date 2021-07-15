@@ -129,7 +129,7 @@ public class R2dbcSchemaGenerator {
                                         .then();
                         }
 
-                    })).block(Duration.of(20, ChronoUnit.SECONDS));
+                    })).block();
                 }
             }
         }
