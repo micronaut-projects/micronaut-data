@@ -51,8 +51,8 @@ jobs:
         if: always()
         uses: mikepenz/action-junit-report@v2
         with:
-           check_name: Java CI / Test Report (${{ matrix.java }})
-           report_paths: '**/build/test-results/test/TEST-*.xml'
+          check_name: Java CI / Test Report (${{ matrix.java }})
+          report_paths: '**/build/test-results/test/TEST-*.xml'
       - name: Publish to Sonatype Snapshots
         if: success() && github.event_name == 'push' && matrix.java == '8'
         env:
