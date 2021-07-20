@@ -37,7 +37,7 @@ dependencies {
     testAnnotationProcessor project(":data-processor")
     testCompileOnly "io.micronaut:micronaut-inject-groovy:$micronautVersion"
     testCompileOnly project(":data-processor")
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.12.2"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.12.4"
     testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
     testImplementation "org.codehaus.groovy:groovy-sql:$groovyVersion"
     testImplementation "io.micronaut:micronaut-validation:$micronautVersion"
