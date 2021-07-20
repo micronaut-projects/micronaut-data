@@ -51,6 +51,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -491,47 +492,68 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
-        final String indexes = createIndexesStatements(entity, tableName);
+        final String indexes = createIndexesStatementsFromTableAnnotation(entity, tableName);
+        final String indexesFromFields = createIndexesStatementsFromFieldAnnotation(entity, tableName);
         if (indexes.length() > 0) {
             createStatements.add(indexes);
+        } else if (indexesFromFields.length() > 0) {
+            createStatements.add(indexesFromFields);
         }
     }
 
-    private String createIndexesStatements(PersistentEntity entity, String tableName) {
+    private String createIndexesStatementsFromFieldAnnotation(PersistentEntity entity, String tableName) {
+        StringBuilder indexBuilder = new StringBuilder();
+        entity.getPersistentProperties()
+                .stream()
+                .filter(annotatedField -> annotatedField.getAnnotation(Index.class) != null)
+                .forEach(x -> addIndex(indexBuilder, new IndexConfiguration(x.getName(), x.getAnnotation(Index.class), tableName)));
+        return indexBuilder.toString();
+    }
+
+    private String createIndexesStatementsFromTableAnnotation(PersistentEntity entity, String tableName) {
 
         StringBuilder indexBuilder = new StringBuilder();
 
-       Optional<AnnotationValue<Index>[]> indexes = entity
+       Optional<AnnotationValue<Annotation>[]> indexes = entity
                 .getAnnotationMetadata()
                 .findDeclaredAnnotation("javax.persistence.Table")
-                .flatMap(table -> Optional.ofNullable((AnnotationValue<Index>[]) table.getValues().get("indexes")));
+                .flatMap(table -> Optional.ofNullable((AnnotationValue<Annotation>[]) table.getValues().get("indexes")));
 
        Stream.of(indexes)
                .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
-               .forEach(index -> addIndex(indexBuilder, index, tableName));
+               .forEach(index -> addIndex(indexBuilder, new IndexConfiguration(null, index, tableName)));
 
        return indexBuilder.toString();
 
     }
 
-    private void addIndex(StringBuilder indexBuilder, AnnotationValue<Index> index, String tableName) {
+    private void addIndex(StringBuilder indexBuilder, IndexConfiguration config) {
         indexBuilder.append("CREATE ")
-                .append(index.booleanValue("unique").map(isUnique -> isUnique ? "UNIQUE " : "").orElse(""))
+                .append(config.index.booleanValue("unique")
+                        .map(isUnique -> isUnique ? "UNIQUE " : "")
+                        .orElse(""))
                 .append("INDEX ")
-                .append(index.stringValue("name")
+                .append(config.index.stringValue("name")
                         .orElse(String.format(
                                 "idx%s",
-                                makeTransformedColumnList(index.stringValue("columnList").get()))))
+                                makeTransformedColumnList(provideColumnList(config)))))
                 .append(" ON " +
-                        tableName +
+                        Optional.ofNullable(config.tableName)
+                                .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
                         " (" +
-                        index.stringValue("columnList").get());
+                        provideColumnList(config));
 
         if (dialect == Dialect.ORACLE) {
             indexBuilder.append(")");
         } else {
             indexBuilder.append(");");
         }
+    }
+
+    private String provideColumnList(IndexConfiguration config) {
+        return config.index.stringValue("columnList").orElseGet(() ->
+                Optional.ofNullable(config.fieldName)
+                        .orElseThrow(() -> new NullPointerException("Column list cannot be null")));
     }
 
     private String makeTransformedColumnList(String columnList) {
@@ -1945,4 +1967,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         Boolean escapeQueries;
         String positionalFormatter;
     }
+
+    private static class IndexConfiguration {
+        public IndexConfiguration(String fieldName, AnnotationValue<?> index, String tableName) {
+            this.fieldName = fieldName;
+            this.index = index;
+            this.tableName = tableName;
+        }
+
+        String fieldName;
+        AnnotationValue<?> index;
+        String tableName;
+    }
+
 }

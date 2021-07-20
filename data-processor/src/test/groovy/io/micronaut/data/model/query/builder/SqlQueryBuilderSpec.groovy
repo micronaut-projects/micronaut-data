@@ -42,6 +42,7 @@ import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.entities.Shipment
 import io.micronaut.data.tck.entities.ShipmentWithIndex
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -430,7 +431,7 @@ interface MyRepository {
             ]
     }
 
-    void "test build create index"() {
+    void "test build create index from table annotation"() {
         when:
         QueryBuilder encoder = new SqlQueryBuilder()
         def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndex))
@@ -438,6 +439,16 @@ interface MyRepository {
         then:
         statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
         statements[1] == 'CREATE UNIQUE INDEX idx_field_taxcode ON "shipment_with_index" (field, taxCode);'
+    }
+
+    void "test build create index from field annotation"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFields))
+
+        then:
+        statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX idx_field ON "shipment_with_index_on_fields" (field);CREATE INDEX idx_taxcode ON "shipment_with_index_on_fields" (taxCode);'
     }
 
     void "test build composite id query"() {

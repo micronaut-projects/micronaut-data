@@ -15,8 +15,11 @@
  */
 package io.micronaut.data.annotation;
 
+
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -29,8 +32,9 @@ import java.lang.annotation.Target;
  * @since 2.4
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({})
 @Documented
+@Target({ElementType.TYPE, ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Repeatable(value = Indexes.class)
 @Inherited
 public @interface Index {
     /**
@@ -39,13 +43,6 @@ public @interface Index {
      * @return The name of the index
      */
     String name() default "";
-
-    /**
-     * (Required) The names of the columns to be included in the index, in order.
-     *
-     * @return The list of column
-     */
-    String columnList();
 
     /**
      *
