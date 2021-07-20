@@ -26,6 +26,7 @@ import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
@@ -492,13 +493,34 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
+
         final String indexes = createIndexesStatementsFromTableAnnotation(entity, tableName);
         final String indexesFromFields = createIndexesStatementsFromFieldAnnotation(entity, tableName);
+        final String createIndexFromClassAnnotations = createIndexFromClassAnnotations(entity, tableName);
         if (indexes.length() > 0) {
             createStatements.add(indexes);
         } else if (indexesFromFields.length() > 0) {
             createStatements.add(indexesFromFields);
+        } else if (createIndexFromClassAnnotations.length() > 0) {
+            createStatements.add(createIndexFromClassAnnotations);
         }
+    }
+
+    private String createIndexFromClassAnnotations(PersistentEntity entity, String tableName) {
+        StringBuilder indexBuilder = new StringBuilder();
+        entity
+                .getAnnotationMetadata()
+                .findDeclaredAnnotation(Indexes.class)
+                .map( x -> x.getAnnotations("value", Index.class))
+                .ifPresent(x -> x.forEach(y ->
+                        addIndex(indexBuilder,
+                                new IndexConfiguration(
+                                        y.getRequiredValue("fieldName", String.class),
+                                        y,
+                                        tableName))));
+
+
+        return indexBuilder.toString();
     }
 
     private String createIndexesStatementsFromFieldAnnotation(PersistentEntity entity, String tableName) {

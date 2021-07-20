@@ -44,6 +44,14 @@ public @interface Index {
      */
     String name() default "";
 
+
+    /**
+     * (Optional) The name of the field. Mandatory when the annotation is used upon a class identifier.
+     *
+     * @return The name of the index
+     */
+    String fieldName() default "";
+
     /**
      *
      * @return (Optional) Whether the index is unique.

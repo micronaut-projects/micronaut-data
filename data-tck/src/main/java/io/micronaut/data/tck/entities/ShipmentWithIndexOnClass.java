@@ -25,17 +25,19 @@ import javax.persistence.Id;
 import java.util.Objects;
 
 @MappedEntity
-public class ShipmentWithIndexOnFields {
+@Index(fieldName = "field", unique = true)
+@Index(fieldName = "taxCode", unique = false)
+public class ShipmentWithIndexOnClass {
 
     @Creator
-    public ShipmentWithIndexOnFields(Long shipmentId, String field, String taxCode) {
+    public ShipmentWithIndexOnClass(Long shipmentId, String field, String taxCode) {
         this.shipmentId = shipmentId;
         this.field = field;
         this.taxCode = taxCode;
     }
 
     // for hibernate
-    public ShipmentWithIndexOnFields() {
+    public ShipmentWithIndexOnClass() {
     }
 
     @Id
@@ -43,12 +45,10 @@ public class ShipmentWithIndexOnFields {
     private Long shipmentId;
 
     @Column(name = "field")
-    @Index(unique = true)
     private String field;
 
 
     @Column(name = "taxCode")
-    @Index(unique = false)
     private String taxCode;
 
     public Long getShipmentId() {
@@ -87,7 +87,7 @@ public class ShipmentWithIndexOnFields {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ShipmentWithIndexOnFields table = (ShipmentWithIndexOnFields) o;
+        ShipmentWithIndexOnClass table = (ShipmentWithIndexOnClass) o;
         return Objects.equals(shipmentId, table.shipmentId) &&
                 Objects.equals(field, table.field);
     }
