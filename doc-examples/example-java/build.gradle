@@ -1,42 +1,34 @@
 plugins {
-    id "application"
+    id "java"
+    id "io.micronaut.application"
 }
 
-version "0.1"
-group "example"
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    runtime "netty"
+    testRuntime "junit5"
+}
 
 dependencies {
-    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
-    annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
-    testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
-
     annotationProcessor project(":data-processor")
-    annotationProcessor "io.micronaut:micronaut-inject-java"
     annotationProcessor "io.micronaut:micronaut-validation"
-    implementation project(":data-hibernate-jpa")
     implementation "io.micronaut:micronaut-http-client"
-    implementation "io.micronaut:micronaut-inject"
-    implementation "io.micronaut:micronaut-validation"
-    implementation "io.micronaut:micronaut-runtime"
+    implementation project(":data-hibernate-jpa")
+    implementation project(":data-jdbc")
+
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
-    implementation "io.micronaut:micronaut-http-server-netty"
-    runtimeOnly "ch.qos.logback:logback-classic"
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     runtimeOnly "com.h2database:h2"
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
-    testImplementation "org.junit.jupiter:junit-jupiter-api"
-    testImplementation "io.micronaut.test:micronaut-test-junit5"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 }
 
-
-mainClassName = "example.Application"
-// use JUnit 5 platform
-test {
-    useJUnitPlatform()
-}
-
-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
-tasks.withType(JavaCompile){
-    options.encoding = "UTF-8"
-    options.compilerArgs.add('-parameters')
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
 }
