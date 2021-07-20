@@ -31,7 +31,6 @@ import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Timeout
 import spock.lang.Unroll
 
 import java.sql.Connection
@@ -39,7 +38,6 @@ import java.time.LocalDate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractRepositorySpec extends Specification {
 
     abstract PersonRepository getPersonRepository()

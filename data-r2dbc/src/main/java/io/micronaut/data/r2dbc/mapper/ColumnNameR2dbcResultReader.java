@@ -30,6 +30,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -119,7 +120,7 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
             return ((ByteBuffer) o).array();
         }
         if (o instanceof Blob) {
-            return Mono.from(((Blob) o).stream()).block().array();
+            return Mono.from(((Blob) o).stream()).block(Duration.ofSeconds(20)).array();
         }
         return convertRequired(o, byte[].class);
     }

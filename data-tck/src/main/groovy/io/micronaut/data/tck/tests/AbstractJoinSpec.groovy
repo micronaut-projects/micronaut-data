@@ -25,13 +25,9 @@ import io.micronaut.data.tck.repositories.ProductRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Timeout
-
-import java.util.concurrent.TimeUnit
 
 import static java.util.stream.Collectors.toMap
 
-@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractJoinSpec extends Specification {
 
     @AutoCleanup

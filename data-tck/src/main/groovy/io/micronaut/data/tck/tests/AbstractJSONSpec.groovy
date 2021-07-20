@@ -28,7 +28,6 @@ import spock.lang.Timeout
 
 import java.util.concurrent.TimeUnit
 
-@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractJSONSpec extends Specification {
 
     @AutoCleanup

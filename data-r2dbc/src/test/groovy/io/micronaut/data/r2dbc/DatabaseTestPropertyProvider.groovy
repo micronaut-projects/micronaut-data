@@ -93,9 +93,9 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
                 "r2dbc.datasources.default.url"                      : "r2dbc:${driverName}://${getR2dbUrlSuffix(driverName, container)}",
                 "r2dbc.datasources.default.schema-generate"          : schemaGenerate(),
                 "r2dbc.datasources.default.dialect"                  : dialect,
-                "r2dbc.datasources.default.options.connectTimeout"   : Duration.ofSeconds(10).toString(),
-                "r2dbc.datasources.default.options.statementTimeout" : Duration.ofSeconds(10).toString(),
-                "r2dbc.datasources.default.options.statement_timeout": Duration.ofSeconds(10).toString(),
+//                "r2dbc.datasources.default.options.connectTimeout"   : Duration.ofSeconds(30).toString(),
+//                "r2dbc.datasources.default.options.statementTimeout" : Duration.ofSeconds(30).toString(),
+//                "r2dbc.datasources.default.options.statement_timeout": Duration.ofSeconds(30).toString(),
         ] as Map<String, String>
         if (usePool()) {
             String poolProtocol
