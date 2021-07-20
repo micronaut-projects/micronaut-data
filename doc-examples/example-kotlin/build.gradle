@@ -28,7 +28,7 @@ dependencies {
     kapt project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-    runtimeOnly "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2"
+    runtimeOnly "com.fasterxml.jackson.module:jackson-module-kotlin:2.12.4"
     testImplementation "org.jetbrains.spek:spek-api:1.2.1"
 }
 
