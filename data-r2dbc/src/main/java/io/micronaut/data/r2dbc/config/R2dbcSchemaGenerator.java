@@ -97,7 +97,7 @@ public class R2dbcSchemaGenerator {
                                 .flatMap(entity -> Arrays.stream(builder.buildCreateTableStatements(entity)))
                                 .collect(Collectors.toList());
                         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
-                                .flatMap(sql -> {
+                                .concatMap(sql -> {
                                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                                     }
@@ -114,7 +114,7 @@ public class R2dbcSchemaGenerator {
                                 List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
                                                                     .collect(Collectors.toList());
                                 return Flux.fromIterable(dropStatements)
-                                        .flatMap(sql -> {
+                                        .concatMap(sql -> {
                                             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                                                 DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
                                             }
