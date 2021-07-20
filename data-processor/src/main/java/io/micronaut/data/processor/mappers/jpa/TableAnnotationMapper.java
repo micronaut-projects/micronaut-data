@@ -26,6 +26,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Maps JPA's {@code Table} annotation to {@link MappedEntity}.
@@ -47,6 +48,8 @@ public final class TableAnnotationMapper implements NamedAnnotationMapper {
         annotation.stringValue("name").ifPresent(builder::value);
         annotation.stringValue(SqlMembers.CATALOG).ifPresent(catalog -> builder.member(SqlMembers.CATALOG, catalog));
         annotation.stringValue(SqlMembers.SCHEMA).ifPresent(catalog -> builder.member(SqlMembers.SCHEMA, catalog));
+        Optional.ofNullable((AnnotationValue<Annotation>[]) annotation.getValues().get("indexes"))
+                .ifPresent(indexes -> builder.member("indexes", indexes));
         return Collections.singletonList(builder.build());
     }
 }

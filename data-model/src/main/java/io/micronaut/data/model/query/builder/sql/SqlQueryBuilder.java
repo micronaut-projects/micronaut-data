@@ -25,6 +25,8 @@ import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
@@ -50,6 +52,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import java.lang.annotation.Annotation;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -386,7 +389,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 if (dialect != Dialect.ORACLE) {
                     joinTableBuilder.append(';');
                 }
+
                 createStatements.add(joinTableBuilder.toString());
+
             }
         }
 
@@ -483,7 +488,110 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             }
         }
         createStatements.add(builder.toString());
+        addIndexes(entity, tableName, createStatements);
         return createStatements.toArray(new String[0]);
+    }
+
+    private void addIndexes(PersistentEntity entity, String tableName, List<String> createStatements) {
+
+        final String indexes = createIndexesStatementsFromTableAnnotation(entity, tableName);
+        final String indexesFromFields = createIndexesStatementsFromFieldAnnotation(entity, tableName);
+        final String createIndexFromClassAnnotations = createIndexFromClassAnnotations(entity, tableName);
+        if (indexes.length() > 0) {
+            createStatements.add(indexes);
+        } else if (indexesFromFields.length() > 0) {
+            createStatements.add(indexesFromFields);
+        } else if (createIndexFromClassAnnotations.length() > 0) {
+            createStatements.add(createIndexFromClassAnnotations);
+        }
+    }
+
+    private String createIndexFromClassAnnotations(PersistentEntity entity, String tableName) {
+        StringBuilder indexBuilder = new StringBuilder();
+        entity
+                .getAnnotationMetadata()
+                .findDeclaredAnnotation(Indexes.class)
+                .map( x -> x.getAnnotations("value", Index.class))
+                .ifPresent(x -> x.forEach(y ->
+                        addIndex(indexBuilder,
+                                new IndexConfiguration(
+                                        y.getRequiredValue("fieldName", String.class),
+                                        y,
+                                        tableName))));
+
+
+        return indexBuilder.toString();
+    }
+
+    private String createIndexesStatementsFromFieldAnnotation(PersistentEntity entity, String tableName) {
+        StringBuilder indexBuilder = new StringBuilder();
+        entity.getPersistentProperties()
+                .stream()
+                .filter(annotatedField -> annotatedField.getAnnotation(Index.class) != null)
+                .forEach(x -> addIndex(indexBuilder, new IndexConfiguration(x.getName(), x.getAnnotation(Index.class), tableName)));
+        return indexBuilder.toString();
+    }
+
+    private String createIndexesStatementsFromTableAnnotation(PersistentEntity entity, String tableName) {
+
+        StringBuilder indexBuilder = new StringBuilder();
+
+       Optional<AnnotationValue<Annotation>[]> indexes = entity
+                .getAnnotationMetadata()
+                .findDeclaredAnnotation("javax.persistence.Table")
+                .flatMap(table -> Optional.ofNullable((AnnotationValue<Annotation>[]) table.getValues().get("indexes")));
+
+       Stream.of(indexes)
+               .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+               .forEach(index -> addIndex(indexBuilder, new IndexConfiguration(null, index, tableName)));
+
+       return indexBuilder.toString();
+
+    }
+
+    private void addIndex(StringBuilder indexBuilder, IndexConfiguration config) {
+        indexBuilder.append("CREATE ")
+                .append(config.index.booleanValue("unique")
+                        .map(isUnique -> isUnique ? "UNIQUE " : "")
+                        .orElse(""))
+                .append("INDEX ")
+                .append(config.index.stringValue("name")
+                        .orElse(String.format(
+                                "idx%s",
+                                makeTransformedColumnList(provideColumnList(config)))))
+                .append(" ON " +
+                        Optional.ofNullable(config.tableName)
+                                .orElseThrow(() -> new NullPointerException("Table name cannot be null")) +
+                        " (" +
+                        provideColumnList(config));
+
+        if (dialect == Dialect.ORACLE) {
+            indexBuilder.append(")");
+        } else {
+            indexBuilder.append(");");
+        }
+    }
+
+    private String provideColumnList(IndexConfiguration config) {
+        return config.index.stringValue("columnList").orElseGet(() ->
+                Optional.ofNullable(config.fieldName)
+                        .orElseThrow(() -> new NullPointerException("Column list cannot be null")));
+    }
+
+    private String makeTransformedColumnList(String columnList) {
+        return Arrays.stream(prepareColumnNames(columnList).split(","))
+                .map(col -> "_" + col)
+                .collect(Collectors.joining());
+
+    }
+
+    private String prepareColumnNames(String columnList) {
+        return columnList.chars()
+                .mapToObj(c -> String.valueOf((char) c))
+                .filter(x -> !x.equals(" "))
+                .filter(x -> !x.equals("\""))
+                .map(String::toLowerCase)
+                .collect(Collectors.joining());
     }
 
     private boolean isRequired(List<Association> associations, PersistentProperty property) {
@@ -1881,4 +1989,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         Boolean escapeQueries;
         String positionalFormatter;
     }
+
+    private static class IndexConfiguration {
+        public IndexConfiguration(String fieldName, AnnotationValue<?> index, String tableName) {
+            this.fieldName = fieldName;
+            this.index = index;
+            this.tableName = tableName;
+        }
+
+        String fieldName;
+        AnnotationValue<?> index;
+        String tableName;
+    }
+
 }
