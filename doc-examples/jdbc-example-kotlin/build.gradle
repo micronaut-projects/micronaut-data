@@ -21,7 +21,8 @@ micronaut {
 }
 
 dependencies {
-    kapt "io.micronaut:micronaut-validation"
+    kapt project(":data-processor")
+
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-jdbc")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
@@ -30,7 +31,6 @@ dependencies {
 
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-    runtimeOnly "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2"
 }
 
 allOpen {
