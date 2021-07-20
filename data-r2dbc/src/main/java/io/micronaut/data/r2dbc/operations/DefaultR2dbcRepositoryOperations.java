@@ -1091,6 +1091,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                     return Mono.just(d);
                 }
                 return Flux.from(stmt.execute()).flatMap(r -> Flux.from(r.getRowsUpdated()))
+                        // Remove in the future: unneeded call "getRowsUpdated" is required for some drivers
                         .as(DefaultR2dbcRepositoryOperations::toSingleResult)
                         .thenReturn(d);
             });
@@ -1288,7 +1289,8 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                         if (notVetoedEntities.isEmpty()) {
                             return Flux.fromIterable(e);
                         }
-                        return Flux.from(stmt.execute()).thenMany(Flux.fromIterable(e));
+                        // Remove in the future: unneeded call "getRowsUpdated" is required for some drivers
+                        return Flux.from(stmt.execute()).flatMap(result -> Flux.from(result.getRowsUpdated())).thenMany(Flux.fromIterable(e));
                     });
         }
 
