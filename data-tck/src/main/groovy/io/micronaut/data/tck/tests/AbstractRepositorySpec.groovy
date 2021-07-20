@@ -896,6 +896,20 @@ abstract class AbstractRepositorySpec extends Specification {
             ]
     }
 
+    void "test saveAll with assigned ads"() {
+        when:
+        def spain = new Country("Spain")
+        def france = new Country("France")
+        countryRepository.saveAll(Arrays.asList(spain, france))
+        def countries = countryRepository.findAll().toList()
+        then:
+        countries.size() == 2
+        countries[0].uuid
+        countries[1].uuid
+        cleanup:
+        countryRepository.deleteAll()
+    }
+
     void "test query across multiple associations"() {
         when:
         def spain = new Country("Spain")
