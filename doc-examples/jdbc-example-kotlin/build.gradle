@@ -1,64 +1,55 @@
 plugins {
-    id "application"
+    id "java"
     id "org.jetbrains.kotlin.jvm"
     id "org.jetbrains.kotlin.kapt"
     id "org.jetbrains.kotlin.plugin.allopen"
     id "org.jetbrains.kotlin.plugin.jpa"
+    id "io.micronaut.application"
 }
 
-version "0.1"
-group "example"
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    runtime "netty"
+    testRuntime "junit5"
+}
 
 dependencies {
-    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
-    testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
-    kapt platform("io.micronaut:micronaut-bom:$micronautVersion")
-    kapt "io.micronaut:micronaut-inject-java"
     kapt "io.micronaut:micronaut-validation"
-    kapt project(":data-processor")
-    kaptTest "io.micronaut:micronaut-inject-java"
-
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-jdbc")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
     implementation "jakarta.persistence:jakarta.persistence-api:2.2.3"
     implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
 
-    implementation "io.micronaut:micronaut-http-server-netty"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}"
-    implementation "io.micronaut:micronaut-runtime"
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
     runtimeOnly "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2"
-    testImplementation "org.junit.jupiter:junit-jupiter-api"
-    testImplementation "org.jetbrains.spek:spek-api:1.1.5"
-    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
-    testImplementation "io.micronaut.test:micronaut-test-junit5"
-}
-
-mainClassName = "example.Application"
-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
-
-test {
-    useJUnitPlatform()
 }
 
 allOpen {
-	annotation("io.micronaut.aop.Around")
+    annotation("io.micronaut.aop.Around")
 }
 
 compileKotlin {
-	kotlinOptions {
-	    jvmTarget = '1.8' 
-	    //Will retain parameter names for Java reflection
-	    javaParameters = true 
-	}
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 }
 
 compileTestKotlin {
-	kotlinOptions {
-	    jvmTarget = '1.8' 
-	    javaParameters = true 
-	}
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
 }

@@ -68,6 +68,8 @@ public abstract class BookRepository implements PageableRepository<Book, Long> {
 
     public abstract Stream<Book> findTop3ByAuthorNameOrderByTitle(String name);
 
+    public abstract List<Book> queryTop3ByAuthorNameOrderByTitle(String name);
+
     public abstract void deleteByTitleIsEmptyOrTitleIsNull();
 
     @Join("author")

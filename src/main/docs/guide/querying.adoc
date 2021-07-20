@@ -44,6 +44,8 @@ The above examples return a single instance of an entity, the supported return t
 |In the case of projections primitive/basic types can be returned
 |===
 
+NOTE: Methods with `Stream<Book>` results need to be used with a 'try-with-resources' block and should be executed within a transaction.
+
 In addition, to the standard `findBy*` pattern, a few other patterns exist that have special return type requirements.
 
 The following table summarizes the possible alternative patterns, behaviour and expected return types:

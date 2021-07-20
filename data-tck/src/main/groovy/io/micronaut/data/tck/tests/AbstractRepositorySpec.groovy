@@ -38,6 +38,7 @@ import java.sql.Connection
 import java.time.LocalDate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 
 @Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractRepositorySpec extends Specification {
@@ -725,6 +726,31 @@ abstract class AbstractRepositorySpec extends Specification {
         authorRepository.findByNameIgnoreCase("don winslow").name == "Don Winslow"
     }
 
+    void "test stream string comparison methods"() {
+        if (!transactionManager.isPresent()) {
+            return
+        }
+        given:
+        setupBooks()
+
+        when:
+        def authors = transactionManager.get().executeRead {
+            authorRepository.queryByNameContains("e").collect(Collectors.toList())
+        }
+
+        then:
+        authors.size() == 2
+
+        when:
+
+        def emptyAuthors = transactionManager.get().executeRead {
+            authorRepository.queryByNameContains("x").collect(Collectors.toList())
+        }
+
+        then:
+        emptyAuthors.size() == 0
+    }
+
     void "test project on single property"() {
         given:
         setupBooks()
@@ -785,8 +811,13 @@ abstract class AbstractRepositorySpec extends Specification {
         all.content.every { it instanceof BookDto }
         all.content.collect { it.title }.every {  it }
 
+        if (!transactionManager.isPresent()) {
+            return
+        }
         when:"Stream is used"
-        def dto = bookDtoRepository.findStream("The Stand").findFirst().get()
+        def dto = transactionManager.get().executeRead {
+            bookDtoRepository.findStream("The Stand").findFirst().get()
+        }
 
         then:"The result is correct"
         dto instanceof BookDto
@@ -831,10 +862,20 @@ abstract class AbstractRepositorySpec extends Specification {
         } else {
             assert bookRepository.count() == 8
         }
-        isOracle() || bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
-                .findFirst().get().title == "Pet Cemetery"
-        isOracle() || bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
-                .count() == 2
+        if (!isOracle()) {
+            bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
+                    .stream().findFirst().get().title == "Pet Cemetery"
+            bookRepository.queryTop3ByAuthorNameOrderByTitle("Stephen King")
+                    .size() == 2
+            if (transactionManager.isPresent()) {
+                transactionManager.get().executeRead {
+                    assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                            .findFirst().get().title == "Pet Cemetery"
+                    assert bookRepository.findTop3ByAuthorNameOrderByTitle("Stephen King")
+                            .count() == 2
+                }
+            }
+        }
         authorRepository.findByBooksTitle("The Stand").name == "Stephen King"
         authorRepository.findByBooksTitle("The Border").name == "Don Winslow"
         bookRepository.findByAuthorName("Stephen King").size() == 2
@@ -894,6 +935,23 @@ abstract class AbstractRepositorySpec extends Specification {
                     "findByIdIsNotNull", // LEFT_FETCH
                     "findByNameIsNotNull" // RIGHT_FETCH
             ]
+    }
+
+    void "stream joined"() {
+        if (!transactionManager.isPresent()) {
+            return
+        }
+        given:
+            saveSampleBooks()
+
+        when:
+            def authors = transactionManager.get().executeRead {
+                authorRepository.queryByIdIsNotNull().collect(Collectors.toList())
+            }
+
+        then:
+            authors.size() == 3
+            authors.collect { [authorName: it.name, books: it.books.size()] }.every { it.books == 2 }
     }
 
     void "test saveAll with assigned ads"() {

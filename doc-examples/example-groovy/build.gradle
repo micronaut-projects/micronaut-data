@@ -1,47 +1,31 @@
 plugins {
     id "groovy"
-    id "application"
+    id "io.micronaut.application"
 }
 
-version "0.1"
-group "example"
+repositories {
+    mavenCentral()
+}
 
-configurations {
-    // for dependencies that are needed for development only
-    developmentOnly 
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    runtime "netty"
+    testRuntime "spock"
 }
 
 dependencies {
-    implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
-    annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
-    testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
-
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
-    implementation "io.micronaut:micronaut-http-server-netty"
-    implementation "io.micronaut.groovy:micronaut-runtime-groovy"
-    implementation "io.micronaut:micronaut-validation"
     compileOnly project(":data-processor")
-    compileOnly "io.micronaut:micronaut-inject-groovy"
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-    testImplementation("org.spockframework:spock-core") {
-        exclude group: "org.codehaus.groovy", module: "groovy-all"
-    }
-    testImplementation "io.micronaut:micronaut-inject-groovy"
-    testImplementation "io.micronaut.test:micronaut-test-spock"
 }
 
-test.classpath += configurations.developmentOnly
-
-mainClassName = "example.Application"
-
-
-run.classpath += configurations.developmentOnly
-run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1', '-Dcom.sun.management.jmxremote')
-tasks.withType(GroovyCompile) {
-    groovyOptions.forkOptions.jvmArgs.add('-Dgroovy.parameters=true')
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
 }
-
-// compileGroovy.groovyOptions.forkOptions.jvmArgs = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005']
