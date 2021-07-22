@@ -27,6 +27,7 @@ import javax.validation.constraints.NotNull;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface AuthorRepository extends CrudRepository<Author, Long> {
 
@@ -49,6 +50,7 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
 
     List<Author> findByNameContains(String name);
 
+    Stream<Author> queryByNameContains(String name);
 
     Author findByNameEndsWith(String name);
 
@@ -64,6 +66,9 @@ public interface AuthorRepository extends CrudRepository<Author, Long> {
 
     @Join(value = "books", type = Join.Type.LEFT_FETCH)
     List<Author> findByIdIsNotNull();
+
+    @Join(value = "books", type = Join.Type.LEFT_FETCH)
+    Stream<Author> queryByIdIsNotNull();
 
     @Join(value = "books", type = Join.Type.RIGHT_FETCH)
     List<Author> findByNameIsNotNull();
