@@ -77,8 +77,8 @@ dependencies {
 
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
+    systemProperty "java.net.preferIPv4Stack", "true"
     exclude "**/r2dbc/oraclexe/**"
-    exclude "**/r2dbc/postgres/**"
 }
 
 micronautBuild {
