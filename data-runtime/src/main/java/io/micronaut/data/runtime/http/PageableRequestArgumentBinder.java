@@ -26,7 +26,7 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;

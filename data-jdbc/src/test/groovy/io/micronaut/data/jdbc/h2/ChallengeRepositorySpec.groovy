@@ -5,7 +5,7 @@ import spock.lang.Issue
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest(rollback = false)
 @H2DBProperties

@@ -13,20 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.annotation;
+package io.micronaut.data.annotation
 
-import java.lang.annotation.*;
 
-/**
- * Designates a field or method that is annotated with the Id of an entity. Typically not used
- * directly but instead mapped to via annotation such as {@code javax.persistence.Id}.
- *
- * @author graemerocher
- * @since 1.0
- */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.ANNOTATION_TYPE})
-@Documented
-@Inherited
-public @interface Id {
+import io.micronaut.data.processor.visitors.AbstractDataSpec
+
+class TestAnnotationSpec extends AbstractDataSpec {
+
+    void "test @Where on entity"() {
+        when:
+        def repository = buildRepository('test.TestRepository', '''
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends io.micronaut.data.tck.repositories.ProjectRepository {
+    @Override
+    void update(@Id io.micronaut.data.tck.jdbc.entities.ProjectId projectId, String name);
+}
+''')
+        then:
+            noExceptionThrown()
+    }
 }

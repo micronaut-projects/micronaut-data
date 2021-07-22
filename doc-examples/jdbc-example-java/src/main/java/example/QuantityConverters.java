@@ -4,7 +4,7 @@ package example;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.core.convert.TypeConverter;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Optional;
 
 @Factory // <1>

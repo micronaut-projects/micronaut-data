@@ -30,7 +30,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.time.temporal.Temporal;
 import java.util.Arrays;

@@ -3,7 +3,7 @@ package example
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.nio.charset.StandardCharsets
 
 @MicronautTest(transactional = false)

@@ -12,6 +12,7 @@ application {
 }
 
 micronaut {
+    version micronautVersion
     runtime "netty"
     testRuntime "junit5"
 }
@@ -20,10 +21,11 @@ dependencies {
     annotationProcessor project(":data-processor")
     annotationProcessor "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-http-client"
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation project(":data-hibernate-jpa")
     implementation project(":data-jdbc")
 
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
     runtimeOnly "com.h2database:h2"
 }

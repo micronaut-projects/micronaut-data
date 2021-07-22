@@ -21,7 +21,7 @@ import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.List;

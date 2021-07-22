@@ -6,7 +6,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")

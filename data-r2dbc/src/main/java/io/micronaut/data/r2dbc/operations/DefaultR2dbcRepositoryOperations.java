@@ -86,7 +86,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.inject.Named;
+import jakarta.inject.Named;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;

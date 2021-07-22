@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.*
 import java.util.concurrent.TimeUnit
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

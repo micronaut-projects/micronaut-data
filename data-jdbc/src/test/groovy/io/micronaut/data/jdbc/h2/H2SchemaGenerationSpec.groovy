@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.h2
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @H2DBProperties

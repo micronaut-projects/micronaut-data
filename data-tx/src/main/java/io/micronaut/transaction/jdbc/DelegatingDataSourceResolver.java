@@ -19,7 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.jdbc.DataSourceResolver;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 
 /**

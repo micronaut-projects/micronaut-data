@@ -24,7 +24,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest(transactional = false, packages = "io.micronaut.data.tck.entities")
 @Property(name = "datasources.default.name", value = "mydb")

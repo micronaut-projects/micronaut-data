@@ -15,9 +15,9 @@
  */
 package io.micronaut.data.processor.mappers.jpa.jx;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.AnnotationValueBuilder;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.MappedEntity;

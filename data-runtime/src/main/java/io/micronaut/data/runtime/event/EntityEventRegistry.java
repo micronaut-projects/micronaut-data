@@ -32,7 +32,7 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.BeanDefinitionMethodReference;
 import io.micronaut.inject.ExecutableMethod;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

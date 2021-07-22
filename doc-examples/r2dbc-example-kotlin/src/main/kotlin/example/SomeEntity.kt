@@ -8,6 +8,6 @@ import io.micronaut.data.annotation.MappedEntity
 data class SomeEntity(
     @field:GeneratedValue
     @field:Id
-    val id: Long? = null,
-    val something: Int? = null,
+    val id: Long?,
+    val something: Int?
 )

@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.context.annotation.Requires;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
 

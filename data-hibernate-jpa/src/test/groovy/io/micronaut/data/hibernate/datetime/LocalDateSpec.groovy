@@ -21,7 +21,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @Property(name = "datasources.default.name", value = "mydb")

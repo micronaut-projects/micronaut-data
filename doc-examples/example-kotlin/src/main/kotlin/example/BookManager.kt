@@ -3,12 +3,12 @@ package example
 
 import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.transaction.annotation.TransactionalEventListener
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import javax.transaction.Transactional
 
 @Singleton
 open class BookManager(
-        private val bookRepository: BookRepository, private val eventPublisher: ApplicationEventPublisher) { // <1>
+        private val bookRepository: BookRepository, private val eventPublisher: ApplicationEventPublisher<NewBookEvent>) { // <1>
 
     @Transactional
     open fun saveBook(title: String, pages: Int) {

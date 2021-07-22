@@ -3,8 +3,8 @@ package io.micronaut.transaction.jdbc;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

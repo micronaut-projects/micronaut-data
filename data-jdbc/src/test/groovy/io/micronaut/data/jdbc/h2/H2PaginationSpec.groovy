@@ -21,7 +21,7 @@ import io.micronaut.data.tck.tests.AbstractPageSpec
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @H2DBProperties

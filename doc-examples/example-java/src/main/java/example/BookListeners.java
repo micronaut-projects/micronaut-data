@@ -6,7 +6,7 @@ import io.micronaut.data.event.listeners.PrePersistEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Factory
 public class BookListeners {

@@ -1,29 +1,30 @@
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
-    annotationProcessor "io.micronaut:micronaut-graal:$micronautVersion"
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    annotationProcessor "io.micronaut:micronaut-graal"
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     api project(":data-runtime")
-    implementation "io.micronaut:micronaut-http:$micronautVersion"
-    implementation "io.micronaut.sql:micronaut-jdbc:$micronautSqlVersion"
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation "io.micronaut:micronaut-http"
+    implementation "io.micronaut.sql:micronaut-jdbc"
     compileOnly project(":data-hibernate-jpa")
     testImplementation project(":data-tck")
 
-    testAnnotationProcessor "io.micronaut:micronaut-inject-java:$micronautVersion"
+    testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testAnnotationProcessor project(":data-processor")
-    testCompileOnly "io.micronaut:micronaut-inject-groovy:$micronautVersion"
+    testCompileOnly "io.micronaut:micronaut-inject-groovy"
     testImplementation project(":data-processor")
-    testImplementation "com.fasterxml.jackson.core:jackson-databind:2.11.3"
+    testImplementation "com.fasterxml.jackson.core:jackson-databind"
     testImplementation 'jakarta.persistence:jakarta.persistence-api:2.2.3'
     testImplementation "org.codehaus.groovy:groovy-sql:$groovyVersion"
-    testImplementation "io.micronaut:micronaut-validation:$micronautVersion"
-    testImplementation "org.testcontainers:spock:$testContainersVersion"
-    testImplementation "org.testcontainers:mysql:$testContainersVersion"
-    testImplementation "org.testcontainers:mariadb:$testContainersVersion"
-    testImplementation "org.testcontainers:postgresql:$testContainersVersion"
-    testImplementation "org.testcontainers:mssqlserver:$testContainersVersion"
-    testImplementation "org.testcontainers:oracle-xe:$testContainersVersion"
+    testImplementation "io.micronaut:micronaut-validation"
+    testImplementation "org.testcontainers:spock"
+    testImplementation "org.testcontainers:mysql"
+    testImplementation "org.testcontainers:mariadb"
+    testImplementation "org.testcontainers:postgresql"
+    testImplementation "org.testcontainers:mssqlserver"
+    testImplementation "org.testcontainers:oracle-xe"
     testRuntimeOnly "com.h2database:h2:1.4.200"
-    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+    testRuntimeOnly "io.micronaut.sql:micronaut-jdbc-tomcat"
     testRuntimeOnly "org.mariadb.jdbc:mariadb-java-client:$mariadbDriverVersion"
     testRuntimeOnly "com.oracle.database.jdbc:ojdbc8:$oracleDriverVersion"
     testRuntimeOnly "mysql:mysql-connector-java:$mysqlDriverVersion"

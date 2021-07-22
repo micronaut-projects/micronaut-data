@@ -12,8 +12,8 @@ import spock.lang.Issue
 import spock.lang.PendingFeature
 import spock.lang.Specification
 
-import javax.inject.Inject
-import javax.inject.Named
+import jakarta.inject.Inject
+import jakarta.inject.Named
 import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.ResultSet

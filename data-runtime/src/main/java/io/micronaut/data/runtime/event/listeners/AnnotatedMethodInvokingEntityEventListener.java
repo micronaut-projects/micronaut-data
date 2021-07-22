@@ -24,7 +24,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.event.PersistenceEventException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 

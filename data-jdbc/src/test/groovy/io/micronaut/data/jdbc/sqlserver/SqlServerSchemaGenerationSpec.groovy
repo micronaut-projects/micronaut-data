@@ -3,7 +3,7 @@ package io.micronaut.data.jdbc.sqlserver
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 class SqlServerSchemaGenerationSpec extends Specification implements MSSQLTestPropertyProvider {

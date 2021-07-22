@@ -22,7 +22,7 @@ import io.micronaut.transaction.interceptor.TransactionalInterceptor
 import io.micronaut.transaction.support.TransactionSynchronizationManager
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.EntityManager
 import javax.transaction.Transactional
 

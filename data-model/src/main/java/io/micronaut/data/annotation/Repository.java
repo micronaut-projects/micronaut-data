@@ -19,7 +19,7 @@ import io.micronaut.aop.Introduction;
 import io.micronaut.context.annotation.Type;
 import io.micronaut.data.intercept.DataIntroductionAdvice;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.annotation.*;
 
 /**

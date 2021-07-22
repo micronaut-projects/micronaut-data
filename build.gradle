@@ -4,6 +4,7 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
+        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
         classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.0.RC5"
@@ -25,6 +26,11 @@ subprojects { Project subproject ->
         apply plugin: "io.micronaut.build.internal.dependency-updates"
         apply plugin: "io.micronaut.build.internal.publishing"
 
+        repositories {
+            mavenCentral()
+            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+        }
+
         micronautBuild {
             resolutionStrategy {
                 force "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
@@ -43,10 +49,10 @@ subprojects { Project subproject ->
             ])
         }
 
-    } else if(isExampleOrBenchmark) {
+    } else if (isExampleOrBenchmark) {
         repositories {
-            jcenter()
             mavenCentral()
+            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
         apply plugin:'java'
 
@@ -56,10 +62,14 @@ subprojects { Project subproject ->
         apply plugin: "io.micronaut.build.internal.dependency-updates"
         apply plugin: "io.micronaut.build.internal.publishing"
 
+        repositories {
+            mavenCentral()
+            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+        }
     }
 
     tasks.withType(Test) {
-        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
+        if (JavaVersion.current() == JavaVersion.VERSION_15) {
             jvmArgs "--enable-preview"
         }
         timeout = Duration.ofHours(1)
@@ -67,16 +77,35 @@ subprojects { Project subproject ->
 
     if (subproject.name != 'data-bom') {
         dependencies {
+            implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+            testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+            annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+            testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+
+            testImplementation platform("org.testcontainers:testcontainers-bom:$testContainersVersion")
+
             testImplementation("org.spockframework:spock-core:${spockVersion}") {
                 exclude module:'groovy-all'
             }
             testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"        
         }
 
+        configurations {
+            all {
+                resolutionStrategy.force "io.micronaut.sql:micronaut-hibernate-jpa:$micronautSqlVersion"
+                resolutionStrategy.force "io.micronaut.sql:micronaut-jdbc:$micronautSqlVersion"
+                resolutionStrategy.force "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+                resolutionStrategy.force "io.micronaut.sql:micronaut-jdbc-hikari:$micronautSqlVersion"
+                resolutionStrategy.force "org.hibernate:hibernate-core:$hibernateVersion"
+                resolutionStrategy.force "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+                resolutionStrategy.force "io.micronaut.sql:micronaut-hibernate-jpa-spring:$micronautSqlVersion"
+            }
+        }
+
         tasks.withType(Test) {
             jvmArgs '-Xmx2048m'
             systemProperty "micronaut.cloud.platform", "OTHER"
-            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
+            if (JavaVersion.current() == JavaVersion.VERSION_15) {
                 jvmArgs "--enable-preview"
             }
             timeout = Duration.ofHours(1)
