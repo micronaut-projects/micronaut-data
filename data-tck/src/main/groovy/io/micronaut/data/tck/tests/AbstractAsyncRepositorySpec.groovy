@@ -395,7 +395,7 @@ abstract class AbstractAsyncRepositorySpec extends Specification {
         personRepository.saveAll(names.collect { new Person(name: it) }).get()
     }
 
-    private static boolean isEmptyResult(Closure<?> closure) {
+    protected static boolean isEmptyResult(Closure<?> closure) {
         try {
             closure.call()
             return false
