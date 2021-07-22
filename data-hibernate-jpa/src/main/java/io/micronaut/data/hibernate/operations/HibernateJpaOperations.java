@@ -485,11 +485,13 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 return operation;
             }
             EntityManager entityManager = sessionFactory.getCurrentSession();
+            List<T> results = new ArrayList<>();
             for (T entity : operation) {
-                entityManager.merge(entity);
+                T merge = entityManager.merge(entity);
+                results.add(merge);
             }
             flushIfNecessary(entityManager, operation.getAnnotationMetadata());
-            return operation;
+            return results;
         });
     }
 
