@@ -224,59 +224,81 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                     }));
                 }
             } else if (cascadeOp instanceof CascadeManyOp) {
-                if (cascadeType != Relation.Cascade.PERSIST) {
-                    continue;
-                    // BATCH updates not supported yet
-                }
                 CascadeManyOp cascadeManyOp = (CascadeManyOp) cascadeOp;
-
                 RuntimePersistentEntity<Object> childPersistentEntity = cascadeManyOp.childPersistentEntity;
 
-                SqlOperation childSqlPersistOperation = resolveEntityInsert(
-                        annotationMetadata,
-                        repositoryType,
-                        childPersistentEntity.getIntrospection().getBeanType(),
-                        childPersistentEntity
-                );
                 Mono<List<Object>> children;
-                if (isSupportsBatchInsert(persistentEntity, dialect)) {
-                    R2dbcEntitiesOperations<Object> op = new R2dbcEntitiesOperations<>(childPersistentEntity, cascadeManyOp.children);
-                    op.veto(persisted::contains);
-                    RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
-                    op.veto(e -> identity.getProperty().get(e) != null);
-
+                if (cascadeType == Relation.Cascade.UPDATE) {
                     if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                        LOG.debug("Cascading UPDATE for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
-
-                    persistInBatch(connection,
-                            cascadeManyOp.annotationMetadata,
-                            cascadeManyOp.repositoryType,
-                            childSqlPersistOperation, associations, persisted, op);
-
-                    children = op.getEntities().collectList();
-                } else {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
-                    }
+                    SqlOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
 
                     Flux<Object> childrenFlux = Flux.empty();
                     for (Object child : cascadeManyOp.children) {
-                        if (persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
+                        if (persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) == null) {
                             childrenFlux = childrenFlux.concatWith(Mono.just(child));
                             continue;
                         }
 
                         R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
 
-                        persistOne(connection,
+                        updateOne(connection,
                                 cascadeManyOp.annotationMetadata,
                                 cascadeManyOp.repositoryType,
-                                childSqlPersistOperation, associations, persisted, op);
+                                childSqlUpdateOperation, associations, persisted, op);
 
                         childrenFlux = childrenFlux.concatWith(op.getEntity());
                     }
                     children = childrenFlux.collectList();
+                } else if (cascadeType == Relation.Cascade.PERSIST) {
+                    SqlOperation childSqlPersistOperation = resolveEntityInsert(
+                            annotationMetadata,
+                            repositoryType,
+                            childPersistentEntity.getIntrospection().getBeanType(),
+                            childPersistentEntity
+                    );
+                    if (isSupportsBatchInsert(persistentEntity, dialect)) {
+                        R2dbcEntitiesOperations<Object> op = new R2dbcEntitiesOperations<>(childPersistentEntity, cascadeManyOp.children);
+                        op.veto(persisted::contains);
+                        RuntimePersistentProperty<Object> identity = childPersistentEntity.getIdentity();
+                        op.veto(e -> identity.getProperty().get(e) != null);
+
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                        }
+
+                        persistInBatch(connection,
+                                cascadeManyOp.annotationMetadata,
+                                cascadeManyOp.repositoryType,
+                                childSqlPersistOperation, associations, persisted, op);
+
+                        children = op.getEntities().collectList();
+                    } else {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
+                        }
+
+                        Flux<Object> childrenFlux = Flux.empty();
+                        for (Object child : cascadeManyOp.children) {
+                            if (persisted.contains(child) || childPersistentEntity.getIdentity().getProperty().get(child) != null) {
+                                childrenFlux = childrenFlux.concatWith(Mono.just(child));
+                                continue;
+                            }
+
+                            R2dbcEntityOperations<Object> op = new R2dbcEntityOperations<>(childPersistentEntity, child);
+
+                            persistOne(connection,
+                                    cascadeManyOp.annotationMetadata,
+                                    cascadeManyOp.repositoryType,
+                                    childSqlPersistOperation, associations, persisted, op);
+
+                            childrenFlux = childrenFlux.concatWith(op.getEntity());
+                        }
+                        children = childrenFlux.collectList();
+                    }
+                } else {
+                    continue;
                 }
                 entity = entity.flatMap(e -> children.flatMap(newChildren -> {
                     T e2 = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);

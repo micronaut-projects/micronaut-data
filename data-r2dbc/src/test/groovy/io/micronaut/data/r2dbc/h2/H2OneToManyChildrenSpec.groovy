@@ -1,11 +1,9 @@
-package io.micronaut.data.jdbc.h2.one2many
+package io.micronaut.data.r2dbc.h2
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.*
-import io.micronaut.data.jdbc.annotation.JdbcRepository
-import io.micronaut.data.jdbc.h2.H2DBProperties
-import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.r2dbc.annotation.R2dbcRepository
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.AutoCleanup
@@ -15,8 +13,7 @@ import spock.lang.Specification
 import javax.inject.Inject
 
 @MicronautTest
-@H2DBProperties
-class OneToManyChildrenSpec extends Specification implements H2TestPropertyProvider {
+class H2OneToManyChildrenSpec extends Specification implements H2TestPropertyProvider {
     @AutoCleanup
     @Shared
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
@@ -72,7 +69,7 @@ class OneToManyChildrenSpec extends Specification implements H2TestPropertyProvi
 
 }
 
-@JdbcRepository(dialect = Dialect.H2)
+@R2dbcRepository(dialect = Dialect.H2)
 interface ParentRepository extends CrudRepository<Parent, Long> {
 
     @Join(value = "children", type = Join.Type.FETCH)
