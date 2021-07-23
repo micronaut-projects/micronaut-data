@@ -38,7 +38,8 @@ import java.lang.annotation.*;
         @Introspected.IndexedAnnotation(annotation = Version.class),
         @Introspected.IndexedAnnotation(annotation = DateCreated.class),
         @Introspected.IndexedAnnotation(annotation = DateUpdated.class),
-        @Introspected.IndexedAnnotation(annotation = MappedProperty.class, member = "value")
+        @Introspected.IndexedAnnotation(annotation = MappedProperty.class, member = "value"),
+        @Introspected.IndexedAnnotation(annotation = Index.class, member = "value")
     }
 )
 public @interface MappedEntity {

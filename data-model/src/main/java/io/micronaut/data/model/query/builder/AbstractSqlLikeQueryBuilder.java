@@ -1496,6 +1496,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * Add a required parameter.
          *
          * @param name The name
+         * @return name A placeholder in a query
          */
         public String addAdditionalRequiredParameter(@NonNull String name) {
             Placeholder placeholder = newParameter();

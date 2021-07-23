@@ -41,6 +41,11 @@ import io.micronaut.data.tck.entities.Meal
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.entities.Sale
 import io.micronaut.data.tck.entities.Shipment
+import io.micronaut.data.tck.entities.ShipmentWithIndex
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnClass
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnClassAndFields
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnFields
+import io.micronaut.data.tck.entities.ShipmentWithIndexOnFieldsCompositeIndexes
 import io.micronaut.data.tck.entities.UuidEntity
 import io.micronaut.data.tck.jdbc.entities.Project
 import io.micronaut.data.tck.jdbc.entities.UserRole
@@ -427,6 +432,56 @@ interface MyRepository {
                     'CREATE TABLE "uuid_entity" ("uuid" UUID,"name" VARCHAR(255) NOT NULL,"child_id" UUID,"xyz" UUID,"embedded_child_embedded_child2_id" UUID);',
                     'CREATE TABLE "user_role_composite" ("id_user_id" BIGINT NOT NULL,"id_role_id" BIGINT NOT NULL, PRIMARY KEY("id_user_id","id_role_id"));'
             ]
+    }
+
+    void "test build create index from table annotation"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndex))
+
+        then:
+        statements[0] == 'CREATE TABLE "shipment_with_index" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_field_taxcode ON "shipment_with_index" (field, taxCode);'
+    }
+
+    void "test build create index from field annotation"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFields))
+
+        then:
+        statements[0] == 'CREATE TABLE "shipment_with_index_on_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_fields_field ON "shipment_with_index_on_fields" (field);CREATE INDEX idx_shipment_with_index_on_fields_taxcode ON "shipment_with_index_on_fields" (taxCode);'
+    }
+
+    void "test build create index from field annotation with composite indexes"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnFieldsCompositeIndexes))
+
+        then:
+        statements[0] == 'CREATE TABLE "shipment_with_index_on_fields_composite_indexes" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_fields_composite_indexes_field_taxcode ON "shipment_with_index_on_fields_composite_indexes" (field, taxCode);'
+    }
+
+    void "test build create index from index class annotation"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnClass))
+
+        then:
+        statements[0] == 'CREATE TABLE "shipment_with_index_on_class" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_class_field ON "shipment_with_index_on_class" (field);CREATE INDEX idx_shipment_with_index_on_class_taxcode ON "shipment_with_index_on_class" (taxCode);'
+    }
+
+    void "test build create index from index class annotation and field annotation"() {
+        when:
+        QueryBuilder encoder = new SqlQueryBuilder()
+        def statements = encoder.buildCreateTableStatements(getRuntimePersistentEntity(ShipmentWithIndexOnClassAndFields))
+
+        then:
+        statements[0] == 'CREATE TABLE "shipment_with_index_on_class_and_fields" ("shipment_id" BIGINT PRIMARY KEY AUTO_INCREMENT,"field2" VARCHAR(255) NOT NULL,"taxCode2" VARCHAR(255) NOT NULL,"field" VARCHAR(255) NOT NULL,"taxCode" VARCHAR(255) NOT NULL);'
+        statements[1] == 'CREATE UNIQUE INDEX idx_shipment_with_index_on_class_and_fields_field ON "shipment_with_index_on_class_and_fields" (field);CREATE INDEX idx_shipment_with_index_on_class_and_fields_taxcode ON "shipment_with_index_on_class_and_fields" (taxCode);CREATE UNIQUE INDEX idx_shipment_with_index_on_class_and_fields_field2_taxcode2 ON "shipment_with_index_on_class_and_fields" (field2, taxCode2);'
     }
 
     void "test build composite id query"() {

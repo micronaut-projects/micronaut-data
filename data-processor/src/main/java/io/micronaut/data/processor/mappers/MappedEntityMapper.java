@@ -63,6 +63,8 @@ public class MappedEntityMapper implements TypedAnnotationMapper<MappedEntity> {
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
                                 .member("annotation", DateUpdated.class).build(),
                         AnnotationValue.builder(Introspected.IndexedAnnotation.class)
+                                .member("annotation", Index.class).build(),
+                        AnnotationValue.builder(Introspected.IndexedAnnotation.class)
                                 .member("annotation", MappedProperty.class)
                                 .member("member", "value").build()
                 );
