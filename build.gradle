@@ -27,7 +27,6 @@ subprojects { Project subproject ->
 
         micronautBuild {
             resolutionStrategy {
-                force "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
                 force "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
             }
         }
