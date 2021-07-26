@@ -33,8 +33,10 @@ io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive
 io.micronaut.data.processor.mappers
-io.micronaut.data.processor.mappers.jpa
-io.micronaut.data.processor.mappers.jpa.event
+io.micronaut.data.processor.mappers.jpa.jakarta
+io.micronaut.data.processor.mappers.jpa.jakarta.event
+io.micronaut.data.processor.mappers.jpa.jx
+io.micronaut.data.processor.mappers.jpa.jx.event
 io.micronaut.data.processor.mappers.jta
 io.micronaut.data.processor.mappers.spring
 io.micronaut.data.processor.mappers.support
