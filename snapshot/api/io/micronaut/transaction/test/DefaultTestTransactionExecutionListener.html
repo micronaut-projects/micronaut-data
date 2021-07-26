@@ -113,7 +113,7 @@ var activeTableTab = "activeTableTab";
 <br>
 <pre>@EachBean(value=<a href="../../../../io/micronaut/transaction/SynchronousTransactionManager.html" title="interface in io.micronaut.transaction">SynchronousTransactionManager.class</a>)
  @Requires(classes=io.micronaut.test.context.TestExecutionListener.class) @Requires(property="micronaut.test.transactional",value="true",defaultValue="true")
- @Replaces(value=io.micronaut.test.transaction.spring.SpringTransactionTestExecutionListener.class)
+ @Replaces(value=io.micronaut.spring.tx.test.SpringTransactionTestExecutionListener.class)
  @Internal
 public class <span class="typeNameLabel">DefaultTestTransactionExecutionListener</span>
 extends java.lang.Object
