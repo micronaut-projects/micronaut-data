@@ -16,20 +16,20 @@ application {
 }
 
 micronaut {
+    version micronautVersion
     runtime "netty"
     testRuntime "junit5"
 }
 
 dependencies {
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     kapt "io.micronaut:micronaut-validation"
     kapt project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"
-    runtimeOnly "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.2"
-    testImplementation "org.jetbrains.spek:spek-api:1.2.1"
 }
 
 allOpen {

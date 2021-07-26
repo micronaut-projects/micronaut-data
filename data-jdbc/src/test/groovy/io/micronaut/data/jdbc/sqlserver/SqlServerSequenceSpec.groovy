@@ -26,7 +26,7 @@ import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionStatus
 import spock.lang.PendingFeature
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.sql.DataSource
 import java.sql.Connection
 

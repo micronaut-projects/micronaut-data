@@ -8,8 +8,8 @@ import io.micronaut.transaction.annotation.TransactionalEventListener
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import javax.transaction.Transactional
 import java.sql.Connection
 

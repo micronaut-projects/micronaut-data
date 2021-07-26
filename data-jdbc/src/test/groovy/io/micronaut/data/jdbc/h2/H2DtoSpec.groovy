@@ -16,7 +16,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 class H2DtoSpec extends Specification implements H2TestPropertyProvider {

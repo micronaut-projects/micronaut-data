@@ -11,8 +11,8 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.TransactionalAdvice
 import spock.lang.Specification
 
-import javax.inject.Inject
-import javax.inject.Named
+import jakarta.inject.Inject
+import jakarta.inject.Named
 import javax.transaction.Transactional
 
 @MicronautTest(packages = "io.micronaut.data.tck.entities", transactional = false)

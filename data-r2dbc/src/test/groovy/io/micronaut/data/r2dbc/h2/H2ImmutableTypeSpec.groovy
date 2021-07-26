@@ -6,7 +6,7 @@ import io.micronaut.data.r2dbc.ImmutablePetRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest(rollback = false)
 class H2ImmutableTypeSpec extends Specification implements H2TestPropertyProvider {

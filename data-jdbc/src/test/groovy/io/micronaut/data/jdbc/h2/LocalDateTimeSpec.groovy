@@ -19,7 +19,7 @@ import io.micronaut.data.tck.entities.BasicTypes
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime

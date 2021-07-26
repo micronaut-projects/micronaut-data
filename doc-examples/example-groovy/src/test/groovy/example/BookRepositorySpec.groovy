@@ -8,7 +8,7 @@ import io.micronaut.data.model.Slice
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 class BookRepositorySpec extends Specification {

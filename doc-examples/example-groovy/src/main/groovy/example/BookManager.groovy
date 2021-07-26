@@ -3,15 +3,15 @@ package example
 
 import io.micronaut.context.event.ApplicationEventPublisher
 import io.micronaut.transaction.annotation.TransactionalEventListener
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import javax.transaction.Transactional
 
 @Singleton
 class BookManager {
     private final BookRepository bookRepository
-    private final ApplicationEventPublisher eventPublisher
+    private final ApplicationEventPublisher<NewBookEvent> eventPublisher
 
-    BookManager(BookRepository bookRepository, ApplicationEventPublisher eventPublisher) { // <1>
+    BookManager(BookRepository bookRepository, ApplicationEventPublisher<NewBookEvent> eventPublisher) { // <1>
         this.bookRepository = bookRepository
         this.eventPublisher = eventPublisher
     }

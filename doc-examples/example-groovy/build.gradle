@@ -12,14 +12,16 @@ application {
 }
 
 micronaut {
+    version micronautVersion
     runtime "netty"
     testRuntime "spock"
 }
 
 dependencies {
-    implementation "io.micronaut:micronaut-http-client"
     implementation project(":data-hibernate-jpa")
-    implementation "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
+    implementation "io.micronaut:micronaut-http-client"
+    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
     compileOnly project(":data-processor")
     runtimeOnly "ch.qos.logback:logback-classic"
     runtimeOnly "com.h2database:h2"

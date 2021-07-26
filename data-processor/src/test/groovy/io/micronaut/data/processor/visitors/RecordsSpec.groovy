@@ -6,7 +6,6 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
-import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
@@ -17,7 +16,7 @@ class RecordsSpec extends AbstractDataSpec {
         given:
         def entity = buildEntity('test.Person', '''
 import io.micronaut.data.annotation.*;
-record Person(@Id @GeneratedValue @javax.annotation.Nullable Long id, String name, int age) {}
+record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id, String name, int age) {}
 ''')
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ANSI)
         def sql = builder.buildBatchCreateTableStatement(entity)
@@ -35,7 +34,7 @@ package test;
 import io.micronaut.data.annotation.*;
 
 @io.micronaut.data.annotation.MappedEntity
-record Person(@Id @GeneratedValue @javax.annotation.Nullable Long id, String name, int age) {}
+record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id, String name, int age) {}
 ''')
         def entity = RuntimePersistentEntity.of(introspection)
         def property = entity.getPropertyByName("name")
@@ -63,7 +62,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 }
 
 @io.micronaut.data.annotation.MappedEntity
-record Person(@Id @GeneratedValue @javax.annotation.Nullable Long id, String name, int age) {}
+record Person(@Id @GeneratedValue @io.micronaut.core.annotation.Nullable Long id, String name, int age) {}
 """
         )
 

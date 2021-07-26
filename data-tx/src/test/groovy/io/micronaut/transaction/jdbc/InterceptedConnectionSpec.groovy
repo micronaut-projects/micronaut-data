@@ -5,7 +5,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.exceptions.NoTransactionException
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.sql.Connection
 
 @MicronautTest(transactional = false)

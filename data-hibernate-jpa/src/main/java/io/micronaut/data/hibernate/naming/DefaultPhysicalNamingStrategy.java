@@ -20,7 +20,7 @@ import org.hibernate.boot.model.naming.Identifier;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.engine.jdbc.env.spi.JdbcEnvironment;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * The default {@link PhysicalNamingStrategy} to use. Can be replaced with another bean that declares:

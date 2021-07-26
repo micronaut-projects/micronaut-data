@@ -11,8 +11,8 @@ import spock.lang.Specification
 import spock.lang.Stepwise
 import spock.lang.Unroll
 
-import javax.inject.Inject
-import javax.inject.Singleton
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import java.lang.annotation.Annotation
 
 @MicronautTest

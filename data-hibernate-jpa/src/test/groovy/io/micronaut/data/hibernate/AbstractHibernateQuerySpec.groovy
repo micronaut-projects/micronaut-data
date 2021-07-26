@@ -22,7 +22,7 @@ import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.tests.AbstractQuerySpec
 import spock.lang.Shared
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.OptimisticLockException
 
 abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {

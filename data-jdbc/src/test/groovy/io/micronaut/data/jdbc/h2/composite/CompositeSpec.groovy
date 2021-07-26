@@ -21,7 +21,7 @@ import spock.lang.Ignore
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.CascadeType
 import javax.persistence.OneToMany
 

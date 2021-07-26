@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.MySQLContainer
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -17,7 +17,7 @@ class SomeEntityRepositoryTest() : TestPropertyProvider {
 
     @Test
     fun testInsertImmutableWithNullValue() {
-        val result = repository.save(SomeEntity()).block()
+        val result = repository.save(SomeEntity(null, null)).block()
 
         assertNotNull(result)
         assertNotNull(result?.id)

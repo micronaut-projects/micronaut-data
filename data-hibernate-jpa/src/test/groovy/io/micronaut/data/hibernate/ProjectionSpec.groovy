@@ -26,7 +26,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import java.util.stream.Collectors
 
 @MicronautTest(rollback = false, packages = ["io.micronaut.data.tck.entities", "io.micronaut.data.hibernate.entities"])

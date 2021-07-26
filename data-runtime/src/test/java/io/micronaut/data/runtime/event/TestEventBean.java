@@ -3,7 +3,7 @@ package io.micronaut.data.runtime.event;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.tck.entities.DomainEvents;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class TestEventBean {

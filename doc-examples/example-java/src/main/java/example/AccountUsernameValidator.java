@@ -2,7 +2,7 @@ package example;
 
 import io.micronaut.data.annotation.event.PrePersist;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Singleton
 public class AccountUsernameValidator {

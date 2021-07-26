@@ -18,11 +18,7 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.JavaParser
 import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.DeleteAllInterceptor
-import io.micronaut.data.intercept.FindAllInterceptor
-import io.micronaut.data.intercept.FindOneInterceptor
-import io.micronaut.data.intercept.FindPageInterceptor
-import io.micronaut.data.intercept.UpdateInterceptor
+import io.micronaut.data.intercept.*
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.entities.Person
@@ -30,7 +26,6 @@ import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
-import spock.lang.PendingFeature
 import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
@@ -132,7 +127,6 @@ ${entity('Movie', [title: String, enabled: Boolean])}
         'nextTask'   | [String.class] | 'UPDATE User SET enabled = false WHERE id = :id' | UpdateInterceptor
     }
 
-    @PendingFeature(reason = "Micronaut Core currently visits methods that are overridden. This is a bug and once fixed in core this can be removed.")
     void "test @Query with update statement - override"() {
         given:
         def repository = buildRepository('test.MovieRepository', """

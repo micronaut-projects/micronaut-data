@@ -2,7 +2,7 @@
 package example
 
 import io.micronaut.transaction.SynchronousTransactionManager
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import javax.persistence.EntityManager
 import java.sql.Connection
 

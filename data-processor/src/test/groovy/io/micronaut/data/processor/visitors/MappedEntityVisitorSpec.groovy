@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
-import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
@@ -31,7 +30,7 @@ class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
 package test;
 
 import javax.persistence.*;
-import javax.inject.*;
+import jakarta.inject.*;
 
 @Singleton
 class BadBean {

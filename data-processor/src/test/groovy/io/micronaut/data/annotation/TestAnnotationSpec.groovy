@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.h2.groovy_static_repo
+package io.micronaut.data.annotation
 
 
-import io.micronaut.data.jdbc.h2.H2DBProperties
-import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import jakarta.inject.Inject
-import spock.lang.Specification
+import io.micronaut.data.processor.visitors.AbstractDataSpec
 
-@MicronautTest
-@H2DBProperties
-class H2GroovyStaticExtendedRepositorySpec extends Specification {
+class TestAnnotationSpec extends AbstractDataSpec {
 
-    @Inject
-    TestEntityRepository entityRepository
-
-    def "simple operation"() {
-        def entity = new GTestEntity(name: "xxx")
+    void "test @Where on entity"() {
         when:
-            entityRepository.save(entity)
-            entityRepository.update(entity.id, "zzz")
+        def repository = buildRepository('test.TestRepository', '''
+
+@Repository
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends io.micronaut.data.tck.repositories.ProjectRepository {
+    @Override
+    void update(@Id io.micronaut.data.tck.jdbc.entities.ProjectId projectId, String name);
+}
+''')
         then:
             noExceptionThrown()
     }
-
 }

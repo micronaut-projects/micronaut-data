@@ -26,7 +26,7 @@ class TransactionalAnnotationMapperSpec extends AbstractTypeElementSpec {
         def definition = buildBeanDefinition('test.Test', '''
 package test;
 
-@javax.inject.Singleton
+@jakarta.inject.Singleton
 class Test {
 
     @javax.transaction.Transactional(dontRollbackOn=java.io.IOException.class)

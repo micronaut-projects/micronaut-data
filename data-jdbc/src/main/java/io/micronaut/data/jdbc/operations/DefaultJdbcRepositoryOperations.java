@@ -74,7 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.PreDestroy;
-import javax.inject.Named;
+import jakarta.inject.Named;
 import javax.sql.DataSource;
 import java.io.Serializable;
 import java.sql.Connection;
