@@ -7,7 +7,7 @@ buildscript {
         maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
-        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.0.RC5"
+        classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.1-SNAPSHOT"
     }
 }
 
