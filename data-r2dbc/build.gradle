@@ -45,7 +45,7 @@ dependencies {
 
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
         // oracle
-        testImplementation "com.oracle.database.r2dbc:oracle-r2dbc:0.1.0"
+        testImplementation "com.oracle.database.r2dbc:oracle-r2dbc:0.2.0"
     }
     testImplementation "org.testcontainers:oracle-xe"
 
