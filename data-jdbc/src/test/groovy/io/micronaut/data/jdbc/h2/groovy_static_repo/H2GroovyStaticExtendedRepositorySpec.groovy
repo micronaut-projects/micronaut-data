@@ -18,9 +18,8 @@ package io.micronaut.data.jdbc.h2.groovy_static_repo
 
 import io.micronaut.data.jdbc.h2.H2DBProperties
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
 import spock.lang.Specification
-
-import javax.inject.Inject
 
 @MicronautTest
 @H2DBProperties
