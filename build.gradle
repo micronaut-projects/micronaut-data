@@ -4,7 +4,6 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
         classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.0.RC5"
@@ -28,7 +27,6 @@ subprojects { Project subproject ->
 
         repositories {
             mavenCentral()
-            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
 
         micronautBuild {
@@ -52,7 +50,6 @@ subprojects { Project subproject ->
     } else if (isExampleOrBenchmark) {
         repositories {
             mavenCentral()
-            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
         apply plugin:'java'
 
@@ -64,7 +61,6 @@ subprojects { Project subproject ->
 
         repositories {
             mavenCentral()
-            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
     }
 
