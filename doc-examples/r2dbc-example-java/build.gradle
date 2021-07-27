@@ -8,7 +8,6 @@ application {
 }
 
 micronaut {
-    print project.ext.micronautVersion
     version project.ext.micronautVersion
     runtime "netty"
     testRuntime "junit5"

@@ -27,9 +27,6 @@ dependencies {
     api "io.r2dbc:r2dbc-spi"
 
     testImplementation project(":data-tck")
-    testImplementation("org.spockframework:spock-core:${spockVersion}") {
-        exclude module:'groovy-all'
-    }
     testImplementation "io.micronaut.test:micronaut-test-spock"
     testImplementation "io.r2dbc:r2dbc-pool"
 
