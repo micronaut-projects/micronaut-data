@@ -4,7 +4,6 @@ buildscript {
     repositories {
         mavenCentral()
         gradlePluginPortal()
-        maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
     }
     dependencies {
         classpath "io.micronaut.build.internal:micronaut-gradle-plugins:4.0.0.RC5"
@@ -28,7 +27,6 @@ subprojects { Project subproject ->
 
         repositories {
             mavenCentral()
-            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
 
         micronautBuild {
@@ -52,7 +50,6 @@ subprojects { Project subproject ->
     } else if (isExampleOrBenchmark) {
         repositories {
             mavenCentral()
-            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
         apply plugin:'java'
 
@@ -64,7 +61,6 @@ subprojects { Project subproject ->
 
         repositories {
             mavenCentral()
-            maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
         }
     }
 
@@ -83,22 +79,29 @@ subprojects { Project subproject ->
             testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
 
             testImplementation platform("org.testcontainers:testcontainers-bom:$testContainersVersion")
-
-            testImplementation("org.spockframework:spock-core:${spockVersion}") {
-                exclude module:'groovy-all'
-            }
-            testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"        
+            testImplementation "io.micronaut.test:micronaut-test-spock"
         }
 
         configurations {
             all {
-                resolutionStrategy.force "io.micronaut.sql:micronaut-hibernate-jpa:$micronautSqlVersion"
-                resolutionStrategy.force "io.micronaut.sql:micronaut-jdbc:$micronautSqlVersion"
-                resolutionStrategy.force "io.micronaut.sql:micronaut-jdbc-tomcat:$micronautSqlVersion"
-                resolutionStrategy.force "io.micronaut.sql:micronaut-jdbc-hikari:$micronautSqlVersion"
                 resolutionStrategy.force "org.hibernate:hibernate-core:$hibernateVersion"
-                resolutionStrategy.force "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
-                resolutionStrategy.force "io.micronaut.sql:micronaut-hibernate-jpa-spring:$micronautSqlVersion"
+                resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+                    if (details.requested.name == 'groovy-all') {
+                        throw new GradleException("Dependency 'groovy-all' not allowed!")
+                    }
+                    if (groovyVersion && details.requested.group == 'org.codehaus.groovy') {
+                        details.useVersion groovyVersion
+                    }
+                    if (micronautSqlVersion && details.requested.group == 'io.micronaut.sql') {
+                        details.useVersion micronautSqlVersion
+                    }
+                    if (spockVersion && details.requested.group == 'org.spockframework') {
+                        details.useVersion spockVersion
+                    }
+                }
+                if (micronautTestVersion) {
+                    resolutionStrategy.force "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+                }
             }
         }
 

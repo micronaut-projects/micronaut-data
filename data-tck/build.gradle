@@ -9,12 +9,8 @@ dependencies {
     runtimeOnly "cglib:cglib-nodep:3.3.0"
     runtimeOnly "org.objenesis:objenesis:3.2"
 
-    implementation("org.spockframework:spock-core:${spockVersion}") {
-        exclude module:'groovy-all'
-    }
-
-    implementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
-    implementation  "io.micronaut.test:micronaut-test-core:$micronautTestVersion"
+    implementation "io.micronaut.test:micronaut-test-spock"
+    implementation  "io.micronaut.test:micronaut-test-core"
     implementation "com.fasterxml.jackson.core:jackson-databind"
 }
 
