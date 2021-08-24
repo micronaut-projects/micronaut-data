@@ -56,6 +56,9 @@ public abstract class BookRepository extends io.micronaut.data.tck.repositories.
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableListSearch(@Nullable List<String> arg0);
 
+    @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE :arg1 END)", nativeQuery = true)
+    public abstract List<Book> listNativeBooksNullableListSearchWithExtraParameter(@Nullable List<String> arg0, boolean arg1);
+
     @Query(value = "select * from book where (CASE WHEN exists ( select (:arg0) ) THEN title IN (:arg0) ELSE true END)", nativeQuery = true)
     public abstract List<Book> listNativeBooksNullableArraySearch(@Nullable String[] arg0);
 

@@ -285,6 +285,13 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             books6.size() == 0
     }
 
+    void "test IN queries with multiple parameters"() {
+        when:
+            def books1 = bookRepository.listNativeBooksNullableListSearchWithExtraParameter(["The Stand", "FFF"], true)
+        then:
+            books1.size() == 1
+    }
+
     void "test join on many ended association"() {
         when:
         def author = authorRepository.searchByName("Stephen King")
