@@ -18,7 +18,9 @@ package io.micronaut.data.jdbc.oraclexe
 import io.micronaut.data.jdbc.SchemaCreateDropSpec
 import io.micronaut.data.runtime.config.SchemaGenerate
 import io.micronaut.data.tck.repositories.BookRepository
+import spock.lang.Ignore
 
+@Ignore
 class OracleXESchemaCreateDropSpec extends SchemaCreateDropSpec implements OracleTestPropertyProvider {
 
     @Override
