@@ -65,7 +65,7 @@ subprojects { Project subproject ->
     }
 
     tasks.withType(Test) {
-        if (JavaVersion.current() == JavaVersion.VERSION_15) {
+        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
             jvmArgs "--enable-preview"
         }
         timeout = Duration.ofHours(1)
