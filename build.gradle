@@ -52,7 +52,9 @@ subprojects { Project subproject ->
             mavenCentral()
         }
         apply plugin:'java'
-
+        if (subproject.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)) {
+            test.enabled(false)
+        }
     } else {
         apply plugin: "java-platform"
         version projectVersion
