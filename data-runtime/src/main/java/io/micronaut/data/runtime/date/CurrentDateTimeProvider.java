@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.runtime.date;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.time.OffsetDateTime;
 
 /**

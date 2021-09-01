@@ -32,7 +32,7 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 import org.hibernate.tuple.entity.EntityMetamodel;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * Integrates event handling.

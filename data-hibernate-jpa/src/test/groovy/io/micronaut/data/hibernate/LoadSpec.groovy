@@ -9,7 +9,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.validation.ConstraintViolationException
 
 @MicronautTest(rollback = false, packages = "io.micronaut.data.tck.entities")

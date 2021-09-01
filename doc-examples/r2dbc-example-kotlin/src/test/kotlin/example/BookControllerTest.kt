@@ -17,7 +17,7 @@ import org.testcontainers.containers.MySQLContainer
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.util.*
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

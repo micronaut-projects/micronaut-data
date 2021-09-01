@@ -21,7 +21,7 @@ import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.jdbc.spring.DataSourceTransactionManagerFactory;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 
 /**

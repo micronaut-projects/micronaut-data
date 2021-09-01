@@ -4,7 +4,7 @@ import io.micronaut.context.annotation.Factory;
 import io.micronaut.data.event.listeners.*;
 import io.micronaut.data.tck.entities.DomainEvents;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 @Factory
 public class TestEventListenerFactory {

@@ -23,8 +23,6 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import javax.inject.Scope;
-
 /**
  * Validates entity event method signatures.
  *
@@ -51,7 +49,7 @@ public class EntityEventVisitor implements TypeElementVisitor<Object, EntityEven
                 if (!element.getReturnType().getName().equals("void") || element.getParameters().length != 0) {
                     context.fail("Method annotated with @" + NameUtils.getSimpleName(eventMapping) + " must return void and declare no arguments", element);
                 }
-            } else if (element.hasStereotype(Scope.class)) {
+            } else if (element.hasStereotype("javax.inject.Scope")) {
                 if (!element.getReturnType().getName().equals("void") || element.getParameters().length != 1) {
                     context.fail("Method annotated with @" + NameUtils.getSimpleName(eventMapping) + " must return void and declare exactly one argument that represents the entity type to listen for", element);
                 }

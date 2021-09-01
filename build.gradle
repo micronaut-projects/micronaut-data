@@ -25,6 +25,10 @@ subprojects { Project subproject ->
         apply plugin: "io.micronaut.build.internal.dependency-updates"
         apply plugin: "io.micronaut.build.internal.publishing"
 
+        repositories {
+            mavenCentral()
+        }
+
         micronautBuild {
             resolutionStrategy {
                 force "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
@@ -43,19 +47,23 @@ subprojects { Project subproject ->
             ])
         }
 
-    } else if(isExampleOrBenchmark) {
+    } else if (isExampleOrBenchmark) {
         repositories {
-            jcenter()
             mavenCentral()
         }
         apply plugin:'java'
-
+        if (subproject.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)) {
+            test.enabled(false)
+        }
     } else {
         apply plugin: "java-platform"
         version projectVersion
         apply plugin: "io.micronaut.build.internal.dependency-updates"
         apply plugin: "io.micronaut.build.internal.publishing"
 
+        repositories {
+            mavenCentral()
+        }
     }
 
     tasks.withType(Test) {
@@ -67,16 +75,42 @@ subprojects { Project subproject ->
 
     if (subproject.name != 'data-bom') {
         dependencies {
-            testImplementation("org.spockframework:spock-core:${spockVersion}") {
-                exclude module:'groovy-all'
+            implementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+            testImplementation platform("io.micronaut:micronaut-bom:$micronautVersion")
+            annotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+            testAnnotationProcessor platform("io.micronaut:micronaut-bom:$micronautVersion")
+
+            testImplementation platform("org.testcontainers:testcontainers-bom:$testContainersVersion")
+            testImplementation "io.micronaut.test:micronaut-test-spock"
+        }
+
+        configurations {
+            all {
+                resolutionStrategy.force "org.hibernate:hibernate-core:$hibernateVersion"
+                resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+                    if (details.requested.name == 'groovy-all') {
+                        throw new GradleException("Dependency 'groovy-all' not allowed!")
+                    }
+                    if (groovyVersion && details.requested.group == 'org.codehaus.groovy') {
+                        details.useVersion groovyVersion
+                    }
+                    if (micronautSqlVersion && details.requested.group == 'io.micronaut.sql') {
+                        details.useVersion micronautSqlVersion
+                    }
+                    if (spockVersion && details.requested.group == 'org.spockframework') {
+                        details.useVersion spockVersion
+                    }
+                }
+                if (micronautTestVersion) {
+                    resolutionStrategy.force "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"
+                }
             }
-            testImplementation "io.micronaut.test:micronaut-test-spock:$micronautTestVersion"        
         }
 
         tasks.withType(Test) {
             jvmArgs '-Xmx2048m'
             systemProperty "micronaut.cloud.platform", "OTHER"
-            if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
+            if (JavaVersion.current() == JavaVersion.VERSION_15) {
                 jvmArgs "--enable-preview"
             }
             timeout = Duration.ofHours(1)

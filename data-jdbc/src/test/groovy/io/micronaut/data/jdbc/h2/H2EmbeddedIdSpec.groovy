@@ -25,7 +25,7 @@ import io.micronaut.data.tck.entities.ShipmentId
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.Entity
 import javax.validation.constraints.NotNull
 

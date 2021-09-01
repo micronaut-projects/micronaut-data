@@ -19,7 +19,7 @@ import spock.lang.PendingFeature
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated

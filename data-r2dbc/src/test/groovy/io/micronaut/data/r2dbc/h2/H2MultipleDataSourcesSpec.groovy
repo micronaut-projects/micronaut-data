@@ -10,7 +10,7 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest(rollback = false)
 @Property(name = "r2dbc.datasources.other.url", value = "r2dbc:h2:mem:///otherdb;DB_CLOSE_DELAY=10")

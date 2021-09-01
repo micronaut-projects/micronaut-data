@@ -3,7 +3,7 @@ package example
 
 import io.micronaut.transaction.SynchronousTransactionManager
 import java.sql.Connection
-import javax.inject.Singleton
+import jakarta.inject.Singleton
 import javax.persistence.EntityManager
 
 @Singleton

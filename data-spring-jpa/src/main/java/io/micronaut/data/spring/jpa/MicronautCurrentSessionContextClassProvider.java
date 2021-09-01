@@ -20,7 +20,7 @@ import io.micronaut.context.annotation.Primary;
 import io.micronaut.transaction.hibernate5.MicronautSessionContext;
 import org.hibernate.context.spi.CurrentSessionContext;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 /**
  * Micronaut Hibernate session class provider.

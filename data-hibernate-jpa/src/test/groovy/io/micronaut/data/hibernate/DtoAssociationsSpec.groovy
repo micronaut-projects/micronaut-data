@@ -11,7 +11,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Shared
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.Entity
 import javax.persistence.Id
 import javax.persistence.ManyToMany

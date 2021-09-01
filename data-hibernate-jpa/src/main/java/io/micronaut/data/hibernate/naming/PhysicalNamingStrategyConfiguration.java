@@ -22,7 +22,7 @@ import io.micronaut.core.annotation.Internal;
 import org.hibernate.boot.model.naming.PhysicalNamingStrategy;
 import org.hibernate.cfg.AvailableSettings;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.util.Objects;
 
 /**

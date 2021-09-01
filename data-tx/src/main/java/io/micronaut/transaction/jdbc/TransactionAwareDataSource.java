@@ -23,7 +23,7 @@ import io.micronaut.context.event.BeanCreatedEventListener;
 import io.micronaut.inject.BeanIdentifier;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 

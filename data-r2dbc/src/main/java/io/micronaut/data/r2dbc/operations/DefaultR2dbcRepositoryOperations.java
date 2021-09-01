@@ -86,7 +86,7 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import javax.inject.Named;
+import jakarta.inject.Named;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -438,7 +438,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Flux.deferContextual(contextView -> {
-            Object o = !contextView.isEmpty() ? contextView.get(ReactiveTransactionStatus.STATUS) : null;
+            Object o = contextView.getOrDefault(ReactiveTransactionStatus.STATUS, null);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (o instanceof ReactiveTransactionStatus) {
                 // existing transaction, use it

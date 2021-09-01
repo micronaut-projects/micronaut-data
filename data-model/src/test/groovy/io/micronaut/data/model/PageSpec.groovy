@@ -22,7 +22,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 
 @MicronautTest
 class PageSpec extends Specification {

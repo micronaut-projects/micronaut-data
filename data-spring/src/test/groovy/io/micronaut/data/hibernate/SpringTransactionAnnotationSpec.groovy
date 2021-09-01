@@ -8,7 +8,7 @@ import io.micronaut.transaction.support.TransactionSynchronizationManager
 import org.springframework.transaction.interceptor.TransactionAspectSupport
 import spock.lang.Specification
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.persistence.EntityManager
 import javax.transaction.Transactional
 

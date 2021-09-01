@@ -25,7 +25,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.inject.Inject
+import jakarta.inject.Inject
 import javax.sql.DataSource
 
 @MicronautTest
