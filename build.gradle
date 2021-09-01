@@ -52,7 +52,9 @@ subprojects { Project subproject ->
             mavenCentral()
         }
         apply plugin:'java'
-
+        if (subproject.path.contains("groovy") && JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_16)) {
+            test.enabled(false)
+        }
     } else {
         apply plugin: "java-platform"
         version projectVersion
@@ -65,7 +67,7 @@ subprojects { Project subproject ->
     }
 
     tasks.withType(Test) {
-        if (JavaVersion.current() == JavaVersion.VERSION_15) {
+        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_15)) {
             jvmArgs "--enable-preview"
         }
         timeout = Duration.ofHours(1)
