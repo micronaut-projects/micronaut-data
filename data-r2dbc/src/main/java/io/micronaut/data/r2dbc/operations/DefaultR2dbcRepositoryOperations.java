@@ -438,7 +438,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         Objects.requireNonNull(handler, "Callback handler cannot be null");
 
         return Flux.deferContextual(contextView -> {
-            Object o = !contextView.isEmpty() ? contextView.get(ReactiveTransactionStatus.STATUS) : null;
+            Object o = contextView.getOrDefault(ReactiveTransactionStatus.STATUS, null);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (o instanceof ReactiveTransactionStatus) {
                 // existing transaction, use it
