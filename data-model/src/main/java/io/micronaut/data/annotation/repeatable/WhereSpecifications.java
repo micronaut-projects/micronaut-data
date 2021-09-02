@@ -28,6 +28,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.ANNOTATION_TYPE, ElementType.TYPE, ElementType.METHOD})
 @Documented
+@Inherited
 public @interface WhereSpecifications {
     /**
      * @return The where specifications.

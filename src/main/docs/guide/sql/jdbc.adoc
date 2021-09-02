@@ -8,7 +8,6 @@ However, Micronaut Data JDBC is not a Object Relational Mapping (ORM) implementa
 * Dirty Checking
 * Persistence Contexts / Sessions
 * First Level Caching and Entity Proxies
-* Optimistic Locking
 
 Micronaut Data JDBC is designed for users who prefer a lower-level experience and working directly with SQL.
 

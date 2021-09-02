@@ -745,7 +745,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     }
 
     private List<MethodCandidate> initializeMethodCandidates(VisitorContext context) {
-        List<MethodCandidate> finderList = Arrays.asList(
+        List<MethodCandidate> finderList = new ArrayList<>(Arrays.asList(
                 new RawQueryMethod(),
                 new FindByFinder(),
                 new ExistsByFinder(),
@@ -770,7 +770,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 new CountSpecificationMethod(),
                 new FindAllSpecificationMethod(),
                 new FindPageSpecificationMethod()
-        );
+        ));
         SoftServiceLoader<MethodCandidate> otherCandidates = SoftServiceLoader.load(MethodCandidate.class);
         for (ServiceDefinition<MethodCandidate> definition : otherCandidates) {
             if (definition.isPresent()) {
