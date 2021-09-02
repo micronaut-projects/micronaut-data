@@ -1530,14 +1530,7 @@ abstract class AbstractRepositorySpec extends Specification {
             cleanupBooks()
     }
 
-    boolean skipOptimisticLockingTest() {
-        return false
-    }
-
     def "test optimistic locking"() {
-        if (skipOptimisticLockingTest()) {
-            return
-        }
         given:
             def student = new Student("Denis")
         when:
