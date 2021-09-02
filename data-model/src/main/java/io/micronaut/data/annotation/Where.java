@@ -30,6 +30,7 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE, ElementType.TYPE})
 @Documented
 @Repeatable(WhereSpecifications.class)
+@Inherited
 public @interface Where {
     /**
      * The string value that represents the additional query criterion. For example: {@code enabled = true}
