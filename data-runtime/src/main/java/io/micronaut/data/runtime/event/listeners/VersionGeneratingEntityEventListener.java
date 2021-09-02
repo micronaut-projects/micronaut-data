@@ -18,19 +18,20 @@ package io.micronaut.data.runtime.event.listeners;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
 import io.micronaut.data.annotation.event.PreUpdate;
-import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-
 import jakarta.inject.Singleton;
+
 import java.lang.annotation.Annotation;
 import java.time.temporal.Temporal;
 import java.util.Arrays;
@@ -92,7 +93,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
             throw new IllegalStateException("@Version value cannot be null");
         }
         if (Temporal.class.isAssignableFrom(type)) {
-            return dateTimeProvider.getNow();
+            return newTemporal(type);
         } else if (type == Integer.class) {
             return (Integer) previousValue + 1;
         } else if (type == Long.class) {
@@ -106,7 +107,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     private Object init(Class<?> valueType) {
         if (Temporal.class.isAssignableFrom(valueType)) {
-            return dateTimeProvider.getNow();
+            return newTemporal(valueType);
         } else if (valueType == Integer.class) {
             return 0;
         } else if (valueType == Long.class) {
@@ -116,6 +117,11 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
         } else {
             throw new DataAccessException("Unsupported @Version type: " + valueType);
         }
+    }
+
+    private Object newTemporal(Class<?> type) {
+        Object now = dateTimeProvider.getNow();
+        return ConversionService.SHARED.convertRequired(now, type);
     }
 
 }
