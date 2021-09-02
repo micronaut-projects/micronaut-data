@@ -157,6 +157,17 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.authorName
     }
 
+    void "author dto result from native query"() {
+        when:
+        def author = authorRepository.getAuthorsByNativeQuery()
+
+        then:
+        author
+        author.authorId
+        author.authorName
+    }
+
+
     void "entity with id class"() {
         given:
         EntityWithIdClass e = new EntityWithIdClass()

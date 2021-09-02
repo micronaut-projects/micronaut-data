@@ -89,6 +89,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -359,7 +360,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 bindPreparedQuery(q, preparedQuery, entityManager, queryStr);
                 return q.stream()
                         .map(tuple -> {
-                            Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toSet());
+                            Set<String> properties = tuple.getElements().stream().map(TupleElement::getAlias).collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)));
                             return ((BeanIntrospectionMapper<Tuple, R>) (tuple1, alias) -> {
                                 if (!properties.contains(alias)) {
                                     return null;
