@@ -37,8 +37,4 @@ class SqlServerPlainR2dbcSpec extends PlainR2dbcSpec implements SqlServerTestPro
         return true
     }
 
-    @Override
-    boolean isFailsToInsertWithoutGetRowsUpdatedCall() {
-        return true
-    }
 }

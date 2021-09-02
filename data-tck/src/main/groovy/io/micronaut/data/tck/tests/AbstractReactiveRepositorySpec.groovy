@@ -26,11 +26,7 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
-import spock.lang.Timeout
 
-import java.util.concurrent.TimeUnit
-
-@Timeout(value = 20, unit = TimeUnit.SECONDS)
 @Stepwise
 abstract class AbstractReactiveRepositorySpec extends Specification {
 
@@ -291,9 +287,6 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
     }
 
     def "test optimistic locking"() {
-        if (skipOptimisticLockingTest()) {
-            return
-        }
         given:
             def student = new Student("Denis")
         when:
