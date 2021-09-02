@@ -40,4 +40,7 @@ public interface AuthorRepository extends io.micronaut.data.tck.repositories.Aut
 
     @Query("select new io.micronaut.data.hibernate.entities.AuthorDto(e.id, e.name) from Author e where e.id = :id")
     AuthorDto getAuthorsById(Long id);
+
+    @Query(nativeQuery = true, value = "SELECT id FROM (VALUES (1),(2),(4),(5)) AS t(id)")
+    List<Long> longs();
 }

@@ -446,6 +446,13 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             books.size() == 2
     }
 
+    void "test native query with numbers"() {
+        when:
+            def value = authorRepository.longs()
+        then:
+            !value.isEmpty()
+    }
+
     @Override
     BookRepository getBookRepository() {
         return br

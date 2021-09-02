@@ -372,8 +372,11 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 Class<R> wrapperType = ReflectionUtils.getWrapperType(preparedQuery.getResultType());
                 Query<R> q;
                 if (preparedQuery.isNative()) {
-                    q = entityManager.createNativeQuery(queryStr, wrapperType);
-
+                    if (DataType.ENTITY.equals(preparedQuery.getResultDataType())) {
+                        q = entityManager.createNativeQuery(queryStr, wrapperType);
+                    } else {
+                        q = entityManager.createNativeQuery(queryStr);
+                    }
                 } else {
                     q = entityManager.createQuery(queryStr, wrapperType);
                 }
