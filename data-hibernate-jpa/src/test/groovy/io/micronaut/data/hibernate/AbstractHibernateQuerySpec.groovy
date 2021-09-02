@@ -20,6 +20,7 @@ import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.tests.AbstractQuerySpec
+import spock.lang.Issue
 import spock.lang.Shared
 
 import jakarta.inject.Inject
@@ -283,6 +284,14 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             def books6 = bookRepository.listNativeBooksWithTitleInArray(new String[0])
         then:
             books6.size() == 0
+    }
+
+    @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')
+    void "test IN queries with multiple parameters"() {
+        when:
+            def books1 = bookRepository.listNativeBooksNullableListSearchWithExtraParameter(["The Stand", "FFF"], true)
+        then:
+            books1.size() == 1
     }
 
     void "test join on many ended association"() {
