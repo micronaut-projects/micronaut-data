@@ -36,9 +36,4 @@ class OracleXEReactiveRepositorySpec extends AbstractReactiveRepositorySpec impl
         return context.getBean(OracleXEStudentReactiveRepository)
     }
 
-    @Override
-    boolean skipOptimisticLockingTest() {
-        // https://github.com/oracle/oracle-r2dbc/issues/11
-        return true
-    }
 }

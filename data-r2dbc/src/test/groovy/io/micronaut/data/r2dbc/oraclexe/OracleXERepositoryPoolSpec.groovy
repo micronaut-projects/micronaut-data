@@ -13,27 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.r2dbc.sqlserver
+package io.micronaut.data.r2dbc.oraclexe
 
-import groovy.transform.Memoized
-import io.micronaut.data.r2dbc.PlainR2dbcSpec
-import io.micronaut.data.tck.repositories.AuthorRepository
+import spock.lang.IgnoreIf
 
-class SqlServerPlainR2dbcSpec extends PlainR2dbcSpec implements SqlServerTestPropertyProvider {
-
-    @Memoized
-    @Override
-    AuthorRepository getAuthorRepository() {
-        return context.getBean(MSAuthorRepository)
-    }
+@IgnoreIf({ !jvm.isJava11Compatible() })
+class OracleXERepositoryPoolSpec extends OracleXERepositorySpec {
 
     @Override
-    String getInsertQuery() {
-        return 'INSERT INTO author (name) VALUES (@name)'
-    }
-
-    @Override
-    boolean isFailsWhenConvertingFluxToMono() {
+    boolean usePool() {
         return true
     }
 

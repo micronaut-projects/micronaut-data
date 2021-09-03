@@ -24,11 +24,7 @@ import io.micronaut.data.tck.repositories.SaleRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
-import spock.lang.Timeout
 
-import java.util.concurrent.TimeUnit
-
-@Timeout(value = 20, unit = TimeUnit.SECONDS)
 abstract class AbstractJSONSpec extends Specification {
 
     @AutoCleanup

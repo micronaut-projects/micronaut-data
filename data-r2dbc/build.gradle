@@ -15,15 +15,15 @@ dependencies {
     implementation "io.micronaut.reactor:micronaut-reactor"
     implementation "io.projectreactor.netty:reactor-netty"
 
-    implementation platform("io.micronaut.r2dbc:micronaut-r2dbc-bom:$micronautR2dbcVersion")
-    testImplementation platform("io.micronaut.r2dbc:micronaut-r2dbc-bom:$micronautR2dbcVersion")
+    implementation platform("io.r2dbc:r2dbc-bom:$r2dbcVersion")
+    testImplementation platform("io.r2dbc:r2dbc-bom:$r2dbcVersion")
 
     api "io.projectreactor:reactor-core:$reactorVersion"
     api "io.projectreactor:reactor-tools:$reactorVersion"
     api project(":data-model")
     api project(":data-runtime")
     implementation "io.micronaut:micronaut-http"
-    api "io.micronaut.r2dbc:micronaut-r2dbc-core"
+    api "io.micronaut.r2dbc:micronaut-r2dbc-core:$micronautR2dbcVersion"
     api "io.r2dbc:r2dbc-spi"
 
     testImplementation project(":data-tck")
@@ -42,7 +42,7 @@ dependencies {
 
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_11)) {
         // oracle
-        testImplementation "com.oracle.database.r2dbc:oracle-r2dbc:0.1.0"
+        testImplementation "com.oracle.database.r2dbc:oracle-r2dbc"
     }
     testImplementation "org.testcontainers:oracle-xe"
 
@@ -54,7 +54,7 @@ dependencies {
     // mysql
     testImplementation "org.testcontainers:mysql"
     testImplementation 'mysql:mysql-connector-java'
-    testImplementation 'dev.miku:r2dbc-mysql'
+    testImplementation 'dev.miku:r2dbc-mysql:0.8.2.RELEASE'
 
     // h2
     testImplementation 'io.r2dbc:r2dbc-h2'
@@ -66,7 +66,7 @@ dependencies {
     testImplementation 'io.r2dbc:r2dbc-mssql'
 
     // postgres
-    testImplementation 'io.r2dbc:r2dbc-postgresql'
+    testImplementation 'org.postgresql:r2dbc-postgresql'
     testImplementation "org.testcontainers:postgresql"
     testImplementation 'org.postgresql:postgresql'
 }
@@ -74,7 +74,10 @@ dependencies {
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
-    exclude "**/r2dbc/oraclexe/**"
+    if (JavaVersion.current() == JavaVersion.VERSION_11) {
+        // Oracle tests deadlock on JDK 11
+        exclude "**/r2dbc/oraclexe/**"
+    }
 }
 
 micronautBuild {
