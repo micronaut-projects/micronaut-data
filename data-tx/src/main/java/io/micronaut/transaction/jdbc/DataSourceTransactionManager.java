@@ -15,23 +15,26 @@
  */
 package io.micronaut.transaction.jdbc;
 
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.jdbc.exceptions.CannotGetJdbcConnectionException;
-import io.micronaut.transaction.support.*;
+import io.micronaut.transaction.support.AbstractSynchronousTransactionManager;
+import io.micronaut.transaction.support.DefaultTransactionStatus;
+import io.micronaut.transaction.support.ResourceTransactionManager;
+import io.micronaut.transaction.support.TransactionSynchronizationManager;
+import io.micronaut.transaction.support.TransactionSynchronizationUtils;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
 import java.util.Objects;
-import javax.sql.DataSource;
 
 
 /**

@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
@@ -24,7 +24,8 @@ import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.SaveOneReactiveInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.reactivex.Flowable;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -49,10 +50,10 @@ public class DefaultSaveOneReactiveInterceptor extends AbstractReactiveIntercept
         Class<?> rootEntity = getRequiredRootEntity(context);
         Map<String, Object> parameterValueMap = context.getParameterValueMap();
 
-        Flowable<Object> publisher = Flowable.fromCallable(() -> {
+        Flux<Object> publisher = Mono.fromCallable(() -> {
             Object o = instantiateEntity(rootEntity, parameterValueMap);
             return getInsertOperation(context, o);
-        }).flatMap(reactiveOperations::persist);
+        }).flatMapMany(reactiveOperations::persist);
         ReturnType<Object> rt = context.getReturnType();
         Argument<?> reactiveValue = context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
         if (isNumber(reactiveValue.getType())) {

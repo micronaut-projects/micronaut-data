@@ -7,7 +7,6 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import io.r2dbc.spi.Connection
-import io.reactivex.Flowable
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeAll
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.TestInstance
 import org.testcontainers.containers.MySQLContainer
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.util.*
 import jakarta.inject.Inject
 
 @MicronautTest
@@ -43,8 +41,8 @@ class BookControllerTest : TestPropertyProvider {
         // end::programmatic-tx[]
 
         // tag::programmatic-tx-status[]
-        Flowable.fromPublisher(operations.withTransaction { status: ReactiveTransactionStatus<Connection> ->  // <1>
-            Flowable.fromPublisher(authorRepository.save(Author("Michael Crichton")))
+        Flux.from(operations.withTransaction { status: ReactiveTransactionStatus<Connection> ->  // <1>
+            Flux.from(authorRepository.save(Author("Michael Crichton")))
                     .flatMap { author: Author ->
                         operations.withTransaction(status) {   // <2>
                             bookRepository.saveAll(listOf(
@@ -53,7 +51,7 @@ class BookControllerTest : TestPropertyProvider {
                             ))
                         }
                     }
-        }).blockingSubscribe()
+        }).collectList().block()
         // end::programmatic-tx-status[]
     }
 

@@ -15,66 +15,15 @@
  */
 package io.micronaut.data.r2dbc.repository;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 /**
  * CRUD repository for Project Reactor.
  * @param <E> The entity type
  * @param <ID> The ID type
  * @see ReactiveStreamsCrudRepository
+ * @deprecated Replaced by {@link io.micronaut.data.repository.reactive.ReactorCrudRepository}
  */
-public interface ReactorCrudRepository<E, ID> extends ReactiveStreamsCrudRepository<E, ID> {
-    @NonNull
-    @Override
-    <S extends E> Mono<S> save(@NonNull @Valid @NotNull S entity);
-
-    @NonNull
-    @Override
-    <S extends E> Flux<S> saveAll(@NonNull @Valid @NotNull Iterable<S> entities);
-
-    @NonNull
-    @Override
-    <S extends E> Mono<S> update(@NonNull @Valid @NotNull S entity);
-
-    @NonNull
-    @Override
-    <S extends E> Flux<S> updateAll(@NonNull @Valid @NotNull Iterable<S> entities);
-
-    @NonNull
-    @Override
-    Mono<E> findById(@NonNull @NotNull ID id);
-
-    @NonNull
-    @Override
-    Mono<Boolean> existsById(@NonNull @NotNull ID id);
-
-    @NonNull
-    @Override
-    Flux<E> findAll();
-
-    @NonNull
-    @Override
-    Mono<Long> count();
-
-    @NonNull
-    @Override
-    Mono<Long> deleteById(@NonNull @NotNull ID id);
-
-    @NonNull
-    @Override
-    Mono<Long> delete(@NonNull @NotNull E entity);
-
-    @NonNull
-    @Override
-    Mono<Long> deleteAll(@NonNull @NotNull Iterable<? extends E> entities);
-
-    @NonNull
-    @Override
-    Mono<Long> deleteAll();
+@Deprecated
+public interface ReactorCrudRepository<E, ID> extends io.micronaut.data.repository.reactive.ReactorCrudRepository<E, ID> {
 }
