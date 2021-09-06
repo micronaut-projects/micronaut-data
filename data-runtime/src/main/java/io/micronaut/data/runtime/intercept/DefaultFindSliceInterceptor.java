@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
@@ -26,8 +25,8 @@ import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.runtime.PagedQuery;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 /**
  * Default implementation of {@link FindSliceInterceptor}.
@@ -70,7 +69,7 @@ public class DefaultFindSliceInterceptor<T, R> extends AbstractQueryInterceptor<
         if (returnType.getType().isInstance(slice)) {
             return (R) slice;
         } else {
-            return ConversionService.SHARED.convert(
+            return operations.getConversionService().convert(
                     slice,
                     returnType.asArgument()
             ).orElseThrow(() -> new IllegalStateException("Unsupported slice interface: " + returnType.getType()));

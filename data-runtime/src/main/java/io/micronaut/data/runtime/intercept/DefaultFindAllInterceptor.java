@@ -16,13 +16,12 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindAllInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PagedQuery;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.Collections;
 
@@ -53,7 +52,7 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
             if (rt.isInstance(iterable)) {
                 return (Iterable<R>) iterable;
             } else {
-                return ConversionService.SHARED.convert(
+                return operations.getConversionService().convert(
                         iterable,
                         context.getReturnType().asArgument()
                 ).orElse(Collections.emptyList());
@@ -64,7 +63,7 @@ public class DefaultFindAllInterceptor<T, R> extends AbstractQueryInterceptor<T,
             if (rt.isInstance(iterable)) {
                 return iterable;
             } else {
-                return ConversionService.SHARED.convert(
+                return operations.getConversionService().convert(
                         iterable,
                         context.getReturnType().asArgument()
                 ).orElse(Collections.emptyList());

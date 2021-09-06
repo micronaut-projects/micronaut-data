@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.DeleteOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -54,7 +53,7 @@ public class DefaultDeleteOneInterceptor<T> extends AbstractQueryInterceptor<T, 
             }
             Number deleted = operations.delete(getDeleteOperation(context, entity));
             if (isNumber(returnType)) {
-                return ConversionService.SHARED.convertRequired(deleted, returnType);
+                return operations.getConversionService().convertRequired(deleted, returnType);
             } else if (returnType.equals(rootEntity)) {
                 if (deleted.intValue() > 0) {
                     return entity;

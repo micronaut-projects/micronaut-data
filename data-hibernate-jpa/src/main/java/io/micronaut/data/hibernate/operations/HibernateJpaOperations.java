@@ -53,6 +53,7 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
@@ -113,6 +114,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     private final RuntimeEntityRegistry runtimeEntityRegistry;
     private ExecutorAsyncOperations asyncOperations;
     private ExecutorService executorService;
+    private final ConversionService<?> dataConversionService;
 
     /**
      * Default constructor.
@@ -122,21 +124,47 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
      * @param executorService       The executor service for I/O tasks to use
      * @param runtimeEntityRegistry The runtime entity registry
      */
+    @Deprecated
     protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
             @Named("io") @Nullable ExecutorService executorService,
             RuntimeEntityRegistry runtimeEntityRegistry) {
+        this(sessionFactory, transactionOperations, executorService, runtimeEntityRegistry, null);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param sessionFactory        The session factory
+     * @param transactionOperations The transaction operations
+     * @param executorService       The executor service for I/O tasks to use
+     * @param runtimeEntityRegistry The runtime entity registry
+     * @param dataConversionService The data conversion service
+     */
+    protected HibernateJpaOperations(
+            @NonNull SessionFactory sessionFactory,
+            @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
+            @Named("io") @Nullable ExecutorService executorService,
+            RuntimeEntityRegistry runtimeEntityRegistry,
+            DataConversionService dataConversionService) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.sessionFactory = sessionFactory;
         this.transactionOperations = transactionOperations;
         this.executorService = executorService;
+        // Backwards compatibility should be removed in the next version
+        this.dataConversionService = dataConversionService == null ? ConversionService.SHARED : dataConversionService;
     }
 
     @Override
     public ApplicationContext getApplicationContext() {
         return runtimeEntityRegistry.getApplicationContext();
+    }
+
+    @Override
+    public ConversionService<?> getConversionService() {
+        return dataConversionService;
     }
 
     @NonNull
@@ -633,7 +661,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                                     if (wrapperType.isInstance(o)) {
                                         return (R) o;
                                     } else {
-                                        return ConversionService.SHARED.convertRequired(
+                                        return dataConversionService.convertRequired(
                                                 o,
                                                 wrapperType
                                         );
@@ -771,7 +799,10 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(async());
+        if (dataConversionService instanceof DataConversionService) {
+            return new ExecutorReactiveOperations(async(), (DataConversionService) dataConversionService);
+        }
+        return new ExecutorReactiveOperations(async(), null);
     }
 
     @NonNull

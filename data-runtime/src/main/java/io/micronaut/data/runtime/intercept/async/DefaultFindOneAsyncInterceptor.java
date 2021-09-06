@@ -15,15 +15,14 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.concurrent.CompletionStage;
 
@@ -56,7 +55,7 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
                 return null;
             }
             if (!type.getType().isInstance(o)) {
-                return ConversionService.SHARED.convert(o, type)
+                return operations.getConversionService().convert(o, type)
                         .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + o));
             }
             return o;

@@ -362,7 +362,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @NonNull
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(async());
+        return new ExecutorReactiveOperations(async(), conversionService);
     }
 
     @Nullable

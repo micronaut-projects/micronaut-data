@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateAllEntitiesInterceptor;
@@ -52,10 +51,10 @@ public class DefaultUpdateAllEntitiesInterceptor<T, R> extends AbstractQueryInte
             return null;
         }
         if (isNumber(rt.getType())) {
-            return ConversionService.SHARED.convert(count(rs), rt.asArgument())
+            return operations.getConversionService().convert(count(rs), rt.asArgument())
                         .orElseThrow(() -> new IllegalStateException("Unsupported return type: " + rt.getType()));
         }
-        return ConversionService.SHARED.convert(rs, rt.asArgument())
+        return operations.getConversionService().convert(rs, rt.asArgument())
                     .orElseThrow(() -> new IllegalStateException("Unsupported iterable return type: " + rt.getType()));
     }
 }

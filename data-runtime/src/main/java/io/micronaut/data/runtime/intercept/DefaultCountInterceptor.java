@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.CountInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -55,7 +54,7 @@ public class DefaultCountInterceptor<T> extends AbstractQueryInterceptor<T, Numb
             result = operations.count(getPagedQuery(context));
         }
 
-        return ConversionService.SHARED.convert(
+        return operations.getConversionService().convert(
                 result,
                 context.getReturnType().asArgument()
         ).orElseThrow(() -> new IllegalStateException("Unsupported number type: " + context.getReturnType().getType()));
