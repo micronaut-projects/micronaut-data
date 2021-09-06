@@ -5,8 +5,8 @@ dependencies {
 	testImplementation "io.projectreactor:reactor-core:3.4.0"
 	testImplementation "io.micronaut:micronaut-inject-groovy"
 	testImplementation "io.micronaut:micronaut-inject-java-test"
-//	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
-//	testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
+	testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
 	testImplementation "jakarta.transaction:jakarta.transaction-api:$jakartaTxVersion"
 	if (!JavaVersion.current().isJava9Compatible()) {
 		testImplementation files(org.gradle.internal.jvm.Jvm.current().toolsJar)
