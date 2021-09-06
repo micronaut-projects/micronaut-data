@@ -2,6 +2,8 @@ dependencies {
 	annotationProcessor "io.micronaut:micronaut-inject-java"
 	annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
 	api project(":data-model")
+	implementation "io.projectreactor:reactor-core"
+	implementation 'io.micronaut.reactor:micronaut-reactor'
 	compileOnly 'io.micronaut:micronaut-http'
 	testImplementation 'javax.persistence:javax.persistence-api:2.2'
 	testImplementation project(":data-processor")

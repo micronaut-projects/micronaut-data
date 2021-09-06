@@ -24,8 +24,8 @@ import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 /**
  * Default implementation of {@link FindPageReactiveInterceptor}.
@@ -50,12 +50,12 @@ public class DefaultFindPageReactiveInterceptor extends AbstractReactiveIntercep
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
-            publisher = Flowable.fromPublisher(reactiveOperations.findOne(countQuery))
+            publisher = Flux.from(reactiveOperations.findOne(countQuery))
                     .flatMap(total -> {
-                        Flowable<Object> resultList = Flowable.fromPublisher(reactiveOperations.findAll(preparedQuery));
-                        return resultList.toList().map(list ->
+                        Flux<Object> resultList = Flux.from(reactiveOperations.findAll(preparedQuery));
+                        return resultList.collectList().map(list ->
                             Page.of(list, preparedQuery.getPageable(), total.longValue())
-                        ).toFlowable();
+                        );
                     });
         } else {
             publisher = reactiveOperations.findPage(getPagedQuery(context));

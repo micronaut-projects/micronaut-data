@@ -15,19 +15,19 @@
  */
 package io.micronaut.data.runtime.intercept.reactive;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.async.publisher.Publishers;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindSliceReactiveInterceptor;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.Slice;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.reactivex.Flowable;
-import io.reactivex.Single;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Default implementation of {@link FindSliceReactiveInterceptor}.
@@ -51,14 +51,14 @@ public class DefaultFindSliceReactiveInterceptor extends AbstractReactiveInterce
             PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
             Pageable pageable = preparedQuery.getPageable();
 
-            Single<Slice<Object>> publisher = Flowable.fromPublisher(reactiveOperations.findAll(preparedQuery))
-                    .toList().map(objects -> Slice.of(objects, pageable));
+            Mono<Slice<Object>> publisher = Flux.from(reactiveOperations.findAll(preparedQuery))
+                    .collectList().map(objects -> Slice.of(objects, pageable));
             return Publishers.convertPublisher(publisher, context.getReturnType().getType());
 
         } else {
             PagedQuery<Object> pagedQuery = getPagedQuery(context);
-            Single<? extends Slice<?>> result = Flowable.fromPublisher(reactiveOperations.findAll(pagedQuery))
-                    .toList().map(objects ->
+            Mono<? extends Slice<?>> result = Flux.from(reactiveOperations.findAll(pagedQuery))
+                    .collectList().map(objects ->
                             Slice.of(objects, pagedQuery.getPageable())
                     );
             return Publishers.convertPublisher(result, context.getReturnType().getType());

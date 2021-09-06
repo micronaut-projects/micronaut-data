@@ -28,6 +28,7 @@ dependencies {
     implementation "io.micronaut.r2dbc:micronaut-r2dbc-core"
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation "io.micronaut.sql:micronaut-jdbc-hikari"
+
     runtimeOnly "dev.miku:r2dbc-mysql:$r2dbcMysqlVersion"
     runtimeOnly "mysql:mysql-connector-java"
 

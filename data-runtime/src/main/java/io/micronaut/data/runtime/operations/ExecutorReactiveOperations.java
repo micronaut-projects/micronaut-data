@@ -25,8 +25,8 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.*;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
-import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 import java.io.Serializable;
 import java.util.concurrent.Executor;
@@ -116,9 +116,9 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public <T> Publisher<T> findAll(PagedQuery<T> pagedQuery) {
-        return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
+        return Flux.from(Publishers.fromCompletableFuture(() ->
                 asyncOperations.findAll(pagedQuery)
-        )).flatMap(Flowable::fromIterable);
+        )).flatMap(Flux::fromIterable);
     }
 
     @NonNull
@@ -140,9 +140,9 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public <T, R> Publisher<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
-        return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
+        return Flux.from(Publishers.fromCompletableFuture(() ->
                 asyncOperations.findAll(preparedQuery)
-        )).flatMap(Flowable::fromIterable);
+        )).flatMap(Flux::fromIterable);
     }
 
     @NonNull
@@ -164,17 +164,17 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
     @NonNull
     @Override
     public <T> Publisher<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
+        return Flux.from(Publishers.fromCompletableFuture(() ->
                 asyncOperations.updateAll(operation)
-        )).flatMap(Flowable::fromIterable);
+        )).flatMap(Flux::fromIterable);
     }
 
     @NonNull
     @Override
     public <T> Publisher<T> persistAll(@NonNull InsertBatchOperation<T> operation) {
-        return Flowable.fromPublisher(Publishers.fromCompletableFuture(() ->
+        return Flux.from(Publishers.fromCompletableFuture(() ->
                 asyncOperations.persistAll(operation)
-        )).flatMap(Flowable::fromIterable);
+        )).flatMap(Flux::fromIterable);
     }
 
     @NonNull

@@ -21,8 +21,8 @@ import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
-import io.reactivex.Flowable;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 
 /**
  * Abstract reactive repository interceptor.
@@ -58,6 +58,6 @@ public abstract class AbstractReactiveInterceptor<T, R> extends AbstractQueryInt
      * @return the size
      */
     protected Publisher<Integer> count(Publisher<R> publisher) {
-        return Flowable.fromPublisher(publisher).count().toFlowable().map(Long::intValue);
+        return Flux.from(publisher).count().map(Long::intValue);
     }
 }
