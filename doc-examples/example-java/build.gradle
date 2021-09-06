@@ -26,7 +26,7 @@ dependencies {
     implementation project(":data-jdbc")
 
     implementation "io.micronaut.sql:micronaut-jdbc-tomcat"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.5"
     runtimeOnly "com.h2database:h2"
 }
 
