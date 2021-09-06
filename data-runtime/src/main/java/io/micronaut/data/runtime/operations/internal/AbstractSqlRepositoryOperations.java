@@ -1307,7 +1307,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     private Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
         TypeConverter<Object, Object> converter = property.getConverter();
         if (converter != null) {
-            return converter.convertFrom(value, ConversionContext.of((Argument) property.getArgument()));
+            return converter.convertToPersistedValue(value, ConversionContext.of((Argument) property.getArgument()));
         }
         return value;
     }
@@ -1323,7 +1323,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         } else {
             conversionContext = ConversionContext.of(argument);
         }
-        return converter.convertFrom(value, conversionContext);
+        return converter.convertToPersistedValue(value, conversionContext);
     }
 
     /**

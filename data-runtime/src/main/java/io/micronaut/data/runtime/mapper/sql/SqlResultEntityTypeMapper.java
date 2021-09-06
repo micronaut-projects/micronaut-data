@@ -583,7 +583,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         Object result = resultReader.readDynamic(rs, columnName, prop.getDataType());
         TypeConverter<Object, Object> converter = prop.getConverter();
         if (converter != null) {
-            return converter.convertTo(result, ConversionContext.of((Argument) prop.getArgument()));
+            return converter.convertToEntityValue(result, ConversionContext.of((Argument) prop.getArgument()));
         }
         return result;
     }

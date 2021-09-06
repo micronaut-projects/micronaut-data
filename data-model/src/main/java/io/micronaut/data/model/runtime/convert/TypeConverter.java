@@ -19,12 +19,21 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 
+/**
+ * The type converter is used for converting mapped entity value to the persisted value and back.
+ *
+ * @param <X> The entity value type
+ * @param <Y> The persisted value type
+ *
+ * @author Denis Stepanov
+ * @since 3.1
+ */
 public interface TypeConverter<X, Y> {
 
     @Nullable
-    Y convertFrom(@Nullable X object, @NonNull ConversionContext context);
+    Y convertToPersistedValue(@Nullable X object, @NonNull ConversionContext context);
 
     @Nullable
-    X convertTo(@Nullable Y object, @NonNull ConversionContext context);
+    X convertToEntityValue(@Nullable Y object, @NonNull ConversionContext context);
 
 }

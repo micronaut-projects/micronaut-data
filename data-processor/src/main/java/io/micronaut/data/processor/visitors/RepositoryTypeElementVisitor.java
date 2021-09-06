@@ -438,14 +438,15 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                                             annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, dataTypes);
                                             List<String> converters = getConverters(methodMatchContext, parameters, finalParameterBinding);
                                             if (!converters.isEmpty()) {
-                                                annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_CONVERTERS, converters.stream()
+                                                AnnotationClassValue[] classValues = converters.stream()
                                                         .map(name -> {
                                                             if (name == null) {
                                                                 return new AnnotationClassValue<>(Object.class.getName());
                                                             }
                                                             return new AnnotationClassValue<>(name);
                                                         })
-                                                        .toArray(AnnotationClassValue[]::new));
+                                                        .toArray(AnnotationClassValue[]::new);
+                                                annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_CONVERTERS, classValues);
                                             }
                                         }
 

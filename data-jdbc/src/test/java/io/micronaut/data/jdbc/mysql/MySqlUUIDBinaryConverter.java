@@ -13,7 +13,7 @@ import java.util.UUID;
 public class MySqlUUIDBinaryConverter implements TypeConverter<UUID, byte[]> {
 
     @Override
-    public byte[] convertFrom(UUID uuid, ConversionContext context) {
+    public byte[] convertToPersistedValue(UUID uuid, ConversionContext context) {
         if (uuid == null) {
             return null;
         }
@@ -24,7 +24,7 @@ public class MySqlUUIDBinaryConverter implements TypeConverter<UUID, byte[]> {
     }
 
     @Override
-    public UUID convertTo(byte[] bytes, ConversionContext context) {
+    public UUID convertToEntityValue(byte[] bytes, ConversionContext context) {
         if (bytes == null) {
             return null;
         }
