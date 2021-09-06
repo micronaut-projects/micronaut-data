@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.TypeHint;
@@ -142,12 +143,13 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
      * @param runtimeEntityRegistry The runtime entity registry
      * @param dataConversionService The data conversion service
      */
+    @Creator
     protected HibernateJpaOperations(
             @NonNull SessionFactory sessionFactory,
             @NonNull @Parameter TransactionOperations<Connection> transactionOperations,
             @Named("io") @Nullable ExecutorService executorService,
             RuntimeEntityRegistry runtimeEntityRegistry,
-            DataConversionService dataConversionService) {
+            DataConversionService<?> dataConversionService) {
         ArgumentUtils.requireNonNull("sessionFactory", sessionFactory);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.sessionFactory = sessionFactory;

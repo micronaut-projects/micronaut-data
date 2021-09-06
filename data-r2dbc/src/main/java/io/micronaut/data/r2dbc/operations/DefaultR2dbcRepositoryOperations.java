@@ -15,9 +15,6 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
-import io.micronaut.context.BeanLocator;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -25,6 +22,8 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationMetadataProvider;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.attr.AttributeHolder;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
@@ -32,8 +31,6 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
-import io.micronaut.data.runtime.convert.DataConversionService;
-import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
@@ -52,6 +49,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.TypeConverterRegistry;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -59,6 +57,7 @@ import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.mapper.DTOMapper;
@@ -66,6 +65,7 @@ import io.micronaut.data.runtime.mapper.TypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.AsyncFromReactiveAsyncRepositoryOperation;
+import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.TransactionalAdvice;
@@ -80,6 +80,7 @@ import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Statement;
+import jakarta.inject.Named;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,7 +89,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
-import jakarta.inject.Named;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -136,7 +136,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
      * @param applicationContext    The bean context
      * @param executorService       The executor
      * @param conversionService     The conversion service
-     * @param beanLocator           The bean locator
+     * @param typeConverterRegistry The type converter registry
      */
     @Internal
     private DefaultR2dbcRepositoryOperations(
@@ -148,7 +148,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
             ApplicationContext applicationContext,
             @Nullable @Named("io") ExecutorService executorService,
             DataConversionService<?> conversionService,
-            BeanLocator beanLocator) {
+            TypeConverterRegistry typeConverterRegistry) {
         super(
                 dataSourceName,
                 new ColumnNameR2dbcResultReader(conversionService),
@@ -158,7 +158,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                 dateTimeProvider,
                 runtimeEntityRegistry,
                 applicationContext,
-                conversionService, beanLocator);
+                conversionService, typeConverterRegistry);
         this.connectionFactory = connectionFactory;
         this.executorService = executorService;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();

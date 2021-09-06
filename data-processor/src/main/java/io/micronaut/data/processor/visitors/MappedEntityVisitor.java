@@ -198,35 +198,51 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             Map<String, DataType> dataTypes,
             Map<String, String> dataConverters,
             VisitorContext context) {
+
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
         PropertyElement propertyElement = spp.getPropertyElement();
 
+        boolean isRelation = propertyElement.hasStereotype(Relation.class);
+
         DataType dataType = annotationMetadata.getValue(TypeDef.class, "type", DataType.class)
                 .orElse(null);
-        String converter = annotationMetadata.stringValue(TypeDef.class, "converter")
-                .orElse(null);
+        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter")
+                .orElseGet(() -> annotationMetadata.stringValue(TypeDef.class, "converter").orElse(null));
         if (Objects.equals(converter, Object.class.getName())) {
             converter = null;
-        }
-
-        if (dataType == null && spp.getType().isEnum()) {
-            if (spp.getOwner().getAnnotationMetadata().hasAnnotation("javax.persistence.Entity")) {
-                // JPA enums have default ORDINAL mapping for enums
-                dataType = DataType.INTEGER;
-            }
-        }
-
-        if (dataType == null) {
-            ClassElement type = propertyElement.getGenericType();
-            dataType = TypeUtils.resolveDataType(type, dataTypes);
         }
         if (converter == null) {
             ClassElement type = propertyElement.getGenericType();
             converter = TypeUtils.resolveDataConverter(type, dataConverters);
         }
+        if (converter != null) {
+            if (isRelation) {
+                context.fail("Relation cannot have converter specified", propertyElement);
+                return;
+            }
+            if (dataType == null) {
+                dataType = getDataTypeFromConverter(converter, dataTypes, context);
+                if (dataType == null) {
+                    context.fail("Cannot recognize proper data type. Please use @TypeDef to specify one", propertyElement);
+                    return;
+                }
+            }
+        } else {
+            if (dataType == null && spp.getType().isEnum()) {
+                if (spp.getOwner().getAnnotationMetadata().hasAnnotation("javax.persistence.Entity")
+                        || spp.getOwner().getAnnotationMetadata().hasAnnotation("jakarta.persistence.Entity")) {
+                    // JPA enums have default ORDINAL mapping for enums
+                    dataType = DataType.INTEGER;
+                }
+            }
 
-        boolean isRelation = propertyElement.hasStereotype(Relation.class);
+            if (dataType == null) {
+                ClassElement type = propertyElement.getGenericType();
+                dataType = TypeUtils.resolveDataType(type, dataTypes);
+            }
+        }
+
         if (dataType == DataType.ENTITY && !isRelation) {
             propertyElement = (PropertyElement) propertyElement.annotate(Relation.class, builder ->
                 builder.value(Relation.Kind.MANY_TO_ONE)
@@ -293,5 +309,24 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                         return Optional.empty();
                     }
                 }).orElseGet(NamingStrategies.UnderScoreSeparatedLowerCase::new);
+    }
+
+    private DataType getDataTypeFromConverter(String converter, Map<String, DataType> dataTypes, VisitorContext context) {
+        ClassElement classElement = context.getClassElement(converter).get();
+        ClassElement genericType = classElement.getGenericType();
+
+        Map<String, ClassElement> typeArguments = genericType.getTypeArguments("javax.persistence.AttributeConverter");
+        if (typeArguments.isEmpty()) {
+            typeArguments = genericType.getTypeArguments("jakarta.persistence.AttributeConverter");
+        }
+        ClassElement dataTypeClassElement = typeArguments.get("Y");
+        if (dataTypeClassElement != null) {
+            DataType dataType = TypeUtils.resolveDataType(dataTypeClassElement, dataTypes);
+            if (dataType == DataType.OBJECT) {
+                dataType = null;
+            }
+            return dataType;
+        }
+        return null;
     }
 }

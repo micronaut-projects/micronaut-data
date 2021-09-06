@@ -7,6 +7,7 @@ import io.micronaut.data.jdbc.annotation.ColumnTransformer;
 import io.micronaut.data.model.DataType;
 
 import javax.persistence.Column;
+import javax.persistence.Convert;
 import java.util.UUID;
 
 @MappedEntity
@@ -28,6 +29,16 @@ public class MySqlUuidEntity {
 
     @CustomBinaryMySqlUUIDType
     private UUID id4;
+
+    @TypeDef(type = DataType.BYTE_ARRAY)
+    @Convert(converter = JxMySqlUUIDBinaryConverter.class)
+    @Column(columnDefinition = "binary(16)")
+    private UUID id5;
+
+    @TypeDef(type = DataType.BYTE_ARRAY)
+    @jakarta.persistence.Convert(converter = JakartaMySqlUUIDBinaryConverter.class)
+    @Column(columnDefinition = "binary(16)")
+    private UUID id6;
 
     @Column
     private String name;
@@ -70,5 +81,21 @@ public class MySqlUuidEntity {
 
     public void setId4(UUID id4) {
         this.id4 = id4;
+    }
+
+    public UUID getId5() {
+        return id5;
+    }
+
+    public void setId5(UUID id5) {
+        this.id5 = id5;
+    }
+
+    public UUID getId6() {
+        return id6;
+    }
+
+    public void setId6(UUID id6) {
+        this.id6 = id6;
     }
 }

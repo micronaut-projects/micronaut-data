@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.operations;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -52,6 +51,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.TypeConverterRegistry;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -140,7 +140,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param dateTimeProvider      The dateTimeProvider
      * @param entityRegistry        The entity registry
      * @param conversionService     The conversion service
-     * @param beanLocator           The bean locator
+     * @param typeConverterRegistry The type converter registry
      */
     @Internal
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
@@ -152,7 +152,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @NonNull DateTimeProvider dateTimeProvider,
                                               RuntimeEntityRegistry entityRegistry,
                                               DataConversionService<?> conversionService,
-                                              BeanLocator beanLocator) {
+                                              TypeConverterRegistry typeConverterRegistry) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
@@ -162,7 +162,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 dateTimeProvider,
                 entityRegistry,
                 beanContext,
-                conversionService, beanLocator);
+                conversionService, typeConverterRegistry);
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;

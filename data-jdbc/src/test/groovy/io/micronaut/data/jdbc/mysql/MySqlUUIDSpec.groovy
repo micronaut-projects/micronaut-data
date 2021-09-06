@@ -32,6 +32,8 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             entity.id2 = UUID.randomUUID()
             entity.id3 = UUID.randomUUID()
             entity.id4 = UUID.randomUUID()
+            entity.id5 = UUID.randomUUID()
+            entity.id6 = UUID.randomUUID()
             entity.name = "SPECIAL"
         when:
             MySqlUuidEntity test = repository.save(entity)
@@ -44,6 +46,8 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             test2.id2 == test.id2
             test2.id3 == test.id3
             test2.id4 == test.id4
+            test2.id5 == test.id5
+            test2.id6 == test.id6
             test2.name == 'SPECIAL'
         when: "update query with transform is used"
             def newUUID = UUID.randomUUID()
@@ -54,6 +58,8 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             test2.id2 == newUUID
             test2.id3 == test.id3
             test2.id4 == test.id4
+            test2.id5 == test.id5
+            test2.id6 == test.id6
             test2.name == 'SPECIAL'
         when:
             def result = repository.getById3InList([test2.id3])
@@ -62,11 +68,13 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             result.id2 == test2.id2
             result.id3 == test2.id3
             result.id4 == test2.id4
+            result.id5 == test2.id5
+            result.id6 == test2.id6
             result.name == 'SPECIAL'
         when:
             repository.delete(result)
         then:
-            repository.findById(result.id)
+            !repository.findById(result.id).isPresent()
         cleanup:
             repository.deleteAll()
     }

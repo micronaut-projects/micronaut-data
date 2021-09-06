@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.operations.internal;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.context.BeanContext;
-import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
@@ -62,6 +61,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.TypeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.TypeConverter;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -126,7 +126,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     protected final DateTimeProvider dateTimeProvider;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
     protected final DataConversionService<?> conversionService;
-    protected final BeanLocator beanLocator;
+    protected final TypeConverterRegistry typeConverterRegistry;
     private final Map<QueryKey, SqlOperation> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlOperation> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
@@ -143,7 +143,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param runtimeEntityRegistry      The entity registry
      * @param beanContext                The bean context
      * @param conversionService          The conversion service
-     * @param beanLocator                The bean locator
+     * @param typeConverterRegistry      The type converter registry
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -155,7 +155,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             RuntimeEntityRegistry runtimeEntityRegistry,
             BeanContext beanContext,
             DataConversionService<?> conversionService,
-            BeanLocator beanLocator) {
+            TypeConverterRegistry typeConverterRegistry) {
         this.dateTimeProvider = dateTimeProvider;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.entityEventRegistry = runtimeEntityRegistry.getEntityEventListener();
@@ -164,7 +164,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
         this.conversionService = conversionService;
-        this.beanLocator = beanLocator;
+        this.typeConverterRegistry = typeConverterRegistry;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -1316,7 +1316,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         if (converterClass == null) {
             return value;
         }
-        TypeConverter<Object, Object> converter = (TypeConverter<Object, Object>) beanLocator.getBean(converterClass);
+        TypeConverter<Object, Object> converter = typeConverterRegistry.getConverter(converterClass);
         ConversionContext conversionContext;
         if (argument == null) {
             conversionContext = ConversionContext.DEFAULT;

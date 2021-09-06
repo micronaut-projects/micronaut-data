@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.support;
+package io.micronaut.data.runtime.support.convert;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
@@ -28,6 +28,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.TypeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.TypeConverter;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
@@ -44,24 +45,29 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, ApplicationContextProvider {
+final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, ApplicationContextProvider {
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class<? extends Annotation>, PropertyAutoPopulator<?>> propertyPopulators;
     private final EntityEventRegistry eventRegistry;
     private final ApplicationContext applicationContext;
+    private final TypeConverterRegistry typeConverterRegistry;
 
     /**
      * Default constructor.
-     * @param eventRegistry The event registry
-     * @param propertyPopulators The property populators
-     * @param applicationContext The application context
+     *
+     * @param eventRegistry         The event registry
+     * @param propertyPopulators    The property populators
+     * @param applicationContext    The application context
+     * @param typeConverterRegistry The type converter registry
      */
     public DefaultRuntimeEntityRegistry(
             EntityEventRegistry eventRegistry,
             Collection<BeanRegistration<PropertyAutoPopulator<?>>> propertyPopulators,
-            ApplicationContext applicationContext) {
+            ApplicationContext applicationContext,
+            TypeConverterRegistry typeConverterRegistry) {
         this.eventRegistry = eventRegistry;
         this.propertyPopulators = new HashMap<>(propertyPopulators.size());
+        this.typeConverterRegistry = typeConverterRegistry;
         for (BeanRegistration<PropertyAutoPopulator<?>> propertyPopulator : propertyPopulators) {
             final PropertyAutoPopulator<?> populator = propertyPopulator.getBean();
             final List<Argument<?>> typeArguments = propertyPopulator.getBeanDefinition().getTypeArguments(PropertyAutoPopulator.class);
@@ -101,7 +107,7 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appl
 
     @NonNull
     @Override
-    public final <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+    public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
         RuntimePersistentEntity<T> entity = entities.get(type);
         if (entity == null) {
@@ -125,7 +131,7 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appl
 
             @Override
             protected TypeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
-                return (TypeConverter<Object, Object>) applicationContext.getBean(converterClass);
+                return typeConverterRegistry.getConverter(converterClass);
             }
 
             @Override
