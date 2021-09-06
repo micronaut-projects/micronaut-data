@@ -20,6 +20,7 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import reactor.core.publisher.Mono
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -82,8 +83,8 @@ class CrudRepositorySpec extends Specification {
         crudRepository.list(Pageable.from(1)).isEmpty()
         crudRepository.list(Pageable.from(0, 1)).size() == 1
 
-        when:"The person is updated with rxjava"
-        long result = crudRepository.updatePersonRx(crudRepository.findByName("Jeff").id).blockingGet()
+        when:"The person is updated with reactor"
+        long result = Mono.from(crudRepository.updatePersonRx(crudRepository.findByName("Jeff").id)).block()
 
         then:
         result == 1

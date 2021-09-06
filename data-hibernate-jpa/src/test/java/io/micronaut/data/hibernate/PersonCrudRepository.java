@@ -23,7 +23,7 @@ import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.repositories.PersonRepository;
-import io.reactivex.Single;
+import org.reactivestreams.Publisher;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -54,8 +54,8 @@ public interface PersonCrudRepository extends JpaRepository<Person, Long>, Perso
             value = "SELECT u FROM Person u WHERE u.age > :age",
             countQuery = "SELECT COUNT(u) FROM Person u WHERE u.age > :age"
     )
-    Single<Page<Person>> find(int age, Pageable pageable);
+    Publisher<Page<Person>> find(int age, Pageable pageable);
 
     @Query("UPDATE Person p SET p.enabled = false WHERE p.id = :id")
-    Single<Long> updatePersonRx(Long id);
+    Publisher<Long> updatePersonRx(Long id);
 }

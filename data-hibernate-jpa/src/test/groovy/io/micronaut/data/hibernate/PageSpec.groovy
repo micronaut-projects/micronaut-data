@@ -23,6 +23,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import reactor.core.publisher.Mono
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -66,7 +67,7 @@ class PageSpec extends Specification {
 
     void "test reactive single result that returns pageable"() {
         when:
-        def page = crudRepository.find(10, Pageable.from(1)).blockingGet()
+        def page = Mono.from(crudRepository.find(10, Pageable.from(1))).block()
 
         then:
         page.size == 10

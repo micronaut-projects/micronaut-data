@@ -26,6 +26,10 @@ import javax.validation.constraints.NotNull;
  * CRUD repository for Project Reactor.
  * @param <E> The entity type
  * @param <ID> The ID type
+ *
+ * @author graemerocher
+ * @author Denis Stepanov
+ * @since 3.1
  * @see ReactiveStreamsCrudRepository
  */
 public interface ReactorCrudRepository<E, ID> extends ReactiveStreamsCrudRepository<E, ID> {
