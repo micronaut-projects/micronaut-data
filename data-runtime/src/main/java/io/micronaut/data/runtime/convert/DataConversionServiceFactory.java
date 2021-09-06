@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2020 original authors
+ * Copyright 2017-2021 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept;
+package io.micronaut.data.runtime.convert;
 
-import io.micronaut.context.annotation.Context;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.annotation.Internal;
+import jakarta.inject.Singleton;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.Collection;
 import java.util.Date;
@@ -28,20 +36,24 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Internal Data initialization.
+ * The {@link DataConversionService} factory class.
  *
- * @author graemerocher
- * @since 1.0
+ * @author Denis Stepanov
+ * @since 3.1
  */
-@Context
-class DataInitializer {
+@Internal
+@Factory
+final class DataConversionServiceFactory {
 
-    /**
-     * Default constructor.
-     */
-    DataInitializer() {
-        ConversionService<?> conversionService = ConversionService.SHARED;
+    @Singleton
+    @Bean(typed = DataConversionService.class)
+    DataConversionServiceImpl build() {
+        DataConversionServiceImpl dataConversionService = new DataConversionServiceImpl();
+        initialize(dataConversionService);
+        return dataConversionService;
+    }
 
+    private void initialize(DataConversionService<?> conversionService) {
         conversionService.addConverter(Enum.class, Number.class, Enum::ordinal);
         conversionService.addConverter(Number.class, Enum.class, (index, targetType, context) -> {
             Enum[] enumConstants = targetType.getEnumConstants();
@@ -55,9 +67,9 @@ class DataInitializer {
 
         conversionService.addConverter(byte[].class, UUID.class, UUID::nameUUIDFromBytes);
         conversionService.addConverter(Date.class, LocalDate.class, date ->
-            Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate());
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate());
         conversionService.addConverter(ChronoLocalDate.class, Date.class, localDate ->
-            new Date(localDate.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+                new Date(localDate.atTime(LocalTime.MIDNIGHT).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
 
         // Arrays
         conversionService.addConverter(String[].class, Character[].class, values -> {
@@ -94,7 +106,7 @@ class DataInitializer {
             Character[] chars = new Character[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                chars[i++] = asCharacter(value);
+                chars[i++] = asCharacter(value, conversionService);
             }
             return chars;
         });
@@ -102,7 +114,7 @@ class DataInitializer {
             char[] chars = new char[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                chars[i++] = asCharacter(value);
+                chars[i++] = asCharacter(value, conversionService);
             }
             return chars;
         });
@@ -125,7 +137,7 @@ class DataInitializer {
             Short[] shorts = new Short[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                shorts[i++] = asShort(value);
+                shorts[i++] = asShort(value, conversionService);
             }
             return shorts;
         });
@@ -133,7 +145,7 @@ class DataInitializer {
             short[] shorts = new short[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                shorts[i++] = asShort(value);
+                shorts[i++] = asShort(value, conversionService);
             }
             return shorts;
         });
@@ -156,7 +168,7 @@ class DataInitializer {
             Float[] floats = new Float[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                floats[i++] = asFloat(value);
+                floats[i++] = asFloat(value, conversionService);
             }
             return floats;
         });
@@ -164,7 +176,7 @@ class DataInitializer {
             float[] floats = new float[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                floats[i++] = asFloat(value);
+                floats[i++] = asFloat(value, conversionService);
             }
             return floats;
         });
@@ -202,7 +214,7 @@ class DataInitializer {
             Integer[] ints = new Integer[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                ints[i++] = asInteger(value);
+                ints[i++] = asInteger(value, conversionService);
             }
             return ints;
         });
@@ -210,7 +222,7 @@ class DataInitializer {
             int[] ints = new int[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                ints[i++] = asInteger(value);
+                ints[i++] = asInteger(value, conversionService);
             }
             return ints;
         });
@@ -233,7 +245,7 @@ class DataInitializer {
             Long[] longs = new Long[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                longs[i++] = asLong(value);
+                longs[i++] = asLong(value, conversionService);
             }
             return longs;
         });
@@ -241,7 +253,7 @@ class DataInitializer {
             long[] longs = new long[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                longs[i++] = asLong(value);
+                longs[i++] = asLong(value, conversionService);
             }
             return longs;
         });
@@ -264,7 +276,7 @@ class DataInitializer {
             Double[] doubles = new Double[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                doubles[i++] = asDouble(value);
+                doubles[i++] = asDouble(value, conversionService);
             }
             return doubles;
         });
@@ -272,7 +284,7 @@ class DataInitializer {
             double[] doubles = new double[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                doubles[i++] = asDouble(value);
+                doubles[i++] = asDouble(value, conversionService);
             }
             return doubles;
         });
@@ -309,7 +321,7 @@ class DataInitializer {
             Boolean[] booleans = new Boolean[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                booleans[i++] = asBoolean(value);
+                booleans[i++] = asBoolean(value, conversionService);
             }
             return booleans;
         });
@@ -317,7 +329,7 @@ class DataInitializer {
             boolean[] booleans = new boolean[collection.size()];
             int i = 0;
             for (Object value : collection) {
-                booleans[i++] = asBoolean(value);
+                booleans[i++] = asBoolean(value, conversionService);
             }
             return booleans;
         });
@@ -341,101 +353,101 @@ class DataInitializer {
         conversionService.addConverter(Instant.class, Timestamp.class, Timestamp::from);
         conversionService.addConverter(Date.class, Instant.class, Date::toInstant);
         conversionService.addConverter(java.sql.Date.class, Instant.class, date ->
-            Instant.ofEpochMilli(date.getTime()));
+                Instant.ofEpochMilli(date.getTime()));
 
         // ZonedDateTime
         conversionService.addConverter(Timestamp.class, ZonedDateTime.class, timestamp ->
-            timestamp.toLocalDateTime().atZone(ZoneId.systemDefault()));
+                timestamp.toLocalDateTime().atZone(ZoneId.systemDefault()));
         conversionService.addConverter(ZonedDateTime.class, Timestamp.class, zonedDateTime ->
-            Timestamp.from(zonedDateTime.toInstant()));
+                Timestamp.from(zonedDateTime.toInstant()));
 
         // LocalDateTime
         conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime ->
-            new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+                new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
         conversionService.addConverter(LocalDateTime.class, Timestamp.class, Timestamp::valueOf);
         conversionService.addConverter(Timestamp.class, LocalDateTime.class, Timestamp::toLocalDateTime);
         conversionService.addConverter(Date.class, LocalDateTime.class, date ->
-            Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime());
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime());
 
         // OffsetDateTime
         conversionService.addConverter(Date.class, OffsetDateTime.class, date ->
-            Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toOffsetDateTime());
+                Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toOffsetDateTime());
         conversionService.addConverter(OffsetDateTime.class, Date.class, offsetDateTime2 ->
-            new Date(offsetDateTime2.toInstant().toEpochMilli()));
+                new Date(offsetDateTime2.toInstant().toEpochMilli()));
         conversionService.addConverter(OffsetDateTime.class, java.sql.Date.class, offsetDateTime1 ->
-            new java.sql.Date(offsetDateTime1.toInstant().toEpochMilli()));
+                new java.sql.Date(offsetDateTime1.toInstant().toEpochMilli()));
         conversionService.addConverter(OffsetDateTime.class, Timestamp.class, offsetDateTime1 ->
-            Timestamp.from(offsetDateTime1.toInstant()));
+                Timestamp.from(offsetDateTime1.toInstant()));
         conversionService.addConverter(Timestamp.class, OffsetDateTime.class, timestamp ->
-            OffsetDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault()));
+                OffsetDateTime.ofInstant(timestamp.toInstant(), ZoneId.systemDefault()));
         conversionService.addConverter(OffsetDateTime.class, Instant.class, OffsetDateTime::toInstant);
         conversionService.addConverter(OffsetDateTime.class, LocalDate.class, OffsetDateTime::toLocalDate);
         conversionService.addConverter(OffsetDateTime.class, LocalDateTime.class, OffsetDateTime::toLocalDateTime);
         conversionService.addConverter(OffsetDateTime.class, Long.class, offsetDateTime ->
-            offsetDateTime.toInstant().toEpochMilli());
+                offsetDateTime.toInstant().toEpochMilli());
     }
 
-    private Integer asInteger(Object value) {
+    private Integer asInteger(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Integer) {
             return (Integer) value;
         }
         if (value instanceof Number) {
             return ((Number) value).intValue();
         }
-        return ConversionService.SHARED.convertRequired(value, Integer.class);
+        return dataConversionService.convertRequired(value, Integer.class);
     }
 
-    private Long asLong(Object value) {
+    private Long asLong(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Long) {
             return (Long) value;
         }
         if (value instanceof Number) {
             return ((Number) value).longValue();
         }
-        return ConversionService.SHARED.convertRequired(value, Long.class);
+        return dataConversionService.convertRequired(value, Long.class);
     }
 
-    private Double asDouble(Object value) {
+    private Double asDouble(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Double) {
             return (Double) value;
         }
         if (value instanceof Number) {
             return ((Number) value).doubleValue();
         }
-        return ConversionService.SHARED.convertRequired(value, Double.class);
+        return dataConversionService.convertRequired(value, Double.class);
     }
 
-    private Boolean asBoolean(Object value) {
+    private Boolean asBoolean(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Boolean) {
             return (Boolean) value;
         }
-        return ConversionService.SHARED.convertRequired(value, Boolean.class);
+        return dataConversionService.convertRequired(value, Boolean.class);
     }
 
-    private Float asFloat(Object value) {
+    private Float asFloat(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Float) {
             return (Float) value;
         }
         if (value instanceof Number) {
             return ((Number) value).floatValue();
         }
-        return ConversionService.SHARED.convertRequired(value, Float.class);
+        return dataConversionService.convertRequired(value, Float.class);
     }
 
-    private Short asShort(Object value) {
+    private Short asShort(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Short) {
             return (Short) value;
         }
         if (value instanceof Number) {
             return ((Number) value).shortValue();
         }
-        return ConversionService.SHARED.convertRequired(value, Short.class);
+        return dataConversionService.convertRequired(value, Short.class);
     }
 
-    private Character asCharacter(Object value) {
+    private Character asCharacter(Object value, DataConversionService<?> dataConversionService) {
         if (value instanceof Character) {
             return (Character) value;
         }
-        return ConversionService.SHARED.convertRequired(value, Character.class);
+        return dataConversionService.convertRequired(value, Character.class);
     }
 }

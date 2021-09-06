@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.context.annotation.Property;
+import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.NonNull;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -109,6 +111,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             });
         }
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
+        Map<String, String> dataConverters = getConfiguredDataConverters(element);
+
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
@@ -122,21 +126,21 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
 
         for (PersistentProperty property : properties) {
-            computeMappingDefaults(namingStrategy, property, dataTypes, context);
+            computeMappingDefaults(namingStrategy, property, dataTypes, dataConverters, context);
         }
         SourcePersistentProperty identity = entity.getIdentity();
         if (identity != null) {
-            computeMappingDefaults(namingStrategy, identity, dataTypes, context);
+            computeMappingDefaults(namingStrategy, identity, dataTypes, dataConverters, context);
         }
         SourcePersistentProperty[] compositeIdentities = entity.getCompositeIdentity();
         if (compositeIdentities != null) {
             for (SourcePersistentProperty compositeIdentity : compositeIdentities) {
-                computeMappingDefaults(namingStrategy, compositeIdentity, dataTypes, context);
+                computeMappingDefaults(namingStrategy, compositeIdentity, dataTypes, dataConverters, context);
             }
         }
         SourcePersistentProperty version = entity.getVersion();
         if (version != null) {
-            computeMappingDefaults(namingStrategy, version, dataTypes, context);
+            computeMappingDefaults(namingStrategy, version, dataTypes, dataConverters, context);
         }
     }
 
@@ -165,10 +169,34 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         return dataTypes;
     }
 
+    /**
+     * Resolves the configured data converters.
+     * @param element The element
+     * @return The data converters
+     */
+    static Map<String, String> getConfiguredDataConverters(ClassElement element) {
+        List<AnnotationValue<TypeDef>> typeDefinitions = element.getAnnotationValuesByType(TypeDef.class);
+        Map<String, String> dataConverters = new HashMap<>(typeDefinitions.size());
+        for (AnnotationValue<TypeDef> typeDefinition : typeDefinitions) {
+            typeDefinition.stringValue("converter")
+                    .filter(c -> !Object.class.getName().equals(c))
+                    .ifPresent(converter -> {
+                String[] values = typeDefinition.stringValues("classes");
+                String[] names = typeDefinition.stringValues("names");
+                String[] concated = ArrayUtils.concat(values, names);
+                for (String s : concated) {
+                    dataConverters.put(s, converter);
+                }
+            });
+        }
+        return dataConverters;
+    }
+
     private void computeMappingDefaults(
             NamingStrategy namingStrategy,
             PersistentProperty property,
             Map<String, DataType> dataTypes,
+            Map<String, String> dataConverters,
             VisitorContext context) {
         AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
         SourcePersistentProperty spp = (SourcePersistentProperty) property;
@@ -176,6 +204,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         DataType dataType = annotationMetadata.getValue(TypeDef.class, "type", DataType.class)
                 .orElse(null);
+        String converter = annotationMetadata.stringValue(TypeDef.class, "converter")
+                .orElse(null);
+        if (Objects.equals(converter, Object.class.getName())) {
+            converter = null;
+        }
 
         if (dataType == null && spp.getType().isEnum()) {
             if (spp.getOwner().getAnnotationMetadata().hasAnnotation("javax.persistence.Entity")) {
@@ -187,6 +220,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (dataType == null) {
             ClassElement type = propertyElement.getGenericType();
             dataType = TypeUtils.resolveDataType(type, dataTypes);
+        }
+        if (converter == null) {
+            ClassElement type = propertyElement.getGenericType();
+            converter = TypeUtils.resolveDataConverter(type, dataConverters);
         }
 
         boolean isRelation = propertyElement.hasStereotype(Relation.class);
@@ -237,6 +274,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (dataType != DataType.OBJECT) {
             DataType finalDataType = dataType;
             propertyElement.annotate(MappedProperty.class, builder -> builder.member("type", finalDataType));
+        }
+        if (converter != null) {
+            String finalConverter = converter;
+            propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
         }
     }
 

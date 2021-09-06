@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.model.DataType;
 
@@ -31,6 +32,17 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
+
+    private final DataConversionService<?> conversionService;
+
+    public JdbcQueryStatement(DataConversionService<?> conversionService) {
+        this.conversionService = conversionService;
+    }
+
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
 
     @Override
     public QueryStatement<PreparedStatement, Integer> setDynamic(@NonNull PreparedStatement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {

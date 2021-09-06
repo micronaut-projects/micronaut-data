@@ -15,58 +15,50 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.data.tck.tests.AbstractUUIDSpec
+import io.micronaut.context.ApplicationContext
+import spock.lang.AutoCleanup
 import spock.lang.Shared
+import spock.lang.Specification
 
-class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvider {
+class MySqlUUID2Spec extends Specification implements MySQLTestPropertyProvider {
+
+    @AutoCleanup
+    @Shared
+    ApplicationContext applicationContext = ApplicationContext.run(properties)
 
     @Shared
-    MySqlUuidEntityRepository repository = applicationContext.getBean(MySqlUuidEntityRepository)
-
-    MySqlUuidRepository uuidRepository = applicationContext.getBean(MySqlUuidRepository)
+    MySqlUuidEntity2Repository repository = applicationContext.getBean(MySqlUuidEntity2Repository)
 
     void 'test insert with UUID'() {
         given:
-            def entity = new MySqlUuidEntity()
+            def entity = new MySqlUuidEntity2()
             entity.id = UUID.randomUUID()
-            entity.id2 = UUID.randomUUID()
-            entity.id3 = UUID.randomUUID()
-            entity.id4 = UUID.randomUUID()
             entity.name = "SPECIAL"
         when:
-            MySqlUuidEntity test = repository.save(entity)
+            MySqlUuidEntity2 test = repository.save(entity)
         then:
             test.id
         when:
             def test2 = repository.findById(test.id).get()
         then:
             test2.id == test.id
-            test2.id2 == test.id2
-            test2.id3 == test.id3
-            test2.id4 == test.id4
             test2.name == 'SPECIAL'
         when: "update query with transform is used"
             def newUUID = UUID.randomUUID()
-            repository.update(test.id, newUUID)
+            repository.update(test.id, "xyz")
             test2 = repository.findById(test.id).get()
         then:
             test2.id == test.id
-            test2.id2 == newUUID
-            test2.id3 == test.id3
-            test2.id4 == test.id4
-            test2.name == 'SPECIAL'
+            test2.name == 'xyz'
         when:
-            def result = repository.getById3InList([test2.id3])
+            def result = repository.getByIdInList([test2.id])
         then:
             result.id == test2.id
-            result.id2 == test2.id2
-            result.id3 == test2.id3
-            result.id4 == test2.id4
-            result.name == 'SPECIAL'
+            result.name == 'xyz'
         when:
             repository.delete(result)
         then:
-            repository.findById(result.id)
+            !repository.findById(result.id).isPresent()
         cleanup:
             repository.deleteAll()
     }

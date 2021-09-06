@@ -20,8 +20,10 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.runtime.convert.TypeConverter;
 
 /**
  * A runtime representation of {@link PersistentProperty}.
@@ -38,6 +40,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final DataType dataType;
     private final boolean constructorArg;
     private final Argument<?> argument;
+    private final TypeConverter<Object, Object> converter;
     private String persistedName;
 
     /**
@@ -53,6 +56,8 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
         this.dataType = PersistentProperty.super.getDataType();
         this.constructorArg = constructorArg;
         this.argument = property.asArgument();
+        this.converter = property.classValue(MappedProperty.class, "converter")
+                .map(owner::resolveConverter).orElse(null);
     }
 
     /**
@@ -132,6 +137,11 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
      */
     public BeanProperty<T, ?> getProperty() {
         return property;
+    }
+
+    @Override
+    public TypeConverter<Object, Object> getConverter() {
+        return converter;
     }
 
     @NonNull

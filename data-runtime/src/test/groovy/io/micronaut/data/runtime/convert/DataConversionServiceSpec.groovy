@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.runtime.intercept
+package io.micronaut.data.runtime.convert
 
-import io.micronaut.core.convert.ConversionService
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.*
 
-class DataInitializerSpec extends Specification {
+class DataConversionServiceSpec extends Specification {
 
     static def DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd")
     static Date now = new Date()
@@ -37,8 +31,7 @@ class DataInitializerSpec extends Specification {
     @Unroll
     def "test date conversion #obj to #targetType"() {
         given:
-            new DataInitializer()
-            ConversionService<?> conversionService = ConversionService.SHARED
+            DataConversionService<?> conversionService = new DataConversionServiceFactory().build()
 
         when:
             def expectedValue = conversionService.convert(obj, targetType)

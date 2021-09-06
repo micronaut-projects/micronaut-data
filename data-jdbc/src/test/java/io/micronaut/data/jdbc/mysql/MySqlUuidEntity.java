@@ -22,9 +22,12 @@ public class MySqlUuidEntity {
     @ColumnTransformer(read = "BIN_TO_UUID(@.id2)", write = "UUID_TO_BIN(?)")
     private UUID id2;
 
-    @TypeDef(type = DataType.BYTE_ARRAY)
+    @TypeDef(type = DataType.BYTE_ARRAY, converter = MySqlUUIDBinaryConverter.class)
     @Column(columnDefinition = "binary(16)")
     private UUID id3;
+
+    @CustomBinaryMySqlUUIDType
+    private UUID id4;
 
     @Column
     private String name;
@@ -59,5 +62,13 @@ public class MySqlUuidEntity {
 
     public void setId3(UUID id3) {
         this.id3 = id3;
+    }
+
+    public UUID getId4() {
+        return id4;
+    }
+
+    public void setId4(UUID id4) {
+        this.id4 = id4;
     }
 }

@@ -15,22 +15,22 @@
  */
 package io.micronaut.data.runtime.event.listeners;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.data.annotation.DateUpdated;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreUpdate;
-import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.event.EntityEventContext;
+import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-
 import jakarta.inject.Singleton;
+
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
 import java.util.List;
@@ -45,14 +45,14 @@ import java.util.function.Predicate;
 @Singleton
 public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventListener implements PropertyAutoPopulator<DateUpdated> {
     private final DateTimeProvider<?> dateTimeProvider;
-    private final ConversionService<?> conversionService;
+    private final DataConversionService<?> conversionService;
 
     /**
      * Default constructor.
      * @param dateTimeProvider The date time provider
      * @param conversionService The conversion service
      */
-    public AutoTimestampEntityEventListener(DateTimeProvider<?> dateTimeProvider, ConversionService<?> conversionService) {
+    public AutoTimestampEntityEventListener(DateTimeProvider<?> dateTimeProvider, DataConversionService<?> conversionService) {
         this.dateTimeProvider = dateTimeProvider;
         this.conversionService = conversionService;
     }
@@ -87,7 +87,7 @@ public class AutoTimestampEntityEventListener extends AutoPopulatedEntityEventLi
     @Override
     @NonNull
     public Object populate(RuntimePersistentProperty<?> property, @Nullable Object previousValue) {
-        return ConversionService.SHARED.convertRequired(dateTimeProvider.getNow(), property.getArgument());
+        return conversionService.convertRequired(dateTimeProvider.getNow(), property.getArgument());
     }
 
     private void autoTimestampIfNecessary(@NonNull EntityEventContext<Object> context, boolean isUpdate) {

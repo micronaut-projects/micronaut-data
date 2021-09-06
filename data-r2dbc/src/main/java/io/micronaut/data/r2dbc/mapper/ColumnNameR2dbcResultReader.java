@@ -17,10 +17,10 @@ package io.micronaut.data.r2dbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
@@ -42,7 +42,11 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
-    private final ConversionService<?> conversionService = ConversionService.SHARED;
+    private final DataConversionService<?> conversionService;
+
+    public ColumnNameR2dbcResultReader(DataConversionService<?> conversionService) {
+        this.conversionService = conversionService;
+    }
 
     @Nullable
     @Override

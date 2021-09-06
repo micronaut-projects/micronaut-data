@@ -42,6 +42,11 @@ public class JoinTableAnnotationMapper implements NamedAnnotationMapper {
         return "javax.persistence.JoinTable";
     }
 
+    /**
+     * Override to replace the join column mapper.
+     *
+     * @return the join column mapper
+     */
     protected NamedAnnotationMapper getJoinColumnAnnotationMapper() {
         return JOIN_COLUMN_ANNOTATION_MAPPER;
     }

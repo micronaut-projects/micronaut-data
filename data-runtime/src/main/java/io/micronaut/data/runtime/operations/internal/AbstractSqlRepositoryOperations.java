@@ -17,15 +17,16 @@ package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextProvider;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
@@ -57,19 +58,18 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PreparedQuery;
-import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.convert.TypeConverter;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
-import io.micronaut.data.runtime.event.EntityEventRegistry;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.micronaut.data.runtime.mapper.ResultReader;
-import io.micronaut.data.runtime.support.DefaultRuntimeEntityRegistry;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.inject.BeanDefinition;
@@ -125,52 +125,15 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     protected final EntityEventListener<Object> entityEventRegistry;
     protected final DateTimeProvider dateTimeProvider;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
-
+    protected final DataConversionService<?> conversionService;
+    protected final BeanLocator beanLocator;
     private final Map<QueryKey, SqlOperation> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlOperation> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
     private final Map<Class, RuntimePersistentProperty> idReaders = new ConcurrentHashMap<>(10);
 
-
     /**
      * Default constructor.
-     *
-     * @param dataSourceName             The datasource name
-     * @param columnNameResultSetReader  The column name result reader
-     * @param columnIndexResultSetReader The column index result reader
-     * @param preparedStatementWriter    The prepared statement writer
-     * @param codecs                     The media type codecs
-     * @param dateTimeProvider           The date time provider
-     * @param beanContext                The bean context
-     * @deprecated Use {@link #AbstractSqlRepositoryOperations(String, ResultReader, ResultReader, QueryStatement, List, DateTimeProvider, RuntimeEntityRegistry, BeanContext)}
-     */
-    @Deprecated
-    protected AbstractSqlRepositoryOperations(
-            String dataSourceName,
-            ResultReader<RS, String> columnNameResultSetReader,
-            ResultReader<RS, Integer> columnIndexResultSetReader,
-            QueryStatement<PS, Integer> preparedStatementWriter,
-            List<MediaTypeCodec> codecs,
-            DateTimeProvider<Object> dateTimeProvider,
-            BeanContext beanContext) {
-        this(
-                dataSourceName,
-                columnNameResultSetReader,
-                columnIndexResultSetReader,
-                preparedStatementWriter,
-                codecs,
-                dateTimeProvider,
-                new DefaultRuntimeEntityRegistry(
-                        new EntityEventRegistry(beanContext),
-                        (Collection) beanContext.getBeanRegistrations(PropertyAutoPopulator.class),
-                        (ApplicationContext) beanContext),
-                beanContext
-        );
-    }
-
-    /**
-     * Default constructor.
-     *
      * @param dataSourceName             The datasource name
      * @param columnNameResultSetReader  The column name result reader
      * @param columnIndexResultSetReader The column index result reader
@@ -179,6 +142,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param dateTimeProvider           The date time provider
      * @param runtimeEntityRegistry      The entity registry
      * @param beanContext                The bean context
+     * @param conversionService          The conversion service
+     * @param beanLocator                The bean locator
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -188,7 +153,9 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             List<MediaTypeCodec> codecs,
             DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
-            BeanContext beanContext) {
+            BeanContext beanContext,
+            DataConversionService<?> conversionService,
+            BeanLocator beanLocator) {
         this.dateTimeProvider = dateTimeProvider;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.entityEventRegistry = runtimeEntityRegistry.getEntityEventListener();
@@ -196,6 +163,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         this.columnIndexResultSetReader = columnIndexResultSetReader;
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
+        this.conversionService = conversionService;
+        this.beanLocator = beanLocator;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -225,6 +194,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     /**
      * Prepare a statement for execution.
      *
+     * @param connection        The connection
      * @param statementFunction The statement function
      * @param preparedQuery     The prepared query
      * @param isUpdate          Is this an update
@@ -234,6 +204,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @return The prepared statement
      */
     protected <T, R> PS prepareStatement(
+            Cnt connection,
             StatementSupplier<PS> statementFunction,
             @NonNull PreparedQuery<T, R> preparedQuery,
             boolean isUpdate,
@@ -245,6 +216,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
         String[] indexedParameterAutoPopulatedPreviousPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
         int[] indexedParameterAutoPopulatedPreviousPropertyIndexes = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
+        Class[] parameterConvertors = preparedQuery.getAnnotationMetadata().classValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_CONVERTERS);
         String query = preparedQuery.getQuery();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
         final Dialect dialect = queryBuilder.getDialect();
@@ -312,6 +284,13 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             int parameterIndex = parameterBinding[i];
             DataType dataType = parameterTypes[i];
             Object value;
+            Class<?> parameterConverter = null;
+            if (parameterConvertors.length > i) {
+                parameterConverter = parameterConvertors[i];
+                if (parameterConverter == Object.class) {
+                    parameterConverter = null;
+                }
+            }
             if (parameterIndex > -1) {
                 value = queryParameters[parameterIndex];
             } else {
@@ -333,45 +312,62 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                         }
                     }
                     value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+                    value = convert(connection, value, persistentProperty);
+                    parameterConverter = null;
                 } else if (propertyPath != null) {
                     value = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
                 } else {
                     throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
                 }
             }
-
-            index = setExpandedStatementParameter(value, ps, index, dataType, dialect);
+            List<Object> values = expandValue(value, dataType);
+            if (values != null && values.isEmpty()) {
+                // Empty collections / array should always set at least one value
+                value = null;
+                values = null;
+            }
+            if (values == null) {
+                if (parameterConverter != null) {
+                    Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
+                    value = convert(parameterConverter, connection, value, argument);
+                }
+                setStatementParameter(ps, index++, dataType, value, dialect);
+            } else {
+                for (Object v : values) {
+                    if (parameterConverter != null) {
+                        Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
+                        v = convert(parameterConverter, connection, v, argument);
+                    }
+                    setStatementParameter(ps, index++, dataType, v, dialect);
+                }
+            }
         }
         return ps;
     }
 
-    private int setExpandedStatementParameter(Object value, PS ps, int index, DataType dataType, Dialect dialect) {
+    private List<Object> expandValue(Object value, DataType dataType) {
         // Special case for byte array, we want to support a list of byte[] convertible values
         if (value == null || dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
-            setStatementParameter(ps, index++, dataType, value, dialect);
+            // not expanded
+            return null;
         } else if (value instanceof Iterable) {
-            Iterator<?> iterator = ((Iterable<?>) value).iterator();
-            if (!iterator.hasNext()) {
-                setStatementParameter(ps, index++, dataType, null, dialect);
-            } else {
-                while (iterator.hasNext()) {
-                    setStatementParameter(ps, index++, dataType, iterator.next(), dialect);
-                }
-            }
+            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
         } else if (value.getClass().isArray()) {
             int len = Array.getLength(value);
             if (len == 0) {
-                setStatementParameter(ps, index++, dataType, null, dialect);
+                return Collections.emptyList();
             } else {
+                List<Object> list = new ArrayList<>(len);
                 for (int j = 0; j < len; j++) {
                     Object o = Array.get(value, j);
-                    setStatementParameter(ps, index++, dataType, o, dialect);
+                    list.add(o);
                 }
+                return list;
             }
         } else {
-            setStatementParameter(ps, index++, dataType, value, dialect);
+            // not expanded
+            return null;
         }
-        return index;
     }
 
     private String expandMultipleValues(int parametersSize, Iterator<Object> valuesIt, String query, SqlQueryBuilder queryBuilder) {
@@ -560,7 +556,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             op.cascadePre(Relation.Cascade.PERSIST, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
             prepareStatement(connection, sqlOperation.getDialect(), op.persistentEntity.getIdentity(), hasGeneratedID, sqlOperation.getQuery(), stmt -> {
-                op.setParameters(stmt, sqlOperation);
+                op.setParameters(connection, stmt, sqlOperation);
                 if (hasGeneratedID) {
                     op.executeUpdateSetGeneratedId(stmt);
                 } else {
@@ -605,7 +601,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing Batch SQL Insert: {}", sqlOperation.getQuery());
                 }
-                op.setParameters(stmt, sqlOperation);
+                op.setParameters(connection, stmt, sqlOperation);
                 if (hasGeneratedID) {
                     op.executeUpdateSetGeneratedId(stmt);
                 } else {
@@ -631,7 +627,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         if (beanProperty.isReadOnly()) {
             Argument<T> argument = beanProperty.asArgument();
             final ArgumentConversionContext<T> context = ConversionContext.of(argument);
-            Object convertedValue = ConversionService.SHARED.convert(value, context).orElseThrow(() ->
+            Object convertedValue = conversionService.convert(value, context).orElseThrow(() ->
                     new ConversionErrorException(argument, context.getLastError()
                             .orElse(() -> new IllegalArgumentException("Value [" + value + "] cannot be converted to type : " + beanProperty.getType())))
             );
@@ -665,7 +661,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             op.checkForParameterToBeExpanded(sqlOperation, queryBuilder);
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(ps, sqlOperation);
+                op.setParameters(connection, ps, sqlOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Delete operation deleted {} records", deleted);
@@ -705,7 +701,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 QUERY_LOG.debug("Executing Batch SQL DELETE: {}", sqlOperation.getQuery());
             }
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(ps, sqlOperation);
+                op.setParameters(connection, ps, sqlOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Delete operation deleted {} records", deleted);
@@ -753,7 +749,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 QUERY_LOG.debug("Executing SQL UPDATE: {}", sqlOperation.getQuery());
             }
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(ps, sqlOperation);
+                op.setParameters(connection, ps, sqlOperation);
                 op.executeUpdate(ps, (entries, rowsUpdated) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", rowsUpdated);
@@ -799,7 +795,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             op.cascadePre(Relation.Cascade.UPDATE, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(ps, sqlOperation);
+                op.setParameters(connection, ps, sqlOperation);
                 op.executeUpdate(ps, (expected, updated) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update batch operation updated {} records", updated);
@@ -1104,7 +1100,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         SqlOperation sqlInsertOperation = resolveSqlInsertAssociation(repositoryType, dialect, (RuntimeAssociation) association, entity, parent);
         try {
             prepareStatement(connection, sqlInsertOperation.getQuery(), ps -> {
-                op.setParameters(ps, sqlInsertOperation);
+                op.setParameters(connection, ps, sqlInsertOperation);
                 op.executeUpdate(ps);
             });
         } catch (Exception e) {
@@ -1117,22 +1113,24 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return new SqlOperation(sqlInsert, dialect) {
 
             @Override
-            public <K> void setParameters(PS ps, RuntimePersistentEntity<K> pe, K e, Map<String, Object> previousValues) {
+            public <K> void setParameters(Cnt connection, PS ps, RuntimePersistentEntity<K> pe, K e, Map<String, Object> previousValues) {
                 int i = 0;
                 for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
+                    Object value = convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
                     setStatementParameter(
                             ps,
                             shiftIndex(i++),
                             property.getKey().getDataType(),
-                            property.getValue(),
+                            value,
                             dialect);
                 }
                 for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(pe.getIdentity(), e).collect(Collectors.toList())) {
+                    Object value = convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
                     setStatementParameter(
                             ps,
                             shiftIndex(i++),
                             property.getKey().getDataType(),
-                            property.getValue(),
+                            value,
                             dialect);
                 }
             }
@@ -1306,6 +1304,28 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return newAssociations;
     }
 
+    private Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
+        TypeConverter<Object, Object> converter = property.getConverter();
+        if (converter != null) {
+            return converter.convertFrom(value, ConversionContext.of((Argument) property.getArgument()));
+        }
+        return value;
+    }
+
+    private Object convert(Class<?> converterClass, Cnt connection, Object value, @Nullable Argument<?> argument) {
+        if (converterClass == null) {
+            return value;
+        }
+        TypeConverter<Object, Object> converter = (TypeConverter<Object, Object>) beanLocator.getBean(converterClass);
+        ConversionContext conversionContext;
+        if (argument == null) {
+            conversionContext = ConversionContext.DEFAULT;
+        } else {
+            conversionContext = ConversionContext.of(argument);
+        }
+        return converter.convertFrom(value, conversionContext);
+    }
+
     /**
      * Simple function interface without return type.
      *
@@ -1470,11 +1490,12 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         /**
          * Set sql parameters.
          *
+         * @param connection   The connection
          * @param stmt         The statement
          * @param sqlOperation The sql operation
          * @throws Exc The exception type
          */
-        protected abstract void setParameters(PS stmt, SqlOperation sqlOperation) throws Exc;
+        protected abstract void setParameters(Cnt connection, PS stmt, SqlOperation sqlOperation) throws Exc;
 
         /**
          * Execute update and process entities modified and rows executed.
@@ -1743,7 +1764,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         }
 
         @Override
-        public <T> void setParameters(PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues) {
+        public <T> void setParameters(Cnt connection, PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues) {
+            int index = shiftIndex(0);
             for (int i = 0; i < parameterBindingPaths.length; i++) {
                 String propertyPath = parameterBindingPaths[i];
                 if (StringUtils.isEmpty(propertyPath)) {
@@ -1755,20 +1777,21 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                             if (pp == null) {
                                 throw new IllegalStateException("Unrecognized path: " + autoPopulatedPreviousProperty);
                             }
-                            setStatementParameter(stmt, shiftIndex(i), pp.getProperty().getDataType(), previousValue, dialect);
+                            index = setStatementParameter(stmt, index, pp.getProperty().getDataType(), previousValue, dialect);
                             continue;
                         }
                     }
-                    setStatementParameter(stmt, shiftIndex(i), DataType.ENTITY, entity, dialect);
+                    index = setStatementParameter(stmt, index, DataType.ENTITY, entity, dialect);
                     continue;
                 }
-                setPropertyPathParameter(stmt, shiftIndex(i), persistentEntity, entity, propertyPath);
+                index = setPropertyPathParameter(connection, stmt, index, persistentEntity, entity, propertyPath);
             }
         }
 
         /**
          * Set query parameters from property path.
          *
+         * @param connection         The connection
          * @param stmt               The statement
          * @param index              The index
          * @param persistentEntity   The persistentEntity
@@ -1776,7 +1799,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
          * @param propertyStringPath The entity property path
          * @param <T>                The entity type
          */
-        private <T> void setPropertyPathParameter(PS stmt, int index, RuntimePersistentEntity<T> persistentEntity, T entity, String propertyStringPath) {
+        private <T> int setPropertyPathParameter(Cnt connection, PS stmt, int index, RuntimePersistentEntity<T> persistentEntity, T entity, String propertyStringPath) {
             if (propertyStringPath.startsWith("0.")) {
                 propertyStringPath = propertyStringPath.substring(2);
             }
@@ -1805,17 +1828,33 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 if (identity == null) {
                     throw new IllegalStateException("Cannot set an entity value without identity: " + referencedEntity);
                 }
+                property = identity;
                 type = identity.getDataType();
             }
-            setStatementParameter(stmt, index, type, value, dialect);
+            value = convert(connection, value, property);
+            return setStatementParameter(stmt, index, type, value, dialect);
         }
 
-        private void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+        private int setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
             if (expandedQuery) {
-                setExpandedStatementParameter(value, preparedStatement, index, dataType, dialect);
+                List<Object> values = expandValue(value, dataType);
+                if (values != null && values.isEmpty()) {
+                    value = null;
+                    values = null;
+                }
+                if (values == null) {
+                    AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, value, dialect);
+                } else {
+                    for (Object v : values) {
+                        AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, v, dialect);
+                        index++;
+                    }
+                    return index;
+                }
             } else {
                 AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, value, dialect);
             }
+            return index + 1;
         }
 
     }
@@ -1891,25 +1930,14 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         /**
          * Set query parameters.
          *
+         * @param connection       The connection
          * @param stmt             The statement
          * @param persistentEntity The persistentEntity
          * @param entity           The entity
          * @param previousValues   The previous auto-populated collected values
          * @param <T>              The entity type
          */
-        public abstract <T> void setParameters(PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues);
-
-        /**
-         * Set query parameters.
-         *
-         * @param stmt             The statement
-         * @param persistentEntity The persistentEntity
-         * @param entity           The entity
-         * @param <T>              The entity type
-         */
-        public <T> void setParameters(PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity) {
-            setParameters(stmt, persistentEntity, entity, null);
-        }
+        public abstract <T> void setParameters(Cnt connection, PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues);
 
     }
 

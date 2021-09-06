@@ -434,7 +434,19 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                     if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
                                         if (!supportsImplicitQueries && !finalEncodeEntityParameters) {
-                                            annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, getDataTypes(methodMatchContext, parameters, finalParameterBinding));
+                                            DataType[] dataTypes = getDataTypes(methodMatchContext, parameters, finalParameterBinding);
+                                            annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, dataTypes);
+                                            List<String> converters = getConverters(methodMatchContext, parameters, finalParameterBinding);
+                                            if (!converters.isEmpty()) {
+                                                annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_CONVERTERS, converters.stream()
+                                                        .map(name -> {
+                                                            if (name == null) {
+                                                                return new AnnotationClassValue<>(Object.class.getName());
+                                                            }
+                                                            return new AnnotationClassValue<>(name);
+                                                        })
+                                                        .toArray(AnnotationClassValue[]::new));
+                                            }
                                         }
 
                                         if (finalEncodeEntityParameters) {
@@ -572,6 +584,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     }
                     return resolvePropertyDataType(methodMatchContext, parameters, queryParameterBinding.getPath());
                 }).toArray(DataType[]::new);
+    }
+
+    private List<String> getConverters(MethodMatchContext methodMatchContext, ParameterElement[] parameters, List<QueryParameterBinding> finalParameterBinding) {
+        return finalParameterBinding.stream()
+                .map(queryParameterBinding -> resolvePropertyConverter(methodMatchContext, parameters, queryParameterBinding.getPath()))
+                .collect(Collectors.toList());
     }
 
     private void bindAdditionalParameters(MethodMatchContext methodMatchContext, List<QueryParameterBinding> parameterBinding, ParameterElement[] parameters, Map<String, String> params) {
@@ -742,6 +760,32 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
         }
         return DataType.OBJECT;
+    }
+
+    private String resolvePropertyConverter(MethodMatchContext matchContext, ParameterElement[] parameters, String value) {
+        Map<String, ParameterElement> paramMap = Arrays.stream(parameters)
+                .collect(Collectors.toMap(e -> e.stringValue(Parameter.class).orElse(e.getName()), p -> p));
+        int dot = value.indexOf('.');
+        if (dot > -1) {
+            String val = value.substring(0, dot);
+            ParameterElement parameterElement = paramMap.get(val);
+            if (parameterElement != null) {
+                SourcePersistentEntity sourcePersistentEntity = resolvePersistentEntity(parameterElement.getGenericType());
+                if (sourcePersistentEntity != null) {
+                    String name = value.substring(dot + 1);
+                    SourcePersistentProperty subProp = (SourcePersistentProperty) sourcePersistentEntity.getPropertyByPath(name).orElse(null);
+                    if (subProp != null && !(subProp instanceof Association)) {
+                        return subProp.getConverterClassName();
+                    }
+                }
+            }
+        } else {
+            SourcePersistentProperty prop = matchContext.getRootEntity().getPropertyByName(value);
+            if (prop != null && !(prop instanceof Association)) {
+                return prop.getConverterClassName();
+            }
+        }
+        return null;
     }
 
     private List<MethodCandidate> initializeMethodCandidates(VisitorContext context) {

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.operations;
 
+import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.ApplicationContext;
@@ -31,6 +32,7 @@ import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -133,26 +135,30 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
      * @param runtimeEntityRegistry The runtime entity registry
      * @param applicationContext    The bean context
      * @param executorService       The executor
+     * @param conversionService     The conversion service
+     * @param beanLocator           The bean locator
      */
     @Internal
-    protected DefaultR2dbcRepositoryOperations(
+    private DefaultR2dbcRepositoryOperations(
             @Parameter String dataSourceName,
             ConnectionFactory connectionFactory,
             List<MediaTypeCodec> mediaTypeCodecList,
             @NonNull DateTimeProvider<Object> dateTimeProvider,
             RuntimeEntityRegistry runtimeEntityRegistry,
             ApplicationContext applicationContext,
-            @Nullable @Named("io") ExecutorService executorService) {
+            @Nullable @Named("io") ExecutorService executorService,
+            DataConversionService<?> conversionService,
+            BeanLocator beanLocator) {
         super(
                 dataSourceName,
-                new ColumnNameR2dbcResultReader(),
-                new ColumnIndexR2dbcResultReader(),
-                new R2dbcQueryStatement(),
+                new ColumnNameR2dbcResultReader(conversionService),
+                new ColumnIndexR2dbcResultReader(conversionService),
+                new R2dbcQueryStatement(conversionService),
                 mediaTypeCodecList,
                 dateTimeProvider,
                 runtimeEntityRegistry,
-                applicationContext
-        );
+                applicationContext,
+                conversionService, beanLocator);
         this.connectionFactory = connectionFactory;
         this.executorService = executorService;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();
@@ -586,6 +592,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         public <T> Mono<Boolean> exists(@NonNull PreparedQuery<T, Boolean> preparedQuery) {
             return Flux.from(withNewOrExistingTransaction(preparedQuery, false, status -> {
                 @SuppressWarnings("Convert2MethodRef") Statement statement = prepareStatement(
+                        status.getConnection(),
                         (sql) -> status.getConnection().createStatement(sql),
                         preparedQuery,
                         false,
@@ -604,6 +611,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         public <T, R> Mono<R> findOne(@NonNull PreparedQuery<T, R> preparedQuery) {
             return Flux.from(withNewOrExistingTransaction(preparedQuery, false, status -> {
                 @SuppressWarnings("Convert2MethodRef") Statement statement = prepareStatement(
+                        status.getConnection(),
                         (sql) -> status.getConnection().createStatement(sql),
                         preparedQuery,
                         false,
@@ -625,8 +633,8 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                                             } else {
                                                 return o;
                                             }
-                                        }
-                                );
+                                        },
+                                        conversionService);
                                 SqlResultEntityTypeMapper.PushingMapper<Row, R> rowsMapper = mapper.readOneWithJoins();
                                 return Flux.from(r.map((row, metadata) -> {
                                     rowsMapper.processRow(row);
@@ -639,8 +647,8 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                                     TypeMapper<Row, R> introspectedDataMapper = new DTOMapper<>(
                                             getEntity(preparedQuery.getRootEntity()),
                                             columnNameResultSetReader,
-                                            jsonCodec
-                                    );
+                                            jsonCodec,
+                                            conversionService);
                                     return introspectedDataMapper.map(row, resultType);
                                 }));
                             }
@@ -663,6 +671,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         public <T, R> Flux<R> findAll(@NonNull PreparedQuery<T, R> preparedQuery) {
             return Flux.from(withNewOrExistingTransaction(preparedQuery, false, status -> {
                 @SuppressWarnings("Convert2MethodRef") Statement statement = prepareStatement(
+                        status.getConnection(),
                         (sql) -> status.getConnection().createStatement(sql),
                         preparedQuery,
                         false,
@@ -680,7 +689,8 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                                     mapper = new SqlDTOMapper<>(
                                             persistentEntity,
                                             columnNameResultSetReader,
-                                            jsonCodec
+                                            jsonCodec,
+                                            conversionService
                                     );
                                 } else {
                                     Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
@@ -695,8 +705,8 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
                                                 } else {
                                                     return o;
                                                 }
-                                            }
-                                    );
+                                            },
+                                            conversionService);
                                     boolean onlySingleEndedJoins = isOnlySingleEndedJoins(getEntity(preparedQuery.getRootEntity()), joinFetchPaths);
                                     // Cannot stream ResultSet for "many" joined query
                                     if (!onlySingleEndedJoins) {
@@ -736,6 +746,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         public Mono<Number> executeUpdate(@NonNull PreparedQuery<?, Number> preparedQuery) {
             return Flux.from(withNewOrExistingTransaction(preparedQuery, true, status -> {
                 @SuppressWarnings("Convert2MethodRef") Statement statement = prepareStatement(
+                        status.getConnection(),
                         (sql) -> status.getConnection().createStatement(sql),
                         preparedQuery,
                         true,
@@ -1082,12 +1093,12 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         }
 
         @Override
-        protected void setParameters(Statement stmt, SqlOperation sqlOperation) {
+        protected void setParameters(Connection connection, Statement stmt, SqlOperation sqlOperation) {
             data = data.map(d -> {
                 if (d.vetoed) {
                     return d;
                 }
-                sqlOperation.setParameters(stmt, persistentEntity, d.entity, d.previousValues);
+                sqlOperation.setParameters(connection, stmt, persistentEntity, d.entity, d.previousValues);
                 return d;
             });
         }
@@ -1292,12 +1303,12 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
         }
 
         @Override
-        protected void setParameters(Statement stmt, SqlOperation sqlOperation) {
+        protected void setParameters(Connection connection, Statement stmt, SqlOperation sqlOperation) {
             entities = entities.map(d -> {
                 if (d.vetoed) {
                     return d;
                 }
-                sqlOperation.setParameters(stmt, persistentEntity, d.entity, d.previousValues);
+                sqlOperation.setParameters(connection, stmt, persistentEntity, d.entity, d.previousValues);
                 stmt.add();
                 return d;
             });

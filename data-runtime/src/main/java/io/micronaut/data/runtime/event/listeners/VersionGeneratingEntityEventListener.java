@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.event.listeners;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.annotation.event.PrePersist;
 import io.micronaut.data.annotation.event.PreRemove;
@@ -29,6 +28,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.PropertyAutoPopulator;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Singleton;
 
@@ -49,9 +49,11 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
     private static final List<Class<? extends Annotation>> SUPPORTED_EVENTS = Arrays.asList(PrePersist.class, PreUpdate.class, PreRemove.class);
 
     private final DateTimeProvider dateTimeProvider;
+    private final DataConversionService<?> conversionService;
 
-    public VersionGeneratingEntityEventListener(DateTimeProvider dateTimeProvider) {
+    public VersionGeneratingEntityEventListener(DateTimeProvider dateTimeProvider, DataConversionService<?> conversionService) {
         this.dateTimeProvider = dateTimeProvider;
+        this.conversionService = conversionService;
     }
 
     @Override
@@ -121,7 +123,7 @@ public class VersionGeneratingEntityEventListener implements EntityEventListener
 
     private Object newTemporal(Class<?> type) {
         Object now = dateTimeProvider.getNow();
-        return ConversionService.SHARED.convertRequired(now, type);
+        return conversionService.convertRequired(now, type);
     }
 
 }

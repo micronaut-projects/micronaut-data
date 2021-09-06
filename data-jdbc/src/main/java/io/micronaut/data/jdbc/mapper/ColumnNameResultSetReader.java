@@ -17,15 +17,18 @@ package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.math.BigDecimal;
-import java.sql.*;
+import java.sql.Blob;
+import java.sql.Clob;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 
 /**
@@ -35,7 +38,16 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
-    private final ConversionService<?> conversionService = ConversionService.SHARED;
+    private final DataConversionService<?> conversionService;
+
+    public ColumnNameResultSetReader(DataConversionService<?> conversionService) {
+        this.conversionService = conversionService;
+    }
+
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
 
     @Nullable
     @Override

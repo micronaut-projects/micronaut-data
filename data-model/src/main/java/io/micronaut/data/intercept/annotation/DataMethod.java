@@ -150,6 +150,11 @@ public @interface DataMethod {
     String META_MEMBER_PARAMETER_TYPE_DEFS = "parameterTypeDefs";
 
     /**
+     * Meta member for storing the parameter converters.
+     */
+    String META_MEMBER_PARAMETER_CONVERTERS = "parameterConverters";
+
+    /**
      * @return The child interceptor to use for the method execution.
      */
     Class<? extends DataInterceptor> interceptor();

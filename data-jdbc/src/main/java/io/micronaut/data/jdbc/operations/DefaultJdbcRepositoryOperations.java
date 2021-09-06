@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.operations;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -56,6 +57,7 @@ import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.mapper.DTOMapper;
@@ -137,6 +139,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
      * @param codecs                The codecs
      * @param dateTimeProvider      The dateTimeProvider
      * @param entityRegistry        The entity registry
+     * @param conversionService     The conversion service
+     * @param beanLocator           The bean locator
      */
     @Internal
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
@@ -146,17 +150,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               BeanContext beanContext,
                                               List<MediaTypeCodec> codecs,
                                               @NonNull DateTimeProvider dateTimeProvider,
-                                              RuntimeEntityRegistry entityRegistry) {
+                                              RuntimeEntityRegistry entityRegistry,
+                                              DataConversionService<?> conversionService,
+                                              BeanLocator beanLocator) {
         super(
                 dataSourceName,
-                new ColumnNameResultSetReader(),
-                new ColumnIndexResultSetReader(),
-                new JdbcQueryStatement(),
+                new ColumnNameResultSetReader(conversionService),
+                new ColumnIndexResultSetReader(conversionService),
+                new JdbcQueryStatement(conversionService),
                 codecs,
                 dateTimeProvider,
                 entityRegistry,
-                beanContext
-        );
+                beanContext,
+                conversionService, beanLocator);
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;
@@ -365,7 +371,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return transactionOperations.executeRead(status -> {
             Connection connection = status.getConnection();
             RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
-            try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
+            try (PreparedStatement ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, false, true)) {
                 try (ResultSet rs = ps.executeQuery()) {
                     Class<R> resultType = preparedQuery.getResultType();
                     if (preparedQuery.getResultDataType() == DataType.ENTITY) {
@@ -383,8 +389,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                     } else {
                                         return o;
                                     }
-                                }
-                        );
+                                },
+                                conversionService);
                         SqlResultEntityTypeMapper.PushingMapper<ResultSet, R> oneMapper = mapper.readOneWithJoins();
                         if (rs.next()) {
                             oneMapper.processRow(rs);
@@ -403,8 +409,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             TypeMapper<ResultSet, R> introspectedDataMapper = new DTOMapper<>(
                                     persistentEntity,
                                     columnNameResultSetReader,
-                                    jsonCodec
-                            );
+                                    jsonCodec,
+                                    conversionService);
                             return introspectedDataMapper.map(rs, resultType);
                         } else {
                             Object v = columnIndexResultSetReader.readDynamic(rs, 1, preparedQuery.getResultDataType());
@@ -430,7 +436,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return transactionOperations.executeRead(status -> {
             try {
                 Connection connection = status.getConnection();
-                try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, false, true)) {
+                try (PreparedStatement ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, false, true)) {
                     try (ResultSet rs = ps.executeQuery()) {
                         return rs.next();
                     }
@@ -453,7 +459,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         PreparedStatement ps;
         try {
-            ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
+            ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, false, false);
         } catch (Exception e) {
             throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
         }
@@ -476,7 +482,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     mapper = new SqlDTOMapper<>(
                             persistentEntity,
                             columnNameResultSetReader,
-                            jsonCodec
+                            jsonCodec,
+                            conversionService
                     );
                 } else {
                     Set<JoinPath> joinFetchPaths = preparedQuery.getJoinFetchPaths();
@@ -491,8 +498,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 } else {
                                     return o;
                                 }
-                            }
-                    );
+                            },
+                            conversionService);
                     boolean onlySingleEndedJoins = isOnlySingleEndedJoins(getEntity(preparedQuery.getRootEntity()), joinFetchPaths);
                     // Cannot stream ResultSet for "many" joined query
                     if (!onlySingleEndedJoins) {
@@ -601,7 +608,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return transactionOperations.executeWrite(status -> {
             try {
                 Connection connection = status.getConnection();
-                try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, true, false)) {
+                try (PreparedStatement ps = prepareStatement(connection, connection::prepareStatement, preparedQuery, true, false)) {
                     int result = ps.executeUpdate();
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", result);
@@ -847,8 +854,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 prefix,
                 getEntity(type),
                 columnNameResultSetReader,
-                jsonCodec
-        ).map(resultSet, type);
+                jsonCodec,
+                conversionService).map(resultSet, type);
     }
 
     @NonNull
@@ -857,8 +864,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return new DTOMapper<E, ResultSet, D>(
                 getEntity(rootEntity),
                 columnNameResultSetReader,
-                jsonCodec
-        ).map(resultSet, dtoType);
+                jsonCodec,
+                conversionService).map(resultSet, dtoType);
     }
 
     @NonNull
@@ -866,7 +873,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     public <T> Stream<T> entityStream(@NonNull ResultSet resultSet, @Nullable String prefix, @NonNull Class<T> rootEntity) {
         ArgumentUtils.requireNonNull("resultSet", resultSet);
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
-        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader, jsonCodec);
+        TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader, jsonCodec, conversionService);
         Iterable<T> iterable = () -> new Iterator<T>() {
             boolean nextCalled = false;
 
@@ -914,8 +921,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         prefix,
                         entity,
                         columnNameResultSetReader,
-                        jsonCodec
-                );
+                        jsonCodec,
+                        conversionService);
                 return mapper.map(rs, type);
             }
 
@@ -926,8 +933,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 TypeMapper<ResultSet, D> introspectedDataMapper = new DTOMapper<>(
                         entity,
                         columnNameResultSetReader,
-                        jsonCodec
-                );
+                        jsonCodec,
+                        conversionService);
                 return introspectedDataMapper.map(rs, dtoType);
             }
         };
@@ -972,8 +979,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void setParameters(PreparedStatement stmt, SqlOperation sqlOperation) {
-            sqlOperation.setParameters(stmt, persistentEntity, entity, previousValues);
+        protected void setParameters(Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) {
+            sqlOperation.setParameters(connection, stmt, persistentEntity, entity, previousValues);
         }
 
         @Override
@@ -1128,12 +1135,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void setParameters(PreparedStatement stmt, SqlOperation sqlOperation) throws SQLException {
+        protected void setParameters(Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) throws SQLException {
             for (Data d : entities) {
                 if (d.vetoed) {
                     continue;
                 }
-                sqlOperation.setParameters(stmt, persistentEntity, d.entity, d.previousValues);
+                sqlOperation.setParameters(connection, stmt, persistentEntity, d.entity, d.previousValues);
                 stmt.addBatch();
             }
         }

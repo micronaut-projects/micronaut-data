@@ -17,9 +17,9 @@ package io.micronaut.data.r2dbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
 import io.r2dbc.spi.Statement;
 
@@ -36,6 +36,17 @@ import java.util.UUID;
  * @since 1.0.0
  */
 public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
+    private final DataConversionService<?> conversionService;
+
+    public R2dbcQueryStatement(DataConversionService<?> conversionService) {
+        this.conversionService = conversionService;
+    }
+
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
+
     @Override
     public QueryStatement<Statement, Integer> setDynamic(@NonNull Statement statement, @NonNull Integer index, @NonNull DataType dataType, Object value) {
         if (value == null) {
@@ -126,7 +137,7 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
     @Nullable
     @Override
     public <T> T convertRequired(@Nullable Object value, Class<T> type) {
-        return ConversionService.SHARED.convertRequired(
+        return conversionService.convertRequired(
                 value,
                 type
         );

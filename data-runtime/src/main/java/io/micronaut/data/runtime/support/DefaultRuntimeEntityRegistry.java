@@ -28,6 +28,7 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.convert.TypeConverter;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
 import jakarta.inject.Singleton;
@@ -121,6 +122,11 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appl
             final boolean hasPostRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostRemove.class);
             final boolean hasPostUpdateEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostUpdate.class);
             final boolean hasPostLoadEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostLoad.class);
+
+            @Override
+            protected TypeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
+                return (TypeConverter<Object, Object>) applicationContext.getBean(converterClass);
+            }
 
             @Override
             protected RuntimePersistentEntity<T> getEntity(Class<T> type) {

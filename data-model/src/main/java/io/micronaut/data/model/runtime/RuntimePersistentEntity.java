@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.annotation.Version;
 import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.*;
+import io.micronaut.data.model.runtime.convert.TypeConverter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -120,6 +121,16 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
             this.constructorArguments[i] = prop;
         }
         this.aliasName = super.getAliasName();
+    }
+
+    /**
+     * Resolves a converter instance.
+     * @param converterClass The converter class
+     * @return converter instance
+     */
+    @NonNull
+    protected TypeConverter<Object, Object> resolveConverter(@NonNull Class<?> converterClass) {
+        throw new MappingException("Converters not supported");
     }
 
     /**

@@ -270,6 +270,19 @@ public class TypeUtils {
     }
 
     /**
+     * Resolve the converter for the given type.
+     * @param type The type
+     * @param dataConverters Configured data converters
+     * @return The data type
+     */
+    public static @Nullable String resolveDataConverter(@NonNull ClassElement type, Map<String, String> dataConverters) {
+        return dataConverters.keySet()
+                .stream()
+                .filter(type::isAssignable)
+                .findFirst().orElse(null);
+    }
+
+    /**
      * Compute the data type for the given type.
      * @param type The type
      * @param dataTypes Configured data types

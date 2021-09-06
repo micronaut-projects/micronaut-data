@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.math.BigDecimal;
@@ -33,6 +34,17 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnIndexResultSetReader implements ResultReader<ResultSet, Integer> {
+
+    private final DataConversionService<?> conversionService;
+
+    public ColumnIndexResultSetReader(DataConversionService<?> conversionService) {
+        this.conversionService = conversionService;
+    }
+
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
 
     @Nullable
     @Override
