@@ -6596,24 +6596,24 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">@Post("/")
-Single&lt;Book&gt; create(@Valid Book book) {
-    return Single.fromPublisher(bookRepository.save(book));
+Mono&lt;Book&gt; create(@Valid Book book) {
+    return Mono.from(bookRepository.save(book));
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Post("/")
-Single&lt;Book&gt; create(@Valid Book book) {
-    return Single.fromPublisher(bookRepository.save(book))
+Mono&lt;Book&gt; create(@Valid Book book) {
+    return Mono.from(bookRepository.save(book))
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Post("/")
-fun create(book: @Valid Book): Single&lt;Book&gt; {
-    return Single.fromPublisher(bookRepository.save(book))
+fun create(book: @Valid Book): Mono&lt;Book&gt; {
+    return Mono.from(bookRepository.save(book))
 }</code></pre>
 </div>
 </div>
@@ -6665,24 +6665,24 @@ fun show(id: Long): Mono&lt;Book&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">@Put("/{id}")
-Single&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
-    return Single.fromPublisher(bookRepository.update(book));
+Mono&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
+    return Mono.from(bookRepository.update(book));
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Put("/{id}")
-Single&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
-    return Single.fromPublisher(bookRepository.update(book))
+Mono&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
+    return Mono.from(bookRepository.update(book))
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Put("/{id}")
-fun update(id: Long, book: @Valid Book): Single&lt;Book&gt; {
-    return Single.fromPublisher(bookRepository.update(book))
+fun update(id: Long, book: @Valid Book): Mono&lt;Book&gt; {
+    return Mono.from(bookRepository.update(book))
 }</code></pre>
 </div>
 </div>
@@ -6692,8 +6692,8 @@ fun update(id: Long, book: @Valid Book): Single&lt;Book&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">@Delete("/{id}")
-Single&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
-    return Single.fromPublisher(bookRepository.deleteById(id))
+Mono&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
+    return Mono.from(bookRepository.deleteById(id))
             .map(deleted -&gt; deleted &gt; 0 ? HttpResponse.noContent() : HttpResponse.notFound());
 }</code></pre>
 </div>
@@ -6701,8 +6701,8 @@ Single&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Delete("/{id}")
-Single&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
-    return Single.fromPublisher(bookRepository.deleteById(id))
+Mono&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
+    return Mono.from(bookRepository.deleteById(id))
             .map(deleted -&gt; deleted &gt; 0 ? HttpResponse.noContent() : HttpResponse.notFound())
 }</code></pre>
 </div>
@@ -6710,8 +6710,8 @@ Single&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Delete("/{id}")
-fun delete(id: Long): Single&lt;HttpResponse&lt;*&gt;&gt; {
-    return Single.fromPublisher(bookRepository.deleteById(id))
+fun delete(id: Long): Mono&lt;HttpResponse&lt;*&gt;&gt; {
+    return Mono.from(bookRepository.deleteById(id))
             .map { deleted: Long -&gt; if (deleted &gt; 0) HttpResponse.noContent() else HttpResponse.notFound&lt;Any&gt;() }
 }</code></pre>
 </div>
@@ -6949,32 +6949,32 @@ override fun &lt;S : Book?&gt; saveAll(entities: @Valid @NotNull Iterable&lt;S&g
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-java" data-lang="java">Flowable.fromPublisher(operations.withTransaction(status -&gt; <b class="conum">(1)</b>
-        Flowable.fromPublisher(authorRepository.save(new Author("Michael Crichton")))
+<pre class="highlight"><code class="language-java" data-lang="java">Flux.from(operations.withTransaction(status -&gt; <b class="conum">(1)</b>
+        Flux.from(authorRepository.save(new Author("Michael Crichton")))
                 .flatMap((author -&gt; operations.withTransaction(status, (s) -&gt; <b class="conum">(2)</b>
                         bookRepository.saveAll(Arrays.asList(
                                 new Book("Jurassic Park", 300, author),
                                 new Book("Disclosure", 400, author)
                         )))))
-)).blockingSubscribe();</code></pre>
+)).collectList().block();</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-groovy" data-lang="groovy">Flowable.fromPublisher(operations.withTransaction(status -&gt; <b class="conum">(1)</b>
-        Flowable.fromPublisher(authorRepository.save(new Author("Michael Crichton")))
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">Flux.from(operations.withTransaction(status -&gt; <b class="conum">(1)</b>
+        Flux.from(authorRepository.save(new Author("Michael Crichton")))
                 .flatMap((author -&gt; operations.withTransaction(status, (s) -&gt; <b class="conum">(2)</b>
                         bookRepository.saveAll([
                                 new Book("Jurassic Park", 300, author),
                                 new Book("Disclosure", 400, author)
                         ]))))
-)).blockingSubscribe()</code></pre>
+)).collectList().block()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">Flowable.fromPublisher(operations.withTransaction { status: ReactiveTransactionStatus&lt;Connection&gt; -&gt;  <b class="conum">(1)</b>
-    Flowable.fromPublisher(authorRepository.save(Author("Michael Crichton")))
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">Flux.from(operations.withTransaction { status: ReactiveTransactionStatus&lt;Connection&gt; -&gt;  <b class="conum">(1)</b>
+    Flux.from(authorRepository.save(Author("Michael Crichton")))
             .flatMap { author: Author -&gt;
                 operations.withTransaction(status) {   <b class="conum">(2)</b>
                     bookRepository.saveAll(listOf(
@@ -6983,7 +6983,7 @@ override fun &lt;S : Book?&gt; saveAll(entities: @Valid @NotNull Iterable&lt;S&g
                     ))
                 }
             }
-}).blockingSubscribe()</code></pre>
+}).collectList().block()</code></pre>
 </div>
 </div>
 <div class="colist arabic">
