@@ -24,16 +24,29 @@ import io.micronaut.core.convert.ConversionContext;
  *
  * @param <X> The entity value type
  * @param <Y> The persisted value type
- *
  * @author Denis Stepanov
  * @since 3.1
  */
 public interface TypeConverter<X, Y> {
 
+    /**
+     * Converts the entity value to the persisted value.
+     *
+     * @param entityValue The entity value
+     * @param context     The conversion context.
+     * @return the persisted value
+     */
     @Nullable
-    Y convertToPersistedValue(@Nullable X object, @NonNull ConversionContext context);
+    Y convertToPersistedValue(@Nullable X entityValue, @NonNull ConversionContext context);
 
+    /**
+     * Converts the persisted value to the entity value.
+     *
+     * @param persistedValue The persisted value
+     * @param context        The conversion context.
+     * @return the entity value
+     */
     @Nullable
-    X convertToEntityValue(@Nullable Y object, @NonNull ConversionContext context);
+    X convertToEntityValue(@Nullable Y persistedValue, @NonNull ConversionContext context);
 
 }
