@@ -117,7 +117,7 @@ import java.util.stream.Stream;
  */
 @EachBean(ConnectionFactory.class)
 @Internal
-public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Connection, Row, Statement, RuntimeException> implements BlockingReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations, ReactiveTransactionOperations<Connection> {
+final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperations<Connection, Row, Statement, RuntimeException> implements BlockingReactorRepositoryOperations, R2dbcRepositoryOperations, R2dbcOperations, ReactiveTransactionOperations<Connection> {
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcRepositoryOperations.class);
     private final ConnectionFactory connectionFactory;
     private final ReactorReactiveRepositoryOperations reactiveOperations;
@@ -139,7 +139,7 @@ public final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositor
      * @param typeConverterRegistry The type converter registry
      */
     @Internal
-    private DefaultR2dbcRepositoryOperations(
+    protected DefaultR2dbcRepositoryOperations(
             @Parameter String dataSourceName,
             ConnectionFactory connectionFactory,
             List<MediaTypeCodec> mediaTypeCodecList,

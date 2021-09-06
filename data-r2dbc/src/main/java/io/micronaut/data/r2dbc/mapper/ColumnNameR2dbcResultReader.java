@@ -48,6 +48,11 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         this.conversionService = conversionService;
     }
 
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
+
     @Nullable
     @Override
     public Object readDynamic(@NonNull Row resultSet, @NonNull String index, @NonNull DataType dataType) {

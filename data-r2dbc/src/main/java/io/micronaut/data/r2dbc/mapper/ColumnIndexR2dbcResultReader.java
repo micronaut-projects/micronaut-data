@@ -44,6 +44,11 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
         this.conversionService = conversionService;
     }
 
+    @Override
+    public DataConversionService<?> getConversionService() {
+        return conversionService;
+    }
+
     @Nullable
     @Override
     public Object readDynamic(@NonNull Row resultSet, @NonNull Integer index, @NonNull DataType dataType) {
