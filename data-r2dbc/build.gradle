@@ -25,7 +25,8 @@ dependencies {
     testCompileOnly project(":data-processor")
     testCompileOnly "io.reactivex.rxjava2:rxjava:$rxJava2Version"
     testImplementation "com.fasterxml.jackson.core:jackson-databind"
-    testImplementation "jakarta.persistence:jakarta.persistence-api:$javaxPersistenceVersion"
+    testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
+    testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
     testImplementation "org.codehaus.groovy:groovy-sql:$groovyVersion"
     testImplementation "io.micronaut:micronaut-validation"
     testImplementation "org.testcontainers:r2dbc"
