@@ -15,12 +15,8 @@
  */
 package io.micronaut.data.jdbc.mysql
 
-import io.micronaut.core.convert.ConversionService
 import io.micronaut.data.tck.tests.AbstractUUIDSpec
 import spock.lang.Shared
-
-import java.nio.ByteBuffer
-import java.util.function.Function
 
 class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvider {
 
@@ -31,40 +27,13 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
 
     void 'test insert with UUID'() {
         given:
-            // MySQL trick to store less data is to use only 16 bytes for UUID type
-            // We need to use custom UUID <-> binary 16 convertors
-            // This should be replaced by `AttributeConverter<UUID, byte[]>` in the future
-            ConversionService.SHARED.addConverter(UUID, byte[], new Function<UUID, byte[]>() {
-                @Override
-                byte[] apply(UUID uuid) {
-                    ByteBuffer bb = ByteBuffer.wrap(new byte[16])
-                    bb.putLong(uuid.getMostSignificantBits())
-                    bb.putLong(uuid.getLeastSignificantBits())
-                    return bb.array()
-                }
-            })
-            ConversionService.SHARED.addConverter(byte[], UUID, new Function<byte[], UUID>() {
-                @Override
-                UUID apply(byte[] bytes) {
-                    if (bytes.length != 16) {
-                        throw new IllegalArgumentException()
-                    }
-                    int i = 0;
-                    long msl = 0;
-                    for (; i < 8; i++) {
-                        msl = (msl << 8) | (bytes[i] & 0xFF)
-                    }
-                    long lsl = 0;
-                    for (; i < 16; i++) {
-                        lsl = (lsl << 8) | (bytes[i] & 0xFF)
-                    }
-                    return new UUID(msl, lsl)
-                }
-            })
             def entity = new MySqlUuidEntity()
             entity.id = UUID.randomUUID()
             entity.id2 = UUID.randomUUID()
             entity.id3 = UUID.randomUUID()
+            entity.id4 = UUID.randomUUID()
+            entity.id5 = UUID.randomUUID()
+            entity.id6 = UUID.randomUUID()
             entity.name = "SPECIAL"
         when:
             MySqlUuidEntity test = repository.save(entity)
@@ -76,6 +45,9 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             test2.id == test.id
             test2.id2 == test.id2
             test2.id3 == test.id3
+            test2.id4 == test.id4
+            test2.id5 == test.id5
+            test2.id6 == test.id6
             test2.name == 'SPECIAL'
         when: "update query with transform is used"
             def newUUID = UUID.randomUUID()
@@ -85,6 +57,9 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             test2.id == test.id
             test2.id2 == newUUID
             test2.id3 == test.id3
+            test2.id4 == test.id4
+            test2.id5 == test.id5
+            test2.id6 == test.id6
             test2.name == 'SPECIAL'
         when:
             def result = repository.getById3InList([test2.id3])
@@ -92,8 +67,14 @@ class MySqlUUIDSpec extends AbstractUUIDSpec implements MySQLTestPropertyProvide
             result.id == test2.id
             result.id2 == test2.id2
             result.id3 == test2.id3
+            result.id4 == test2.id4
+            result.id5 == test2.id5
+            result.id6 == test2.id6
             result.name == 'SPECIAL'
-
+        when:
+            repository.delete(result)
+        then:
+            !repository.findById(result.id).isPresent()
         cleanup:
             repository.deleteAll()
     }

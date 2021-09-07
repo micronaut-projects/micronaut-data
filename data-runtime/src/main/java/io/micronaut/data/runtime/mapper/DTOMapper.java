@@ -26,6 +26,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.http.codec.MediaTypeCodec;
 
 /**
@@ -41,16 +42,18 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
     private final RuntimePersistentEntity<T> persistentEntity;
     private final ResultReader<S, String> resultReader;
     private final @Nullable MediaTypeCodec jsonCodec;
+    private final DataConversionService<?> conversionService;
 
     /**
      * Default constructor.
      * @param persistentEntity The entity
      * @param resultReader The result reader
+     * @param conversionService
      */
-    public DTOMapper(
-            RuntimePersistentEntity<T> persistentEntity,
-            ResultReader<S, String> resultReader) {
-        this(persistentEntity, resultReader, null);
+    public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
+                     ResultReader<S, String> resultReader,
+                     DataConversionService<?> conversionService) {
+        this(persistentEntity, resultReader, null, conversionService);
     }
 
     /**
@@ -58,11 +61,13 @@ public class DTOMapper<T, S, R> implements BeanIntrospectionMapper<S, R> {
      * @param persistentEntity The entity
      * @param resultReader The result reader
      * @param jsonCodec The JSON codec
+     * @param conversionService
      */
-    public DTOMapper(
-            RuntimePersistentEntity<T> persistentEntity,
-            ResultReader<S, String> resultReader,
-            @Nullable MediaTypeCodec jsonCodec) {
+    public DTOMapper(RuntimePersistentEntity<T> persistentEntity,
+                     ResultReader<S, String> resultReader,
+                     @Nullable MediaTypeCodec jsonCodec,
+                     DataConversionService<?> conversionService) {
+        this.conversionService = conversionService;
         ArgumentUtils.requireNonNull("persistentEntity", persistentEntity);
         ArgumentUtils.requireNonNull("resultReader", resultReader);
         this.persistentEntity = persistentEntity;

@@ -15,10 +15,9 @@
  */
 package io.micronaut.data.spring.jpa.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
@@ -85,7 +84,7 @@ public class CountSpecificationInterceptor extends AbstractQueryInterceptor<Obje
             if (returnType.isInstance(result)) {
                 return result;
             } else {
-                return ConversionService.SHARED.convertRequired(
+                return operations.getConversionService().convertRequired(
                         result,
                         rt.asArgument()
                 );

@@ -15,15 +15,14 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.UpdateInterceptor;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 /**
  * Default implementation of {@link UpdateInterceptor}.
@@ -51,7 +50,7 @@ public class DefaultUpdateInterceptor<T> extends AbstractQueryInterceptor<T, Obj
             if (type.isInstance(number)) {
                 return number;
             } else {
-                return ConversionService.SHARED.
+                return operations.getConversionService().
                         convert(number, returnType)
                         .orElse(0);
             }

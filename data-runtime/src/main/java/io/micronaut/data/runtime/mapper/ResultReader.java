@@ -15,16 +15,16 @@
  */
 package io.micronaut.data.runtime.mapper;
 
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.UUID;
-
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+
+import java.math.BigDecimal;
+import java.util.Date;
+import java.util.UUID;
 
 /**
  * A result reader is a type that is capable of reading data from the given result set type.
@@ -43,8 +43,7 @@ public interface ResultReader<RS, IDX> {
      * @throws DataAccessException if the value cannot be converted
      */
     default <T> T convertRequired(@NonNull Object value, Class<T> type) {
-
-        return ConversionService.SHARED.convert(
+        return getConversionService().convert(
                 value,
                 type
         ).orElseThrow(() ->
@@ -61,8 +60,7 @@ public interface ResultReader<RS, IDX> {
      * @throws DataAccessException if the value cannot be converted
      */
     default <T> T convertRequired(@NonNull Object value, Argument<T> type) {
-
-        return ConversionService.SHARED.convert(
+        return getConversionService().convert(
                 value,
                 type
         ).orElseThrow(() ->
@@ -275,5 +273,13 @@ public interface ResultReader<RS, IDX> {
      */
     default byte[] readBytes(RS resultSet, IDX name) {
         return getRequiredValue(resultSet, name, byte[].class);
+    }
+
+    /**
+     * Get conversion service.
+     * @return the instance of {@link ConversionService}
+     */
+    default ConversionService<?> getConversionService() {
+        return ConversionService.SHARED;
     }
 }

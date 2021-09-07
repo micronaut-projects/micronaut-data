@@ -21,6 +21,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Row;
 
@@ -38,7 +39,27 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> {
-    private final ConversionService<?> conversionService = ConversionService.SHARED;
+    private final ConversionService<?> conversionService;
+
+    public ColumnIndexR2dbcResultReader() {
+        this(null);
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param conversionService The data conversion service
+     * @since 3.1
+     */
+    public ColumnIndexR2dbcResultReader(DataConversionService<?> conversionService) {
+        // Backwards compatibility should be removed in the next version
+        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
+    }
+
+    @Override
+    public ConversionService<?> getConversionService() {
+        return conversionService;
+    }
 
     @Nullable
     @Override

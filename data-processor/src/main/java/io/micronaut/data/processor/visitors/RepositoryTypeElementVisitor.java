@@ -15,18 +15,35 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.AnnotationClassValue;
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.AnnotationValueBuilder;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.core.annotation.*;
 import io.micronaut.core.io.service.ServiceDefinition;
 import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.core.order.OrderUtil;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.*;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Slice;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
@@ -36,7 +53,25 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
-import io.micronaut.data.processor.visitors.finders.*;
+import io.micronaut.data.processor.visitors.finders.CountByMethod;
+import io.micronaut.data.processor.visitors.finders.CountMethod;
+import io.micronaut.data.processor.visitors.finders.DeleteByMethod;
+import io.micronaut.data.processor.visitors.finders.DeleteMethod;
+import io.micronaut.data.processor.visitors.finders.ExistsByFinder;
+import io.micronaut.data.processor.visitors.finders.FindByFinder;
+import io.micronaut.data.processor.visitors.finders.FindByIdsMethod;
+import io.micronaut.data.processor.visitors.finders.FindOneMethod;
+import io.micronaut.data.processor.visitors.finders.ListMethod;
+import io.micronaut.data.processor.visitors.finders.MethodCandidate;
+import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
+import io.micronaut.data.processor.visitors.finders.RawQuery;
+import io.micronaut.data.processor.visitors.finders.RawQueryMethod;
+import io.micronaut.data.processor.visitors.finders.SaveEntityMethod;
+import io.micronaut.data.processor.visitors.finders.SaveOneMethod;
+import io.micronaut.data.processor.visitors.finders.TypeUtils;
+import io.micronaut.data.processor.visitors.finders.UpdateByMethod;
+import io.micronaut.data.processor.visitors.finders.UpdateEntityMethod;
+import io.micronaut.data.processor.visitors.finders.UpdateMethod;
 import io.micronaut.data.processor.visitors.finders.page.FindPageByMethod;
 import io.micronaut.data.processor.visitors.finders.page.ListPageMethod;
 import io.micronaut.data.processor.visitors.finders.slice.FindSliceByMethod;
@@ -46,11 +81,25 @@ import io.micronaut.data.processor.visitors.finders.specification.FindAllSpecifi
 import io.micronaut.data.processor.visitors.finders.specification.FindOneSpecificationMethod;
 import io.micronaut.data.processor.visitors.finders.specification.FindPageSpecificationMethod;
 import io.micronaut.data.repository.GenericRepository;
-import io.micronaut.inject.ast.*;
+import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.Element;
+import io.micronaut.inject.ast.MethodElement;
+import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.ast.TypedElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
@@ -434,7 +483,20 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
                                     if (CollectionUtils.isNotEmpty(finalParameterBinding)) {
                                         if (!supportsImplicitQueries && !finalEncodeEntityParameters) {
-                                            annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, getDataTypes(methodMatchContext, parameters, finalParameterBinding));
+                                            DataType[] dataTypes = getDataTypes(methodMatchContext, parameters, finalParameterBinding);
+                                            annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, dataTypes);
+                                            List<String> converters = getConverters(methodMatchContext, parameters, finalParameterBinding);
+                                            if (!converters.isEmpty() && converters.stream().anyMatch(c -> StringUtils.isNotEmpty(c))) {
+                                                AnnotationClassValue[] classValues = converters.stream()
+                                                        .map(name -> {
+                                                            if (name == null) {
+                                                                return new AnnotationClassValue<>(Object.class.getName());
+                                                            }
+                                                            return new AnnotationClassValue<>(name);
+                                                        })
+                                                        .toArray(AnnotationClassValue[]::new);
+                                                annotationBuilder.member(DataMethod.META_MEMBER_PARAMETER_CONVERTERS, classValues);
+                                            }
                                         }
 
                                         if (finalEncodeEntityParameters) {
@@ -572,6 +634,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     }
                     return resolvePropertyDataType(methodMatchContext, parameters, queryParameterBinding.getPath());
                 }).toArray(DataType[]::new);
+    }
+
+    private List<String> getConverters(MethodMatchContext methodMatchContext, ParameterElement[] parameters, List<QueryParameterBinding> finalParameterBinding) {
+        return finalParameterBinding.stream()
+                .map(queryParameterBinding -> resolvePropertyConverter(methodMatchContext, parameters, queryParameterBinding))
+                .collect(Collectors.toList());
     }
 
     private void bindAdditionalParameters(MethodMatchContext methodMatchContext, List<QueryParameterBinding> parameterBinding, ParameterElement[] parameters, Map<String, String> params) {
@@ -742,6 +810,34 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
             }
         }
         return DataType.OBJECT;
+    }
+
+    private String resolvePropertyConverter(MethodMatchContext matchContext, ParameterElement[] parameters, QueryParameterBinding q) {
+        String value = q.getPath();
+        int dot = value.indexOf('.');
+        if (dot > -1) {
+            String val = value.substring(0, dot);
+            ParameterElement parameterElement = Arrays.stream(parameters)
+                    .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(val))
+                    .findFirst()
+                    .orElse(null);
+            if (parameterElement != null) {
+                SourcePersistentEntity sourcePersistentEntity = resolvePersistentEntity(parameterElement.getGenericType());
+                if (sourcePersistentEntity != null) {
+                    String name = value.substring(dot + 1);
+                    SourcePersistentProperty subProp = (SourcePersistentProperty) sourcePersistentEntity.getPropertyByPath(name).orElse(null);
+                    if (subProp != null && !(subProp instanceof Association)) {
+                        return subProp.getConverterClassName();
+                    }
+                }
+            }
+        } else {
+            SourcePersistentProperty prop = matchContext.getRootEntity().getPropertyByName(value);
+            if (prop != null && !(prop instanceof Association)) {
+                return prop.getConverterClassName();
+            }
+        }
+        return null;
     }
 
     private List<MethodCandidate> initializeMethodCandidates(VisitorContext context) {

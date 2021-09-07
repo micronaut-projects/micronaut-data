@@ -26,6 +26,8 @@ io.micronaut.data.processor.mappers.jpa.jx.event.PreUpdateAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jx.event.PostUpdateAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jx.event.PreRemoveAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jx.event.PostRemoveAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.jx.ConverterAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.jx.ConvertAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jakarta.EntityAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddableAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jakarta.EmbeddedAnnotationMapper
@@ -51,6 +53,8 @@ io.micronaut.data.processor.mappers.jpa.jakarta.event.PreUpdateAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jakarta.event.PostUpdateAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jakarta.event.PreRemoveAnnotationMapper
 io.micronaut.data.processor.mappers.jpa.jakarta.event.PostRemoveAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.jakarta.ConverterAnnotationMapper
+io.micronaut.data.processor.mappers.jpa.jakarta.ConvertAnnotationMapper
 io.micronaut.data.processor.mappers.spring.SpringTransactionalMapper
 io.micronaut.data.processor.mappers.spring.SpringCreatedDateMapper
 io.micronaut.data.processor.mappers.spring.SpringIdMapper

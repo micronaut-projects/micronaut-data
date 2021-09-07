@@ -18,6 +18,7 @@ package io.micronaut.data.processor.model;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.Association;
@@ -45,6 +46,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     private final PropertyElement propertyElement;
     private final DataType dataType;
     private final ClassElement type;
+    private final String converterClassName;
 
     /**
      * Default constructor.
@@ -57,6 +59,7 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
         this.propertyElement = propertyElement;
         this.type = propertyElement.getGenericType();
         this.dataType = computeDataType(propertyElement);
+        this.converterClassName = propertyElement.stringValue(MappedProperty.class, "converter").orElse(null);
     }
 
     @Override
@@ -174,6 +177,15 @@ public class SourcePersistentProperty implements PersistentProperty, TypedElemen
     @Override
     public String getPersistedName() {
         return owner.getNamingStrategy().mappedName(this);
+    }
+
+    /**
+     * Returns converter class name if present.
+     * @return the converter's class name
+     */
+    @Nullable
+    public String getConverterClassName() {
+        return converterClassName;
     }
 
     @Override

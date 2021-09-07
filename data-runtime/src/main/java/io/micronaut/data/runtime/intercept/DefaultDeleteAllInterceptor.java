@@ -16,14 +16,12 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.intercept.DeleteAllInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.operations.RepositoryOperations;
-
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.Optional;
 
@@ -60,7 +58,7 @@ public class DefaultDeleteAllInterceptor<T> extends AbstractQueryInterceptor<T, 
 
     private Number convertIfNecessary(Argument<Number> resultType, Number result) {
         if (!resultType.getType().isInstance(result)) {
-            return ConversionService.SHARED.convert(result, resultType).orElse(0);
+            return operations.getConversionService().convert(result, resultType).orElse(0);
         } else {
             return result;
         }

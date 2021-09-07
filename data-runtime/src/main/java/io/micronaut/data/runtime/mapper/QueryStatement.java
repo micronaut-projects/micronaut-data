@@ -250,7 +250,7 @@ public interface QueryStatement<PS, IDX> {
         if (type.isInstance(value)) {
             return (T) value;
         }
-        return ConversionService.SHARED.convert(
+        return getConversionService().convert(
                 value,
                 type
         ).orElseThrow(() ->
@@ -426,4 +426,11 @@ public interface QueryStatement<PS, IDX> {
         return setValue(statement, name, array);
     }
 
+    /**
+     * Get conversion service.
+     * @return the instance of {@link ConversionService}
+     */
+    default ConversionService<?> getConversionService() {
+        return ConversionService.SHARED;
+    }
 }

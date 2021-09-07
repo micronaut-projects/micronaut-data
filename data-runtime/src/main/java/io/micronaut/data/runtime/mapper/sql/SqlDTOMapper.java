@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.mapper.sql;
 
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.DTOMapper;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.http.codec.MediaTypeCodec;
@@ -31,11 +32,14 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
     /**
      * Default constructor.
      *
-     * @param persistentEntity The entity
-     * @param resultReader     The result reader
+     * @param persistentEntity  The entity
+     * @param resultReader      The result reader
+     * @param conversionService The conversion service
      */
-    public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity, ResultReader<S, String> resultReader) {
-        this(persistentEntity, resultReader, null);
+    public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
+                        ResultReader<S, String> resultReader,
+                        DataConversionService<?> conversionService) {
+        this(persistentEntity, resultReader, null, conversionService);
     }
 
     /**
@@ -44,9 +48,13 @@ public class SqlDTOMapper<T, S, R> extends DTOMapper<T, S, R> implements SqlType
      * @param persistentEntity The entity
      * @param resultReader     The result reader
      * @param jsonCodec        The json codec
+     * @param conversionService The conversion service
      */
-    public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity, ResultReader<S, String> resultReader, MediaTypeCodec jsonCodec) {
-        super(persistentEntity, resultReader, jsonCodec);
+    public SqlDTOMapper(RuntimePersistentEntity<T> persistentEntity,
+                        ResultReader<S, String> resultReader,
+                        MediaTypeCodec jsonCodec,
+                        DataConversionService<?> conversionService) {
+        super(persistentEntity, resultReader, jsonCodec, conversionService);
     }
 
     @Override

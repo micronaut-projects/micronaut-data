@@ -1,0 +1,2 @@
+io.micronaut.data.runtime.support.convert.convert.jpa.JakartaAttributeConverterProvider
+io.micronaut.data.runtime.support.convert.convert.jpa.JxAttributeConverterProvider

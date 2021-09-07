@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.model.DataType
+import spock.lang.Unroll
 
 class MappedEntityVisitorSpec extends AbstractTypeElementSpec {
 
@@ -351,5 +352,77 @@ class SName {
         introspection.hasStereotype(MappedEntity)
         introspection.getPropertyNames()
         introspection.getProperty("name").get().enumValue(MappedProperty, "type", DataType).get() == DataType.STRING
+    }
+
+    @Unroll
+    void "test detecting custom data type: #dataType from type: #type"(String type, DataType dataType) {
+        given:
+            def introspection = buildBeanIntrospection('test.TestEntity', """
+package test;
+
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.core.convert.ConversionContext;
+import javax.persistence.*;
+import java.util.UUID;
+import io.micronaut.data.annotation.MappedProperty;
+
+@Entity
+class TestEntity {
+    @MappedProperty(converter = SNameTypeConverter.class)
+    private SName name;
+    @Id
+    private Integer id;
+    
+    public SName getName() {
+        return name;
+    }
+
+    public void setName(SName name) {
+        this.name = name;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+}
+
+class SName {
+    String name;
+}
+
+class SNameTypeConverter implements AttributeConverter<SName, $type> {
+    
+    @Override
+    public $type convertToPersistedValue(SName entityValue, ConversionContext context) {
+        return null;
+    }
+
+    @Override
+    public SName convertToEntityValue($type persistedValue, ConversionContext context) {
+        return null;
+    }
+    
+}
+
+""")
+        expect:
+            introspection != null
+            introspection.hasStereotype(MappedEntity)
+            introspection.getProperty("name").get().enumValue(MappedProperty, "type", DataType).get() == dataType
+
+        where:
+            type                    || dataType
+            String.class.getName()  || DataType.STRING
+            Integer.class.getName() || DataType.INTEGER
+// Core doesn't detect primitive arrays
+//            'byte[]'                || DataType.BYTE_ARRAY
+//            'int[]'                 || DataType.INTEGER_ARRAY
     }
 }

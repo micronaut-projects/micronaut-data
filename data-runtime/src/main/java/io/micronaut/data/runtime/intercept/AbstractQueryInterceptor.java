@@ -15,16 +15,15 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
-import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.reflect.ClassUtils;
@@ -34,21 +33,52 @@ import io.micronaut.core.type.MutableArgumentValue;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.annotation.QueryHint;
+import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.model.*;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.AbstractPreparedDataOperation;
+import io.micronaut.data.model.runtime.BatchOperation;
+import io.micronaut.data.model.runtime.DefaultStoredDataOperation;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.EntityInstanceOperation;
+import io.micronaut.data.model.runtime.EntityOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.TransactionDefinition;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -281,7 +311,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                         //noinspection unchecked
                         parameterValue = (RT) o;
                     } else {
-                        parameterValue = ConversionService.SHARED
+                        parameterValue = operations.getConversionService()
                                 .convert(o, type).orElse(null);
                     }
                 }
@@ -470,7 +500,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             number = 0;
         }
         if (!type.isInstance(number)) {
-            return (Number) ConversionService.SHARED.convert(number, firstTypeVar)
+            return (Number) operations.getConversionService().convert(number, firstTypeVar)
                     .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
         } else {
             return number;

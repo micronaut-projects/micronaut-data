@@ -15,16 +15,15 @@
  */
 package io.micronaut.data.runtime.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.FindPageInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.List;
 
@@ -61,7 +60,7 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             if (returnType.isInstance(page)) {
                 return (R) page;
             } else {
-                return ConversionService.SHARED.convert(page, returnType)
+                return operations.getConversionService().convert(page, returnType)
                         .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + returnType));
             }
         } else {
@@ -70,7 +69,7 @@ public class DefaultFindPageInterceptor<T, R> extends AbstractQueryInterceptor<T
             if (returnType.isInstance(page)) {
                 return (R) page;
             } else {
-                return ConversionService.SHARED.convert(page, returnType)
+                return operations.getConversionService().convert(page, returnType)
                         .orElseThrow(() -> new IllegalStateException("Unsupported page interface type " + returnType));
             }
         }

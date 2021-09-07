@@ -21,13 +21,15 @@ As you can see `@TypeDef` is used to define the `Quantity` type as an `INTEGER` 
 
 TIP: If you cannot declare `@TypeDef` directly on the type then you can declare it on the field where the type is used.
 
-The last step is to add custom type conversion so that Micronaut Data knows how to read and write the type from an `Integer`:
+The last step is to add custom attribute conversion so that Micronaut Data knows how to read and write the type from an `Integer`:
 
-snippet::example.QuantityConverters[project-base="doc-examples/jdbc-example", source="main"]
+snippet::example.QuantityAttributeConverter[project-base="doc-examples/jdbc-example", source="main"]
 
-<1> A `@Factory` bean is created to define the converters
+<1> The attribute converter implements ann:io.micronaut.data.model.runtime.convert.AttributeConverter[] and must be a bean
 <2> A converter from `Quantity` to `Integer`
 <3> A converter from `Integer` to `Quantity`
+
+NOTE: It's possible to define the converter using ann:data.annotation.MappedProperty[]: `@MappedProperty(converter = QuantityTypeConverter.class)`, in this case the data type will be detected automatically.
 
 
 

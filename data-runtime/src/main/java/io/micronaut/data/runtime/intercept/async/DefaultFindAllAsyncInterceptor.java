@@ -15,15 +15,14 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindAllAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.util.Collections;
 import java.util.concurrent.CompletionStage;
@@ -60,7 +59,7 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
             Argument<CompletionStage<Iterable<Object>>> targetType = context.getReturnType().asArgument();
             Argument<?> argument = targetType.getFirstTypeVariable().orElse(Argument.listOf(Object.class));
-            Iterable<Object> result = (Iterable<Object>) ConversionService.SHARED.convert(
+            Iterable<Object> result = (Iterable<Object>) operations.getConversionService().convert(
                     iterable,
                     argument
             ).orElse(null);

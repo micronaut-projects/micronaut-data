@@ -45,6 +45,9 @@ The following table summarizes the different annotations and what they enable. I
 |ann:data.annotation.Transient[]
 |Used to specify a property is transient
 
+|ann:data.annotation.TypeDef[]
+|Used to specify the property's data type and custom converter
+
 |ann:data.annotation.Version[]
 |Specifies the version field of an entity, enables optimistic locking
 
@@ -52,20 +55,12 @@ The following table summarizes the different annotations and what they enable. I
 
 In the case of using JPA only a subset of annotations are supported including the following:
 
-* `@Table`
-* `@Id`
-* `@Version`
-* `@Column`
-* `@Transient`
-* `@JoinTable`
-* `@JoinColumn`
-* `@OneToMany`
-* `@OneToOne`
-* `@ManyToOne`
-* `@ManyToMany`
-* `@Embedded`
-* `@EmbeddedId`
-* `@Embeddable`
-* `@Enumerated`
+* Basic: `@Table` `@Id` `@Version` `@Column` `@Transient` `@Enumerated`
+* Embedded definition:  `@Embedded` `@EmbeddedId` `@Embeddable`
+* Relationship mapping: `@OneToMany` `@OneToOne` `@ManyToOne` `@ManyToMany`
+* Join specification: `@JoinTable` `@JoinColumn`
+* Type converters: `@Convert` `@Converter` and `AttributeConverter` interface
+
+NOTE: Micronaut Data supports both `javax.persistence` and `jakarta.persistence` packages.
 
 Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don't apply, however for users familiar with these annotations it is handy being able to use them.

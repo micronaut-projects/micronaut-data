@@ -17,11 +17,13 @@ package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 
 /**
@@ -161,6 +163,14 @@ public interface PersistentProperty extends PersistentElement {
     }
 
     /**
+     * @return Returns possible property convertor.
+     */
+    @Nullable
+    default AttributeConverter<Object, Object> getConverter() {
+        return null;
+    }
+
+    /**
      * Return whether the metadata indicates the instance is nullable.
      * @param metadata The metadata
      * @return True if it is nullable
@@ -171,5 +181,4 @@ public interface PersistentProperty extends PersistentElement {
                 .stream()
                 .anyMatch(n -> NameUtils.getSimpleName(n).equalsIgnoreCase("nullable"));
     }
-
 }

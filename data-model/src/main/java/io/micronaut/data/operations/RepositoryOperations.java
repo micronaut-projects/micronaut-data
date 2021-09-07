@@ -18,6 +18,7 @@ package io.micronaut.data.operations;
 import io.micronaut.context.ApplicationContextProvider;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.runtime.*;
@@ -218,5 +219,13 @@ public interface RepositoryOperations extends ApplicationContextProvider {
      */
     default @NonNull Map<String, Object> getQueryHints(@NonNull StoredQuery<?, ?> storedQuery) {
         return Collections.emptyMap();
+    }
+
+    /**
+     * Get conversion service.
+     * @return the instance of {@link ConversionService}
+     */
+    default ConversionService<?> getConversionService() {
+        return ConversionService.SHARED;
     }
 }

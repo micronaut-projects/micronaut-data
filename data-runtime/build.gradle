@@ -5,7 +5,9 @@ dependencies {
 	implementation "io.projectreactor:reactor-core"
 	implementation 'io.micronaut.reactor:micronaut-reactor'
 	compileOnly 'io.micronaut:micronaut-http'
-	testImplementation 'javax.persistence:javax.persistence-api:2.2'
+	compileOnly "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
+	compileOnly "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
+	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
 	testImplementation project(":data-processor")
 	testImplementation "io.micronaut:micronaut-inject-groovy"
 	testAnnotationProcessor "io.micronaut:micronaut-inject-java"

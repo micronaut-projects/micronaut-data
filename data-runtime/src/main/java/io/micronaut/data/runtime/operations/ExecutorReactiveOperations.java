@@ -22,9 +22,17 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.runtime.*;
+import io.micronaut.data.model.runtime.DeleteBatchOperation;
+import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.InsertBatchOperation;
+import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
+import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
@@ -44,6 +52,7 @@ import java.util.concurrent.Executor;
 public class ExecutorReactiveOperations implements ReactiveRepositoryOperations {
 
     private final ExecutorAsyncOperations asyncOperations;
+    private final ConversionService<?> dataConversionService;
 
     /**
      * Default constructor.
@@ -51,8 +60,20 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      * @param datastore The target operations
      * @param executor  The executor to use.
      */
+    @Deprecated
     public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor) {
-        this(new ExecutorAsyncOperations(datastore, executor));
+        this(datastore, executor, null);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param datastore             The target operations
+     * @param executor              The executor to use.
+     * @param dataConversionService The data conversion service
+     */
+    public ExecutorReactiveOperations(@NonNull RepositoryOperations datastore, @NonNull Executor executor, DataConversionService<?> dataConversionService) {
+        this(new ExecutorAsyncOperations(datastore, executor), dataConversionService);
     }
 
     /**
@@ -60,9 +81,22 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
      *
      * @param asyncOperations The instance operations instance
      */
+    @Deprecated
     public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations) {
+        this(asyncOperations, null);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param asyncOperations The instance operations instance
+     * @param dataConversionService The data conversion service
+     */
+    public ExecutorReactiveOperations(@NonNull ExecutorAsyncOperations asyncOperations, DataConversionService dataConversionService) {
         ArgumentUtils.requireNonNull("asyncOperations", asyncOperations);
         this.asyncOperations = asyncOperations;
+        // Backwards compatibility should be removed in the next version
+        this.dataConversionService = dataConversionService == null ? ConversionService.SHARED : dataConversionService;
     }
 
     @NonNull
@@ -106,7 +140,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
             Argument<?> type = returnType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
             if (!type.getType().isInstance(r)) {
                 //noinspection unchecked
-                return (R) ConversionService.SHARED.convert(r, type)
+                return (R) dataConversionService.convert(r, type)
                         .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + r));
             }
             return r;
@@ -215,7 +249,7 @@ public class ExecutorReactiveOperations implements ReactiveRepositoryOperations 
             number = 0;
         }
         if (!type.isInstance(number)) {
-            return (Number) ConversionService.SHARED.convert(number, firstTypeVar)
+            return (Number) dataConversionService.convert(number, firstTypeVar)
                     .orElseThrow(() -> new IllegalStateException("Unsupported number type for return type: " + firstTypeVar));
         } else {
             return number;

@@ -41,6 +41,12 @@ public @interface TypeDef {
     DataType type();
 
     /**
+     * The data converter.
+     * @return The converter class
+     */
+    Class<?> converter() default Object.class;
+
+    /**
      * @return The classes for this data type.
      */
     Class[] classes() default {};

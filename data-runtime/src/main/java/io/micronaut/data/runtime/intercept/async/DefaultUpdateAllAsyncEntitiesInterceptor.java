@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
@@ -55,9 +54,9 @@ public class DefaultUpdateAllAsyncEntitiesInterceptor<T> extends AbstractAsyncIn
         Argument<CompletionStage<Object>> rtArgument = context.getReturnType().asArgument();
         Argument<Object> csValueArgument = (Argument<Object>) rtArgument.getFirstTypeVariable().orElse(Argument.listOf(Object.class));
         if (isNumber(csValueArgument.getType())) {
-            return future.thenApply(it -> ConversionService.SHARED.convertRequired(count(it), csValueArgument));
+            return future.thenApply(it -> operations.getConversionService().convertRequired(count(it), csValueArgument));
         }
-        return future.thenApply(it -> ConversionService.SHARED.convertRequired(
+        return future.thenApply(it -> operations.getConversionService().convertRequired(
                 it,
                 csValueArgument
         ));

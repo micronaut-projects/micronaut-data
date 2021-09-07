@@ -28,6 +28,8 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.event.EntityEventRegistry;
 
 import jakarta.inject.Singleton;
@@ -43,24 +45,29 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Singleton
 @Internal
-public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, ApplicationContextProvider {
+final class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, ApplicationContextProvider {
     private final Map<Class, RuntimePersistentEntity> entities = new ConcurrentHashMap<>(10);
     private final Map<Class<? extends Annotation>, PropertyAutoPopulator<?>> propertyPopulators;
     private final EntityEventRegistry eventRegistry;
     private final ApplicationContext applicationContext;
+    private final AttributeConverterRegistry attributeConverterRegistry;
 
     /**
      * Default constructor.
-     * @param eventRegistry The event registry
-     * @param propertyPopulators The property populators
-     * @param applicationContext The application context
+     *
+     * @param eventRegistry         The event registry
+     * @param propertyPopulators    The property populators
+     * @param applicationContext    The application context
+     * @param attributeConverterRegistry The type converter registry
      */
     public DefaultRuntimeEntityRegistry(
             EntityEventRegistry eventRegistry,
             Collection<BeanRegistration<PropertyAutoPopulator<?>>> propertyPopulators,
-            ApplicationContext applicationContext) {
+            ApplicationContext applicationContext,
+            AttributeConverterRegistry attributeConverterRegistry) {
         this.eventRegistry = eventRegistry;
         this.propertyPopulators = new HashMap<>(propertyPopulators.size());
+        this.attributeConverterRegistry = attributeConverterRegistry;
         for (BeanRegistration<PropertyAutoPopulator<?>> propertyPopulator : propertyPopulators) {
             final PropertyAutoPopulator<?> populator = propertyPopulator.getBean();
             final List<Argument<?>> typeArguments = propertyPopulator.getBeanDefinition().getTypeArguments(PropertyAutoPopulator.class);
@@ -100,7 +107,7 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appl
 
     @NonNull
     @Override
-    public final <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
+    public <T> RuntimePersistentEntity<T> getEntity(@NonNull Class<T> type) {
         ArgumentUtils.requireNonNull("type", type);
         RuntimePersistentEntity<T> entity = entities.get(type);
         if (entity == null) {
@@ -121,6 +128,11 @@ public class DefaultRuntimeEntityRegistry implements RuntimeEntityRegistry, Appl
             final boolean hasPostRemoveEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostRemove.class);
             final boolean hasPostUpdateEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostUpdate.class);
             final boolean hasPostLoadEventListeners = eventRegistry.supports((RuntimePersistentEntity) this, PostLoad.class);
+
+            @Override
+            protected AttributeConverter<Object, Object> resolveConverter(Class<?> converterClass) {
+                return attributeConverterRegistry.getConverter(converterClass);
+            }
 
             @Override
             protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
