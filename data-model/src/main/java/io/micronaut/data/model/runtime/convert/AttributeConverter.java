@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.model.runtime.convert;
 
+import io.micronaut.core.annotation.Indexed;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
@@ -27,6 +28,7 @@ import io.micronaut.core.convert.ConversionContext;
  * @author Denis Stepanov
  * @since 3.1
  */
+@Indexed(AttributeConverter.class)
 public interface AttributeConverter<X, Y> {
 
     /**
