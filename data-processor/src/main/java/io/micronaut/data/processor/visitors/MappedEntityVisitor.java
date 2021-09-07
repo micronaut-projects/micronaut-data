@@ -113,6 +113,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
 
+
         List<SourcePersistentProperty> properties = entity.getPersistentProperties();
 
         final List<AnnotationValue<Index>> indexes = properties.stream()
@@ -222,7 +223,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 return;
             }
             if (dataType == null) {
-                dataType = getDataTypeFromConverter(converter, dataTypes, context);
+                dataType = getDataTypeFromConverter(propertyElement.getGenericType(), converter, dataTypes, context);
                 if (dataType == null) {
                     context.fail("Cannot recognize proper data type. Please use @TypeDef to specify one", propertyElement);
                     return;
@@ -311,13 +312,24 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 }).orElseGet(NamingStrategies.UnderScoreSeparatedLowerCase::new);
     }
 
-    private DataType getDataTypeFromConverter(String converter, Map<String, DataType> dataTypes, VisitorContext context) {
+    private DataType getDataTypeFromConverter(ClassElement type, String converter, Map<String, DataType> dataTypes, VisitorContext context) {
         ClassElement classElement = context.getClassElement(converter).get();
         ClassElement genericType = classElement.getGenericType();
 
         Map<String, ClassElement> typeArguments = genericType.getTypeArguments("javax.persistence.AttributeConverter");
         if (typeArguments.isEmpty()) {
             typeArguments = genericType.getTypeArguments("jakarta.persistence.AttributeConverter");
+        }
+        ClassElement entityElement = typeArguments.get("X");
+        if (entityElement != null) {
+            Optional<DataType> explicitType = entityElement.getValue(TypeDef.class, "type", DataType.class);
+            if (explicitType.isPresent()) {
+                return explicitType.get();
+            }
+        }
+        Optional<DataType> explicitType = type.getValue(TypeDef.class, "type", DataType.class);
+        if (explicitType.isPresent()) {
+            return explicitType.get();
         }
         ClassElement dataTypeClassElement = typeArguments.get("Y");
         if (dataTypeClassElement != null) {

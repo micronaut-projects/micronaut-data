@@ -276,6 +276,10 @@ public class TypeUtils {
      * @return The data type
      */
     public static @Nullable String resolveDataConverter(@NonNull ClassElement type, Map<String, String> dataConverters) {
+        Optional<String> explicitConverter = type.stringValue(TypeDef.class, "converter");
+        if (explicitConverter.isPresent()) {
+            return explicitConverter.get();
+        }
         return dataConverters.keySet()
                 .stream()
                 .filter(type::isAssignable)

@@ -24,8 +24,6 @@ import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of {@link TypeConverterRegistry}.
@@ -36,13 +34,21 @@ final class DefaultTypeConverterRegistry implements TypeConverterRegistry {
 
     private final BeanLocator beanLocator;
     private final List<TypeConverterProvider> typeConverterTransformers;
-    private final Map<Class, TypeConverter<Object, Object>> transformedTypeConverters = new ConcurrentHashMap<>();
 
     DefaultTypeConverterRegistry(BeanLocator beanLocator) {
         this.beanLocator = beanLocator;
         List<TypeConverterProvider> typeConverterTransformers = new ArrayList<>();
         SoftServiceLoader.load(TypeConverterProvider.class).collectAll(typeConverterTransformers);
         this.typeConverterTransformers = typeConverterTransformers;
+        this.typeConverterTransformers.removeIf(typeConverterProvider -> {
+            try {
+                // Remove missing classes providers
+                typeConverterProvider.supports(Object.class);
+                return false;
+            } catch (Throwable e) {
+                return true;
+            }
+        });
     }
 
     @Override
@@ -50,13 +56,11 @@ final class DefaultTypeConverterRegistry implements TypeConverterRegistry {
         if (TypeConverter.class.isAssignableFrom(converterClass)) {
             return (TypeConverter<Object, Object>) beanLocator.getBean(converterClass);
         }
-        return transformedTypeConverters.computeIfAbsent(converterClass, c -> {
-            for (TypeConverterProvider transformer : typeConverterTransformers) {
-                if (transformer.supports(converterClass)) {
-                    return transformer.provide(beanLocator, converterClass);
-                }
+        for (TypeConverterProvider transformer : typeConverterTransformers) {
+            if (transformer.supports(converterClass)) {
+                return transformer.provide(beanLocator, converterClass);
             }
-            throw new IllegalStateException("Unknown converter type: " + converterClass);
-        });
+        }
+        throw new IllegalStateException("Unknown converter type: " + converterClass);
     }
 }

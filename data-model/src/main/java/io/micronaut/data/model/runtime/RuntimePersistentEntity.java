@@ -107,7 +107,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity impleme
                 persistentProperties.put(prop.getName(), prop);
             }
         }
-        this.identity = ids.stream().toArray(RuntimePersistentProperty[]::new);
+        this.identity = ids.toArray(new RuntimePersistentProperty[0]);
         this.version = version;
 
         this.constructorArguments = new RuntimePersistentProperty[constructorArguments.length];
