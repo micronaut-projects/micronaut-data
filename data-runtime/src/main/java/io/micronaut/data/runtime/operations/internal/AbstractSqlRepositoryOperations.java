@@ -1307,7 +1307,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     private Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
         TypeConverter<Object, Object> converter = property.getConverter();
         if (converter != null) {
-            return converter.convertToPersistedValue(value, ConversionContext.of((Argument) property.getArgument()));
+            return converter.convertToPersistedValue(value, createTypeConversionContext(connection, property, property.getArgument()));
         }
         return value;
     }
@@ -1317,14 +1317,21 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             return value;
         }
         TypeConverter<Object, Object> converter = typeConverterRegistry.getConverter(converterClass);
-        ConversionContext conversionContext;
-        if (argument == null) {
-            conversionContext = ConversionContext.DEFAULT;
-        } else {
-            conversionContext = ConversionContext.of(argument);
-        }
+        ConversionContext conversionContext = createTypeConversionContext(connection, null, argument);
         return converter.convertToPersistedValue(value, conversionContext);
     }
+
+    /**
+     * Creates implementation specific conversion context.
+     *
+     * @param connection The connection
+     * @param property   The property
+     * @param argument   The argument
+     * @return new {@link ConversionContext}
+     */
+    protected abstract ConversionContext createTypeConversionContext(Cnt connection,
+                                                                     @Nullable RuntimePersistentProperty<?> property,
+                                                                     @Nullable Argument<?> argument);
 
     /**
      * Simple function interface without return type.

@@ -26,6 +26,8 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.attr.AttributeHolder;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
@@ -54,10 +56,12 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
+import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.ColumnNameR2dbcResultReader;
 import io.micronaut.data.r2dbc.mapper.R2dbcQueryStatement;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.mapper.DTOMapper;
@@ -66,6 +70,7 @@ import io.micronaut.data.runtime.mapper.sql.SqlDTOMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.operations.AsyncFromReactiveAsyncRepositoryOperation;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.TransactionalAdvice;
@@ -335,6 +340,20 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
         }
         return entity;
+    }
+
+    @Override
+    protected ConversionContext createTypeConversionContext(Connection connection,
+                                                            RuntimePersistentProperty<?> property,
+                                                            Argument<?> argument) {
+        Objects.requireNonNull(connection);
+        if (property != null) {
+            return new RuntimePersistentPropertyR2dbcCC(connection, property);
+        }
+        if (argument != null) {
+            return new ArgumentR2dbcCC(connection, argument);
+        }
+        return new R2dbcConversionContextImpl(connection);
     }
 
     @Override
@@ -1108,13 +1127,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             data = data.flatMap(d -> Flux.from(stmt.execute()).flatMap(result -> Flux.from(result.getRowsUpdated()))
                     .as(DefaultR2dbcRepositoryOperations::toSingleResult)
                     .map(rowsUpdated -> {
-                if (d.vetoed) {
-                    return d;
-                }
-                d.rowsUpdated = rowsUpdated;
-                fn.process(1, rowsUpdated);
-                return d;
-            }));
+                        if (d.vetoed) {
+                            return d;
+                        }
+                        d.rowsUpdated = rowsUpdated;
+                        fn.process(1, rowsUpdated);
+                        return d;
+                    }));
         }
 
         @Override
@@ -1138,13 +1157,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 }
                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                 return Flux.from(stmt.execute()).flatMap(result ->
-                        Flux.from(result.map((row, rowMetadata) ->
-                                columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))))
+                                Flux.from(result.map((row, rowMetadata) ->
+                                        columnIndexResultSetReader.readDynamic(row, 0, identity.getDataType()))))
                         .as(DefaultR2dbcRepositoryOperations::toSingleResult).map(id -> {
-                    BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
-                    d.entity = updateEntityId(property, d.entity, id);
-                    return d;
-                });
+                            BeanProperty<T, Object> property = (BeanProperty<T, Object>) identity.getProperty();
+                            d.entity = updateEntityId(property, d.entity, id);
+                            return d;
+                        });
             });
         }
 
@@ -1395,5 +1414,56 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             Map<String, Object> previousValues;
             boolean vetoed = false;
         }
+    }
+
+    private static final class RuntimePersistentPropertyR2dbcCC extends R2dbcConversionContextImpl implements RuntimePersistentPropertyConversionContext {
+
+        private final RuntimePersistentProperty<?> property;
+
+        public RuntimePersistentPropertyR2dbcCC(Connection connection, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection);
+            this.property = property;
+        }
+
+        @Override
+        public RuntimePersistentProperty<?> getRuntimePersistentProperty() {
+            return property;
+        }
+    }
+
+    private static final class ArgumentR2dbcCC extends R2dbcConversionContextImpl implements ArgumentConversionContext<Object> {
+
+        private final Argument argument;
+
+        public ArgumentR2dbcCC(Connection connection, Argument argument) {
+            super(ConversionContext.of(argument), connection);
+            this.argument = argument;
+        }
+
+        @Override
+        public Argument<Object> getArgument() {
+            return argument;
+        }
+    }
+
+    private static class R2dbcConversionContextImpl extends AbstractConversionContext
+            implements R2dbcConversionContext {
+
+        private final Connection connection;
+
+        public R2dbcConversionContextImpl(Connection connection) {
+            this(ConversionContext.DEFAULT, connection);
+        }
+
+        public R2dbcConversionContextImpl(ConversionContext conversionContext, Connection connection) {
+            super(conversionContext);
+            this.connection = connection;
+        }
+
+        @Override
+        public Connection getConnection() {
+            return connection;
+        }
+
     }
 }

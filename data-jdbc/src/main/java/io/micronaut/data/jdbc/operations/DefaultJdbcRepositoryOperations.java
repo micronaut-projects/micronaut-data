@@ -23,11 +23,15 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ArgumentConversionContext;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.jdbc.convert.JdbcConversionContext;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
@@ -58,6 +62,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.mapper.DTOMapper;
@@ -70,6 +75,7 @@ import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
@@ -318,6 +324,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
         }
         return entity;
+    }
+
+    @Override
+    protected ConversionContext createTypeConversionContext(Connection connection,
+                                                            RuntimePersistentProperty<?> property,
+                                                            Argument<?> argument) {
+        Objects.requireNonNull(connection);
+        if (property != null) {
+            return new RuntimePersistentPropertyJdbcCC(connection, property);
+        }
+        if (argument != null) {
+            return new ArgumentJdbcCC(connection, argument);
+        }
+        return new JdbcConversionContextImpl(connection);
     }
 
     @Override
@@ -1190,6 +1210,57 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             Map<String, Object> previousValues;
             boolean vetoed = false;
         }
+    }
+
+    private static final class RuntimePersistentPropertyJdbcCC extends JdbcConversionContextImpl implements RuntimePersistentPropertyConversionContext {
+
+        private final RuntimePersistentProperty<?> property;
+
+        public RuntimePersistentPropertyJdbcCC(Connection connection, RuntimePersistentProperty<?> property) {
+            super(ConversionContext.of(property.getArgument()), connection);
+            this.property = property;
+        }
+
+        @Override
+        public RuntimePersistentProperty<?> getRuntimePersistentProperty() {
+            return property;
+        }
+    }
+
+    private static final class ArgumentJdbcCC extends JdbcConversionContextImpl implements ArgumentConversionContext<Object> {
+
+        private final Argument argument;
+
+        public ArgumentJdbcCC(Connection connection, Argument argument) {
+            super(ConversionContext.of(argument), connection);
+            this.argument = argument;
+        }
+
+        @Override
+        public Argument<Object> getArgument() {
+            return argument;
+        }
+    }
+
+    private static class JdbcConversionContextImpl extends AbstractConversionContext
+            implements JdbcConversionContext {
+
+        private final Connection connection;
+
+        public JdbcConversionContextImpl(Connection connection) {
+            this(ConversionContext.DEFAULT, connection);
+        }
+
+        public JdbcConversionContextImpl(ConversionContext conversionContext, Connection connection) {
+            super(conversionContext);
+            this.connection = connection;
+        }
+
+        @Override
+        public Connection getConnection() {
+            return connection;
+        }
+
     }
 
 }
