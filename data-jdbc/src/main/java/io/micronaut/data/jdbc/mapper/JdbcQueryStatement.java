@@ -109,7 +109,7 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
 
                     default:
                         if (dataType.isArray()) {
-                            statement.setNull(index, Types.ARRAY);
+                            statement.setNull(index, Types.ARRAY, "nnn");
                         } else {
                             statement.setNull(index, Types.NULL);
                         }

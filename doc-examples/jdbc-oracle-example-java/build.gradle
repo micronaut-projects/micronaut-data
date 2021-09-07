@@ -1,0 +1,41 @@
+plugins {
+    id "java"
+    id "io.micronaut.application"
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version micronautVersion
+    runtime "netty"
+    testRuntime "junit5"
+}
+
+dependencies {
+    annotationProcessor project(":data-processor")
+    annotationProcessor "io.micronaut:micronaut-validation"
+    implementation project(":data-jdbc")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    runtimeOnly("io.micronaut.flyway:micronaut-flyway")
+
+    implementation "io.micronaut:micronaut-http-client"
+    implementation "io.micronaut:micronaut-validation"
+    implementation 'jakarta.transaction:jakarta.transaction-api:1.3.3'
+    runtimeOnly "ch.qos.logback:logback-classic"
+
+    implementation platform("com.oracle.database.jdbc:ojdbc-bom:21.1.0.0")
+    implementation "com.oracle.database.jdbc:ojdbc8"
+
+    testImplementation "org.testcontainers:oracle-xe"
+}
+
+project.afterEvaluate {
+    nativeImage.enabled = false
+    testNativeImage.enabled = false
+}
