@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -38,14 +39,19 @@ import java.util.Date;
  * @since 1.0.0
  */
 public final class ColumnNameResultSetReader implements ResultReader<ResultSet, String> {
-    private final DataConversionService<?> conversionService;
+    private final ConversionService<?> conversionService;
+
+    public ColumnNameResultSetReader() {
+        this(null);
+    }
 
     public ColumnNameResultSetReader(DataConversionService<?> conversionService) {
-        this.conversionService = conversionService;
+        // Backwards compatibility should be removed in the next version
+        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public ConversionService<?> getConversionService() {
         return conversionService;
     }
 

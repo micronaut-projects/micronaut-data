@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.QueryStatement;
@@ -33,14 +34,19 @@ import java.util.Date;
  */
 public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Integer> {
 
-    private final DataConversionService<?> conversionService;
+    private final ConversionService<?> conversionService;
+
+    public JdbcQueryStatement() {
+        this(null);
+    }
 
     public JdbcQueryStatement(DataConversionService<?> conversionService) {
-        this.conversionService = conversionService;
+        // Backwards compatibility should be removed in the next version
+        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public ConversionService<?> getConversionService() {
         return conversionService;
     }
 

@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -36,14 +37,19 @@ import java.util.UUID;
  * @since 1.0.0
  */
 public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
-    private final DataConversionService<?> conversionService;
+    private final ConversionService<?> conversionService;
+
+    public R2dbcQueryStatement() {
+        this(null);
+    }
 
     public R2dbcQueryStatement(DataConversionService<?> conversionService) {
-        this.conversionService = conversionService;
+        // Backwards compatibility should be removed in the next version
+        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public ConversionService<?> getConversionService() {
         return conversionService;
     }
 

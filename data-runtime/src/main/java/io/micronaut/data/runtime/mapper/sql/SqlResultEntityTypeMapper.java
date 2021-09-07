@@ -359,7 +359,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                     }
                 } else {
                     Object newValue = setChildrenAndTriggerPostLoad(null, associationCtx, instance);
-                    newValue = conversionService.convertRequired(newValue == null ? new ArrayList<>() : newValue, beanProperty.getType());
+                    newValue = resultReader.convertRequired(newValue == null ? new ArrayList<>() : newValue, beanProperty.getType());
                     instance = setProperty(beanProperty, instance, newValue);
                 }
             }
@@ -436,7 +436,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                         }
                                     } else if (entityAssociation.getProperty().isReadOnly()) {
                                         // For constructor-only properties (records) always set empty collection and replace later
-                                        args[i] = conversionService.convertRequired(new ArrayList<>(0), entityAssociation.getProperty().getType());
+                                        args[i] = resultReader.convertRequired(new ArrayList<>(0), entityAssociation.getProperty().getType());
                                         if (joinCtx.jp != null) {
                                             MappingContext<K> associatedCtx = joinCtx.copy();
                                             if (resolvedId == null) {
@@ -479,10 +479,10 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                                     args[i] = jsonCodec.decode(prop.getArgument(), v.toString());
                                 } catch (Exception e) {
                                     // Fallback to reading and converting if decoding failed.
-                                    args[i] = conversionService.convertRequired(v, prop.getArgument());
+                                    args[i] = resultReader.convertRequired(v, prop.getArgument());
                                 }
                             } else {
-                                args[i] = conversionService.convertRequired(v, prop.getArgument());
+                                args[i] = resultReader.convertRequired(v, prop.getArgument());
                             }
                         }
                     } else {
@@ -626,7 +626,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             if (dataType == DataType.JSON && jsonCodec != null) {
                 r = jsonCodec.decode(rpp.getArgument(), v.toString());
             } else {
-                r = conversionService.convertRequired(v, rpp.getArgument());
+                r = resultReader.convertRequired(v, rpp.getArgument());
             }
         }
         return setProperty(property, entity, r);
@@ -651,7 +651,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
                         if (resolvedId == null) {
                             resolvedId = readEntityId(rs, ctx);
                         }
-                        return associatedIntrospection.instantiate(conversionService.convertRequired(resolvedId, identity.getType()));
+                        return associatedIntrospection.instantiate(resultReader.convertRequired(resolvedId, identity.getType()));
                     }
                 }
             }

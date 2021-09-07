@@ -17,6 +17,7 @@ package io.micronaut.data.r2dbc.mapper;
 
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.DataType;
@@ -38,14 +39,19 @@ import java.util.Date;
  * @since 1.0.0
  */
 public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> {
-    private final DataConversionService<?> conversionService;
+    private final ConversionService<?> conversionService;
+
+    public ColumnIndexR2dbcResultReader() {
+        this(null);
+    }
 
     public ColumnIndexR2dbcResultReader(DataConversionService<?> conversionService) {
-        this.conversionService = conversionService;
+        // Backwards compatibility should be removed in the next version
+        this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;
     }
 
     @Override
-    public DataConversionService<?> getConversionService() {
+    public ConversionService<?> getConversionService() {
         return conversionService;
     }
 
