@@ -143,16 +143,20 @@ public @interface <span class="memberNameLabel">MappedProperty</span></pre>
 <th class="colLast" scope="col">Optional Element and Description</th>
 </tr>
 <tr class="altColor">
+<td class="colFirst"><code>java.lang.Class&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedProperty.html#converter--">converter</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedProperty.html#definition--">definition</a></span></code>
 <div class="block">Used to define the mapping.</div>
 </td>
 </tr>
-<tr class="rowColor">
+<tr class="altColor">
 <td class="colFirst"><code><a href="../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedProperty.html#type--">type</a></span></code>&nbsp;</td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/data/annotation/MappedProperty.html#value--">value</a></span></code>
 <div class="block">The destination the property is persisted to.</div>
@@ -228,6 +232,28 @@ public abstract&nbsp;<a href="../../../../io/micronaut/data/model/DataType.html"
 <dl>
 <dt>Default:</dt>
 <dd>io.micronaut.data.model.DataType.OBJECT</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+<ul class="blockList">
+<li class="blockList"><a name="converter--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>converter</h4>
+<pre>@AliasFor(annotation=<a href="../../../../io/micronaut/data/annotation/TypeDef.html" title="annotation in io.micronaut.data.annotation">TypeDef.class</a>,
+          member="converter")
+public abstract&nbsp;java.lang.Class&lt;?&gt;&nbsp;converter</pre>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>The converter of the property.</dd>
+</dl>
+<dl>
+<dt>Default:</dt>
+<dd>java.lang.Object.class</dd>
 </dl>
 </li>
 </ul>

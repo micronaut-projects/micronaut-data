@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10,"i18":10,"i19":10,"i20":10,"i21":10,"i22":10,"i23":10,"i24":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -146,6 +146,16 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
                       <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
                       java.util.concurrent.ExecutorService&nbsp;executorService,
                       <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</code>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>protected </code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-">HibernateJpaOperations</a></span>(org.hibernate.SessionFactory&nbsp;sessionFactory,
+                      <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
+                      java.util.concurrent.ExecutorService&nbsp;executorService,
+                      <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+                      <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;dataConversionService)</code>
 <div class="block">Default constructor.</div>
 </td>
 </tr>
@@ -252,49 +262,55 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getApplicationContext--">getApplicationContext</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i15" class="rowColor">
+<td class="colFirst"><code>io.micronaut.core.convert.ConversionService&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getConversionService--">getConversionService</a></span>()</code>
+<div class="block">Get conversion service.</div>
+</td>
+</tr>
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>javax.persistence.EntityManager</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getCurrentEntityManager--">getCurrentEntityManager</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>javax.persistence.EntityManagerFactory</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getEntityManagerFactory--">getEntityManagerFactory</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i17" class="rowColor">
+<tr id="i18" class="altColor">
 <td class="colFirst"><code>java.util.Map&lt;java.lang.String,java.lang.Object&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#getQueryHints-io.micronaut.data.model.runtime.StoredQuery-">getQueryHints</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/StoredQuery.html" title="interface in io.micronaut.data.model.runtime">StoredQuery</a>&lt;?,?&gt;&nbsp;storedQuery)</code>
 <div class="block">Obtain any custom query hints for this method and repository implementation.</div>
 </td>
 </tr>
-<tr id="i18" class="altColor">
+<tr id="i19" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#load-java.lang.Class-java.io.Serializable-">load</a></span>(java.lang.Class&lt;T&gt;&nbsp;type,
     java.io.Serializable&nbsp;id)</code>
 <div class="block">Create an uninitialized proxy.</div>
 </td>
 </tr>
-<tr id="i19" class="rowColor">
+<tr id="i20" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#persist-io.micronaut.data.model.runtime.InsertOperation-">persist</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertOperation.html" title="interface in io.micronaut.data.model.runtime">InsertOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist the operation returning a possibly new entity.</div>
 </td>
 </tr>
-<tr id="i20" class="altColor">
+<tr id="i21" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#persistAll-io.micronaut.data.model.runtime.InsertBatchOperation-">persistAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/InsertBatchOperation.html" title="interface in io.micronaut.data.model.runtime">InsertBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Persist all the given entities.</div>
 </td>
 </tr>
-<tr id="i21" class="rowColor">
+<tr id="i22" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/operations/reactive/ReactiveRepositoryOperations.html" title="interface in io.micronaut.data.operations.reactive">ReactiveRepositoryOperations</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#reactive--">reactive</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i22" class="altColor">
+<tr id="i23" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#update-io.micronaut.data.model.runtime.UpdateOperation-">update</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entity for the given operation.</div>
 </td>
 </tr>
-<tr id="i23" class="rowColor">
+<tr id="i24" class="altColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;java.lang.Iterable&lt;T&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/hibernate/operations/HibernateJpaOperations.html#updateAll-io.micronaut.data.model.runtime.UpdateBatchOperation-">updateAll</a></span>(<a href="../../../../../io/micronaut/data/model/runtime/UpdateBatchOperation.html" title="interface in io.micronaut.data.model.runtime">UpdateBatchOperation</a>&lt;T&gt;&nbsp;operation)</code>
 <div class="block">Updates the entities for the given operation.</div>
@@ -332,16 +348,18 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 <a name="HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.data.model.runtime.RuntimeEntityRegistry-">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>HibernateJpaOperations</h4>
-<pre>protected&nbsp;HibernateJpaOperations(@NonNull
-                                 org.hibernate.SessionFactory&nbsp;sessionFactory,
-                                 @NonNull @Parameter
-                                 <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
-                                 @Named(value="io") @Nullable
-                                 java.util.concurrent.ExecutorService&nbsp;executorService,
-                                 <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</pre>
+<pre>@Deprecated
+protected&nbsp;HibernateJpaOperations(@NonNull
+                                             org.hibernate.SessionFactory&nbsp;sessionFactory,
+                                             @NonNull @Parameter
+                                             <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
+                                             @Named(value="io") @Nullable
+                                             java.util.concurrent.ExecutorService&nbsp;executorService,
+                                             <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry)</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -349,6 +367,32 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 <dd><code>transactionOperations</code> - The transaction operations</dd>
 <dd><code>executorService</code> - The executor service for I/O tasks to use</dd>
 <dd><code>runtimeEntityRegistry</code> - The runtime entity registry</dd>
+</dl>
+</li>
+</ul>
+<a name="HibernateJpaOperations-org.hibernate.SessionFactory-io.micronaut.transaction.TransactionOperations-java.util.concurrent.ExecutorService-io.micronaut.data.model.runtime.RuntimeEntityRegistry-io.micronaut.data.runtime.convert.DataConversionService-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>HibernateJpaOperations</h4>
+<pre>@Creator
+protected&nbsp;HibernateJpaOperations(@NonNull
+                                          org.hibernate.SessionFactory&nbsp;sessionFactory,
+                                          @NonNull @Parameter
+                                          <a href="../../../../../io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;java.sql.Connection&gt;&nbsp;transactionOperations,
+                                          @Named(value="io") @Nullable
+                                          java.util.concurrent.ExecutorService&nbsp;executorService,
+                                          <a href="../../../../../io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime">RuntimeEntityRegistry</a>&nbsp;runtimeEntityRegistry,
+                                          <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;dataConversionService)</pre>
+<div class="block">Default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>sessionFactory</code> - The session factory</dd>
+<dd><code>transactionOperations</code> - The transaction operations</dd>
+<dd><code>executorService</code> - The executor service for I/O tasks to use</dd>
+<dd><code>runtimeEntityRegistry</code> - The runtime entity registry</dd>
+<dd><code>dataConversionService</code> - The data conversion service</dd>
 </dl>
 </li>
 </ul>
@@ -370,6 +414,23 @@ implements <a href="../../../../../io/micronaut/data/jpa/operations/JpaRepositor
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
 <dd><code>getApplicationContext</code>&nbsp;in interface&nbsp;<code>io.micronaut.context.ApplicationContextProvider</code></dd>
+</dl>
+</li>
+</ul>
+<a name="getConversionService--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getConversionService</h4>
+<pre>public&nbsp;io.micronaut.core.convert.ConversionService&lt;?&gt;&nbsp;getConversionService()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getConversionService--">RepositoryOperations</a></code></span></div>
+<div class="block">Get conversion service.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html#getConversionService--">getConversionService</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a></code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the instance of <code>ConversionService</code></dd>
 </dl>
 </li>
 </ul>

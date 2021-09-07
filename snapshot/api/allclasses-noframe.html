@@ -12,6 +12,7 @@
 <div class="indexContainer">
 <ul>
 <li><a href="io/micronaut/data/runtime/intercept/async/AbstractAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">AbstractAsyncInterceptor</a></li>
+<li><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/AbstractListMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractListMethod</a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/AbstractPatternBasedMethod.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractPatternBasedMethod</a></li>
 <li><a href="io/micronaut/data/model/AbstractPersistentEntity.html" title="class in io.micronaut.data.model">AbstractPersistentEntity</a></li>
@@ -42,6 +43,9 @@
 <li><a href="io/micronaut/data/repository/async/AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async"><span class="interfaceName">AsyncCrudRepository</span></a></li>
 <li><a href="io/micronaut/data/runtime/operations/AsyncFromReactiveAsyncRepositoryOperation.html" title="class in io.micronaut.data.runtime.operations">AsyncFromReactiveAsyncRepositoryOperation</a></li>
 <li><a href="io/micronaut/data/operations/async/AsyncRepositoryOperations.html" title="interface in io.micronaut.data.operations.async"><span class="interfaceName">AsyncRepositoryOperations</span></a></li>
+<li><a href="io/micronaut/data/model/runtime/convert/AttributeConverter.html" title="interface in io.micronaut.data.model.runtime.convert"><span class="interfaceName">AttributeConverter</span></a></li>
+<li><a href="io/micronaut/data/runtime/support/convert/AttributeConverterProvider.html" title="interface in io.micronaut.data.runtime.support.convert"><span class="interfaceName">AttributeConverterProvider</span></a></li>
+<li><a href="io/micronaut/data/model/runtime/AttributeConverterRegistry.html" title="interface in io.micronaut.data.model.runtime"><span class="interfaceName">AttributeConverterRegistry</span></a></li>
 <li><a href="io/micronaut/data/annotation/AutoPopulated.html" title="annotation in io.micronaut.data.annotation">AutoPopulated</a></li>
 <li><a href="io/micronaut/data/runtime/event/listeners/AutoPopulatedEntityEventListener.html" title="class in io.micronaut.data.runtime.event.listeners">AutoPopulatedEntityEventListener</a></li>
 <li><a href="io/micronaut/data/runtime/event/listeners/AutoTimestampEntityEventListener.html" title="class in io.micronaut.data.runtime.event.listeners">AutoTimestampEntityEventListener</a></li>
@@ -60,6 +64,10 @@
 <li><a href="io/micronaut/data/jdbc/runtime/ConnectionCallback.html" title="interface in io.micronaut.data.jdbc.runtime"><span class="interfaceName">ConnectionCallback</span></a></li>
 <li><a href="io/micronaut/transaction/jdbc/ConnectionHandle.html" title="interface in io.micronaut.transaction.jdbc"><span class="interfaceName">ConnectionHandle</span></a></li>
 <li><a href="io/micronaut/transaction/jdbc/ConnectionHolder.html" title="class in io.micronaut.transaction.jdbc">ConnectionHolder</a></li>
+<li><a href="io/micronaut/data/processor/mappers/jpa/jakarta/ConvertAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">ConvertAnnotationMapper</a></li>
+<li><a href="io/micronaut/data/processor/mappers/jpa/jx/ConvertAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">ConvertAnnotationMapper</a></li>
+<li><a href="io/micronaut/data/processor/mappers/jpa/jakarta/ConverterAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jakarta">ConverterAnnotationMapper</a></li>
+<li><a href="io/micronaut/data/processor/mappers/jpa/jx/ConverterAnnotationMapper.html" title="class in io.micronaut.data.processor.mappers.jpa.jx">ConverterAnnotationMapper</a></li>
 <li><a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="interfaceName">CountAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/processor/visitors/finders/CountByMethod.html" title="class in io.micronaut.data.processor.visitors.finders">CountByMethod</a></li>
 <li><a href="io/micronaut/data/intercept/CountInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">CountInterceptor</span></a></li>
@@ -103,6 +111,7 @@
 <li><a href="io/micronaut/data/exceptions/DataAccessResourceFailureException.html" title="class in io.micronaut.data.exceptions">DataAccessResourceFailureException</a></li>
 <li><a href="io/micronaut/data/runtime/config/DataConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration</a></li>
 <li><a href="io/micronaut/data/runtime/config/DataConfiguration.PageableConfiguration.html" title="class in io.micronaut.data.runtime.config">DataConfiguration.PageableConfiguration</a></li>
+<li><a href="io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert"><span class="interfaceName">DataConversionService</span></a></li>
 <li><a href="io/micronaut/data/intercept/DataInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">DataInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/DataIntroductionAdvice.html" title="class in io.micronaut.data.intercept">DataIntroductionAdvice</a></li>
 <li><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></li>
@@ -149,8 +158,6 @@
 <li><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></li>
 <li><a href="io/micronaut/data/hibernate/naming/DefaultPhysicalNamingStrategy.html" title="class in io.micronaut.data.hibernate.naming">DefaultPhysicalNamingStrategy</a></li>
 <li><a href="io/micronaut/data/model/query/DefaultQuery.html" title="class in io.micronaut.data.model.query">DefaultQuery</a></li>
-<li><a href="io/micronaut/data/r2dbc/operations/DefaultR2dbcRepositoryOperations.html" title="class in io.micronaut.data.r2dbc.operations">DefaultR2dbcRepositoryOperations</a></li>
-<li><a href="io/micronaut/data/runtime/support/DefaultRuntimeEntityRegistry.html" title="class in io.micronaut.data.runtime.support">DefaultRuntimeEntityRegistry</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/async/DefaultSaveAllAsyncInterceptor.html" title="class in io.micronaut.data.runtime.intercept.async">DefaultSaveAllAsyncInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/DefaultSaveAllInterceptor.html" title="class in io.micronaut.data.runtime.intercept">DefaultSaveAllInterceptor</a></li>
 <li><a href="io/micronaut/data/runtime/intercept/reactive/DefaultSaveAllReactiveInterceptor.html" title="class in io.micronaut.data.runtime.intercept.reactive">DefaultSaveAllReactiveInterceptor</a></li>
@@ -271,6 +278,7 @@
 <li><a href="io/micronaut/transaction/exceptions/InvalidIsolationLevelException.html" title="class in io.micronaut.transaction.exceptions">InvalidIsolationLevelException</a></li>
 <li><a href="io/micronaut/transaction/exceptions/InvalidTimeoutException.html" title="class in io.micronaut.transaction.exceptions">InvalidTimeoutException</a></li>
 <li><a href="io/micronaut/data/intercept/IterableResultInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">IterableResultInterceptor</span></a></li>
+<li><a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" title="interface in io.micronaut.data.jdbc.convert"><span class="interfaceName">JdbcConversionContext</span></a></li>
 <li><a href="io/micronaut/data/jdbc/runtime/JdbcOperations.html" title="interface in io.micronaut.data.jdbc.runtime"><span class="interfaceName">JdbcOperations</span></a></li>
 <li><a href="io/micronaut/data/jdbc/mapper/JdbcQueryStatement.html" title="class in io.micronaut.data.jdbc.mapper">JdbcQueryStatement</a></li>
 <li><a href="io/micronaut/data/jdbc/annotation/JdbcRepository.html" title="annotation in io.micronaut.data.jdbc.annotation">JdbcRepository</a></li>
@@ -460,6 +468,7 @@
 <li><a href="io/micronaut/data/model/query/builder/QueryParameterBinding.html" title="class in io.micronaut.data.model.query.builder">QueryParameterBinding</a></li>
 <li><a href="io/micronaut/data/model/query/builder/QueryResult.html" title="interface in io.micronaut.data.model.query.builder"><span class="interfaceName">QueryResult</span></a></li>
 <li><a href="io/micronaut/data/runtime/mapper/QueryStatement.html" title="interface in io.micronaut.data.runtime.mapper"><span class="interfaceName">QueryStatement</span></a></li>
+<li><a href="io/micronaut/data/r2dbc/convert/R2dbcConversionContext.html" title="interface in io.micronaut.data.r2dbc.convert"><span class="interfaceName">R2dbcConversionContext</span></a></li>
 <li><a href="io/micronaut/data/r2dbc/operations/R2dbcOperations.html" title="interface in io.micronaut.data.r2dbc.operations"><span class="interfaceName">R2dbcOperations</span></a></li>
 <li><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></li>
 <li><a href="io/micronaut/data/r2dbc/annotation/R2dbcRepository.html" title="annotation in io.micronaut.data.r2dbc.annotation">R2dbcRepository</a></li>
@@ -497,6 +506,7 @@
 <li><a href="io/micronaut/data/model/runtime/RuntimeEntityRegistry.html" title="interface in io.micronaut.data.model.runtime"><span class="interfaceName">RuntimeEntityRegistry</span></a></li>
 <li><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></li>
 <li><a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a></li>
+<li><a href="io/micronaut/data/runtime/convert/RuntimePersistentPropertyConversionContext.html" title="interface in io.micronaut.data.runtime.convert"><span class="interfaceName">RuntimePersistentPropertyConversionContext</span></a></li>
 <li><a href="io/micronaut/data/repository/reactive/RxJavaCrudRepository.html" title="interface in io.micronaut.data.repository.reactive"><span class="interfaceName">RxJavaCrudRepository</span></a></li>
 <li><a href="io/micronaut/data/intercept/async/SaveAllAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><span class="interfaceName">SaveAllAsyncInterceptor</span></a></li>
 <li><a href="io/micronaut/data/intercept/SaveAllInterceptor.html" title="interface in io.micronaut.data.intercept"><span class="interfaceName">SaveAllInterceptor</span></a></li>

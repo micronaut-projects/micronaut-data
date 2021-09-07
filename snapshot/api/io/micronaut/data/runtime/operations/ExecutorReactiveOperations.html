@@ -145,12 +145,25 @@ implements <a href="../../../../../io/micronaut/data/operations/reactive/Reactiv
 </tr>
 <tr class="altColor">
 <td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#ExecutorReactiveOperations-io.micronaut.data.runtime.operations.ExecutorAsyncOperations-">ExecutorReactiveOperations</a></span>(<a href="../../../../../io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a>&nbsp;asyncOperations)</code>
-<div class="block">Default constructor.</div>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 </td>
 </tr>
 <tr class="rowColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#ExecutorReactiveOperations-io.micronaut.data.runtime.operations.ExecutorAsyncOperations-io.micronaut.data.runtime.convert.DataConversionService-">ExecutorReactiveOperations</a></span>(<a href="../../../../../io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a>&nbsp;asyncOperations,
+                          <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;dataConversionService)</code>
+<div class="block">Default constructor.</div>
+</td>
+</tr>
+<tr class="altColor">
 <td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#ExecutorReactiveOperations-io.micronaut.data.operations.RepositoryOperations-java.util.concurrent.Executor-">ExecutorReactiveOperations</a></span>(<a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;datastore,
                           java.util.concurrent.Executor&nbsp;executor)</code>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/runtime/operations/ExecutorReactiveOperations.html#ExecutorReactiveOperations-io.micronaut.data.operations.RepositoryOperations-java.util.concurrent.Executor-io.micronaut.data.runtime.convert.DataConversionService-">ExecutorReactiveOperations</a></span>(<a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;datastore,
+                          java.util.concurrent.Executor&nbsp;executor,
+                          <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;dataConversionService)</code>
 <div class="block">Default constructor.</div>
 </td>
 </tr>
@@ -302,10 +315,12 @@ implements <a href="../../../../../io/micronaut/data/operations/reactive/Reactiv
 <ul class="blockList">
 <li class="blockList">
 <h4>ExecutorReactiveOperations</h4>
-<pre>public&nbsp;ExecutorReactiveOperations(@NonNull
-                                  <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;datastore,
-                                  @NonNull
-                                  java.util.concurrent.Executor&nbsp;executor)</pre>
+<pre>@Deprecated
+public&nbsp;ExecutorReactiveOperations(@NonNull
+                                              <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;datastore,
+                                              @NonNull
+                                              java.util.concurrent.Executor&nbsp;executor)</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
@@ -314,18 +329,57 @@ implements <a href="../../../../../io/micronaut/data/operations/reactive/Reactiv
 </dl>
 </li>
 </ul>
+<a name="ExecutorReactiveOperations-io.micronaut.data.operations.RepositoryOperations-java.util.concurrent.Executor-io.micronaut.data.runtime.convert.DataConversionService-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ExecutorReactiveOperations</h4>
+<pre>public&nbsp;ExecutorReactiveOperations(@NonNull
+                                  <a href="../../../../../io/micronaut/data/operations/RepositoryOperations.html" title="interface in io.micronaut.data.operations">RepositoryOperations</a>&nbsp;datastore,
+                                  @NonNull
+                                  java.util.concurrent.Executor&nbsp;executor,
+                                  <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;dataConversionService)</pre>
+<div class="block">Default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>datastore</code> - The target operations</dd>
+<dd><code>executor</code> - The executor to use.</dd>
+<dd><code>dataConversionService</code> - The data conversion service</dd>
+</dl>
+</li>
+</ul>
 <a name="ExecutorReactiveOperations-io.micronaut.data.runtime.operations.ExecutorAsyncOperations-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ExecutorReactiveOperations</h4>
+<pre>@Deprecated
+public&nbsp;ExecutorReactiveOperations(@NonNull
+                                              <a href="../../../../../io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a>&nbsp;asyncOperations)</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
+<div class="block">Default constructor.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>asyncOperations</code> - The instance operations instance</dd>
+</dl>
+</li>
+</ul>
+<a name="ExecutorReactiveOperations-io.micronaut.data.runtime.operations.ExecutorAsyncOperations-io.micronaut.data.runtime.convert.DataConversionService-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>ExecutorReactiveOperations</h4>
 <pre>public&nbsp;ExecutorReactiveOperations(@NonNull
-                                  <a href="../../../../../io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a>&nbsp;asyncOperations)</pre>
+                                  <a href="../../../../../io/micronaut/data/runtime/operations/ExecutorAsyncOperations.html" title="class in io.micronaut.data.runtime.operations">ExecutorAsyncOperations</a>&nbsp;asyncOperations,
+                                  <a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&nbsp;dataConversionService)</pre>
 <div class="block">Default constructor.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
 <dd><code>asyncOperations</code> - The instance operations instance</dd>
+<dd><code>dataConversionService</code> - The data conversion service</dd>
 </dl>
 </li>
 </ul>

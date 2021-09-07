@@ -257,7 +257,7 @@
 <p>JPA (Hibernate)</p>
 </li>
 <li>
-<p>SQL (JDBC)</p>
+<p>SQL (JDBC, R2DBC)</p>
 </li>
 </ul>
 </div>
@@ -1014,6 +1014,10 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for reactive CRUD execution</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorCrudRepository.html">ReactorCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> and is using Reactor</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/RxJavaCrudRepository.html">RxJavaCrudRepository</a></p></td>
@@ -2556,7 +2560,7 @@ In the case of JPA each operation will run with its own transaction and session,
 
 
 <div class="paragraph">
-<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a> or a RxJava 2 type.</p>
+<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a>, Reactor or a RxJava 2 type.</p>
 </div>
 <div class="paragraph">
 <p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
@@ -3083,8 +3087,14 @@ You can also use the JPA annotations in the <code>javax.persistence</code> packa
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Convert;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.PrePersist;
 import java.nio.charset.StandardCharsets;
+import java.time.MonthDay;
 import java.util.Base64;
 
 @Entity
@@ -3094,6 +3104,9 @@ public class Account {
     private Long id;
     private String username;
     private String password;
+    @Column(columnDefinition = "date")
+    @Convert(converter = MonthDayDateAttributeConverter.class)
+    private MonthDay paymentDay;
 
     public Long getId() {
         return id;
@@ -3117,6 +3130,14 @@ public class Account {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public MonthDay getPaymentDay() {
+        return paymentDay;
+    }
+
+    public void setPaymentDay(MonthDay paymentDay) {
+        this.paymentDay = paymentDay;
     }
 
     @PrePersist
@@ -5182,6 +5203,10 @@ public class Country {
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify a property is transient</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/TypeDef.html">@TypeDef</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to specify the property&#8217;s data type and custom converter</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/annotation/Version.html">@Version</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Specifies the version field of an entity, enables optimistic locking</p></td>
 </tr>
@@ -5193,51 +5218,33 @@ public class Country {
 <div class="ulist">
 <ul>
 <li>
-<p><code>@Table</code></p>
+<p>Basic: <code>@Table</code> <code>@Id</code> <code>@Version</code> <code>@Column</code> <code>@Transient</code> <code>@Enumerated</code></p>
 </li>
 <li>
-<p><code>@Id</code></p>
+<p>Embedded definition:  <code>@Embedded</code> <code>@EmbeddedId</code> <code>@Embeddable</code></p>
 </li>
 <li>
-<p><code>@Version</code></p>
+<p>Relationship mapping: <code>@OneToMany</code> <code>@OneToOne</code> <code>@ManyToOne</code> <code>@ManyToMany</code></p>
 </li>
 <li>
-<p><code>@Column</code></p>
+<p>Join specification: <code>@JoinTable</code> <code>@JoinColumn</code></p>
 </li>
 <li>
-<p><code>@Transient</code></p>
-</li>
-<li>
-<p><code>@JoinTable</code></p>
-</li>
-<li>
-<p><code>@JoinColumn</code></p>
-</li>
-<li>
-<p><code>@OneToMany</code></p>
-</li>
-<li>
-<p><code>@OneToOne</code></p>
-</li>
-<li>
-<p><code>@ManyToOne</code></p>
-</li>
-<li>
-<p><code>@ManyToMany</code></p>
-</li>
-<li>
-<p><code>@Embedded</code></p>
-</li>
-<li>
-<p><code>@EmbeddedId</code></p>
-</li>
-<li>
-<p><code>@Embeddable</code></p>
-</li>
-<li>
-<p><code>@Enumerated</code></p>
+<p>Type converters: <code>@Convert</code> <code>@Converter</code> and <code>AttributeConverter</code> interface</p>
 </li>
 </ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Micronaut Data supports both <code>javax.persistence</code> and <code>jakarta.persistence</code> packages.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Again Micronaut Data JDBC is not an ORM, but instead a simple data mapper so many of the concepts in JPA simply don&#8217;t apply, however for users familiar with these annotations it is handy being able to use them.</p>
@@ -6280,8 +6287,9 @@ data class Sale(
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 
-@TypeDef(type = DataType.INTEGER)
+@TypeDef(type = DataType.INTEGER, converter = QuantityAttributeConverter.class)
 public class Quantity {
+
     private final int amount;
 
     private Quantity(int amount) {
@@ -6306,7 +6314,7 @@ import groovy.transform.Immutable
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 
-@TypeDef(type = DataType.INTEGER)
+@TypeDef(type = DataType.INTEGER, converter = QuantityAttributeConverter.class)
 @Immutable
 class Quantity {
     int amount
@@ -6320,7 +6328,7 @@ class Quantity {
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.model.DataType
 
-@TypeDef(type = DataType.INTEGER)
+@TypeDef(type = DataType.INTEGER, converter = QuantityAttributeConverter::class)
 data class Quantity(val amount: Int)</code></pre>
 </div>
 </div>
@@ -6340,30 +6348,29 @@ If you cannot declare <code>@TypeDef</code> directly on the type then you can de
 </table>
 </div>
 <div class="paragraph">
-<p>The last step is to add custom type conversion so that Micronaut Data knows how to read and write the type from an <code>Integer</code>:</p>
+<p>The last step is to add custom attribute conversion so that Micronaut Data knows how to read and write the type from an <code>Integer</code>:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">package example;
 
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.core.convert.TypeConverter;
-
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import jakarta.inject.Singleton;
-import java.util.Optional;
 
-@Factory <b class="conum">(1)</b>
-public class QuantityConverters {
+@Singleton <b class="conum">(1)</b>
+public class QuantityAttributeConverter implements AttributeConverter&lt;Quantity, Integer&gt; {
 
-    @Singleton <b class="conum">(2)</b>
-    TypeConverter&lt;Quantity, Integer&gt; quantityIntegerTypeConverter() {
-        return (object, targetType, context) -&gt; Optional.of(object.getAmount());
+    @Override <b class="conum">(2)</b>
+    public Integer convertToPersistedValue(Quantity quantity, ConversionContext context) {
+        return quantity == null ? null : quantity.getAmount();
     }
 
-    @Singleton <b class="conum">(3)</b>
-    TypeConverter&lt;Integer, Quantity&gt; integerQuantityTypeConverter() {
-        return (object, targetType, context) -&gt; Optional.of(Quantity.valueOf(object));
+    @Override <b class="conum">(3)</b>
+    public Quantity convertToEntityValue(Integer value, ConversionContext context) {
+        return value == null ? null : Quantity.valueOf(value);
     }
+
 }</code></pre>
 </div>
 </div>
@@ -6372,29 +6379,24 @@ public class QuantityConverters {
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">package example
 
 import groovy.transform.CompileStatic
-import io.micronaut.context.annotation.Factory
 import io.micronaut.core.convert.ConversionContext
-import io.micronaut.core.convert.TypeConverter
-
+import io.micronaut.data.model.runtime.convert.AttributeConverter
 import jakarta.inject.Singleton
 
-@Factory <b class="conum">(1)</b>
+@Singleton <b class="conum">(1)</b>
 @CompileStatic
-class QuantityConverters {
+class QuantityAttributeConverter implements AttributeConverter&lt;Quantity, Integer&gt; {
 
-    @Singleton <b class="conum">(2)</b>
-    TypeConverter&lt;Quantity, Integer&gt; quantityIntegerTypeConverter() {
-        return { Quantity quantity, Class targetType, ConversionContext context -&gt;
-            Optional.of(quantity.amount)
-        } as TypeConverter&lt;Quantity, Integer&gt;
+    @Override <b class="conum">(2)</b>
+    Integer convertToPersistedValue(Quantity quantity, ConversionContext context) {
+        return quantity == null ? null : quantity.getAmount()
     }
 
-    @Singleton <b class="conum">(3)</b>
-    TypeConverter&lt;Integer, Quantity&gt; integerQuantityTypeConverter() {
-        return { Integer integer, Class targetType, ConversionContext context -&gt;
-            Optional.of(new Quantity(integer))
-        } as TypeConverter&lt;Integer, Quantity&gt;
+    @Override <b class="conum">(3)</b>
+    Quantity convertToEntityValue(Integer value, ConversionContext context) {
+        return value == null ? null : new Quantity(value)
     }
+
 }</code></pre>
 </div>
 </div>
@@ -6402,24 +6404,23 @@ class QuantityConverters {
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">package example
 
-import io.micronaut.context.annotation.Factory
-import io.micronaut.core.convert.TypeConverter
-
+import io.micronaut.core.convert.ConversionContext
+import io.micronaut.data.model.runtime.convert.AttributeConverter
 import jakarta.inject.Singleton
-import java.util.Optional
 
-@Factory <b class="conum">(1)</b>
-class QuantityConverters {
+@Singleton <b class="conum">(1)</b>
+class QuantityAttributeConverter : AttributeConverter&lt;Quantity?, Int?&gt; {
 
-    @Singleton <b class="conum">(2)</b>
-    fun quantityIntegerTypeConverter(): TypeConverter&lt;Quantity, Int&gt; {
-        return TypeConverter { quantity, targetType, context -&gt; Optional.of&lt;Int&gt;(quantity.amount) }
+    <b class="conum">(2)</b>
+    override fun convertToPersistedValue(quantity: Quantity?, context: ConversionContext): Int? {
+        return quantity?.amount
     }
 
-    @Singleton <b class="conum">(3)</b>
-    fun integerQuantityTypeConverter(): TypeConverter&lt;Int, Quantity&gt; {
-        return TypeConverter { integer, targetType, context -&gt; Optional.of&lt;Quantity&gt;(Quantity(integer)) }
+    <b class="conum">(3)</b>
+    override fun convertToEntityValue(value: Int?, context: ConversionContext): Quantity? {
+        return if (value == null) null else Quantity(value)
     }
+
 }</code></pre>
 </div>
 </div>
@@ -6427,7 +6428,7 @@ class QuantityConverters {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>A <code>@Factory</code> bean is created to define the converters</td>
+<td>The attribute converter implements <a href="../api/io/micronaut/data/model/runtime/convert/AttributeConverter.html">@AttributeConverter</a> and must be a bean</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -6436,6 +6437,18 @@ class QuantityConverters {
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
 <td>A converter from <code>Integer</code> to <code>Quantity</code></td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+It&#8217;s possible to define the converter using <a href="../api/io/micronaut/data/annotation/MappedProperty.html">@MappedProperty</a>: <code>@MappedProperty(converter = QuantityTypeConverter.class)</code>, in this case the data type will be detected automatically.
+</td>
 </tr>
 </table>
 </div>

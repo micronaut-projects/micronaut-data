@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -139,7 +139,14 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <th class="colOne" scope="col">Constructor and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#ColumnIndexResultSetReader--">ColumnIndexResultSetReader</a></span>()</code>&nbsp;</td>
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#ColumnIndexResultSetReader--">ColumnIndexResultSetReader</a></span>()</code>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
+</td>
+</tr>
+<tr class="rowColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#ColumnIndexResultSetReader-io.micronaut.data.runtime.convert.DataConversionService-">ColumnIndexResultSetReader</a></span>(<a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService)</code>
+<div class="block">Constructs a new instance.</div>
+</td>
 </tr>
 </table>
 </li>
@@ -157,6 +164,12 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>io.micronaut.core.convert.ConversionService&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#getConversionService--">getConversionService</a></span>()</code>
+<div class="block">Get conversion service.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#getRequiredValue-java.sql.ResultSet-java.lang.Integer-java.lang.Class-">getRequiredValue</a></span>(java.sql.ResultSet&nbsp;resultSet,
                 java.lang.Integer&nbsp;index,
@@ -164,62 +177,62 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <div class="block">Get a value from the given result set for the given name and type.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#next-java.sql.ResultSet-">next</a></span>(java.sql.ResultSet&nbsp;resultSet)</code>
 <div class="block">Move the index to the next result if possible.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.math.BigDecimal</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readBigDecimal-java.sql.ResultSet-java.lang.Integer-">readBigDecimal</a></span>(java.sql.ResultSet&nbsp;resultSet,
               java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a BigDecimal value for the given name.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readBoolean-java.sql.ResultSet-java.lang.Integer-">readBoolean</a></span>(java.sql.ResultSet&nbsp;resultSet,
            java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a boolean value for the given name.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>byte</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readByte-java.sql.ResultSet-java.lang.Integer-">readByte</a></span>(java.sql.ResultSet&nbsp;resultSet,
         java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a byte value for the given name.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>byte[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readBytes-java.sql.ResultSet-java.lang.Integer-">readBytes</a></span>(java.sql.ResultSet&nbsp;resultSet,
          java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a byte[] value for the given name.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>char</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readChar-java.sql.ResultSet-java.lang.Integer-">readChar</a></span>(java.sql.ResultSet&nbsp;resultSet,
         java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a char value for the given name.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.util.Date</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readDate-java.sql.ResultSet-java.lang.Integer-">readDate</a></span>(java.sql.ResultSet&nbsp;resultSet,
         java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a date value for the given name.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>double</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readDouble-java.sql.ResultSet-java.lang.Integer-">readDouble</a></span>(java.sql.ResultSet&nbsp;resultSet,
           java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a double value for the given name.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readDynamic-java.sql.ResultSet-java.lang.Integer-io.micronaut.data.model.DataType-">readDynamic</a></span>(java.sql.ResultSet&nbsp;resultSet,
            java.lang.Integer&nbsp;index,
@@ -227,42 +240,42 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>float</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readFloat-java.sql.ResultSet-java.lang.Integer-">readFloat</a></span>(java.sql.ResultSet&nbsp;resultSet,
          java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a float value for the given name.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readInt-java.sql.ResultSet-java.lang.Integer-">readInt</a></span>(java.sql.ResultSet&nbsp;resultSet,
        java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a int value for the given name.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readLong-java.sql.ResultSet-java.lang.Integer-">readLong</a></span>(java.sql.ResultSet&nbsp;resultSet,
         java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a long value for the given name.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>short</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readShort-java.sql.ResultSet-java.lang.Integer-">readShort</a></span>(java.sql.ResultSet&nbsp;resultSet,
          java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a short value for the given name.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readString-java.sql.ResultSet-java.lang.Integer-">readString</a></span>(java.sql.ResultSet&nbsp;resultSet,
           java.lang.Integer&nbsp;index)</code>
 <div class="block">Read a string value for the given name.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>java.sql.Timestamp</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/jdbc/mapper/ColumnIndexResultSetReader.html#readTimestamp-java.sql.ResultSet-java.lang.Integer-">readTimestamp</a></span>(java.sql.ResultSet&nbsp;resultSet,
              java.lang.Integer&nbsp;index)</code>
@@ -301,10 +314,28 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <a name="ColumnIndexResultSetReader--">
 <!--   -->
 </a>
+<ul class="blockList">
+<li class="blockList">
+<h4>ColumnIndexResultSetReader</h4>
+<pre>@Deprecated
+public&nbsp;ColumnIndexResultSetReader()</pre>
+<div class="block"><span class="deprecatedLabel">Deprecated.</span>&nbsp;</div>
+</li>
+</ul>
+<a name="ColumnIndexResultSetReader-io.micronaut.data.runtime.convert.DataConversionService-">
+<!--   -->
+</a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>ColumnIndexResultSetReader</h4>
-<pre>public&nbsp;ColumnIndexResultSetReader()</pre>
+<pre>public&nbsp;ColumnIndexResultSetReader(<a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService)</pre>
+<div class="block">Constructs a new instance.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>conversionService</code> - The data conversion service</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.1</dd>
+</dl>
 </li>
 </ul>
 </li>
@@ -315,6 +346,23 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getConversionService--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getConversionService</h4>
+<pre>public&nbsp;io.micronaut.core.convert.ConversionService&lt;?&gt;&nbsp;getConversionService()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#getConversionService--">ResultReader</a></code></span></div>
+<div class="block">Get conversion service.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#getConversionService--">getConversionService</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;java.sql.ResultSet,java.lang.Integer&gt;</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the instance of <code>ConversionService</code></dd>
+</dl>
+</li>
+</ul>
 <a name="readDynamic-java.sql.ResultSet-java.lang.Integer-io.micronaut.data.model.DataType-">
 <!--   -->
 </a>

@@ -227,7 +227,8 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.StoredSqlOperation.html#setParameters-Cnt-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
+             <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
              T&nbsp;entity,
              java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;previousValues)</code>
@@ -240,7 +241,7 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.data.runtime.operations.internal.<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a></h3>
-<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#exandedQuery--">exandedQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getDialect--">getDialect</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getQuery--">getQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-">setParameters</a></code></li>
+<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#exandedQuery--">exandedQuery</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getDialect--">getDialect</a>, <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#getQuery--">getQuery</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -402,26 +403,28 @@ extends <a href="../../../../../../io/micronaut/data/runtime/operations/internal
 </dl>
 </li>
 </ul>
-<a name="setParameters-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-java.util.Map-">
+<a name="setParameters-java.lang.Object-java.lang.Object-io.micronaut.data.model.runtime.RuntimePersistentEntity-java.lang.Object-java.util.Map-">
 <!--   -->
-</a><a name="setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">
+</a><a name="setParameters-Cnt-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
 <h4>setParameters</h4>
-<pre>public&nbsp;&lt;T&gt;&nbsp;void&nbsp;setParameters(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
+<pre>public&nbsp;&lt;T&gt;&nbsp;void&nbsp;setParameters(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
+                              <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
                               <a href="../../../../../../io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a>&lt;T&gt;&nbsp;persistentEntity,
                               T&nbsp;entity,
                               java.util.Map&lt;java.lang.String,java.lang.Object&gt;&nbsp;previousValues)</pre>
-<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">AbstractSqlRepositoryOperations.SqlOperation</a></code></span></div>
+<div class="block"><span class="descfrmTypeLabel">Description copied from class:&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-Cnt-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">AbstractSqlRepositoryOperations.SqlOperation</a></code></span></div>
 <div class="block">Set query parameters.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">setParameters</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a></code></dd>
+<dd><code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html#setParameters-Cnt-PS-io.micronaut.data.model.runtime.RuntimePersistentEntity-T-java.util.Map-">setParameters</a></code>&nbsp;in class&nbsp;<code><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a></code></dd>
 <dt><span class="paramLabel">Type Parameters:</span></dt>
 <dd><code>T</code> - The entity type</dd>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>connection</code> - The connection</dd>
 <dd><code>stmt</code> - The statement</dd>
 <dd><code>persistentEntity</code> - The persistentEntity</dd>
 <dd><code>entity</code> - The entity</dd>

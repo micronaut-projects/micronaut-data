@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10,"i17":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -178,74 +178,80 @@ implements <a href="../../../../../io/micronaut/data/model/PersistentProperty.ht
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getAnnotationMetadata--">getAnnotationMetadata</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
+<td class="colFirst"><code>java.lang.String</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getConverterClassName--">getConverterClassName</a></span>()</code>
+<div class="block">Returns converter class name if present.</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/DataType.html" title="enum in io.micronaut.data.model">DataType</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getDataType--">getDataType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getName--">getName</a></span>()</code>
 <div class="block">The name of the property.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getNativeType--">getNativeType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code><a href="../../../../../io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getOwner--">getOwner</a></span>()</code>
 <div class="block">Obtains the owner of this persistent property.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getPersistedName--">getPersistedName</a></span>()</code>
 <div class="block">The persisted name is the fully qualified name including potential schema definitions.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>io.micronaut.inject.ast.PropertyElement</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getPropertyElement--">getPropertyElement</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>io.micronaut.inject.ast.ClassElement</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getType--">getType</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#getTypeName--">getTypeName</a></span>()</code>
 <div class="block">The type of the property.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#hashCode--">hashCode</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#isAssignable-java.lang.String-">isAssignable</a></span>(java.lang.String&nbsp;type)</code>
 <div class="block">Is the property assignable to the given type name.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#isEnum--">isEnum</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#isOptional--">isOptional</a></span>()</code>
 <div class="block">Whether the property can be set to null.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#isProtected--">isProtected</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#isPublic--">isPublic</a></span>()</code>&nbsp;</td>
 </tr>
-<tr id="i16" class="altColor">
+<tr id="i17" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/processor/model/SourcePersistentProperty.html#toString--">toString</a></span>()</code>&nbsp;</td>
 </tr>
@@ -262,7 +268,7 @@ implements <a href="../../../../../io/micronaut/data/model/PersistentProperty.ht
 <!--   -->
 </a>
 <h3>Methods inherited from interface&nbsp;io.micronaut.data.model.<a href="../../../../../io/micronaut/data/model/PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a></h3>
-<code><a href="../../../../../io/micronaut/data/model/PersistentProperty.html#getCapitilizedName--">getCapitilizedName</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isAssignable-java.lang.Class-">isAssignable</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isAutoPopulated--">isAutoPopulated</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isConstructorArgument--">isConstructorArgument</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isGenerated--">isGenerated</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isNullableMetadata-io.micronaut.core.annotation.AnnotationMetadata-">isNullableMetadata</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isReadOnly--">isReadOnly</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isRequired--">isRequired</a></code></li>
+<code><a href="../../../../../io/micronaut/data/model/PersistentProperty.html#getCapitilizedName--">getCapitilizedName</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#getConverter--">getConverter</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isAssignable-java.lang.Class-">isAssignable</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isAutoPopulated--">isAutoPopulated</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isConstructorArgument--">isConstructorArgument</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isGenerated--">isGenerated</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isNullableMetadata-io.micronaut.core.annotation.AnnotationMetadata-">isNullableMetadata</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isReadOnly--">isReadOnly</a>, <a href="../../../../../io/micronaut/data/model/PersistentProperty.html#isRequired--">isRequired</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.io.micronaut.inject.ast.TypedElement">
@@ -559,6 +565,21 @@ public&nbsp;java.lang.String&nbsp;getPersistedName()</pre>
 <dd><code><a href="../../../../../io/micronaut/data/model/PersistentElement.html#getPersistedName--">getPersistedName</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/model/PersistentElement.html" title="interface in io.micronaut.data.model">PersistentElement</a></code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>The persisted name.</dd>
+</dl>
+</li>
+</ul>
+<a name="getConverterClassName--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getConverterClassName</h4>
+<pre>@Nullable
+public&nbsp;java.lang.String&nbsp;getConverterClassName()</pre>
+<div class="block">Returns converter class name if present.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the converter's class name</dd>
 </dl>
 </li>
 </ul>

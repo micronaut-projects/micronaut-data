@@ -17,7 +17,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10,"i11":10,"i12":10,"i13":10,"i14":10,"i15":10,"i16":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -141,6 +141,11 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <tr class="altColor">
 <td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#ColumnNameR2dbcResultReader--">ColumnNameR2dbcResultReader</a></span>()</code>&nbsp;</td>
 </tr>
+<tr class="rowColor">
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#ColumnNameR2dbcResultReader-io.micronaut.data.runtime.convert.DataConversionService-">ColumnNameR2dbcResultReader</a></span>(<a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService)</code>
+<div class="block">Constructs a new instance.</div>
+</td>
+</tr>
 </table>
 </li>
 </ul>
@@ -157,6 +162,12 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
+<td class="colFirst"><code>io.micronaut.core.convert.ConversionService&lt;?&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#getConversionService--">getConversionService</a></span>()</code>
+<div class="block">Get conversion service.</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
 <td class="colFirst"><code>&lt;T&gt;&nbsp;T</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#getRequiredValue-io.r2dbc.spi.Row-java.lang.String-java.lang.Class-">getRequiredValue</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
                 java.lang.String&nbsp;name,
@@ -164,62 +175,62 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <div class="block">Get a value from the given result set for the given name and type.</div>
 </td>
 </tr>
-<tr id="i1" class="rowColor">
+<tr id="i2" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#next-io.r2dbc.spi.Row-">next</a></span>(io.r2dbc.spi.Row&nbsp;resultSet)</code>
 <div class="block">Move the index to the next result if possible.</div>
 </td>
 </tr>
-<tr id="i2" class="altColor">
+<tr id="i3" class="rowColor">
 <td class="colFirst"><code>java.math.BigDecimal</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readBigDecimal-io.r2dbc.spi.Row-java.lang.String-">readBigDecimal</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
               java.lang.String&nbsp;name)</code>
 <div class="block">Read a BigDecimal value for the given name.</div>
 </td>
 </tr>
-<tr id="i3" class="rowColor">
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readBoolean-io.r2dbc.spi.Row-java.lang.String-">readBoolean</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
            java.lang.String&nbsp;name)</code>
 <div class="block">Read a boolean value for the given name.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>byte</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readByte-io.r2dbc.spi.Row-java.lang.String-">readByte</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
         java.lang.String&nbsp;name)</code>
 <div class="block">Read a byte value for the given name.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>byte[]</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readBytes-io.r2dbc.spi.Row-java.lang.String-">readBytes</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
          java.lang.String&nbsp;name)</code>
 <div class="block">Read a byte[] value for the given name.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>char</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readChar-io.r2dbc.spi.Row-java.lang.String-">readChar</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
         java.lang.String&nbsp;name)</code>
 <div class="block">Read a char value for the given name.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>java.util.Date</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readDate-io.r2dbc.spi.Row-java.lang.String-">readDate</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
         java.lang.String&nbsp;name)</code>
 <div class="block">Read a date value for the given name.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>double</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readDouble-io.r2dbc.spi.Row-java.lang.String-">readDouble</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
           java.lang.String&nbsp;name)</code>
 <div class="block">Read a double value for the given name.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>java.lang.Object</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readDynamic-io.r2dbc.spi.Row-java.lang.String-io.micronaut.data.model.DataType-">readDynamic</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
            java.lang.String&nbsp;index,
@@ -227,42 +238,42 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <div class="block">Read a value dynamically using the result set and the given name and data type.</div>
 </td>
 </tr>
-<tr id="i10" class="altColor">
+<tr id="i11" class="rowColor">
 <td class="colFirst"><code>float</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readFloat-io.r2dbc.spi.Row-java.lang.String-">readFloat</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
          java.lang.String&nbsp;name)</code>
 <div class="block">Read a float value for the given name.</div>
 </td>
 </tr>
-<tr id="i11" class="rowColor">
+<tr id="i12" class="altColor">
 <td class="colFirst"><code>int</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readInt-io.r2dbc.spi.Row-java.lang.String-">readInt</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
        java.lang.String&nbsp;name)</code>
 <div class="block">Read a int value for the given name.</div>
 </td>
 </tr>
-<tr id="i12" class="altColor">
+<tr id="i13" class="rowColor">
 <td class="colFirst"><code>long</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readLong-io.r2dbc.spi.Row-java.lang.String-">readLong</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
         java.lang.String&nbsp;name)</code>
 <div class="block">Read a long value for the given name.</div>
 </td>
 </tr>
-<tr id="i13" class="rowColor">
+<tr id="i14" class="altColor">
 <td class="colFirst"><code>short</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readShort-io.r2dbc.spi.Row-java.lang.String-">readShort</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
          java.lang.String&nbsp;name)</code>
 <div class="block">Read a short value for the given name.</div>
 </td>
 </tr>
-<tr id="i14" class="altColor">
+<tr id="i15" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readString-io.r2dbc.spi.Row-java.lang.String-">readString</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
           java.lang.String&nbsp;name)</code>
 <div class="block">Read a string value for the given name.</div>
 </td>
 </tr>
-<tr id="i15" class="rowColor">
+<tr id="i16" class="altColor">
 <td class="colFirst"><code>java.util.Date</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../../io/micronaut/data/r2dbc/mapper/ColumnNameR2dbcResultReader.html#readTimestamp-io.r2dbc.spi.Row-java.lang.String-">readTimestamp</a></span>(io.r2dbc.spi.Row&nbsp;resultSet,
              java.lang.String&nbsp;index)</code>
@@ -301,10 +312,26 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <a name="ColumnNameR2dbcResultReader--">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>ColumnNameR2dbcResultReader</h4>
 <pre>public&nbsp;ColumnNameR2dbcResultReader()</pre>
+</li>
+</ul>
+<a name="ColumnNameR2dbcResultReader-io.micronaut.data.runtime.convert.DataConversionService-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>ColumnNameR2dbcResultReader</h4>
+<pre>public&nbsp;ColumnNameR2dbcResultReader(<a href="../../../../../io/micronaut/data/runtime/convert/DataConversionService.html" title="interface in io.micronaut.data.runtime.convert">DataConversionService</a>&lt;?&gt;&nbsp;conversionService)</pre>
+<div class="block">Constructs a new instance.</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>conversionService</code> - The data conversion service</dd>
+<dt><span class="simpleTagLabel">Since:</span></dt>
+<dd>3.1</dd>
+</dl>
 </li>
 </ul>
 </li>
@@ -315,6 +342,23 @@ implements <a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader
 <!--   -->
 </a>
 <h3>Method Detail</h3>
+<a name="getConversionService--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getConversionService</h4>
+<pre>public&nbsp;io.micronaut.core.convert.ConversionService&lt;?&gt;&nbsp;getConversionService()</pre>
+<div class="block"><span class="descfrmTypeLabel">Description copied from interface:&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#getConversionService--">ResultReader</a></code></span></div>
+<div class="block">Get conversion service.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html#getConversionService--">getConversionService</a></code>&nbsp;in interface&nbsp;<code><a href="../../../../../io/micronaut/data/runtime/mapper/ResultReader.html" title="interface in io.micronaut.data.runtime.mapper">ResultReader</a>&lt;io.r2dbc.spi.Row,java.lang.String&gt;</code></dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the instance of <code>ConversionService</code></dd>
+</dl>
+</li>
+</ul>
 <a name="readDynamic-io.r2dbc.spi.Row-java.lang.String-io.micronaut.data.model.DataType-">
 <!--   -->
 </a>

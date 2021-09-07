@@ -162,7 +162,9 @@ implements io.micronaut.inject.annotation.NamedAnnotationMapper</pre>
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code>protected io.micronaut.inject.annotation.NamedAnnotationMapper</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/processor/mappers/jpa/jx/JoinTableAnnotationMapper.html#getJoinColumnAnnotationMapper--">getJoinColumnAnnotationMapper</a></span>()</code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../../io/micronaut/data/processor/mappers/jpa/jx/JoinTableAnnotationMapper.html#getJoinColumnAnnotationMapper--">getJoinColumnAnnotationMapper</a></span>()</code>
+<div class="block">Override to replace the join column mapper.</div>
+</td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code>java.lang.String</code></td>
@@ -233,6 +235,11 @@ public&nbsp;java.lang.String&nbsp;getName()</pre>
 <li class="blockList">
 <h4>getJoinColumnAnnotationMapper</h4>
 <pre>protected&nbsp;io.micronaut.inject.annotation.NamedAnnotationMapper&nbsp;getJoinColumnAnnotationMapper()</pre>
+<div class="block">Override to replace the join column mapper.</div>
+<dl>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the join column mapper</dd>
+</dl>
 </li>
 </ul>
 <a name="map-io.micronaut.core.annotation.AnnotationValue-io.micronaut.inject.visitor.VisitorContext-">

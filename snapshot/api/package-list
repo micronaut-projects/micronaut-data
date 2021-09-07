@@ -14,6 +14,7 @@ io.micronaut.data.intercept.async
 io.micronaut.data.intercept.reactive
 io.micronaut.data.jdbc.annotation
 io.micronaut.data.jdbc.config
+io.micronaut.data.jdbc.convert
 io.micronaut.data.jdbc.mapper
 io.micronaut.data.jdbc.operations
 io.micronaut.data.jdbc.runtime
@@ -29,6 +30,7 @@ io.micronaut.data.model.query.builder.jpa
 io.micronaut.data.model.query.builder.sql
 io.micronaut.data.model.query.factory
 io.micronaut.data.model.runtime
+io.micronaut.data.model.runtime.convert
 io.micronaut.data.operations
 io.micronaut.data.operations.async
 io.micronaut.data.operations.reactive
@@ -48,6 +50,7 @@ io.micronaut.data.processor.visitors.finders.slice
 io.micronaut.data.processor.visitors.finders.specification
 io.micronaut.data.r2dbc.annotation
 io.micronaut.data.r2dbc.config
+io.micronaut.data.r2dbc.convert
 io.micronaut.data.r2dbc.mapper
 io.micronaut.data.r2dbc.operations
 io.micronaut.data.r2dbc.repository
@@ -55,6 +58,7 @@ io.micronaut.data.repository
 io.micronaut.data.repository.async
 io.micronaut.data.repository.reactive
 io.micronaut.data.runtime.config
+io.micronaut.data.runtime.convert
 io.micronaut.data.runtime.date
 io.micronaut.data.runtime.event
 io.micronaut.data.runtime.event.listeners
@@ -67,6 +71,7 @@ io.micronaut.data.runtime.mapper.sql
 io.micronaut.data.runtime.operations
 io.micronaut.data.runtime.operations.internal
 io.micronaut.data.runtime.support
+io.micronaut.data.runtime.support.convert
 io.micronaut.data.spring.hibernate
 io.micronaut.data.spring.jdbc
 io.micronaut.data.spring.jpa

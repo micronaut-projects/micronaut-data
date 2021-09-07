@@ -236,7 +236,8 @@ extends java.lang.Object</pre>
 </tr>
 <tr id="i7" class="rowColor">
 <td class="colFirst"><code>protected abstract void</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#setParameters-PS-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.BaseOperations.html#setParameters-Cnt-PS-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">setParameters</a></span>(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
+             <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
              <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>&nbsp;sqlOperation)</code>
 <div class="block">Set sql parameters.</div>
 </td>
@@ -445,20 +446,22 @@ extends java.lang.Object</pre>
 </dl>
 </li>
 </ul>
-<a name="setParameters-java.lang.Object-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">
+<a name="setParameters-java.lang.Object-java.lang.Object-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">
 <!--   -->
-</a><a name="setParameters-PS-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">
+</a><a name="setParameters-Cnt-PS-io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations.SqlOperation-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
 <h4>setParameters</h4>
-<pre>protected abstract&nbsp;void&nbsp;setParameters(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
+<pre>protected abstract&nbsp;void&nbsp;setParameters(<a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Cnt</a>&nbsp;connection,
+                                      <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">PS</a>&nbsp;stmt,
                                       <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.SqlOperation.html" title="class in io.micronaut.data.runtime.operations.internal">AbstractSqlRepositoryOperations.SqlOperation</a>&nbsp;sqlOperation)
                                throws <a href="../../../../../../io/micronaut/data/runtime/operations/internal/AbstractSqlRepositoryOperations.html" title="type parameter in AbstractSqlRepositoryOperations">Exc</a> extends java.lang.Exception</pre>
 <div class="block">Set sql parameters.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>connection</code> - The connection</dd>
 <dd><code>stmt</code> - The statement</dd>
 <dd><code>sqlOperation</code> - The sql operation</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>
