@@ -363,7 +363,7 @@ package test;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.core.convert.ConversionContext;
 import javax.persistence.*;
 import java.util.UUID;
@@ -397,7 +397,7 @@ class SName {
     String name;
 }
 
-class SNameTypeConverter implements TypeConverter<SName, $type> {
+class SNameTypeConverter implements AttributeConverter<SName, $type> {
     
     @Override
     public $type convertToPersistedValue(SName entityValue, ConversionContext context) {
