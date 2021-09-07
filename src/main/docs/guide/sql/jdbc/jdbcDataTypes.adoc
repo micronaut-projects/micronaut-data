@@ -29,5 +29,7 @@ snippet::example.QuantityTypeConverter[project-base="doc-examples/jdbc-example",
 <2> A converter from `Quantity` to `Integer`
 <3> A converter from `Integer` to `Quantity`
 
+NOTE: It's possible to define the converter using ann:data.annotation.MappedProperty[]: `@MappedProperty(converter = QuantityTypeConverter.class)`, in this case the data type will be detected automatically.
+
 
 

@@ -33,6 +33,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.naming.NamingStrategies;
 import io.micronaut.data.model.naming.NamingStrategy;
+import io.micronaut.data.model.runtime.convert.TypeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
@@ -316,7 +317,10 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         ClassElement classElement = context.getClassElement(converter).get();
         ClassElement genericType = classElement.getGenericType();
 
-        Map<String, ClassElement> typeArguments = genericType.getTypeArguments("javax.persistence.AttributeConverter");
+        Map<String, ClassElement> typeArguments = genericType.getTypeArguments(TypeConverter.class.getName());
+        if (typeArguments.isEmpty()) {
+            typeArguments = genericType.getTypeArguments("javax.persistence.AttributeConverter");
+        }
         if (typeArguments.isEmpty()) {
             typeArguments = genericType.getTypeArguments("jakarta.persistence.AttributeConverter");
         }
