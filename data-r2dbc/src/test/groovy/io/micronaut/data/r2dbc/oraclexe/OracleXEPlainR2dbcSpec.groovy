@@ -18,9 +18,9 @@ package io.micronaut.data.r2dbc.oraclexe
 import groovy.transform.Memoized
 import io.micronaut.data.r2dbc.PlainR2dbcSpec
 import io.micronaut.data.tck.repositories.AuthorRepository
-import spock.lang.IgnoreIf
+import spock.lang.Ignore
 
-@IgnoreIf({ !jvm.isJava11Compatible() })
+@Ignore
 class OracleXEPlainR2dbcSpec extends PlainR2dbcSpec implements OracleXETestPropertyProvider {
 
     @Memoized
