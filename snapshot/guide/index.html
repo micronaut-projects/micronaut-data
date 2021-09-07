@@ -5618,7 +5618,7 @@ public class CountryRegion {
 
 
 <div class="paragraph">
-<p>To specify a relation between two entities you need to use <a href="../api/io/micronaut/data/annotation/Relation.html">@Relation</a> annotation. The relation kind is specified using enum <a href="../api/io/micronaut/data/annotation/Relation/Kind.html">@Kind</a> <code>value</code> attribute which is similar to JPA relations annotation names (<code>@OneToMany</code>, <code>@OneToOne</code> etc.)</p>
+<p>To specify a relation between two entities you need to use <a href="../api/io/micronaut/data/annotation/Relation.html">@Relation</a> annotation. The relation kind is specified using enum <a href="../api/io/micronaut/data/annotation/Relation.Kind.html">@Kind</a> <code>value</code> attribute which is similar to JPA relations annotation names (<code>@OneToMany</code>, <code>@OneToOne</code> etc.)</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <caption class="title">Table 1. Micronaut Data supported relations:</caption>
@@ -6604,7 +6604,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <p>The <a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> interface exposes methods to perform Create, Read, Update and Delete (CRUD) operations reactively.</p>
 </div>
 <div class="paragraph">
-<p>To create a new instance you can use the <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#save-S-">save</a> method:</p>
+<p>To create a new instance you can use the <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#save-S-">save</a> method:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -6631,7 +6631,7 @@ fun create(book: @Valid Book): Mono&lt;Book&gt; {
 </div>
 </div>
 <div class="paragraph">
-<p>To read objects you can use <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#findAll--">findAll</a> or <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#findById-ID-">findById</a>:</p>
+<p>To read objects you can use <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#findAll--">findAll</a> or <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#findById-ID-">findById</a>:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -6673,7 +6673,7 @@ fun show(id: Long): Mono&lt;Book&gt; {
 </div>
 </div>
 <div class="paragraph">
-<p>To perform an update you can use the <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#update-S-">update</a> method:</p>
+<p>To perform an update you can use the <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#update-S-">update</a> method:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
@@ -6700,7 +6700,7 @@ fun update(id: Long, book: @Valid Book): Mono&lt;Book&gt; {
 </div>
 </div>
 <div class="paragraph">
-<p>Finally to delete an instance you can use thBasicTypese <a href="../api/io/micronaut/data/repository/reactive.html#ReactiveStreamsCrudRepository#deleteById-ID-">deleteById</a> method:</p>
+<p>Finally to delete an instance you can use thBasicTypese <a href="../api/io/micronaut/data/repository/reactive/.html#ReactiveStreamsCrudRepository#deleteById-ID-">deleteById</a> method:</p>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
