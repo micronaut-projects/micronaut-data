@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.TypeDef;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 
 /**
@@ -166,7 +166,7 @@ public interface PersistentProperty extends PersistentElement {
      * @return Returns possible property convertor.
      */
     @Nullable
-    default TypeConverter<Object, Object> getConverter() {
+    default AttributeConverter<Object, Object> getConverter() {
         return null;
     }
 

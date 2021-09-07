@@ -20,14 +20,14 @@ import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 
 /**
- * The type converter is used for converting mapped entity value to the persisted value and back.
+ * The attribute converter is used for converting mapped entity value to the persisted value and back.
  *
  * @param <X> The entity value type
  * @param <Y> The persisted value type
  * @author Denis Stepanov
  * @since 3.1
  */
-public interface TypeConverter<X, Y> {
+public interface AttributeConverter<X, Y> {
 
     /**
      * Converts the entity value to the persisted value.

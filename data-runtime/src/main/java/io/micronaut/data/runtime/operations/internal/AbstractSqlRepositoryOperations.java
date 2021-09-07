@@ -61,8 +61,8 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.TypeConverterRegistry;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -126,7 +126,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     protected final DateTimeProvider dateTimeProvider;
     protected final RuntimeEntityRegistry runtimeEntityRegistry;
     protected final DataConversionService<?> conversionService;
-    protected final TypeConverterRegistry typeConverterRegistry;
+    protected final AttributeConverterRegistry attributeConverterRegistry;
     private final Map<QueryKey, SqlOperation> entityInserts = new ConcurrentHashMap<>(10);
     private final Map<QueryKey, SqlOperation> entityUpdates = new ConcurrentHashMap<>(10);
     private final Map<Association, String> associationInserts = new ConcurrentHashMap<>(10);
@@ -134,6 +134,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
 
     /**
      * Default constructor.
+     *
      * @param dataSourceName             The datasource name
      * @param columnNameResultSetReader  The column name result reader
      * @param columnIndexResultSetReader The column index result reader
@@ -143,7 +144,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param runtimeEntityRegistry      The entity registry
      * @param beanContext                The bean context
      * @param conversionService          The conversion service
-     * @param typeConverterRegistry      The type converter registry
+     * @param attributeConverterRegistry The attribute converter registry
      */
     protected AbstractSqlRepositoryOperations(
             String dataSourceName,
@@ -155,7 +156,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             RuntimeEntityRegistry runtimeEntityRegistry,
             BeanContext beanContext,
             DataConversionService<?> conversionService,
-            TypeConverterRegistry typeConverterRegistry) {
+            AttributeConverterRegistry attributeConverterRegistry) {
         this.dateTimeProvider = dateTimeProvider;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.entityEventRegistry = runtimeEntityRegistry.getEntityEventListener();
@@ -164,7 +165,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         this.preparedStatementWriter = preparedStatementWriter;
         this.jsonCodec = resolveJsonCodec(codecs);
         this.conversionService = conversionService;
-        this.typeConverterRegistry = typeConverterRegistry;
+        this.attributeConverterRegistry = attributeConverterRegistry;
         Collection<BeanDefinition<GenericRepository>> beanDefinitions = beanContext
                 .getBeanDefinitions(GenericRepository.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<GenericRepository> beanDefinition : beanDefinitions) {
@@ -1305,7 +1306,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     }
 
     private Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
-        TypeConverter<Object, Object> converter = property.getConverter();
+        AttributeConverter<Object, Object> converter = property.getConverter();
         if (converter != null) {
             return converter.convertToPersistedValue(value, createTypeConversionContext(connection, property, property.getArgument()));
         }
@@ -1316,7 +1317,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         if (converterClass == null) {
             return value;
         }
-        TypeConverter<Object, Object> converter = typeConverterRegistry.getConverter(converterClass);
+        AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
         ConversionContext conversionContext = createTypeConversionContext(connection, null, argument);
         return converter.convertToPersistedValue(value, conversionContext);
     }

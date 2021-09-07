@@ -17,33 +17,33 @@ package io.micronaut.data.runtime.support.convert;
 
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.runtime.TypeConverterRegistry;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import jakarta.inject.Singleton;
 
 import java.util.List;
 
 /**
- * Default implementation of {@link TypeConverterRegistry}.
+ * Default implementation of {@link AttributeConverterRegistry}.
  */
 @Singleton
 @Internal
-final class DefaultTypeConverterRegistry implements TypeConverterRegistry {
+final class DefaultAttributeConverterRegistry implements AttributeConverterRegistry {
 
     private final BeanLocator beanLocator;
-    private final List<TypeConverterProvider> typeConverterTransformers;
+    private final List<AttributeConverterProvider> attributeConverterTransformers;
 
-    DefaultTypeConverterRegistry(BeanLocator beanLocator, List<TypeConverterProvider> typeConverterTransformers) {
+    DefaultAttributeConverterRegistry(BeanLocator beanLocator, List<AttributeConverterProvider> attributeConverterTransformers) {
         this.beanLocator = beanLocator;
-        this.typeConverterTransformers = typeConverterTransformers;
+        this.attributeConverterTransformers = attributeConverterTransformers;
     }
 
     @Override
-    public TypeConverter<Object, Object> getConverter(Class<?> converterClass) {
-        if (TypeConverter.class.isAssignableFrom(converterClass)) {
-            return (TypeConverter<Object, Object>) beanLocator.getBean(converterClass);
+    public AttributeConverter<Object, Object> getConverter(Class<?> converterClass) {
+        if (AttributeConverter.class.isAssignableFrom(converterClass)) {
+            return (AttributeConverter<Object, Object>) beanLocator.getBean(converterClass);
         }
-        for (TypeConverterProvider transformer : typeConverterTransformers) {
+        for (AttributeConverterProvider transformer : attributeConverterTransformers) {
             if (transformer.supports(converterClass)) {
                 return transformer.provide(beanLocator, converterClass);
             }

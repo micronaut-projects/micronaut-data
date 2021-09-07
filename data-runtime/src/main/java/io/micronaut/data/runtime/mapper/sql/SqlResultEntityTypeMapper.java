@@ -42,7 +42,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.http.codec.MediaTypeCodec;
@@ -581,7 +581,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             columnName = ctx.prefix + columnName;
         }
         Object result = resultReader.readDynamic(rs, columnName, prop.getDataType());
-        TypeConverter<Object, Object> converter = prop.getConverter();
+        AttributeConverter<Object, Object> converter = prop.getConverter();
         if (converter != null) {
             return converter.convertToEntityValue(result, ConversionContext.of((Argument) prop.getArgument()));
         }

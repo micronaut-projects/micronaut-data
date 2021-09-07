@@ -24,7 +24,7 @@ import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 import java.util.function.Supplier;
 
@@ -43,7 +43,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     private final DataType dataType;
     private final boolean constructorArg;
     private final Argument<?> argument;
-    private final Supplier<TypeConverter<Object, Object>> converter;
+    private final Supplier<AttributeConverter<Object, Object>> converter;
     private String persistedName;
 
     /**
@@ -144,7 +144,7 @@ public class RuntimePersistentProperty<T> implements PersistentProperty {
     }
 
     @Override
-    public TypeConverter<Object, Object> getConverter() {
+    public AttributeConverter<Object, Object> getConverter() {
         if (converter == null) {
             return null;
         }

@@ -51,7 +51,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.TypeConverterRegistry;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
@@ -133,15 +133,15 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     /**
      * Default constructor.
      *
-     * @param dataSourceName        The data source name
-     * @param connectionFactory     The associated connection factory
-     * @param mediaTypeCodecList    The media type codec list
-     * @param dateTimeProvider      The date time provider
-     * @param runtimeEntityRegistry The runtime entity registry
-     * @param applicationContext    The bean context
-     * @param executorService       The executor
-     * @param conversionService     The conversion service
-     * @param typeConverterRegistry The type converter registry
+     * @param dataSourceName             The data source name
+     * @param connectionFactory          The associated connection factory
+     * @param mediaTypeCodecList         The media type codec list
+     * @param dateTimeProvider           The date time provider
+     * @param runtimeEntityRegistry      The runtime entity registry
+     * @param applicationContext         The bean context
+     * @param executorService            The executor
+     * @param conversionService          The conversion service
+     * @param attributeConverterRegistry The attribute converter registry
      */
     @Internal
     protected DefaultR2dbcRepositoryOperations(
@@ -153,7 +153,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             ApplicationContext applicationContext,
             @Nullable @Named("io") ExecutorService executorService,
             DataConversionService<?> conversionService,
-            TypeConverterRegistry typeConverterRegistry) {
+            AttributeConverterRegistry attributeConverterRegistry) {
         super(
                 dataSourceName,
                 new ColumnNameR2dbcResultReader(conversionService),
@@ -163,7 +163,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 dateTimeProvider,
                 runtimeEntityRegistry,
                 applicationContext,
-                conversionService, typeConverterRegistry);
+                conversionService, attributeConverterRegistry);
         this.connectionFactory = connectionFactory;
         this.executorService = executorService;
         this.reactiveOperations = new DefaultR2dbcReactiveRepositoryOperations();

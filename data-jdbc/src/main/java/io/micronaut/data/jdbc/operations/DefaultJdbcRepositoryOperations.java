@@ -55,7 +55,7 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.TypeConverterRegistry;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -137,16 +137,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * Default constructor.
      *
-     * @param dataSourceName        The data source name
-     * @param dataSource            The datasource
-     * @param transactionOperations The JDBC operations for the data source
-     * @param executorService       The executor service
-     * @param beanContext           The bean context
-     * @param codecs                The codecs
-     * @param dateTimeProvider      The dateTimeProvider
-     * @param entityRegistry        The entity registry
-     * @param conversionService     The conversion service
-     * @param typeConverterRegistry The type converter registry
+     * @param dataSourceName             The data source name
+     * @param dataSource                 The datasource
+     * @param transactionOperations      The JDBC operations for the data source
+     * @param executorService            The executor service
+     * @param beanContext                The bean context
+     * @param codecs                     The codecs
+     * @param dateTimeProvider           The dateTimeProvider
+     * @param entityRegistry             The entity registry
+     * @param conversionService          The conversion service
+     * @param attributeConverterRegistry The attribute converter registry
      */
     @Internal
     protected DefaultJdbcRepositoryOperations(@Parameter String dataSourceName,
@@ -158,7 +158,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                               @NonNull DateTimeProvider dateTimeProvider,
                                               RuntimeEntityRegistry entityRegistry,
                                               DataConversionService<?> conversionService,
-                                              TypeConverterRegistry typeConverterRegistry) {
+                                              AttributeConverterRegistry attributeConverterRegistry) {
         super(
                 dataSourceName,
                 new ColumnNameResultSetReader(conversionService),
@@ -168,7 +168,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 dateTimeProvider,
                 entityRegistry,
                 beanContext,
-                conversionService, typeConverterRegistry);
+                conversionService, attributeConverterRegistry);
         ArgumentUtils.requireNonNull("dataSource", dataSource);
         ArgumentUtils.requireNonNull("transactionOperations", transactionOperations);
         this.dataSource = dataSource;

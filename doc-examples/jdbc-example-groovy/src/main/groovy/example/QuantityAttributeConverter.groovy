@@ -3,12 +3,12 @@ package example
 
 import groovy.transform.CompileStatic
 import io.micronaut.core.convert.ConversionContext
-import io.micronaut.data.model.runtime.convert.TypeConverter
+import io.micronaut.data.model.runtime.convert.AttributeConverter
 import jakarta.inject.Singleton
 
 @Singleton // <1>
 @CompileStatic
-class QuantityTypeConverter implements TypeConverter<Quantity, Integer> {
+class QuantityAttributeConverter implements AttributeConverter<Quantity, Integer> {
 
     @Override // <2>
     Integer convertToPersistedValue(Quantity quantity, ConversionContext context) {

@@ -17,16 +17,16 @@ package io.micronaut.data.runtime.support.convert;
 
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 /**
- * Intended to support different implementation of type converters like JPA' jakarta.persistence.AttributeConverter.
+ * Intended to support different implementation of attribute converters like JPA's 'jakarta.persistence.AttributeConverter'.
  *
  * @author Denis Stepanov
  * @since 3.1
  */
 @Internal
-public interface TypeConverterProvider {
+public interface AttributeConverterProvider {
 
     /**
      * Provide an instance of passed converter type class.
@@ -35,7 +35,7 @@ public interface TypeConverterProvider {
      * @param converterType The converter type
      * @return the type converter represented by this converter type
      */
-    TypeConverter<Object, Object> provide(BeanLocator beanLocator, Class<?> converterType);
+    AttributeConverter<Object, Object> provide(BeanLocator beanLocator, Class<?> converterType);
 
     /**
      * Does support providing an instance of this converter class.

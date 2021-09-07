@@ -1,7 +1,7 @@
 package io.micronaut.data.jdbc.mysql;
 
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 import javax.persistence.Converter;
 import java.nio.ByteBuffer;
@@ -10,7 +10,7 @@ import java.util.UUID;
 // MySQL trick to store less data is to use only 16 bytes for UUID type
 // We need to use custom UUID <-> binary 16 convertors
 @Converter
-public class MySqlUUIDBinaryConverter implements TypeConverter<UUID, byte[]> {
+public class MySqlUUIDBinaryConverter implements AttributeConverter<UUID, byte[]> {
 
     @Override
     public byte[] convertToPersistedValue(UUID uuid, ConversionContext context) {

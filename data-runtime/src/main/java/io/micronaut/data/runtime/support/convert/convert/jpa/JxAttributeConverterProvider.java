@@ -19,11 +19,10 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
-import io.micronaut.data.runtime.support.convert.TypeConverterProvider;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.runtime.support.convert.AttributeConverterProvider;
 import jakarta.inject.Singleton;
 
-import javax.persistence.AttributeConverter;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,31 +33,31 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 3.1
  */
 @Internal
-@Requires(classes = AttributeConverter.class)
+@Requires(classes = javax.persistence.AttributeConverter.class)
 @Singleton
-final class JxTypeConverterProvider implements TypeConverterProvider {
+final class JxAttributeConverterProvider implements AttributeConverterProvider {
 
-    private final Map<Class, TypeConverter<Object, Object>> providersCache = new ConcurrentHashMap<>();
+    private final Map<Class, AttributeConverter<Object, Object>> providersCache = new ConcurrentHashMap<>();
 
     @Override
-    public TypeConverter<Object, Object> provide(BeanLocator beanLocator, Class<?> converterType) {
+    public AttributeConverter<Object, Object> provide(BeanLocator beanLocator, Class<?> converterType) {
         return providersCache.computeIfAbsent(converterType, c -> {
-            AttributeConverter<Object, Object> attributeConverter = (AttributeConverter<Object, Object>)
+            javax.persistence.AttributeConverter attributeConverter = (javax.persistence.AttributeConverter)
                     beanLocator.findBean(converterType).orElseThrow(() -> new IllegalStateException("Cannot find a converter bean: " + converterType.getName() + " make sure it's annotated with @Converter"));
-            return new JxTypeConverter(attributeConverter);
+            return new JxAttributeConverter(attributeConverter);
         });
     }
 
     @Override
     public boolean supports(Class<?> converterType) {
-        return AttributeConverter.class.isAssignableFrom(converterType);
+        return javax.persistence.AttributeConverter.class.isAssignableFrom(converterType);
     }
 
-    private static final class JxTypeConverter implements TypeConverter<Object, Object> {
+    private static final class JxAttributeConverter implements AttributeConverter<Object, Object> {
 
-        private final AttributeConverter<Object, Object> converter;
+        private final javax.persistence.AttributeConverter converter;
 
-        private JxTypeConverter(AttributeConverter<Object, Object> converter) {
+        private JxAttributeConverter(javax.persistence.AttributeConverter converter) {
             this.converter = converter;
         }
 

@@ -16,25 +16,25 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.data.model.runtime.convert.TypeConverter;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
 
 /**
- * Type converter registry.
+ * Attribute converter registry.
  *
  * @author Denis Stepanov
  * @since 3.1
  */
-public interface TypeConverterRegistry {
+public interface AttributeConverterRegistry {
 
     /**
      * Returns the converter instance.
      *
-     * NOTE: The converter class might not implement {@link TypeConverter} when supporting external converters.
+     * NOTE: The converter class might not implement {@link AttributeConverter} when supporting external converters.
      *
      * @param converterClass The converter class.
      * @return new instance of type converter.
      */
     @NonNull
-    TypeConverter<Object, Object> getConverter(@NonNull Class<?> converterClass);
+    AttributeConverter<Object, Object> getConverter(@NonNull Class<?> converterClass);
 
 }
