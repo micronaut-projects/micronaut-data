@@ -49,6 +49,12 @@ public class ColumnNameR2dbcResultReader implements ResultReader<Row, String> {
         this(null);
     }
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param conversionService The data conversion service
+     * @since 3.1
+     */
     public ColumnNameR2dbcResultReader(DataConversionService<?> conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;

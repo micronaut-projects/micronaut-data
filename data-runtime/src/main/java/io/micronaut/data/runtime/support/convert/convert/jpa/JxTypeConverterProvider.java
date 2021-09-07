@@ -16,9 +16,12 @@
 package io.micronaut.data.runtime.support.convert.convert.jpa;
 
 import io.micronaut.context.BeanLocator;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.runtime.convert.TypeConverter;
 import io.micronaut.data.runtime.support.convert.TypeConverterProvider;
+import jakarta.inject.Singleton;
 
 import javax.persistence.AttributeConverter;
 import java.util.Map;
@@ -30,7 +33,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Denis Stepanov
  * @since 3.1
  */
-public class JxTypeConverterProvider implements TypeConverterProvider {
+@Internal
+@Requires(classes = AttributeConverter.class)
+@Singleton
+final class JxTypeConverterProvider implements TypeConverterProvider {
 
     private final Map<Class, TypeConverter<Object, Object>> providersCache = new ConcurrentHashMap<>();
 

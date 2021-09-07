@@ -43,6 +43,12 @@ public class R2dbcQueryStatement implements QueryStatement<Statement, Integer> {
         this(null);
     }
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param conversionService The data conversion service
+     * @since 3.1
+     */
     public R2dbcQueryStatement(DataConversionService<?> conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;

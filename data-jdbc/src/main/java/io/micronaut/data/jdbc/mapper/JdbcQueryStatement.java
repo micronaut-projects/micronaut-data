@@ -40,6 +40,12 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
         this(null);
     }
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param conversionService The data conversion service
+     * @since 3.1
+     */
     public JdbcQueryStatement(DataConversionService<?> conversionService) {
         // Backwards compatibility should be removed in the next version
         this.conversionService = conversionService == null ? ConversionService.SHARED : conversionService;

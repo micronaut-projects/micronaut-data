@@ -17,12 +17,10 @@ package io.micronaut.data.runtime.support.convert;
 
 import io.micronaut.context.BeanLocator;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.io.service.SoftServiceLoader;
 import io.micronaut.data.model.runtime.TypeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.TypeConverter;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,20 +33,9 @@ final class DefaultTypeConverterRegistry implements TypeConverterRegistry {
     private final BeanLocator beanLocator;
     private final List<TypeConverterProvider> typeConverterTransformers;
 
-    DefaultTypeConverterRegistry(BeanLocator beanLocator) {
+    DefaultTypeConverterRegistry(BeanLocator beanLocator, List<TypeConverterProvider> typeConverterTransformers) {
         this.beanLocator = beanLocator;
-        List<TypeConverterProvider> typeConverterTransformers = new ArrayList<>();
-        SoftServiceLoader.load(TypeConverterProvider.class).collectAll(typeConverterTransformers);
         this.typeConverterTransformers = typeConverterTransformers;
-        this.typeConverterTransformers.removeIf(typeConverterProvider -> {
-            try {
-                // Remove missing classes providers
-                typeConverterProvider.supports(Object.class);
-                return false;
-            } catch (Throwable e) {
-                return true;
-            }
-        });
     }
 
     @Override
