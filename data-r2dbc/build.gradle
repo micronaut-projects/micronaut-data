@@ -65,10 +65,7 @@ dependencies {
 test {
     systemProperty "oracle.jdbc.timezoneAsRegion", "false"
     systemProperty "java.net.preferIPv4Stack", "true"
-    if (JavaVersion.current() == JavaVersion.VERSION_11) {
-        // Oracle tests deadlock on JDK 11
-        exclude "**/r2dbc/oraclexe/**"
-    }
+    systemProperty "java.util.concurrent.ForkJoinPool.common.parallelism", "2"
 }
 
 micronautBuild {
