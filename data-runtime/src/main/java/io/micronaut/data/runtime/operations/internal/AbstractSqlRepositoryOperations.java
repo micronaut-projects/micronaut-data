@@ -29,7 +29,6 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
-import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -242,13 +241,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             final SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER);
             final QueryResult queryResult = queryBuilder.buildInsert(annotationMetadata, persistentEntity);
 
-            return new StoredSqlOperation(
-                    queryBuilder.getDialect(),
-                    queryResult.getQuery(),
-                    queryResult.getParameterBindings().stream().map(QueryParameterBinding::getPath).toArray(String[]::new),
-                    new String[0],
-                    false
-            );
+            return new QueryResultSqlOperation(queryBuilder.getDialect(), queryResult);
         });
     }
 
@@ -315,13 +308,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                     updateProperties
             );
 
-            return new StoredSqlOperation(
-                    queryBuilder.getDialect(),
-                    queryResult.getQuery(),
-                    queryResult.getParameterBindings().stream().map(QueryParameterBinding::getPath).toArray(String[]::new),
-                    new String[0],
-                    false
-            );
+            return new QueryResultSqlOperation(queryBuilder.getDialect(), queryResult);
         });
     }
 

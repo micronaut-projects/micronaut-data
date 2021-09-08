@@ -19,6 +19,8 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.model.DataType
 
+import static io.micronaut.data.processor.visitors.TestUtils.*
+
 class ParameterTypeDefSpec extends AbstractDataSpec {
 
     void "test parameter type def resolved from entity"() {
@@ -57,18 +59,14 @@ class Person {
 }
 ''')
 
-
         expect:
-        repository.getRequiredMethod("findByIdIn", List)
-                .getAnnotationMetadata()
-                .getAnnotation(DataMethod)
-                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS)[0] == 'OBJECT'
+        getDataTypes(repository.getRequiredMethod("findByIdIn", List)
+            .getAnnotationMetadata()
+            .getAnnotation(DataMethod))[0] == DataType.OBJECT
 
-        repository.getRequiredMethod("deleteAll", Iterable)
-                .getAnnotationMetadata()
-                .getAnnotation(DataMethod)
-                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS).length == 0
-
+        getDataTypes(repository.getRequiredMethod("deleteAll", Iterable)
+            .getAnnotationMetadata()
+            .getAnnotation(DataMethod)).length == 0
 
     }
 
@@ -97,29 +95,26 @@ abstract class BookRepository extends io.micronaut.data.tck.repositories.BookRep
 ''')
 
         when:
-        def values = repository.getRequiredMethod("countNativeByTitleWithPagesGreaterThan", String.class, int.class)
+        def values = getDataTypes(repository.getRequiredMethod("countNativeByTitleWithPagesGreaterThan", String.class, int.class)
                 .getAnnotationMetadata()
-                .getAnnotation(DataMethod)
-                .enumValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType)
+                .getAnnotation(DataMethod))
         then:
         values.size() == 2
         values[0] == DataType.STRING
         values[1] == DataType.INTEGER
 
         when:
-        values = repository.getRequiredMethod("listNativeBooksWithTitleInCollection", Collection.class)
+        values = getDataTypes(repository.getRequiredMethod("listNativeBooksWithTitleInCollection", Collection.class)
                 .getAnnotationMetadata()
-                .getAnnotation(DataMethod)
-                .enumValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType)
+                .getAnnotation(DataMethod))
         then:
         values.size() == 1
         values[0] == DataType.STRING
 
         when:
-        values = repository.getRequiredMethod("listNativeBooksNullableListAsStringArray", List.class)
+        values = getDataTypes(repository.getRequiredMethod("listNativeBooksNullableListAsStringArray", List.class)
                 .getAnnotationMetadata()
-                .getAnnotation(DataMethod)
-                .enumValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType)
+                .getAnnotation(DataMethod))
         then:
         values.size() == 2
         values[0] == DataType.STRING_ARRAY
@@ -158,14 +153,11 @@ class Person {
 }
 ''')
 
-
         expect:
 
-        repository.getRequiredMethod("deleteAll", Iterable)
-                .getAnnotationMetadata()
-                .getAnnotation(DataMethod)
-                .stringValues(DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS).length == 0
-
+        getDataTypes(repository.getRequiredMethod("deleteAll", Iterable)
+            .getAnnotationMetadata()
+            .getAnnotation(DataMethod)).length == 0
 
     }
 }

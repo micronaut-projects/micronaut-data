@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.data.model.query.QueryModel;
+import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.TypedElement;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -32,81 +33,28 @@ import java.util.*;
  * @author graemerocher
  * @since 1.0
  */
-public class MethodMatchInfo {
+public final class MethodMatchInfo {
 
     private final TypedElement resultType;
-    private final QueryModel query;
     private final ClassElement interceptor;
-    private final OperationType operationType;
-    private final String[] updateProperties;
 
     private Map<String, String> parameterRoles = new HashMap<>(2);
     private boolean dto;
     private boolean optimisticLock;
 
-    /**
-     * Creates a method info.
-     * @param resultType The result type
-     * @param query The query
-     * @param interceptor The interceptor type to execute at runtime
-     */
-    public MethodMatchInfo(
-            @Nullable TypedElement resultType,
-            @Nullable QueryModel query,
-            @Nullable ClassElement interceptor) {
-        this(resultType, query, interceptor, OperationType.QUERY);
-    }
-
-    /**
-     * Creates a method info.
-     * @param resultType The result type
-     * @param query The query
-     * @param interceptor The interceptor type to execute at runtime
-     * @param dto indicate that this is a DTO query
-     */
-    public MethodMatchInfo(
-            @Nullable TypedElement resultType,
-            @Nullable QueryModel query,
-            @Nullable ClassElement interceptor,
-            boolean dto) {
-        this(resultType, query, interceptor, OperationType.QUERY);
-        this.dto = dto;
-    }
+    private QueryResult queryResult;
+    private QueryResult countQueryResult;
+    private boolean isRawQuery;
+    private boolean encodeEntityParameters;
 
     /**
      * Creates a method info.
      * @param resultType The result type, can be null for void etc.
-     * @param query The query, can be null for interceptors that don't execute queries.
      * @param interceptor The interceptor type to execute at runtime
-     * @param operationType The operation type
      */
-    public MethodMatchInfo(
-            @Nullable TypedElement resultType,
-            @Nullable QueryModel query,
-            @Nullable ClassElement interceptor,
-            @NonNull OperationType operationType) {
-        this(resultType, query, interceptor, operationType, null);
-    }
-
-    /**
-     * Creates a method info.
-     * @param resultType The result type, can be null for void etc.
-     * @param query The query, can be null for interceptors that don't execute queries.
-     * @param interceptor The interceptor type to execute at runtime
-     * @param operationType The operation type
-     * @param updateProperties the update properties
-     */
-    public MethodMatchInfo(
-            @Nullable TypedElement resultType,
-            @Nullable QueryModel query,
-            @Nullable ClassElement interceptor,
-            @NonNull OperationType operationType,
-            String[] updateProperties) {
-        this.query = query;
+    public MethodMatchInfo(@Nullable TypedElement resultType, @Nullable ClassElement interceptor) {
         this.interceptor = interceptor;
-        this.operationType = operationType;
         this.resultType = resultType;
-        this.updateProperties = updateProperties;
     }
 
     /**
@@ -154,31 +102,11 @@ public class MethodMatchInfo {
     }
 
     /**
-     * @return The properties to update for an update operation.
-     */
-    @NonNull public List<String> getUpdateProperties() {
-        if (updateProperties == null) {
-            return Collections.emptyList();
-        } else {
-            return Arrays.asList(updateProperties);
-        }
-    }
-
-    /**
      * The computed result type.
      * @return The result type.
      */
     @Nullable public TypedElement getResultType() {
         return resultType;
-    }
-
-    /**
-     * The query to be executed.
-     * @return The query
-     */
-    @Nullable
-    public QueryModel getQuery() {
-        return query;
     }
 
     /**
@@ -189,13 +117,54 @@ public class MethodMatchInfo {
         return interceptor;
     }
 
-    /**
-     * The operation type to execute.
-     * @return The operation type
-     */
-    @NonNull
-    public OperationType getOperationType() {
-        return operationType;
+    public MethodMatchInfo dto(boolean dto) {
+        this.dto = dto;
+        return this;
+    }
+
+    public MethodMatchInfo queryResult(QueryResult queryResult) {
+        this.queryResult = queryResult;
+        return this;
+    }
+
+    public MethodMatchInfo countQueryResult(QueryResult countQueryResult) {
+        this.countQueryResult = countQueryResult;
+        return this;
+    }
+
+    public MethodMatchInfo isRawQuery(boolean isRawQuery) {
+        this.isRawQuery = isRawQuery;
+        return this;
+    }
+
+    public MethodMatchInfo encodeEntityParameters(boolean encodeEntityParameters) {
+        this.encodeEntityParameters = encodeEntityParameters;
+        return this;
+    }
+
+    public MethodMatchInfo optimisticLock(boolean optimisticLock) {
+        this.optimisticLock = optimisticLock;
+        return this;
+    }
+
+    public ClassElement getInterceptor() {
+        return interceptor;
+    }
+
+    public QueryResult getQueryResult() {
+        return queryResult;
+    }
+
+    public QueryResult getCountQueryResult() {
+        return countQueryResult;
+    }
+
+    public boolean isRawQuery() {
+        return isRawQuery;
+    }
+
+    public boolean isEncodeEntityParameters() {
+        return encodeEntityParameters;
     }
 
     /**

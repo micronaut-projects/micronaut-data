@@ -101,7 +101,7 @@ class JpaQueryBuilderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT ${alias} FROM $entity.name AS ${alias} WHERE ($alias.$property $operator :p1)"
-        encodedQuery.parameters == ['p1': 'test']
+        encodedQuery.parameters == ['p1': 'name']
 
         where:
         type   | method | property | operator
@@ -129,7 +129,7 @@ class JpaQueryBuilderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT ${projection.toUpperCase()}(${alias}.$property) FROM $entity.name AS $alias WHERE ($alias.$property $operator :p1)"
-        encodedQuery.parameters == ['p1': 'test']
+        encodedQuery.parameters == ['p1': 'name']
 
         where:
         type   | method | property | operator | projection
@@ -155,7 +155,7 @@ class JpaQueryBuilderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT $alias FROM $entity.name AS $alias WHERE ($alias.$property IN (:p1))"
-        encodedQuery.parameters == ['p1': 'test']
+        encodedQuery.parameters == ['p1': 'name']
 
         where:
         type   | method   | property
@@ -178,7 +178,7 @@ class JpaQueryBuilderSpec extends Specification {
         encodedQuery != null
         encodedQuery.query ==
                 "SELECT $alias FROM $entity.name AS $alias WHERE (($alias.$property >= :p1 AND $alias.$property <= :p2))"
-        encodedQuery.parameters == ['p1': 'from', 'p2': 'to']
+        encodedQuery.parameters == ['p1': 'name', 'p2': 'name']
 
         where:
         type   | method    | property
@@ -284,8 +284,8 @@ class JpaQueryBuilderSpec extends Specification {
             def result = encoder.buildQuery(qm)
         then:
             result.query == 'SELECT entityWithIdClass_ FROM io.micronaut.data.tck.entities.EntityWithIdClass AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
-            result.parameters == ['p1': 'xyz.id1', 'p2': 'xyz.id2']
-            result.parameterTypes == ['xyz.id1': DataType.LONG, 'xyz.id2': DataType.LONG]
+            result.parameters == ['p1': 'id1', 'p2': 'id2']
+            result.parameterTypes == ['id1': DataType.LONG, 'id2': DataType.LONG]
     }
 
     void "test composite id delete"() {
@@ -297,8 +297,8 @@ class JpaQueryBuilderSpec extends Specification {
             def result = encoder.buildDelete(qm)
         then:
             result.query == 'DELETE io.micronaut.data.tck.entities.EntityWithIdClass  AS entityWithIdClass_ WHERE (entityWithIdClass_.id1 = :p1 AND entityWithIdClass_.id2 = :p2)'
-            result.parameters == ['p1': 'xyz.id1', 'p2': 'xyz.id2']
-            result.parameterTypes == ['xyz.id1': DataType.LONG, 'xyz.id2': DataType.LONG]
+            result.parameters == ['p1': 'id1', 'p2': 'id2']
+            result.parameterTypes == ['id1': DataType.LONG, 'id2': DataType.LONG]
     }
 
     void "test composite id update"() {
@@ -310,8 +310,8 @@ class JpaQueryBuilderSpec extends Specification {
             def result = encoder.buildUpdate(qm, ['name'])
         then:
             result.query == 'UPDATE io.micronaut.data.tck.entities.EntityWithIdClass entityWithIdClass_ SET entityWithIdClass_.name=:p1 WHERE (entityWithIdClass_.id1 = :p2 AND entityWithIdClass_.id2 = :p3)'
-            result.parameters == ['p1': 'name', 'p2': 'xyz.id1', 'p3': 'xyz.id2']
-            result.parameterTypes == ['name': DataType.STRING, 'xyz.id1': DataType.LONG, 'xyz.id2': DataType.LONG]
+            result.parameters == ['p1': 'name', 'p2': 'id1', 'p3': 'id2']
+            result.parameterTypes == ['name': DataType.STRING, 'id1': DataType.LONG, 'id2': DataType.LONG]
     }
 
     @Shared

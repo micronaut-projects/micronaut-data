@@ -15,10 +15,9 @@
  */
 package io.micronaut.data.model.query.builder;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.query.QueryParameter;
 
 /**
  * Query parameter binding, represents the data needed to bind a property to the query parameter.
@@ -27,73 +26,40 @@ import io.micronaut.data.model.query.QueryParameter;
  * @since 2.4.0
  */
 @Internal
-public final class QueryParameterBinding {
+public interface QueryParameterBinding {
 
     /**
-     * The key represents the placeholder value in the query (usually it's ?).
+     * @return The key represents the placeholder value in the query (usually it's ?).
      */
-    private final String key;
-    /**
-     * The path is the property path.
-     */
-    private final String path;
-    /**
-     * The data type of the mapping.
-     */
-    private final DataType dataType;
-    /**
-     * Optional query parameter associated with this binding.
-     */
+    String getKey();
+
+    DataType getDataType();
+
     @Nullable
-    private final QueryParameter queryParameter;
-
-    /**
-     * Is the connected property auto-populated and updatable.
-     */
-    private final boolean autoPopulatedUpdatable;
-
-    private QueryParameterBinding(String key, String path, DataType dataType, QueryParameter queryParameter, boolean autoPopulatedUpdatable) {
-        this.key = key;
-        this.path = path;
-        this.dataType = dataType;
-        this.queryParameter = queryParameter;
-        this.autoPopulatedUpdatable = autoPopulatedUpdatable;
+    default String getConverterClassName() {
+        return null;
     }
 
-    public static QueryParameterBinding of(String key, String path, DataType dataType) {
-        return of(key, path, dataType, null, false);
-    }
-
-    public static QueryParameterBinding of(String key, String path, DataType dataType, boolean autoPopulated) {
-        return new QueryParameterBinding(key, path, dataType, null, autoPopulated);
-    }
-
-    public static QueryParameterBinding of(String key, String path, DataType dataType, @Nullable QueryParameter queryParameter) {
-        return new QueryParameterBinding(key, path, dataType, queryParameter, false);
-    }
-
-    public static QueryParameterBinding of(String key, String path, DataType dataType, @Nullable QueryParameter queryParameter, boolean autoPopulated) {
-        return new QueryParameterBinding(key, path, dataType, queryParameter, autoPopulated);
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public DataType getDataType() {
-        return dataType;
-    }
-
-    public boolean isAutoPopulatedUpdatable() {
-        return autoPopulatedUpdatable;
+    default int getParameterIndex() {
+        return -1;
     }
 
     @Nullable
-    public QueryParameter getQueryParameter() {
-        return queryParameter;
+    default String[] getParameterBindingPath() {
+        return null;
     }
+
+    @Nullable
+    default String[] getPropertyPath() {
+        return null;
+    }
+
+    default boolean isAutoPopulated() {
+        return false;
+    }
+
+    default boolean isRequiresPreviousPopulatedValue() {
+        return false;
+    }
+
 }

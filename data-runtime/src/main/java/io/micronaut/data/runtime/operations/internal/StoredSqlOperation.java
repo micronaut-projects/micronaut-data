@@ -20,12 +20,12 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 
@@ -48,8 +48,7 @@ import java.util.stream.Collectors;
 @Internal
 public class StoredSqlOperation extends DBOperation {
 
-    protected final String[] parameterBindingPaths;
-    protected final String[] autoPopulatedPreviousProperties;
+    protected final List<QueryParameterBinding> queryParameterBindings;
     protected final boolean isOptimisticLock;
 
     protected boolean expandedQuery;
@@ -57,22 +56,19 @@ public class StoredSqlOperation extends DBOperation {
     /**
      * Creates a new instance.
      *
-     * @param dialect                         The dialect.
-     * @param query                           The query
-     * @param parameterBindingPaths           The parameterBindingPaths
-     * @param autoPopulatedPreviousProperties The autoPopulatedPreviousProperties
-     * @param isOptimisticLock                Is optimistic locking
+     * @param dialect                The dialect.
+     * @param query                  The query
+     * @param queryParameterBindings The query parameters
+     * @param isOptimisticLock       Is optimistic locking
      */
     protected StoredSqlOperation(Dialect dialect,
                                  String query,
-                                 String[] parameterBindingPaths,
-                                 String[] autoPopulatedPreviousProperties,
+                                 List<QueryParameterBinding> queryParameterBindings,
                                  boolean isOptimisticLock) {
         super(query, dialect);
         Objects.requireNonNull(query, "Query cannot be null");
         Objects.requireNonNull(dialect, "Dialect cannot be null");
-        this.parameterBindingPaths = parameterBindingPaths;
-        this.autoPopulatedPreviousProperties = autoPopulatedPreviousProperties;
+        this.queryParameterBindings = queryParameterBindings;
         this.isOptimisticLock = isOptimisticLock;
     }
 
@@ -82,21 +78,24 @@ public class StoredSqlOperation extends DBOperation {
     }
 
     @Override
-    public <T> Map<String, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
-        if (autoPopulatedPreviousProperties == null || autoPopulatedPreviousProperties.length == 0) {
+    public <T> Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
+        if (queryParameterBindings.isEmpty()) {
             return null;
         }
-        return Arrays.stream(autoPopulatedPreviousProperties)
-                .filter(StringUtils::isNotEmpty)
-                .map(propertyPath -> {
+        return queryParameterBindings.stream()
+                .filter(b -> b.isAutoPopulated() && b.isRequiresPreviousPopulatedValue())
+                .map(b -> {
+                    if (b.getPropertyPath() == null) {
+                        throw new IllegalStateException("Missing property path for query parameter: " + b);
+                    }
                     Object value = entity;
-                    for (String property : propertyPath.split("\\.")) {
+                    for (String property : b.getPropertyPath()) {
                         if (value == null) {
                             break;
                         }
                         value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
                     }
-                    return new AbstractMap.SimpleEntry<>(propertyPath, value);
+                    return new AbstractMap.SimpleEntry<>(b, value);
                 })
                 .filter(e -> e.getValue() != null)
                 .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
@@ -105,27 +104,27 @@ public class StoredSqlOperation extends DBOperation {
     /**
      * Check if query need to be modified to expand parameters.
      *
-     * @param persistentEntity  The persistentEntity
-     * @param entity            The entity instance
-     * @param queryBuilder      The queryBuilder
-     * @param <T>               The entity type
+     * @param persistentEntity The persistentEntity
+     * @param entity           The entity instance
+     * @param queryBuilder     The queryBuilder
+     * @param <T>              The entity type
      */
     public <T> void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity, SqlQueryBuilder queryBuilder) {
         Iterator<Object> valuesIt = new Iterator<Object>() {
 
-            int i;
+            final Iterator<QueryParameterBinding> queryBindingIterator = queryParameterBindings.iterator();
 
             @Override
             public boolean hasNext() {
-                return i >= parameterBindingPaths.length;
+                return queryBindingIterator.hasNext();
             }
 
             @Override
             public Object next() {
-                String stringPropertyPath = parameterBindingPaths[i];
+                String[] stringPropertyPath = queryBindingIterator.next().getRequiredPropertyPath();
                 PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(stringPropertyPath);
                 if (propertyPath == null) {
-                    throw new IllegalStateException("Unrecognized path: " + stringPropertyPath);
+                    throw new IllegalStateException("Unrecognized path: " + String.join(".", stringPropertyPath));
                 }
                 Object value = entity;
                 for (Association association : propertyPath.getAssociations()) {
@@ -141,12 +140,11 @@ public class StoredSqlOperation extends DBOperation {
                     BeanProperty beanProperty = property.getProperty();
                     value = beanProperty.get(value);
                 }
-                i++;
                 return value;
             }
 
         };
-        String q = expandMultipleValues(parameterBindingPaths.length, valuesIt, query, queryBuilder);
+        String q = expandMultipleValues(queryParameterBindings.size(), valuesIt, query, queryBuilder);
         if (q != query) {
             expandedQuery = true;
             query = q;
@@ -158,81 +156,51 @@ public class StoredSqlOperation extends DBOperation {
                                            Cnt connection,
                                            PS stmt,
                                            RuntimePersistentEntity<T> persistentEntity,
-                                           T entity, Map<String, Object> previousValues) {
+                                           T entity, Map<QueryParameterBinding, Object> previousValues) {
         int index = context.shiftIndex(0);
-        for (int i = 0; i < parameterBindingPaths.length; i++) {
-            String propertyPath = parameterBindingPaths[i];
-            if (StringUtils.isEmpty(propertyPath)) {
+        for (QueryParameterBinding binding : queryParameterBindings) {
+            String[] stringPropertyPath = binding.getRequiredPropertyPath();
+            PersistentPropertyPath pp = persistentEntity.getPropertyPath(stringPropertyPath);
+            if (pp == null) {
+                throw new IllegalStateException("Unrecognized path: " + String.join(".", stringPropertyPath));
+            }
+            if (binding.isAutoPopulated() && binding.isRequiresPreviousPopulatedValue()) {
                 if (previousValues != null) {
-                    String autoPopulatedPreviousProperty = autoPopulatedPreviousProperties[i];
-                    Object previousValue = previousValues.get(autoPopulatedPreviousProperty);
+                    Object previousValue = previousValues.get(binding);
                     if (previousValue != null) {
-                        PersistentPropertyPath pp = persistentEntity.getPropertyPath(autoPopulatedPreviousProperty);
-                        if (pp == null) {
-                            throw new IllegalStateException("Unrecognized path: " + autoPopulatedPreviousProperty);
-                        }
                         index = setStatementParameter(context, stmt, index, pp.getProperty().getDataType(), previousValue, dialect);
                         continue;
                     }
                 }
-                index = setStatementParameter(context, stmt, index, DataType.ENTITY, entity, dialect);
                 continue;
             }
-            index = setPropertyPathParameter(context, connection, stmt, index, persistentEntity, entity, propertyPath);
-        }
-    }
-
-    /**
-     * Set query parameters from property path.
-     *
-     * @param connection         The connection
-     * @param stmt               The statement
-     * @param index              The index
-     * @param persistentEntity   The persistentEntity
-     * @param entity             The entity instance
-     * @param propertyStringPath The entity property path
-     * @param <T>                The entity type
-     */
-    private <T, Cnt, PS> int setPropertyPathParameter(OpContext<Cnt, PS> context,
-                                                      Cnt connection,
-                                                      PS stmt,
-                                                      int index,
-                                                      RuntimePersistentEntity<T> persistentEntity,
-                                                      T entity,
-                                                      String propertyStringPath) {
-        if (propertyStringPath.startsWith("0.")) {
-            propertyStringPath = propertyStringPath.substring(2);
-        }
-        PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyStringPath);
-        if (propertyPath == null) {
-            throw new IllegalStateException("Unrecognized path: " + propertyStringPath);
-        }
-        Object value = entity;
-        for (Association association : propertyPath.getAssociations()) {
-            RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-            BeanProperty beanProperty = property.getProperty();
-            value = beanProperty.get(value);
-            if (value == null) {
-                break;
+            Object value = entity;
+            for (Association association : pp.getAssociations()) {
+                RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
+                BeanProperty beanProperty = property.getProperty();
+                value = beanProperty.get(value);
+                if (value == null) {
+                    break;
+                }
             }
-        }
-        RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
-        if (value != null) {
-            BeanProperty beanProperty = property.getProperty();
-            value = beanProperty.get(value);
-        }
-        DataType type = property.getDataType();
-        if (value == null && type == DataType.ENTITY) {
-            RuntimePersistentEntity<?> referencedEntity = context.getEntity(property.getType());
-            RuntimePersistentProperty<?> identity = referencedEntity.getIdentity();
-            if (identity == null) {
-                throw new IllegalStateException("Cannot set an entity value without identity: " + referencedEntity);
+            RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) pp.getProperty();
+            if (value != null) {
+                BeanProperty beanProperty = property.getProperty();
+                value = beanProperty.get(value);
             }
-            property = identity;
-            type = identity.getDataType();
+            DataType type = property.getDataType();
+            if (value == null && type == DataType.ENTITY) {
+                RuntimePersistentEntity<?> referencedEntity = context.getEntity(property.getType());
+                RuntimePersistentProperty<?> identity = referencedEntity.getIdentity();
+                if (identity == null) {
+                    throw new IllegalStateException("Cannot set an entity value without identity: " + referencedEntity);
+                }
+                property = identity;
+                type = identity.getDataType();
+            }
+            value = context.convert(connection, value, property);
+            index = setStatementParameter(context, stmt, index, type, value, dialect);
         }
-        value = context.convert(connection, value, property);
-        return setStatementParameter(context, stmt, index, type, value, dialect);
     }
 
     private <PS> int setStatementParameter(OpContext<?, PS> context, PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {

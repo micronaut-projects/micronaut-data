@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.data.annotation.Query
+
 import io.micronaut.data.intercept.UpdateInterceptor
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.async.UpdateAsyncInterceptor
@@ -23,6 +23,8 @@ import io.micronaut.data.intercept.reactive.UpdateReactiveInterceptor
 import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Unroll
+
+import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildUpdateSpec extends AbstractDataSpec {
 
@@ -46,7 +48,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
 }
 """)
         def method = repository.findPossibleMethods("updatePerson").findFirst().get()
-        def updateQuery = method.stringValue(Query).get()
+        def updateQuery = getQuery(method)
 
         expect:
         updateQuery == 'UPDATE `person` SET `name`=? WHERE (`id` = ?)'
@@ -82,16 +84,15 @@ ${entity('Movie', [title: String, theLongName: String])}
         def method = repository.findPossibleMethods(methodName).findFirst().get()
 
         expect:
-        method.stringValue(Query).get() == query
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
-
+        getQuery(method) == query
+        getParameterPropertyPaths(method) == bindingPaths
+        getParameterBindingIndexes(method) == binding
 
         where:
         methodName   | query                                                             | bindingPaths                               | binding
-        'update'     | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | [] as String[]
-        'updateById' | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)' | ['', '', ''] as String[]                   | ['1', '2', '0'] as String[]
-        'updateAll'  | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | [] as String[]
+        'update'     | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | ['-1', '-1', '-1'] as String[]
+        'updateById' | 'UPDATE `movie` SET `the_long_name`=?,`title`=? WHERE (`id` = ?)' | ['theLongName', 'title', 'id'] as String[] | ['1', '2', '0'] as String[]
+        'updateAll'  | 'UPDATE `movie` SET `title`=?,`the_long_name`=? WHERE (`id` = ?)' | ['title', 'theLongName', 'id'] as String[] | ['-1', '-1', '-1'] as String[]
     }
 
     @Unroll
@@ -109,14 +110,13 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
         def method = repository.findPossibleMethods(methodName).findFirst().get()
 
         expect:
-        method.stringValue(Query).get() == query
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
-
+        getQuery(method) == query
+        getParameterPropertyPaths(method) == bindingPaths
+        getParameterBindingIndexes(method) == binding
 
         where:
         methodName | query                                                                        | bindingPaths                                       | binding
-        'update'   | 'UPDATE `company` SET `last_updated`=?,`name`=?,`url`=? WHERE (`my_id` = ?)' | ['lastUpdated', 'name', 'url', 'myId'] as String[] | [] as String[]
+        'update'   | 'UPDATE `company` SET `last_updated`=?,`name`=?,`url`=? WHERE (`my_id` = ?)' | ['lastUpdated', 'name', 'url', 'myId'] as String[] | ['-1', '-1', '-1', '-1'] as String[]
     }
 
     void "test build update with embedded"() {
@@ -132,14 +132,13 @@ interface CompanyRepository extends CrudRepository<Restaurant, Long> {
 }
 """)
         def method = repository.findPossibleMethods("update").findFirst().get()
-        def updateQuery = method.stringValue(Query).get()
+        def updateQuery = getQuery(method)
 //        method = repository.findPossibleMethods("save").findFirst().get()
 //        def insertQuery = method.stringValue(Query).get()
 
         expect:
         updateQuery == 'UPDATE `restaurant` SET `name`=?,`address_street`=?,`address_zip_code`=?,`hq_address_street`=?,`hq_address_zip_code`=? WHERE (`id` = ?)'
-        method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["name", "address.street", "address.zipCode", "hqAddress.street", "hqAddress.zipCode", "id"] as String[]
-
+        getParameterPropertyPaths(method) == ["name", "address.street", "address.zipCode", "hqAddress.street", "hqAddress.zipCode", "id"] as String[]
     }
 
 
@@ -158,7 +157,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
 }
 """)
         def method = repository.findPossibleMethods("updatePerson").findFirst().get()
-        def updateQuery = method.stringValue(Query).get()
+        def updateQuery = getQuery(method)
 
         expect:
         updateQuery == 'UPDATE `person` SET `name`=? WHERE (`id` = ?)'
@@ -198,7 +197,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
   }
   """)
       def method = repository.findPossibleMethods("update").findFirst().get()
-      def updateQuery = method.stringValue(Query).get()
+      def updateQuery = getQuery(method)
 
       expect:
           updateQuery == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
@@ -216,7 +215,7 @@ interface PersonRepository extends CrudRepository<Person, Long> {
   }
   """)
             def method = repository.findPossibleMethods("update").findFirst().get()
-            def updateQuery = method.stringValue(Query).get()
+            def updateQuery = getQuery(method)
 
         expect:
             updateQuery == 'UPDATE `student_data` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
@@ -239,21 +238,23 @@ interface CompanyRepository extends CrudRepository<Company, Long> {
             def updateByNameMethod = repository.findPossibleMethods("updateByName").findFirst().get()
 
         then:
-            updateByNameMethod.stringValue(Query).get() == "UPDATE `company` SET `last_updated`=? WHERE (`name` = ?)"
-            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", ""]
-            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["lastUpdated", ""]
-            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"]
-            updateByNameMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.TIMESTAMP, DataType.STRING]
+            getQuery(updateByNameMethod) == "UPDATE `company` SET `last_updated`=? WHERE (`name` = ?)"
+            getDataTypes(updateByNameMethod) == [DataType.TIMESTAMP, DataType.STRING]
+            getParameterBindingIndexes(updateByNameMethod) == ["-1", "0"]
+            getParameterPropertyPaths(updateByNameMethod) == ["lastUpdated", "name"]
+            getParameterAutoPopulatedProperties(updateByNameMethod) == ["lastUpdated", ""]
+            getParameterRequiresPreviousPopulatedValueProperties(updateByNameMethod) == ["", ""]
 
         when:
             def updateByLastUpdatedMethod = repository.findPossibleMethods("updateByLastUpdated").findFirst().get()
 
         then:
-            updateByLastUpdatedMethod.stringValue(Query).get() == "UPDATE `company` SET `last_updated`=? WHERE (`last_updated` = ?)"
-            updateByLastUpdatedMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", ""]
-            updateByNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["lastUpdated", ""]
-            updateByLastUpdatedMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "0"]
-            updateByLastUpdatedMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.TIMESTAMP, DataType.TIMESTAMP]
+            getQuery(updateByLastUpdatedMethod) == "UPDATE `company` SET `last_updated`=? WHERE (`last_updated` = ?)"
+            getDataTypes(updateByLastUpdatedMethod) == [DataType.TIMESTAMP, DataType.TIMESTAMP]
+            getParameterBindingIndexes(updateByLastUpdatedMethod) == ["-1", "0"]
+            getParameterPropertyPaths(updateByLastUpdatedMethod) == ["lastUpdated", "lastUpdated"]
+            getParameterAutoPopulatedProperties(updateByLastUpdatedMethod) == ["lastUpdated", "lastUpdated"]
+            getParameterRequiresPreviousPopulatedValueProperties(updateByLastUpdatedMethod) == ["", ""]
     }
 
     void "test build update relation"() {
@@ -278,17 +279,19 @@ interface BookRepository extends CrudRepository<Book, Long> {
         when:
             def updateAuthorCustomMethod = repository.findPossibleMethods("updateAuthorCustom").findFirst().get()
         then:
-            updateAuthorCustomMethod.stringValue(Query).get() == 'UPDATE Book SET author_id = :author WHERE id = :id'
-            updateAuthorCustomMethod.stringValue(Query, "rawQuery").get() == 'UPDATE Book SET author_id = ? WHERE id = ?'
-            updateAuthorCustomMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["1", "0"] as String[]
-            updateAuthorCustomMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.ENTITY, DataType.LONG]
+            getQuery(updateAuthorCustomMethod) == 'UPDATE Book SET author_id = :author WHERE id = :id'
+            getRawQuery(updateAuthorCustomMethod) == 'UPDATE Book SET author_id = ? WHERE id = ?'
+            getParameterBindingIndexes(updateAuthorCustomMethod) == ["1", "0"] as String[]
+            getDataTypes(updateAuthorCustomMethod) == [DataType.ENTITY, DataType.LONG]
+            getParameterPropertyPaths(updateAuthorCustomMethod) == ["author", "id"] as String[]
         when:
             def updateAuthorMethod = repository.findPossibleMethods("updateAuthor").findFirst().get()
         then:
-            updateAuthorMethod.stringValue(Query).get() == 'UPDATE `book` SET `author_id`=?,`last_updated`=? WHERE (`id` = ?)'
-            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ["-1", "-1", "0"] as String[]
-            updateAuthorMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["1.id", "", ""] as String[]
-            updateAuthorMethod.enumValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_TYPE_DEFS, DataType) == [DataType.LONG, DataType.TIMESTAMP, DataType.LONG]
+            getQuery(updateAuthorMethod) == 'UPDATE `book` SET `author_id`=?,`last_updated`=? WHERE (`id` = ?)'
+            getParameterBindingIndexes(updateAuthorMethod) == ["1", "-1", "0"] as String[]
+            getParameterBindingPaths(updateAuthorMethod) == ["id", "", ""] as String[]
+            getParameterPropertyPaths(updateAuthorMethod) == ["author.id", "lastUpdated", "id"] as String[]
+            getDataTypes(updateAuthorMethod) == [DataType.LONG, DataType.TIMESTAMP, DataType.LONG]
 
     }
 }

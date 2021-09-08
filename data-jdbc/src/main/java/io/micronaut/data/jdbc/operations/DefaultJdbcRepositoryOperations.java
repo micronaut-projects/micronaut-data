@@ -52,6 +52,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -980,7 +981,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         private T entity;
         private Integer rowsUpdated;
-        private Map<String, Object> previousValues;
+        private Map<QueryParameterBinding, Object> previousValues;
 
         private JdbcEntityOperations(RuntimePersistentEntity<T> persistentEntity, T entity) {
             super(persistentEntity);
@@ -1223,7 +1224,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         class Data {
             T entity;
-            Map<String, Object> previousValues;
+            Map<QueryParameterBinding, Object> previousValues;
             boolean vetoed = false;
         }
     }

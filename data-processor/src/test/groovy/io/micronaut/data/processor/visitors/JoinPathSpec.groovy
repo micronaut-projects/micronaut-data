@@ -19,7 +19,6 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.tck.entities.City
-import io.micronaut.inject.ExecutableMethod
 import spock.lang.Issue
 import spock.lang.Unroll
 

@@ -70,14 +70,10 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             case JSON:
                 return readString(resultSet, index);
             case LONG:
-                return resultSet.get(index, Long.class);
+                return readConvertible(resultSet, index, Long.class);
             case INTEGER:
                 // https://github.com/mirromutth/r2dbc-mysql/issues/177
-                Object value = resultSet.get(index);
-                if (value instanceof Integer) {
-                    return value;
-                }
-                return convertRequired(value, Integer.class);
+                return readConvertible(resultSet, index, Integer.class);
             case BOOLEAN:
                 return resultSet.get(index, Boolean.class);
             case BYTE:
@@ -102,6 +98,14 @@ public class ColumnIndexR2dbcResultReader implements ResultReader<Row, Integer> 
             default:
                 return getRequiredValue(resultSet, index, Object.class);
         }
+    }
+
+    private Object readConvertible(Row resultSet, int index, Class<?> clazz) {
+        Object value = resultSet.get(index);
+        if (value == null || clazz.isInstance(value)) {
+            return value;
+        }
+        return convertRequired(value, clazz);
     }
 
     @Override

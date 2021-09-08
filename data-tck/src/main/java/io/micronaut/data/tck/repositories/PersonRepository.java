@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.tck.repositories;
 
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.model.Page;
@@ -24,7 +24,9 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.repository.CrudRepository;
+import io.micronaut.data.repository.jpa.JpaSpecificationExecutor;
 import io.micronaut.data.repository.PageableRepository;
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.tck.entities.Person;
 import io.micronaut.data.tck.entities.TotalDto;
 import io.reactivex.Single;
@@ -34,7 +36,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-public interface PersonRepository extends CrudRepository<Person, Long>, PageableRepository<Person, Long> {
+public interface PersonRepository extends CrudRepository<Person, Long>, PageableRepository<Person, Long>, JpaSpecificationExecutor<Person> {
 
     @Query("select count(*) as total from person")
     TotalDto getTotal();
@@ -143,4 +145,15 @@ public interface PersonRepository extends CrudRepository<Person, Long>, Pageable
 
     @Query("DELETE FROM person WHERE name = :xyz")
     int deleteCustomSingleNoEntity(String xyz);
+
+    class Specifications {
+
+        public static PredicateSpecification<Person> nameEquals(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static PredicateSpecification<Person> nameEqualsCaseInsensitive(String name) {
+            return (root, criteriaBuilder) -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+        }
+    }
 }

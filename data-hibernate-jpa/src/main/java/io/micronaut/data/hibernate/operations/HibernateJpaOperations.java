@@ -31,12 +31,12 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.QueryHint;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jpa.annotation.EntityGraph;
 import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -45,6 +45,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -60,6 +61,7 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import io.micronaut.transaction.TransactionOperations;
+import jakarta.inject.Named;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.graph.AttributeNode;
@@ -70,7 +72,6 @@ import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.hibernate.type.Type;
 
-import jakarta.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.FlushModeType;
@@ -91,6 +92,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -273,38 +275,33 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     }
 
     private <T, R> void bindParameters(Query<?> q, @NonNull PreparedQuery<T, R> preparedQuery, String query) {
-        String[] parameterNames = preparedQuery.getParameterNames();
-        Object[] parameterArray = preparedQuery.getParameterArray();
-        int[] indexedParameterBinding = preparedQuery.getIndexedParameterBinding();
-        for (int i = 0; i < parameterNames.length; i++) {
-            String parameterName = parameterNames[i];
-            int parameterIndex = indexedParameterBinding[i];
+        for (QueryParameterBinding queryParameterBinding : preparedQuery.getQueryBindings()) {
+            String parameterName = Objects.requireNonNull(queryParameterBinding.getName(), "Parameter name cannot be null!");
             Object value;
-            if (parameterIndex > -1) {
-                value = parameterArray[parameterIndex];
-            } else {
-                String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
-                String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
-                String propertyPath = i < indexedParameterPaths.length ? indexedParameterPaths[i] : null;
-                String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
-                if (autoPopulatedPropertyPath != null) {
-                    RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
-                    RuntimePersistentProperty<T> persistentProperty = persistentEntity.getPropertyByName(autoPopulatedPropertyPath);
-                    if (persistentProperty == null) {
-                        throw new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath);
-                    }
-                    Object previousValue = null;
-                    if (propertyPath != null) {
-                        previousValue = resolveQueryParameterByPath(query, i, parameterArray, propertyPath);
-                    }
-                    value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-                } else if (propertyPath != null) {
-                    value = resolveQueryParameterByPath(query, i, parameterArray, propertyPath);
-                } else {
-                    throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
+            if (queryParameterBinding.getParameterIndex() != -1) {
+                value = resolveParameterValue(queryParameterBinding, preparedQuery.getParameterArray());
+            } else if (queryParameterBinding.isAutoPopulated()) {
+                String[] propertyPath = queryParameterBinding.getRequiredPropertyPath();
+                RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
+                PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+                if (pp == null) {
+                    throw new IllegalStateException("Cannot find auto populated property: " + String.join(".", propertyPath));
                 }
+                RuntimePersistentProperty<?> persistentProperty = (RuntimePersistentProperty) pp.getProperty();
+                Object previousValue = null;
+                QueryParameterBinding previousPopulatedValueParameter = queryParameterBinding.getPreviousPopulatedValueParameter();
+                if (previousPopulatedValueParameter != null) {
+                    if (previousPopulatedValueParameter.getParameterIndex() == -1) {
+                        throw new IllegalStateException("Previous value parameter cannot be bind!");
+                    }
+                    previousValue = resolveParameterValue(previousPopulatedValueParameter, preparedQuery.getParameterArray());
+                }
+                value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+            } else {
+                throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at name: " + parameterName);
             }
             if (preparedQuery.isNative()) {
+                int parameterIndex = queryParameterBinding.getParameterIndex();
                 Argument<?> argument = preparedQuery.getArguments()[parameterIndex];
                 Class<?> argumentType = argument.getType();
                 if (Collection.class.isAssignableFrom(argumentType)) {
@@ -328,15 +325,19 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         }
     }
 
-    private Object resolveQueryParameterByPath(String query, int i, Object[] queryParameters, String propertyPath) {
-        int j = propertyPath.indexOf('.');
-        if (j > -1) {
-            String subProp = propertyPath.substring(j + 1);
-            Object indexedValue = queryParameters[Integer.parseInt(propertyPath.substring(0, j))];
-            return BeanWrapper.getWrapper(indexedValue).getRequiredProperty(subProp, Argument.OBJECT_ARGUMENT);
-        } else {
-            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+    private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] queryParameters) {
+        Object value;
+        value = queryParameters[queryParameterBinding.getParameterIndex()];
+        String[] parameterBindingPath = queryParameterBinding.getParameterBindingPath();
+        if (parameterBindingPath != null) {
+            for (String prop : parameterBindingPath) {
+                if (value == null) {
+                    break;
+                }
+                value = BeanWrapper.getWrapper(value).getRequiredProperty(prop, Argument.OBJECT_ARGUMENT);
+            }
         }
+        return value;
     }
 
     @Override
@@ -542,11 +543,10 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> T update(@NonNull UpdateOperation<T> operation) {
-        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
+        StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return transactionOperations.executeWrite(status -> {
-            if (queryString != null) {
-                executeEntityUpdate(annotationMetadata, queryString, operation.getEntity());
+            if (storedQuery != null) {
+                executeEntityUpdate(storedQuery, operation.getEntity());
                 return operation.getEntity();
             }
             T entity = operation.getEntity();
@@ -560,12 +560,11 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
     @NonNull
     @Override
     public <T> Iterable<T> updateAll(@NonNull UpdateBatchOperation<T> operation) {
-        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
+        StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return transactionOperations.executeWrite(status -> {
-            if (queryString != null) {
+            if (storedQuery != null) {
                 for (T entity : operation) {
-                    executeEntityUpdate(annotationMetadata, queryString, entity);
+                    executeEntityUpdate(storedQuery, entity);
                 }
                 return operation;
             }
@@ -622,11 +621,10 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @Override
     public <T> int delete(@NonNull DeleteOperation<T> operation) {
-        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
+        StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         return transactionOperations.executeWrite(status -> {
-            if (queryString != null) {
-                return executeEntityUpdate(annotationMetadata, queryString, operation.getEntity());
+            if (storedQuery != null) {
+                return executeEntityUpdate(storedQuery, operation.getEntity());
             }
             getCurrentSession().remove(operation.getEntity());
             return 1;
@@ -635,13 +633,12 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
 
     @Override
     public <T> Optional<Number> deleteAll(@NonNull DeleteBatchOperation<T> operation) {
-        AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
-        String queryString = annotationMetadata.stringValue(io.micronaut.data.annotation.Query.class).orElse(null);
+        StoredQuery<T, ?> storedQuery = operation.getStoredQuery();
         Integer result = transactionOperations.executeWrite(status -> {
-            if (queryString != null) {
+            if (storedQuery != null) {
                 int i = 0;
                 for (T entity : operation) {
-                    i += executeEntityUpdate(annotationMetadata, queryString, entity);
+                    i += executeEntityUpdate(storedQuery, entity);
                 }
                 return i;
             }
@@ -656,17 +653,16 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         return Optional.ofNullable(result);
     }
 
-    private int executeEntityUpdate(AnnotationMetadata annotationMetadata, String queryString, Object entity) {
-        String[] parameters = annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS);
-        Query query = getCurrentSession().createQuery(queryString);
-        for (String parameter : parameters) {
-            query.setParameter(parameter, getParameterValue(parameter, entity));
+    private int executeEntityUpdate(StoredQuery<?, ?> storedQuery, Object entity) {
+        Query query = getCurrentSession().createQuery(storedQuery.getQuery());
+        for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
+            query.setParameter(queryParameterBinding.getRequiredName(), getParameterValue(queryParameterBinding.getRequiredPropertyPath(), entity));
         }
         return query.executeUpdate();
     }
 
-    private Object getParameterValue(String propertyName, Object value) {
-        for (String property : propertyName.split("\\.")) {
+    private Object getParameterValue(String[] propertyPath, Object value) {
+        for (String property : propertyPath) {
             value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
         }
         return value;

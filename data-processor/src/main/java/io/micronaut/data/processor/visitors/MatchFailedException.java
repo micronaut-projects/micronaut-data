@@ -15,11 +15,31 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.inject.ast.Element;
+
 /**
  * Immediate match fail.
  *
  * @author Denis Stepanov
  * @version 2.4.0
  */
-public class MatchFailedException extends RuntimeException {
+public final class MatchFailedException extends RuntimeException {
+
+    @Nullable
+    private final Element element;
+
+    public MatchFailedException(String message) {
+        this(message, null);
+    }
+
+    public MatchFailedException(String message, @Nullable Element element) {
+        super(message);
+        this.element = element;
+    }
+
+    @Nullable
+    public Element getElement() {
+        return element;
+    }
 }

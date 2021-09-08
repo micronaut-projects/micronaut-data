@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.annotation.processing.test.JavaParser
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.FindAllInterceptor
 import io.micronaut.data.intercept.FindOneInterceptor
@@ -38,6 +37,7 @@ import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParameterNames
 
 class RepositoryTypeElementVisitorSpec extends AbstractTypeElementSpec {
     @Shared String personAlias = new JpaQueryBuilder().getAliasName(PersistentEntity.of(Person))
@@ -121,7 +121,7 @@ interface MyInterface {
         if (query == null) {
             return true
         }
-        def names = method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names")
+        def names = getQueryParameterNames(method)
         return names.size() == argumentTypes.size()
     }
 

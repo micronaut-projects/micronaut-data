@@ -16,13 +16,11 @@
 package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.ExistsByInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.intercept.annotation.DataMethod;
-import io.micronaut.data.operations.RepositoryOperations;
-
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.operations.RepositoryOperations;
 
 /**
  * The default implementation of {@link ExistsByInterceptor}.
@@ -42,9 +40,7 @@ public class DefaultExistsByInterceptor<T> extends AbstractQueryInterceptor<T, B
 
     @Override
     public Boolean intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Boolean> context) {
-        Class idType = context.classValue(DataMethod.class, DataMethod.META_MEMBER_ID_TYPE)
-                .orElseGet(() -> getRequiredRootEntity(context));
-        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, idType);
+        PreparedQuery<?, Boolean> preparedQuery = prepareQuery(methodKey, context, null);
         return operations.exists(preparedQuery);
     }
 }

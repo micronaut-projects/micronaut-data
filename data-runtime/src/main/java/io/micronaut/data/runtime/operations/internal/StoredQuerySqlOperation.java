@@ -34,8 +34,7 @@ public class StoredQuerySqlOperation extends StoredSqlOperation {
     public StoredQuerySqlOperation(Dialect dialect, StoredQuery<?, ?> storedQuery) {
         super(dialect,
                 storedQuery.getQuery(),
-                storedQuery.getIndexedParameterPaths(),
-                storedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths(),
+                storedQuery.getQueryBindings(),
                 storedQuery.isOptimisticLock()
         );
     }

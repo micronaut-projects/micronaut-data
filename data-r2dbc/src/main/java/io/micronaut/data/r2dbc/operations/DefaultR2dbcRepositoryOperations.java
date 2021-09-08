@@ -48,6 +48,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -1235,7 +1236,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         class Data {
             T entity;
-            Map<String, Object> previousValues;
+            Map<QueryParameterBinding, Object> previousValues;
             int rowsUpdated;
             boolean vetoed = false;
         }
@@ -1428,7 +1429,7 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
 
         class Data {
             T entity;
-            Map<String, Object> previousValues;
+            Map<QueryParameterBinding, Object> previousValues;
             boolean vetoed = false;
         }
     }

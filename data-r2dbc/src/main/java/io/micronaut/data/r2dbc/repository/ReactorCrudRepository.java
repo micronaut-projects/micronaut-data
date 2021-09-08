@@ -15,13 +15,11 @@
  */
 package io.micronaut.data.r2dbc.repository;
 
-import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
-
 /**
  * CRUD repository for Project Reactor.
  * @param <E> The entity type
  * @param <ID> The ID type
- * @see ReactiveStreamsCrudRepository
+ * @see io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository
  * @deprecated Replaced by {@link io.micronaut.data.repository.reactive.ReactorCrudRepository}
  */
 @Deprecated

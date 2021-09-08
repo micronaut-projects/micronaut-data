@@ -281,7 +281,7 @@ public class DefaultQuery implements QueryModel {
      */
     @Override
     public @NonNull
-    DefaultQuery eq(@NonNull String property, @NonNull QueryParameter parameter) {
+    DefaultQuery eq(@NonNull String property, @NonNull Object parameter) {
         criteria.add(Restrictions.eq(property, parameter));
         return this;
     }
@@ -293,10 +293,10 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     public @NonNull
-    DefaultQuery allEq(@NonNull Map<String, QueryParameter> values) {
+    DefaultQuery allEq(@NonNull Map<String, Object> values) {
         QueryModel.Junction conjunction = conjunction();
         for (String property : values.keySet()) {
-            QueryParameter value = values.get(property);
+            Object value = values.get(property);
             conjunction.add(Restrictions.eq(property, value));
         }
         return this;
@@ -357,7 +357,7 @@ public class DefaultQuery implements QueryModel {
     }
 
     @Override
-    public DefaultQuery versionEq(@NonNull QueryParameter value) {
+    public DefaultQuery versionEq(@NonNull Object value) {
         criteria.add(Restrictions.versionEq(value));
         return this;
     }
@@ -432,14 +432,14 @@ public class DefaultQuery implements QueryModel {
      */
     @Override
     public @NonNull
-    DefaultQuery idEq(@NonNull QueryParameter value) {
+    DefaultQuery idEq(@NonNull Object value) {
         criteria.add(Restrictions.idEq(value));
         return this;
     }
 
     @NonNull
     @Override
-    public QueryModel ne(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel ne(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.ne(propertyName, parameter));
         return this;
     }
@@ -453,7 +453,7 @@ public class DefaultQuery implements QueryModel {
      */
     @Override
     public @NonNull
-    DefaultQuery gt(@NonNull String property, @NonNull QueryParameter value) {
+    DefaultQuery gt(@NonNull String property, @NonNull Object value) {
         criteria.add(Restrictions.gt(property, value));
         return this;
     }
@@ -466,7 +466,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery gte(String property, QueryParameter value) {
+    public DefaultQuery gte(String property, Object value) {
         criteria.add(Restrictions.gte(property, value));
         return this;
     }
@@ -479,7 +479,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery lte(String property, QueryParameter value) {
+    public DefaultQuery lte(String property, Object value) {
         criteria.add(Restrictions.lte(property, value));
         return this;
     }
@@ -492,7 +492,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery ge(String property, QueryParameter value) {
+    public DefaultQuery ge(String property, Object value) {
         return gte(property, value);
     }
 
@@ -504,7 +504,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery le(String property, QueryParameter value) {
+    public DefaultQuery le(String property, Object value) {
         return lte(property, value);
     }
 
@@ -516,49 +516,49 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery lt(String property, QueryParameter value) {
+    public DefaultQuery lt(String property, Object value) {
         criteria.add(Restrictions.lt(property, value));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery like(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public DefaultQuery like(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.like(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public QueryModel startsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel startsWith(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.startsWith(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public QueryModel endsWith(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel endsWith(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.endsWith(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public QueryModel contains(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public QueryModel contains(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.contains(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery ilike(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public DefaultQuery ilike(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.ilike(propertyName, parameter));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery rlike(@NonNull String propertyName, @NonNull QueryParameter parameter) {
+    public DefaultQuery rlike(@NonNull String propertyName, @NonNull Object parameter) {
         criteria.add(Restrictions.rlike(propertyName, parameter));
         return this;
     }
@@ -599,7 +599,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery inList(String property, QueryParameter values) {
+    public DefaultQuery inList(String property, Object values) {
         criteria.add(Restrictions.in(property, values));
         return this;
     }
@@ -613,42 +613,42 @@ public class DefaultQuery implements QueryModel {
 
     @NonNull
     @Override
-    public DefaultQuery sizeEq(@NonNull String propertyName, @NonNull QueryParameter size) {
+    public DefaultQuery sizeEq(@NonNull String propertyName, @NonNull Object size) {
         criteria.add(Restrictions.sizeEq(propertyName, size));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery sizeGt(@NonNull String propertyName, @NonNull QueryParameter size) {
+    public DefaultQuery sizeGt(@NonNull String propertyName, @NonNull Object size) {
         criteria.add(Restrictions.sizeGt(propertyName, size));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery sizeGe(@NonNull String propertyName, @NonNull QueryParameter size) {
+    public DefaultQuery sizeGe(@NonNull String propertyName, @NonNull Object size) {
         criteria.add(Restrictions.sizeGe(propertyName, size));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery sizeLe(@NonNull String propertyName, @NonNull QueryParameter size) {
+    public DefaultQuery sizeLe(@NonNull String propertyName, @NonNull Object size) {
         criteria.add(Restrictions.sizeLe(propertyName, size));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery sizeLt(@NonNull String propertyName, @NonNull QueryParameter size) {
+    public DefaultQuery sizeLt(@NonNull String propertyName, @NonNull Object size) {
         criteria.add(Restrictions.sizeLt(propertyName, size));
         return this;
     }
 
     @NonNull
     @Override
-    public DefaultQuery sizeNe(@NonNull String propertyName, @NonNull QueryParameter size) {
+    public DefaultQuery sizeNe(@NonNull String propertyName, @NonNull Object size) {
         criteria.add(Restrictions.sizeNe(propertyName, size));
         return this;
     }
@@ -704,7 +704,7 @@ public class DefaultQuery implements QueryModel {
      * @return This query instance
      */
     @Override
-    public DefaultQuery between(String property, QueryParameter start, QueryParameter end) {
+    public DefaultQuery between(String property, Object start, Object end) {
         criteria.add(Restrictions.between(property, start, end));
         return this;
     }

@@ -67,7 +67,8 @@ trait DatabaseTestPropertyProvider implements TestPropertyProvider {
             case "mariadb":
                 return new MariaDBContainer<>("mariadb:10.5")
             case "mysql":
-                return new MySQLContainer<>(DockerImageName.parse("mysql/mysql-server:8.0").asCompatibleSubstituteFor("mysql"))
+//                return new MySQLContainer<>(DockerImageName.parse("mysql/mysql-server:8.0").asCompatibleSubstituteFor("mysql"))
+                return new MySQLContainer<>("mysql:8.0.17")
         }
     }
 

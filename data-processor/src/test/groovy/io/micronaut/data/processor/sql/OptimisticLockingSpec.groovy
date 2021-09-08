@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.data.annotation.Query
+
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+
+import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class OptimisticLockingSpec extends AbstractDataSpec {
 
@@ -46,105 +48,103 @@ class OptimisticLockingSpec extends AbstractDataSpec {
 
         when:
             def updateByIdAndVersionMethod = repository.findPossibleMethods("updateByIdAndVersion").findFirst().get()
-            def updateByIdAndVersionQuery = updateByIdAndVersionMethod.stringValue(Query).get()
 
         then:
-            updateByIdAndVersionQuery == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
-            updateByIdAndVersionMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', '', '', '', ''] as String[]
-            updateByIdAndVersionMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['2', '-1', '-1', '0', '1'] as String[]
-            updateByIdAndVersionMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["", "lastUpdatedTime", "version", "", ""] as String[]
-            updateByIdAndVersionMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", "", "", ""] as String[]
-            updateByIdAndVersionMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES) == ["-1", "-1", "1", "-1", "-1"] as String[]
+            getQuery(updateByIdAndVersionMethod) == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
+            getParameterBindingIndexes(updateByIdAndVersionMethod) == ['2', '-1', '-1', '0', '1']
+            getParameterBindingPaths(updateByIdAndVersionMethod) == ['', '', '', '', '']
+            getParameterPropertyPaths(updateByIdAndVersionMethod) == ["name", "lastUpdatedTime", "version", "id", "version"]
+            getParameterAutoPopulatedProperties(updateByIdAndVersionMethod) == ["", "lastUpdatedTime", "version", "", "version"]
+            getParameterRequiresPreviousPopulatedValueProperties(updateByIdAndVersionMethod) == ["", "", "", "", ""]
             updateByIdAndVersionMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).get()
 
             def updateOneMethod = repository.findPossibleMethods("update").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
-            def updateOneQuery = updateOneMethod.stringValue(Query).get()
 
         then:
-            updateOneQuery == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
-            updateOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["name", "lastUpdatedTime", "version", "id", ''] as String[]
-            updateOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", "", "", "version"] as String[]
+            getQuery(updateOneMethod) == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
+            getParameterBindingIndexes(updateOneMethod) == ['-1', '-1', '-1', '-1', '-1']
+            getParameterBindingPaths(updateOneMethod) == ['', '', '', '', '']
+            getParameterPropertyPaths(updateOneMethod) == ["name", "lastUpdatedTime", "version", "id", "version"]
+            getParameterAutoPopulatedProperties(updateOneMethod) == ["", "lastUpdatedTime", "version", "", "version"]
+            getParameterRequiresPreviousPopulatedValueProperties(updateOneMethod) == ["", "", "", "", "version"]
             updateOneMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def updateStudentMethod1 = repository.findPossibleMethods("updateStudent1").findFirst().get()
-            def updateStudentQuery1 = updateStudentMethod1.stringValue(Query).get()
 
         then:
-            updateStudentQuery1 == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
-            updateStudentMethod1.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', '', '', '', ''] as String[]
-            updateStudentMethod1.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['2', '-1', '-1', '0', "1"] as String[]
-            updateStudentMethod1.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["", "lastUpdatedTime", "version", "", ""] as String[]
-            updateStudentMethod1.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", "", "", ""] as String[]
-            updateStudentMethod1.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES) == ["-1", "-1", "1", "-1", "-1"] as String[]
+            getQuery(updateStudentMethod1) == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
+            getParameterBindingIndexes(updateStudentMethod1) == ['2', '-1', '-1', '0', "1"]
+            getParameterBindingPaths(updateStudentMethod1) == ['', '', '', '', '']
+            getParameterPropertyPaths(updateStudentMethod1) == ["name", "lastUpdatedTime", "version", "id", "version"]
+            getParameterAutoPopulatedProperties(updateStudentMethod1) == ["", "lastUpdatedTime", "version", "", "version"]
+            getParameterRequiresPreviousPopulatedValueProperties(updateStudentMethod1) == ["", "", "", "", ""]
             updateStudentMethod1.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def updateStudentMethod2 = repository.findPossibleMethods("updateStudent2").findFirst().get()
-            def updateStudentQuery2 = updateStudentMethod2.stringValue(Query).get()
 
         then:
-            updateStudentQuery2 == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
-            updateStudentMethod2.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', "", "", "", ""] as String[]
-            updateStudentMethod2.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['2', '-1', '-1', '0', "1"] as String[]
-            updateStudentMethod2.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["", "lastUpdatedTime", "version", "", ""] as String[]
-            updateStudentMethod2.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES) == ["-1", "-1", "1", "-1", "-1"] as String[]
+            getQuery(updateStudentMethod2) == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
+            getParameterBindingIndexes(updateStudentMethod2) == ['2', '-1', '-1', '0', "1"]
+            getParameterBindingPaths(updateStudentMethod2) == ['', '', '', '', '']
+            getParameterPropertyPaths(updateStudentMethod2) == ["name", "lastUpdatedTime", "version", "id", "version"]
+            getParameterAutoPopulatedProperties(updateStudentMethod2) == ["", "lastUpdatedTime", "version", "", "version"]
+            getParameterRequiresPreviousPopulatedValueProperties(updateStudentMethod2) == ["", "", "", "", ""]
             updateStudentMethod2.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def updateStudentMethod3 = repository.findPossibleMethods("updateStudent3").findFirst().get()
-            def updateStudentQuery3 = updateStudentMethod3.stringValue(Query).get()
 
         then:
-            updateStudentQuery3 == 'UPDATE `student` SET `name`=?,`last_updated_time`=? WHERE (`id` = ?)'
-            updateStudentMethod3.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', "", ""] as String[]
-            updateStudentMethod3.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['1', '-1', '0'] as String[]
-            updateStudentMethod3.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["", "lastUpdatedTime", ""] as String[]
-            updateStudentMethod3.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", ""] as String[]
-            updateStudentMethod3.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES) == ["-1", "-1", "-1"] as String[]
+            getQuery(updateStudentMethod3) == 'UPDATE `student` SET `name`=?,`last_updated_time`=? WHERE (`id` = ?)'
+            getParameterBindingIndexes(updateStudentMethod3) == ['1', '-1', '0']
+            getParameterBindingPaths(updateStudentMethod3) == ['', '', '']
+            getParameterPropertyPaths(updateStudentMethod3) == ["name", "lastUpdatedTime", "id"]
+            getParameterAutoPopulatedProperties(updateStudentMethod3) == ["", "lastUpdatedTime", ""]
+            getParameterRequiresPreviousPopulatedValueProperties(updateStudentMethod3) == ["", "", ""]
             !updateStudentMethod3.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).isPresent()
 
         when:
             def updateByStudentMethod = repository.findPossibleMethods("updateById").findFirst().get()
-            def updateByStudentQuery = updateByStudentMethod.stringValue(Query).get()
 
         then:
-            updateByStudentQuery == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
-            updateByStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ['', "", "", "", ""] as String[]
-            updateByStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['2', '-1', '-1', '0', "1"] as String[]
-            updateByStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PROPERTY_PATHS) == ["", "lastUpdatedTime", "version", "", ""] as String[]
-            updateByStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "", "", "", ""] as String[]
-            updateByStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_INDEXES) == ["-1", "-1", "1", "-1", "-1"] as String[]
+            getQuery(updateByStudentMethod) == 'UPDATE `student` SET `name`=?,`last_updated_time`=?,`version`=? WHERE (`id` = ? AND `version` = ?)'
+            getParameterBindingIndexes(updateByStudentMethod) == ['2', '-1', '-1', '0', "1"]
+            getParameterBindingPaths(updateByStudentMethod) == ['', "", "", "", ""]
+            getParameterPropertyPaths(updateByStudentMethod) == ["name", "lastUpdatedTime", "version", "id", "version"]
+            getParameterAutoPopulatedProperties(updateByStudentMethod) == ["", "lastUpdatedTime", "version", "", "version"]
+            getParameterRequiresPreviousPopulatedValueProperties(updateByStudentMethod) == ["", "", "", "", ""]
             updateByStudentMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def deleteOneMethod = repository.findPossibleMethods("delete").filter({ it -> it.getArguments().size() == 1 }).findFirst().get()
-            def deleteOneQuery = deleteOneMethod.stringValue(Query).get()
 
         then:
-            deleteOneQuery == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ?)'
-            deleteOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["id", ''] as String[]
-            deleteOneMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS) == ["", "version"] as String[]
+            getQuery(deleteOneMethod) == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ?)'
+            getParameterBindingIndexes(deleteOneMethod) == ["-1", "-1"]
+            getParameterBindingPaths(deleteOneMethod) == ['', ""]
+            getParameterPropertyPaths(deleteOneMethod) == [ "id", "version"]
             deleteOneMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def deleteStudentMethod = repository.findPossibleMethods("delete").filter({ it -> it.getArguments().size() > 1 }).findFirst().get()
-            def deleteStudentQuery = deleteStudentMethod.stringValue(Query).get()
 
         then:
-            deleteStudentQuery == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ? AND `name` = ?)'
-            deleteStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", "", ""] as String[]
-            deleteStudentMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['0', '1', '2'] as String[]
+            getQuery(deleteStudentMethod) == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ? AND `name` = ?)'
+            getParameterBindingIndexes(deleteStudentMethod) == ['0', '1', '2']
+            getParameterBindingPaths(deleteStudentMethod) == ['', "", ""]
+            getParameterPropertyPaths(deleteStudentMethod) == [ "id", "version", "name"]
             deleteStudentMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
 
         when:
             def deleteByIdAndVersionAndNameMethod = repository.findPossibleMethods("deleteByIdAndVersionAndName").findFirst().get()
-            def deleteByIdAndVersionAndNameQuery = deleteStudentMethod.stringValue(Query).get()
 
         then:
-            deleteByIdAndVersionAndNameQuery == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ? AND `name` = ?)'
-            deleteByIdAndVersionAndNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == ["", "", ""] as String[]
-            deleteByIdAndVersionAndNameMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == ['0', '1', '2'] as String[]
+            getQuery(deleteByIdAndVersionAndNameMethod) == 'DELETE  FROM `student`  WHERE (`id` = ? AND `version` = ? AND `name` = ?)'
+            getParameterBindingIndexes(deleteByIdAndVersionAndNameMethod) == ['0', '1', '2']
+            getParameterBindingPaths(deleteByIdAndVersionAndNameMethod) == ['', "", ""]
+            getParameterPropertyPaths(deleteByIdAndVersionAndNameMethod) == [ "id", "version", "name"]
             deleteByIdAndVersionAndNameMethod.booleanValue(DataMethod, DataMethod.META_MEMBER_OPTIMISTIC_LOCK)
     }
 }

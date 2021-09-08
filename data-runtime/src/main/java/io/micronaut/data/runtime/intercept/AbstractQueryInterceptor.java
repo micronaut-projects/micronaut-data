@@ -43,6 +43,7 @@ import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.intercept.annotation.DataMethodQueryParameter;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Pageable;
@@ -62,15 +63,16 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.transaction.TransactionDefinition;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -87,11 +89,12 @@ import java.util.stream.Collectors;
 import static io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PAGE_SIZE;
 
 /**
- * Abstract interceptor that executes a {@link io.micronaut.data.annotation.Query}.
+ * Abstract interceptor that executes a {@link Query}.
+ *
  * @param <T> The declaring type
  * @param <R> The return type
- * @since 1.0
  * @author graemerocher
+ * @since 1.0
  */
 public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<T, R> {
     private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
@@ -102,6 +105,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default constructor.
+     *
      * @param operations The operations
      */
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
@@ -153,7 +157,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Prepares a query for the given context.
      *
-     * @param key The method key
+     * @param key     The method key
      * @param context The context
      * @return The query
      */
@@ -164,9 +168,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Prepares a query for the given context.
      *
-     * @param <RT> The result generic type
-     * @param methodKey The method key
-     * @param context The context
+     * @param <RT>       The result generic type
+     * @param methodKey  The method key
+     * @param context    The context
      * @param resultType The result type
      * @return The query
      */
@@ -212,7 +216,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     resultType,
                     rootEntity,
                     query,
-                    DataMethod.META_MEMBER_PARAMETER_BINDING,
                     false
             );
             queries.put(methodKey, storedQuery);
@@ -224,7 +227,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Prepares a query for the given context.
      *
      * @param methodKey The method key
-     * @param context The context
+     * @param context   The context
      * @return The query
      */
     protected final PreparedQuery<?, Number> prepareCountQuery(RepositoryMethodKey methodKey, @NonNull MethodInvocationContext<T, R> context) {
@@ -242,7 +245,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     Long.class,
                     rootEntity,
                     query,
-                    DataMethod.META_MEMBER_PARAMETER_BINDING,
                     true
             );
             countQueries.put(methodKey, storedQuery);
@@ -262,12 +264,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Obtains the root entity or throws an exception if it not available.
+     *
      * @param context The context
+     * @param <E> The entity type
      * @return The root entity type
      * @throws IllegalStateException If the root entity is unavailable
      */
     @NonNull
-    protected Class<?> getRequiredRootEntity(MethodInvocationContext context) {
+    protected <E> Class<E> getRequiredRootEntity(MethodInvocationContext context) {
         Class aClass = context.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY).orElse(null);
         if (aClass != null) {
             return aClass;
@@ -286,9 +290,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Retrieve an entity parameter value in role.
+     *
      * @param context The context
-     * @param type The type
-     * @param <RT> The generic type
+     * @param type    The type
+     * @param <RT>    The generic type
      * @return An result
      */
     protected <RT> RT getEntityParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
@@ -297,9 +302,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Retrieve an entities parameter value in role.
+     *
      * @param context The context
-     * @param type The type
-     * @param <RT> The generic type
+     * @param type    The type
+     * @param <RT>    The generic type
      * @return An result
      */
     protected <RT> Iterable<RT> getEntitiesParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
@@ -308,9 +314,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Find an entity parameter value in role.
+     *
      * @param context The context
-     * @param type The type
-     * @param <RT> The generic type
+     * @param type    The type
+     * @param <RT>    The generic type
      * @return An result
      */
     protected <RT> Optional<RT> findEntityParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
@@ -319,9 +326,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Fid an entities parameter value in role.
+     *
      * @param context The context
-     * @param type The type
-     * @param <RT> The generic type
+     * @param type    The type
+     * @param <RT>    The generic type
      * @return An result
      */
     protected <RT> Optional<Iterable<RT>> findEntitiesParameter(MethodInvocationContext<?, ?> context, @NonNull Class<RT> type) {
@@ -331,10 +339,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Retrieve a parameter in the given role for the given type.
+     *
      * @param context The context
-     * @param role The role
-     * @param type The type
-     * @param <RT> The generic type
+     * @param role    The role
+     * @param type    The type
+     * @param <RT>    The generic type
      * @return An result
      */
     private <RT> RT getRequiredParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
@@ -343,10 +352,11 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Retrieve a parameter in the given role for the given type.
+     *
      * @param context The context
-     * @param role The role
-     * @param type The type
-     * @param <RT> The generic type
+     * @param role    The role
+     * @param type    The type
+     * @param <RT>    The generic type
      * @return An optional result
      */
     private <RT> Optional<RT> getParameterInRole(MethodInvocationContext<?, ?> context, @NonNull String role, @NonNull Class<RT> type) {
@@ -372,6 +382,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Resolves the {@link Pageable} for the given context.
+     *
      * @param context The pageable
      * @return The pageable or null
      */
@@ -400,6 +411,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Return whether the metadata indicates the instance is nullable.
+     *
      * @param metadata The metadata
      * @return True if it is nullable
      */
@@ -412,10 +424,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Looks up the entity to persist from the execution context, or throws an exception.
+     *
      * @param context The context
      * @return The entity
      */
-    protected @NonNull Object getRequiredEntity(MethodInvocationContext<T, ?> context) {
+    protected @NonNull
+    Object getRequiredEntity(MethodInvocationContext<T, ?> context) {
         String entityParam = context.stringValue(DATA_METHOD_ANN_NAME, TypeRole.ENTITY)
                 .orElseThrow(() -> new IllegalStateException("No entity parameter specified"));
 
@@ -479,12 +493,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Instantiate the given entity for the given parameter values.
      *
-     * @param rootEntity The entity
+     * @param rootEntity      The entity
      * @param parameterValues The parameter values
      * @return The entity
      * @throws IllegalArgumentException if the entity cannot be instantiated due to an illegal argument
      */
-    protected @NonNull Object instantiateEntity(@NonNull Class<?> rootEntity, @NonNull Map<String, Object> parameterValues) {
+    protected @NonNull
+    Object instantiateEntity(@NonNull Class<?> rootEntity, @NonNull Map<String, Object> parameterValues) {
         PersistentEntity entity = operations.getEntity(rootEntity);
         BeanIntrospection<?> introspection = BeanIntrospection.getIntrospection(rootEntity);
         Argument<?>[] constructorArguments = introspection.getConstructorArguments();
@@ -536,12 +551,14 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Convert a number argument if necessary.
-     * @param number The number
+     *
+     * @param number   The number
      * @param argument The argument
      * @return The result
      */
     @Deprecated
-    protected @Nullable Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
+    protected @Nullable
+    Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
         Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
         Class<?> type = firstTypeVar.getType();
         if (type == Object.class || type == Void.class) {
@@ -560,11 +577,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Get the paged query for the given context.
+     *
      * @param context The context
-     * @param <E> The entity type
+     * @param <E>     The entity type
      * @return The paged query
      */
-    protected @NonNull <E> PagedQuery<E> getPagedQuery(@NonNull MethodInvocationContext context) {
+    protected @NonNull
+    <E> PagedQuery<E> getPagedQuery(@NonNull MethodInvocationContext context) {
         @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
         Pageable pageable = getPageable(context);
 
@@ -573,32 +592,37 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Get the insert batch operation for the given context.
-     * @param context The context
+     *
+     * @param context  The context
      * @param iterable The iterable
-     * @param <E> The entity type
+     * @param <E>      The entity type
      * @return The paged query
      */
-    protected @NonNull <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, @NonNull Iterable<E> iterable) {
+    protected @NonNull
+    <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, @NonNull Iterable<E> iterable) {
         @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
         return getInsertBatchOperation(context, rootEntity, iterable);
     }
 
     /**
      * Get the insert batch operation for the given context.
-     * @param <E> The entity type
-     * @param context The context
+     *
+     * @param <E>        The entity type
+     * @param context    The context
      * @param rootEntity The root entity
-     * @param iterable The iterable
+     * @param iterable   The iterable
      * @return The paged query
      */
-    protected @NonNull <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
+    protected @NonNull
+    <E> InsertBatchOperation<E> getInsertBatchOperation(@NonNull MethodInvocationContext context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
         return new DefaultInsertBatchOperation<>(context, rootEntity, iterable);
     }
 
     /**
      * Get the batch operation for the given context.
+     *
      * @param context The context
-     * @param <E> The entity type
+     * @param <E>     The entity type
      * @return The paged query
      */
     @SuppressWarnings("unchecked")
@@ -609,8 +633,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Get the batch operation for the given context.
+     *
      * @param context The context
-     * @param <E> The entity type
+     * @param <E>     The entity type
      * @return The paged query
      */
     @SuppressWarnings("unchecked")
@@ -620,9 +645,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Get the batch operation for the given context.
+     *
      * @param context The context
-     * @param entity The entity instance
-     * @param <E> The entity type
+     * @param entity  The entity instance
+     * @param <E>     The entity type
      * @return The paged query
      */
     @SuppressWarnings("unchecked")
@@ -632,21 +658,24 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Get the update all batch operation for the given context.
-     * @param <E> The entity type
+     *
+     * @param <E>        The entity type
      * @param rootEntity The root entitry
-     * @param context The context
-     * @param iterable The iterable
+     * @param context    The context
+     * @param iterable   The iterable
      * @return The paged query
      */
-    protected @NonNull <E> UpdateBatchOperation<E> getUpdateAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
+    protected @NonNull
+    <E> UpdateBatchOperation<E> getUpdateAllBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
         return new DefaultUpdateBatchOperation<>(context, rootEntity, iterable);
     }
 
     /**
      * Get the delete operation for the given context.
+     *
      * @param context The context
-     * @param entity The entity
-     * @param <E> The entity type
+     * @param entity  The entity
+     * @param <E>     The entity type
      * @return The paged query
      */
     protected <E> DeleteOperation<E> getDeleteOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull E entity) {
@@ -655,33 +684,38 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Get the delete batch operation for the given context.
-     * @param context The context
+     *
+     * @param context  The context
      * @param iterable The iterable
-     * @param <E> The entity type
+     * @param <E>      The entity type
      * @return The paged query
      */
-    protected @NonNull <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull Iterable<E> iterable) {
+    protected @NonNull
+    <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, @NonNull Iterable<E> iterable) {
         @SuppressWarnings("unchecked") Class<E> rootEntity = (Class<E>) getRequiredRootEntity(context);
         return getDeleteBatchOperation(context, rootEntity, iterable);
     }
 
     /**
      * Get the delete batch operation for the given context.
-     * @param <E> The entity type
-     * @param context The context
+     *
+     * @param <E>        The entity type
+     * @param context    The context
      * @param rootEntity The root entity
-     * @param iterable The iterable
+     * @param iterable   The iterable
      * @return The paged query
      */
-    protected @NonNull <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
+    protected @NonNull
+    <E> DeleteBatchOperation<E> getDeleteBatchOperation(@NonNull MethodInvocationContext<T, ?> context, Class<E> rootEntity, @NonNull Iterable<E> iterable) {
         return new DefaultDeleteBatchOperation<>(context, rootEntity, iterable);
     }
 
     /**
      * Get the batch operation for the given context.
+     *
      * @param context The context
-     * @param entity The entity
-     * @param <E> The entity type
+     * @param entity  The entity
+     * @param <E>     The entity type
      * @return The paged query
      */
     protected <E> InsertOperation<E> getInsertOperation(@NonNull MethodInvocationContext<T, ?> context, E entity) {
@@ -690,6 +724,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Validates null arguments ensuring no argument is null unless declared so.
+     *
      * @param context The context
      */
     protected final void validateNullArguments(MethodInvocationContext<T, R> context) {
@@ -723,6 +758,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Is the type a number.
+     *
      * @param type The type
      * @return True if is a number
      */
@@ -740,6 +776,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default implementation of {@link InsertOperation}.
+     *
      * @param <E> The entity type
      */
     private final class DefaultInsertOperation<E> extends AbstractEntityOperation<E> implements InsertOperation<E> {
@@ -759,16 +796,18 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default implementation of {@link DeleteOperation}.
+     *
      * @param <E> The entity type
      */
     private class DefaultDeleteOperation<E> extends AbstractEntityInstanceOperation<E> implements DeleteOperation<E> {
-        DefaultDeleteOperation(MethodInvocationContext<?, ?>  method, E entity) {
+        DefaultDeleteOperation(MethodInvocationContext<?, ?> method, E entity) {
             super(method, entity);
         }
     }
 
     /**
      * Default implementation of {@link UpdateOperation}.
+     *
      * @param <E> The entity type
      */
     private final class DefaultUpdateOperation<E> extends AbstractEntityOperation<E> implements UpdateOperation<E> {
@@ -816,6 +855,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public StoredQuery<E, ?> getStoredQuery() {
             if (storedQuery == null) {
+                String queryString = method.stringValue(Query.class).orElse(null);
+                if (queryString == null) {
+                    return null;
+                }
                 storedQuery = findStoreQuery(method);
             }
             return storedQuery;
@@ -847,6 +890,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default implementation of {@link InsertBatchOperation}.
+     *
      * @param <E> The entity type
      */
     private class DefaultInsertBatchOperation<E> extends DefaultBatchOperation<E> implements InsertBatchOperation<E> {
@@ -866,6 +910,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default implementation of {@link DeleteBatchOperation}.
+     *
      * @param <E> The entity type
      */
     private class DefaultDeleteBatchOperation<E> extends DefaultBatchOperation<E> implements DeleteBatchOperation<E> {
@@ -890,6 +935,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default implementation of {@link UpdateBatchOperation}.
+     *
      * @param <E> The entity type
      */
     private class DefaultUpdateBatchOperation<E> extends DefaultBatchOperation<E> implements UpdateBatchOperation<E> {
@@ -910,6 +956,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
     /**
      * Default implementation of {@link BatchOperation}.
+     *
      * @param <E> The entity type
      */
     private class DefaultBatchOperation<E> extends AbstractEntityOperation<E> implements BatchOperation<E> {
@@ -935,14 +982,16 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private static final class DefaultPagedQuery<E> implements PagedQuery<E> {
 
         private final ExecutableMethod<?, ?> method;
-        private final @NonNull Class<E> rootEntity;
+        private final @NonNull
+        Class<E> rootEntity;
         private final Pageable pageable;
 
         /**
          * Default constructor.
-         * @param method The method
+         *
+         * @param method     The method
          * @param rootEntity The root entity
-         * @param pageable The pageable
+         * @param pageable   The pageable
          */
         DefaultPagedQuery(ExecutableMethod<?, ?> method, @NonNull Class<E> rootEntity, Pageable pageable) {
             this.method = method;
@@ -977,16 +1026,16 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Represents a prepared query.
      *
-     * @param <E> The entity type
+     * @param <E>  The entity type
      * @param <RT> The result type
      */
     private final class DefaultStoredQuery<E, RT> extends DefaultStoredDataOperation<RT> implements StoredQuery<E, RT> {
-        private final @NonNull Class<RT> resultType;
-        private final @NonNull Class<E> rootEntity;
-        private final @NonNull String query;
-        private final @Nullable Map<String, String> parameterBinding;
-        private final @Nullable int[] indexedParameterBinding;
-        private final @Nullable String[] parameterPaths;
+        private final @NonNull
+        Class<RT> resultType;
+        private final @NonNull
+        Class<E> rootEntity;
+        private final @NonNull
+        String query;
         private final ExecutableMethod<?, ?> method;
         private final boolean isDto;
         private final boolean isOptimisticLock;
@@ -996,29 +1045,25 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         private final AnnotationMetadata annotationMetadata;
         private final boolean isCount;
         private final DataType[] indexedDataTypes;
-        private final String[] parameterNames;
-        private final String[] parameterAutoPopulatedPropertyPaths;
-        private final String[] parameterAutoPopulatedPreviousPropertyPaths;
-        private final int[] parameterAutoPopulatedPreviousPropertyIndexes;
         private final boolean hasResultConsumer;
         private Map<String, Object> queryHints;
         private Set<JoinPath> joinFetchPaths = null;
-        private TransactionDefinition transactionDefinition = null;
+        private final List<StoredQueryParameter> queryParameters;
 
         /**
          * The default constructor.
-         * @param method The target method
+         *
+         * @param method     The target method
          * @param resultType The result type of the query
          * @param rootEntity The root entity of the query
-         * @param query The query itself
-         * @param isCount Is the query a count query
+         * @param query      The query itself
+         * @param isCount    Is the query a count query
          */
         DefaultStoredQuery(
                 @NonNull ExecutableMethod<?, ?> method,
                 @NonNull Class<RT> resultType,
                 @NonNull Class<E> rootEntity,
                 @NonNull String query,
-                @Nullable String parameterBindingMember,
                 boolean isCount) {
             super(method);
             this.resultType = ReflectionUtils.getWrapperType(resultType);
@@ -1030,8 +1075,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     .classValue(RepositoryConfiguration.class, "queryBuilder")
                     .map(c -> c == SqlQueryBuilder.class).orElse(false);
             this.hasPageable = method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.PAGEABLE).isPresent() ||
-                                    method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
-                                    method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
+                    method.stringValue(DATA_METHOD_ANN_NAME, TypeRole.SORT).isPresent() ||
+                    method.intValue(DATA_METHOD_ANN_NAME, META_MEMBER_PAGE_SIZE).orElse(-1) > -1;
 
             if (isCount) {
                 this.query = method.stringValue(Query.class, DataMethod.META_MEMBER_RAW_COUNT_QUERY).orElse(query);
@@ -1044,24 +1089,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
             this.isCount = isCount;
             AnnotationValue<DataMethod> annotation = annotationMetadata.getAnnotation(DataMethod.class);
-            if (parameterBindingMember != null && annotation != null) {
-                this.indexedParameterBinding = annotation.get(
-                        parameterBindingMember, int[].class).orElse(EMPTY_INT_ARRAY);
-                this.parameterBinding = null;
-                this.parameterPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "Paths"));
-                this.parameterNames = annotation.stringValues(parameterBindingMember + "Names");
-                this.parameterAutoPopulatedPropertyPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "AutoPopulatedPaths"));
-                this.parameterAutoPopulatedPreviousPropertyPaths = removeEmpty(annotation.stringValues(parameterBindingMember + "AutoPopulatedPreviousPaths"));
-                this.parameterAutoPopulatedPreviousPropertyIndexes = annotation.get(parameterBindingMember + "AutoPopulatedPrevious", int[].class).orElse(EMPTY_INT_ARRAY);
-            } else {
-                this.indexedParameterBinding = EMPTY_INT_ARRAY;
-                this.parameterPaths = null;
-                this.parameterBinding = null;
-                this.parameterNames = null;
-                this.parameterAutoPopulatedPropertyPaths = null;
-                this.parameterAutoPopulatedPreviousPropertyPaths = null;
-                this.parameterAutoPopulatedPreviousPropertyIndexes = null;
-            }
             if (method.hasAnnotation(QueryHint.class)) {
                 List<AnnotationValue<QueryHint>> values = method.getAnnotationValuesByType(QueryHint.class);
                 this.queryHints = new HashMap<>(values.size());
@@ -1089,31 +1116,52 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             } else {
                 this.indexedDataTypes = null;
             }
+
+            if (annotation == null) {
+                queryParameters = Collections.emptyList();
+            } else {
+                List<AnnotationValue<DataMethodQueryParameter>> params = annotation.getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter.class);
+                List<StoredQueryParameter> queryParameters = new ArrayList<>(params.size());
+                for (AnnotationValue<DataMethodQueryParameter> av : params) {
+                    String[] propertyPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PROPERTY_PATH);
+                    if (propertyPath.length == 0) {
+                        propertyPath = av.stringValue(DataMethodQueryParameter.META_MEMBER_PROPERTY)
+                                .map(property -> new String[]{property})
+                                .orElse(null);
+                    }
+                    String[] parameterBindingPath = av.stringValues(DataMethodQueryParameter.META_MEMBER_PARAMETER_BINDING_PATH);
+                    if (parameterBindingPath.length == 0) {
+                        parameterBindingPath = null;
+                    }
+                    queryParameters.add(
+                            new StoredQueryParameter(
+                                    av.stringValue(DataMethodQueryParameter.META_MEMBER_NAME).orElse(null),
+                                    isNumericPlaceHolder ? av.enumValue(DataMethodQueryParameter.META_MEMBER_DATA_TYPE, DataType.class).orElse(DataType.OBJECT) : null,
+                                    av.intValue(DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX).orElse(-1),
+                                    parameterBindingPath,
+                                    propertyPath,
+                                    av.booleanValue(DataMethodQueryParameter.META_MEMBER_AUTO_POPULATED).orElse(false),
+                                    av.booleanValue(DataMethodQueryParameter.META_MEMBER_REQUIRES_PREVIOUS_POPULATED_VALUES).orElse(false),
+                                    av.classValue(DataMethodQueryParameter.META_MEMBER_CONVERTER).orElse(null),
+                                    queryParameters
+                            ));
+                }
+                this.queryParameters = queryParameters;
+            }
         }
 
-        private String[] removeEmpty(String[] strArray) {
-            for (int i = 0; i < strArray.length; i++) {
-                String s = strArray[i];
-                if (StringUtils.isEmpty(s)) {
-                    strArray[i] = null;
-                }
-            }
-            return strArray;
+        @Override
+        public List<QueryParameterBinding> getQueryBindings() {
+            return (List) queryParameters;
         }
 
         @Override
         public String[] getParameterNames() {
-            if (parameterNames == null) {
-                return StringUtils.EMPTY_STRING_ARRAY;
-            }
-            return this.parameterNames;
+            return StringUtils.EMPTY_STRING_ARRAY;
         }
 
         @Override
         public String[] getIndexedParameterPaths() {
-            if (parameterPaths != null) {
-                return parameterPaths;
-            }
             return StringUtils.EMPTY_STRING_ARRAY;
         }
 
@@ -1169,9 +1217,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @NonNull
         @Override
         public int[] getIndexedParameterBinding() {
-            if (this.indexedParameterBinding != null) {
-                return this.indexedParameterBinding;
-            }
             return EMPTY_INT_ARRAY;
         }
 
@@ -1191,6 +1236,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         /**
          * Is this a raw SQL query.
+         *
          * @return The raw sql query.
          */
         @Override
@@ -1222,7 +1268,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 return DataType.LONG;
             }
             return annotationMetadata.enumValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_RESULT_DATA_TYPE, DataType.class)
-                                     .orElse(DataType.OBJECT);
+                    .orElse(DataType.OBJECT);
         }
 
         /**
@@ -1246,6 +1292,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         /**
          * Does the query contain an in expression.
+         *
          * @return True if it does
          */
         @Override
@@ -1283,25 +1330,22 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @NonNull
         @Override
         public Map<String, String> getParameterBinding() {
-            if (parameterBinding == null) {
-                return Collections.emptyMap();
-            }
-            return parameterBinding;
+            return Collections.emptyMap();
         }
 
         @Override
         public String[] getIndexedParameterAutoPopulatedPropertyPaths() {
-            return parameterAutoPopulatedPropertyPaths;
+            return StringUtils.EMPTY_STRING_ARRAY;
         }
 
         @Override
         public int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
-            return parameterAutoPopulatedPreviousPropertyIndexes;
+            return new int[0];
         }
 
         @Override
         public String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
-            return parameterAutoPopulatedPreviousPropertyPaths;
+            return StringUtils.EMPTY_STRING_ARRAY;
         }
 
         @Override
@@ -1331,10 +1375,10 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     /**
      * Represents a prepared query.
      *
-     * @param <E> The entity type
+     * @param <E>  The entity type
      * @param <RT> The result type
      */
-    private final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements PreparedQuery<E, RT> {
+    protected final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperation<RT> implements PreparedQuery<E, RT> {
         private final Pageable pageable;
         private final StoredQuery<E, RT> storedQuery;
         private final String query;
@@ -1344,13 +1388,13 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         /**
          * The default constructor.
          *
-         * @param context The execution context
-         * @param storedQuery The stored query
-         * @param finalQuery The final query
-         * @param pageable The pageable
+         * @param context       The execution context
+         * @param storedQuery   The stored query
+         * @param finalQuery    The final query
+         * @param pageable      The pageable
          * @param dtoProjection Whether the prepared query is a dto projection
          */
-        DefaultPreparedQuery(
+        public DefaultPreparedQuery(
                 MethodInvocationContext<T, R> context,
                 StoredQuery<E, RT> storedQuery,
                 String finalQuery,
@@ -1365,13 +1409,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
 
         @Override
-        public String[] getParameterNames() {
-            return storedQuery.getParameterNames();
-        }
-
-        @Override
-        public String[] getIndexedParameterPaths() {
-            return storedQuery.getIndexedParameterPaths();
+        public List<QueryParameterBinding> getQueryBindings() {
+            return storedQuery.getQueryBindings();
         }
 
         @Override
@@ -1386,12 +1425,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
 
         @NonNull
         @Override
-        public int[] getIndexedParameterBinding() {
-            return storedQuery.getIndexedParameterBinding();
-        }
-
-        @NonNull
-        @Override
         public Set<JoinPath> getJoinFetchPaths() {
             return storedQuery.getJoinFetchPaths();
         }
@@ -1399,12 +1432,6 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @Override
         public boolean isSingleResult() {
             return storedQuery.isSingleResult();
-        }
-
-        @NonNull
-        @Override
-        public DataType[] getIndexedParameterTypes() {
-            return storedQuery.getIndexedParameterTypes();
         }
 
         @NonNull
@@ -1421,7 +1448,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         @NonNull
         @Override
         public Map<String, Object> getParameterValues() {
-            return buildParameterValues(context, this);
+            return Collections.emptyMap();
         }
 
         @Override
@@ -1563,4 +1590,107 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
         }
     }
 
+    private static final class StoredQueryParameter implements QueryParameterBinding {
+
+        private final String name;
+        private final DataType dataType;
+        private final int parameterIndex;
+        private final String[] parameterBindingPath;
+        private final String[] propertyPath;
+        private final boolean autoPopulated;
+        private final boolean requiresPreviousPopulatedValue;
+        private final Class<?> parameterConverterClass;
+        private final List<? extends QueryParameterBinding> all;
+
+        private boolean previousInitialized;
+        private QueryParameterBinding previousPopulatedValueParameter;
+
+        private StoredQueryParameter(String name,
+                                     DataType dataType,
+                                     int parameterIndex,
+                                     String[] parameterBindingPath,
+                                     String[] propertyPath,
+                                     boolean autoPopulated,
+                                     boolean requiresPreviousPopulatedValue,
+                                     Class<?> parameterConverterClass,
+                                     List<? extends QueryParameterBinding> all) {
+            this.name = name;
+            this.dataType = dataType;
+            this.parameterIndex = parameterIndex;
+            this.parameterBindingPath = parameterBindingPath;
+            this.propertyPath = propertyPath;
+            this.autoPopulated = autoPopulated;
+            this.requiresPreviousPopulatedValue = requiresPreviousPopulatedValue;
+            this.parameterConverterClass = parameterConverterClass;
+            this.all = all;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public DataType getDataType() {
+            return dataType;
+        }
+
+        @Override
+        public Class<?> getParameterConverterClass() {
+            return parameterConverterClass;
+        }
+
+        @Override
+        public int getParameterIndex() {
+            return parameterIndex;
+        }
+
+        @Override
+        public String[] getParameterBindingPath() {
+            return parameterBindingPath;
+        }
+
+        @Override
+        public String[] getPropertyPath() {
+            return propertyPath;
+        }
+
+        @Override
+        public boolean isAutoPopulated() {
+            return autoPopulated;
+        }
+
+        @Override
+        public boolean isRequiresPreviousPopulatedValue() {
+            return requiresPreviousPopulatedValue;
+        }
+
+        @Override
+        public QueryParameterBinding getPreviousPopulatedValueParameter() {
+            if (!previousInitialized) {
+                for (QueryParameterBinding it : all) {
+                    if (it != this && it.getParameterIndex() != -1 && Arrays.equals(propertyPath, it.getPropertyPath())) {
+                        previousPopulatedValueParameter = it;
+                        break;
+                    }
+                }
+                previousInitialized = true;
+            }
+            return previousPopulatedValueParameter;
+        }
+
+        @Override
+        public String toString() {
+            return "StoredQueryParameter{" +
+                    "name='" + name + '\'' +
+                    ", dataType=" + dataType +
+                    ", parameterIndex=" + parameterIndex +
+                    ", parameterBindingPath=" + Arrays.toString(parameterBindingPath) +
+                    ", propertyPath=" + Arrays.toString(propertyPath) +
+                    ", autoPopulated=" + autoPopulated +
+                    ", requiresPreviousPopulatedValue=" + requiresPreviousPopulatedValue +
+                    ", previousPopulatedValueParameter=" + previousPopulatedValueParameter +
+                    '}';
+        }
+    }
 }

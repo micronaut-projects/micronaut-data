@@ -49,6 +49,12 @@ sql:
       sqlInserts: Inserts and Updates
       optimisticLocking: Optimistic locking
       pessimisticLocking: Pessimistic Locking
+    dbcCriteriaSpecifications:
+      title: Respositories with Criteria API
+      criteriaExecuteQuery: Querying
+      criteriaExecuteUpdate: Updating
+      criteriaExecuteDelete: Deleting
+      otherRepositoryVariations: Other repository variations
     sqlMapping:
       title: Mapping Entities
       sqlAnnotations: SQL Annotations

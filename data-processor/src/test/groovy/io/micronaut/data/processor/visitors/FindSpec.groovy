@@ -27,6 +27,7 @@ import io.micronaut.data.model.query.builder.jpa.JpaQueryBuilder
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.writer.BeanDefinitionVisitor
 import spock.lang.Issue
+import spock.lang.Unroll
 
 class FindSpec extends AbstractDataSpec {
 
@@ -388,6 +389,74 @@ interface RestaurantRepository extends CrudRepository<Restaurant, Long> {
 
     }
 
+    void "test top"() {
+        given:
+            def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    List<Book> findTop30OrderByTitle();
+    
+}
+""")
+        when:
+            def method = repository.findPossibleMethods("findTop30OrderByTitle").findFirst().get()
+        then:
+            method.stringValue(Query).get() == 'SELECT book_."id",book_."author_id",book_."title",book_."total_pages",book_."publisher_id",book_."last_updated" FROM "book" book_ ORDER BY book_."title" ASC'
+            method.intValue(DataMethod, DataMethod.META_MEMBER_PAGE_SIZE).getAsInt() == 30
+    }
+
+    void "test project association"() {
+        given:
+            def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends CrudRepository<Book, Long> {
+
+    Author findAuthorById(@Id Long id);
+    
+}
+""")
+        when:
+            def method = repository.findPossibleMethods("findAuthorById").findFirst().get()
+        then:
+            method.stringValue(Query).get() == 'SELECT book_author_."id",book_author_."name",book_author_."nick_name" FROM "book" book_ INNER JOIN "author" book_author_ ON book_."author_id"=book_author_."id" WHERE (book_."id" = ?)'
+    }
+
+    @Unroll
+    void "test projection #projection find"() {
+        given:
+            def repository = buildRepository('test.TestRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect= Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface TestRepository extends CrudRepository<Person, Long> {
+
+    int find${projection}AgeByNameLike(String name);
+    
+}
+""")
+        when:
+            def method = repository.findPossibleMethods("find${projection}AgeByNameLike").findFirst().get()
+        then:
+            method.stringValue(Query).get() == """SELECT ${projection.toUpperCase()}(person_."age") FROM "person" person_ WHERE (person_."name" like ?)"""
+        where:
+            projection << ['Min', 'Max', 'Sum', "Avg"]
+    }
+
     void "test find for update"() {
         given:
         def repository = buildRepository('test.TestRepository', """
@@ -463,7 +532,7 @@ interface TestRepository extends CrudRepository<Book, Long> {
 """)
         then:
         RuntimeException exception = thrown()
-        exception.message.contains("non-existent property: ${nonExistentProperty}")
+        exception.message.contains("For update not supported for current query builder: JpaQueryBuilder")
 
         where:
         returnType | methodName                          | arguments      | nonExistentProperty

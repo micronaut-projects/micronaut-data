@@ -15,8 +15,9 @@
  */
 package io.micronaut.data.annotation
 
-import io.micronaut.data.intercept.annotation.DataMethod
+
 import io.micronaut.data.processor.visitors.AbstractDataSpec
+import io.micronaut.data.processor.visitors.TestUtils
 import io.micronaut.data.tck.entities.Person
 
 class WhereAnnotationSpec extends AbstractDataSpec {
@@ -139,7 +140,7 @@ interface TestRepository extends GenericRepository<Person, Long> {
 ''')
         def method = repository.getRequiredMethod("countByNameLike", String, int.class)
         def query = method.stringValue(Query).get()
-        def parameterBinding = method.getValue(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING, int[].class).get()
+        def parameterBinding = TestUtils.getParameterBindingIndexes(method)
 
         expect:
         query == "SELECT COUNT(person_) FROM $Person.name AS person_ WHERE (person_.name like :p1 AND (age >:p2))"

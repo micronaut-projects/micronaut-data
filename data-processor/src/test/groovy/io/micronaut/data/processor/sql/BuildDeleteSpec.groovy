@@ -15,10 +15,12 @@
  */
 package io.micronaut.data.processor.sql
 
-import io.micronaut.data.annotation.Query
-import io.micronaut.data.intercept.annotation.DataMethod
+
+import io.micronaut.data.model.DataType
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import spock.lang.Unroll
+
+import static io.micronaut.data.processor.visitors.TestUtils.*
 
 class BuildDeleteSpec extends AbstractDataSpec {
 
@@ -46,15 +48,14 @@ ${entity('Movie', [title: String, theLongName: String])}
             def method = repository.findPossibleMethods(methodName).findFirst().get()
 
         expect:
-            method.stringValue(Query, "rawQuery").get() == query
-            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
-            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
-
+            getRawQuery(method) == query
+            getParameterPropertyPaths(method)  == propertyPaths
+            getParameterBindingIndexes(method) == parameterIndexes
 
         where:
-            methodName           | query                               | bindingPaths          | binding
-            'deleteCustom'       | 'DELETE FROM movie WHERE title = ?' | ['title'] as String[] | [] as String[]
-            'deleteCustomSingle' | 'DELETE FROM movie WHERE title = ?' | ['title'] as String[] | [] as String[]
+            methodName           | query                               | propertyPaths         | parameterIndexes
+            'deleteCustom'       | 'DELETE FROM movie WHERE title = ?' | ['title'] as String[] | ['-1'] as String[]
+            'deleteCustomSingle' | 'DELETE FROM movie WHERE title = ?' | ['title'] as String[] | ['-1'] as String[]
     }
 
     @Unroll
@@ -74,14 +75,52 @@ ${entity('Movie', [title: String, theLongName: String])}
             def method = repository.findMethod(methodName, Iterable.class).get()
 
         expect:
-            method.stringValue(Query, "value").get() == query
-            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS) == bindingPaths
-            method.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING) == binding
-
+            getQuery(method) == query
+            getParameterPropertyPaths(method) == propertyPaths
+            getParameterBindingIndexes(method) == parameterIndexes
 
         where:
-            methodName  | query                                       | bindingPaths       | binding
-            'deleteAll' | 'DELETE  FROM `movie`  WHERE (`id` IN (?))' | ['id'] as String[] | [] as String[]
+            methodName  | query                                       | propertyPaths      | parameterIndexes
+            'deleteAll' | 'DELETE  FROM `movie`  WHERE (`id` IN (?))' | ['id'] as String[] | ['-1'] as String[]
+    }
+
+    void "test build delete relation"() {
+        given:
+            def repository = buildRepository('test.BookRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+import io.micronaut.data.tck.entities.Author;
+
+@JdbcRepository(dialect= Dialect.MYSQL)
+@io.micronaut.context.annotation.Executable
+interface BookRepository extends CrudRepository<Book, Long> {
+
+    int deleteByIdAndAuthorId(Long id, Long authorId);
+    
+    @Query("DELETE  FROM `book`  WHERE (`id` = :id AND `author_id` = :authorId)")
+    int deleteAllByIdAndAuthorId(Long id, Long authorId);
+
+}
+""")
+        when:
+            def deleteByIdAndAuthorIdMethod = repository.findPossibleMethods("deleteByIdAndAuthorId").findFirst().get()
+        then:
+            getQuery(deleteByIdAndAuthorIdMethod) == 'DELETE  FROM `book`  WHERE (`id` = ? AND `author_id` = ?)'
+            getParameterBindingIndexes(deleteByIdAndAuthorIdMethod) == ["0", "1"] as String[]
+            getParameterBindingPaths(deleteByIdAndAuthorIdMethod) == ["", ""] as String[]
+            getParameterPropertyPaths(deleteByIdAndAuthorIdMethod) == ["id", "author.id"] as String[]
+            getDataTypes(deleteByIdAndAuthorIdMethod) == [DataType.LONG, DataType.LONG]
+
+        when:
+            def deleteAllByIdAndAuthorIdMethod = repository.findPossibleMethods("deleteAllByIdAndAuthorId").findFirst().get()
+        then:
+            getQuery(deleteAllByIdAndAuthorIdMethod) == 'DELETE  FROM `book`  WHERE (`id` = :id AND `author_id` = :authorId)'
+            getRawQuery(deleteAllByIdAndAuthorIdMethod) == 'DELETE  FROM `book`  WHERE (`id` = ? AND `author_id` = ?)'
+            getParameterBindingIndexes(deleteAllByIdAndAuthorIdMethod) == ["0", "1"] as String[]
+            getParameterBindingPaths(deleteAllByIdAndAuthorIdMethod) == ["", ""] as String[]
+            getParameterPropertyPaths(deleteAllByIdAndAuthorIdMethod) == ["id", ""] as String[]
+            getDataTypes(deleteAllByIdAndAuthorIdMethod) == [DataType.LONG, DataType.LONG]
     }
 
 }

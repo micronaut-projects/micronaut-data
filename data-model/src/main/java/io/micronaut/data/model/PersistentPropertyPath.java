@@ -16,11 +16,13 @@
 package io.micronaut.data.model;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.naming.NamingStrategy;
 
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 /**
  * The property path representation.
@@ -31,7 +33,16 @@ import java.util.Optional;
 public class PersistentPropertyPath {
     private final List<Association> associations;
     private final PersistentProperty property;
-    private final String path;
+    private String path;
+
+    /**
+     * Default constructor.
+     *  @param associations The associations
+     * @param property     The property
+     */
+    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property) {
+        this(associations, property, null);
+    }
 
     /**
      * Default constructor.
@@ -39,7 +50,7 @@ public class PersistentPropertyPath {
      * @param property     The property
      * @param path         The path
      */
-    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property, @NonNull String path) {
+    public PersistentPropertyPath(List<Association> associations, @NonNull PersistentProperty property, @Nullable String path) {
         this.associations = associations;
         this.property = property;
         this.path = path;
@@ -66,6 +77,17 @@ public class PersistentPropertyPath {
      */
     @NonNull
     public String getPath() {
+        if (path == null) {
+            if (associations.isEmpty()) {
+                return property.getName();
+            }
+            StringJoiner joiner = new StringJoiner(".");
+            for (Association association : associations) {
+                joiner.add(association.getName());
+            }
+            joiner.add(property.getName());
+            path = joiner.toString();
+        }
         return path;
     }
 

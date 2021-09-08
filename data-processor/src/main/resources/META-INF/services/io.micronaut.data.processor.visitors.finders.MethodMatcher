@@ -1,0 +1,15 @@
+io.micronaut.data.processor.visitors.finders.spec.FindPageSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.FindAllSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.FindOneSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.CountSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.DeleteAllSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.spec.UpdateAllSpecificationMethodMatcher
+io.micronaut.data.processor.visitors.finders.RawQueryMethodMatcher
+io.micronaut.data.processor.visitors.finders.ExistsMethodMatcher
+io.micronaut.data.processor.visitors.finders.DeleteMethodMatcher
+io.micronaut.data.processor.visitors.finders.FindMethodMatcher
+io.micronaut.data.processor.visitors.finders.CountMethodMatcher
+io.micronaut.data.processor.visitors.finders.ListMethodMatcher
+io.micronaut.data.processor.visitors.finders.UpdateMethodMatcher
+io.micronaut.data.processor.visitors.finders.SaveEntityMethodMatcher
+io.micronaut.data.processor.visitors.finders.SaveOneMethodMatcher

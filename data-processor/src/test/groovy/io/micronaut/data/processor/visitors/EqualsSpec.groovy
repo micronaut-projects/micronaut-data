@@ -40,7 +40,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
 
         then:
         def e = thrown(RuntimeException)
-        e.message.contains('MyInterface.findByNameOrAge(int age,String name). Parameter [int age] of method [findByNameOrAge] is not compatible with property [java.lang.String name] of entity')
+        e.message.contains('MyInterface.findByNameOrAge(int age,String name). Parameter [int age] is not compatible with property [java.lang.String name] of entity')
     }
 
 
@@ -60,6 +60,7 @@ interface MyInterface extends GenericRepository<Person, Long> {
         alias   | method                 | returnType | arguments     | interceptor        | expectedQuery
         alias() | "findByNameIgnoreCase" | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (lower(${alias}.name) = lower(:p1))"
         alias() | "findByName"           | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
+        alias() | "findByNameEquals"      | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
         alias() | "findByNameEqual"      | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
         alias() | "findByNameEquals"     | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name = :p1)"
         alias() | "findByNameNotEquals"  | "Person"   | "String name" | FindOneInterceptor | "SELECT $alias FROM $Person.name AS $alias WHERE (${alias}.name != :p1)"

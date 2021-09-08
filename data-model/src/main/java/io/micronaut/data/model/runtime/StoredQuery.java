@@ -25,6 +25,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.JoinPath;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -52,7 +53,9 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return True if it does
      */
     @Deprecated
-    boolean hasInExpression();
+    default boolean hasInExpression() {
+        return false;
+    }
 
     /**
      * Does the query have a pageable.
@@ -67,6 +70,13 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      */
     @NonNull
     String getQuery();
+
+    /**
+     * The list of query bindings.
+     *
+     * @return the query bindings
+     */
+    List<QueryParameterBinding> getQueryBindings();
 
     /**
      * The query result type. This may differ from the root entity type returned by {@link #getRootEntity()}.
@@ -139,6 +149,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The parameter binding.
      */
     @NonNull
+    @Deprecated
     default Map<String, String> getParameterBinding() {
         return Collections.emptyMap();
     }
@@ -153,6 +164,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @return The indexed values
      * @see #useNumericPlaceholders()
      */
+    @Deprecated
     default @NonNull DataType[] getIndexedParameterTypes() {
         return DataType.EMPTY_DATA_TYPE_ARRAY;
     }
@@ -164,6 +176,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      * @see #useNumericPlaceholders()
      */
     @NonNull
+    @Deprecated
     default int[] getIndexedParameterBinding() {
         return new int[0];
     }
@@ -171,6 +184,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     /**
      * @return The parameter names the case where named parameters are supported
      */
+    @Deprecated
     default String[] getParameterNames() {
         return StringUtils.EMPTY_STRING_ARRAY;
     }
@@ -178,6 +192,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
     /**
      * @return The indexed parameter paths.
      */
+    @Deprecated
     default String[] getIndexedParameterPaths() {
         return StringUtils.EMPTY_STRING_ARRAY;
     }
@@ -207,6 +222,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The auto populated properties.
      */
+    @Deprecated
     default String[] getIndexedParameterAutoPopulatedPropertyPaths() {
         return StringUtils.EMPTY_STRING_ARRAY;
     }
@@ -216,6 +232,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The auto populated properties.
      */
+    @Deprecated
     default String[] getIndexedParameterAutoPopulatedPreviousPropertyPaths() {
         return StringUtils.EMPTY_STRING_ARRAY;
     }
@@ -225,6 +242,7 @@ public interface StoredQuery<E, R> extends Named, StoredDataOperation<R> {
      *
      * @return The auto populated properties.
      */
+    @Deprecated
     default int[] getIndexedParameterAutoPopulatedPreviousPropertyIndexes() {
         return new int[0];
     }

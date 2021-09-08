@@ -141,8 +141,9 @@ class FullNameDto {
         "countByName"      | "CompletionStage<Long>"              | "String name"                  | CountAsyncInterceptor      | Long.name          | false
         "delete"           | "CompletionStage<Integer>"           | "String name"                  | DeleteAllAsyncInterceptor  | Integer.name       | false
         "delete"           | "CompletionStage<Void>"              | "String name"                  | DeleteAllAsyncInterceptor  | Void.name          | false
-        "deleteByName"     | "CompletionStage<Long>"              | "String name"                  | DeleteAllAsyncInterceptor  | void.name          | false
+        "deleteByName"     | "CompletionStage<Long>"              | "String name"                  | DeleteAllAsyncInterceptor  | Long.name          | false
         "existsByName"     | "CompletionStage<Boolean>"           | "String name"                  | ExistsByAsyncInterceptor   | Boolean.name       | false
+        "existsById"       | "CompletionStage<Boolean>"           | "Long id"                      | ExistsByAsyncInterceptor   | Boolean.name       | false
         "findById"         | "CompletionStage<Person>"            | "Long id"                      | FindByIdAsyncInterceptor   | Person.name        | false
         "findFullNameById" | "CompletionStage<FullNameDto>"       | "Long id"                      | FindOneAsyncInterceptor    | 'test.FullNameDto' | true
         "save"             | "CompletionStage<Integer>"           | "Person person"                | SaveEntityAsyncInterceptor | Integer.name       | false
@@ -150,7 +151,7 @@ class FullNameDto {
         "save"             | "CompletionStage<Person>"            | "String name, String publicId" | SaveOneAsyncInterceptor    | Person.name        | false
         "save"             | "CompletionStage<Integer>"           | "String name, String publicId" | SaveOneAsyncInterceptor    | Integer.name       | false
         "save"             | "CompletionStage<List<Person>>"      | "List<Person> entities"        | SaveAllAsyncInterceptor    | Person.name        | false
-        "updateByName"     | "CompletionStage<Long>"              | "String name, int age"         | UpdateAsyncInterceptor     | Person.name        | false
+        "updateByName"     | "CompletionStage<Long>"              | "String name, int age"         | UpdateAsyncInterceptor     | Long.name          | false
         "update"           | "CompletionStage<Void>"              | "@Id Long id, int age"         | UpdateAsyncInterceptor     | Void.name          | false
         "updateAll"        | "CompletionStage<Integer>"           | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Integer.class.name | false
         "updateAll"        | "CompletionStage<List<Person>>"      | "List<Person> entities"        | UpdateAllEntriesAsyncInterceptor | Person.class.name  | false

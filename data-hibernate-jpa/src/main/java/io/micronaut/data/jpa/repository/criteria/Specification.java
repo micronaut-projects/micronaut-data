@@ -33,6 +33,7 @@ import javax.persistence.criteria.Root;
  * @author Sebastian Staudt
  * @author Mark Paluch
  * @author Jens Schauder
+ * @param <T> The entity root type
  * @since 3.1
  */
 public interface Specification<T> {

@@ -83,6 +83,7 @@ import static io.micronaut.data.annotation.GeneratedValue.Type.UUID;
  * @author graemerocher
  * @since 1.0.0
  */
+@SuppressWarnings("FileLength")
 public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements QueryBuilder, SqlQueryConfiguration.DialectConfiguration {
 
     /**
@@ -108,6 +109,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Constructor with annotation metadata.
+     *
      * @param annotationMetadata The annotation metadata
      */
     @Creator
@@ -116,9 +118,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             this.dialect = annotationMetadata
                     .enumValue(JDBC_REPO_ANNOTATION, "dialect", Dialect.class)
                     .orElseGet(() ->
-                        annotationMetadata
-                                .enumValue(Repository.class, "dialect", Dialect.class)
-                                .orElse(Dialect.ANSI)
+                            annotationMetadata
+                                    .enumValue(Repository.class, "dialect", Dialect.class)
+                                    .orElse(Dialect.ANSI)
                     );
 
             AnnotationValue<SqlQueryConfiguration> annotation = annotationMetadata.getAnnotation(SqlQueryConfiguration.class);
@@ -129,7 +131,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         DialectConfig dc = new DialectConfig();
                         perDialectConfig.put(dialect, dc);
                         dialectConfig.stringValue("positionalParameterFormat").ifPresent(format ->
-                            dc.positionalFormatter = format
+                                dc.positionalFormatter = format
                         );
                         dialectConfig.booleanValue("escapeQueries").ifPresent(escape ->
                                 dc.escapeQueries = escape
@@ -176,6 +178,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     @Override
+    protected String asLiteral(Object value) {
+        if ((dialect == Dialect.SQL_SERVER || dialect == Dialect.ORACLE) && value instanceof Boolean) {
+            return ((Boolean) value).booleanValue() ? "1" : "0";
+        }
+        return super.asLiteral(value);
+    }
+
+    @Override
     public boolean shouldAliasProjections() {
         return false;
     }
@@ -187,26 +197,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Builds a batch create tables statement. Designed for testing and not production usage. For production a
-     *  SQL migration tool such as Flyway or Liquibase is recommended.
+     * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entities the entities
      * @return The table
      */
     @Experimental
-    public @NonNull String buildBatchCreateTableStatement(@NonNull PersistentEntity... entities) {
+    public @NonNull
+    String buildBatchCreateTableStatement(@NonNull PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildCreateTableStatements(entity)))
                 .collect(Collectors.joining(System.getProperty("line.separator")));
     }
 
     /**
      * Builds a batch drop tables statement. Designed for testing and not production usage. For production a
-     *  SQL migration tool such as Flyway or Liquibase is recommended.
+     * SQL migration tool such as Flyway or Liquibase is recommended.
      *
      * @param entities the entities
      * @return The table
      */
     @Experimental
-    public @NonNull String buildBatchDropTableStatement(@NonNull PersistentEntity... entities) {
+    public @NonNull
+    String buildBatchDropTableStatement(@NonNull PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
                 .collect(Collectors.joining("\n"));
     }
@@ -220,7 +232,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The tables for the give entity
      */
     @Experimental
-    public @NonNull String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
+    public @NonNull
+    String[] buildDropTableStatements(@NonNull PersistentEntity entity) {
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
         String sql = "DROP TABLE " + tableName;
@@ -243,11 +256,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Builds a join table insert statement for a given entity and association.
-     * @param entity The entity
+     *
+     * @param entity      The entity
      * @param association The association
      * @return The join table insert statement
      */
-    public @NonNull String buildJoinTableInsert(@NonNull PersistentEntity entity, @NonNull Association association) {
+    public @NonNull
+    String buildJoinTableInsert(@NonNull PersistentEntity entity, @NonNull Association association) {
         if (!isForeignKeyWithJoinTable(association)) {
             throw new IllegalArgumentException("Join table inserts can only be built for foreign key associations that are mapped with a join table.");
         } else {
@@ -273,6 +288,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Is the given association a foreign key reference that requires a join table.
+     *
      * @param association The association.
      * @return True if it is.
      */
@@ -290,7 +306,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
      * @return The tables for the give entity
      */
     @Experimental
-    public @NonNull String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
+    public @NonNull
+    String[] buildCreateTableStatements(@NonNull PersistentEntity entity) {
         ArgumentUtils.requireNonNull("entity", entity);
         final String unescapedTableName = getUnescapedTableName(entity);
         String tableName = getTableName(entity);
@@ -351,8 +368,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(',');
                     }
                 } else {
-                    for (PersistentPropertyPath pp: leftProperties) {
-                        String columnName =  namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
+                    for (PersistentPropertyPath pp : leftProperties) {
+                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
                         if (escape) {
                             columnName = quote(columnName);
                         }
@@ -373,8 +390,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                                 .append(',');
                     }
                 } else {
-                    for (PersistentPropertyPath pp: rightProperties) {
-                        String columnName =  namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
+                    for (PersistentPropertyPath pp : rightProperties) {
+                        String columnName = namingStrategy.mappedJoinTableColumn(entity, pp.getAssociations(), pp.getProperty());
                         if (escape) {
                             columnName = quote(columnName);
                         }
@@ -460,7 +477,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         if (identity != null && identity.isGenerated()) {
-             GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
+            GeneratedValue.Type idGeneratorType = identity.getAnnotationMetadata()
                     .enumValue(GeneratedValue.class, GeneratedValue.Type.class)
                     .orElseGet(() -> selectAutoStrategy(identity));
             boolean isSequence = idGeneratorType == GeneratedValue.Type.SEQUENCE;
@@ -510,7 +527,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 .flatMap(Collection::stream)
                 .forEach(index -> addIndex(indexBuilder, new IndexConfiguration(index, tableName)));
 
-       return indexBuilder.toString();
+        return indexBuilder.toString();
 
     }
 
@@ -646,7 +663,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     } else {
                         column += " NOT NULL";
                     }
-                break;
+                    break;
                 default:
                     if (type == UUID) {
                         // mysql requires the UUID generation in the insert statement
@@ -715,12 +732,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         return Stream.concat(Stream.of(persistentEntity.getIdentity()), persistentEntity.getPersistentProperties().stream())
                 .flatMap(this::flatMapEmbedded)
                 .filter(p -> {
-                if (p instanceof Association) {
-                    Association a = (Association) p;
-                    return isForeignKeyWithJoinTable(a);
-                }
-                return false;
-            }).map(p -> (Association) p).collect(Collectors.toList());
+                    if (p instanceof Association) {
+                        Association a = (Association) p;
+                        return isForeignKeyWithJoinTable(a);
+                    }
+                    return false;
+                }).map(p -> (Association) p).collect(Collectors.toList());
     }
 
     @Override
@@ -760,7 +777,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                         // so we need to retrieve it
                         includeIdentity = true;
                     }
-                    traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) ->  {
+                    traversePersistentProperties(associatedEntity, includeIdentity, true, (propertyAssociations, prop) -> {
                         String columnName;
                         if (computePropertyPaths()) {
                             columnName = namingStrategy.mappedName(propertyAssociations, prop);
@@ -784,9 +801,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Selects all columns for the given entity and alias.
+     *
      * @param entity The entity
-     * @param alias The alias
-     * @param sb The builder to add the columns
+     * @param alias  The alias
+     * @param sb     The builder to add the columns
      */
     @Override
     public void selectAllColumns(PersistentEntity entity, String alias, StringBuilder sb) {
@@ -886,11 +904,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 traversePersistentProperties(prop, (associations, property) -> {
                     addWriteExpression(values, prop);
 
-                    parameterBindings.add(QueryParameterBinding.of(
-                            String.valueOf(values.size()),
-                            asPath(associations, property),
-                            property.getDataType()
-                    ));
+                    String key = String.valueOf(values.size());
+                    String[] path = asStringPath(associations, property);
+                    parameterBindings.add(new QueryParameterBinding() {
+                        @Override
+                        public String getKey() {
+                            return key;
+                        }
+
+                        @Override
+                        public DataType getDataType() {
+                            return property.getDataType();
+                        }
+
+                        @Override
+                        public String[] getPropertyPath() {
+                            return path;
+                        }
+                    });
 
                     String columnName = namingStrategy.mappedName(associations, property);
                     if (escape) {
@@ -904,11 +935,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (version != null) {
             addWriteExpression(values, version);
 
-            parameterBindings.add(QueryParameterBinding.of(
-                    String.valueOf(values.size()),
-                    version.getName(),
-                    version.getDataType()
-            ));
+            String key = String.valueOf(values.size());
+            parameterBindings.add(new QueryParameterBinding() {
+                @Override
+                public String getKey() {
+                    return key;
+                }
+
+                @Override
+                public DataType getDataType() {
+                    return version.getDataType();
+                }
+
+                @Override
+                public String[] getPropertyPath() {
+                    return new String[] { version.getName()};
+                }
+            });
 
             String columnName = namingStrategy.mappedName(Collections.emptyList(), version);
             if (escape) {
@@ -940,11 +983,26 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                     values.add(getSequenceStatement(unescapedTableName, property));
                 } else {
                     addWriteExpression(values, property);
-                    parameterBindings.add(QueryParameterBinding.of(
-                            String.valueOf(values.size()),
-                            asPath(associations, property),
-                            property.getDataType()
-                    ));
+
+                    String key = String.valueOf(values.size());
+                    String[] path = asStringPath(associations, property);
+                    parameterBindings.add(new QueryParameterBinding() {
+                        @Override
+                        public String getKey() {
+                            return key;
+                        }
+
+                        @Override
+                        public DataType getDataType() {
+                            return property.getDataType();
+                        }
+
+                        @Override
+                        public String[] getPropertyPath() {
+                            return path;
+                        }
+                    });
+
                 }
 
                 String columnName = namingStrategy.mappedName(associations, property);
@@ -965,6 +1023,18 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         );
     }
 
+    private String[] asStringPath(List<Association> associations, PersistentProperty property) {
+        if (associations.isEmpty()) {
+            return new String[]{property.getName()};
+        }
+        List<String> path = new ArrayList<>(associations.size() + 1);
+        for (Association association : associations) {
+            path.add(association.getName());
+        }
+        path.add(property.getName());
+        return path.toArray(new String[0]);
+    }
+
     private String getSequenceStatement(String unescapedTableName, PersistentProperty property) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         switch (dialect) {
@@ -981,14 +1051,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {
         return identity.getAnnotationMetadata().stringValue(GeneratedValue.class, "ref")
-                                    .map(n -> {
-                                        if (StringUtils.isEmpty(n)) {
-                                            return unescapedTableName + SEQ_SUFFIX;
-                                        } else {
-                                            return n;
-                                        }
-                                    })
-                                    .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
+                .map(n -> {
+                    if (StringUtils.isEmpty(n)) {
+                        return unescapedTableName + SEQ_SUFFIX;
+                    } else {
+                        return n;
+                    }
+                })
+                .orElseGet(() -> unescapedTableName + SEQ_SUFFIX);
     }
 
     @NonNull
@@ -1183,13 +1253,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
                 PersistentEntity associatedEntity = association.getAssociatedEntity();
                 int finalI = i;
                 JoinPath joinPathToUse = queryState.getQueryModel().getJoinPath(currentPath)
-                          .orElseGet(() ->
-                                  new JoinPath(
-                                          currentPath,
-                                          Arrays.copyOfRange(associationPath, 0, finalI + 1),
-                                          joinPath.getJoinType(),
-                                          joinPath.getAlias().orElse(null))
-                          );
+                        .orElseGet(() ->
+                                new JoinPath(
+                                        currentPath,
+                                        Arrays.copyOfRange(associationPath, 0, finalI + 1),
+                                        joinPath.getJoinType(),
+                                        joinPath.getAlias().orElse(null))
+                        );
                 joinAliases[i] = getAliasName(joinPathToUse);
                 String currentJoinAlias = joinAliases[i];
 
@@ -1354,17 +1424,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             if (joinColumnsHolder != null) {
                 onLeftColumns.addAll(
                         joinColumnsHolder.getAnnotations("value")
-                        .stream()
-                        .map(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").orElse(null))
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList())
+                                .stream()
+                                .map(ann -> ann.stringValue(isOwner ? "name" : "referencedColumnName").orElse(null))
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList())
                 );
                 onRightColumns.addAll(
                         joinColumnsHolder.getAnnotations("value")
-                            .stream()
-                            .map(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").orElse(null))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList())
+                                .stream()
+                                .map(ann -> ann.stringValue(isOwner ? "referencedColumnName" : "name").orElse(null))
+                                .filter(Objects::nonNull)
+                                .collect(Collectors.toList())
                 );
             }
         }
@@ -1410,28 +1480,28 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
     }
 
     private void join(StringBuilder sb,
-                        QueryModel queryModel,
-                        String joinType,
-                        String tableName,
-                        String tableAlias,
-                        String onTableName,
-                        String onTableColumn,
-                        String tableColumnName) {
+                      QueryModel queryModel,
+                      String joinType,
+                      String tableName,
+                      String tableAlias,
+                      String onTableName,
+                      String onTableColumn,
+                      String tableColumnName) {
         sb
-            .append(joinType)
-            .append(tableName)
-            .append(SPACE)
-            .append(tableAlias);
+                .append(joinType)
+                .append(tableName)
+                .append(SPACE)
+                .append(tableAlias);
         appendForUpdate(QueryPosition.AFTER_TABLE_NAME, queryModel, sb);
         sb
-            .append(" ON ")
-            .append(onTableName)
-            .append(DOT)
-            .append(onTableColumn)
-            .append('=')
-            .append(tableAlias)
-            .append(DOT)
-            .append(tableColumnName);
+                .append(" ON ")
+                .append(onTableName)
+                .append(DOT)
+                .append(onTableColumn)
+                .append('=')
+                .append(tableAlias)
+                .append(DOT)
+                .append(tableColumnName);
     }
 
     private void join(StringBuilder builder,
@@ -1448,22 +1518,22 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         }
 
         builder
-            .append(joinType)
-            .append(tableName)
-            .append(SPACE)
-            .append(tableAlias);
+                .append(joinType)
+                .append(tableName)
+                .append(SPACE)
+                .append(tableAlias);
         appendForUpdate(QueryPosition.AFTER_TABLE_NAME, queryModel, builder);
         builder.append(" ON ");
         for (int i = 0; i < onLeftColumns.size(); i++) {
             String leftColumn = onLeftColumns.get(i);
             String rightColumn = onRightColumns.get(i);
             builder.append(onTableName)
-                .append(DOT)
-                .append(leftColumn)
-                .append('=')
-                .append(tableAlias)
-                .append(DOT)
-                .append(rightColumn);
+                    .append(DOT)
+                    .append(leftColumn)
+                    .append('=')
+                    .append(tableAlias)
+                    .append(DOT)
+                    .append(rightColumn);
             if (i + 1 != onLeftColumns.size()) {
                 builder.append(LOGICAL_AND);
             }
@@ -1485,6 +1555,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Quote a column name for the dialect.
+     *
      * @param persistedName The persisted name.
      * @return The quoted name
      */
@@ -1522,7 +1593,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
         if (query.isForUpdate()) {
             boolean isSqlServer = Dialect.SQL_SERVER.equals(dialect);
             if (isSqlServer && queryPosition.equals(QueryPosition.AFTER_TABLE_NAME) ||
-                !isSqlServer && queryPosition.equals(QueryPosition.END_OF_QUERY)) {
+                    !isSqlServer && queryPosition.equals(QueryPosition.END_OF_QUERY)) {
                 queryBuilder.append(isSqlServer ? SQL_SERVER_FOR_UPDATE_CLAUSE : STANDARD_FOR_UPDATE_CLAUSE);
             }
         }
@@ -1553,6 +1624,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
 
     /**
      * Selects the default fallback strategy. For a generated value.
+     *
      * @param property The Persistent property
      * @return The generated value
      */
@@ -1962,7 +2034,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder implements Quer
             this.tableName = tableName;
         }
 
-;
+        ;
     }
 
 }

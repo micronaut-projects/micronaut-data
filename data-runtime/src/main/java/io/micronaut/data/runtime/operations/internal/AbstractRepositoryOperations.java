@@ -41,6 +41,7 @@ import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
+import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -347,16 +348,16 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
     }
 
     private <B, T> B convertAndSetWithValue(BeanProperty<B, T> beanProperty, B bean, T value) {
+        Argument<T> argument = beanProperty.asArgument();
+        final ArgumentConversionContext<T> context = ConversionContext.of(argument);
+        T convertedValue = conversionService.convert(value, context).orElseThrow(() ->
+                new ConversionErrorException(argument, context.getLastError()
+                        .orElse(() -> new IllegalArgumentException("Value [" + value + "] cannot be converted to type : " + beanProperty.getType())))
+        );
         if (beanProperty.isReadOnly()) {
-            Argument<T> argument = beanProperty.asArgument();
-            final ArgumentConversionContext<T> context = ConversionContext.of(argument);
-            Object convertedValue = conversionService.convert(value, context).orElseThrow(() ->
-                    new ConversionErrorException(argument, context.getLastError()
-                            .orElse(() -> new IllegalArgumentException("Value [" + value + "] cannot be converted to type : " + beanProperty.getType())))
-            );
-            return beanProperty.withValue(bean, (T) convertedValue);
+            return beanProperty.withValue(bean, convertedValue);
         }
-        beanProperty.convertAndSet(bean, value);
+        beanProperty.set(bean, convertedValue);
         return bean;
     }
 
@@ -683,7 +684,7 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
         return new DBOperation(sqlInsert, dialect) {
 
             @Override
-            public <T, Cnt, PS> void setParameters(OpContext<Cnt, PS> context, Cnt connection, PS ps, RuntimePersistentEntity<T> pe, T e, Map<String, Object> previousValues) {
+            public <T, Cnt, PS> void setParameters(OpContext<Cnt, PS> context, Cnt connection, PS ps, RuntimePersistentEntity<T> pe, T e, Map<QueryParameterBinding, Object> previousValues) {
                 int i = 0;
                 for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
                     Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());

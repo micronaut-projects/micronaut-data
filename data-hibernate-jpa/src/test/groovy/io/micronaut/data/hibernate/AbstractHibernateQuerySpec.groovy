@@ -109,7 +109,7 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
             studentRepository.updateStudentName(student2.getId(), student2.getVersion(), "Joe2")
             student3 = studentRepository.findById(student2.getId()).get()
         then:
-            thrown(IllegalStateException) // TODO: Update version for Hibernate
+            noExceptionThrown()
         when:
             studentRepository.delete(student3.getId(), student3.getVersion(), student3.getName())
             def student4 = studentRepository.findById(student2.getId())

@@ -19,6 +19,7 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -326,15 +327,33 @@ public interface PersistentEntity extends PersistentElement {
     @Nullable
     default PersistentPropertyPath getPropertyPath(@NonNull String path) {
         if (path.indexOf('.') == -1) {
-            PersistentProperty pp = getPropertyByName(path);
+            return getPropertyPath(new String[] {path});
+        }
+        return getPropertyPath(StringUtils.splitOmitEmptyStringsList(path, '.').toArray(new String[0]));
+    }
+
+    /**
+     * Return a {@link PersistentPropertyPath} by path such as {@code foo.bar.prop}.
+     * .
+     * @param propertyPath The path
+     * @return The properties
+     */
+    @Nullable
+    default PersistentPropertyPath getPropertyPath(@NonNull String[] propertyPath) {
+        if (propertyPath.length == 0) {
+            return null;
+        }
+        if (propertyPath.length == 1) {
+            String propertyName = propertyPath[0];
+            PersistentProperty pp = getPropertyByName(propertyName);
             if (pp == null) {
                 PersistentProperty identity = getIdentity();
                 if (identity != null) {
-                    if (identity.getName().equals(path)) {
+                    if (identity.getName().equals(propertyName)) {
                         pp = identity;
                     } else if (identity instanceof Embedded) {
                         PersistentEntity idEntity = ((Embedded) identity).getAssociatedEntity();
-                        pp = idEntity.getPropertyByName(path);
+                        pp = idEntity.getPropertyByName(propertyName);
                         if (pp != null) {
                             return new PersistentPropertyPath(Collections.singletonList((Embedded) identity), pp, identity.getName() + "." + pp.getName());
                         }
@@ -342,19 +361,18 @@ public interface PersistentEntity extends PersistentElement {
                 }
                 PersistentProperty version = getVersion();
                 if (version != null) {
-                    if (version.getName().equals(path)) {
+                    if (version.getName().equals(propertyName)) {
                         pp = version;
                     }
                 }
             }
-            return pp == null ? null : new PersistentPropertyPath(Collections.emptyList(), pp, path);
+            return pp == null ? null : new PersistentPropertyPath(Collections.emptyList(), pp, propertyName);
         } else {
-            String[] tokens = path.split("\\.");
-            List<Association> associations = new ArrayList<>(tokens.length);
+            List<Association> associations = new ArrayList<>(propertyPath.length - 1);
             PersistentEntity startingEntity = this;
-            for (int i = 0; i < tokens.length - 1; i++) {
-                String token = tokens[i];
-                PersistentProperty prop = startingEntity.getPropertyByName(token);
+            for (int i = 0; i < propertyPath.length - 1; i++) {
+                String propertyName = propertyPath[i];
+                PersistentProperty prop = startingEntity.getPropertyByName(propertyName);
                 if (prop instanceof Association) {
                     Association association = (Association) prop;
                     startingEntity = association.getAssociatedEntity();
@@ -363,14 +381,14 @@ public interface PersistentEntity extends PersistentElement {
                     if (prop == null) {
                         return null;
                     }
-                    throw new IllegalArgumentException("Invalid association path. Property [" + token + "] of [" + startingEntity + "] is not an association in [" + path + "]");
+                    throw new IllegalArgumentException("Invalid association path. Property [" + propertyName + "] of [" + startingEntity + "] is not an association in [" + String.join(".", propertyPath) + "]");
                 }
             }
-            PersistentProperty prop = startingEntity.getPropertyByName(tokens[tokens.length - 1]);
+            PersistentProperty prop = startingEntity.getPropertyByName(propertyPath[propertyPath.length - 1]);
             if (prop == null) {
                 return null;
             }
-            return new PersistentPropertyPath(associations, prop, path);
+            return new PersistentPropertyPath(associations, prop);
         }
     }
 

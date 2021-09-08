@@ -30,6 +30,8 @@ import spock.lang.Unroll
 
 import javax.annotation.processing.SupportedAnnotationTypes
 
+import static io.micronaut.data.processor.visitors.TestUtils.getQueryParameterNames
+
 class QueryAnnotationSpec extends AbstractDataSpec {
 
     void "test native query escaping"() {
@@ -230,7 +232,7 @@ interface MyInterface {
         def ann = listMethod.synthesize(DataMethod)
         ann.rootEntity() == Person
         ann.interceptor() == FindAllInterceptor
-        listMethod.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['n'] as String[]
+        getQueryParameterNames(listMethod) == ['n'] as String[]
         listMethod.getReturnType().type == List
 
         when: "the findOne method is retrieved"
@@ -240,7 +242,7 @@ interface MyInterface {
         def ann2 = findOne.synthesize(DataMethod)
         ann2.rootEntity() == Person
         ann2.interceptor() == FindOneInterceptor
-        findOne.stringValues(DataMethod, DataMethod.META_MEMBER_PARAMETER_BINDING + "Names") == ['n'] as String[]
+        getQueryParameterNames(listMethod) == ['n'] as String[]
         findOne.getReturnType().type == Person
     }
 

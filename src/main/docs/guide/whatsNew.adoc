@@ -1,3 +1,6 @@
+=== Micronaut Data 3.2
+- Repositories with JPA Criteria API specification for Micronaut JDBC/R2DBC
+
 === Micronaut Data 3.1
 - Kotlin's coroutines support. New repository interface `CoroutineCrudRepository`.
 - Support for <<dbcAttributeConverter, `AttributeConverter`>>
