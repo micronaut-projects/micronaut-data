@@ -16,8 +16,6 @@
 package io.micronaut.data.jdbc.postgres
 
 import groovy.transform.Memoized
-import io.micronaut.data.exceptions.OptimisticLockException
-import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.repositories.*
 import io.micronaut.data.tck.tests.AbstractRepositorySpec
 
@@ -141,54 +139,6 @@ class PostgresRepositorySpec extends AbstractRepositorySpec implements PostgresT
     @Override
     boolean isSupportsArrays() {
         return true
-    }
-
-    def "test batch optimistic locking"() {
-        given:
-            def student1 = new Student("Denis")
-            def student2 = new Student("Frank")
-        when:
-            studentRepository.saveAll([student1, student2])
-        then:
-            student1.version == 0
-            student2.version == 0
-        when:
-            student1 = studentRepository.findById(student1.getId()).get()
-            student2 = studentRepository.findById(student2.getId()).get()
-        then:
-            student1.version == 0
-            student2.version == 0
-        when:
-            studentRepository.updateAll([student1, student2])
-            student1 = studentRepository.findById(student1.getId()).get()
-            student2 = studentRepository.findById(student2.getId()).get()
-        then:
-            student1.version == 1
-            student2.version == 1
-        when:
-            studentRepository.updateAll([student1, student2])
-            student1 = studentRepository.findById(student1.getId()).get()
-            student2 = studentRepository.findById(student2.getId()).get()
-        then:
-            student1.version == 2
-            student2.version == 2
-        when:
-            student1.setVersion(5)
-            student1.setName("Xyz")
-            studentRepository.updateAll([student1, student2])
-        then:
-            def e = thrown(OptimisticLockException)
-            e.message == "Execute update returned unexpected row count. Expected: 2 got: 1"
-        when:
-            student1 = studentRepository.findById(student1.getId()).get()
-            student2 = studentRepository.findById(student2.getId()).get()
-            student1.setVersion(5)
-            studentRepository.deleteAll([student1, student2])
-        then:
-            e = thrown(OptimisticLockException)
-            e.message == "Execute update returned unexpected row count. Expected: 2 got: 1"
-        cleanup:
-            studentRepository.deleteAll()
     }
 
     void "test native query with nullable property"() {

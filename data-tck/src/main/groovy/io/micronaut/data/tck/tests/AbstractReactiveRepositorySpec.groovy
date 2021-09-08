@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
@@ -350,6 +351,53 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             def student5 = studentRepository.findById(student2.getId())
         then:
             student5.isEmpty().blockingGet()
+    }
+
+    def "test batch optimistic locking"() {
+        given:
+            def student1 = new Student("Denis")
+            def student2 = new Student("Frank")
+        when:
+            studentRepository.saveAll([student1, student2]).toList().blockingGet()
+        then:
+            student1.version == 0
+            student2.version == 0
+        when:
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student1.version == 0
+            student2.version == 0
+        when:
+            studentRepository.updateAll([student1, student2]).toList().blockingGet()
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student1.version == 1
+            student2.version == 1
+        when:
+            studentRepository.updateAll([student1, student2]).toList().blockingGet()
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student1.version == 2
+            student2.version == 2
+        when:
+            student1.setVersion(5)
+            student1.setName("Xyz")
+            studentRepository.updateAll([student1, student2]).toList().blockingGet()
+        then:
+            def e = thrown(OptimisticLockException)
+            e.message == "Execute update returned unexpected row count. Expected: 2 got: 1"
+        when:
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+            student1.setVersion(5)
+            e = studentRepository.deleteAll([student1, student2]).blockingGet()
+        then:
+            e.message == "Execute update returned unexpected row count. Expected: 2 got: 1"
+        cleanup:
+            studentRepository.deleteAll().blockingGet()
     }
 
     void "test custom delete"() {
