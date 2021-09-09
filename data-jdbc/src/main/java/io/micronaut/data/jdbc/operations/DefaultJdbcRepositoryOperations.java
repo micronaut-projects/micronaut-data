@@ -45,6 +45,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
@@ -55,7 +56,6 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -75,6 +75,10 @@ import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.OpContext;
+import io.micronaut.data.runtime.operations.internal.SqlOperation;
+import io.micronaut.data.runtime.operations.internal.StoredAnnotationMetadataSqlOperation;
+import io.micronaut.data.runtime.operations.internal.StoredSqlOperation;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.micronaut.http.codec.MediaTypeCodec;
 import io.micronaut.transaction.TransactionOperations;
@@ -999,8 +1003,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void setParameters(Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) {
-            sqlOperation.setParameters(connection, stmt, persistentEntity, entity, previousValues);
+        protected void setParameters(OpContext<Connection, PreparedStatement> context, Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) {
+            sqlOperation.setParameters(context, connection, stmt, persistentEntity, entity, previousValues);
         }
 
         @Override
@@ -1155,12 +1159,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void setParameters(Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) throws SQLException {
+        protected void setParameters(OpContext<Connection, PreparedStatement> context, Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) throws SQLException {
             for (Data d : entities) {
                 if (d.vetoed) {
                     continue;
                 }
-                sqlOperation.setParameters(connection, stmt, persistentEntity, d.entity, d.previousValues);
+                sqlOperation.setParameters(context, connection, stmt, persistentEntity, d.entity, d.previousValues);
                 stmt.addBatch();
             }
         }

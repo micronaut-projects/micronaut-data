@@ -23,15 +23,12 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.beans.BeanWrapper;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
-import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.TypeRole;
@@ -39,19 +36,15 @@ import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.QueryModel;
 import io.micronaut.data.model.query.QueryParameter;
-import io.micronaut.data.model.query.builder.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -76,15 +69,12 @@ import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -94,7 +84,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -111,7 +100,8 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings("FileLength")
 @Internal
-public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception> implements ApplicationContextProvider {
+public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends Exception>
+        implements ApplicationContextProvider, OpContext<Cnt, PS> {
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
     protected static final SqlQueryBuilder DEFAULT_SQL_BUILDER = new SqlQueryBuilder();
     @SuppressWarnings("WeakerAccess")
@@ -192,158 +182,9 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return runtimeEntityRegistry.getEntity(type);
     }
 
-    class PQSqlOperation<T, R> extends SqlOperation {
-
-        private final PreparedQuery<T, R> preparedQuery;
-        private final boolean isUpdate;
-        private final boolean isSingleResult;
-        private final Object[] queryParameters;
-        private final int[] parameterBinding;
-        private final DataType[] parameterTypes;
-        private final String[] indexedParameterPaths;
-        private final String[] indexedParameterAutoPopulatedPropertyPaths;
-        private final String[] indexedParameterAutoPopulatedPreviousPropertyPaths;
-        private final int[] indexedParameterAutoPopulatedPreviousPropertyIndexes;
-        private final Class[] parameterConvertors;
-        private boolean queryExpanded;
-
-
-        protected PQSqlOperation(@NonNull PreparedQuery<T, R> preparedQuery,
-                                 boolean isUpdate,
-                                 boolean isSingleResult,
-                                 Dialect dialect) {
-            super(preparedQuery.getQuery(), dialect);
-            this.preparedQuery = preparedQuery;
-            this.isUpdate = isUpdate;
-            this.isSingleResult = isSingleResult;
-            queryParameters = preparedQuery.getParameterArray();
-            parameterBinding = preparedQuery.getIndexedParameterBinding();
-            parameterTypes = preparedQuery.getIndexedParameterTypes();
-            indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
-            indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
-            indexedParameterAutoPopulatedPreviousPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
-            indexedParameterAutoPopulatedPreviousPropertyIndexes = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
-            parameterConvertors = preparedQuery.getAnnotationMetadata().classValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_CONVERTERS);
-        }
-
-        public void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity, SqlQueryBuilder queryBuilder) {
-            Iterator<Object> valuesIterator = new Iterator<Object>() {
-
-                int i;
-
-                @Override
-                public boolean hasNext() {
-                    if (i >= parameterBinding.length) {
-                        return false;
-                    }
-                    int parameterIndex = parameterBinding[i];
-                    DataType dataType = parameterTypes[i];
-                    // We want to expand collections with byte array convertible values
-                    if (parameterIndex == -1 || dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
-                        i++;
-                        return hasNext();
-                    }
-                    return true;
-                }
-
-                @Override
-                public Object next() {
-                    Object queryParameter = queryParameters[parameterBinding[i]];
-                    i++;
-                    return queryParameter;
-                }
-            };
-
-            String expandedQuery = expandMultipleValues(parameterBinding.length, valuesIterator, this.query, queryBuilder);
-            this.queryExpanded = !query.equals(expandedQuery);
-            this.query = expandedQuery;
-
-            if (!isUpdate) {
-                Pageable pageable = preparedQuery.getPageable();
-                if (pageable != Pageable.UNPAGED) {
-                    Class<T> rootEntity = persistentEntity.getIntrospection().getBeanType();
-                    Sort sort = pageable.getSort();
-                    if (sort.isSorted()) {
-                        query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
-                    } else if (isSqlServerWithoutOrderBy(query, dialect)) {
-                        // SQL server requires order by
-                        sort = sortById(persistentEntity);
-                        query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
-                    }
-                    if (isSingleResult && pageable.getOffset() > 0) {
-                        pageable = Pageable.from(pageable.getNumber(), 1);
-                    }
-                    query += queryBuilder.buildPagination(pageable).getQuery();
-                }
-            }
-        }
-
-        @Override
-        public <K> void setParameters(Cnt connection, PS stmt, RuntimePersistentEntity<K> persistentEntity, K entity, Map<String, Object> previousValues) {
-            int index = shiftIndex(0);
-            for (int i = 0; i < parameterBinding.length; i++) {
-                int parameterIndex = parameterBinding[i];
-                DataType dataType = parameterTypes[i];
-                Object value;
-                Class<?> parameterConverter = null;
-                if (parameterConvertors.length > i) {
-                    parameterConverter = parameterConvertors[i];
-                    if (parameterConverter == Object.class) {
-                        parameterConverter = null;
-                    }
-                }
-                if (parameterIndex > -1) {
-                    value = queryParameters[parameterIndex];
-                } else {
-                    String propertyPath = indexedParameterPaths[i];
-                    String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
-                    if (autoPopulatedPropertyPath != null) {
-                        RuntimePersistentProperty<K> persistentProperty = persistentEntity.getPropertyByName(autoPopulatedPropertyPath);
-                        if (persistentProperty == null) {
-                            throw new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath);
-                        }
-                        Object previousValue = null;
-                        int autoPopulatedPreviousPropertyIndex = indexedParameterAutoPopulatedPreviousPropertyIndexes[i];
-                        if (autoPopulatedPreviousPropertyIndex > -1) {
-                            previousValue = queryParameters[autoPopulatedPreviousPropertyIndex];
-                        } else {
-                            String previousValuePath = indexedParameterAutoPopulatedPreviousPropertyPaths[i];
-                            if (previousValuePath != null) {
-                                previousValue = resolveQueryParameterByPath(query, i, queryParameters, previousValuePath);
-                            }
-                        }
-                        value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-                        value = convert(connection, value, persistentProperty);
-                        parameterConverter = null;
-                    } else if (propertyPath != null) {
-                        value = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
-                    } else {
-                        throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
-                    }
-                }
-                List<Object> values = expandValue(value, dataType);
-                if (values != null && values.isEmpty()) {
-                    // Empty collections / array should always set at least one value
-                    value = null;
-                    values = null;
-                }
-                if (values == null) {
-                    if (parameterConverter != null) {
-                        Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
-                        value = convert(parameterConverter, connection, value, argument);
-                    }
-                    setStatementParameter(stmt, index++, dataType, value, dialect);
-                } else {
-                    for (Object v : values) {
-                        if (parameterConverter != null) {
-                            Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
-                            v = convert(parameterConverter, connection, v, argument);
-                        }
-                        setStatementParameter(stmt, index++, dataType, v, dialect);
-                    }
-                }
-            }
-        }
+    @Override
+    public RuntimeEntityRegistry getRuntimeEntityRegistry() {
+        return runtimeEntityRegistry;
     }
 
     /**
@@ -368,8 +209,11 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         final Dialect dialect = queryBuilder.getDialect();
         RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
 
-        PQSqlOperation<T, R> pqSqlOperation = new PQSqlOperation<>(preparedQuery, isUpdate, isSingleResult, dialect);
+        PreparedQuerySqlOperation pqSqlOperation = new PreparedQuerySqlOperation(preparedQuery, isUpdate, isSingleResult, dialect);
         pqSqlOperation.checkForParameterToBeExpanded(persistentEntity, null, queryBuilder);
+        if (!isUpdate) {
+            pqSqlOperation.attachPageable(preparedQuery.getPageable(), isSingleResult, persistentEntity, queryBuilder);
+        }
 
         String query = pqSqlOperation.getQuery();
         if (QUERY_LOG.isDebugEnabled()) {
@@ -381,73 +225,9 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         } catch (Exception e) {
             throw new DataAccessException("Unable to prepare query [" + query + "]: " + e.getMessage(), e);
         }
-        pqSqlOperation.setParameters(connection, ps, persistentEntity, null, null);
+        pqSqlOperation.setParameters(this, connection, ps, persistentEntity, null, null);
 
         return ps;
-    }
-
-    private List<Object> expandValue(Object value, DataType dataType) {
-        // Special case for byte array, we want to support a list of byte[] convertible values
-        if (value == null || dataType.isArray() && dataType != DataType.BYTE_ARRAY || value instanceof byte[]) {
-            // not expanded
-            return null;
-        } else if (value instanceof Iterable) {
-            return (List<Object>) CollectionUtils.iterableToList((Iterable<?>) value);
-        } else if (value.getClass().isArray()) {
-            int len = Array.getLength(value);
-            if (len == 0) {
-                return Collections.emptyList();
-            } else {
-                List<Object> list = new ArrayList<>(len);
-                for (int j = 0; j < len; j++) {
-                    Object o = Array.get(value, j);
-                    list.add(o);
-                }
-                return list;
-            }
-        } else {
-            // not expanded
-            return null;
-        }
-    }
-
-    private String expandMultipleValues(int parametersSize, Iterator<Object> valuesIt, String query, SqlQueryBuilder queryBuilder) {
-        int[] parametersListSizes = null;
-        for (int i = 0; i < parametersSize; i++) {
-            if (!valuesIt.hasNext()) {
-                continue;
-            }
-            Object value = valuesIt.next();
-            if (value == null || value instanceof byte[]) {
-                continue;
-            }
-            int size = sizeOf(value);
-            if (size == 1) {
-                continue;
-            }
-            if (parametersListSizes == null) {
-                parametersListSizes = new int[parametersSize];
-                Arrays.fill(parametersListSizes, 1);
-            }
-            parametersListSizes[i] = size;
-        }
-        if (parametersListSizes != null) {
-            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
-            Pattern positionalParameterPattern = queryBuilder.positionalParameterPattern();
-            String[] queryParametersSplit = positionalParameterPattern.split(query);
-            StringBuilder sb = new StringBuilder(queryParametersSplit[0]);
-            int inx = 1;
-            for (int i = 0; i < parametersSize; i++) {
-                int parameterSetSize = parametersListSizes[i];
-                sb.append(String.format(positionalParameterFormat, inx));
-                for (int sx = 1; sx < parameterSetSize; sx++) {
-                    sb.append(",").append(String.format(positionalParameterFormat, inx + sx));
-                }
-                sb.append(queryParametersSplit[inx++]);
-            }
-            return sb.toString();
-        }
-        return query;
     }
 
     /**
@@ -597,7 +377,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             op.cascadePre(Relation.Cascade.PERSIST, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
             prepareStatement(connection, sqlOperation.getDialect(), op.persistentEntity.getIdentity(), hasGeneratedID, sqlOperation.getQuery(), stmt -> {
-                op.setParameters(connection, stmt, sqlOperation);
+                op.setParameters(this, connection, stmt, sqlOperation);
                 if (hasGeneratedID) {
                     op.executeUpdateSetGeneratedId(stmt);
                 } else {
@@ -642,7 +422,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 if (QUERY_LOG.isDebugEnabled()) {
                     QUERY_LOG.debug("Executing Batch SQL Insert: {}", sqlOperation.getQuery());
                 }
-                op.setParameters(connection, stmt, sqlOperation);
+                op.setParameters(this, connection, stmt, sqlOperation);
                 if (hasGeneratedID) {
                     op.executeUpdateSetGeneratedId(stmt);
                 } else {
@@ -702,7 +482,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             op.checkForParameterToBeExpanded(sqlOperation, queryBuilder);
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(connection, ps, sqlOperation);
+                op.setParameters(this, connection, ps, sqlOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Delete operation deleted {} records", deleted);
@@ -742,7 +522,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 QUERY_LOG.debug("Executing Batch SQL DELETE: {}", sqlOperation.getQuery());
             }
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(connection, ps, sqlOperation);
+                op.setParameters(this, connection, ps, sqlOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Delete operation deleted {} records", deleted);
@@ -790,7 +570,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                 QUERY_LOG.debug("Executing SQL UPDATE: {}", sqlOperation.getQuery());
             }
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(connection, ps, sqlOperation);
+                op.setParameters(this, connection, ps, sqlOperation);
                 op.executeUpdate(ps, (entries, rowsUpdated) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update operation updated {} records", rowsUpdated);
@@ -836,7 +616,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             }
             op.cascadePre(Relation.Cascade.UPDATE, connection, sqlOperation.dialect, annotationMetadata, repositoryType, associations, persisted);
             prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(connection, ps, sqlOperation);
+                op.setParameters(this, connection, ps, sqlOperation);
                 op.executeUpdate(ps, (expected, updated) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Update batch operation updated {} records", updated);
@@ -855,28 +635,13 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         }
     }
 
-    private Object resolveQueryParameterByPath(String query, int i, Object[] queryParameters, String propertyPath) {
-        int j = propertyPath.indexOf('.');
-        if (j > -1) {
-            String[] properties = propertyPath.split("\\.");
-            Object value = queryParameters[Integer.parseInt(properties[0])];
-            for (int k = 1; k < properties.length && value != null; k++) {
-                String property = properties[k];
-                value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
-            }
-            return value;
-        } else {
-            throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
-        }
-    }
-
     /**
      * Used to define the index whether it is 1 based (JDBC) or 0 based (R2DBC).
      *
      * @param i The index to shift
      * @return the index
      */
-    protected int shiftIndex(int i) {
+    public int shiftIndex(int i) {
         return i + 1;
     }
 
@@ -903,56 +668,6 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
     }
 
     /**
-     * Build a sort for ID for the given entity.
-     *
-     * @param persistentEntity The entity
-     * @param <T>              The entity type
-     * @return The sort
-     */
-    @NonNull
-    protected final <T> Sort sortById(RuntimePersistentEntity<T> persistentEntity) {
-        Sort sort;
-        RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-        if (identity == null) {
-            throw new DataAccessException("Pagination requires an entity ID on SQL Server");
-        }
-        sort = Sort.unsorted().order(Sort.Order.asc(identity.getName()));
-        return sort;
-    }
-
-    /**
-     * In the dialect SQL server and is order by required.
-     *
-     * @param query   The query
-     * @param dialect The dialect
-     * @return True if it is
-     */
-    protected final boolean isSqlServerWithoutOrderBy(String query, Dialect dialect) {
-        return dialect == Dialect.SQL_SERVER && !query.contains(AbstractSqlLikeQueryBuilder.ORDER_BY_CLAUSE);
-    }
-
-    /**
-     * Compute the size of the given object.
-     *
-     * @param value The value
-     * @return The size
-     */
-    protected final int sizeOf(Object value) {
-        if (value instanceof Collection) {
-            return ((Collection) value).size();
-        } else if (value instanceof Iterable) {
-            int i = 0;
-            for (Object ignored : ((Iterable) value)) {
-                i++;
-            }
-            return i;
-        } else if (value.getClass().isArray()) {
-            return Array.getLength(value);
-        }
-        return 1;
-    }
-
-    /**
      * Set the parameter value on the given statement.
      *
      * @param preparedStatement The prepared statement
@@ -961,7 +676,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
      * @param value             The value
      * @param dialect           The dialect
      */
-    protected final void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
+    public void setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
         switch (dataType) {
             case UUID:
                 if (value != null && dialect.requiresStringUUID(dataType)) {
@@ -1141,7 +856,7 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         SqlOperation sqlInsertOperation = resolveSqlInsertAssociation(repositoryType, dialect, (RuntimeAssociation) association, entity, parent);
         try {
             prepareStatement(connection, sqlInsertOperation.getQuery(), ps -> {
-                op.setParameters(connection, ps, sqlInsertOperation);
+                op.setParameters(this, connection, ps, sqlInsertOperation);
                 op.executeUpdate(ps);
             });
         } catch (Exception e) {
@@ -1154,11 +869,11 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return new SqlOperation(sqlInsert, dialect) {
 
             @Override
-            public <K> void setParameters(Cnt connection, PS ps, RuntimePersistentEntity<K> pe, K e, Map<String, Object> previousValues) {
+            public <T, Cnt, PS> void setParameters(OpContext<Cnt, PS> context, Cnt connection, PS ps, RuntimePersistentEntity<T> pe, T e, Map<String, Object> previousValues) {
                 int i = 0;
                 for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(persistentEntity.getIdentity(), entity).collect(Collectors.toList())) {
-                    Object value = convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
-                    setStatementParameter(
+                    Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
+                    context.setStatementParameter(
                             ps,
                             shiftIndex(i++),
                             property.getKey().getDataType(),
@@ -1166,8 +881,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
                             dialect);
                 }
                 for (Map.Entry<PersistentProperty, Object> property : idPropertiesWithValues(pe.getIdentity(), e).collect(Collectors.toList())) {
-                    Object value = convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
-                    setStatementParameter(
+                    Object value = context.convert(connection, property.getValue(), (RuntimePersistentProperty<?>) property.getKey());
+                    context.setStatementParameter(
                             ps,
                             shiftIndex(i++),
                             property.getKey().getDataType(),
@@ -1345,7 +1060,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return newAssociations;
     }
 
-    private Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
+    @Override
+    public Object convert(Cnt connection, Object value, RuntimePersistentProperty<?> property) {
         AttributeConverter<Object, Object> converter = property.getConverter();
         if (converter != null) {
             return converter.convertToPersistedValue(value, createTypeConversionContext(connection, property, property.getArgument()));
@@ -1353,7 +1069,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return value;
     }
 
-    private Object convert(Class<?> converterClass, Cnt connection, Object value, @Nullable Argument<?> argument) {
+    @Override
+    public Object convert(Class<?> converterClass, Cnt connection, Object value, @Nullable Argument<?> argument) {
         if (converterClass == null) {
             return value;
         }
@@ -1538,12 +1255,13 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         /**
          * Set sql parameters.
          *
+         * @param context      The context
          * @param connection   The connection
          * @param stmt         The statement
          * @param sqlOperation The sql operation
          * @throws Exc The exception type
          */
-        protected abstract void setParameters(Cnt connection, PS stmt, SqlOperation sqlOperation) throws Exc;
+        protected abstract void setParameters(OpContext<Cnt, PS> context, Cnt connection, PS stmt, SqlOperation sqlOperation) throws Exc;
 
         /**
          * Execute update and process entities modified and rows executed.
@@ -1675,317 +1393,6 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
          * @param fn The entity context function
          */
         protected abstract void triggerPost(Consumer<EntityEventContext<Object>> fn);
-
-    }
-
-    /**
-     * Implementation of {@link StoredSqlOperation} that retrieves data from {@link AnnotationMetadata}.
-     */
-    protected class StoredAnnotationMetadataSqlOperation extends StoredSqlOperation {
-
-        /**
-         * Creates a new instance.
-         *
-         * @param dialect            The dialect
-         * @param annotationMetadata The annotation metadata
-         */
-        public StoredAnnotationMetadataSqlOperation(Dialect dialect, AnnotationMetadata annotationMetadata) {
-            super(dialect,
-                    annotationMetadata.stringValue(Query.class, "rawQuery")
-                            .orElseGet(() -> annotationMetadata.stringValue(Query.class).orElse(null)),
-                    annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_BINDING_PATHS),
-                    annotationMetadata.stringValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_AUTO_POPULATED_PREVIOUS_PROPERTY_PATHS),
-                    annotationMetadata.booleanValue(DataMethod.class, DataMethod.META_MEMBER_OPTIMISTIC_LOCK).orElse(false)
-            );
-        }
-
-    }
-
-    /**
-     * Implementation of {@link SqlOperation} that uses bindging paths.
-     */
-    protected class StoredSqlOperation extends SqlOperation {
-
-        protected final String[] parameterBindingPaths;
-        protected final String[] autoPopulatedPreviousProperties;
-        protected final boolean isOptimisticLock;
-
-        protected boolean expandedQuery;
-
-        /**
-         * Creates a new instance.
-         *
-         * @param dialect                         The dialect.
-         * @param query                           The query
-         * @param parameterBindingPaths           The parameterBindingPaths
-         * @param autoPopulatedPreviousProperties The autoPopulatedPreviousProperties
-         * @param isOptimisticLock                Is optimistic locking
-         */
-        protected StoredSqlOperation(Dialect dialect,
-                                     String query,
-                                     String[] parameterBindingPaths,
-                                     String[] autoPopulatedPreviousProperties,
-                                     boolean isOptimisticLock) {
-            super(query, dialect);
-            Objects.requireNonNull(query, "Query cannot be null");
-            Objects.requireNonNull(dialect, "Dialect cannot be null");
-            this.parameterBindingPaths = parameterBindingPaths;
-            this.autoPopulatedPreviousProperties = autoPopulatedPreviousProperties;
-            this.isOptimisticLock = isOptimisticLock;
-        }
-
-        @Override
-        public boolean isOptimisticLock() {
-            return isOptimisticLock;
-        }
-
-        @Override
-        public <T> Map<String, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
-            if (autoPopulatedPreviousProperties == null || autoPopulatedPreviousProperties.length == 0) {
-                return null;
-            }
-            return Arrays.stream(autoPopulatedPreviousProperties)
-                    .filter(StringUtils::isNotEmpty)
-                    .map(propertyPath -> {
-                        Object value = entity;
-                        for (String property : propertyPath.split("\\.")) {
-                            if (value == null) {
-                                break;
-                            }
-                            value = BeanWrapper.getWrapper(value).getRequiredProperty(property, Argument.OBJECT_ARGUMENT);
-                        }
-                        return new AbstractMap.SimpleEntry<>(propertyPath, value);
-                    })
-                    .filter(e -> e.getValue() != null)
-                    .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
-        }
-
-        /**
-         * Check if query need to be modified to expand parameters.
-         *
-         * @param persistentEntity  The persistentEntity
-         * @param entity            The entity instance
-         * @param queryBuilder      The queryBuilder
-         * @param <T>               The entity type
-         */
-        public <T> void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity, SqlQueryBuilder queryBuilder) {
-            Iterator<Object> valuesIt = new Iterator<Object>() {
-
-                int i;
-
-                @Override
-                public boolean hasNext() {
-                    return i >= parameterBindingPaths.length;
-                }
-
-                @Override
-                public Object next() {
-                    String stringPropertyPath = parameterBindingPaths[i];
-                    PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(stringPropertyPath);
-                    if (propertyPath == null) {
-                        throw new IllegalStateException("Unrecognized path: " + stringPropertyPath);
-                    }
-                    Object value = entity;
-                    for (Association association : propertyPath.getAssociations()) {
-                        RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-                        BeanProperty beanProperty = property.getProperty();
-                        value = beanProperty.get(value);
-                        if (value == null) {
-                            break;
-                        }
-                    }
-                    RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
-                    if (value != null) {
-                        BeanProperty beanProperty = property.getProperty();
-                        value = beanProperty.get(value);
-                    }
-                    i++;
-                    return value;
-                }
-
-            };
-            String q = expandMultipleValues(parameterBindingPaths.length, valuesIt, query, queryBuilder);
-            if (q != query) {
-                expandedQuery = true;
-                query = q;
-            }
-        }
-
-        @Override
-        public <T> void setParameters(Cnt connection, PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues) {
-            int index = shiftIndex(0);
-            for (int i = 0; i < parameterBindingPaths.length; i++) {
-                String propertyPath = parameterBindingPaths[i];
-                if (StringUtils.isEmpty(propertyPath)) {
-                    if (previousValues != null) {
-                        String autoPopulatedPreviousProperty = autoPopulatedPreviousProperties[i];
-                        Object previousValue = previousValues.get(autoPopulatedPreviousProperty);
-                        if (previousValue != null) {
-                            PersistentPropertyPath pp = persistentEntity.getPropertyPath(autoPopulatedPreviousProperty);
-                            if (pp == null) {
-                                throw new IllegalStateException("Unrecognized path: " + autoPopulatedPreviousProperty);
-                            }
-                            index = setStatementParameter(stmt, index, pp.getProperty().getDataType(), previousValue, dialect);
-                            continue;
-                        }
-                    }
-                    index = setStatementParameter(stmt, index, DataType.ENTITY, entity, dialect);
-                    continue;
-                }
-                index = setPropertyPathParameter(connection, stmt, index, persistentEntity, entity, propertyPath);
-            }
-        }
-
-        /**
-         * Set query parameters from property path.
-         *
-         * @param connection         The connection
-         * @param stmt               The statement
-         * @param index              The index
-         * @param persistentEntity   The persistentEntity
-         * @param entity             The entity instance
-         * @param propertyStringPath The entity property path
-         * @param <T>                The entity type
-         */
-        private <T> int setPropertyPathParameter(Cnt connection, PS stmt, int index, RuntimePersistentEntity<T> persistentEntity, T entity, String propertyStringPath) {
-            if (propertyStringPath.startsWith("0.")) {
-                propertyStringPath = propertyStringPath.substring(2);
-            }
-            PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(propertyStringPath);
-            if (propertyPath == null) {
-                throw new IllegalStateException("Unrecognized path: " + propertyStringPath);
-            }
-            Object value = entity;
-            for (Association association : propertyPath.getAssociations()) {
-                RuntimePersistentProperty<?> property = (RuntimePersistentProperty) association;
-                BeanProperty beanProperty = property.getProperty();
-                value = beanProperty.get(value);
-                if (value == null) {
-                    break;
-                }
-            }
-            RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) propertyPath.getProperty();
-            if (value != null) {
-                BeanProperty beanProperty = property.getProperty();
-                value = beanProperty.get(value);
-            }
-            DataType type = property.getDataType();
-            if (value == null && type == DataType.ENTITY) {
-                RuntimePersistentEntity<?> referencedEntity = getEntity(property.getType());
-                RuntimePersistentProperty<?> identity = referencedEntity.getIdentity();
-                if (identity == null) {
-                    throw new IllegalStateException("Cannot set an entity value without identity: " + referencedEntity);
-                }
-                property = identity;
-                type = identity.getDataType();
-            }
-            value = convert(connection, value, property);
-            return setStatementParameter(stmt, index, type, value, dialect);
-        }
-
-        private int setStatementParameter(PS preparedStatement, int index, DataType dataType, Object value, Dialect dialect) {
-            if (expandedQuery) {
-                List<Object> values = expandValue(value, dataType);
-                if (values != null && values.isEmpty()) {
-                    value = null;
-                    values = null;
-                }
-                if (values == null) {
-                    AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, value, dialect);
-                } else {
-                    for (Object v : values) {
-                        AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, v, dialect);
-                        index++;
-                    }
-                    return index;
-                }
-            } else {
-                AbstractSqlRepositoryOperations.this.setStatementParameter(preparedStatement, index, dataType, value, dialect);
-            }
-            return index + 1;
-        }
-
-    }
-
-    /**
-     * The sql operation.
-     */
-    protected abstract class SqlOperation {
-
-        protected String query;
-        protected final Dialect dialect;
-
-        /**
-         * Creates a new instance.
-         *
-         * @param query   The sql query
-         * @param dialect The dialect
-         */
-        protected SqlOperation(String query, Dialect dialect) {
-            this.query = query;
-            this.dialect = dialect;
-        }
-
-        /**
-         * Expanded query.
-         *
-         * @return expanded query
-         */
-        public String exandedQuery() {
-            return query;
-        }
-
-        /**
-         * Get sql query.
-         *
-         * @return sql query
-         */
-        public String getQuery() {
-            return query;
-        }
-
-        /**
-         * Get dialect.
-         *
-         * @return dialect
-         */
-        public Dialect getDialect() {
-            return dialect;
-        }
-
-        /**
-         * Return true if query contains previous version check.
-         * If true and modifying query updates less records than expected {@link io.micronaut.data.exceptions.OptimisticLockException should be thrown.}
-         *
-         * @return true if the query contains optimistic lock
-         */
-        public boolean isOptimisticLock() {
-            return false;
-        }
-
-        /**
-         * Collect auto-populated property values before pre-actions are triggered and property values are modified.
-         *
-         * @param persistentEntity The persistent entity
-         * @param entity           The entity instance
-         * @param <T>              The entity type
-         * @return collected values
-         */
-        public <T> Map<String, Object> collectAutoPopulatedPreviousValues(RuntimePersistentEntity<T> persistentEntity, T entity) {
-            return null;
-        }
-
-        /**
-         * Set query parameters.
-         *
-         * @param connection       The connection
-         * @param stmt             The statement
-         * @param persistentEntity The persistentEntity
-         * @param entity           The entity
-         * @param previousValues   The previous auto-populated collected values
-         * @param <T>              The entity type
-         */
-        public abstract <T> void setParameters(Cnt connection, PS stmt, RuntimePersistentEntity<T> persistentEntity, T entity, Map<String, Object> previousValues);
 
     }
 
