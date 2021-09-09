@@ -352,6 +352,53 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             student5.isEmpty().blockingGet()
     }
 
+    def "test batch optimistic locking"() {
+        given:
+            def student1 = new Student("Denis")
+            def student2 = new Student("Frank")
+        when:
+            studentRepository.saveAll([student1, student2]).toList().blockingGet()
+        then:
+            student1.version == 0
+            student2.version == 0
+        when:
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student1.version == 0
+            student2.version == 0
+        when:
+            studentRepository.updateAll([student1, student2]).toList().blockingGet()
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student1.version == 1
+            student2.version == 1
+        when:
+            studentRepository.updateAll([student1, student2]).toList().blockingGet()
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+        then:
+            student1.version == 2
+            student2.version == 2
+        when:
+            student1.setVersion(5)
+            student1.setName("Xyz")
+            studentRepository.updateAll([student1, student2]).toList().blockingGet()
+        then:
+            def e = thrown(Exception)
+            e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
+        when:
+            student1 = studentRepository.findById(student1.getId()).blockingGet()
+            student2 = studentRepository.findById(student2.getId()).blockingGet()
+            student1.setVersion(5)
+            e = studentRepository.deleteAll([student1, student2]).blockingGet()
+        then:
+            e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
+        cleanup:
+            studentRepository.deleteAll().blockingGet()
+    }
+
     void "test custom delete"() {
         given:
         personRepository.deleteAll().blockingGet()

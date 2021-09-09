@@ -24,6 +24,7 @@ import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.RepositoryOperations;
 
@@ -72,6 +73,11 @@ public interface BlockingReactorRepositoryOperations extends RepositoryOperation
     @Override
     default <T> T update(@NonNull UpdateOperation<T> operation) {
         return reactive().update(operation).block();
+    }
+
+    @Override
+    default <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
+        return reactive().updateAll(operation).collectList().block();
     }
 
     @NonNull
