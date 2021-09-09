@@ -56,12 +56,12 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
-import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -192,6 +192,160 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         return runtimeEntityRegistry.getEntity(type);
     }
 
+    class PQSqlOperation<T, R> extends SqlOperation {
+
+        private final PreparedQuery<T, R> preparedQuery;
+        private final boolean isUpdate;
+        private final boolean isSingleResult;
+        private final Object[] queryParameters;
+        private final int[] parameterBinding;
+        private final DataType[] parameterTypes;
+        private final String[] indexedParameterPaths;
+        private final String[] indexedParameterAutoPopulatedPropertyPaths;
+        private final String[] indexedParameterAutoPopulatedPreviousPropertyPaths;
+        private final int[] indexedParameterAutoPopulatedPreviousPropertyIndexes;
+        private final Class[] parameterConvertors;
+        private boolean queryExpanded;
+
+
+        protected PQSqlOperation(@NonNull PreparedQuery<T, R> preparedQuery,
+                                 boolean isUpdate,
+                                 boolean isSingleResult,
+                                 Dialect dialect) {
+            super(preparedQuery.getQuery(), dialect);
+            this.preparedQuery = preparedQuery;
+            this.isUpdate = isUpdate;
+            this.isSingleResult = isSingleResult;
+            queryParameters = preparedQuery.getParameterArray();
+            parameterBinding = preparedQuery.getIndexedParameterBinding();
+            parameterTypes = preparedQuery.getIndexedParameterTypes();
+            indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
+            indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
+            indexedParameterAutoPopulatedPreviousPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
+            indexedParameterAutoPopulatedPreviousPropertyIndexes = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
+            parameterConvertors = preparedQuery.getAnnotationMetadata().classValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_CONVERTERS);
+        }
+
+        public void checkForParameterToBeExpanded(RuntimePersistentEntity<T> persistentEntity, T entity, SqlQueryBuilder queryBuilder) {
+            Iterator<Object> valuesIterator = new Iterator<Object>() {
+
+                int i;
+
+                @Override
+                public boolean hasNext() {
+                    if (i >= parameterBinding.length) {
+                        return false;
+                    }
+                    int parameterIndex = parameterBinding[i];
+                    DataType dataType = parameterTypes[i];
+                    // We want to expand collections with byte array convertible values
+                    if (parameterIndex == -1 || dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
+                        i++;
+                        return hasNext();
+                    }
+                    return true;
+                }
+
+                @Override
+                public Object next() {
+                    Object queryParameter = queryParameters[parameterBinding[i]];
+                    i++;
+                    return queryParameter;
+                }
+            };
+
+            String expandedQuery = expandMultipleValues(parameterBinding.length, valuesIterator, this.query, queryBuilder);
+            this.queryExpanded = !query.equals(expandedQuery);
+            this.query = expandedQuery;
+
+            if (!isUpdate) {
+                Pageable pageable = preparedQuery.getPageable();
+                if (pageable != Pageable.UNPAGED) {
+                    Class<T> rootEntity = persistentEntity.getIntrospection().getBeanType();
+                    Sort sort = pageable.getSort();
+                    if (sort.isSorted()) {
+                        query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
+                    } else if (isSqlServerWithoutOrderBy(query, dialect)) {
+                        // SQL server requires order by
+                        sort = sortById(persistentEntity);
+                        query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
+                    }
+                    if (isSingleResult && pageable.getOffset() > 0) {
+                        pageable = Pageable.from(pageable.getNumber(), 1);
+                    }
+                    query += queryBuilder.buildPagination(pageable).getQuery();
+                }
+            }
+        }
+
+        @Override
+        public <K> void setParameters(Cnt connection, PS stmt, RuntimePersistentEntity<K> persistentEntity, K entity, Map<String, Object> previousValues) {
+            int index = shiftIndex(0);
+            for (int i = 0; i < parameterBinding.length; i++) {
+                int parameterIndex = parameterBinding[i];
+                DataType dataType = parameterTypes[i];
+                Object value;
+                Class<?> parameterConverter = null;
+                if (parameterConvertors.length > i) {
+                    parameterConverter = parameterConvertors[i];
+                    if (parameterConverter == Object.class) {
+                        parameterConverter = null;
+                    }
+                }
+                if (parameterIndex > -1) {
+                    value = queryParameters[parameterIndex];
+                } else {
+                    String propertyPath = indexedParameterPaths[i];
+                    String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
+                    if (autoPopulatedPropertyPath != null) {
+                        RuntimePersistentProperty<K> persistentProperty = persistentEntity.getPropertyByName(autoPopulatedPropertyPath);
+                        if (persistentProperty == null) {
+                            throw new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath);
+                        }
+                        Object previousValue = null;
+                        int autoPopulatedPreviousPropertyIndex = indexedParameterAutoPopulatedPreviousPropertyIndexes[i];
+                        if (autoPopulatedPreviousPropertyIndex > -1) {
+                            previousValue = queryParameters[autoPopulatedPreviousPropertyIndex];
+                        } else {
+                            String previousValuePath = indexedParameterAutoPopulatedPreviousPropertyPaths[i];
+                            if (previousValuePath != null) {
+                                previousValue = resolveQueryParameterByPath(query, i, queryParameters, previousValuePath);
+                            }
+                        }
+                        value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
+                        value = convert(connection, value, persistentProperty);
+                        parameterConverter = null;
+                    } else if (propertyPath != null) {
+                        value = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
+                    } else {
+                        throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
+                    }
+                }
+                List<Object> values = expandValue(value, dataType);
+                if (values != null && values.isEmpty()) {
+                    // Empty collections / array should always set at least one value
+                    value = null;
+                    values = null;
+                }
+                if (values == null) {
+                    if (parameterConverter != null) {
+                        Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
+                        value = convert(parameterConverter, connection, value, argument);
+                    }
+                    setStatementParameter(stmt, index++, dataType, value, dialect);
+                } else {
+                    for (Object v : values) {
+                        if (parameterConverter != null) {
+                            Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
+                            v = convert(parameterConverter, connection, v, argument);
+                        }
+                        setStatementParameter(stmt, index++, dataType, v, dialect);
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Prepare a statement for execution.
      *
@@ -210,67 +364,14 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
             @NonNull PreparedQuery<T, R> preparedQuery,
             boolean isUpdate,
             boolean isSingleResult) throws Exc {
-        Object[] queryParameters = preparedQuery.getParameterArray();
-        int[] parameterBinding = preparedQuery.getIndexedParameterBinding();
-        DataType[] parameterTypes = preparedQuery.getIndexedParameterTypes();
-        String[] indexedParameterPaths = preparedQuery.getIndexedParameterPaths();
-        String[] indexedParameterAutoPopulatedPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPropertyPaths();
-        String[] indexedParameterAutoPopulatedPreviousPropertyPaths = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyPaths();
-        int[] indexedParameterAutoPopulatedPreviousPropertyIndexes = preparedQuery.getIndexedParameterAutoPopulatedPreviousPropertyIndexes();
-        Class[] parameterConvertors = preparedQuery.getAnnotationMetadata().classValues(DataMethod.class, DataMethod.META_MEMBER_PARAMETER_CONVERTERS);
-        String query = preparedQuery.getQuery();
         SqlQueryBuilder queryBuilder = queryBuilders.getOrDefault(preparedQuery.getRepositoryType(), DEFAULT_SQL_BUILDER);
         final Dialect dialect = queryBuilder.getDialect();
         RuntimePersistentEntity<T> persistentEntity = getEntity(preparedQuery.getRootEntity());
 
-        Iterator<Object> valuesIterator = new Iterator<Object>() {
+        PQSqlOperation<T, R> pqSqlOperation = new PQSqlOperation<>(preparedQuery, isUpdate, isSingleResult, dialect);
+        pqSqlOperation.checkForParameterToBeExpanded(persistentEntity, null, queryBuilder);
 
-            int i;
-
-            @Override
-            public boolean hasNext() {
-                if (i >= parameterBinding.length) {
-                    return false;
-                }
-                int parameterIndex = parameterBinding[i];
-                DataType dataType = parameterTypes[i];
-                // We want to expand collections with byte array convertible values
-                if (parameterIndex == -1 || dataType.isArray() && dataType != DataType.BYTE_ARRAY) {
-                    i++;
-                    return hasNext();
-                }
-                return true;
-            }
-
-            @Override
-            public Object next() {
-                Object queryParameter = queryParameters[parameterBinding[i]];
-                i++;
-                return queryParameter;
-            }
-        };
-
-        query = expandMultipleValues(parameterBinding.length, valuesIterator, query, queryBuilder);
-
-        if (!isUpdate) {
-            Pageable pageable = preparedQuery.getPageable();
-            if (pageable != Pageable.UNPAGED) {
-                Class<T> rootEntity = preparedQuery.getRootEntity();
-                Sort sort = pageable.getSort();
-                if (sort.isSorted()) {
-                    query += queryBuilder.buildOrderBy(getEntity(rootEntity), sort).getQuery();
-                } else if (isSqlServerWithoutOrderBy(query, dialect)) {
-                    // SQL server requires order by
-                    sort = sortById(persistentEntity);
-                    query += queryBuilder.buildOrderBy(persistentEntity, sort).getQuery();
-                }
-                if (isSingleResult && pageable.getOffset() > 0) {
-                    pageable = Pageable.from(pageable.getNumber(), 1);
-                }
-                query += queryBuilder.buildPagination(pageable).getQuery();
-            }
-        }
-
+        String query = pqSqlOperation.getQuery();
         if (QUERY_LOG.isDebugEnabled()) {
             QUERY_LOG.debug("Executing Query: {}", query);
         }
@@ -280,69 +381,8 @@ public abstract class AbstractSqlRepositoryOperations<Cnt, RS, PS, Exc extends E
         } catch (Exception e) {
             throw new DataAccessException("Unable to prepare query [" + query + "]: " + e.getMessage(), e);
         }
-        int index = shiftIndex(0);
-        for (int i = 0; i < parameterBinding.length; i++) {
-            int parameterIndex = parameterBinding[i];
-            DataType dataType = parameterTypes[i];
-            Object value;
-            Class<?> parameterConverter = null;
-            if (parameterConvertors.length > i) {
-                parameterConverter = parameterConvertors[i];
-                if (parameterConverter == Object.class) {
-                    parameterConverter = null;
-                }
-            }
-            if (parameterIndex > -1) {
-                value = queryParameters[parameterIndex];
-            } else {
-                String propertyPath = indexedParameterPaths[i];
-                String autoPopulatedPropertyPath = indexedParameterAutoPopulatedPropertyPaths[i];
-                if (autoPopulatedPropertyPath != null) {
-                    RuntimePersistentProperty<T> persistentProperty = persistentEntity.getPropertyByName(autoPopulatedPropertyPath);
-                    if (persistentProperty == null) {
-                        throw new IllegalStateException("Cannot find auto populated property: " + autoPopulatedPropertyPath);
-                    }
-                    Object previousValue = null;
-                    int autoPopulatedPreviousPropertyIndex = indexedParameterAutoPopulatedPreviousPropertyIndexes[i];
-                    if (autoPopulatedPreviousPropertyIndex > -1) {
-                        previousValue = queryParameters[autoPopulatedPreviousPropertyIndex];
-                    } else {
-                        String previousValuePath = indexedParameterAutoPopulatedPreviousPropertyPaths[i];
-                        if (previousValuePath != null) {
-                            previousValue = resolveQueryParameterByPath(query, i, queryParameters, previousValuePath);
-                        }
-                    }
-                    value = runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-                    value = convert(connection, value, persistentProperty);
-                    parameterConverter = null;
-                } else if (propertyPath != null) {
-                    value = resolveQueryParameterByPath(query, i, queryParameters, propertyPath);
-                } else {
-                    throw new IllegalStateException("Invalid query [" + query + "]. Unable to establish parameter value for parameter at position: " + (i + 1));
-                }
-            }
-            List<Object> values = expandValue(value, dataType);
-            if (values != null && values.isEmpty()) {
-                // Empty collections / array should always set at least one value
-                value = null;
-                values = null;
-            }
-            if (values == null) {
-                if (parameterConverter != null) {
-                    Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
-                    value = convert(parameterConverter, connection, value, argument);
-                }
-                setStatementParameter(ps, index++, dataType, value, dialect);
-            } else {
-                for (Object v : values) {
-                    if (parameterConverter != null) {
-                        Argument<?> argument = parameterIndex > -1 ? preparedQuery.getArguments()[parameterIndex] : null;
-                        v = convert(parameterConverter, connection, v, argument);
-                    }
-                    setStatementParameter(ps, index++, dataType, v, dialect);
-                }
-            }
-        }
+        pqSqlOperation.setParameters(connection, ps, persistentEntity, null, null);
+
         return ps;
     }
 
