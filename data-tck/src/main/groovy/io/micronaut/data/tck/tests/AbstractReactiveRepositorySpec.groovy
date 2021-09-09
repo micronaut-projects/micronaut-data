@@ -16,7 +16,6 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.data.tck.entities.PersonDto
@@ -387,15 +386,15 @@ abstract class AbstractReactiveRepositorySpec extends Specification {
             student1.setName("Xyz")
             studentRepository.updateAll([student1, student2]).toList().blockingGet()
         then:
-            def e = thrown(OptimisticLockException)
-            e.message == "Execute update returned unexpected row count. Expected: 2 got: 1"
+            def e = thrown(Exception)
+            e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
         when:
             student1 = studentRepository.findById(student1.getId()).blockingGet()
             student2 = studentRepository.findById(student2.getId()).blockingGet()
             student1.setVersion(5)
             e = studentRepository.deleteAll([student1, student2]).blockingGet()
         then:
-            e.message == "Execute update returned unexpected row count. Expected: 2 got: 1"
+            e.message.contains "Execute update returned unexpected row count. Expected: 2 got: 1"
         cleanup:
             studentRepository.deleteAll().blockingGet()
     }
