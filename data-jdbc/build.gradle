@@ -3,7 +3,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-graal"
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     api project(":data-runtime")
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    compileOnly 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation "io.micronaut:micronaut-http"
     implementation "io.micronaut.sql:micronaut-jdbc"
     compileOnly project(":data-hibernate-jpa")
@@ -13,6 +13,7 @@ dependencies {
     testAnnotationProcessor project(":data-processor")
     testCompileOnly "io.micronaut:micronaut-inject-groovy"
     testImplementation project(":data-processor")
+    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
     testImplementation "com.fasterxml.jackson.core:jackson-databind"
 	testImplementation "javax.persistence:javax.persistence-api:$javaxPersistenceVersion"
     testImplementation "jakarta.persistence:jakarta.persistence-api:$jakartaPersistenceVersion"
