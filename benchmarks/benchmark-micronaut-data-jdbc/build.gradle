@@ -1,7 +1,7 @@
 plugins {
     id "application"
     id "java"
-    id "me.champeau.jmh" version "0.6.4"
+    id "me.champeau.jmh" version "0.6.6"
 }
 
 version "0.1"
@@ -28,7 +28,7 @@ dependencies {
     implementation "io.micronaut:micronaut-validation"
     implementation "io.micronaut:micronaut-runtime"
     implementation "io.micronaut.sql:micronaut-jdbc-hikari:$micronautSqlVersion"
-    runtimeOnly "ch.qos.logback:logback-classic:1.2.3"
+    runtimeOnly "ch.qos.logback:logback-classic:1.2.6"
     runtimeOnly "com.h2database:h2"
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testImplementation "org.junit.jupiter:junit-jupiter-api"

@@ -10,7 +10,7 @@ buildscript {
 
 plugins {
 	id 'java'
-    id "me.champeau.jmh" version "0.6.4"
+    id "me.champeau.jmh" version "0.6.6"
 }
 
 apply plugin: "org.springframework.boot"
@@ -34,7 +34,7 @@ dependencies {
 	runtimeOnly "com.zaxxer:HikariCP:3.4.5"
 	runtimeOnly "com.h2database:h2"
 
-    jmh "ch.qos.logback:logback-classic:1.2.3"
+    jmh "ch.qos.logback:logback-classic:1.2.6"
     jmh 'org.openjdk.jmh:jmh-core:1.30'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.25.2'
 }
