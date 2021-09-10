@@ -36,7 +36,7 @@ dependencies {
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
     jmh 'org.openjdk.jmh:jmh-core:1.30'
-    jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.25.2'
+    jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.33'
 }
 
 test.classpath += configurations.developmentOnly
