@@ -28,7 +28,7 @@ import java.util.Map;
  * @since 3.1
  */
 @Internal
-public abstract class SqlOperation {
+public abstract class DBOperation {
 
     protected String query;
     protected final Dialect dialect;
@@ -39,7 +39,7 @@ public abstract class SqlOperation {
      * @param query   The sql query
      * @param dialect The dialect
      */
-    protected SqlOperation(String query, Dialect dialect) {
+    protected DBOperation(String query, Dialect dialect) {
         this.query = query;
         this.dialect = dialect;
     }

@@ -39,7 +39,7 @@ import java.util.Map;
  * Implementation of the DB operation based on {@link PreparedQuery}.
  */
 @Internal
-public final class PreparedQuerySqlOperation extends StoredSqlOperation {
+public final class PreparedQueryDBOperation extends StoredSqlOperation {
 
     private final Object[] queryParameters;
     private final int[] parameterBinding;
@@ -52,10 +52,7 @@ public final class PreparedQuerySqlOperation extends StoredSqlOperation {
     private final Argument[] parameterArguments;
     private boolean queryExpanded;
 
-    protected PreparedQuerySqlOperation(@NonNull PreparedQuery<?, ?> preparedQuery,
-                                        boolean isUpdate,
-                                        boolean isSingleResult,
-                                        Dialect dialect) {
+    protected PreparedQueryDBOperation(@NonNull PreparedQuery<?, ?> preparedQuery, Dialect dialect) {
         super(dialect, preparedQuery.getQuery(), new String[0], null, false);
         queryParameters = preparedQuery.getParameterArray();
         parameterBinding = preparedQuery.getIndexedParameterBinding();

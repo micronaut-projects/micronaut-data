@@ -76,7 +76,7 @@ import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractSqlRepositoryOperations;
 import io.micronaut.data.runtime.operations.internal.OpContext;
-import io.micronaut.data.runtime.operations.internal.SqlOperation;
+import io.micronaut.data.runtime.operations.internal.DBOperation;
 import io.micronaut.data.runtime.operations.internal.StoredAnnotationMetadataSqlOperation;
 import io.micronaut.data.runtime.operations.internal.StoredSqlOperation;
 import io.micronaut.data.runtime.support.AbstractConversionContext;
@@ -208,7 +208,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         LOG.debug("Cascading PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
                     }
                     JdbcEntityOperations<Object> op = new JdbcEntityOperations<>(childPersistentEntity, child);
-                    SqlOperation childSqlPersistOperation = resolveEntityInsert(annotationMetadata, repositoryType, child.getClass(), childPersistentEntity);
+                    DBOperation childSqlPersistOperation = resolveEntityInsert(annotationMetadata, repositoryType, child.getClass(), childPersistentEntity);
                     persistOne(connection, cascadeOneOp.annotationMetadata, cascadeOneOp.repositoryType, childSqlPersistOperation, associations, persisted, op);
                     entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, op.entity);
                     child = op.entity;
@@ -218,7 +218,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                 persistentEntity.getIdentity().getProperty().get(entity), cascadeOp.ctx.associations);
                     }
                     JdbcEntityOperations<Object> op = new JdbcEntityOperations<>(childPersistentEntity, child);
-                    SqlOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, child.getClass(), childPersistentEntity);
+                    DBOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, child.getClass(), childPersistentEntity);
                     updateOne(connection, cascadeOneOp.annotationMetadata, cascadeOneOp.repositoryType, childSqlUpdateOperation, associations, persisted, op);
                     entity = afterCascadedOne(entity, cascadeOp.ctx.associations, child, op.entity);
                     child = op.entity;
@@ -238,7 +238,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 List<Object> entities;
                 if (cascadeType == Relation.Cascade.UPDATE) {
                     entities = CollectionUtils.iterableToList(cascadeManyOp.children);
-                    SqlOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
+                    DBOperation childSqlUpdateOperation = resolveEntityUpdate(annotationMetadata, repositoryType, childPersistentEntity.getIntrospection().getBeanType(), childPersistentEntity);
                     for (ListIterator<Object> iterator = entities.listIterator(); iterator.hasNext(); ) {
                         Object child = iterator.next();
                         if (persisted.contains(child)) {
@@ -260,7 +260,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     }
                 } else if (cascadeType == Relation.Cascade.PERSIST) {
 
-                    SqlOperation childSqlPersistOperation = resolveEntityInsert(
+                    DBOperation childSqlPersistOperation = resolveEntityInsert(
                             annotationMetadata,
                             repositoryType,
                             childPersistentEntity.getIntrospection().getBeanType(),
@@ -734,7 +734,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
         final Class<?> repositoryType = operation.getRepositoryType();
         final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
-        final SqlOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
+        final DBOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
         return transactionOperations.executeWrite((status) -> {
             JdbcEntityOperations<T> op = new JdbcEntityOperations<>(getEntity(operation.getRootEntity()), operation.getEntity());
             persistOne(status.getConnection(), annotationMetadata, repositoryType, sqlOperation, Collections.emptyList(), new HashSet<>(5), op);
@@ -776,7 +776,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             final AnnotationMetadata annotationMetadata = operation.getAnnotationMetadata();
             final Class<?> repositoryType = operation.getRepositoryType();
             final Dialect dialect = queryBuilders.getOrDefault(repositoryType, DEFAULT_SQL_BUILDER).dialect();
-            final SqlOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
+            final DBOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
             final RuntimePersistentEntity<T> persistentEntity = getEntity(operation.getRootEntity());
             final HashSet<Object> persisted = new HashSet<>(5);
             if (!isSupportsBatchInsert(persistentEntity, dialect)) {
@@ -991,19 +991,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void collectAutoPopulatedPreviousValues(SqlOperation sqlOperation) {
+        protected void collectAutoPopulatedPreviousValues(DBOperation sqlOperation) {
             previousValues = sqlOperation.collectAutoPopulatedPreviousValues(persistentEntity, entity);
         }
 
         @Override
-        protected void checkForParameterToBeExpanded(SqlOperation sqlOperation, SqlQueryBuilder queryBuilder) {
+        protected void checkForParameterToBeExpanded(DBOperation sqlOperation, SqlQueryBuilder queryBuilder) {
             if (StoredSqlOperation.class.isInstance(sqlOperation)) {
                 ((StoredSqlOperation) sqlOperation).checkForParameterToBeExpanded(persistentEntity, entity, queryBuilder);
             }
         }
 
         @Override
-        protected void setParameters(OpContext<Connection, PreparedStatement> context, Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) {
+        protected void setParameters(OpContext<Connection, PreparedStatement> context, Connection connection, PreparedStatement stmt, DBOperation sqlOperation) {
             sqlOperation.setParameters(context, connection, stmt, persistentEntity, entity, previousValues);
         }
 
@@ -1109,7 +1109,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void collectAutoPopulatedPreviousValues(SqlOperation sqlOperation) {
+        protected void collectAutoPopulatedPreviousValues(DBOperation sqlOperation) {
             for (Data d : entities) {
                 if (d.vetoed) {
                     continue;
@@ -1159,7 +1159,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         @Override
-        protected void setParameters(OpContext<Connection, PreparedStatement> context, Connection connection, PreparedStatement stmt, SqlOperation sqlOperation) throws SQLException {
+        protected void setParameters(OpContext<Connection, PreparedStatement> context, Connection connection, PreparedStatement stmt, DBOperation sqlOperation) throws SQLException {
             for (Data d : entities) {
                 if (d.vetoed) {
                     continue;

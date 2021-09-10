@@ -43,10 +43,10 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * Implementation of {@link SqlOperation} that uses bindging paths.
+ * Implementation of {@link DBOperation} that uses bindging paths.
  */
 @Internal
-public class StoredSqlOperation extends SqlOperation {
+public class StoredSqlOperation extends DBOperation {
 
     protected final String[] parameterBindingPaths;
     protected final String[] autoPopulatedPreviousProperties;
