@@ -3,7 +3,7 @@ dependencies {
     annotationProcessor "io.micronaut:micronaut-graal"
     annotationProcessor "io.micronaut.docs:micronaut-docs-asciidoc-config-props:$micronautDocsVersion"
     api project(":data-runtime")
-    implementation 'io.micronaut.rxjava2:micronaut-rxjava2'
+    compileOnly 'io.micronaut.rxjava2:micronaut-rxjava2'
     implementation "io.micronaut:micronaut-http"
     implementation "io.micronaut.sql:micronaut-jdbc"
     compileOnly project(":data-hibernate-jpa")
