@@ -18,6 +18,7 @@ dependencies {
     testImplementation project(":data-tck")
     testImplementation "io.micronaut.test:micronaut-test-spock"
     testImplementation "io.r2dbc:r2dbc-pool"
+    testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
     testAnnotationProcessor project(":data-processor")
