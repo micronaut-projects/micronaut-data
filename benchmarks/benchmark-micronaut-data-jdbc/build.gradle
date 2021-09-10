@@ -35,7 +35,7 @@ dependencies {
     testImplementation "io.micronaut.test:micronaut-test-junit5:$micronautTestVersion"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine"
 
-    jmh 'org.openjdk.jmh:jmh-core:1.30'
+    jmh 'org.openjdk.jmh:jmh-core:1.33'
     jmh 'org.openjdk.jmh:jmh-generator-annprocess:1.25.2'
 }
 
