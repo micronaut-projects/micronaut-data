@@ -25,7 +25,7 @@ dependencies {
         exclude group: 'io.micronaut.data'
     }
     testImplementation 'io.micronaut.rxjava2:micronaut-rxjava2'
-    testImplementation "io.projectreactor:reactor-core"
+    testImplementation 'io.micronaut.reactor:micronaut-reactor'
     testImplementation project(":data-tck")
 
     testAnnotationProcessor "io.micronaut:micronaut-inject-java"
