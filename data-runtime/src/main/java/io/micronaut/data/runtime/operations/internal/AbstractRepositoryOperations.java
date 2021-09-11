@@ -74,9 +74,8 @@ import java.util.stream.Stream;
  * @param <Cnt> The connection type
  * @param <PS>  The prepared statement type
  * @param <Exc> The exception type
- * @author graemerocher
  * @author Denis Stepanov
- * @since 1.0.0
+ * @since 3.1.0
  */
 @SuppressWarnings("FileLength")
 @Internal
@@ -365,15 +364,13 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
      * Delete one operation.
      *
      * @param connection         The connection
-     * @param dialect            The dialect
-     * @param annotationMetadata The annotationMetadata
-     * @param op                 The operation
+     * @param op                 The entity operation
+     * @param dbOperation        The db operation
      * @param queryBuilder       The queryBuilder
      * @param <T>                The entity type
      */
-    protected <T> void deleteOne(Cnt connection, Dialect dialect, AnnotationMetadata annotationMetadata, EntityOperations<T> op, SqlQueryBuilder queryBuilder) {
-        StoredSqlOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
-        op.collectAutoPopulatedPreviousValues(sqlOperation);
+    protected <T> void deleteOne(Cnt connection, EntityOperations<T> op, DBOperation dbOperation, SqlQueryBuilder queryBuilder) {
+        op.collectAutoPopulatedPreviousValues(dbOperation);
         boolean vetoed = op.triggerPreRemove();
         if (vetoed) {
             // operation vetoed
@@ -381,16 +378,16 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
         }
         try {
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing SQL DELETE: {}", sqlOperation.getQuery());
+                QUERY_LOG.debug("Executing SQL DELETE: {}", dbOperation.getQuery());
             }
-            op.checkForParameterToBeExpanded(sqlOperation, queryBuilder);
-            prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(this, connection, ps, sqlOperation);
+            op.checkForParameterToBeExpanded(dbOperation, queryBuilder);
+            prepareStatement(connection, dbOperation.getQuery(), ps -> {
+                op.setParameters(this, connection, ps, dbOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Delete operation deleted {} records", deleted);
                     }
-                    if (sqlOperation.isOptimisticLock()) {
+                    if (dbOperation.isOptimisticLock()) {
                         checkOptimisticLocking(entries, deleted);
                     }
                 });
@@ -407,14 +404,12 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
      * Delete batch operation.
      *
      * @param connection         The connection
-     * @param dialect            The dialect
-     * @param annotationMetadata The annotationMetadata
      * @param op                 The operation
+     * @param dbOperation        The db operations
      * @param <T>                The entity type
      */
-    protected <T> void deleteInBatch(Cnt connection, Dialect dialect, AnnotationMetadata annotationMetadata, EntitiesOperations<T> op) {
-        StoredSqlOperation sqlOperation = new StoredAnnotationMetadataSqlOperation(dialect, annotationMetadata);
-        op.collectAutoPopulatedPreviousValues(sqlOperation);
+    protected <T> void deleteInBatch(Cnt connection, EntitiesOperations<T> op, DBOperation dbOperation) {
+        op.collectAutoPopulatedPreviousValues(dbOperation);
         boolean vetoed = op.triggerPreRemove();
         if (vetoed) {
             // operation vetoed
@@ -422,15 +417,15 @@ public abstract class AbstractRepositoryOperations<Cnt, PS, Exc extends Exceptio
         }
         try {
             if (QUERY_LOG.isDebugEnabled()) {
-                QUERY_LOG.debug("Executing Batch SQL DELETE: {}", sqlOperation.getQuery());
+                QUERY_LOG.debug("Executing Batch SQL DELETE: {}", dbOperation.getQuery());
             }
-            prepareStatement(connection, sqlOperation.getQuery(), ps -> {
-                op.setParameters(this, connection, ps, sqlOperation);
+            prepareStatement(connection, dbOperation.getQuery(), ps -> {
+                op.setParameters(this, connection, ps, dbOperation);
                 op.executeUpdate(ps, (entries, deleted) -> {
                     if (QUERY_LOG.isTraceEnabled()) {
                         QUERY_LOG.trace("Delete operation deleted {} records", deleted);
                     }
-                    if (sqlOperation.isOptimisticLock()) {
+                    if (dbOperation.isOptimisticLock()) {
                         checkOptimisticLocking(entries, deleted);
                     }
                 });

@@ -96,9 +96,8 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     private static final String DATA_METHOD_ANN_NAME = DataMethod.class.getName();
     private static final int[] EMPTY_INT_ARRAY = new int[0];
     protected final RepositoryOperations operations;
-    private final ConcurrentMap<Class, Class> lastUpdatedTypes = new ConcurrentHashMap<>(10);
-    private final ConcurrentMap<RepositoryMethodKey, StoredQuery> findQueries = new ConcurrentHashMap<>(50);
     private final ConcurrentMap<RepositoryMethodKey, StoredQuery> countQueries = new ConcurrentHashMap<>(50);
+    private final ConcurrentMap<RepositoryMethodKey, StoredQuery> queries = new ConcurrentHashMap<>(50);
 
     /**
      * Default constructor.
@@ -134,9 +133,29 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             MethodInvocationContext<T, R> context,
             Class<RT> resultType) {
         validateNullArguments(context);
-        StoredQuery<?, RT> storedQuery = findQueries.get(methodKey);
+        StoredQuery<?, RT> storedQuery = findStoreQuery(methodKey, context, resultType);
+
+        Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
+        String query = storedQuery.getQuery();
+        return new DefaultPreparedQuery<>(
+                context,
+                storedQuery,
+                query,
+                pageable,
+                storedQuery.isDtoProjection()
+        );
+    }
+
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(MethodInvocationContext<?, ?> context) {
+        RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
+        return findStoreQuery(key, context, null);
+
+    }
+
+    private <E, RT> StoredQuery<E, RT> findStoreQuery(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context, Class<RT> resultType) {
+        StoredQuery<E, RT> storedQuery = queries.get(methodKey);
         if (storedQuery == null) {
-            Class<?> rootEntity = context.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
+            Class<E> rootEntity = context.classValue(DATA_METHOD_ANN_NAME, DataMethod.META_MEMBER_ROOT_ENTITY)
                     .orElseThrow(() -> new IllegalStateException("No root entity present in method"));
             if (resultType == null) {
                 //noinspection unchecked
@@ -154,20 +173,9 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                     DataMethod.META_MEMBER_PARAMETER_BINDING,
                     false
             );
-            findQueries.put(methodKey, storedQuery);
+            queries.put(methodKey, storedQuery);
         }
-
-
-
-        Pageable pageable = storedQuery.hasPageable() ? getPageable(context) : Pageable.UNPAGED;
-        String query = storedQuery.getQuery();
-        return new DefaultPreparedQuery<>(
-                context,
-                storedQuery,
-                query,
-                pageable,
-                storedQuery.isDtoProjection()
-        );
+        return storedQuery;
     }
 
     /**
@@ -691,43 +699,17 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Default implementation of {@link InsertOperation}.
      * @param <E> The entity type
      */
-    private final class DefaultInsertOperation<E> extends AbstractPreparedDataOperation<E> implements InsertOperation<E> {
-        private final MethodInvocationContext<?, ?> method;
+    private final class DefaultInsertOperation<E> extends AbstractEntityOperation<E> implements InsertOperation<E> {
         private final E entity;
 
         DefaultInsertOperation(MethodInvocationContext<?, ?> method, E entity) {
-            //noinspection unchecked
-            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
-            this.method = method;
+            super(method, (Class<E>) entity.getClass());
             this.entity = entity;
-        }
-
-        @Override
-        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
-            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
-        }
-
-        @NonNull
-        @Override
-        public Class<E> getRootEntity() {
-            return (Class<E>) entity.getClass();
-        }
-
-        @NonNull
-        @Override
-        public Class<?> getRepositoryType() {
-            return method.getTarget().getClass();
         }
 
         @Override
         public E getEntity() {
             return entity;
-        }
-
-        @NonNull
-        @Override
-        public String getName() {
-            return method.getMethodName();
         }
 
     }
@@ -746,31 +728,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Default implementation of {@link UpdateOperation}.
      * @param <E> The entity type
      */
-    private final class DefaultUpdateOperation<E> extends AbstractPreparedDataOperation<E> implements UpdateOperation<E> {
-        private final MethodInvocationContext<?, ?> method;
+    private final class DefaultUpdateOperation<E> extends AbstractEntityOperation<E> implements UpdateOperation<E> {
         private final E entity;
 
         DefaultUpdateOperation(MethodInvocationContext<?, ?> method, E entity) {
-            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
-            this.method = method;
+            super(method, (Class<E>) entity.getClass());
             this.entity = entity;
-        }
-
-        @Override
-        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
-            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
-        }
-
-        @NonNull
-        @Override
-        public Class<E> getRootEntity() {
-            return (Class<E>) entity.getClass();
-        }
-
-        @NonNull
-        @Override
-        public Class<?> getRepositoryType() {
-            return method.getTarget().getClass();
         }
 
         @Override
@@ -778,13 +741,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
             return entity;
         }
 
-        @NonNull
-        @Override
-        public String getName() {
-            return method.getMethodName();
-        }
     }
-
 
     private abstract class AbstractEntityInstanceOperation<E> extends AbstractEntityOperation<E> implements EntityInstanceOperation<E> {
         private final E entity;
@@ -803,13 +760,22 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     }
 
     private abstract class AbstractEntityOperation<E> extends AbstractPreparedDataOperation<E> implements EntityOperation<E> {
-        private final MethodInvocationContext<?, ?> method;
-        private final Class<E> rootEntity;
+        protected final MethodInvocationContext<?, ?> method;
+        protected final Class<E> rootEntity;
+        protected StoredQuery<E, ?> storedQuery;
 
         AbstractEntityOperation(MethodInvocationContext<?, ?> method, Class<E> rootEntity) {
             super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
             this.method = method;
             this.rootEntity = rootEntity;
+        }
+
+        @Override
+        public StoredQuery<E, ?> getStoredQuery() {
+            if (storedQuery == null) {
+                storedQuery = findStoreQuery(method);
+            }
+            return storedQuery;
         }
 
         @Override
@@ -903,39 +869,12 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * Default implementation of {@link BatchOperation}.
      * @param <E> The entity type
      */
-    private class DefaultBatchOperation<E> extends AbstractPreparedDataOperation<E> implements BatchOperation<E> {
-        protected final MethodInvocationContext<?, ?> method;
-        protected final @NonNull Class<E> rootEntity;
+    private class DefaultBatchOperation<E> extends AbstractEntityOperation<E> implements BatchOperation<E> {
         protected final Iterable<E> iterable;
 
         public DefaultBatchOperation(MethodInvocationContext<?, ?> method, @NonNull Class<E> rootEntity, Iterable<E> iterable) {
-            super((MethodInvocationContext<?, E>) method, new DefaultStoredDataOperation<>(method.getExecutableMethod()));
-            this.method = method;
-            this.rootEntity = rootEntity;
+            super(method, rootEntity);
             this.iterable = iterable;
-        }
-
-        @Override
-        public <RT1> Optional<RT1> getParameterInRole(@NonNull String role, @NonNull Class<RT1> type) {
-            return AbstractQueryInterceptor.this.getParameterInRole(method, role, type);
-        }
-
-        @NonNull
-        @Override
-        public Class<E> getRootEntity() {
-            return rootEntity;
-        }
-
-        @NonNull
-        @Override
-        public Class<?> getRepositoryType() {
-            return method.getTarget().getClass();
-        }
-
-        @NonNull
-        @Override
-        public String getName() {
-            return method.getMethodName();
         }
 
         @Override
