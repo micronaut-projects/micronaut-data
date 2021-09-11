@@ -62,6 +62,8 @@ import io.micronaut.jdbc.spring.HibernatePresenceCondition;
 import io.micronaut.transaction.TransactionOperations;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.graph.AttributeNode;
+import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
 import org.hibernate.graph.SubGraph;
 import org.hibernate.query.NativeQuery;
@@ -441,31 +443,7 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                     } else if (value instanceof String[]) {
                         String[] pathsDefinitions = (String[]) value;
                         if (ArrayUtils.isNotEmpty(pathsDefinitions)) {
-                            RootGraph<T> entityGraph = session.createEntityGraph(preparedQuery.getRootEntity());
-                            for (String pathsDefinition : pathsDefinitions) {
-                                String[] paths = pathsDefinition.split("\\.");
-                                if (paths.length == 1) {
-                                    entityGraph.addAttributeNode(paths[0]);
-                                } else {
-                                    SubGraph<T> subGraph = null;
-                                    for (int i = 0; i < paths.length; i++) {
-                                        String path = paths[i];
-                                        if (subGraph == null) {
-                                            if (i + 1 == paths.length) {
-                                                entityGraph.addAttributeNode(path);
-                                            } else {
-                                                subGraph = entityGraph.addSubGraph(path);
-                                            }
-                                        } else {
-                                            if (i + 1 == paths.length) {
-                                                subGraph.addAttributeNode(path);
-                                            } else {
-                                                subGraph = subGraph.addSubGraph(path);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            RootGraph<T> entityGraph = createGraph(pathsDefinitions, session, preparedQuery.getRootEntity());
                             q.setHint(hintName, entityGraph);
                         }
                     }
@@ -474,6 +452,55 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
                 }
             }
         }
+    }
+
+    /**
+     * Create an EntityGraph from the collection of paths provided. It ensures that only one SubGraph for each component
+     * of the path is created within the graph.
+     * @param paths Array of paths to add to the EntityGraph
+     * @param session The hibernate session
+     * @param rootEntity The root entity class
+     * @param <T>
+     * @return A RootGraph created from the paths
+     */
+    private static <T> RootGraph<T> createGraph(@NonNull String[] paths, @NonNull Session session, @NonNull Class<T> rootEntity) {
+        RootGraph<T> rootGraph = session.createEntityGraph(rootEntity);
+        for (String path : paths) {
+            if (path.trim().equals("")) {
+                continue;
+            }
+            String[] parts = path.split("\\.");
+            if (parts.length == 1) {
+                AttributeNode<?> attrNode = rootGraph.findAttributeNode(path);
+                if (attrNode == null) {
+                    rootGraph.addAttributeNode(path);
+                }
+            } else {
+                Graph<?> graph = rootGraph;
+                for (int i = 0; i < parts.length; i++) {
+                    String part = parts[i];
+                    // Check if the node already exists at this level
+                    AttributeNode<?> attrNode = graph.findAttributeNode(part);
+                    if (attrNode != null) {
+                        SubGraph<?> subGraph = attrNode.getSubGraphs().isEmpty() ? null : attrNode.getSubGraphs().values().iterator().next();
+                        // If this is not a leaf and the subgraph doesn't exist, create it
+                        if (subGraph == null && i < parts.length - 1) {
+                            graph = graph.addSubGraph(part);
+                        } else if (subGraph != null) {
+                            // Otherwise, keep the existing one for the child node
+                            graph = subGraph;
+                        }
+                    } else if (i == parts.length - 1) {
+                        // If this is a leaf, create an attribute node
+                        graph.addAttributeNode(part);
+                    } else {
+                        // Otherwise, create a subgraph
+                        graph = graph.addSubGraph(part);
+                    }
+                }
+            }
+        }
+        return rootGraph;
     }
 
     @SuppressWarnings("ConstantConditions")
