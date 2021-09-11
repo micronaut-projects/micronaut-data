@@ -175,8 +175,12 @@ public class HibernateJpaOperations implements JpaRepositoryOperations, AsyncCap
         AnnotationMetadata annotationMetadata = storedQuery.getAnnotationMetadata();
         if (annotationMetadata.hasAnnotation(EntityGraph.class)) {
             String hint = annotationMetadata.stringValue(EntityGraph.class, "hint").orElse(ENTITY_GRAPH_FETCH);
+            String graphName = annotationMetadata.stringValue(EntityGraph.class).orElse(null);
             String[] paths = annotationMetadata.stringValues(EntityGraph.class, "attributePaths");
-            if (ArrayUtils.isNotEmpty(paths)) {
+            // If the graphName is set, it takes precedence over the attributeNames
+            if (graphName != null) {
+                return Collections.singletonMap(hint, graphName);
+            } else if (ArrayUtils.isNotEmpty(paths)) {
                 return Collections.singletonMap(hint, paths);
             }
         }
