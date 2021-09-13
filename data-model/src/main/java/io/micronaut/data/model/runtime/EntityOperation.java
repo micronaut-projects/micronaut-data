@@ -38,7 +38,10 @@ public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
     @NonNull
     Class<?> getRepositoryType();
 
-
+    /**
+     * Possible stored query if exists.
+     * @return The stored query
+     */
     @Nullable
     StoredQuery<E, ?> getStoredQuery();
 }
