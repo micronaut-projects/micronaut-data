@@ -15,11 +15,14 @@
  */
 package io.micronaut.data.hibernate
 
+import io.micronaut.data.hibernate.entities.Rating
+import io.micronaut.data.tck.entities.Author
 import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.data.tck.tests.AbstractQuerySpec
+import org.hibernate.LazyInitializationException
 import spock.lang.Issue
 import spock.lang.Shared
 
@@ -43,6 +46,10 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
     @Shared
     @Inject
     JpaStudentRepository studentRepository
+
+    @Shared
+    @Inject
+    RatingRepository ratingRepository
 
     void "test optimistic locking"() {
         given:
@@ -133,6 +140,62 @@ abstract class AbstractHibernateQuerySpec extends AbstractQuerySpec {
         author.books.size() == 2
         author.books[0].pages.size() == 0
         author.books[1].pages.size() == 0
+    }
+
+    void "Rating find by id with named EntityGraph"() {
+        setup:
+        Book book = bookRepository.findByTitle("The Power of the Dog")
+        Author ratingAuthor = authorRepository.findByName("Stephen King")
+        Rating rating = new Rating()
+        rating.setRating(2)
+        rating.setComment("wow, much book, so pages, wow")
+        rating.setBook(book)
+        rating.setAuthor(ratingAuthor)
+        Rating savedRating = ratingRepository.save(rating)
+
+        when: 'Testing method annotated with @EntityGraph referencing an existing @NamedEntityGraph'
+        Rating namedEGraphRating = ratingRepository.findById(savedRating.id).orElse(null)
+
+        then: 'All the paths in the EntityGraph are eagerly fetched and will not trigger a lazy loading'
+        namedEGraphRating != null
+        namedEGraphRating.book != null
+        namedEGraphRating.book.pages.size() == 0
+        namedEGraphRating.book.author != null
+        namedEGraphRating.book.author.name == book.author.name
+        namedEGraphRating.author != null
+        namedEGraphRating.author.name == ratingAuthor.name
+
+        when: 'Annotated with @EntityGraph with a list of attributeNames containing multiple paths on the book relation'
+        Rating bookEGraphRating = ratingRepository.queryById(savedRating.id).orElse(null)
+
+        then: 'All the paths specified path are eagerly fetched'
+        bookEGraphRating != null
+        bookEGraphRating.book != null
+        bookEGraphRating.book.pages.size() == 0
+        bookEGraphRating.book.author != null
+        bookEGraphRating.book.author.name == book.author.name
+
+        when: 'Trying to access a association that was not in the list of attributeNames'
+        bookEGraphRating.book.author.books.size() == 2
+
+        then: 'A lazy loading is triggered and fail outside a session'
+        thrown(LazyInitializationException)
+
+        when: 'Annotated with @EntityGraph with a list of attributeNames containing multiple relation paths'
+        Rating relEGraphRating = ratingRepository.getById(savedRating.id).orElse(null)
+
+        then: 'All the paths specified path are eagerly fetched'
+        relEGraphRating != null
+        relEGraphRating.book != null
+        relEGraphRating.book.pages.size() == 0
+        relEGraphRating.book.author != null
+        relEGraphRating.book.author.name == book.author.name
+        relEGraphRating.author != null
+        relEGraphRating.author.name == ratingAuthor.name
+        relEGraphRating.author.books.size() == 2
+
+        cleanup:
+        ratingRepository.deleteById(savedRating.id)
     }
 
     void "author dto"() {
