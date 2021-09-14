@@ -39,6 +39,7 @@ import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.DataInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.annotation.DataMethod;
@@ -106,6 +107,47 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
     protected AbstractQueryInterceptor(@NonNull RepositoryOperations operations) {
         ArgumentUtils.requireNonNull("operations", operations);
         this.operations = operations;
+    }
+
+    /**
+     * Returns the return type.
+     *
+     * @param context The context
+     * @return the return type
+     */
+    protected Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
+        return context.getReturnType().asArgument();
+    }
+
+    @Nullable
+    protected final Object convertOne(MethodInvocationContext<?, ?> context, @Nullable Object o) {
+        Argument<?> argumentType = getReturnType(context);
+        Class<?> type = argumentType.getType();
+        if (o == null) {
+            if (type == Optional.class) {
+                return Optional.empty();
+            }
+            if (argumentType.isDeclaredNonNull() || !argumentType.isNullable()
+                    && type.equals(context.getReturnType().getType())) {
+                throw new EmptyResultException();
+            }
+            return null;
+        }
+        boolean isOptional = false;
+        if (type == Optional.class) {
+            argumentType = argumentType.getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+            type = argumentType.getType();
+            isOptional = true;
+        }
+        if (!type.isInstance(o)) {
+            Object finalO = o;
+            o = operations.getConversionService().convert(o, argumentType)
+                    .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + finalO));
+        }
+        if (isOptional) {
+            return Optional.of(o);
+        }
+        return o;
     }
 
     /**

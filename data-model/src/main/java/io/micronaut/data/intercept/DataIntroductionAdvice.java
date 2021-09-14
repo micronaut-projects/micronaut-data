@@ -28,6 +28,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import io.micronaut.core.util.KotlinUtils;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -115,20 +116,25 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
                 case PUBLISHER:
                     return interceptedMethod.handleResult(result);
                 case COMPLETION_STAGE:
-                    CompletionStage<Object> completionStage = (CompletionStage) result;
-                    completionStage.whenComplete((value, throwable) -> {
-                        if (throwable == null) {
-                            interceptedMethod.handleResult(CompletableFuture.completedFuture(value));
-                        } else {
-                            if (throwable instanceof CompletionException) {
-                                throwable = throwable.getCause();
+                    if (context.isSuspend()) {
+                        // Unwrap CompletionException
+                        CompletionStage<Object> completionStage = (CompletionStage) result;
+                        completionStage.whenComplete((value, throwable) -> {
+                            if (throwable == null) {
+                                interceptedMethod.handleResult(CompletableFuture.completedFuture(value));
+                            } else {
+                                if (throwable instanceof CompletionException) {
+                                    throwable = throwable.getCause();
+                                }
+                                CompletableFuture<?> completableFuture = new CompletableFuture<>();
+                                completableFuture.completeExceptionally(throwable);
+                                interceptedMethod.handleResult(completableFuture);
                             }
-                            CompletableFuture completableFuture = new CompletableFuture();
-                            completableFuture.completeExceptionally(throwable);
-                            interceptedMethod.handleResult(completableFuture);
-                        }
-                    });
-                    return interceptedMethod.handleResult(completionStage);
+                        });
+                        return KotlinUtils.COROUTINE_SUSPENDED;
+                    } else {
+                        return interceptedMethod.handleResult(result);
+                    }
                 case SYNCHRONOUS:
                     return result;
                 default:

@@ -45,6 +45,9 @@ public class DefaultFindByIdInterceptor<T> extends AbstractQueryInterceptor<T, O
         if (!(id instanceof Serializable)) {
             throw new IllegalArgumentException("Entity IDs must be serializable!");
         }
-        return operations.findOne(rootEntity, (Serializable) id);
+        return convertOne(
+                context,
+                operations.findOne(rootEntity, (Serializable) id)
+        );
     }
 }

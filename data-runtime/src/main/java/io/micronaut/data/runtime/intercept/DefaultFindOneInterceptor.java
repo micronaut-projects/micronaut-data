@@ -17,8 +17,6 @@ package io.micronaut.data.runtime.intercept;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.type.ReturnType;
-import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.FindOneInterceptor;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -42,22 +40,10 @@ public class DefaultFindOneInterceptor<T> extends AbstractQueryInterceptor<T, Ob
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, Object> context) {
         PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context, null);
-        Object result = operations.findOne(preparedQuery);
-
-        if (result != null) {
-            ReturnType<Object> returnType = context.getReturnType();
-            if (!returnType.getType().isInstance(result)) {
-                return operations.getConversionService().convert(result, returnType.asArgument())
-                            .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + result));
-            } else {
-                return result;
-            }
-        } else {
-            if (!isNullable(context.getAnnotationMetadata())) {
-                throw new EmptyResultException();
-            }
-        }
-        return result;
+        return convertOne(
+                context,
+                operations.findOne(preparedQuery)
+        );
     }
 
 }

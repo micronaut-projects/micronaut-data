@@ -17,8 +17,6 @@ package io.micronaut.data.runtime.intercept.async;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.exceptions.EmptyResultException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.FindOneAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -45,21 +43,9 @@ public class DefaultFindOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
     @Override
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
         PreparedQuery<Object, Object> preparedQuery = (PreparedQuery<Object, Object>) prepareQuery(methodKey, context);
-        CompletionStage<Object> future = asyncDatastoreOperations.findOne(preparedQuery);
-        return future.thenApply(o -> {
-            Argument<?> type = getReturnType(context);
-            if (o == null) {
-                if (!isNullable(context.getAnnotationMetadata())) {
-                    throw new EmptyResultException();
-                }
-                return null;
-            }
-            if (!type.getType().isInstance(o)) {
-                return operations.getConversionService().convert(o, type)
-                        .orElseThrow(() -> new IllegalStateException("Unexpected return type: " + o));
-            }
-            return o;
-        });
+        return asyncDatastoreOperations.findOne(preparedQuery)
+                .thenApply(o -> convertOne(context, o));
     }
+
 }
 
