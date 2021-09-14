@@ -38,6 +38,9 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -110,8 +113,22 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
             Object result = dataInterceptor.intercept(key, context);
             switch (interceptedMethod.resultType()) {
                 case PUBLISHER:
-                case COMPLETION_STAGE:
                     return interceptedMethod.handleResult(result);
+                case COMPLETION_STAGE:
+                    CompletionStage<Object> completionStage = (CompletionStage) result;
+                    completionStage.whenComplete((value, throwable) -> {
+                        if (throwable == null) {
+                            interceptedMethod.handleResult(CompletableFuture.completedFuture(value));
+                        } else {
+                            if (throwable instanceof CompletionException) {
+                                throwable = throwable.getCause();
+                            }
+                            CompletableFuture completableFuture = new CompletableFuture();
+                            completableFuture.completeExceptionally(throwable);
+                            interceptedMethod.handleResult(completableFuture);
+                        }
+                    });
+                    return interceptedMethod.handleResult(completionStage);
                 case SYNCHRONOUS:
                     return result;
                 default:
