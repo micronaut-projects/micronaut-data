@@ -14,10 +14,14 @@ import org.junit.jupiter.api.TestInstance
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import jakarta.inject.Inject
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Assertions.assertTrue
 
 @MicronautTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BookControllerTest : AbstractTest() {
+class BookCoroutinesControllerTest : AbstractTest() {
     @Inject
     lateinit var bookClient: BookClient
 
@@ -58,18 +62,39 @@ class BookControllerTest : AbstractTest() {
     }
 
     @Test
-    fun testListBooks() {
-        val list = bookClient.list()
+    fun testListBooks() = runBlocking {
+        val list = bookClient.list().toList()
         assertEquals(
                 5,
                 list.size
         )
     }
 
-    @Client("/books2")
+    @Test
+    fun testFindBook() = runBlocking {
+        val list = bookClient.list().toList()
+        val firstBook = list[0]
+        val book = bookClient.show(firstBook.id!!)!!
+        assertEquals(
+                firstBook.title,
+                book.title
+        )
+    }
+
+    @Test
+    fun testMissingBook() = runBlocking {
+        val book = bookClient.show(1111111)
+        assertTrue(book == null)
+    }
+
+    @Client("/books")
     interface BookClient {
+
+        @Get("/{id}")
+        suspend fun show(id: Long): Book?
+
         @Get("/")
-        fun list(): List<Book>
+        fun list(): Flow<Book>
     }
 
 }

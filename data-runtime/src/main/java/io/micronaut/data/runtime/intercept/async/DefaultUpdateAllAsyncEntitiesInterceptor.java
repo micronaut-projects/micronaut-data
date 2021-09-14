@@ -18,7 +18,6 @@ package io.micronaut.data.runtime.intercept.async;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.type.Argument;
-import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.UpdateAllEntriesAsyncInterceptor;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -50,11 +49,9 @@ public class DefaultUpdateAllAsyncEntitiesInterceptor<T> extends AbstractAsyncIn
         //noinspection unchecked
         Class<T> rootEntity = (Class<T>) getRequiredRootEntity(context);
         CompletionStage<Iterable<T>> future = asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
-        ReturnType<CompletionStage<Object>> rt = context.getReturnType();
-        Argument<CompletionStage<Object>> rtArgument = context.getReturnType().asArgument();
-        Argument<Object> csValueArgument = (Argument<Object>) rtArgument.getFirstTypeVariable().orElse(Argument.listOf(Object.class));
+        Argument<Object> csValueArgument = (Argument<Object>) findReturnType(context).orElse(Argument.listOf(Object.class));
         if (isNumber(csValueArgument.getType())) {
-            return future.thenApply(it -> operations.getConversionService().convertRequired(count(it), csValueArgument));
+            return future.thenApply(it -> convertNumberToReturnType(context, count(it)));
         }
         return future.thenApply(it -> operations.getConversionService().convertRequired(
                 it,

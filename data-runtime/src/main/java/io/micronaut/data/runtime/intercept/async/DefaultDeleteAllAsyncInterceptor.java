@@ -15,9 +15,8 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
-import io.micronaut.core.type.Argument;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.async.DeleteAllAsyncInterceptor;
 import io.micronaut.data.model.runtime.PreparedQuery;
@@ -46,7 +45,6 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
 
     @Override
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
-        Argument<CompletionStage<Object>> arg = context.getReturnType().asArgument();
         Optional<Iterable<Object>> deleteEntities = findEntitiesParameter(context, Object.class);
         Optional<Object> deleteEntity = findEntityParameter(context, Object.class);
         CompletionStage<Number> cs;
@@ -56,7 +54,7 @@ public class DefaultDeleteAllAsyncInterceptor<T> extends AbstractAsyncIntercepto
         } else {
             cs = asyncDatastoreOperations.deleteAll(getDeleteBatchOperation(context, deleteEntities.get()));
         }
-        return cs.thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
+        return cs.thenApply(number -> convertNumberToReturnType(context, number));
     }
 
 }

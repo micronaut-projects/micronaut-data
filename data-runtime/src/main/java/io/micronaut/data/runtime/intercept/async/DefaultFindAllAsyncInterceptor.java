@@ -57,8 +57,7 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
             future = asyncDatastoreOperations.findAll(getPagedQuery(context));
         }
         return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
-            Argument<CompletionStage<Iterable<Object>>> targetType = context.getReturnType().asArgument();
-            Argument<?> argument = targetType.getFirstTypeVariable().orElse(Argument.listOf(Object.class));
+            Argument<?> argument = findReturnType(context).orElse(Argument.listOf(Object.class));
             Iterable<Object> result = (Iterable<Object>) operations.getConversionService().convert(
                     iterable,
                     argument

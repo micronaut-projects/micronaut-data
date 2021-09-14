@@ -157,7 +157,9 @@ public class TypeUtils {
      * @return True if is
      */
     public static boolean isReactiveType(@Nullable ClassElement type) {
-        return type != null && (type.isAssignable(Publisher.class) || type.getPackageName().equals("io.reactivex"));
+        return type != null && (type.isAssignable(Publisher.class)
+                || type.getPackageName().equals("io.reactivex"))
+                || type.getPackageName().startsWith("kotlinx.coroutines.flow");
     }
 
     /**

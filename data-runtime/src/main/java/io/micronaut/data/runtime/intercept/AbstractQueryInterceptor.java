@@ -498,6 +498,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
      * @param argument The argument
      * @return The result
      */
+    @Deprecated
     protected @Nullable Number convertNumberArgumentIfNecessary(Number number, Argument<?> argument) {
         Argument<?> firstTypeVar = argument.getFirstTypeVariable().orElse(Argument.of(Long.class));
         Class<?> type = firstTypeVar.getType();

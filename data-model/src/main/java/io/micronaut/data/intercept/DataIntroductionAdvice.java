@@ -15,8 +15,7 @@
  */
 package io.micronaut.data.intercept;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
+import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
@@ -25,17 +24,19 @@ import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.operations.PrimaryRepositoryOperations;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.annotation.DataMethod;
+import io.micronaut.data.operations.PrimaryRepositoryOperations;
+import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
-
 import jakarta.inject.Singleton;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,6 +56,7 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
 
     /**
      * Default constructor.
+     *
      * @param beanLocator The bean locator
      */
     DataIntroductionAdvice(BeanLocator beanLocator) {
@@ -65,41 +67,59 @@ public final class DataIntroductionAdvice implements MethodInterceptor<Object, O
     public Object intercept(MethodInvocationContext<Object, Object> context) {
         RepositoryMethodKey key = new RepositoryMethodKey(context.getTarget(), context.getExecutableMethod());
         DataInterceptor<Object, Object> dataInterceptor = interceptorMap.get(key);
-        if (dataInterceptor == null) {
-            String dataSourceName = context.stringValue(Repository.class).orElse(null);
-            Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
-                    .orElse(PrimaryRepositoryOperations.class);
-            Class<?> interceptorType = context
-                    .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
-                    .orElse(null);
-
-            if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-                DataInterceptor<Object, Object> childInterceptor =
-                        findInterceptor(dataSourceName, operationsType, interceptorType);
-                interceptorMap.put(key, childInterceptor);
-                return childInterceptor.intercept(key, context);
-            } else {
-                final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
-                if (declaredAnnotation != null) {
-                    interceptorType = declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
-                    if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
-                        DataInterceptor<Object, Object> childInterceptor =
-                                findInterceptor(dataSourceName, operationsType, interceptorType);
-                        interceptorMap.put(key, childInterceptor);
-                        return childInterceptor.intercept(key, context);
-                    }
-                }
-
-                final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
-                if (interceptorName != null) {
-                    throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod().toString());
-                }
-                throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
-            }
-        } else {
-            return dataInterceptor.intercept(key, context);
+        if (dataInterceptor != null) {
+            return intercept(context, dataInterceptor, key);
         }
+        String dataSourceName = context.stringValue(Repository.class).orElse(null);
+        Class<?> operationsType = context.classValue(RepositoryConfiguration.class, "operations")
+                .orElse(PrimaryRepositoryOperations.class);
+        Class<?> interceptorType = context
+                .classValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR)
+                .orElse(null);
 
+        if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+            DataInterceptor<Object, Object> childInterceptor =
+                    findInterceptor(dataSourceName, operationsType, interceptorType);
+            interceptorMap.put(key, childInterceptor);
+            return intercept(context, childInterceptor, key);
+        } else {
+            final AnnotationValue<DataMethod> declaredAnnotation = context.getDeclaredAnnotation(DataMethod.class);
+            if (declaredAnnotation != null) {
+                interceptorType = declaredAnnotation.classValue(DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+                if (interceptorType != null && DataInterceptor.class.isAssignableFrom(interceptorType)) {
+                    DataInterceptor<Object, Object> childInterceptor =
+                            findInterceptor(dataSourceName, operationsType, interceptorType);
+                    interceptorMap.put(key, childInterceptor);
+                    return intercept(context, childInterceptor, key);
+                }
+            }
+
+            final String interceptorName = context.getAnnotationMetadata().stringValue(DataMethod.class, DataMethod.META_MEMBER_INTERCEPTOR).orElse(null);
+            if (interceptorName != null) {
+                throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod().toString());
+            }
+            throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
+        }
+    }
+
+    private Object intercept(MethodInvocationContext<Object, Object> context,
+                             DataInterceptor<Object, Object> dataInterceptor,
+                             RepositoryMethodKey key) {
+        InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
+        try {
+            Object result = dataInterceptor.intercept(key, context);
+            switch (interceptedMethod.resultType()) {
+                case PUBLISHER:
+                case COMPLETION_STAGE:
+                    return interceptedMethod.handleResult(result);
+                case SYNCHRONOUS:
+                    return result;
+                default:
+                    return interceptedMethod.unsupported();
+            }
+        } catch (Exception e) {
+            return interceptedMethod.handleException(e);
+        }
     }
 
     private @NonNull
