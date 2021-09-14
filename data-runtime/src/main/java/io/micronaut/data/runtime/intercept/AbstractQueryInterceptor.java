@@ -128,7 +128,7 @@ public abstract class AbstractQueryInterceptor<T, R> implements DataInterceptor<
                 return Optional.empty();
             }
             if (argumentType.isDeclaredNonNull() || !argumentType.isNullable()
-                    && type.equals(context.getReturnType().getType())) {
+                    && !context.getReturnType().asArgument().isNullable()) {
                 throw new EmptyResultException();
             }
             return null;
