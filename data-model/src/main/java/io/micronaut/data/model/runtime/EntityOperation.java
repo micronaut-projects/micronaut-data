@@ -16,6 +16,7 @@
 package io.micronaut.data.model.runtime;
 
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.naming.Named;
 
 /**
@@ -36,4 +37,11 @@ public interface EntityOperation<E> extends Named, PreparedDataOperation<E> {
      */
     @NonNull
     Class<?> getRepositoryType();
+
+    /**
+     * Possible stored query if exists.
+     * @return The stored query
+     */
+    @Nullable
+    StoredQuery<E, ?> getStoredQuery();
 }
