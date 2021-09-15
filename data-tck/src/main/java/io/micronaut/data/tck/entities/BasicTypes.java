@@ -29,7 +29,9 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.Date;
@@ -62,12 +64,14 @@ public class BasicTypes {
     private Byte wrapperByte = 4;
     private URL url = new URL("https://test.com");
     private URI uri = URI.create("https://test.com");
-    private byte[] byteArray = new byte[] { 1, 2, 3};
+    private byte[] byteArray = new byte[]{1, 2, 3};
     private Date date = new Date();
 
     private LocalDateTime localDateTime = LocalDateTime.now();
     private ZonedDateTime zonedDateTime = ZonedDateTime.now();
     private OffsetDateTime offsetDateTime = OffsetDateTime.now();
+    private LocalDate localDate = LocalDate.now();
+    private LocalTime localTime = LocalTime.now();
     private Instant instant = Instant.now();
     private UUID uuid = UUID.randomUUID();
     @MappedProperty(definition = "DECIMAL(24) NOT NULL")
@@ -346,5 +350,21 @@ public class BasicTypes {
 
     public void setDateUpdated(Instant dateUpdated) {
         this.dateUpdated = dateUpdated;
+    }
+
+    public LocalDate getLocalDate() {
+        return localDate;
+    }
+
+    public void setLocalDate(LocalDate localDate) {
+        this.localDate = localDate;
+    }
+
+    public LocalTime getLocalTime() {
+        return localTime;
+    }
+
+    public void setLocalTime(LocalTime localTime) {
+        this.localTime = localTime;
     }
 }
