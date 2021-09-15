@@ -362,6 +362,9 @@ final class DataConversionServiceFactory {
                 Timestamp.from(zonedDateTime.toInstant()));
 
         // LocalDateTime
+        conversionService.addConverter(LocalTime.class, Timestamp.class, localTime -> Timestamp.valueOf(localTime.atDate(LocalDate.now())));
+        conversionService.addConverter(Timestamp.class, LocalTime.class, timestamp -> timestamp.toLocalDateTime().toLocalTime());
+
         conversionService.addConverter(LocalDateTime.class, Date.class, localDateTime ->
                 new Date(localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
         conversionService.addConverter(LocalDateTime.class, Timestamp.class, Timestamp::valueOf);
