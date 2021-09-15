@@ -50,7 +50,7 @@ public class DefaultDeleteOneAsyncInterceptor<T> extends AbstractAsyncIntercepto
         if (entity != null) {
             final DeleteOperation<Object> deleteOperation = getDeleteOperation(context, entity);
             return asyncDatastoreOperations.delete(deleteOperation)
-                    .thenApply(number -> convertNumberArgumentIfNecessary(number, arg));
+                    .thenApply(number -> convertNumberToReturnType(context, number));
         } else {
             throw new IllegalArgumentException("Entity to delete cannot be null");
         }

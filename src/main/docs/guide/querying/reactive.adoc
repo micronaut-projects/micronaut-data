@@ -1,4 +1,4 @@
-Micronaut Data supports reactive query execution by defining methods that return either rs:Publisher[], Reactor or a RxJava 2 type.
+Micronaut Data supports reactive query execution by defining methods that return either rs:Publisher[], Reactor or a RxJava 2 type. If you use Kotlin, you can use coroutines and `Flow`.
 
 In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the https://docs.micronaut.io/latest/guide/index.html#reactiveServer[Configured I/O thread pool] to schedule the query execution on a different thread.
 

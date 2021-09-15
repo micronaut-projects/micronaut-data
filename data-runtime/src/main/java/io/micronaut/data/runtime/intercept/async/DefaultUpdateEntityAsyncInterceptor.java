@@ -45,9 +45,9 @@ public class DefaultUpdateEntityAsyncInterceptor<T> extends AbstractAsyncInterce
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
         Object entity = getEntityParameter(context, Object.class);
         CompletionStage<Object> cs = asyncDatastoreOperations.update(getUpdateOperation(context, entity));
-        Argument<Object> csValueArgument = (Argument<Object>) context.getReturnType().getFirstTypeVariable().orElse(Argument.listOf(Object.class));
+        Argument<?> csValueArgument = getReturnType(context);
         if (isNumber(csValueArgument.getType())) {
-            return cs.thenApply(it -> operations.getConversionService().convertRequired(it == null ? 0 : 1, csValueArgument));
+            return cs.thenApply(it -> convertNumberToReturnType(context, it == null ? 0 : 1));
         }
         return cs;
     }

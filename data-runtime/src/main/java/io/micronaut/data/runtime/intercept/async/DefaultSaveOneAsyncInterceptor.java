@@ -55,7 +55,7 @@ public class DefaultSaveOneAsyncInterceptor<T> extends AbstractAsyncInterceptor<
         }, executor)
                 .thenCompose(operation -> {
                     CompletionStage<Object> cs = asyncDatastoreOperations.persist(operation);
-                    Argument<?> csValueArgument = context.getReturnType().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+                    Argument<?> csValueArgument = getReturnType(context);
                     if (isNumber(csValueArgument.getType())) {
                         return cs.thenApply(it -> operations.getConversionService().convertRequired(it == null ? 0 : 1, csValueArgument));
                     }

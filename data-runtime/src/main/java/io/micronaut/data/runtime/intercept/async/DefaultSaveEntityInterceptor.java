@@ -45,7 +45,7 @@ public class DefaultSaveEntityInterceptor<T> extends AbstractAsyncInterceptor<T,
     public CompletionStage<Object> intercept(RepositoryMethodKey methodKey, MethodInvocationContext<T, CompletionStage<Object>> context) {
         Object entity = getEntityParameter(context, Object.class);
         CompletionStage<Object> cs = asyncDatastoreOperations.persist(getInsertOperation(context, entity));
-        Argument<?> csValueArgument = context.getReturnType().getFirstTypeVariable().orElse(Argument.OBJECT_ARGUMENT);
+        Argument<?> csValueArgument = getReturnType(context);
         if (isNumber(csValueArgument.getType())) {
             return cs.thenApply(it -> operations.getConversionService().convertRequired(it == null ? 0 : 1, csValueArgument));
         }

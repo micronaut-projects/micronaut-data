@@ -15,16 +15,16 @@
  */
 package io.micronaut.transaction.interceptor;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.aop.InterceptPhase;
+import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.publisher.Publishers;
-import io.micronaut.core.type.ReturnType;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.transaction.SynchronousTransactionManager;
@@ -35,11 +35,11 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
+import jakarta.inject.Singleton;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -91,55 +91,74 @@ public class TransactionalInterceptor implements MethodInterceptor<Object, Objec
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        ReturnType<Object> returnType = context.getReturnType();
-        final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
-                .computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
-            final String qualifier = executableMethod.stringValue(TransactionalAdvice.class).orElse(null);
+        InterceptedMethod interceptedMethod = InterceptedMethod.of(context);
+        try {
+            boolean isReactive = interceptedMethod.resultType() == InterceptedMethod.ResultType.PUBLISHER;
+            boolean isAsync = interceptedMethod.resultType() == InterceptedMethod.ResultType.COMPLETION_STAGE;
 
-            if (returnType.isReactive()) {
-                ReactiveTransactionOperations<?> reactiveTransactionOperations
-                        = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
-                if (reactiveTransactionOperations == null) {
-                    throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
-                } else {
-                    final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
-                    return new TransactionInvocation(null, reactiveTransactionOperations, transactionAttribute);
-                }
-            } else {
+            final TransactionInvocation<?> transactionInvocation = transactionInvocationMap
+                    .computeIfAbsent(context.getExecutableMethod(), executableMethod -> {
+                        final String qualifier = executableMethod.stringValue(TransactionalAdvice.class).orElse(null);
 
-                SynchronousTransactionManager<?> transactionManager =
-                        beanLocator.getBean(SynchronousTransactionManager.class, qualifier != null ? Qualifiers.byName(qualifier) : null);
-                final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
+                        if (isReactive || isAsync) {
+                            ReactiveTransactionOperations<?> reactiveTransactionOperations
+                                    = beanLocator.findBean(ReactiveTransactionOperations.class, qualifier != null ? Qualifiers.byName(qualifier) : null).orElse(null);
+                            if (isReactive && reactiveTransactionOperations == null) {
+                                throw new ConfigurationException("No reactive transaction management has been configured. Ensure you have correctly configured a reactive capable transaction manager");
+                            } else {
+                                final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
+                                return new TransactionInvocation(null, reactiveTransactionOperations, transactionAttribute);
+                            }
+                        } else {
 
-                return new TransactionInvocation<>(transactionManager, null, transactionAttribute);
+                            SynchronousTransactionManager<?> transactionManager =
+                                    beanLocator.getBean(SynchronousTransactionManager.class, qualifier != null ? Qualifiers.byName(qualifier) : null);
+                            final TransactionAttribute transactionAttribute = resolveTransactionDefinition(executableMethod);
+
+                            return new TransactionInvocation<>(transactionManager, null, transactionAttribute);
+                        }
+                    });
+
+            final TransactionAttribute definition = transactionInvocation.definition;
+            switch (interceptedMethod.resultType()) {
+                case PUBLISHER:
+                    return interceptedMethod.handleResult(
+                            transactionInvocation.reactiveTransactionOperations.withTransaction(definition, (status) -> {
+                                context.setAttribute(ReactiveTransactionStatus.STATUS, status);
+                                context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, definition);
+                                return Publishers.convertPublisher(context.proceed(), Publisher.class);
+                            })
+                    );
+                case COMPLETION_STAGE:
+                    if (transactionInvocation.reactiveTransactionOperations != null) {
+                        return interceptedMethod.handleResult(interceptedMethod.interceptResult());
+                    } else {
+                        throw new ConfigurationException("Async return type doesn't support transactional execution.");
+                    }
+                case SYNCHRONOUS:
+                    final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
+                    final TransactionInfo transactionInfo = createTransactionIfNecessary(
+                            transactionManager,
+                            definition,
+                            context.getExecutableMethod()
+                    );
+                    Object retVal;
+                    try {
+                        retVal = context.proceed();
+                    } catch (Throwable ex) {
+                        completeTransactionAfterThrowing(transactionInfo, ex);
+                        throw ex;
+                    } finally {
+                        cleanupTransactionInfo(transactionInfo);
+                    }
+                    commitTransactionAfterReturning(transactionInfo);
+                    return retVal;
+                default:
+                    return interceptedMethod.unsupported();
+
             }
-        });
-
-        final TransactionAttribute definition = transactionInvocation.definition;
-        if (transactionInvocation.reactiveTransactionOperations != null) {
-            return Publishers.convertPublisher(transactionInvocation.reactiveTransactionOperations.withTransaction(definition, (status) -> {
-                context.setAttribute(ReactiveTransactionStatus.STATUS, status);
-                context.setAttribute(ReactiveTransactionStatus.ATTRIBUTE, definition);
-                return Publishers.convertPublisher(context.proceed(), Publisher.class);
-            }), returnType.getType());
-        } else {
-            final SynchronousTransactionManager<?> transactionManager = transactionInvocation.transactionManager;
-            final TransactionInfo transactionInfo = createTransactionIfNecessary(
-                    transactionManager,
-                    definition,
-                    context.getExecutableMethod()
-            );
-            Object retVal;
-            try {
-                retVal = context.proceed();
-            } catch (Throwable ex) {
-                completeTransactionAfterThrowing(transactionInfo, ex);
-                throw ex;
-            } finally {
-                cleanupTransactionInfo(transactionInfo);
-            }
-            commitTransactionAfterReturning(transactionInfo);
-            return retVal;
+        } catch (Exception e) {
+            return interceptedMethod.handleException(e);
         }
     }
 

@@ -1,11 +1,13 @@
 package io.micronaut.data.r2dbc.h2;
 
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.operations.R2dbcOperations;
 import io.micronaut.data.repository.reactive.ReactiveStreamsCrudRepository;
 import io.micronaut.data.tck.entities.Owner;
 import io.micronaut.data.tck.entities.Pet;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -23,6 +25,10 @@ abstract class H2OwnerRepository implements ReactiveStreamsCrudRepository<Owner,
         this.operations = operations;
     }
 
+    @Transactional(Transactional.TxType.MANDATORY)
+    @Override
+    @NonNull
+    public abstract Publisher<Owner> findAll();
 
     @Transactional
     public Mono<Void> setupData() {

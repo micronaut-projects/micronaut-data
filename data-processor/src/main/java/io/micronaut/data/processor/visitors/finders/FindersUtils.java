@@ -15,10 +15,10 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.reflect.ClassUtils;
 import io.micronaut.data.annotation.TypeRole;
@@ -127,92 +127,83 @@ interface FindersUtils {
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveOneInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, SaveOneAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), SaveOneAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, SaveOneReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), SaveOneReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), SaveOneInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, UpdateAllEntriesAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), UpdateAllEntriesAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, UpdateAllEntitiesReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), UpdateAllEntitiesReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), UpdateAllEntitiesInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickDeleteInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, DeleteOneAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), DeleteOneAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, DeleteOneReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), DeleteOneReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), DeleteOneInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickDeleteAllInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, DeleteAllAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), DeleteAllAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, DeleteAllReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), DeleteAllReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), DeleteAllInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, SaveEntityAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), SaveEntityAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, SaveEntityReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), SaveEntityReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), SaveEntityInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickSaveAllEntitiesInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, SaveAllAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), SaveAllAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, SaveAllReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), SaveAllReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), SaveAllInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, UpdateAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), UpdateAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, UpdateReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), UpdateReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), UpdateInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> pickUpdateEntityInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         if (isFutureType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, UpdateEntityAsyncInterceptor.class);
+            return typeAndInterceptorEntry(getAsyncType(matchContext, returnType), UpdateEntityAsyncInterceptor.class);
         } else if (isReactiveType(matchContext, returnType)) {
-            return typeAndInterceptorEntry(firstTypeArgument, UpdateEntityReactiveInterceptor.class);
+            return typeAndInterceptorEntry(returnType.getFirstTypeArgument().orElse(null), UpdateEntityReactiveInterceptor.class);
         }
         return typeAndInterceptorEntry(returnType.getType(), UpdateEntityInterceptor.class);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> resolveFindInterceptor(MethodMatchContext matchContext, ClassElement returnType) {
-        ClassElement firstTypeArgument = returnType.getFirstTypeArgument().orElse(null);
         Map.Entry<ClassElement, Class<? extends DataInterceptor>> entry;
         if (isFutureType(matchContext, returnType)) {
-            entry = resolveAsyncFindInterceptor(matchContext, returnType, firstTypeArgument);
+            entry = resolveAsyncFindInterceptor(matchContext, returnType, getAsyncType(matchContext, returnType));
         } else if (isReactiveType(matchContext, returnType)) {
-            entry = resolveReactiveFindInterceptor(matchContext, returnType, firstTypeArgument);
+            entry = resolveReactiveFindInterceptor(matchContext, returnType, returnType.getFirstTypeArgument().orElse(null));
         } else {
             entry = resolveSyncFindInterceptor(matchContext, returnType);
         }
@@ -265,9 +256,16 @@ interface FindersUtils {
             return typeAndInterceptorEntry(firstTypeArgument, FindSliceAsyncInterceptor.class);
         } else if (isContainer(matchContext, asyncType, Iterable.class)) {
             return typeAndInterceptorEntry(firstTypeArgument, FindAllAsyncInterceptor.class);
+        } else if (isContainer(matchContext, returnType, Optional.class)) {
+            return typeAndInterceptorEntry(firstTypeArgument, FindOneAsyncInterceptor.class);
         } else {
             return typeAndInterceptorEntry(asyncType, FindOneAsyncInterceptor.class);
         }
+    }
+
+    static ClassElement getAsyncType(@NonNull MethodMatchContext matchContext,
+                                     @NonNull ClassElement returnType) {
+        return matchContext.getMethodElement().isSuspend() ? returnType : returnType.getFirstTypeArgument().orElse(null);
     }
 
     static Map.Entry<ClassElement, Class<? extends DataInterceptor>> typeAndInterceptorEntry(ClassElement type, Class<? extends DataInterceptor> interceptor) {
@@ -275,12 +273,12 @@ interface FindersUtils {
     }
 
     static boolean isFutureType(MethodMatchContext methodMatchContext, @Nullable ClassElement type) {
-        return isOneOfContainers(methodMatchContext, type, CompletionStage.class, Future.class);
+        return methodMatchContext.getMethodElement().isSuspend() || isOneOfContainers(methodMatchContext, type, CompletionStage.class, Future.class);
     }
 
     static boolean isReactiveType(MethodMatchContext methodMatchContext, @Nullable ClassElement type) {
         return isContainer(methodMatchContext, type, Publisher.class)
-                || type != null && type.getPackageName().equals("io.reactivex")
+                || TypeUtils.isReactiveType(type)
                 && (type.getTypeArguments().isEmpty() || isContainer(methodMatchContext, type, type.getName())); // Validate container argument
     }
 

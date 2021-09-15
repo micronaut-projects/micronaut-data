@@ -7,7 +7,7 @@ import javax.transaction.Transactional
 @Singleton
 open class AuthorService(
         private val authorRepository: AuthorRepository,
-        private val bookRepository: BookRepository) { // <1>
+        private val bookRepository: BookReactiveRepository) { // <1>
 
     @Transactional // <2>
     open fun setupData(): Mono<Void> {

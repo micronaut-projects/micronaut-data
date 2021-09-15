@@ -17,8 +17,6 @@ dependencies {
     annotationProcessor("io.micronaut:micronaut-graal")
     annotationProcessor project(":data-processor")
     implementation project(":data-r2dbc")
-    implementation platform("io.micronaut.r2dbc:micronaut-r2dbc-bom:$micronautR2dbcVersion")
-    implementation "io.micronaut.r2dbc:micronaut-r2dbc-core"
     implementation("io.micronaut.flyway:micronaut-flyway")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
 
@@ -27,8 +25,6 @@ dependencies {
 
     testImplementation "io.micronaut:micronaut-http-client"
     testImplementation "org.testcontainers:mysql"
-
-    testImplementation "io.micronaut.test:micronaut-test-core"
 }
 
 nativeImage {

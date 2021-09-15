@@ -15,11 +15,11 @@
  */
 package io.micronaut.data.runtime.intercept.async;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.intercept.async.FindByIdAsyncInterceptor;
+import io.micronaut.data.operations.RepositoryOperations;
 
 import java.io.Serializable;
 import java.util.concurrent.CompletionStage;
@@ -47,6 +47,7 @@ public class DefaultFindByIdAsyncInterceptor<T> extends AbstractAsyncInterceptor
         if (!(id instanceof Serializable)) {
             throw new IllegalArgumentException("Entity IDs must be serializable!");
         }
-        return asyncDatastoreOperations.findOne((Class<Object>) rootEntity, (Serializable) id);
+        return asyncDatastoreOperations.findOne((Class<Object>) rootEntity, (Serializable) id)
+                .thenApply(o -> convertOne(context, o));
     }
 }
