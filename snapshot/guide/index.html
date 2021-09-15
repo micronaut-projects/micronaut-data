@@ -1013,15 +1013,19 @@ Lombok plugins like the Gradle plugin <code>io.franzbecker.gradle-lombok</code> 
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for reactive CRUD execution</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds CRUD methods that return <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorCrudRepository.html">ReactorCrudRepository</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> and is using Reactor</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> and is using Reactor return types</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/RxJavaCrudRepository.html">RxJavaCrudRepository</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds methods for reactive CRUD execution using RxJava 2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds CRUD methods that return RxJava 2 types</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/kotlin/CoroutineCrudRepository.html">CoroutineCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and is using Kotlin coroutines for reactive CRUD operations</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/PageableRepository.html">PageableRepository</a></p></td>
@@ -1202,8 +1206,12 @@ fun retrieveByTitle(title: String): Book</code></pre>
 <td class="tableblock halign-left valign-top"><p class="tableblock">A <code>java.util.concurrent.Future</code> for asynchronous execution</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Publisher&lt;Book&gt;</code> (or <code>Single</code>, <code>Maybe</code>, <code>Flux</code>, <code>Mono</code> etc.)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Publisher&lt;Book&gt;</code> (or 'Flowable', <code>Single</code>, <code>Maybe</code>, <code>Flux</code>, <code>Mono</code> etc.)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An Reactive Streams compatible type</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>Flow&lt;Book&gt;</code> as an alternative to <code>suspend</code> functions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A Kotlin reactive type. Requires <code>kotlinx-coroutines-reactive</code> dependency for the proper conversion.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Primitive/Simple Types</p></td>
@@ -2560,7 +2568,7 @@ In the case of JPA each operation will run with its own transaction and session,
 
 
 <div class="paragraph">
-<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a>, Reactor or a RxJava 2 type.</p>
+<p>Micronaut Data supports reactive query execution by defining methods that return either <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a>, Reactor or a RxJava 2 type. If you use Kotlin, you can use coroutines and <code>Flow</code>.</p>
 </div>
 <div class="paragraph">
 <p>In the case of reactive execution and if the backing implementation is blocking, Micronaut Data will use the <a href="https://docs.micronaut.io/latest/guide/index.html#reactiveServer">Configured I/O thread pool</a> to schedule the query execution on a different thread.</p>
@@ -6573,16 +6581,7 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 
 
 <div class="paragraph">
-<p>To write queries with Micronaut Data R2DBC you can use all the same patterns as defined in the <a href="#querying">Micronaut Data documentation on querying</a>.</p>
-</div>
-<div class="paragraph">
-<p>The method pattern is essentially:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="https://micronaut-projects.github.io/micronaut-data/latest/img/finderpattern.svg" alt="finderpattern">
-</div>
-<div class="title">Figure 1. Query Method Pattern</div>
+<p>To write queries with Micronaut Data R2DBC you can use all the same patterns as defined in the <a href="#querying">Writing Queries</a> section.</p>
 </div>
 <div class="paragraph">
 <p>The Reactive return type is used to figure out whether the query is for a single result or multiple. If you use for example <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Single.html">Single</a> or Reactor&#8217;s <code>Mono</code> type a single result will be returned, whilst a <a href="http://reactivex.io/RxJava/2.x/javadoc/io/reactivex/Flowable.html">Flowable</a> or Reactor <code>Flux</code> will return multiple records.</p>
@@ -6590,6 +6589,38 @@ It is necessary to use the "logical name" of the field in the <code>@Join</code>
 <div class="paragraph">
 <p>You can pass a <a href="../api/io/micronaut/data/model/Pageable.html">Pageable</a> instance to any query to paginate results, although note that the <a href="../api/io/micronaut/data/model/Page.html">Page</a> return type is not supported since it is an implicitly blocking API.</p>
 </div>
+<div class="paragraph">
+<p>The following table summarizes the repository interfaces that come with Micronaut Data:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Builtin Reactive Repository Interfaces</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Interface</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>Description</strong></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds CRUD methods that return <a href="https://www.reactive-streams.org/reactive-streams-1.0.3-javadoc/org/reactivestreams/Publisher.html">Publisher</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/ReactorCrudRepository.html">ReactorCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/ReactiveStreamsCrudRepository.html">ReactiveStreamsCrudRepository</a> and is using Reactor return types</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/reactive/RxJavaCrudRepository.html">RxJavaCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and adds CRUD methods that return RxJava 2 types</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/repository/kotlin/CoroutineCrudRepository.html">CoroutineCrudRepository</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extends <a href="../api/io/micronaut/data/repository/GenericRepository.html">GenericRepository</a> and is using Kotlin coroutines for reactive CRUD operations</p></td>
+</tr>
+</tbody>
+</table>
 
 <h2 id="r2crud"><a class="anchor" href="#r2crud"></a>8.2.2 Performing CRUD Operations</h2>
 
@@ -6625,8 +6656,8 @@ Mono&lt;Book&gt; create(@Valid Book book) {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Post("/")
-fun create(book: @Valid Book): Mono&lt;Book&gt; {
-    return Mono.from(bookRepository.save(book))
+suspend fun create(book: @Valid Book): Book {
+    return bookRepository.save(book)
 }</code></pre>
 </div>
 </div>
@@ -6662,12 +6693,12 @@ Mono&lt;Book&gt; show(Long id) {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Get("/")
-fun all(): Flux&lt;Book&gt; {
+fun all(): Flow&lt;Book&gt; {
     return bookRepository.findAll() <b class="conum">(1)</b>
 }
 
 @Get("/{id}")
-fun show(id: Long): Mono&lt;Book&gt; {
+suspend fun show(id: Long): Book? {
     return bookRepository.findById(id) <b class="conum">(2)</b>
 }</code></pre>
 </div>
@@ -6694,8 +6725,8 @@ Mono&lt;Book&gt; update(@NotNull Long id, @Valid Book book) {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Put("/{id}")
-fun update(id: Long, book: @Valid Book): Mono&lt;Book&gt; {
-    return Mono.from(bookRepository.update(book))
+suspend fun update(id: Long, book: @Valid Book): Book {
+    return bookRepository.update(book)
 }</code></pre>
 </div>
 </div>
@@ -6723,9 +6754,9 @@ Mono&lt;HttpResponse&lt;?&gt;&gt; delete(@NotNull Long id) {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Delete("/{id}")
-fun delete(id: Long): Mono&lt;HttpResponse&lt;*&gt;&gt; {
-    return Mono.from(bookRepository.deleteById(id))
-            .map { deleted: Long -&gt; if (deleted &gt; 0) HttpResponse.noContent() else HttpResponse.notFound&lt;Any&gt;() }
+suspend fun delete(id: Long): HttpResponse&lt;*&gt; {
+    val deleted = bookRepository.deleteById(id)
+    return if (deleted &gt; 0) HttpResponse.noContent&lt;Any&gt;() else HttpResponse.notFound&lt;Any&gt;()
 }</code></pre>
 </div>
 </div>
@@ -6825,7 +6856,7 @@ import javax.transaction.Transactional
 @Singleton
 open class AuthorService(
         private val authorRepository: AuthorRepository,
-        private val bookRepository: BookRepository) { <b class="conum">(1)</b>
+        private val bookRepository: BookReactiveRepository) { <b class="conum">(1)</b>
 
     @Transactional <b class="conum">(2)</b>
     open fun setupData(): Mono&lt;Void&gt; {
@@ -6948,10 +6979,10 @@ open class AuthorService(
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Transactional(Transactional.TxType.MANDATORY)
-override fun &lt;S : Book?&gt; save(entity: @Valid @NotNull S): Publisher&lt;S&gt;
+override suspend fun &lt;S : Book&gt; save(entity: S): S
 
 @Transactional(Transactional.TxType.MANDATORY)
-override fun &lt;S : Book?&gt; saveAll(entities: @Valid @NotNull Iterable&lt;S&gt;): Publisher&lt;S&gt;</code></pre>
+override fun &lt;S : Book&gt; saveAll(entities: Iterable&lt;S&gt;): Flow&lt;S&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
