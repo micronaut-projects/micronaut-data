@@ -49,7 +49,7 @@ public class DefaultUpdateAllAsyncEntitiesInterceptor<T> extends AbstractAsyncIn
         //noinspection unchecked
         Class<T> rootEntity = (Class<T>) getRequiredRootEntity(context);
         CompletionStage<Iterable<T>> future = asyncDatastoreOperations.updateAll(getUpdateAllBatchOperation(context, rootEntity, iterable));
-        Argument<Object> csValueArgument = (Argument<Object>) findReturnType(context).orElse(Argument.listOf(Object.class));
+        Argument<?> csValueArgument = findReturnType(context, LIST_OF_OBJECTS);
         if (isNumber(csValueArgument.getType())) {
             return future.thenApply(it -> convertNumberToReturnType(context, count(it)));
         }

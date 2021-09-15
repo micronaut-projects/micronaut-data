@@ -36,6 +36,7 @@ import java.util.function.Function;
  * @since 1.0.0
  */
 public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<T, Iterable<Object>> implements FindAllAsyncInterceptor<T> {
+
     /**
      * Default constructor.
      *
@@ -57,7 +58,7 @@ public class DefaultFindAllAsyncInterceptor<T> extends AbstractAsyncInterceptor<
             future = asyncDatastoreOperations.findAll(getPagedQuery(context));
         }
         return future.thenApply((Function<Iterable<?>, Iterable<Object>>) iterable -> {
-            Argument<?> argument = findReturnType(context).orElse(Argument.listOf(Object.class));
+            Argument<?> argument = findReturnType(context, LIST_OF_OBJECTS);
             Iterable<Object> result = (Iterable<Object>) operations.getConversionService().convert(
                     iterable,
                     argument

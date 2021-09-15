@@ -25,7 +25,7 @@ import io.micronaut.data.operations.async.AsyncCapableRepository;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -37,6 +37,7 @@ import java.util.concurrent.CompletionStage;
  * @since 1.0.0
  */
 public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterceptor<T, CompletionStage<R>> {
+    protected static final Argument<List<Object>> LIST_OF_OBJECTS = Argument.listOf(Object.class);
 
     @NonNull
     protected final AsyncRepositoryOperations asyncDatastoreOperations;
@@ -56,17 +57,14 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
     }
 
     protected final Argument<?> getReturnType(MethodInvocationContext<?, ?> context) {
+        return findReturnType(context, Argument.OBJECT_ARGUMENT);
+    }
+
+    protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
         if (context.isSuspend()) {
             return context.getReturnType().asArgument();
         }
-        return context.getReturnType().asArgument().getFirstTypeVariable().orElse(Argument.VOID);
-    }
-
-    protected final Optional<Argument<?>> findReturnType(MethodInvocationContext<?, ?> context) {
-        if (context.isSuspend()) {
-            return Optional.of(context.getReturnType().asArgument());
-        }
-        return context.getReturnType().asArgument().getFirstTypeVariable();
+        return context.getReturnType().asArgument().getFirstTypeVariable().orElse(defaultArg);
     }
 
     /**
@@ -77,7 +75,7 @@ public abstract class AbstractAsyncInterceptor<T, R> extends AbstractQueryInterc
      */
     @Nullable
     protected Number convertNumberToReturnType(MethodInvocationContext<?, ?> context, Number number) {
-        Argument<?> firstTypeVar = findReturnType(context).orElse(Argument.of(Long.class));
+        Argument<?> firstTypeVar = findReturnType(context, Argument.LONG);
         Class<?> type = firstTypeVar.getType();
         if (type == Object.class || type == Void.class) {
             return null;
