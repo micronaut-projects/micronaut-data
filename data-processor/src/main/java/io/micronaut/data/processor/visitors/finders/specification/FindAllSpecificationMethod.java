@@ -15,18 +15,16 @@
  */
 package io.micronaut.data.processor.visitors.finders.specification;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
-import io.micronaut.data.processor.visitors.finders.AbstractListMethod;
 import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.TypeUtils;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
-import io.micronaut.inject.visitor.VisitorContext;
 
 /**
  * Find all specification method.
@@ -35,7 +33,7 @@ import io.micronaut.inject.visitor.VisitorContext;
  * @since 1.0
  */
 @Internal
-public class FindAllSpecificationMethod extends AbstractListMethod {
+public class FindAllSpecificationMethod extends AbstractSpecificationMethod {
     /**
      * The prefixes used.
      */
@@ -49,45 +47,38 @@ public class FindAllSpecificationMethod extends AbstractListMethod {
     }
 
     @Override
-    public int getOrder() {
-        return DEFAULT_POSITION - 200;
-    }
-
-    @Override
     public boolean isMethodMatch(@NonNull MethodElement methodElement, @NonNull MatchContext matchContext) {
-
-        final VisitorContext visitorContext = matchContext.getVisitorContext();
         ClassElement returnType = matchContext.getReturnType();
-
-        return super.isMethodMatch(methodElement, matchContext) &&
-                TypeUtils.isIterableOfEntity(returnType) &&
-                visitorContext.getClassElement("io.micronaut.data.spring.jpa.intercept.FindAllSpecificationInterceptor").isPresent() &&
-                visitorContext.getClassElement("org.springframework.data.jpa.domain.Specification").isPresent() &&
-                isFirstParameterJpaSpecification(methodElement);
+        return super.isMethodMatch(methodElement, matchContext)
+                && TypeUtils.isIterableOfEntity(returnType) && isCorrectParameters(methodElement);
     }
 
     @Nullable
     @Override
     public MethodMatchInfo buildMatchInfo(@NonNull MethodMatchContext matchContext) {
-        final ClassElement interceptorElement = getInterceptorElement(matchContext,
-                "io.micronaut.data.spring.jpa.intercept.FindAllSpecificationInterceptor");
+        if (isFirstParameterSpringJpaSpecification(matchContext.getMethodElement())) {
+            return new MethodMatchInfo(
+                    matchContext.getReturnType(),
+                    null,
+                    getInterceptorElement(matchContext, "io.micronaut.data.spring.jpa.intercept.FindAllSpecificationInterceptor")
+            );
+        }
         return new MethodMatchInfo(
                 matchContext.getReturnType(),
                 null,
-                interceptorElement
+                getInterceptorElement(matchContext, "io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor")
         );
     }
 
-    private boolean isFirstParameterJpaSpecification(@NonNull MethodElement methodElement) {
+    private boolean isCorrectParameters(@NonNull MethodElement methodElement) {
         final ParameterElement[] parameters = methodElement.getParameters();
         final int len = parameters.length;
         switch (len) {
             case 1:
-                return parameters[0].getType().isAssignable("org.springframework.data.jpa.domain.Specification");
+                return true;
             case 2:
-                return parameters[0].getType().isAssignable("org.springframework.data.jpa.domain.Specification") &&
-                                parameters[1].getType().isAssignable("org.springframework.data.domain.Sort");
-
+                return parameters[1].getType().isAssignable("org.springframework.data.domain.Sort") ||
+                        parameters[1].getType().isAssignable("io.micronaut.data.model.Sort");
             default:
                 return false;
         }

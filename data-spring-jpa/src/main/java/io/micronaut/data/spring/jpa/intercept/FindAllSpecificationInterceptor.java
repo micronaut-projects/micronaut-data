@@ -15,20 +15,18 @@
  */
 package io.micronaut.data.spring.jpa.intercept;
 
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.intercept.RepositoryMethodKey;
-import io.micronaut.data.jpa.operations.JpaRepositoryOperations;
+import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.operations.RepositoryOperations;
-import io.micronaut.data.runtime.intercept.AbstractQueryInterceptor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -38,8 +36,7 @@ import java.util.List;
  * @since 1.0
  */
 @Internal
-public class FindAllSpecificationInterceptor extends AbstractQueryInterceptor<Object, Object> {
-    private final JpaRepositoryOperations jpaOperations;
+public class FindAllSpecificationInterceptor extends io.micronaut.data.jpa.repository.intercept.FindAllSpecificationInterceptor {
 
     /**
      * Default constructor.
@@ -48,48 +45,28 @@ public class FindAllSpecificationInterceptor extends AbstractQueryInterceptor<Ob
      */
     protected FindAllSpecificationInterceptor(@NonNull RepositoryOperations operations) {
         super(operations);
-        if (operations instanceof JpaRepositoryOperations) {
-            this.jpaOperations = (JpaRepositoryOperations) operations;
-        } else {
-            throw new IllegalStateException("Repository operations must be na instance of JpaRepositoryOperations");
-        }
     }
 
     @Override
-    public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        final Object[] parameterValues = context.getParameterValues();
-        final Object parameterValue = parameterValues[0];
+    protected io.micronaut.data.jpa.repository.criteria.Specification getSpecification(MethodInvocationContext<?, ?> context) {
+        final Object parameterValue = context.getParameterValues()[0];
         if (parameterValue instanceof Specification) {
-            Specification specification = (Specification) parameterValue;
-            final EntityManager entityManager = jpaOperations.getCurrentEntityManager();
-            final CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-            final CriteriaQuery<Object> query = criteriaBuilder.createQuery((Class<Object>) getRequiredRootEntity(context));
-            final Root<Object> root = query.from((Class<Object>) getRequiredRootEntity(context));
-            final Predicate predicate = specification.toPredicate(root, query, criteriaBuilder);
-            if (predicate != null) {
-                query.where(predicate);
+            Specification springSpecification = (Specification) parameterValue;
+            return (root, query, criteriaBuilder) -> springSpecification.toPredicate(root, query, criteriaBuilder);
+        }
+        return super.getSpecification(context);
+    }
+
+    @Override
+    protected void addSort(Object sortObject, CriteriaQuery<Object> query, Root<Object> root, CriteriaBuilder criteriaBuilder) {
+        if (sortObject instanceof Sort) {
+            Sort sort = (Sort) sortObject;
+            if (sort.isSorted()) {
+                final List<Order> orders = QueryUtils.toOrders(sort, root, criteriaBuilder);
+                query.orderBy(orders);
             }
-            query.select(root);
-
-
-            if (parameterValues.length == 1) {
-                final TypedQuery<?> typedQuery = entityManager.createQuery(query);
-                return typedQuery.getResultList();
-            } else {
-                final Object o = parameterValues[1];
-                if (o instanceof Sort) {
-                    Sort sort = (Sort) o;
-                    if (sort.isSorted()) {
-                        final List<Order> orders = QueryUtils.toOrders(sort, root, criteriaBuilder);
-                        query.orderBy(orders);
-                    }
-                }
-                final TypedQuery<?> typedQuery = entityManager.createQuery(query);
-                return typedQuery.getResultList();
-            }
-
         } else {
-            throw new IllegalArgumentException("Argument must be an instance of: " + Specification.class);
+            super.addSort(sortObject, query, root, criteriaBuilder);
         }
     }
 }
