@@ -84,4 +84,19 @@ class ProductRepositorySpec {
                 productManager.find("Watch").getName()
         );
     }
+
+    @Test
+    void testFindCaseInsensitive() {
+        long totalCaseInsensitive = productRepository.findByName("macbook", true, false).size();
+        long totalCaseSensitive = productRepository.findByName("macbook", false, false).size();
+
+        Assertions.assertEquals(
+                1,
+                totalCaseInsensitive
+        );
+        Assertions.assertEquals(
+                0,
+                totalCaseSensitive
+        );
+    }
 }

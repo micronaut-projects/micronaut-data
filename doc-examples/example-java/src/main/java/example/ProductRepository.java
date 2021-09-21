@@ -1,21 +1,28 @@
 
 package example;
 
-import io.micronaut.data.annotation.*;
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jpa.annotation.EntityGraph;
+import io.micronaut.data.jpa.repository.JpaSpecificationExecutor;
+import io.micronaut.data.jpa.repository.criteria.Specification;
 import io.micronaut.data.repository.CrudRepository;
 import io.reactivex.Maybe;
 import io.reactivex.Single;
 
+import javax.transaction.Transactional;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 // tag::join[]
 // tag::async[]
+// tag::specifications[]
 @Repository
-public interface ProductRepository extends CrudRepository<Product, Long> {
+public interface ProductRepository extends CrudRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 // end::join[]
 // end::async[]
+// end::specifications[]
+
     // tag::join[]
     @Join(value = "manufacturer", type = Join.Type.FETCH) // <1>
     List<Product> list();
@@ -38,8 +45,44 @@ public interface ProductRepository extends CrudRepository<Product, Long> {
 
     Single<Long> countDistinctByManufacturerName(String name);
     // end::reactive[]
+
+    // tag::specifications[]
+
+    @Transactional
+    default List<Product> findByName(String name, boolean caseInsensitive, boolean includeBlank) {
+        Specification<Product> specification;
+        if (caseInsensitive) {
+            specification = Specifications.nameEqualsCaseInsensitive(name);
+        } else {
+            specification = Specifications.nameEquals(name);
+        }
+        if (includeBlank) {
+            specification = specification.or(Specifications.nameEquals(""));
+        }
+        return findAll(specification);
+    }
+
+    // tag::spec[]
+    class Specifications {
+
+        public static Specification<Product> nameEquals(String name) {
+            return (root, query, criteriaBuilder)
+                    -> criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static Specification<Product> nameEqualsCaseInsensitive(String name) {
+            return (root, query, criteriaBuilder)
+                    -> criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+        }
+    }
+    // end::spec[]
+
+    // end::specifications[]
+
 // tag::join[]
 // tag::async[]
+// tag::specifications[]
 }
 // end::join[]
 // end::async[]
+// end::specifications[]

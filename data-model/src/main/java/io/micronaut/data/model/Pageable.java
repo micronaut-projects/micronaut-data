@@ -118,6 +118,13 @@ public interface Pageable extends Sort {
         }
     }
 
+    /**
+     * @return Is unpaged
+     */
+    default boolean isUnpaged() {
+        return getSize() == -1;
+    }
+
     @NonNull
     @Override
     default Pageable order(@NonNull String propertyName) {

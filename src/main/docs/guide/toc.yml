@@ -20,6 +20,7 @@ querying:
   nativeQueries: Native Queries
   async: Asynchronous Queries
   reactive: Reactive Queries
+  specifications: JPA specifications
 dataUpdates:
   title: Inserting and modifying data
   inserts: Inserting
