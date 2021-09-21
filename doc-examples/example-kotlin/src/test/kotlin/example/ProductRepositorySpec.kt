@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 import jakarta.inject.Inject
 
-@MicronautTest
+@MicronautTest(transactional = false, rollback = false)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class ProductRepositorySpec {
 
@@ -71,5 +71,20 @@ internal class ProductRepositorySpec {
                 total
         )
         // end::reactive[]
+    }
+
+    @Test
+    fun testFindCaseInsensitive() {
+        val totalCaseInsensitive = productRepository.findByName("macbook", true, false).size
+        val totalCaseSensitive = productRepository.findByName("macbook", false, false).size
+
+        assertEquals(
+                1,
+                totalCaseInsensitive
+        )
+        assertEquals(
+                0,
+                totalCaseSensitive
+        )
     }
 }

@@ -62,4 +62,14 @@ class ProductRepositorySpec extends Specification {
         total == 2
         // end::reactive[]
     }
+
+    void "test find case-insensitive"() {
+        when:
+        long totalCaseInsensitive = productRepository.findByName("macbook", true, false).size();
+        long totalCaseSensitive = productRepository.findByName("macbook", false, false).size();
+
+        then:
+        totalCaseInsensitive == 1
+        totalCaseSensitive == 0
+    }
 }
