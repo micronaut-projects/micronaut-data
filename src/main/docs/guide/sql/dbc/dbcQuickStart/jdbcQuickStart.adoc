@@ -1,4 +1,4 @@
-To get started with Micronaut Data and SQL/JDBC add the following dependency to your annotation processor path:
+To get started with Micronaut Data JDBC add the following dependency to your annotation processor path:
 
 dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor", version="{version}"]
 

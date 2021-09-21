@@ -1,6 +1,6 @@
-As mentioned in the <<jdbcQuickStart, Quick Start>> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the `io.micronaut.data.annotation` package.
+As mentioned in the <<dbcQuickStart, Quick Start>> section, if you need to customize how entities map to the table and column names of the database you can use JPA annotations to do so or Micronaut Datas own annotations in the `io.micronaut.data.annotation` package.
 
-An important aspect of Micronaut Data JDBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.
+An important aspect of Micronaut Data JDBC / R2DBC is that regardless whether you use JPA annotations or Micronaut Data annotations the entity classes must be compiled with Micronaut Data.
 
 This is because Micronaut Data pre-computes the persistence model (the relationships between entities, the class/property name to table/column name mappings) at compilation time, which is one of the reasons Micronaut Data JDBC can startup so fast.
 

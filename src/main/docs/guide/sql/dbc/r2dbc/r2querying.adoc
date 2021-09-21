@@ -1,10 +1,4 @@
-To write queries with Micronaut Data R2DBC you can use all the same patterns as defined in the <<querying, Writing Queries>> section.
-
-The Reactive return type is used to figure out whether the query is for a single result or multiple. If you use for example rx:Single[] or Reactor's `Mono` type a single result will be returned, whilst a rx:Flowable[] or Reactor `Flux` will return multiple records.
-
-You can pass a api:data.model.Pageable[] instance to any query to paginate results, although note that the api:data.model.Page[] return type is not supported since it is an implicitly blocking API.
-
-The following table summarizes the repository interfaces that come with Micronaut Data:
+The following table summarizes the reactive repository interfaces that come with Micronaut Data and are recommended to be used with R2DBC:
 
 .Builtin Reactive Repository Interfaces
 [cols=2*]

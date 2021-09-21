@@ -1,0 +1,21 @@
+=== Micronaut Data 3.1
+- Kotlin's coroutines support. New repository interface `CoroutineCrudRepository`.
+- Support for <<dbcAttributeConverter, `AttributeConverter`>>
+- R2DBC upgraded to `Borca-M2`
+- JPA Criteria specifications
+
+=== Micronaut Data 3.0
+- Micronaut 3.0
+- Hibernate optimizations
+
+=== Micronaut Data 2.5.0
+- Repositories now support batch insert/update/delete even with a custom query
+- Rewritten entity mapper allows more complex mapping for JDBC/R2DBC entities
+- Support for `@JoinTable` and `@JoinColumn` annotations
+
+=== Micronaut Data 2.4.0
+- Full support for immutable entities. You can use Java 16 records or Kotlin immutable data classes
+- Integrated support for R2DBC, now the `data-r2dbc` module is a part of the data project and shares the same code with JDBC
+- Optimistic locking for JDBC/R2DBC
+
+
