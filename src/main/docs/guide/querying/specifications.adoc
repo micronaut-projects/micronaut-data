@@ -1,6 +1,6 @@
-Currently supported only by JPA runtime.
+NOTE: Currently supported only by JPA runtime.
 
-When you need to create a query dynamically at the runtime, it's possible to use JPA criteria. There is a special interface: api:data.jpa.repository.JpaSpecificationExecutor[] which provides multiple methods that are receiving api:data.jpa.repository.criteria.Specification[] and it can be used in combination with existing repository interfaces.
+Based on the https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications[same concept as Spring Data], when you need to create queries dynamically by composing JPA criteria then you can implement the api:data.jpa.repository.JpaSpecificationExecutor[] interface which provides multiple methods that receive an instance of api:data.jpa.repository.criteria.Specification[] which can be used in combination with existing repository interfaces.
 
 The api:data.jpa.repository.criteria.Specification[] interface represents a simple Criteria-based API entry point:
 
@@ -16,7 +16,7 @@ public interface Specification<T> {
 }
 ----
 
-Implement this interface for a custom entity filtering specification:
+The following example implementation demonstrates custom entity filtering using specifications:
 
 snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="spec", indent="0"]
 
@@ -24,4 +24,4 @@ You can create default methods in your repository class and provide dynamic impl
 
 snippet::example.ProductRepository[project-base="doc-examples/example", source="main",tags="specifications", indent="0"]
 
-NOTE: In Micronaut-Data, the preferred way is to have build-time generated queries. It's recommended to use Criteria-based API only for queries that need to be generated dynamically at the runtime.
+NOTE: In Micronaut Data, the preferred way is to have build-time generated queries. It's recommended to use Criteria-based API only for queries that need to be generated dynamically at the runtime.
