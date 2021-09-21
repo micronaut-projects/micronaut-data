@@ -52,6 +52,7 @@ jobs:
           fi
         env:
            TESTCONTAINERS_RYUK_DISABLED: true
+           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       - name: Publish Test Report
         if: always()
         uses: mikepenz/action-junit-report@v2
