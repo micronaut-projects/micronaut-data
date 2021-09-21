@@ -126,6 +126,8 @@
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-reactive"><a href="#reactive"><strong>5.11</strong><span>Reactive Queries</span></a></div>
         
+        <div class="toc-item" style="margin-left:10px" id="toc-item-specifications"><a href="#specifications"><strong>5.12</strong><span>JPA specifications</span></a></div>
+        
         <div class="toc-item" style="margin-left:0px" id="toc-item-dataUpdates"><a href="#dataUpdates"><strong>6</strong><span>Inserting and modifying data</span></a></div>
         
         <div class="toc-item" style="margin-left:10px" id="toc-item-inserts"><a href="#inserts"><strong>6.1</strong><span>Inserting</span></a></div>
@@ -2083,7 +2085,7 @@ data class Manufacturer(
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">@Repository
-public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
     List&lt;Product&gt; list();
 }</code></pre>
@@ -2092,18 +2094,18 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
-interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
-    List&lt;Product&gt; list()
+    abstract List&lt;Product&gt; list()
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
-interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+abstract class ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join(value = "manufacturer", type = Join.Type.FETCH) <b class="conum">(1)</b>
-    fun list(): List&lt;Product&gt;
+    abstract fun list(): List&lt;Product&gt;
 }</code></pre>
 </div>
 </div>
@@ -2132,13 +2134,13 @@ List&lt;Product&gt; findAll();</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
-List&lt;Product&gt; findAll()</code></pre>
+abstract List&lt;Product&gt; findAll()</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@EntityGraph(attributePaths = ["manufacturer", "title"]) <b class="conum">(1)</b>
-override fun findAll(): List&lt;Product&gt;</code></pre>
+abstract override fun findAll(): List&lt;Product&gt;</code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -2477,7 +2479,7 @@ For <a href="#pagination">Pagination</a> queries that return a <a href="../api/i
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-java" data-lang="java">@Repository
-public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join("manufacturer")
     CompletableFuture&lt;Product&gt; findByNameContains(String str);
 
@@ -2488,22 +2490,22 @@ public interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
-interface ProductRepository extends CrudRepository&lt;Product, Long&gt; {
+abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join("manufacturer")
-    CompletableFuture&lt;Product&gt; findByNameContains(String str)
+    abstract CompletableFuture&lt;Product&gt; findByNameContains(String str)
 
-    CompletableFuture&lt;Long&gt; countByManufacturerName(String name)
+    abstract CompletableFuture&lt;Long&gt; countByManufacturerName(String name)
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
-interface ProductRepository : CrudRepository&lt;Product, Long&gt; {
+abstract class ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
     @Join("manufacturer")
-    fun findByNameContains(str: String): CompletableFuture&lt;Product&gt;
+    abstract fun findByNameContains(str: String): CompletableFuture&lt;Product&gt;
 
-    fun countByManufacturerName(name: String): CompletableFuture&lt;Long&gt;
+    abstract fun countByManufacturerName(name: String): CompletableFuture&lt;Long&gt;
 }</code></pre>
 </div>
 </div>
@@ -2590,17 +2592,17 @@ Single&lt;Long&gt; countDistinctByManufacturerName(String name);</code></pre>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-groovy" data-lang="groovy">@Join("manufacturer")
-Maybe&lt;Product&gt; queryByNameContains(String str)
+abstract Maybe&lt;Product&gt; queryByNameContains(String str)
 
-Single&lt;Long&gt; countDistinctByManufacturerName(String name)</code></pre>
+abstract Single&lt;Long&gt; countDistinctByManufacturerName(String name)</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Join("manufacturer")
-fun queryByNameContains(str: String): Maybe&lt;Product&gt;
+abstract fun queryByNameContains(str: String): Maybe&lt;Product&gt;
 
-fun countDistinctByManufacturerName(name: String): Single&lt;Long&gt;</code></pre>
+abstract fun countDistinctByManufacturerName(name: String): Single&lt;Long&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2653,6 +2655,212 @@ assertEquals(
 </div>
 <div class="paragraph">
 <p>In addition for more complex operations it may be more efficient to write custom code that uses a single session.</p>
+</div>
+
+<h2 id="specifications"><a class="anchor" href="#specifications"></a>5.12 JPA specifications</h2>
+
+<div class='contribute-btn'>
+    <button type='button' class='btn btn-default' onclick='window.location.href="https://github.com/micronaut-projects/micronaut-data/edit/master/src/main/docs/guide/querying/specifications.adoc"'>
+        <i class='fa fa-pencil-square-o'></i> Improve this doc
+    </button>
+</div>
+
+
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Currently supported only by JPA runtime.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Based on the <a href="https://docs.spring.io/spring-data/jpa/docs/current/reference/html/#specifications">same concept as Spring Data</a>, when you need to create queries dynamically by composing JPA criteria then you can implement the <a href="../api/io/micronaut/data/jpa/repository/JpaSpecificationExecutor.html">JpaSpecificationExecutor</a> interface which provides multiple methods that receive an instance of <a href="../api/io/micronaut/data/jpa/repository/criteria/Specification.html">Specification</a> which can be used in combination with existing repository interfaces.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="../api/io/micronaut/data/jpa/repository/criteria/Specification.html">Specification</a> interface represents a simple Criteria-based API entry point:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">public interface Specification&lt;T&gt; {
+
+    @Nullable
+    Predicate toPredicate(@NonNull Root&lt;T&gt; root,
+                          @NonNull CriteriaQuery&lt;?&gt; query,
+                          @NonNull CriteriaBuilder criteriaBuilder);
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The following example implementation demonstrates custom entity filtering using specifications:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">class Specifications {
+
+    public static Specification&lt;Product&gt; nameEquals(String name) {
+        return (root, query, criteriaBuilder)
+                -&gt; criteriaBuilder.equal(root.get("name"), name);
+    }
+
+    public static Specification&lt;Product&gt; nameEqualsCaseInsensitive(String name) {
+        return (root, query, criteriaBuilder)
+                -&gt; criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">static class Specifications {
+
+    static Specification&lt;Product&gt; nameEquals(String name) {
+        return (root, query, criteriaBuilder)
+                -&gt; criteriaBuilder.equal(root.get("name"), name)
+    }
+
+    static Specification&lt;Product&gt; nameEqualsCaseInsensitive(String name) {
+        return (root, query, criteriaBuilder)
+                -&gt; criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">object Specifications {
+
+    fun nameEquals(name: String) = Specification&lt;Product&gt; { root, _, criteriaBuilder -&gt;
+        criteriaBuilder.equal(root.get&lt;String&gt;("name"), name)
+    }
+
+    fun nameEqualsCaseInsensitive(name: String) = Specification&lt;Product&gt; { root, _, criteriaBuilder -&gt;
+        criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase())
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can create default methods in your repository class and provide dynamic implementation with a combination of multiple specifications:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-java" data-lang="java">@Repository
+public interface ProductRepository extends CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+
+    @Transactional
+    default List&lt;Product&gt; findByName(String name, boolean caseInsensitive, boolean includeBlank) {
+        Specification&lt;Product&gt; specification;
+        if (caseInsensitive) {
+            specification = Specifications.nameEqualsCaseInsensitive(name);
+        } else {
+            specification = Specifications.nameEquals(name);
+        }
+        if (includeBlank) {
+            specification = specification.or(Specifications.nameEquals(""));
+        }
+        return findAll(specification);
+    }
+
+    class Specifications {
+
+        public static Specification&lt;Product&gt; nameEquals(String name) {
+            return (root, query, criteriaBuilder)
+                    -&gt; criteriaBuilder.equal(root.get("name"), name);
+        }
+
+        public static Specification&lt;Product&gt; nameEqualsCaseInsensitive(String name) {
+            return (root, query, criteriaBuilder)
+                    -&gt; criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+        }
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-groovy" data-lang="groovy">@Repository
+abstract class ProductRepository implements CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+
+    @Transactional
+    List&lt;Product&gt; findByName(String name, boolean caseInsensitive, boolean includeBlank) {
+        Specification&lt;Product&gt; specification
+        if (caseInsensitive) {
+            specification = Specifications.nameEqualsCaseInsensitive(name)
+        } else {
+            specification = Specifications.nameEquals(name)
+        }
+        if (includeBlank) {
+            specification = specification | Specifications.nameEquals("")
+        }
+        return findAll(specification)
+    }
+
+    static class Specifications {
+
+        static Specification&lt;Product&gt; nameEquals(String name) {
+            return (root, query, criteriaBuilder)
+                    -&gt; criteriaBuilder.equal(root.get("name"), name)
+        }
+
+        static Specification&lt;Product&gt; nameEqualsCaseInsensitive(String name) {
+            return (root, query, criteriaBuilder)
+                    -&gt; criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase());
+        }
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlight"><code class="language-kotlin" data-lang="kotlin">@Repository
+abstract class ProductRepository : CrudRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; {
+
+    @Transactional
+    fun findByName(name: String, caseInsensitive: Boolean, includeBlank: Boolean): List&lt;Product&gt; {
+        var specification = if (caseInsensitive) {
+            Specifications.nameEqualsCaseInsensitive(name)
+        } else {
+            Specifications.nameEquals(name)
+        }
+        if (includeBlank) {
+            specification = specification.or(Specifications.nameEquals(""))
+        }
+        return findAll(specification)
+    }
+
+    object Specifications {
+
+        fun nameEquals(name: String) = Specification&lt;Product&gt; { root, _, criteriaBuilder -&gt;
+            criteriaBuilder.equal(root.get&lt;String&gt;("name"), name)
+        }
+
+        fun nameEqualsCaseInsensitive(name: String) = Specification&lt;Product&gt; { root, _, criteriaBuilder -&gt;
+            criteriaBuilder.equal(criteriaBuilder.lower(root.get("name")), name.toLowerCase())
+        }
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In Micronaut Data, the preferred way is to have build-time generated queries. It&#8217;s recommended to use Criteria-based API only for queries that need to be generated dynamically at the runtime.
+</td>
+</tr>
+</table>
 </div>
 
 <h1 id="dataUpdates"><a class="anchor" href="#dataUpdates"></a>6 Inserting and modifying data</h1>
